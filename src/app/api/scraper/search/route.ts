@@ -165,23 +165,28 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
     const fetchLimit = isBroad ? 200 : Math.max(targetMin * 4, 80);
     const nicheEscaped = niche.replace(/["\\]/g, '');
 
-    // Extended Overpass query: match by name OR by shop/amenity category
+    // Extended Overpass query: match by name OR by shop/amenity/office/craft category
+    // We include node, way, and relation.
     const q = `
 [out:json][timeout:30];
 (
-  node["name"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
-  node["name"~"${nicheEscaped}",i]["contact:phone"](${south},${west},${north},${east});
-  node["name"~"${nicheEscaped}",i]["contact:email"](${south},${west},${north},${east});
-  node["name"~"${nicheEscaped}",i]["email"](${south},${west},${north},${east});
-  node["name"~"${nicheEscaped}",i]["website"](${south},${west},${north},${east});
-  node["amenity"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
-  node["shop"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
-  way["name"~"${nicheEscaped}",i]["phone"](${south},${west},${north},${east});
-  way["name"~"${nicheEscaped}",i]["contact:phone"](${south},${west},${north},${east});
-  way["name"~"${nicheEscaped}",i]["contact:email"](${south},${west},${north},${east});
-  way["name"~"${nicheEscaped}",i]["email"](${south},${west},${north},${east});
-);
-out body ${fetchLimit};
+  node["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["office"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["craft"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  
+  way["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  way["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  way["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  way["office"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  
+  relation["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  relation["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  relation["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
+)
+;
+out center ${fetchLimit};
     `.trim();
 
     try {

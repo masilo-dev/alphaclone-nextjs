@@ -7,6 +7,7 @@ ALTER TYPE project_stage ADD VALUE IF NOT EXISTS 'Planning';
 ALTER TYPE project_stage ADD VALUE IF NOT EXISTS 'Execution';
 ALTER TYPE project_stage ADD VALUE IF NOT EXISTS 'Review';
 ALTER TYPE project_stage ADD VALUE IF NOT EXISTS 'Closure';
+ALTER TYPE project_stage ADD VALUE IF NOT EXISTS 'Proposal';
 
 -- 2. Add Missing Columns to Projects Table from Phase 7 & 9
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget numeric DEFAULT 0;

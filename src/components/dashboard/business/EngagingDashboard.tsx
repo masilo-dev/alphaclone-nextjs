@@ -319,7 +319,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Grow your network',
             icon: UserPlus,
             color: 'bg-blue-500',
-            action: () => router.push('/dashboard/crm')
+            action: () => router.push('/dashboard/crm?quickAdd=true')
         },
         {
             id: 'new-invoice',
@@ -334,8 +334,8 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             title: 'Schedule Meeting',
             description: 'Connect with clients',
             icon: Calendar,
-            color: 'bg-purple-500',
-            action: () => router.push('/dashboard/calendar')
+            color: 'bg-indigo-500',
+            action: () => router.push('/dashboard/business/calendar')
         },
         {
             id: 'view-reports',
@@ -343,7 +343,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Track your progress',
             icon: BarChart2,
             color: 'bg-orange-500',
-            action: () => router.push('/dashboard/reports')
+            action: () => router.push('/dashboard/business/reports')
         }
     ];
 
@@ -366,10 +366,16 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     <p className="text-slate-600 mt-1">{welcomeMessage}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    <button 
+                        onClick={() => router.push('/dashboard/crm?quickAdd=true')}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm active:scale-95"
+                    >
                         Quick Add
                     </button>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    <button 
+                        onClick={() => router.push('/dashboard/business/projects?new=true')}
+                        className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20 active:scale-95"
+                    >
                         New Project
                     </button>
                 </div>
@@ -511,9 +517,9 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         label: 'Active Projects',
                         value: metrics.activeProjects.toString(),
                         icon: Briefcase,
-                        color: 'text-purple-400',
-                        bgColor: 'bg-purple-500/10',
-                        borderColor: 'border-purple-500/30',
+                        color: 'text-indigo-400',
+                        bgColor: 'bg-indigo-500/10',
+                        borderColor: 'border-indigo-500/30',
                         emotion: metrics.activeProjects > 0 ? 'Building momentum!' : 'Time to build!',
                         trend: '+2'
                     },
@@ -613,7 +619,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white text-center"
+                className="bg-gradient-to-r from-indigo-600 to-teal-600 rounded-2xl p-6 text-white text-center shadow-xl"
             >
                 <div className="text-4xl mb-2">💪</div>
                 <h3 className="text-xl font-bold mb-2">You're Doing Amazing!</h3>
@@ -626,7 +632,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 <div className="mt-4 flex justify-center gap-4">
                     <Button
                         onClick={() => router.push('/dashboard/integrations')}
-                        className="bg-white text-purple-600 hover:bg-purple-50"
+                        className="bg-white text-indigo-600 hover:bg-indigo-50"
                     >
                         <Sparkles className="w-4 h-4 mr-2" />
                         Unlock More Features

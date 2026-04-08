@@ -11,6 +11,7 @@ import {
 import { Button, Card, Input, Modal } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
+import MCPSetupGuide from './integrations/MCPSetupGuide';
 
 interface MarketplaceItem {
   id: string;
@@ -26,6 +27,7 @@ interface MarketplaceItem {
   developer: string;
   isInstalled?: boolean;
   isPremium?: boolean;
+  isComingSoon?: boolean;
   actionUrl?: string;
 }
 
@@ -45,6 +47,7 @@ const MarketplacePage: React.FC = () => {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
   const [installedItems, setInstalledItems] = useState<Set<string>>(new Set());
+  const [showMcpGuide, setShowMcpGuide] = useState(false);
 
   // Mock marketplace data
   const [marketplaceItems] = useState<MarketplaceItem[]>([
@@ -143,6 +146,45 @@ const MarketplacePage: React.FC = () => {
       isInstalled: false,
       isPremium: false,
       actionUrl: '/dashboard/billing'
+    },
+    {
+      id: 'mcp-claude',
+      name: 'Claude Desktop (MCP)',
+      description: 'Connect Claude Desktop securely to your CRM database via the Model Context Protocol to orchestrate workflows autonomously.',
+      category: 'integration',
+      price: 0,
+      rating: 5.0,
+      downloads: 0,
+      icon: Zap,
+      features: ['Direct DB queries', 'Automated document processing', 'Lead generation'],
+      tags: ['ai', 'mcp', 'claude'],
+      developer: 'AlphaClone AI'
+    },
+    {
+      id: 'mcp-manus',
+      name: 'Manus AI (MCP)',
+      description: 'Let Manus autonomously research leads and execute background tasks for your agency via MCP.',
+      category: 'integration',
+      price: 0,
+      rating: 5.0,
+      downloads: 0,
+      icon: Sparkles,
+      features: ['Autonomous research', 'Data enrichment', 'Task orchestration'],
+      tags: ['ai', 'mcp', 'manus'],
+      developer: 'AlphaClone AI'
+    },
+    {
+      id: 'integration-hubspot',
+      name: 'HubSpot Sync',
+      description: 'Two-way synchronization between HubSpot CRM and your AlphaClone dashboard.',
+      category: 'integration',
+      price: 19,
+      rating: 4.8,
+      downloads: 0,
+      icon: Users,
+      features: ['Contact sync', 'Deal pipelines', 'Two-way update tracking'],
+      tags: ['crm', 'hubspot', 'integration'],
+      developer: 'Integration Provider'
     }
   ]);
 
@@ -170,6 +212,11 @@ const MarketplacePage: React.FC = () => {
   });
 
   const handleInstall = (item: MarketplaceItem) => {
+    // MCP items open the plain-English setup guide instead of a generic modal
+    if (item.id === 'mcp-claude' || item.id === 'mcp-manus') {
+      setShowMcpGuide(true);
+      return;
+    }
     setSelectedItem(item);
     setShowInstallModal(true);
   };
@@ -215,11 +262,18 @@ const MarketplacePage: React.FC = () => {
               <p className="text-slate-400 text-sm">by {item.developer}</p>
             </div>
           </div>
-          {item.isPremium && (
-            <div className="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs rounded-full">
-              PRO
-            </div>
-          )}
+          <div className="flex gap-2">
+            {item.isComingSoon && (
+              <div className="px-2 py-1 bg-teal-500/10 text-teal-400 text-xs rounded-full font-semibold border border-teal-500/20">
+                Coming Soon
+              </div>
+            )}
+            {item.isPremium && (
+              <div className="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs rounded-full">
+                PRO
+              </div>
+            )}
+          </div>
         </div>
 
         <p className="text-slate-300 text-sm mb-4 line-clamp-2">
@@ -255,9 +309,9 @@ const MarketplacePage: React.FC = () => {
         </div>
 
         <Button
-          onClick={() => handleInstall(item)}
-          disabled={isInstalled}
-          className={`w-full ${isInstalled 
+          onClick={() => !item.isComingSoon && handleInstall(item)}
+          disabled={isInstalled || item.isComingSoon}
+          className={`w-full ${isInstalled || item.isComingSoon
             ? 'bg-slate-700 text-slate-300 cursor-not-allowed' 
             : 'bg-teal-600 hover:bg-teal-500 text-white'
           }`}
@@ -266,6 +320,11 @@ const MarketplacePage: React.FC = () => {
             <>
               <CheckCircle className="w-4 h-4 mr-2" />
               Installed
+            </>
+          ) : item.isComingSoon ? (
+            <>
+              <Clock className="w-4 h-4 mr-2" />
+              In Development
             </>
           ) : (
             <>

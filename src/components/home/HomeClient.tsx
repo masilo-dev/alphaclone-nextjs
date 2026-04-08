@@ -29,8 +29,8 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
       setIsPwa(true);
     }
 
-    const timer = setTimeout(() => setIsInitialLoad(false), 2000);
-    return () => clearTimeout(timer);
+    // Remove artificial delay for instant load
+    setIsInitialLoad(false);
   }, [searchParams]);
 
   useEffect(() => {

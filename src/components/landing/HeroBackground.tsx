@@ -157,13 +157,10 @@ export default function HeroBackground() {
     const mnodes = moduleNodes.current;
     const pkts   = packets.current;
 
-    // ── 1. Move module nodes ──────────────────────────────────────────────
+    // ── 1. Move module nodes (STOPPED) ──────────────────────────────────────────────
     for (const n of mnodes) {
-      n.x += n.vx;
-      n.y += n.vy;
-      const margin = 80;
-      if (n.x < margin || n.x > w - margin) n.vx *= -1;
-      if (n.y < margin || n.y > h - margin) n.vy *= -1;
+      // n.x += n.vx;
+      // n.y += n.vy;
       n.pulsePhase += n.pulseSpeed;
     }
 
@@ -194,39 +191,8 @@ export default function HeroBackground() {
       }
     }
 
-    // ── 4. Draw data packets along lines ─────────────────────────────────
-    for (const pkt of pkts) {
-      pkt.progress += pkt.speed;
-      if (pkt.progress > 1) {
-        // re-route
-        const from = Math.floor(Math.random() * mnodes.length);
-        let to = Math.floor(Math.random() * mnodes.length);
-        while (to === from) to = Math.floor(Math.random() * mnodes.length);
-        pkt.fromIdx   = from;
-        pkt.toIdx     = to;
-        pkt.progress  = 0;
-        pkt.hue       = mnodes[from].hue;
-      }
-      const a = mnodes[pkt.fromIdx];
-      const b = mnodes[pkt.toIdx];
-      const px = a.x + (b.x - a.x) * pkt.progress;
-      const py = a.y + (b.y - a.y) * pkt.progress;
-
-      // Packet glow
-      const pg = ctx.createRadialGradient(px, py, 0, px, py, pkt.size * 5);
-      pg.addColorStop(0, `hsla(${pkt.hue}, 100%, 75%, 0.6)`);
-      pg.addColorStop(1, `hsla(${pkt.hue}, 100%, 75%, 0)`);
-      ctx.beginPath();
-      ctx.arc(px, py, pkt.size * 5, 0, Math.PI * 2);
-      ctx.fillStyle = pg;
-      ctx.fill();
-
-      // Packet core
-      ctx.beginPath();
-      ctx.arc(px, py, pkt.size, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${pkt.hue}, 100%, 80%, 0.9)`;
-      ctx.fill();
-    }
+    // ── 4. Draw data packets (REMOVING as per user request to stop 'moving dots') ─────────────────
+    // Logic removed to reduce distraction and lag.
 
     // ── 5. Draw module nodes ──────────────────────────────────────────────
     for (const n of mnodes) {

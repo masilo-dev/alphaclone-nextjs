@@ -29,6 +29,8 @@ export interface ContractVariables {
     providerRepTitle: string;
     clientRepName: string;
     clientRepTitle: string;
+    templateType?: 'simple' | 'comprehensive';
+    language?: 'en' | 'es' | 'fr';
 }
 
 // Payment schedule templates
@@ -51,119 +53,247 @@ export const SCOPE_TEMPLATES = {
 
 // Generate contract from variables
 export function generateAlphaCloneContract(variables: ContractVariables): string {
-    return `
-# MASTER SERVICES AGREEMENT
+    const lang = variables.language || 'en';
+    const isSimple = variables.templateType === 'simple';
 
-**Reference Date:** ${variables.contractDate}
+    const translations: Record<string, Record<string, string>> = {
+        en: {
+            msa: 'MASTER SERVICES AGREEMENT',
+            psa: 'PROFESSIONAL SERVICES AGREEMENT',
+            refDate: 'Reference Date',
+            between: 'BETWEEN',
+            provider: 'Service Provider',
+            client: 'Client',
+            address: 'Address',
+            email: 'Email',
+            reg: 'Registration',
+            onFile: 'On File',
+            sec1: 'SERVICES AND SCOPE',
+            sec1_desc: 'The Service Provider agrees to perform the following services (the "Services") for the Client:',
+            projectName: 'Project Name',
+            scope: 'Detailed Scope of Work',
+            deliverables: 'Deliverables',
+            profManner: 'The Service Provider shall perform the Services in a professional and workmanlike manner, consistent with industry standards.',
+            sec2: 'COMPENSATION AND PAYMENT',
+            totalValue: 'Total Contract Value',
+            deposit: 'Deposit Required',
+            schedule: 'Payment Schedule',
+            terms: 'Payment Terms',
+            terms_desc: 'Invoices are due upon receipt. Late payments shall incur interest at a rate of 1.5% per month or the maximum rate permitted by law, whichever is less.',
+            sec3: 'TERM AND TERMINATION',
+            start: 'Start Date',
+            completion: 'Estimated Completion',
+            term_desc: 'Either party may terminate this Agreement with 14 days\' written notice. In the event of termination by the Client, the Client shall pay the Service Provider for all work performed and expenses incurred up to the date of termination.',
+            sec4: 'INTELLECTUAL PROPERTY',
+            ip_desc: 'Upon full payment of all fees due, the Service Provider assigns to the Client all right, title, and interest in the custom work product created specifically for the Client under this Agreement.',
+            sec5: 'CONFIDENTIALITY',
+            conf_desc: 'Each party agrees to maintain the confidentiality of the other party\'s proprietary information disclosed during the term of this Agreement.',
+            sec10: 'GOVERNING LAW',
+            gov_desc: 'This Agreement shall be governed by the laws of',
+            witness: 'IN WITNESS WHEREOF',
+            signature: 'Signature',
+            printedName: 'Printed Name',
+            title: 'Title',
+            date: 'Date',
+            disclaimer: 'AlphaClone Systems is a platform provider and is not a party to this agreement.'
+        },
+        es: {
+            msa: 'CONTRATO MAESTRO DE SERVICIOS',
+            psa: 'CONTRATO DE SERVICIOS PROFESIONALES',
+            refDate: 'Fecha de Referencia',
+            between: 'ENTRE',
+            provider: 'Prestador de Servicios',
+            client: 'Cliente',
+            address: 'Dirección',
+            email: 'Correo Electrónico',
+            reg: 'Registro',
+            onFile: 'En Archivo',
+            sec1: 'SERVICIOS Y ALCANCE',
+            sec1_desc: 'El Prestador de Servicios acepta realizar los siguientes servicios (los "Servicios") para el Cliente:',
+            projectName: 'Nombre del Proyecto',
+            scope: 'Alcance Detallado del Trabajo',
+            deliverables: 'Entregables',
+            profManner: 'El Prestador de Servicios realizará los Servicios de manera profesional y competente, de acuerdo con los estándares de la industria.',
+            sec2: 'COMPENSACIÓN Y PAGO',
+            totalValue: 'Valor Total del Contrato',
+            deposit: 'Depósito Requerido',
+            schedule: 'Calendario de Pagos',
+            terms: 'Condiciones de Pago',
+            terms_desc: 'Las facturas vencen al recibirlas. Los pagos atrasados devengarán intereses a una tasa del 1,5% mensual o la tasa máxima permitida por la ley.',
+            sec3: 'PLAZO Y TERMINACIÓN',
+            start: 'Fecha de Inicio',
+            completion: 'Finalización Estimada',
+            term_desc: 'Cualquier parte puede rescindir este Acuerdo con un aviso por escrito de 14 días. En caso de rescisión por parte del Cliente, el Cliente pagará al Prestador de Servicios por todo el trabajo realizado.',
+            sec4: 'PROPIEDAD INTELECTUAL',
+            ip_desc: 'Tras el pago total de todas las tarifas debidas, el Prestador de Servicios asigna al Cliente todos los derechos, títulos e intereses sobre el producto de trabajo personalizado.',
+            sec5: 'CONFIDENCIALIDAD',
+            conf_desc: 'Cada parte acuerda mantener la confidencialidad de la información patentada de la otra parte divulgada durante la vigencia de este Acuerdo.',
+            sec10: 'LEY APLICABLE',
+            gov_desc: 'Este Acuerdo se regirá por las leyes de',
+            witness: 'EN FE DE LO CUAL',
+            signature: 'Firma',
+            printedName: 'Nombre en Letra de Molde',
+            title: 'Título',
+            date: 'Fecha',
+            disclaimer: 'AlphaClone Systems es un proveedor de plataforma y no es parte de este acuerdo.'
+        },
+        fr: {
+            msa: 'ACCORD DE SERVICES MAÎTRE',
+            psa: 'CONTRAT DE SERVICES PROFESSIONNELS',
+            refDate: 'Date de Référence',
+            between: 'ENTRE',
+            provider: 'Prestataire de Services',
+            client: 'Client',
+            address: 'Adresse',
+            email: 'E-mail',
+            reg: 'Enregistrement',
+            onFile: 'Au Dossier',
+            sec1: 'SERVICES ET PORTÉE',
+            sec1_desc: 'Le Prestataire de Services accepte de fournir les services suivants (les "Services") pour le Client :',
+            projectName: 'Nom du Projet',
+            scope: 'Portée Détaillée des Travaux',
+            deliverables: 'Livrables',
+            profManner: 'Le Prestataire de Services doit fournir les Services de manière professionnelle et méticuleuse, conformément aux normes de l\'industrie.',
+            sec2: 'RÉMUNÉRATION ET PAIEMENT',
+            totalValue: 'Valeur Totale du Contrat',
+            deposit: 'Acompte Requis',
+            schedule: 'Calendrier de Paiement',
+            terms: 'Conditions de Paiement',
+            terms_desc: 'Les factures sont dues à réception. Les paiements en retard porteront intérêt au taux de 1,5 % par mois ou au taux maximum autorisé par la loi.',
+            sec3: 'DURÉE ET RÉSILIATION',
+            start: 'Date de Début',
+            completion: 'Achèvement Estimé',
+            term_desc: 'Chaque partie peut résilier le présent Contrat avec un préavis écrit de 14 jours. En cas de résiliation par le Client, celui-ci doit payer au Prestataire de Services tous les travaux effectués.',
+            sec4: 'PROPRIÉTÉ INTELLECTUELLE',
+            ip_desc: 'Dès le paiement intégral de tous les frais dus, le Prestataire de Services cède au Client tous les droits, titres et intérêts sur le produit du travail personnalisé.',
+            sec5: 'CONFIDENTIALITÉ',
+            conf_desc: 'Chaque partie s\'engage à préserver la confidentialité des informations prioritaires de l\'autre partie divulguées pendant la durée du présent Contrat.',
+            sec10: 'LOI APPLICABLE',
+            gov_desc: 'Le présent Contrat est régi par les lois de',
+            witness: 'EN FOI DE QUOI',
+            signature: 'Signature',
+            printedName: 'Nom en Lettres Capitales',
+            title: 'Titre',
+            date: 'Date',
+            disclaimer: 'AlphaClone Systems est un fournisseur de plateforme et ne fait pas partie de cet accord.'
+        }
+    };
 
-**BETWEEN:**
+    const t = translations[lang] || translations.en;
 
-**1. ${variables.providerCompanyName || variables.providerName}** ("Service Provider")${variables.providerPersonalName ? ` represented by ${variables.providerPersonalName}` : ''}
-**2. ${variables.clientName}**${variables.clientCompany ? ` (representing ${variables.clientCompany})` : ''} ("Client")
+    const header = isSimple ? `# ${t.psa}` : `# ${t.msa}`;
 
-**Service Provider Contact:**
-${variables.providerAddress ? `Address: ${variables.providerAddress}` : 'Address: On File'}
-${variables.providerEmail ? `Email: ${variables.providerEmail}` : ''}
-${variables.providerRegistration ? `Registration: ${variables.providerRegistration}` : ''}
+    let body = `
+${header}
 
-**Client Contact:**
-${variables.clientAddress ? `Address: ${variables.clientAddress}` : 'Address: On File'}
-${variables.clientEmail ? `Email: ${variables.clientEmail}` : ''}
+**${t.refDate}:** ${variables.contractDate}
+
+**${t.between}:**
+
+**1. ${variables.providerCompanyName || variables.providerName}** ("${t.provider}")${variables.providerPersonalName ? ` represented by ${variables.providerPersonalName}` : ''}
+**2. ${variables.clientName}**${variables.clientCompany ? ` (representing ${variables.clientCompany})` : ''} ("${t.client}")
+
+**${t.provider} ${t.address}:**
+${variables.providerAddress ? `${t.address}: ${variables.providerAddress}` : `${t.address}: ${t.onFile}`}
+${variables.providerEmail ? `${t.email}: ${variables.providerEmail}` : ''}
+${variables.providerRegistration ? `${t.reg}: ${variables.providerRegistration}` : ''}
+
+**${t.client} ${t.address}:**
+${variables.clientAddress ? `${t.address}: ${variables.clientAddress}` : `${t.address}: ${t.onFile}`}
+${variables.clientEmail ? `${t.email}: ${variables.clientEmail}` : ''}
 
 ---
 
-## 1. SERVICES AND SCOPE
+## 1. ${t.sec1}
 
-The Service Provider agrees to perform the following services (the "Services") for the Client:
+${t.sec1_desc}
 
-**Project Name:** ${variables.projectName}
+**${t.projectName}:** ${variables.projectName}
 
-**Detailed Scope of Work:**
+**${t.scope}:**
 ${variables.projectScope}
 
-**Deliverables:**
+**${t.deliverables}:**
 ${variables.projectDeliverables}
 
-The Service Provider shall perform the Services in a professional and workmanlike manner, consistent with industry standards.
+${t.profManner}
 
-## 2. COMPENSATION AND PAYMENT
+## 2. ${t.sec2}
 
-**Total Contract Value:** $${variables.totalAmount.toLocaleString()} USD
-**Deposit Required:** $${variables.depositAmount.toLocaleString()} USD
+**${t.totalValue}:** $${variables.totalAmount.toLocaleString()} USD
+**${t.deposit}:** $${variables.depositAmount.toLocaleString()} USD
 
-**Payment Schedule:**
+**${t.schedule}:**
 ${variables.paymentSchedule}
 
-**Payment Terms:**
-Invoices are due upon receipt. Late payments shall incur interest at a rate of 1.5% per month or the maximum rate permitted by law, whichever is less. The Service Provider reserves the right to suspend work if payments are more than 14 days overdue.
+**${t.terms}:**
+${t.terms_desc}
+    `.trim();
 
-## 3. TERM AND TERMINATION
+    if (!isSimple) {
+        body += `
 
-**Start Date:** ${variables.startDate}
-**Estimated Completion:** ${variables.deliveryDate}
+## 3. ${t.sec3}
 
-Either party may terminate this Agreement with 14 days' written notice. In the event of termination by the Client, the Client shall pay the Service Provider for all work performed and expenses incurred up to the date of termination.
+**${t.start}:** ${variables.startDate}
+**${t.completion}:** ${variables.deliveryDate}
 
-## 4. INTELLECTUAL PROPERTY
+${t.term_desc}
 
-Upon full payment of all fees due, the Service Provider assigns to the Client all right, title, and interest in the custom work product created specifically for the Client under this Agreement. The Service Provider retains ownership of all pre-existing materials, generic code libraries, and tools used to create the work product.
+## 4. ${t.sec4}
 
-## 5. CONFIDENTIALITY
+${t.ip_desc}
 
-Each party agrees to maintain the confidentiality of the other party's proprietary information disclosed during the term of this Agreement. This obligation includes technical data, business strategies, and customer lists. This clause survives the termination of this Agreement for a period of three (3) years.
+## 5. ${t.sec5}
+
+${t.conf_desc}
 
 ## 6. INDEMNIFICATION
-
-The Client agrees to indemnify and hold harmless the Service Provider against any claims, damages, or expenses arising from the Client's use of the deliverables, or from any content or materials provided by the Client.
+The Client agrees to indemnify and hold harmless the Service Provider against any claims or damages arising from the Client's use of the deliverables.
 
 ## 7. WARRANTIES AND DISCLAIMER
-
-The Service Provider warrants that the Services will be performed substantially in accordance with the specifications. EXCEPT AS EXPRESSLY STATED HEREIN, THE SERVICE PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+EXCEPT AS EXPRESSLY STATED HEREIN, THE SERVICE PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED.
 
 ## 8. LIMITATION OF LIABILITY
-
-IN NO EVENT SHALL EITHER PARTY BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. THE SERVICE PROVIDER'S TOTAL LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE TOTAL FEES PAID BY THE CLIENT UNDER THIS AGREEMENT.
+SERVICE PROVIDER'S TOTAL LIABILITY SHALL NOT EXCEED THE TOTAL FEES PAID BY THE CLIENT UNDER THIS AGREEMENT.
 
 ## 9. NON-SOLICITATION
+Neither party shall solicit for employment any employee or contractor of the other party for 12 months.
+        `;
+    }
 
-During the term of this Agreement and for twelve (12) months thereafter, neither party shall directly or indirectly solicit for employment or engagement any employee or contractor of the other party.
+    body += `
 
-## 10. GOVERNING LAW AND DISPUTE RESOLUTION
+## ${isSimple ? '3' : '10'}. ${t.sec10}
  
-This Agreement shall be governed by the laws of ${variables.governingJurisdiction}. Any disputes arising under this Agreement shall be resolved first through good-faith negotiation, and if unresolved, by binding arbitration in ${variables.governingJurisdiction}.
+${t.gov_desc} ${variables.governingJurisdiction}.
 
-## 11. PLATFORM DISCLAIMER & LEGAL SEPARATION
-AlphaClone Systems (the "Platform Provider") provides the underlying software utilized by the Service Provider to manage this project. The Client acknowledges that:
-1. The Platform Provider is not a party to this Agreement.
-2. The Platform Provider bears no responsibility for the Services, deliverables, or conduct of the Service Provider or Client.
-3. The Platform Provider does not hold, manage, or safeguard funds for the Service Provider or Client.
-4. All tax reporting and payment obligations arising from this Agreement are the sole responsibility of the respective parties.
-
-## 12. ENTIRE AGREEMENT
-
-This Agreement constitutes the entire understanding between the parties and supersedes all prior agreements or understandings, whether written or oral. Amendments must be in writing and signed by both parties.
+## ${isSimple ? '4' : '11'}. PLATFORM DISCLAIMER
+${t.disclaimer}
 
 ---
 
-**IN WITNESS WHEREOF**, the parties have executed this Agreement as of the date first above written.
+**${t.witness}**, the parties have executed this Agreement as of the date first above written.
  
-**SERVICE PROVIDER:**
+**${t.provider.toUpperCase()}:**
 ${variables.providerCompanyName || variables.providerName}
-Signature: [DIGITAL SIGNATURE]
-Printed Name: ${variables.providerPersonalName || variables.providerRepName}
-Title: ${variables.providerRepTitle}
-Date: ${variables.contractDate}
+${t.signature}: [DIGITAL SIGNATURE]
+${t.printedName}: ${variables.providerPersonalName || variables.providerRepName}
+${t.title}: ${variables.providerRepTitle}
+${t.date}: ${variables.contractDate}
  
-**CLIENT:**
+**${t.client.toUpperCase()}:**
 ${variables.clientName}
-Signature: [DIGITAL SIGNATURE]
-Printed Name: ${variables.clientRepName}
-Title: ${variables.clientRepTitle}
-Date: ${variables.contractDate}
+${t.signature}: [DIGITAL SIGNATURE]
+${t.printedName}: ${variables.clientRepName}
+${t.title}: ${variables.clientRepTitle}
+${t.date}: ${variables.contractDate}
  
 ---
-*This document is digitally generated and legally binding upon signature. Signature metadata, including IP addresses and timestamps, are recorded by the system.*
-`.trim();
+*Digital signature metadata recorded.*
+    `;
+
+    return body.trim();
 }
 
 

@@ -117,7 +117,7 @@ export function PrivacyPolicy() {
       <LegalLayout
          title="Privacy Policy"
          subtitle="This Privacy Policy explains how AlphaClone Systems collects, uses, stores, and protects your personal information. Read it in full before using our platform."
-         lastUpdated="February 25, 2026"
+         lastUpdated="April 8, 2026"
          icon={Shield}
          color="teal"
       >
@@ -178,6 +178,12 @@ export function PrivacyPolicy() {
             <Sub title="2.6 AI Growth Agent Data">
                <p>The AI Growth Agent uses publicly available business directory data to identify prospective leads. We do not scrape private data or use data obtained through unauthorized means. Outreach conversations managed by the AI agent are stored in your workspace and are not accessible to other users or AlphaClone staff without your consent.</p>
             </Sub>
+            <Sub title="2.7 Model Context Protocol (MCP) AI Agent Data">
+               <InfoBox variant="warn">
+                  When you connect an external AI agent (e.g. Anthropic Claude Desktop, Manus AI) to AlphaClone via the Model Context Protocol (MCP), your workspace data — including client names, project details, task records, and revenue summaries — is transmitted to that AI agent over an encrypted SSE channel. AlphaClone does not control how the receiving AI provider processes or retains this data. You must review the privacy policy of any external AI agent before enabling MCP access.
+               </InfoBox>
+               <p className="mt-3">AlphaClone's MCP server enforces strict technical controls: all data is scoped to your tenant workspace only, DELETE and DDL operations are blocked, and credentials/secrets are never transmitted. MCP access tokens are user-generated and can be revoked at any time from Settings → Integrations → MCP.</p>
+            </Sub>
          </Section>
 
          <Section id="legal-basis" title="3. Legal Basis for Processing (GDPR)">
@@ -229,6 +235,7 @@ export function PrivacyPolicy() {
                         { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in', d: 'Google account OAuth token, email actions only' },
                         { p: 'Vercel, Inc. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
                         { p: 'Resend / SendGrid', pu: 'Transactional email delivery', d: 'Email address, email content (transactional only)' },
+                        { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
                      ].map((row, i) => (
                         <tr key={i}>
                            <td className="py-2 pr-4 text-white">{row.p}</td>
@@ -418,11 +425,45 @@ export function TermsOfService() {
             </InfoBox>
          </Section>
 
-         <Section id="data-portability" title="8. Data Portability & Export">
+         <Section id="mcp-integration" title="8. Model Context Protocol (MCP) Integrations — Specific Terms">
+            <Sub title="8.1 What MCP Integrations Are">
+               <p>AlphaClone provides an optional Model Context Protocol (MCP) server that allows external AI agents — including but not limited to Anthropic Claude Desktop and Manus AI — to access and interact with your workspace data through a secure, authenticated, server-sent events (SSE) connection.</p>
+            </Sub>
+            <Sub title="8.2 User Responsibility for AI Agent Actions">
+               <p>By connecting an external AI agent via MCP, you acknowledge and agree that:</p>
+               <BulletList items={[
+                  'You are solely responsible for all actions taken by the AI agent within your workspace, including client records created, tasks assigned, project statuses updated, and messages drafted',
+                  'AlphaClone does not review, verify, or approve AI agent actions before they are executed',
+                  'You must supervise and review all AI agent activity logs through the platform\'s activity feed',
+                  'You will not use MCP integrations to process sensitive personal data beyond what is operationally necessary within your workspace',
+               ]} />
+            </Sub>
+            <Sub title="8.3 Data Transfer to External AI Providers">
+               <InfoBox variant="warn">
+                  When you connect an external AI agent via MCP (e.g. Claude Desktop), your workspace data — including client names, project details, and task information — is transmitted to the AI agent running locally or on a third-party platform. AlphaClone does not control how that third-party AI provider stores or processes the data it receives.
+               </InfoBox>
+               <p className="mt-3">You are responsible for ensuring that your use of third-party AI agents complies with GDPR, POPIA, CCPA, and all applicable data protection legislation in your jurisdiction. Review the privacy policy of any AI provider you connect via MCP before activating the integration.</p>
+            </Sub>
+            <Sub title="8.4 Security Constraints">
+               <p>AlphaClone's MCP server enforces the following technical restrictions to protect platform integrity:</p>
+               <BulletList items={[
+                  'DELETE operations are completely excluded — AI agents cannot permanently remove any records',
+                  'Database schema changes (DDL) are completely excluded',
+                  'Source code files and environment configurations are inaccessible',
+                  'Payment gateway credentials and billing details are not exposed via MCP tools',
+                  'All MCP tool queries are scoped to the authenticated tenant\'s workspace only (Row Level Security enforced)',
+               ]} />
+            </Sub>
+            <Sub title="8.5 Limitation of Liability for MCP Actions">
+               <p>To the maximum extent permitted by law, AlphaClone disclaims all liability for: (a) any data processed or retained by third-party AI providers after being transmitted via MCP; (b) incorrect, hallucinated, or harmful actions taken by an AI agent within your workspace; (c) any business, financial, or reputational harm arising from automated AI agent actions. Your maximum remedy for any MCP-related issue is limited to the fees paid in the month the incident occurred.</p>
+            </Sub>
+         </Section>
+
+         <Section id="data-portability" title="9. Data Portability & Export">
             <p>You may export your AlphaClone data at any time in structured formats (CSV, JSON, PDF) from the relevant sections of the Platform. Upon account deletion, you may request a full data export within the 90-day retention window. After this window, data cannot be recovered.</p>
          </Section>
 
-         <Section id="uptime" title="9. Service Availability & SLA">
+         <Section id="uptime" title="10. Service Availability & SLA">
             <Sub title="9.1 Uptime Target">
                <p>AlphaClone targets 99.9% monthly uptime for core platform features. Scheduled maintenance will be announced at least 48 hours in advance via email and the platform dashboard. Emergency maintenance may occur without advance notice.</p>
             </Sub>
@@ -431,24 +472,24 @@ export function TermsOfService() {
             </Sub>
          </Section>
 
-         <Section id="limitation" title="10. Limitation of Liability">
+         <Section id="limitation" title="11. Limitation of Liability">
             <p>To the maximum extent permitted by applicable law, AlphaClone's total liability for any claim arising out of or relating to these Terms or the Platform shall not exceed the total fees you paid in the three (3) months immediately preceding the event giving rise to the claim.</p>
             <p>AlphaClone is not liable for: indirect, incidental, special, consequential, or punitive damages; loss of revenue, profit, or business opportunity; data loss caused by your own actions; third-party service failures (Google, Stripe, Calendly, etc.); or force majeure events.</p>
          </Section>
 
-         <Section id="termination" title="11. Termination">
+         <Section id="termination" title="12. Termination">
             <p>Either party may terminate the relationship at any time. You may cancel your subscription as described in Section 4.5. AlphaClone may suspend or terminate your account immediately if: (a) you breach these Terms; (b) you engage in fraudulent or illegal activity; (c) required by law; or (d) continued operation poses a security risk. Upon termination, access to the Platform ceases immediately, and data deletion follows the retention policy in Section 8 of our Privacy Policy.</p>
          </Section>
 
-         <Section id="governing-law" title="12. Governing Law & Disputes">
+         <Section id="governing-law" title="13. Governing Law & Disputes">
             <p>These Terms are governed by the laws of South Africa. Any dispute arising from these Terms shall first be subject to good-faith negotiation between the parties. If unresolved within 30 days, disputes shall be submitted to binding arbitration in accordance with the Arbitration Foundation of Southern Africa (AFSA) rules before any court proceedings commence. Nothing in this clause prevents either party from seeking urgent or interim injunctive relief from a competent court.</p>
          </Section>
 
-         <Section id="changes-terms" title="13. Changes to Terms">
+         <Section id="changes-terms" title="14. Changes to Terms">
             <p>AlphaClone reserves the right to modify these Terms at any time. Material changes will be communicated by email and in-platform notification at least 14 days before they take effect. Your continued use of the Platform after the effective date constitutes your acceptance of the updated Terms.</p>
          </Section>
 
-         <Section id="contact-legal" title="14. Contact">
+         <Section id="contact-legal" title="15. Contact">
             <p>For legal enquiries, contract disputes, or formal notices:</p>
             <p><strong className="text-white">Email:</strong> <a href="mailto:legal@alphaclone.tech" className="text-teal-400 hover:underline">legal@alphaclone.tech</a></p>
          </Section>

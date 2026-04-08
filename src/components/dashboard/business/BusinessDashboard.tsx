@@ -78,6 +78,7 @@ const WorkflowDashboard = React.lazy(() => import('../engine/WorkflowDashboard')
 const SMSCampaignTab = React.lazy(() => import('../engine/SMSCampaignTab'));
 const SocialMediaComposer = React.lazy(() => import('../engine/SocialMediaComposer'));
 const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
+const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -381,6 +382,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <CampaignBuilder userId={user.id} />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketplace':
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={6} columns={3} /></div>}>
+                        <MarketplacePage />
                     </React.Suspense>
                 );
             case '/dashboard/business/facebook':

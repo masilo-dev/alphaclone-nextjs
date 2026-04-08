@@ -314,7 +314,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
-                     transition={{ duration: 2.0 }}
+                     transition={{ duration: 0.5 }}
                   >
                      {/* Brand pill */}
                      <div className="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
@@ -640,7 +640,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            <p className="text-slate-300">We will get back to you within 24 hours.</p>
                         </motion.div>
                      ) : (
-                        <form onSubmit={handleContactSubmit} className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 sm:p-8">
+                        <form onSubmit={handleContactSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-6 sm:p-8">
                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                               <div>
                                  <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
@@ -648,7 +648,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                     type="text"
                                     value={contactForm.name}
                                     onChange={(e) => setContactForm(prev => ({ ...prev, name: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-medium placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all"
                                     placeholder="Your name"
                                     required
                                  />
@@ -659,7 +659,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                     type="email"
                                     value={contactForm.email}
                                     onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-medium placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all"
                                     placeholder="your@email.com"
                                     required
                                  />
@@ -671,7 +671,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                  type="text"
                                  value={contactForm.subject}
                                  onChange={(e) => setContactForm(prev => ({ ...prev, subject: e.target.value }))}
-                                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                 className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-medium placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all"
                                  placeholder="How can we help?"
                                  required
                               />
@@ -681,7 +681,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               <textarea
                                  value={contactForm.message}
                                  onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
-                                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none"
+                                 className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-medium placeholder-slate-400 focus:outline-none focus:border-teal-500 focus:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all resize-none"
                                  rows={6}
                                  placeholder="Tell us more about your needs..."
                                  required

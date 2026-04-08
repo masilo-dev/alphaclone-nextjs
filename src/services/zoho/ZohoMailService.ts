@@ -51,9 +51,26 @@ export class ZohoMailService extends ZohoService {
     }
 
     private async getMailBase(): Promise<{ base: string; accountId: string }> {
-        const config = await this.getConfig();
+        let config = await this.getConfig();
         if (!config?.mailApiHost) {
-            throw new Error('Zoho Mail is not fully configured. Please reconnect your account.');
+            // Attempt to recover if we have the accountsServer
+            if (config?.accountsServer) {
+                const accountsServer = config.accountsServer.toLowerCase();
+                let inferredHost = 'mail.zoho.com';
+                if (accountsServer.includes('.eu')) inferredHost = 'mail.zoho.eu';
+                else if (accountsServer.includes('.in')) inferredHost = 'mail.zoho.in';
+                else if (accountsServer.includes('.com.au')) inferredHost = 'mail.zoho.com.au';
+                else if (accountsServer.includes('.jp')) inferredHost = 'mail.zoho.jp';
+                else if (accountsServer.includes('.ca')) inferredHost = 'mail.zoho.ca';
+                
+                console.log(`[ZohoMailService] Inferring missing mailApiHost: ${inferredHost}`);
+                await this.saveConfig({ mailApiHost: inferredHost });
+                config = await this.getConfig(); // Refresh config after save
+            }
+            
+            if (!config?.mailApiHost) {
+                throw new Error('Zoho Mail is not fully configured. Please reconnect your account.');
+            }
         }
         
         let accountId = config?.accountId;

@@ -53,6 +53,7 @@ import { Button, Modal, Input } from '../../ui/UIComponents';
 import { BackgroundColorPicker } from '../settings/BackgroundColorPicker';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useLanguage, LANGUAGES } from '../../../contexts/LanguageContext';
+import { IntegrationSettings } from '../settings/IntegrationSettings';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 function applyThemeClass(t: ThemeMode) {

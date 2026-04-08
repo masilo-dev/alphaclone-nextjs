@@ -28,7 +28,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
 }) => {
     // Determine level name based on score
     const getLevel = (s: number) => {
-        if (s >= 90) return { name: 'Hyperdrive', color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10' };
+        if (s >= 90) return { name: 'Hyperdrive', color: 'text-indigo-400', bg: 'bg-indigo-500/10' };
         if (s >= 70) return { name: 'Momentum', color: 'text-teal-400', bg: 'bg-teal-500/10' };
         if (s >= 40) return { name: 'Active', color: 'text-amber-400', bg: 'bg-amber-500/10' };
         return { name: 'Stalled', color: 'text-slate-400', bg: 'bg-slate-500/10' };

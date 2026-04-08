@@ -532,8 +532,8 @@ export default function ZohoMailView() {
                             filteredMessages.map(msg => {
                                 const categoryColors = {
                                     urgent: 'bg-red-500/20 text-red-400 border-red-500/30',
-                                    'follow-up': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-                                    newsletter: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                                    'follow-up': 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+                                    newsletter: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
                                     spam: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
                                     normal: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
                                 };
@@ -588,11 +588,11 @@ export default function ZohoMailView() {
                                         </div>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="flex justify-between"><label className="text-xs font-medium text-gray-400">Message</label><button type="button" onClick={() => setShowAiPrompt(!showAiPrompt)} className="text-[10px] font-black uppercase bg-teal-500/10 text-teal-400 px-3 py-1 rounded-full"><Sparkles size={10} className="inline mr-1"/> Draft with AI</button></div>
+                                        <div className="flex justify-between"><label className="text-xs font-medium text-gray-400">Message</label><button type="button" onClick={() => setShowAiPrompt(!showAiPrompt)} className="text-[10px] font-black uppercase bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full"><Sparkles size={10} className="inline mr-1"/> Draft with AI</button></div>
                                         {showAiPrompt && (
-                                            <div className="bg-teal-500/5 border border-teal-500/20 rounded-2xl p-4 space-y-3">
-                                                <textarea placeholder="Tell AI what to write..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-slate-950/50 border border-teal-500/10 rounded-xl px-4 py-3 text-sm focus:outline-none h-20 resize-none" />
-                                                <div className="flex justify-end"><button type="button" onClick={handleGenerateAiDraft} className="bg-teal-600 text-white text-[10px] font-black uppercase px-6 py-2 rounded-lg">Generate Draft</button></div>
+                                            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 space-y-3">
+                                                <textarea placeholder="Tell AI what to write..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-slate-950/50 border border-indigo-500/10 rounded-xl px-4 py-3 text-sm focus:outline-none h-20 resize-none" />
+                                                <div className="flex justify-end"><button type="button" onClick={handleGenerateAiDraft} className="bg-indigo-600 text-white text-[10px] font-black uppercase px-6 py-2 rounded-lg">Generate Draft</button></div>
                                             </div>
                                         )}
                                         <textarea required rows={12} value={emailData.body} onChange={e => setEmailData({...emailData, body: e.target.value})} className="w-full bg-gray-900/40 border border-white/5 rounded-2xl px-6 py-6 focus:ring-2 focus:ring-blue-500/30 outline-none resize-none text-lg" placeholder="Write here..." />
@@ -608,8 +608,8 @@ export default function ZohoMailView() {
                                         <div className="min-w-0"><h2 className="text-sm font-black truncate text-gray-200">{messageContent?.subject}</h2><p className="text-xs text-blue-400 truncate">{messageContent?.sender}</p></div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => handleSummarizeEmail()} disabled={isSummarizing} className="flex items-center gap-2 bg-purple-600/10 text-purple-400 px-3 py-1.5 rounded-xl border border-purple-600/20"><Sparkles size={14} /> {isSummarizing ? 'Summarizing...' : 'Summarize'}</button>
-                                        <button onClick={() => handleGenerateReplySuggestions()} disabled={isGeneratingSuggestions} className="flex items-center gap-2 bg-amber-600/10 text-amber-400 px-3 py-1.5 rounded-xl border border-amber-600/20"><Sparkles size={14} /> {isGeneratingSuggestions ? 'Generating...' : 'Smart Replies'}</button>
+                                        <button onClick={() => handleSummarizeEmail()} disabled={isSummarizing} className="flex items-center gap-2 bg-indigo-600/10 text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-600/20"><Sparkles size={14} /> {isSummarizing ? 'Summarizing...' : 'Summarize'}</button>
+                                        <button onClick={() => handleGenerateReplySuggestions()} disabled={isGeneratingSuggestions} className="flex items-center gap-2 bg-teal-600/10 text-teal-400 px-3 py-1.5 rounded-xl border border-teal-600/20"><Sparkles size={14} /> {isGeneratingSuggestions ? 'Generating...' : 'Smart Replies'}</button>
                                         <button onClick={() => setShowRouteModal(true)} className="flex items-center gap-2 bg-indigo-600/10 text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-600/20"><Users size={14} /> Route</button>
                                         <button onClick={() => handleCreateTaskFromEmail()} className="flex items-center gap-2 bg-teal-600/10 text-teal-400 px-3 py-1.5 rounded-xl border border-teal-600/20"><CheckSquare size={14} /> Create Task</button>
                                         <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-2 bg-blue-600/10 text-blue-400 px-3 py-1.5 rounded-xl border border-blue-600/20"><Sparkles size={14} /> AI Reply</button>
@@ -629,21 +629,21 @@ export default function ZohoMailView() {
                                             <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: messageContent?.content ?? '' }} />
                                             
                                             {emailSummary && (
-                                                <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                                                <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl">
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <Sparkles className="w-4 h-4 text-purple-400" />
-                                                        <span className="text-sm font-semibold text-purple-400">AI Summary</span>
+                                                        <Sparkles className="w-4 h-4 text-indigo-400" />
+                                                        <span className="text-sm font-semibold text-indigo-400">AI Summary</span>
                                                     </div>
                                                     <p className="text-sm text-gray-300">{emailSummary}</p>
                                                 </div>
                                             )}
 
                                             {replySuggestions.length > 0 && (
-                                                <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                                                <div className="mt-6 p-4 bg-teal-500/10 border border-teal-500/30 rounded-xl">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <div className="flex items-center gap-2">
-                                                            <Sparkles className="w-4 h-4 text-amber-400" />
-                                                            <span className="text-sm font-semibold text-amber-400">Smart Reply Suggestions</span>
+                                                            <Sparkles className="w-4 h-4 text-teal-400" />
+                                                            <span className="text-sm font-semibold text-teal-400">Smart Reply Suggestions</span>
                                                         </div>
                                                         <button
                                                             onClick={() => setReplySuggestions([])}

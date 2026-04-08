@@ -154,6 +154,25 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     features: ['Traffic analysis', 'Conversion tracking', 'Custom reports', 'Real-time data'],
     oauthFlow: true,
   },
+  // ── AI & Agents (Model Context Protocol) ──────────────────────────────────
+  {
+    id: 'claude-mcp',
+    name: 'Claude Desktop (MCP)',
+    description: 'Allow Claude to securely read your leads, draft contracts, and orchestrate workflows via the Model Context Protocol.',
+    category: 'productivity',
+    features: ['Lead generation', 'Contract review', 'Direct database queries', 'Action execution'],
+    oauthFlow: false,
+    new: true,
+  },
+  {
+    id: 'manus-mcp',
+    name: 'Manus AI (MCP)',
+    description: 'Connect Manus Agent to your CRM to autonomously research prospects and update records.',
+    category: 'crm',
+    features: ['Autonomous execution', 'Prospect research', 'Background tasks'],
+    oauthFlow: false,
+    new: true,
+  },
 ];
 
 // ── DB row shape (mirrors tenant_integrations table) ───────────────────────────
@@ -194,9 +213,12 @@ export const integrationService = {
 
     return INTEGRATION_CATALOG.map(entry => {
       const row = rowMap.get(entry.id);
+      
+      let status = (row?.status as IntegrationStatus) ?? 'available';
+
       return {
         ...entry,
-        status: (row?.status as IntegrationStatus) ?? 'available',
+        status,
         connectedAt: row?.connected_at,
         configuredBy: row?.configured_by,
         metadata: row?.metadata ?? {},

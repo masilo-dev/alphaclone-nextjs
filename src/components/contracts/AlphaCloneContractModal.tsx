@@ -83,7 +83,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
         providerRepName: user.name || '',
         providerRepTitle: 'Authorized Representative',
         clientRepName: project?.ownerName || '',
-        clientRepTitle: 'Authorized Representative'
+        clientRepTitle: 'Authorized Representative',
+        templateType: 'comprehensive',
+        language: 'en'
     });
 
     useEffect(() => {
@@ -638,6 +640,31 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         value={variables.depositAmount}
                                         onChange={(e) => handleVariableChange('depositAmount', parseInt(e.target.value) || 0)}
                                     />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Contract Template</label>
+                                        <select
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm outline-none focus:ring-2 focus:ring-teal-500/30"
+                                            value={variables.templateType}
+                                            onChange={e => handleVariableChange('templateType', e.target.value)}
+                                        >
+                                            <option value="comprehensive">Comprehensive MSA (5+ Pages)</option>
+                                            <option value="simple">Simple PSA (1-2 Pages)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Contract Language</label>
+                                        <select
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm outline-none focus:ring-2 focus:ring-teal-500/30"
+                                            value={variables.language}
+                                            onChange={e => handleVariableChange('language', e.target.value)}
+                                        >
+                                            <option value="en">English (Default)</option>
+                                            <option value="es">Spanish (Español)</option>
+                                            <option value="fr">French (Français)</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div className="mt-4">
                                     <label className="text-sm font-medium text-slate-300 mb-2 block">Payment Schedule *</label>

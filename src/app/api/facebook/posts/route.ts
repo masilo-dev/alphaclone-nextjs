@@ -25,7 +25,10 @@ export async function GET(req: NextRequest) {
 
   const token = integration?.page_access_token || integration?.user_access_token;
   if (!token) {
-    return NextResponse.json({ error: 'Facebook page not connected or token missing — please reconnect your page' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Facebook page not connected or token missing — please reconnect your page', action: 'reconnect' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -42,7 +45,12 @@ export async function GET(req: NextRequest) {
     const fbData = await res.json();
 
     if (fbData.error) {
-      return NextResponse.json({ error: fbData.error.message }, { status: 400 });
+      console.error('[Facebook Posts] Graph API error:', fbData.error);
+      const isAuthError = fbData.error.code === 190 || fbData.error.code === 102 || fbData.error.message?.includes('access token');
+      return NextResponse.json(
+        { error: fbData.error.message, action: isAuthError ? 'reconnect' : undefined },
+        { status: isAuthError ? 403 : 400 }
+      );
     }
 
     const posts = (fbData.data || []) as any[];

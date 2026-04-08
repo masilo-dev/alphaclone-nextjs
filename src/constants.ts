@@ -23,6 +23,7 @@ import {
   MapPin,
   FolderOpen,
   Presentation,
+  Globe,
   Facebook,
   Smartphone,
   Bot,
@@ -164,8 +165,9 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     label: 'Action Engine', href: '#', icon: Zap,
     subItems: [
       { label: 'Workflow Builder', href: '/dashboard/automations',       icon: Zap          },
+      { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe       },
       { label: 'Marketing Campaigns',  href: '/dashboard/business/campaigns', icon: Presentation },
-      { label: 'System Settings', href: '/dashboard/admin/settings',    icon: Settings     },
+      { label: 'System Settings', href: '/dashboard/business/settings',    icon: Settings     },
     ]
   },
 ];

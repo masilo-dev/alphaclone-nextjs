@@ -458,16 +458,24 @@ const Dashboard: React.FC<DashboardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]); // Only re-run if user changes (not on every tenant update)
 
+  const refreshStats = useCallback(async () => {
+    if (!currentTenant?.id) return;
+    try {
+      const { stats } = await getDashboardStats(currentTenant.id, user.id);
+      if (stats) setDashboardStats(stats);
+    } catch (err) {
+      console.error('[Dashboard] Stats refresh error:', err);
+    }
+  }, [currentTenant?.id, user.id, getDashboardStats]);
+
   // Load dashboard stats separately — re-runs only when tenant ID changes
   useEffect(() => {
     if (!currentTenant?.id) return;
     if (lastTenantIdRef.current === currentTenant.id) return; // already loaded for this tenant
     lastTenantIdRef.current = currentTenant.id;
 
-    getDashboardStats(currentTenant.id, user.id).then(({ stats }) => {
-      if (stats) setDashboardStats(stats);
-    }).catch(() => { /* stats are non-critical */ });
-  }, [currentTenant?.id, user.id]);
+    refreshStats();
+  }, [currentTenant?.id, user.id, refreshStats]);
 
   // PRELOAD: Prefetch the most-visited lazy tabs sequentially in the background after mount
   // so they're already downloaded when the user clicks them (eliminates Suspense delay)
@@ -608,6 +616,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         setProjects(prev => [project, ...prev]);
         setNewProject({ name: '', category: '', description: '', image: '' });
         alert('Project submitted successfully!');
+        
+        // Refresh stats to update Momentum HUD
+        refreshStats();
+        
         if (user.role === 'client') router.push('/dashboard/projects');
       }
     } catch (err) {
@@ -1722,7 +1734,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <Modal isOpen={architectModalOpen} onClose={() => setArchitectModalOpen(false)} title="Project Architect View">
         {isArchitecting ? (
           <div className="py-12 flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
+            <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-slate-400">AI is designing system architecture...</p>
           </div>
         ) : architectData ? (
@@ -1741,7 +1753,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div>
-              <h4 className="text-purple-400 font-bold mb-2 flex items-center gap-2"><Cpu className="w-4 h-4" /> Mermaid.js Architecture</h4>
+              <h4 className="text-indigo-400 font-bold mb-2 flex items-center gap-2"><Cpu className="w-4 h-4" /> Mermaid.js Architecture</h4>
               <pre className="bg-slate-950 p-3 rounded-lg text-xs text-green-400 overflow-x-auto font-mono">
                 {architectData.architectureDiagram}
               </pre>
