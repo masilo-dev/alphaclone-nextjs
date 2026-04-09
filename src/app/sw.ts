@@ -11,25 +11,39 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// Safe NetworkOnly handler that never throws — returns a fallback error response
+// instead of a rejected Promise (which causes "no-response" SW crashes).
+const safeNetworkOnly = new NetworkOnly({
+    plugins: [
+        {
+            handlerDidError: async () => {
+                return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+            },
+        },
+    ],
+});
+
 const serwist = new Serwist({
     precacheEntries: self.__SW_MANIFEST,
     skipWaiting: true,
     clientsClaim: true,
-    navigationPreload: true,
+    // Disable navigationPreload — it causes "no-response" errors when the
+    // preloaded response is dropped before the SW handler can consume it.
+    navigationPreload: false,
     runtimeCaching: [
         {
-            // Dashboard pages with query params (e.g. ?mcp=claude) must ALWAYS hit
-            // the network — never serve from cache to avoid 'no-response' SW errors.
+            // ALL dashboard routes must bypass the cache entirely.
+            // This covers /dashboard, /dashboard/business/facebook, etc.
             matcher({ request, url }) {
                 return (
                     request.mode === 'navigate' &&
                     (url.pathname.startsWith('/dashboard') || url.search.length > 0)
                 );
             },
-            handler: new NetworkOnly(),
+            handler: safeNetworkOnly,
         },
         {
-            // Bypass service worker for critical API calls, Supabase, and Daily.co
+            // Bypass service worker for API calls, Supabase, and Daily.co
             matcher({ url }) {
                 return (
                     url.pathname.startsWith("/api/") ||
@@ -40,16 +54,14 @@ const serwist = new Serwist({
                     url.pathname.includes("/rest/v1/")
                 );
             },
-            handler: new NetworkOnly(),
+            handler: safeNetworkOnly,
         },
         {
-            // Explicitly exclude WebSockets from being handled by Serwist/SW
-            // Service Workers cannot intercept WebSockets, but returning true in a matcher
-            // can sometimes confuse the runtime fetch handler on mobile.
+            // WebSockets cannot be intercepted — route them through safely.
             matcher({ url }) {
                 return url.protocol === 'wss:' || url.protocol === 'ws:';
             },
-            handler: new NetworkOnly(),
+            handler: safeNetworkOnly,
         },
         {
             // All other page navigations: NetworkFirst with offline fallback
@@ -62,7 +74,6 @@ const serwist = new Serwist({
                 plugins: [
                     {
                         handlerDidError: async () => {
-                            // If network fails (and no cache), return the precached offline page
                             return (await self.caches.match('/offline.html')) || Response.error();
                         },
                     },
