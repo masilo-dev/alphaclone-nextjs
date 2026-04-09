@@ -1079,11 +1079,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
-      case '/dashboard/marketplace': {
-        router.replace('/dashboard/business/settings?tab=integrations');
-        return null;
-      }
-
       // New Enterprise Views
       case '/dashboard/admin/tenants':
         return (

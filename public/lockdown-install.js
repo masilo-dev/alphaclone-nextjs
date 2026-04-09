@@ -8,7 +8,9 @@
   console.warn = function(...args) {
     if (args[0] && typeof args[0] === 'string' && (
       args[0].includes('SES Removing unpermitted intrinsics') ||
-      args[0].includes('lockdown-install.js')
+      args[0].includes('lockdown-install.js') ||
+      args[0].includes('Removing unpermitted intrinsics') ||
+      args[0].includes('unpermitted intrinsics')
     )) {
       return; // Suppress SES noise
     }

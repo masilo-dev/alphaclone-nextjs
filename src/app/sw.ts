@@ -22,7 +22,18 @@ const serwist = new Serwist({
             matcher({ request }) {
                 return request.mode === 'navigate';
             },
-            handler: new NetworkFirst({ networkTimeoutSeconds: 10 }),
+            handler: new NetworkFirst({
+                networkTimeoutSeconds: 10,
+                cacheName: 'pages',
+                plugins: [
+                    {
+                        handlerDidError: async () => {
+                            // If network fails (and no cache), return the precached offline page
+                            return (await self.caches.match('/offline.html')) || Response.error();
+                        },
+                    },
+                ],
+            }),
         },
         {
             // Bypass service worker for critical API calls, Supabase, and Daily.co

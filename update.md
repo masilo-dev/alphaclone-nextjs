@@ -1,4 +1,13 @@
 # Update Log
+ 
+## Date: 2026-04-09 (PWA & ROUTING FIXES)
+
+### Fixed
+- Resolved `no-response` network errors in Service Worker navigation requests by adding a fallback to `/offline.html`.
+- Suppressed SES "unpermitted intrinsics" console noise in `public/lockdown-install.js`.
+
+### Changed
+- Optimized Integrations Marketplace navigation to point directly to the settings tab, removing redundant `/dashboard/marketplace` redirects.
 
 ## Date: 2026-04-09 (BUILD FLAG FIX)
 
