@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useParams } from 'next/navigation';
 import { businessInvoiceService, BusinessInvoice } from '@/services/businessInvoiceService';
 import { Card, Button, Badge } from '@/components/ui/UIComponents';
@@ -63,7 +64,7 @@ export default function PublicInvoicePage() {
             }
         } catch (error: any) {
             console.error('Payment Error:', error);
-            alert(error.message || 'Payment service unavailable');
+            toast.error(error.message || 'Payment service unavailable');
             setProcessing(false);
         }
     };

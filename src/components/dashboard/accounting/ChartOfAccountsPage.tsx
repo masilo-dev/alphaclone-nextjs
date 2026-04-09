@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { ChartOfAccount, chartOfAccountsService, AccountType } from '../../../services/accounting/chartOfAccountsService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -69,7 +70,7 @@ export function ChartOfAccountsPage() {
         const { account, error: err } = await chartOfAccountsService.createAccount(formData);
 
         if (err) {
-            alert(`Error creating account: ${err}`);
+            toast.error(`Error creating account: ${err}`);
         } else {
             setShowCreateModal(false);
             resetForm();
@@ -83,7 +84,7 @@ export function ChartOfAccountsPage() {
         const { account, error: err } = await chartOfAccountsService.updateAccount(editingAccount.id, formData);
 
         if (err) {
-            alert(`Error updating account: ${err}`);
+            toast.error(`Error updating account: ${err}`);
         } else {
             setEditingAccount(null);
             resetForm();
@@ -97,7 +98,7 @@ export function ChartOfAccountsPage() {
         const { error: err } = await chartOfAccountsService.deleteAccount(accountId);
 
         if (err) {
-            alert(`Error deleting account: ${err}`);
+            toast.error(`Error deleting account: ${err}`);
         } else {
             loadAccounts();
         }
@@ -109,9 +110,9 @@ export function ChartOfAccountsPage() {
         const { success, error: err } = await chartOfAccountsService.initializeDefaultAccounts();
 
         if (err) {
-            alert(`Error initializing accounts: ${err}`);
+            toast.error(`Error initializing accounts: ${err}`);
         } else {
-            alert('Default accounts created successfully!');
+            toast.success('Default accounts created successfully!');
             loadAccounts();
         }
     }, [loadAccounts]);

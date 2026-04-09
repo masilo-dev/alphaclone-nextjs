@@ -218,7 +218,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         const error = searchParams?.get('error');
         const tab = searchParams?.get('tab');
 
-        if (tab && ['notifications', 'security', 'business', 'booking', 'integrations', 'billing'].includes(tab)) {
+        if (tab && ['notifications', 'security', 'business', 'booking', 'integrations', 'billing', 'appearance'].includes(tab)) {
             setActiveTab(tab as any);
         }
 
@@ -315,13 +315,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 }, { onConflict: 'tenant_id' });
 
             if (!error) {
-                alert('Settings saved successfully!');
+                toast.success('Settings saved successfully!');
             } else {
-                alert(`Error saving settings: ${error.message}`);
+                toast.error(`Error saving settings: ${error.message}`);
             }
         } catch (error: any) {
             console.error('Error saving settings:', error);
-            alert(`Error: ${error.message}`);
+            toast.error(error.message || 'Failed to save settings');
         } finally {
             setSaving(false);
         }
@@ -336,12 +336,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             const result = await fileUploadService.uploadFile(file, 'tenant_logo', currentTenant?.id);
             if (result.success && result.url) {
                 setSettings({ ...settings, logoUrl: result.url });
+                toast.success('Logo uploaded successfully!');
             } else {
-                alert('Failed to upload logo: ' + result.error);
+                toast.error('Failed to upload logo: ' + (result.error || 'Unknown error'));
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Upload failed');
+            toast.error('Logo upload failed. Please try again.');
         } finally {
             setUploading(false);
         }

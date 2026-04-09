@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTenant } from '../contexts/TenantContext';
 import { AlertCircle, CreditCard, Clock, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button } from './ui/UIComponents';
@@ -102,7 +103,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
                                     }
                                 } catch (error) {
                                     console.error('Checkout error:', error);
-                                    alert('Failed to start checkout. Please try again.');
+                                    toast.error('Failed to start checkout. Please try again.');
                                     setIsProcessing(false);
                                 }
                             }}

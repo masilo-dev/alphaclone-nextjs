@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   Users,
   Building2,
@@ -117,7 +118,7 @@ function SystemTab() {
 
   const handleSaveRole = async () => {
     // Placeholder for Role Saving
-    alert('Role saved (simulation)');
+    toast.success('Role saved (simulation)');
     setShowAddRole(false);
   };
 
@@ -664,7 +665,7 @@ function UsersTab() {
       const { contacts, error } = await fileImportService.importFromExcel(file);
 
       if (error) {
-        alert('Error reading file: ' + error);
+        toast.error('Error reading file: ' + error);
         return;
       }
 
@@ -683,7 +684,7 @@ function UsersTab() {
       const { contacts, error } = await fileImportService.importFromExcel(importFile);
 
       if (error) {
-        alert('Import failed: ' + error);
+        toast.error('Import failed: ' + error);
         return;
       }
 
@@ -710,14 +711,14 @@ function UsersTab() {
         }
       }
 
-      alert(`Successfully imported ${successCount} out of ${contacts.length} users`);
+      toast.success(`Successfully imported ${successCount} out of ${contacts.length} users`);
       setShowImportModal(false);
       setImportFile(null);
       setImportPreview([]);
       loadUsers(); // Reload the list
     } catch (err) {
       console.error('Import error:', err);
-      alert('Import failed');
+      toast.error('Import failed');
     } finally {
       setIsImporting(false);
     }
@@ -760,20 +761,20 @@ function UsersTab() {
                 </span>
                 <div className="flex gap-1">
                   <button
-                    onClick={() => alert('Suspend user logic here')}
+                    onClick={() => toast('Suspend user logic here')}
                     className="px-2 py-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs rounded transition-colors border border-orange-500/20"
                   >
                     Suspend
                   </button>
                   <button
-                    onClick={() => alert('Block user logic here')}
+                    onClick={() => toast('Block user logic here')}
                     className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded transition-colors border border-red-500/20"
                   >
                     Block
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm('Delete user?')) alert('Delete logic here');
+                      if (confirm('Delete user?')) toast('Delete logic here');
                     }}
                     className="p-1 text-slate-400 hover:text-red-400 transition-colors"
                     title="Delete User"

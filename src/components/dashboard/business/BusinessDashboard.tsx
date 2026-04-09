@@ -402,6 +402,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <ExpenseTrackerTab />
                     </React.Suspense>
                 );
+            case '/dashboard/automations':
             case '/dashboard/business/workflows':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -504,7 +505,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/campaigns': return 'Campaigns';
             case '/dashboard/business/facebook': return 'Facebook';
             case '/dashboard/business/expenses': return 'Expense Tracker';
-            case '/dashboard/business/workflows': return 'Flow Engine';
+            case '/dashboard/automations':
+            case '/dashboard/business/workflows': return 'Workflow Builder';
             case '/dashboard/business/sms': return 'SMS Campaigns';
             case '/dashboard/business/social': return 'Social Media';
             case '/dashboard/business/ingestion': return 'Lead Ingestion';

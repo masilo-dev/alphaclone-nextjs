@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
 import { Modal, Input, Button } from '../../ui/UIComponents';
@@ -66,7 +67,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
             const totalCredits = formData.lines.reduce((sum, line) => sum + (line.creditAmount || 0), 0);
 
             if (Math.abs(totalDebits - totalCredits) > 0.01) {
-                alert(`Entry not balanced! Debits: $${totalDebits.toFixed(2)}, Credits: $${totalCredits.toFixed(2)}`);
+                toast.error(`Entry not balanced! Debits: $${totalDebits.toFixed(2)}, Credits: $${totalCredits.toFixed(2)}`);
                 setLoading(false);
                 return;
             }
@@ -79,13 +80,13 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
             });
 
             if (err) {
-                alert(`Error creating entry: ${err}`);
+                toast.error(`Error creating entry: ${err}`);
             } else {
                 // Auto-post the entry
                 if (entry) {
                     const { success, error: postErr } = await journalEntryService.postEntry(entry.id);
                     if (postErr) {
-                        alert(`Entry created but posting failed: ${postErr}`);
+                        toast.error(`Entry created but posting failed: ${postErr}`);
                     }
                 }
                 onSuccess();
@@ -93,7 +94,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
             }
         } catch (error) {
             console.error('Error creating journal entry:', error);
-            alert('An unexpected error occurred.');
+            toast.error('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }

@@ -12,6 +12,7 @@ import {
     MapPin,
     Calendar // Added for Calendly status
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { tenantManagementService, TenantInfo } from '../../../services/tenantManagementService';
 import { securityLogService } from '../../../services/securityLogService';
 
@@ -45,9 +46,9 @@ const SuperAdminTenantsTab: React.FC = () => {
         const { error } = await tenantManagementService.deleteTenant(tenantId);
         if (!error) {
             setTenants(prev => prev.filter(t => t.id !== tenantId));
-            alert('Tenant deleted successfully');
+            toast.success('Tenant deleted successfully');
         } else {
-            alert(`Error deleting tenant: ${error}`);
+            toast.error(`Error deleting tenant: ${error}`);
         }
     }, []);
 

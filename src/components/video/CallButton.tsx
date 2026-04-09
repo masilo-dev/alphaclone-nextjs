@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Video, Phone } from 'lucide-react';
 import { callSignalingService } from '@/services/callSignalingService';
 import { dailyService } from '@/services/dailyService';
@@ -65,7 +66,7 @@ export const CallButton: React.FC<CallButtonProps> = ({
 
         } catch (err) {
             console.error('Call failed:', err);
-            alert('Failed to start call. Please try again.');
+            toast.error('Failed to start call. Please try again.');
         } finally {
             setCalling(false);
         }

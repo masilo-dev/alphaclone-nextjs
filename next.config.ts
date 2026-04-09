@@ -12,9 +12,6 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -53,12 +50,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   async rewrites() {
-    return [
-      {
-        source: '/dashboard/business/facebook',
-        destination: '/api/webhooks/facebook/whatsapp',
-      },
-    ];
+    return [];
   },
 
   async headers() {
@@ -148,6 +140,5 @@ export default withSentryConfig(
       deleteSourcemapsAfterUpload: true,
     },
     tunnelRoute: "/monitoring",
-    disableLogger: true,
   }
 );

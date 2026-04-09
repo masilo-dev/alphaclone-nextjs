@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   Building2,
   Users,
@@ -265,21 +266,10 @@ function TeamSettings({ tenant, isAdmin }: any) {
       if (!user) throw new Error('Not authenticated');
       await tenantService.createInvitation(tenant.id, inviteEmail.trim(), inviteRole, user.id);
       setInviteEmail('');
-      // Show success via toast if available, otherwise alert
-      try {
-        const { default: toast } = await import('react-hot-toast');
-        toast.success(`Invitation sent to ${inviteEmail}`);
-      } catch {
-        alert(`Invitation sent to ${inviteEmail}`);
-      }
+      toast.success(`Invitation sent to ${inviteEmail}`);
     } catch (error: any) {
       console.error('Failed to send invitation:', error);
-      try {
-        const { default: toast } = await import('react-hot-toast');
-        toast.error(error.message || 'Failed to send invitation');
-      } catch {
-        alert('Failed to send invitation');
-      }
+      toast.error(error.message || 'Failed to send invitation');
     } finally {
       setIsInviting(false);
     }
@@ -417,7 +407,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
       // Reload page to reflect changes (or use a refresh context if available)
       window.location.reload();
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoadingAction(null);
     }

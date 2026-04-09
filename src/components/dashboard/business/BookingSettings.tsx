@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant, TenantSettings } from '@/services/tenancy/types';
 import { Settings, Copy, Plus, X, ExternalLink, Globe, Calendar } from 'lucide-react';
@@ -45,9 +46,9 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         } catch (err: any) {
             console.error('Failed to save booking settings', err);
             if (err.message?.includes('violates unique constraint') || err.code === '23505') {
-                alert('This booking link is already taken. Please choose another one.');
+                toast.error('This booking link is already taken. Please choose another one.');
             } else {
-                alert('Failed to save settings. Please try again.');
+                toast.error('Failed to save settings. Please try again.');
             }
         } finally {
             setSaving(false);

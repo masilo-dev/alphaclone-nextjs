@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import {
     JournalEntry,
     JournalEntryWithLines,
@@ -52,7 +53,7 @@ export function JournalEntriesPage() {
         const { entry, error: err } = await journalEntryService.getEntry(entryId);
 
         if (err) {
-            alert(`Error loading entry: ${err}`);
+            toast.error(`Error loading entry: ${err}`);
         } else {
             setViewingEntry(entry);
         }
@@ -64,9 +65,9 @@ export function JournalEntriesPage() {
         const { success, error: err } = await journalEntryService.postEntry(entryId);
 
         if (err) {
-            alert(`Error posting entry: ${err}`);
+            toast.error(`Error posting entry: ${err}`);
         } else {
-            alert('Entry posted successfully!');
+            toast.success('Entry posted successfully!');
             loadEntries();
         }
     }, [loadEntries]);
@@ -78,9 +79,9 @@ export function JournalEntriesPage() {
         const { reversingEntryId, error: err } = await journalEntryService.voidEntry(entryId, reason);
 
         if (err) {
-            alert(`Error voiding entry: ${err}`);
+            toast.error(`Error voiding entry: ${err}`);
         } else {
-            alert(`Entry voided. Reversing entry created: ${reversingEntryId}`);
+            toast.success(`Entry voided. Reversing entry created: ${reversingEntryId}`);
             loadEntries();
         }
     }, [loadEntries]);
@@ -91,7 +92,7 @@ export function JournalEntriesPage() {
         const { error: err } = await journalEntryService.deleteEntry(entryId);
 
         if (err) {
-            alert(`Error deleting entry: ${err}`);
+            toast.error(`Error deleting entry: ${err}`);
         } else {
             loadEntries();
         }

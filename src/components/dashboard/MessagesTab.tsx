@@ -359,14 +359,14 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             // Admin sends to selected client
             recipientId = selectedClient?.id;
             if (!recipientId) {
-                alert("Please select a recipient first.");
+                toast.error("Please select a recipient first.");
                 return;
             }
         } else {
             // Client sends to admin
             recipientId = adminUser?.id;
             if (!recipientId) {
-                alert("Connecting to admin... Please wait a moment and try again.");
+                toast.error("Connecting to admin... Please wait a moment and try again.");
                 return;
             }
         }

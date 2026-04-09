@@ -28,6 +28,7 @@ import {
     LayoutList,
     Download
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
@@ -112,7 +113,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const handleSaveProject = useCallback(async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) {
-            alert("System Error: No active tenant context found. Please refresh.");
+            toast.error("System Error: No active tenant context found. Please refresh.");
             return;
         }
 
@@ -123,7 +124,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
                     setEditingProject(null);
                 } else {
-                    alert(`Project update failed: ${error}`);
+                    toast.error(`Project update failed: ${error}`);
                 }
             } else {
                 const projectToCreate: any = {
@@ -143,7 +144,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 const { project, error } = await projectService.createProject(projectToCreate);
 
                 if (error) {
-                    alert(`Project creation failed: ${error}`);
+                    toast.error(`Project creation failed: ${error}`);
                     console.error("Creation Error:", error);
                 } else if (project) {
                     setProjects(prev => [project, ...prev]);
@@ -151,7 +152,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 }
             }
         } catch (e) {
-            alert(`Critical System Error: ${(e as Error).message}`);
+            toast.error(`Critical System Error: ${(e as Error).message}`);
             console.error(e);
         }
     }, [currentTenant, editingProject, user]);

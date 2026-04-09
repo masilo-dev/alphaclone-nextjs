@@ -104,6 +104,7 @@ const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
 const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
 const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
+const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
 
 
 // Import UI components
@@ -585,7 +586,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleAddProject = async () => {
     if (!newProject.name) {
-      alert('Please enter a project name');
+      toast.error('Please enter a project name');
       return;
     }
 
@@ -608,14 +609,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       if (error) {
         console.error('Project creation error:', error);
-        alert(`Failed to create project: ${error}`);
+        toast.error(`Failed to create project: ${error}`);
         return;
       }
 
       if (project) {
         setProjects(prev => [project, ...prev]);
         setNewProject({ name: '', category: '', description: '', image: '' });
-        alert('Project submitted successfully!');
+        toast.success('Project submitted successfully!');
         
         // Refresh stats to update Momentum HUD
         refreshStats();
@@ -624,7 +625,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      alert('An unexpected error occurred. Please try again.');
+      toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -891,10 +892,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (!error) {
         // Optimistic / Local update (though subscription might handle it)
         setProjects(prev => prev.map(p => p.id === selectedProjectForTool.id ? { ...p, contractStatus: 'Sent', contractText: generatedContract } : p));
-        alert(`Contract generated and sent to ${selectedProjectForTool.ownerName || 'Client'}.`);
+        toast.success(`Contract generated and sent to ${selectedProjectForTool.ownerName || 'Client'}.`);
         setContractModalOpen(false);
       } else {
-        alert('Failed to send contract: ' + error);
+        toast.error('Failed to send contract: ' + error);
       }
     }
   };

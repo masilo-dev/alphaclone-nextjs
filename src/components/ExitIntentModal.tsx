@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { Button, Input } from './ui/UIComponents';
+import toast from 'react-hot-toast';
 import { User } from '../types';
 import { useExitIntent } from '../hooks/useExitIntent';
 import { shouldShowExitIntent, markExitIntentCompleted, getUserType } from '../utils/exitIntentUtils';
@@ -58,7 +59,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
 
             if (error) {
                 console.error('Failed to submit improvement:', error);
-                alert('Failed to submit feedback. Please try again.');
+                toast.error('Failed to submit feedback. Please try again.');
                 setIsSubmitting(false);
                 return;
             }
@@ -81,7 +82,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
             }, 2000);
         } catch (err) {
             console.error('Unexpected error submitting improvement:', err);
-            alert('An unexpected error occurred. Please try again.');
+            toast.error('An unexpected error occurred. Please try again.');
             setIsSubmitting(false);
         }
     };

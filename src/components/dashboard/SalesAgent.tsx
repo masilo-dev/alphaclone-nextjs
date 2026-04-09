@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -31,8 +34,16 @@ interface ParsedContact {
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>('omni'); // Set default to omni
-    const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
+    const searchParams = useSearchParams();
+    // Map URL ?tab= param to internal tab names
+    const getInitialTab = (): 'leads' | 'agent' | 'omni' | 'kanban' | 'automation' => {
+        const tab = searchParams?.get('tab');
+        if (tab === 'chat') return 'agent';
+        if (tab === 'finder') return 'omni';
+        return 'omni';
+    };
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>(getInitialTab);
+    const [searchCriteria, setSearchCriteria] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     
     // Validate that required functions are available
@@ -296,11 +307,11 @@ const SalesAgent: React.FC = () => {
 
     const handleSearch = async () => {
         // Validate inputs
-        if (!searchParams.industry.trim()) {
+        if (!searchCriteria.industry.trim()) {
             toast.error('Please enter a target industry');
             return;
         }
-        if (!searchParams.location.trim()) {
+        if (!searchCriteria.location.trim()) {
             toast.error('Please enter a location');
             return;
         }
@@ -335,7 +346,7 @@ const SalesAgent: React.FC = () => {
     };
 
     const handleVisualSearch = async () => {
-        if (!searchParams.industry || !searchParams.location) {
+        if (!searchCriteria.industry || !searchCriteria.location) {
             toast.error('Please enter both industry and location for AI lead search');
             return;
         }
@@ -352,9 +363,9 @@ const SalesAgent: React.FC = () => {
         }
 
         setIsSearching(true);
-        const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchParams.industry} in ${searchParams.location}`;
+        const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchCriteria.industry} in ${searchCriteria.location}`;
 
-        setVisualSearchParams({ industry: searchParams.industry, location: searchParams.location });
+        setVisualSearchParams({ industry: searchCriteria.industry, location: searchCriteria.location });
         setIsVisualSearchActive(true);
 
         startTask(
@@ -369,14 +380,14 @@ const SalesAgent: React.FC = () => {
                 }
                 
                 // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
-                const res = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
+                const res = await generateLeads(searchCriteria.industry, searchCriteria.location, '', 'tenant');
 
                 if (res && res.leads && res.leads.length > 0) {
                     console.log(`✅ Generated ${res.leads.length} leads, saving to database...`);
 
                     // 2. Perform Audit
                     if (res.rawMapsData && res.rawMapsData.length > 0) {
-                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, searchParams.industry);
+                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, searchCriteria.industry);
                         setAuditResult(audit);
                         setShowAudit(true);
                     }
@@ -1017,8 +1028,8 @@ const SalesAgent: React.FC = () => {
                     <AerialLeadNavigator
                         leads={leads}
                         isSearching={isVisualSearchActive}
-                        searchTopic={visualSearchParams.industry || searchParams.industry}
-                        searchLocation={visualSearchParams.location || searchParams.location}
+                        searchTopic={visualSearchParams.industry || searchCriteria.industry}
+                        searchLocation={visualSearchParams.location || searchCriteria.location}
                     />
                 </div>
             )}
@@ -1087,7 +1098,7 @@ const SalesAgent: React.FC = () => {
                                     <Button variant="outline" size="sm" onClick={() => setPendingSearch(null)}>Cancel</Button>
                                     <Button size="sm" className="bg-teal-600 hover:bg-teal-500" onClick={() => {
                                         if (!pendingSearch) return;
-                                        setSearchParams({
+                                        setSearchCriteria({
                                             industry: pendingSearch.industry,
                                             location: pendingSearch.location
                                         });
