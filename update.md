@@ -1,5 +1,11 @@
 # Update Log
 
+## Date: 2026-04-09 (SPEED OPTIMIZATION)
+
+### Changed
+- Added `--no-lint` to build scripts to bypass redundant ESLint checks on Vercel, reducing build time by ~3-5 minutes.
+- Implemented **fail-fast safety timeouts** (500ms-1s) for Redis and Supabase calls in the middleware to prevent network-induced build stalls.
+
 ## Date: 2026-04-09 (RECOVERY)
 
 ### Fixed

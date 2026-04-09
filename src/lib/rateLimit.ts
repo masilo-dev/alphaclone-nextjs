@@ -160,7 +160,11 @@ export async function rateLimit(
                 prefix: 'alphaclone',
             });
 
-            const result = await ratelimit.limit(id);
+            // Add a 1s timeout to prevent Redis issues from hanging the middleware
+            const result = await Promise.race([
+                ratelimit.limit(id),
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Rate limit timeout')), 1000))
+            ]);
 
             if (!result.success) {
                 await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
@@ -213,32 +217,36 @@ async function logRateLimitViolation(identifier: string, ipAddress: string, path
             }
         });
 
-        await client.from('audit_logs').insert({
-            user_id: null,
-            action: 'rate_limit_exceeded',
-            resource_type: 'api',
-            resource_id: path,
-            metadata: {
-                identifier,
-                ip_address: ipAddress,
-                path,
-                timestamp: new Date().toISOString(),
-            },
-            ip_address: ipAddress,
-            created_at: new Date().toISOString(),
-        });
-
-        // Also log as security threat
-        await client.from('security_threats').insert({
-            type: 'rate_limit_exceeded',
-            severity: 'medium',
-            ip_address: ipAddress,
-            user_agent: 'Edge Runtime',
-            description: `Rate limit exceeded for ${path}`,
-            metadata: { identifier, path },
-            status: 'detected',
-            created_at: new Date().toISOString(),
-        });
+        // Add a 2s timeout for audit logging to prevent it from blocking the request
+        await Promise.race([
+            Promise.all([
+                client.from('audit_logs').insert({
+                    user_id: null,
+                    action: 'rate_limit_exceeded',
+                    resource_type: 'api',
+                    resource_id: path,
+                    metadata: {
+                        identifier,
+                        ip_address: ipAddress,
+                        path,
+                        timestamp: new Date().toISOString(),
+                    },
+                    ip_address: ipAddress,
+                    created_at: new Date().toISOString(),
+                }),
+                client.from('security_threats').insert({
+                    type: 'rate_limit_exceeded',
+                    severity: 'medium',
+                    ip_address: ipAddress,
+                    user_agent: 'Edge Runtime',
+                    description: `Rate limit exceeded for ${path}`,
+                    metadata: { identifier, path },
+                    status: 'detected',
+                    created_at: new Date().toISOString(),
+                })
+            ]),
+            new Promise((resolve) => setTimeout(resolve, 2000))
+        ]);
     } catch (error) {
         console.error('Failed to log rate limit violation:', error);
     }
