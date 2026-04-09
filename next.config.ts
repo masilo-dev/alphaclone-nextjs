@@ -41,10 +41,6 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
   },
   turbopack: {},
-  webpack: (config) => {
-    config.output.chunkLoadTimeout = 180000;
-    return config;
-  },
   async rewrites() {
     return [
       {
@@ -140,6 +136,7 @@ export default withSentryConfig(
     sourcemaps: {
       deleteSourcemapsAfterUpload: true,
     },
-    tunnelRoute: "/monitoring"
+    tunnelRoute: "/monitoring",
+    disableLogger: true,
   }
 );
