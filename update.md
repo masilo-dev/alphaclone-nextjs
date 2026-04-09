@@ -1,5 +1,12 @@
 # Update Log
 
+## Date: 2026-04-09 (RECOVERY)
+
+### Fixed
+- Reverted configuration structure to root (`middleware.ts`, `instrumentation.ts`, `instrumentation-client.ts`) to resolve Vercel build stalls.
+- Restored `chunkLoadTimeout: 180000` in `next.config.ts` to prevent build timeouts during large bundle generation.
+- Harmonized Sentry initialization across environments.
+
 ## Date: 2026-04-09
 
 ### Changed

@@ -41,6 +41,11 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
   },
   turbopack: {},
+  webpack: (config) => {
+    // Critical: Increase timeout for long-running builds/bundling to prevent stalls
+    config.output.chunkLoadTimeout = 180000;
+    return config;
+  },
   async rewrites() {
     return [
       {
@@ -54,8 +59,8 @@ const nextConfig: NextConfig = {
     const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = `
       default-src 'self';
-      script-src 'self' ${isDev ? "'unsafe-eval'" : ''} 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
-      script-src-elem 'self' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
+      script-src 'self' ${isDev ? "'unsafe-eval'" : ''} 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
+      script-src-elem 'self' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https: http:;
       media-src 'self' blob:;
