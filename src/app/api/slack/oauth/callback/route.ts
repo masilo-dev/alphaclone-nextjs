@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import { slackService } from '@/services/slackService';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { code, state, error } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    const error = searchParams.get('error');
 
     if (error) {
       console.error('[Slack OAuth] Error:', error);
@@ -44,10 +47,9 @@ export async function POST(request: NextRequest) {
 
     // Get team info
     const teamInfo = await fetch('https://slack.com/api/team.info', {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
-        'Content-Type': 'application/json',
       },
     });
 

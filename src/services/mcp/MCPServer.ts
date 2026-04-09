@@ -653,3 +653,8 @@ class AlphaCloneMCPServer {
 }
 
 export const mcpServerInstance = new AlphaCloneMCPServer();
+
+// Factory for stateless per-request server instances (Streamable HTTP transport)
+export function createMCPServer(): AlphaCloneMCPServer {
+  return new AlphaCloneMCPServer();
+}

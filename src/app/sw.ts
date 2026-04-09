@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist, NetworkOnly, NetworkFirst } from "serwist";
+import { Serwist, NetworkOnly, NetworkFirst, disableNavigationPreload } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -11,14 +11,18 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-// Safe NetworkOnly handler that never throws — returns a fallback error response
-// instead of a rejected Promise (which causes "no-response" SW crashes).
+// Explicitly disable navigation preload on every activate.
+// Without this, a previous SW that called enableNavigationPreload() leaves the
+// browser-level preload enabled permanently, and error preload responses reach
+// PrecacheStrategy (which has no handlerDidError) causing uncaught "no-response".
+disableNavigationPreload();
+
+// Safe NetworkOnly handler — never rejects the FetchEvent promise.
 const safeNetworkOnly = new NetworkOnly({
     plugins: [
         {
-            handlerDidError: async () => {
-                return new Response(null, { status: 503, statusText: 'Service Unavailable' });
-            },
+            handlerDidError: async () =>
+                new Response(null, { status: 503, statusText: 'Service Unavailable' }),
         },
     ],
 });
@@ -27,9 +31,25 @@ const serwist = new Serwist({
     precacheEntries: self.__SW_MANIFEST,
     skipWaiting: true,
     clientsClaim: true,
-    // Disable navigationPreload — it causes "no-response" errors when the
-    // preloaded response is dropped before the SW handler can consume it.
     navigationPreload: false,
+    // PrecacheRoute is always registered first and can match any pre-rendered page,
+    // including dashboard routes.  Add handlerDidError so PrecacheStrategy never
+    // throws an uncaught "no-response" error when the precache/network fails.
+    precacheOptions: {
+        plugins: [
+            {
+                handlerDidError: async ({ request }) => {
+                    // Fall back to a live network fetch so the page still loads
+                    // even when the precache entry is missing or stale.
+                    try {
+                        return await fetch(request instanceof Request ? request : new Request(request));
+                    } catch {
+                        return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+                    }
+                },
+            },
+        ],
+    },
     runtimeCaching: [
         {
             // ALL dashboard routes must bypass the cache entirely.
@@ -37,7 +57,7 @@ const serwist = new Serwist({
             matcher({ request, url }) {
                 return (
                     request.mode === 'navigate' &&
-                    (url.pathname.startsWith('/dashboard') || url.search.length > 0)
+                    url.pathname.startsWith('/dashboard')
                 );
             },
             handler: safeNetworkOnly,
