@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack --no-lint",
-    "build:prod": "next build --no-lint",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+    "build:prod": "next build",
     "start": "next start",
     "lint": "eslint",
     "setup:verify": "node scripts/verify-setup.js",

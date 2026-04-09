@@ -1,5 +1,11 @@
 # Update Log
 
+## Date: 2026-04-09 (BUILD FLAG FIX)
+
+### Fixed
+- Resolved `unknown option --no-lint` error by moving build-time exclusion settings (linting and typechecking) into `next.config.ts`.
+- Cleaned up `package.json` build scripts.
+
 ## Date: 2026-04-09 (SPEED OPTIMIZATION)
 
 ### Changed

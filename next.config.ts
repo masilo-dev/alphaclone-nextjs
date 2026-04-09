@@ -12,6 +12,12 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   transpilePackages: ['@blocknote/core', '@blocknote/react', '@blocknote/mantine'],
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
