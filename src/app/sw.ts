@@ -53,10 +53,13 @@ const serwist = new Serwist({
     runtimeCaching: [
         {
             // ALL dashboard routes must bypass the cache entirely.
-            // This covers /dashboard, /dashboard/business/facebook, etc.
+            // This covers full page navigations AND Next.js client-side RSC data fetches.
             matcher({ request, url }) {
+                const isNavigate = request.mode === 'navigate';
+                const isRSC = request.headers.get('rsc') === '1' || request.headers.get('next-router-prefetch') === '1';
+                
                 return (
-                    request.mode === 'navigate' &&
+                    (isNavigate || isRSC) &&
                     url.pathname.startsWith('/dashboard')
                 );
             },
