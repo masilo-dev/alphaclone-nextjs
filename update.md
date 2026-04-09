@@ -1,13 +1,14 @@
 # Update Log
- 
-## Date: 2026-04-09 (PWA & ROUTING FIXES)
+
+## Date: 2026-04-09 (MARKETPLACE RESTORATION)
 
 ### Fixed
-- Resolved `no-response` network errors in Service Worker navigation requests by adding a fallback to `/offline.html`.
-- Suppressed SES "unpermitted intrinsics" console noise in `public/lockdown-install.js`.
+- Restored the **Integrations Marketplace** with dedicated page routing.
+- Resolved `no-response` Service Worker errors by implementing a robust navigation fallback.
 
-### Changed
-- Optimized Integrations Marketplace navigation to point directly to the settings tab, removing redundant `/dashboard/marketplace` redirects.
+### Added
+- Integrated **Claude Desktop (MCP)** and **Manus AI (MCP)** setup guides into the Marketplace.
+- Added **HubSpot Sync**, **SendGrid**, **Resend**, and **Calendly** with direct internal configuration links.
 
 ## Date: 2026-04-09 (BUILD FLAG FIX)
 

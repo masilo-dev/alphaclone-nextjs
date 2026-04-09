@@ -1079,6 +1079,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/marketplace':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <MarketplacePage />
+          </React.Suspense>
+        );
+
       // New Enterprise Views
       case '/dashboard/admin/tenants':
         return (

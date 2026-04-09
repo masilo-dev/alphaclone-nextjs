@@ -180,11 +180,40 @@ const MarketplacePage: React.FC = () => {
       category: 'integration',
       price: 19,
       rating: 4.8,
-      downloads: 0,
+      downloads: 420,
       icon: Users,
       features: ['Contact sync', 'Deal pipelines', 'Two-way update tracking'],
       tags: ['crm', 'hubspot', 'integration'],
-      developer: 'Integration Provider'
+      developer: 'Integration Provider',
+      actionUrl: '/dashboard/business/settings?tab=integrations'
+    },
+    {
+      id: 'integration-calendly',
+      name: 'Calendly Booking',
+      description: 'Streamline your scheduling by connecting your Calendly account for automated booking.',
+      category: 'integration',
+      price: 0,
+      rating: 4.9,
+      downloads: 850,
+      icon: Calendar,
+      features: ['Automated Scheduling', 'Meeting Sync', 'Custom Booking Pages'],
+      tags: ['scheduling', 'booking', 'productivity'],
+      developer: 'Calendly',
+      actionUrl: '/dashboard/business/settings?tab=booking'
+    },
+    {
+      id: 'integration-resend',
+      name: 'Resend Email',
+      description: 'The best email API for developers. Integrate Resend for lightning-fast outreach.',
+      category: 'integration',
+      price: 0,
+      rating: 4.7,
+      downloads: 320,
+      icon: Mail,
+      features: ['Email API', 'Webhooks', 'Analytics'],
+      tags: ['email', 'outreach', 'api'],
+      developer: 'Resend',
+      actionUrl: '/dashboard/business/settings?tab=integrations'
     }
   ]);
 
