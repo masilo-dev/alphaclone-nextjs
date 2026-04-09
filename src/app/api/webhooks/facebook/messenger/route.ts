@@ -56,10 +56,12 @@ export async function POST(req: NextRequest) {
 
             let isValid = false;
             try {
-                isValid = crypto.timingSafeEqual(
-                    Buffer.from(signature.padEnd(64, '0'), 'hex'),
-                    Buffer.from(expectedSignature, 'hex')
-                );
+                // Both buffers must be the same length for timingSafeEqual
+                const sigBuf = Buffer.from(signature, 'hex');
+                const expBuf = Buffer.from(expectedSignature, 'hex');
+                if (sigBuf.length === expBuf.length) {
+                    isValid = crypto.timingSafeEqual(sigBuf, expBuf);
+                }
             } catch {
                 isValid = false;
             }

@@ -56,10 +56,12 @@ export async function POST(req: NextRequest) {
 
             let isValid = false;
             try {
-                isValid = crypto.timingSafeEqual(
-                    Buffer.from(signature.padEnd(64, '0'), 'hex'),
-                    Buffer.from(expectedSignature, 'hex')
-                );
+                // Both buffers must be the same length for timingSafeEqual
+                const sigBuf = Buffer.from(signature, 'hex');
+                const expBuf = Buffer.from(expectedSignature, 'hex');
+                if (sigBuf.length === expBuf.length) {
+                    isValid = crypto.timingSafeEqual(sigBuf, expBuf);
+                }
             } catch {
                 isValid = false;
             }
@@ -127,7 +129,7 @@ export async function POST(req: NextRequest) {
                 const jobTitle = fields['job_title'] || '';
 
                 // Insert facebook_lead record
-                const { data: fbLead } = await supabaseAdmin
+                const { data: fbLead, error: fbLeadError } = await supabaseAdmin
                     .from('facebook_leads')
                     .upsert({
                         tenant_id: integration.tenant_id,
@@ -152,6 +154,11 @@ export async function POST(req: NextRequest) {
                     }, { onConflict: 'lead_id' })
                     .select()
                     .single();
+
+                if (fbLeadError) {
+                    console.error('[Facebook Leads Webhook] Failed to upsert facebook_lead:', fbLeadError);
+                    continue;
+                }
 
                 // Auto-create a lead in the main leads table
                 if (fbLead && (email || phone || firstName)) {

@@ -4,7 +4,21 @@ import { mcpServerInstance } from '../../../services/mcp/MCPServer';
 import { mcpTransports } from '../../../services/mcp/mcpStore';
 import { MCPAuthService } from '../../../services/mcp/MCPAuthService';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Handle CORS preflight (required for Claude.ai and Manus web clients)
+  if (req.method === 'OPTIONS') {
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+    return res.status(204).end();
+  }
+
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }

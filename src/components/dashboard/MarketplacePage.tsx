@@ -3,532 +3,639 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Filter, Star, Download, ExternalLink, Shield, Zap,
-  Globe, Mail, Calendar, FileText, Smartphone, MessageSquare,
-  TrendingUp, Users, Briefcase, DollarSign, CheckCircle,
-  ArrowRight, Heart, Clock, Award, Sparkles, Rocket
+  Search, Star, CheckCircle, Zap, Globe, Mail, Calendar, FileText,
+  MessageSquare, TrendingUp, Users, Briefcase, DollarSign, Clock,
+  Sparkles, Rocket, Bot, Shield, ChevronLeft, Phone, BarChart2,
+  ArrowRight, Package, Link2, Bell, CreditCard, Layers, Cpu,
 } from 'lucide-react';
-import { Button, Card, Input, Modal } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
-import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
+import { useRouter } from 'next/navigation';
 import MCPSetupGuide from './integrations/MCPSetupGuide';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+type Category = 'all' | 'ai' | 'integration' | 'email' | 'automation' | 'template';
+type ItemStatus = 'free' | 'paid' | 'included' | 'coming_soon';
 
 interface MarketplaceItem {
   id: string;
   name: string;
   description: string;
-  category: 'integration' | 'template' | 'service' | 'automation';
-  price: number;
+  category: Category;
+  status: ItemStatus;
+  price?: number;
   rating: number;
-  downloads: number;
-  icon: React.FC<any>;
+  installs: number;
+  icon: React.FC<{ className?: string }>;
+  iconBg: string;
+  iconColor: string;
   features: string[];
   tags: string[];
   developer: string;
-  isInstalled?: boolean;
-  isPremium?: boolean;
-  isComingSoon?: boolean;
   actionUrl?: string;
+  isMCP?: boolean;
+  mcpType?: 'claude' | 'manus';
+  badge?: string;
 }
 
-const CATEGORIES = [
-  { id: 'all', name: 'All Items', icon: Globe },
-  { id: 'integration', name: 'Integrations', icon: Zap },
-  { id: 'template', name: 'Templates', icon: FileText },
-  { id: 'service', name: 'Services', icon: Briefcase },
-  { id: 'automation', name: 'Automations', icon: Sparkles },
+// ── Catalogue ────────────────────────────────────────────────────────────────
+
+const ITEMS: MarketplaceItem[] = [
+  // ── AI & Agents ────────────────────────────────────────────────────────────
+  {
+    id: 'mcp-claude',
+    name: 'Claude AI (MCP)',
+    description: 'Connect Claude Desktop directly to your CRM, leads, deals, contracts, and accounting. Talk to your data in plain English.',
+    category: 'ai',
+    status: 'free',
+    rating: 5.0,
+    installs: 2840,
+    icon: Bot,
+    iconBg: 'bg-indigo-500/15',
+    iconColor: 'text-indigo-400',
+    features: ['Add & qualify leads', 'Draft contracts with AI', 'Log expenses by voice', 'Query CRM data', 'Schedule tasks & follow-ups', 'Check revenue instantly'],
+    tags: ['ai', 'mcp', 'claude', 'productivity'],
+    developer: 'AlphaClone',
+    isMCP: true,
+    mcpType: 'claude',
+    badge: 'Featured',
+  },
+  {
+    id: 'mcp-manus',
+    name: 'Manus AI (MCP)',
+    description: 'Let Manus autonomously research leads, enrich CRM data, and execute background tasks — connected live to your workspace.',
+    category: 'ai',
+    status: 'free',
+    rating: 5.0,
+    installs: 1620,
+    icon: Sparkles,
+    iconBg: 'bg-teal-500/15',
+    iconColor: 'text-teal-400',
+    features: ['Autonomous lead research', 'CRM enrichment', 'Background task execution', 'Deal creation', 'Expense logging', 'Contract drafting'],
+    tags: ['ai', 'mcp', 'manus', 'autonomous'],
+    developer: 'AlphaClone',
+    isMCP: true,
+    mcpType: 'manus',
+    badge: 'Featured',
+  },
+  {
+    id: 'sales-agent',
+    name: 'AI Sales Agent',
+    description: 'Your in-platform AI agent for lead prospecting, outreach campaigns, deal qualification, and CRM automation.',
+    category: 'ai',
+    status: 'included',
+    rating: 4.9,
+    installs: 5100,
+    icon: Cpu,
+    iconBg: 'bg-violet-500/15',
+    iconColor: 'text-violet-400',
+    features: ['B2B lead prospecting', 'Outreach email drafting', 'Lead-to-deal conversion', 'Task scheduling', 'CRM sync'],
+    tags: ['ai', 'sales', 'prospecting', 'outreach'],
+    developer: 'AlphaClone',
+    actionUrl: '/dashboard/sales-agent',
+  },
+  // ── Integrations ───────────────────────────────────────────────────────────
+  {
+    id: 'hubspot',
+    name: 'HubSpot CRM',
+    description: 'Two-way sync between HubSpot and AlphaClone. Contacts, deals, and activities stay in perfect alignment.',
+    category: 'integration',
+    status: 'paid',
+    price: 19,
+    rating: 4.8,
+    installs: 3200,
+    icon: Users,
+    iconBg: 'bg-orange-500/15',
+    iconColor: 'text-orange-400',
+    features: ['Contact sync', 'Deal pipeline sync', 'Two-way updates', 'Activity tracking', 'Lead scoring'],
+    tags: ['crm', 'hubspot', 'contacts', 'deals'],
+    developer: 'HubSpot',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook & Lead Ads',
+    description: 'Connect your Facebook Pages, receive lead ads directly into CRM, manage Messenger inbox, and post content.',
+    category: 'integration',
+    status: 'free',
+    rating: 4.7,
+    installs: 2900,
+    icon: Globe,
+    iconBg: 'bg-blue-500/15',
+    iconColor: 'text-blue-400',
+    features: ['Lead Ads capture', 'Messenger inbox', 'Page post & photo publishing', 'Lead auto-creation', 'Campaign tracking'],
+    tags: ['facebook', 'leads', 'social', 'messenger'],
+    developer: 'Meta',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly Booking',
+    description: 'Let clients book directly into your calendar. Meeting links auto-generate from your Calendly account.',
+    category: 'integration',
+    status: 'free',
+    rating: 4.9,
+    installs: 4100,
+    icon: Calendar,
+    iconBg: 'bg-sky-500/15',
+    iconColor: 'text-sky-400',
+    features: ['Booking page embed', 'Meeting sync', 'Custom availability', 'Team scheduling', 'Buffer times'],
+    tags: ['scheduling', 'booking', 'calendar', 'meetings'],
+    developer: 'Calendly',
+    actionUrl: '/dashboard/business/settings?tab=booking',
+  },
+  {
+    id: 'stripe',
+    name: 'Stripe Payments',
+    description: 'Accept card payments, subscriptions, and invoices directly from AlphaClone. Real-time revenue tracking included.',
+    category: 'integration',
+    status: 'free',
+    rating: 4.9,
+    installs: 3800,
+    icon: CreditCard,
+    iconBg: 'bg-violet-500/15',
+    iconColor: 'text-violet-400',
+    features: ['Card & bank payments', 'Subscription billing', 'Invoice generation', 'Revenue dashboard', 'Webhook sync'],
+    tags: ['payments', 'stripe', 'billing', 'subscriptions'],
+    developer: 'Stripe',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'zapier',
+    name: 'Zapier Automation',
+    description: 'Connect AlphaClone to 5,000+ apps with no code. Automate lead capture, follow-ups, and notifications.',
+    category: 'automation',
+    status: 'coming_soon',
+    rating: 4.8,
+    installs: 0,
+    icon: Link2,
+    iconBg: 'bg-orange-500/15',
+    iconColor: 'text-orange-400',
+    features: ['5000+ app connections', 'Trigger-based workflows', 'Multi-step zaps', 'Lead auto-tagging', 'CRM sync'],
+    tags: ['zapier', 'automation', 'workflow', 'no-code'],
+    developer: 'Zapier',
+  },
+  {
+    id: 'google-workspace',
+    name: 'Google Workspace',
+    description: 'Sync Google Calendar, connect Gmail for outreach, and access Drive documents from within AlphaClone.',
+    category: 'integration',
+    status: 'coming_soon',
+    rating: 4.8,
+    installs: 0,
+    icon: Globe,
+    iconBg: 'bg-green-500/15',
+    iconColor: 'text-green-400',
+    features: ['Gmail sync', 'Calendar integration', 'Drive file access', 'Meet link generation', 'Contact import'],
+    tags: ['google', 'gmail', 'calendar', 'workspace'],
+    developer: 'Google',
+  },
+  {
+    id: 'slack',
+    name: 'Slack Notifications',
+    description: 'Get CRM alerts, new lead notifications, and task reminders delivered straight to your Slack channels.',
+    category: 'integration',
+    status: 'coming_soon',
+    rating: 4.7,
+    installs: 0,
+    icon: MessageSquare,
+    iconBg: 'bg-pink-500/15',
+    iconColor: 'text-pink-400',
+    features: ['New lead alerts', 'Deal stage updates', 'Task reminders', 'Revenue notifications', 'Custom channels'],
+    tags: ['slack', 'notifications', 'alerts', 'team'],
+    developer: 'Slack',
+  },
+  {
+    id: 'quickbooks',
+    name: 'QuickBooks Accounting',
+    description: 'Sync invoices, expenses, and payments between AlphaClone and QuickBooks for seamless bookkeeping.',
+    category: 'integration',
+    status: 'coming_soon',
+    price: 29,
+    rating: 4.6,
+    installs: 0,
+    icon: BarChart2,
+    iconBg: 'bg-green-500/15',
+    iconColor: 'text-green-400',
+    features: ['Invoice sync', 'Expense mapping', 'Tax categories', 'P&L reports', 'Bank reconciliation'],
+    tags: ['accounting', 'quickbooks', 'finance', 'bookkeeping'],
+    developer: 'Intuit',
+  },
+  // ── Email & Communication ──────────────────────────────────────────────────
+  {
+    id: 'resend',
+    name: 'Resend Email',
+    description: 'Developer-grade email delivery API. Used for transactional emails, outreach campaigns, and notifications.',
+    category: 'email',
+    status: 'free',
+    rating: 4.8,
+    installs: 1900,
+    icon: Mail,
+    iconBg: 'bg-slate-500/15',
+    iconColor: 'text-slate-300',
+    features: ['Email API', 'React Email templates', 'Delivery analytics', 'Webhooks', 'Domain authentication'],
+    tags: ['email', 'resend', 'api', 'transactional'],
+    developer: 'Resend',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'sendgrid',
+    name: 'SendGrid Email',
+    description: 'High-volume email marketing with advanced analytics. Send campaigns, automations, and transactional emails.',
+    category: 'email',
+    status: 'free',
+    rating: 4.7,
+    installs: 2400,
+    icon: Bell,
+    iconBg: 'bg-blue-500/15',
+    iconColor: 'text-blue-400',
+    features: ['Campaign builder', 'A/B testing', 'Analytics dashboard', 'Automation rules', 'Contact segmentation'],
+    tags: ['email', 'sendgrid', 'campaigns', 'marketing'],
+    developer: 'Twilio SendGrid',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'zoho-mail',
+    name: 'Zoho Mail',
+    description: 'Business email integrated with your AlphaClone workspace. Send outreach, manage threads, and track opens.',
+    category: 'email',
+    status: 'free',
+    rating: 4.5,
+    installs: 1300,
+    icon: Mail,
+    iconBg: 'bg-red-500/15',
+    iconColor: 'text-red-400',
+    features: ['Email outreach', 'Thread management', 'Open tracking', 'Business email', 'Calendar sync'],
+    tags: ['email', 'zoho', 'outreach', 'business'],
+    developer: 'Zoho',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'sms',
+    name: 'SMS Outreach',
+    description: 'Send SMS messages to leads and clients directly from your CRM. Powered by Twilio.',
+    category: 'email',
+    status: 'coming_soon',
+    rating: 4.6,
+    installs: 0,
+    icon: Phone,
+    iconBg: 'bg-green-500/15',
+    iconColor: 'text-green-400',
+    features: ['Bulk SMS', 'Two-way messaging', 'Opt-out management', 'Delivery reports', 'Template library'],
+    tags: ['sms', 'twilio', 'outreach', 'messaging'],
+    developer: 'Twilio',
+  },
+  // ── Templates ──────────────────────────────────────────────────────────────
+  {
+    id: 'proposal-template',
+    name: 'Business Proposal Pack',
+    description: 'Professional proposal templates that convert. Includes NDA, MSA, SOW, and service agreement starters.',
+    category: 'template',
+    status: 'included',
+    rating: 4.7,
+    installs: 3400,
+    icon: FileText,
+    iconBg: 'bg-amber-500/15',
+    iconColor: 'text-amber-400',
+    features: ['NDA template', 'MSA template', 'SOW template', 'Service agreement', 'AI-generated drafts'],
+    tags: ['template', 'contracts', 'legal', 'proposals'],
+    developer: 'AlphaClone',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
+  {
+    id: 'invoice-template',
+    name: 'Invoice & Quote Templates',
+    description: 'Send professional invoices and quotes that match your brand. Includes payment tracking and tax support.',
+    category: 'template',
+    status: 'included',
+    rating: 4.6,
+    installs: 4200,
+    icon: DollarSign,
+    iconBg: 'bg-green-500/15',
+    iconColor: 'text-green-400',
+    features: ['Invoice builder', 'Quote templates', 'PDF export', 'Tax calculations', 'Payment links'],
+    tags: ['invoice', 'quotes', 'billing', 'finance'],
+    developer: 'AlphaClone',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
+  },
 ];
 
-const MarketplacePage: React.FC = () => {
-  const currentTenant = useCurrentTenantSafe();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState<'popular' | 'rating' | 'newest' | 'price'>('popular');
-  const [showInstallModal, setShowInstallModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
-  const [installedItems, setInstalledItems] = useState<Set<string>>(new Set());
-  const [showMcpGuide, setShowMcpGuide] = useState(false);
+// ── Category config ───────────────────────────────────────────────────────────
 
-  // Handle deep linking for MCP guide
+const CATEGORIES: { id: Category; label: string; icon: React.FC<{ className?: string }> }[] = [
+  { id: 'all', label: 'All', icon: Package },
+  { id: 'ai', label: 'AI & Agents', icon: Sparkles },
+  { id: 'integration', label: 'Integrations', icon: Link2 },
+  { id: 'email', label: 'Email & Comms', icon: Mail },
+  { id: 'automation', label: 'Automation', icon: Zap },
+  { id: 'template', label: 'Templates', icon: FileText },
+];
+
+const STATUS_CONFIG: Record<ItemStatus, { label: string; cls: string }> = {
+  free: { label: 'Free', cls: 'text-green-400 bg-green-500/10 border-green-500/20' },
+  paid: { label: 'PRO', cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  included: { label: 'Included', cls: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+  coming_soon: { label: 'Coming Soon', cls: 'text-slate-400 bg-slate-500/10 border-slate-600/30' },
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+const MarketplacePage: React.FC = () => {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState<Category>('all');
+  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | null>(null);
+  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'sales-agent', 'proposal-template', 'invoice-template']));
+
+  // Handle ?mcp=claude / ?mcp=manus deep link
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const mcp = params.get('mcp');
-      if (mcp === 'claude' || mcp === 'manus') {
-        setShowMcpGuide(true);
-      }
-    }
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search);
+    const mcp = p.get('mcp');
+    if (mcp === 'claude' || mcp === 'manus') setActiveMcp(mcp);
   }, []);
 
-
-  // Mock marketplace data
-  const [marketplaceItems] = useState<MarketplaceItem[]>([
-    {
-      id: '1',
-      name: 'SendGrid Email Integration',
-      description: 'Professional email marketing with advanced analytics and automation',
-      category: 'integration',
-      price: 0,
-      rating: 4.8,
-      downloads: 1250,
-      icon: Mail,
-      features: ['Email Templates', 'Automation Rules', 'Analytics Dashboard', 'A/B Testing'],
-      tags: ['email', 'marketing', 'automation'],
-      developer: 'AlphaClone',
-      isInstalled: false,
-      isPremium: false,
-      actionUrl: '/dashboard/integrations'
-    },
-    {
-      id: '2',
-      name: 'AI Lead Generator',
-      description: 'Generate high-quality leads using AI-powered search and qualification',
-      category: 'service',
-      price: 29,
-      rating: 4.9,
-      downloads: 890,
-      icon: Users,
-      features: ['AI-Powered Search', 'Lead Qualification', 'CRM Integration', 'Real-time Updates'],
-      tags: ['ai', 'leads', 'crm'],
-      developer: 'AlphaClone AI',
-      isInstalled: false,
-      isPremium: true,
-      actionUrl: '/dashboard/sales-agent'
-    },
-    {
-      id: '3',
-      name: 'Business Proposal Template',
-      description: 'Professional proposal templates that win contracts',
-      category: 'template',
-      price: 0,
-      rating: 4.6,
-      downloads: 2100,
-      icon: FileText,
-      features: ['Multiple Designs', 'Custom Branding', 'PDF Export', 'Client Tracking'],
-      tags: ['template', 'proposal', 'business'],
-      developer: 'Template Hub',
-      isInstalled: false,
-      isPremium: false,
-      actionUrl: '/dashboard/templates'
-    },
-    {
-      id: '4',
-      name: 'Social Media Automation',
-      description: 'Automate your social media posting and engagement',
-      category: 'automation',
-      price: 19,
-      rating: 4.7,
-      downloads: 650,
-      icon: MessageSquare,
-      features: ['Scheduled Posting', 'Content Calendar', 'Analytics', 'Multi-platform'],
-      tags: ['social', 'automation', 'marketing'],
-      developer: 'SocialFlow',
-      isInstalled: false,
-      isPremium: true,
-      actionUrl: '/dashboard/automations'
-    },
-    {
-      id: '5',
-      name: 'CRM Dashboard Pro',
-      description: 'Advanced CRM with pipeline management and forecasting',
-      category: 'integration',
-      price: 49,
-      rating: 4.9,
-      downloads: 430,
-      icon: TrendingUp,
-      features: ['Pipeline Management', 'Sales Forecasting', 'Contact Management', 'Reporting'],
-      tags: ['crm', 'sales', 'analytics'],
-      developer: 'CRM Solutions',
-      isInstalled: false,
-      isPremium: true,
-      actionUrl: '/dashboard/crm'
-    },
-    {
-      id: '6',
-      name: 'Invoice Generator',
-      description: 'Create professional invoices with automatic calculations',
-      category: 'template',
-      price: 0,
-      rating: 4.5,
-      downloads: 1800,
-      icon: DollarSign,
-      features: ['Invoice Templates', 'Tax Calculations', 'Payment Tracking', 'Multi-currency'],
-      tags: ['invoice', 'finance', 'template'],
-      developer: 'Finance Tools',
-      isInstalled: false,
-      isPremium: false,
-      actionUrl: '/dashboard/billing'
-    },
-    {
-      id: 'mcp-claude',
-      name: 'Claude Desktop (MCP)',
-      description: 'Connect Claude Desktop securely to your CRM database via the Model Context Protocol to orchestrate workflows autonomously.',
-      category: 'integration',
-      price: 0,
-      rating: 5.0,
-      downloads: 0,
-      icon: Zap,
-      features: ['Direct DB queries', 'Automated document processing', 'Lead generation'],
-      tags: ['ai', 'mcp', 'claude'],
-      developer: 'AlphaClone AI'
-    },
-    {
-      id: 'mcp-manus',
-      name: 'Manus AI (MCP)',
-      description: 'Let Manus autonomously research leads and execute background tasks for your agency via MCP.',
-      category: 'integration',
-      price: 0,
-      rating: 5.0,
-      downloads: 0,
-      icon: Sparkles,
-      features: ['Autonomous research', 'Data enrichment', 'Task orchestration'],
-      tags: ['ai', 'mcp', 'manus'],
-      developer: 'AlphaClone AI'
-    },
-    {
-      id: 'integration-hubspot',
-      name: 'HubSpot Sync',
-      description: 'Two-way synchronization between HubSpot CRM and your AlphaClone dashboard.',
-      category: 'integration',
-      price: 19,
-      rating: 4.8,
-      downloads: 420,
-      icon: Users,
-      features: ['Contact sync', 'Deal pipelines', 'Two-way update tracking'],
-      tags: ['crm', 'hubspot', 'integration'],
-      developer: 'Integration Provider',
-      actionUrl: '/dashboard/business/settings?tab=integrations'
-    },
-    {
-      id: 'integration-calendly',
-      name: 'Calendly Booking',
-      description: 'Streamline your scheduling by connecting your Calendly account for automated booking.',
-      category: 'integration',
-      price: 0,
-      rating: 4.9,
-      downloads: 850,
-      icon: Calendar,
-      features: ['Automated Scheduling', 'Meeting Sync', 'Custom Booking Pages'],
-      tags: ['scheduling', 'booking', 'productivity'],
-      developer: 'Calendly',
-      actionUrl: '/dashboard/business/settings?tab=booking'
-    },
-    {
-      id: 'integration-resend',
-      name: 'Resend Email',
-      description: 'The best email API for developers. Integrate Resend for lightning-fast outreach.',
-      category: 'integration',
-      price: 0,
-      rating: 4.7,
-      downloads: 320,
-      icon: Mail,
-      features: ['Email API', 'Webhooks', 'Analytics'],
-      tags: ['email', 'outreach', 'api'],
-      developer: 'Resend',
-      actionUrl: '/dashboard/business/settings?tab=integrations'
-    }
-  ]);
-
-  const filteredItems = marketplaceItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const filtered = ITEMS.filter(item => {
+    const matchSearch = !search ||
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.description.toLowerCase().includes(search.toLowerCase()) ||
+      item.tags.some(t => t.includes(search.toLowerCase()));
+    const matchCat = category === 'all' || item.category === category;
+    return matchSearch && matchCat;
   });
 
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (sortBy) {
-      case 'popular':
-        return b.downloads - a.downloads;
-      case 'rating':
-        return b.rating - a.rating;
-      case 'newest':
-        return b.id.localeCompare(a.id);
-      case 'price':
-        return a.price - b.price;
-      default:
-        return 0;
-    }
-  });
-
-  const handleInstall = (item: MarketplaceItem) => {
-    // MCP items open the plain-English setup guide instead of a generic modal
-    if (item.id === 'mcp-claude' || item.id === 'mcp-manus') {
-      setShowMcpGuide(true);
+  const handleAction = (item: MarketplaceItem) => {
+    if (item.isMCP && item.mcpType) {
+      setActiveMcp(item.mcpType);
       return;
     }
-    setSelectedItem(item);
-    setShowInstallModal(true);
-  };
-
-  const confirmInstall = () => {
-    if (!selectedItem) return;
-
-    // Simulate installation
-    setInstalledItems(prev => new Set([...prev, selectedItem.id]));
-    setShowInstallModal(false);
-    
-    toast.success(`${selectedItem.name} installed successfully!`);
-    
-    // Navigate to the item's page if it has an action URL
-    if (selectedItem.actionUrl) {
-      const actionUrl = selectedItem.actionUrl;
-      setTimeout(() => {
-        window.location.href = actionUrl;
-      }, 1000);
+    if (item.status === 'coming_soon') {
+      toast('Coming soon — stay tuned!', { icon: '🚀' });
+      return;
     }
+    if (item.actionUrl) {
+      router.push(item.actionUrl);
+      return;
+    }
+    setInstalled(prev => new Set([...prev, item.id]));
+    toast.success(`${item.name} connected!`);
   };
 
-  const ItemCard: React.FC<{ item: MarketplaceItem }> = ({ item }) => {
-    const Icon = item.icon;
-    const isInstalled = installedItems.has(item.id);
-
+  // ── MCP full-page view ─────────────────────────────────────────────────────
+  if (activeMcp) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -8, scale: 1.02 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-teal-500/30 shadow-xl group cursor-pointer relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center">
-              <Icon className="w-6 h-6 text-teal-400" />
-            </div>
-            <div>
-              <h3 className="text-white font-semibold group-hover:text-teal-400 transition-colors">
-                {item.name}
-              </h3>
-              <p className="text-slate-400 text-sm">by {item.developer}</p>
-            </div>
-          </div>
+      <div className="min-h-screen bg-slate-950">
+        <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4 bg-slate-950/90 backdrop-blur border-b border-slate-800">
+          <button
+            onClick={() => {
+              setActiveMcp(null);
+              // clean up URL param
+              const url = new URL(window.location.href);
+              url.searchParams.delete('mcp');
+              window.history.replaceState({}, '', url.toString());
+            }}
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-medium"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Marketplace
+          </button>
+          <span className="text-slate-700">|</span>
           <div className="flex gap-2">
-            {item.isComingSoon && (
-              <div className="px-2 py-1 bg-teal-500/10 text-teal-400 text-xs rounded-full font-semibold border border-teal-500/20">
-                Coming Soon
-              </div>
-            )}
-            {item.isPremium && (
-              <div className="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs rounded-full">
-                PRO
-              </div>
-            )}
+            <button
+              onClick={() => setActiveMcp('claude')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'claude' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Claude AI
+            </button>
+            <button
+              onClick={() => setActiveMcp('manus')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'manus' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Manus AI
+            </button>
           </div>
         </div>
-
-        <p className="text-slate-300 text-sm mb-4 line-clamp-2">
-          {item.description}
-        </p>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          {item.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-md">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-amber-400 fill-current" />
-              <span className="text-slate-300">{item.rating}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Download className="w-4 h-4 text-slate-400" />
-              <span className="text-slate-300">{item.downloads}</span>
-            </div>
-          </div>
-          <div className="text-right">
-            {item.price === 0 ? (
-              <span className="text-green-400 font-semibold">Free</span>
-            ) : (
-              <span className="text-white font-semibold">${item.price}/mo</span>
-            )}
-          </div>
-        </div>
-
-        <Button
-          onClick={() => !item.isComingSoon && handleInstall(item)}
-          disabled={isInstalled || item.isComingSoon}
-          className={`w-full ${isInstalled || item.isComingSoon
-            ? 'bg-slate-700 text-slate-300 cursor-not-allowed' 
-            : 'bg-teal-600 hover:bg-teal-500 text-white'
-          }`}
-        >
-          {isInstalled ? (
-            <>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Installed
-            </>
-          ) : item.isComingSoon ? (
-            <>
-              <Clock className="w-4 h-4 mr-2" />
-              In Development
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 mr-2" />
-              {item.price === 0 ? 'Install' : 'Subscribe'}
-            </>
-          )}
-        </Button>
-      </motion.div>
+        <MCPSetupGuide initialType={activeMcp} />
+      </div>
     );
-  };
+  }
 
+  // ── Marketplace grid ───────────────────────────────────────────────────────
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-950 p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Rocket className="w-8 h-8 text-teal-400" />
-          Marketplace
-        </h1>
-        <p className="text-slate-400">
-          Discover integrations, templates, and automations to supercharge your workflow
-        </p>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <Input
-              placeholder="Search marketplace..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-slate-900/50 border-slate-800 text-white placeholder-slate-400"
-            />
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-teal-900/30">
+            <Rocket className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Marketplace</h1>
+            <p className="text-slate-400 text-sm">Connect your tools, power your workflow</p>
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-2">
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 bg-slate-900/50 border border-slate-800 rounded-lg text-white"
-          >
-            {CATEGORIES.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
+      {/* AI Agents hero banner */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {ITEMS.filter(i => i.isMCP).map(item => {
+          const Icon = item.icon;
+          const isActive = item.mcpType === 'claude';
+          return (
+            <motion.button
+              key={item.id}
+              onClick={() => handleAction(item)}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className={`relative overflow-hidden text-left p-5 rounded-2xl border transition-all ${
+                isActive
+                  ? 'bg-gradient-to-br from-indigo-900/40 to-slate-900 border-indigo-500/40 hover:border-indigo-500/70'
+                  : 'bg-gradient-to-br from-teal-900/30 to-slate-900 border-teal-500/30 hover:border-teal-500/60'
+              }`}
+            >
+              <div className={`absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-10 ${isActive ? 'bg-indigo-500' : 'bg-teal-500'}`} />
+              <div className="flex items-start gap-4 relative">
+                <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className={`w-6 h-6 ${item.iconColor}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-bold">{item.name}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${isActive ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' : 'text-teal-300 bg-teal-500/10 border-teal-500/30'}`}>Featured</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Free</span>
+                  </div>
+                  <p className="text-slate-400 text-sm leading-relaxed line-clamp-2">{item.description}</p>
+                  <div className="flex items-center gap-4 mt-3">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                      <span className="text-slate-300 text-xs font-semibold">{item.rating}</span>
+                    </div>
+                    <span className="text-slate-500 text-xs">{item.installs.toLocaleString()} installs</span>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 ${isActive ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-teal-600 hover:bg-teal-500 text-white'}`}>
+                  Connect
+                  <ArrowRight className="w-3 h-3" />
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-4 py-2 bg-slate-900/50 border border-slate-800 rounded-lg text-white"
-          >
-            <option value="popular">Most Popular</option>
-            <option value="rating">Highest Rated</option>
-            <option value="newest">Newest</option>
-            <option value="price">Price</option>
-          </select>
+      {/* Search + Category filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search integrations, tools, templates…"
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:border-teal-500 transition-colors"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          {CATEGORIES.map(cat => {
+            const Icon = cat.icon;
+            const active = category === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setCategory(cat.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
+                  active
+                    ? 'bg-teal-600 border-teal-500 text-white'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Results */}
-      <div className="mb-4 text-slate-400">
-        Found {sortedItems.length} items
-      </div>
+      {/* Count */}
+      <p className="text-slate-500 text-xs font-medium mb-4 uppercase tracking-wider">
+        {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+      </p>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedItems.map(item => (
-          <ItemCard key={item.id} item={item} />
-        ))}
-      </div>
+      <AnimatePresence mode="popLayout">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((item, i) => {
+            const Icon = item.icon;
+            const isInstalled = installed.has(item.id);
+            const statusCfg = STATUS_CONFIG[item.status];
+            const comingSoon = item.status === 'coming_soon';
 
-      {/* Empty State */}
-      {sortedItems.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 text-slate-400" />
-          </div>
-          <h3 className="text-white text-lg font-semibold mb-2">No items found</h3>
-          <p className="text-slate-400">
-            Try adjusting your search or filters to find what you're looking for.
-          </p>
-        </div>
-      )}
+            return (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, delay: i * 0.03 }}
+                className={`group relative flex flex-col bg-slate-900/70 border rounded-2xl p-5 transition-all ${
+                  comingSoon
+                    ? 'border-slate-800/60 opacity-60'
+                    : 'border-slate-800 hover:border-teal-500/30 hover:bg-slate-900 hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer'
+                }`}
+                onClick={() => !comingSoon && handleAction(item)}
+              >
+                {/* Hover glow */}
+                {!comingSoon && (
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-500/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                )}
 
-      {/* Install Modal */}
-      <AnimatePresence>
-        {showInstallModal && selectedItem && (
-          <Modal
-            isOpen={showInstallModal}
-            onClose={() => setShowInstallModal(false)}
-            title="Install Item"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center">
-                  <selectedItem.icon className="w-6 h-6 text-teal-400" />
+                {/* Header */}
+                <div className="flex items-start gap-3 mb-3">
+                  <div className={`w-11 h-11 rounded-xl ${item.iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-5 h-5 ${item.iconColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-white font-semibold text-sm leading-tight group-hover:text-teal-300 transition-colors">
+                        {item.name}
+                      </h3>
+                      {item.badge && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-500 text-xs mt-0.5">{item.developer}</p>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusCfg.cls}`}>
+                    {item.price ? `$${item.price}/mo` : statusCfg.label}
+                  </span>
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold">{selectedItem.name}</h3>
-                  <p className="text-slate-400 text-sm">by {selectedItem.developer}</p>
-                </div>
-              </div>
 
-              <p className="text-slate-300">{selectedItem.description}</p>
+                {/* Description */}
+                <p className="text-slate-400 text-xs leading-relaxed mb-3 line-clamp-2 flex-1">
+                  {item.description}
+                </p>
 
-              <div>
-                <h4 className="text-white font-medium mb-2">Features:</h4>
-                <ul className="space-y-1">
-                  {selectedItem.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-slate-300 text-sm">
-                      <CheckCircle className="w-4 h-4 text-teal-400" />
-                      {feature}
-                    </li>
+                {/* Features (top 3) */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {item.features.slice(0, 3).map(f => (
+                    <span key={f} className="px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] rounded-md">
+                      {f}
+                    </span>
                   ))}
-                </ul>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-                <div>
-                  {selectedItem.price === 0 ? (
-                    <span className="text-green-400 font-semibold">Free</span>
-                  ) : (
-                    <span className="text-white font-semibold">${selectedItem.price}/month</span>
+                  {item.features.length > 3 && (
+                    <span className="px-2 py-0.5 bg-slate-800 text-slate-500 text-[10px] rounded-md">
+                      +{item.features.length - 3} more
+                    </span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowInstallModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={confirmInstall}>
-                    {selectedItem.price === 0 ? 'Install' : 'Subscribe'}
-                  </Button>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between mt-auto">
+                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-amber-400 fill-current" />
+                      {item.rating}
+                    </span>
+                    {item.installs > 0 && (
+                      <span>{item.installs.toLocaleString()} installs</span>
+                    )}
+                  </div>
+                  {comingSoon ? (
+                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                      <Clock className="w-3.5 h-3.5" />
+                      Soon
+                    </span>
+                  ) : isInstalled ? (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-teal-400">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Connected
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 group-hover:text-teal-400 transition-colors">
+                      {item.isMCP ? 'Setup guide' : item.actionUrl ? 'Configure' : 'Connect'}
+                      <ArrowRight className="w-3 h-3" />
+                    </span>
+                  )}
                 </div>
-              </div>
-            </div>
-          </Modal>
-        )}
+              </motion.div>
+            );
+          })}
+        </div>
       </AnimatePresence>
 
-      {/* MCP Setup Guide Modal */}
-      <AnimatePresence>
-        {showMcpGuide && (
-          <Modal
-            isOpen={showMcpGuide}
-            onClose={() => setShowMcpGuide(false)}
-            title="Setup AI Integration"
-          >
-            <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
-              <MCPSetupGuide />
-            </div>
-          </Modal>
-        )}
-      </AnimatePresence>
+      {filtered.length === 0 && (
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-4">
+            <Search className="w-7 h-7 text-slate-600" />
+          </div>
+          <h3 className="text-white font-semibold mb-1">No results found</h3>
+          <p className="text-slate-500 text-sm">Try a different search term or category.</p>
+        </div>
+      )}
     </div>
   );
 };

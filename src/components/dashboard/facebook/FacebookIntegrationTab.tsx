@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Facebook, Users, Megaphone, RefreshCw, CheckCircle2, XCircle,
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
@@ -98,7 +98,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [selectedPageId, setSelectedPageId] = useState('');
     const [postMessage, setPostMessage] = useState('');
     const [postLink, setPostLink] = useState('');
+    const [postImageUrl, setPostImageUrl] = useState('');
+    const [postImageFile, setPostImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState('');
     const [posting, setPosting] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     // AI generation state
     const [showAiPanel, setShowAiPanel] = useState(false);
@@ -202,23 +206,56 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
     };
 
+    const clearImage = () => {
+        setPostImageFile(null);
+        setPostImageUrl('');
+        if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+        setImagePreview('');
+        if (imageInputRef.current) imageInputRef.current.value = '';
+    };
+
+    const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) return toast.error('Please select an image file');
+        if (file.size > 10 * 1024 * 1024) return toast.error('Image must be under 10MB');
+        setPostImageFile(file);
+        setPostImageUrl('');
+        setImagePreview(URL.createObjectURL(file));
+    };
+
     const handlePost = async () => {
         if (!postMessage.trim()) return toast.error('Message is required');
         if (!selectedPageId) return toast.error('Select a Facebook Page');
         setPosting(true);
         const toastId = toast.loading('Posting to Facebook...');
         try {
-            const res = await fetch('/api/facebook/post', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId: selectedPageId, message: postMessage, link: postLink || undefined }),
-            });
+            let res: Response;
+            if (postImageFile) {
+                // Upload photo binary directly to Facebook via multipart route
+                const form = new FormData();
+                form.append('pageId', selectedPageId);
+                form.append('message', postMessage);
+                form.append('file', postImageFile);
+                res = await fetch('/api/facebook/upload-photo', { method: 'POST', body: form });
+            } else {
+                res = await fetch('/api/facebook/post', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pageId: selectedPageId,
+                        message: postMessage,
+                        link: postLink || undefined,
+                        imageUrl: postImageUrl || undefined,
+                    }),
+                });
+            }
             const data = await res.json();
             if (data.success) {
                 toast.success('Posted to Facebook!', { id: toastId });
                 setPostMessage('');
                 setPostLink('');
-                // Refresh posts tab
+                clearImage();
                 setActiveTab('posts');
                 setTimeout(() => fetchPagePosts(selectedPageId), 2000);
             } else {
@@ -226,8 +263,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             }
         } catch {
             toast.error('Failed to post', { id: toastId });
+        } finally {
+            setPosting(false);
         }
-        setPosting(false);
     };
 
     const handleUpdateStatus = async (leadId: string, status: string) => {
@@ -584,6 +622,59 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     />
                                 </div>
                             </div>
+
+                            {/* Image Section */}
+                            <div>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
+                                    Photo (optional)
+                                </label>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            ref={imageInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageFileChange}
+                                            className="hidden"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => imageInputRef.current?.click()}
+                                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 text-sm transition-colors"
+                                        >
+                                            <Image className="w-4 h-4" />
+                                            Upload Photo
+                                        </button>
+                                        <span className="text-slate-600 text-xs">or paste a public image URL</span>
+                                    </div>
+                                    {!postImageFile && (
+                                        <div className="relative">
+                                            <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                            <input
+                                                type="url"
+                                                value={postImageUrl}
+                                                onChange={e => setPostImageUrl(e.target.value)}
+                                                placeholder="https://example.com/image.jpg"
+                                                className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                                            />
+                                        </div>
+                                    )}
+                                    {imagePreview && (
+                                        <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+                                            <img src={imagePreview} alt="Preview" className="w-full max-h-52 object-contain" />
+                                            <button
+                                                type="button"
+                                                onClick={clearImage}
+                                                className="absolute top-2 right-2 p-1 bg-slate-900/80 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
+                                            >
+                                                <XCircle className="w-4 h-4" />
+                                            </button>
+                                            <p className="text-xs text-slate-500 px-3 py-1.5 truncate">{postImageFile?.name}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <button
                                 onClick={handlePost}
                                 disabled={posting || !postMessage.trim()}

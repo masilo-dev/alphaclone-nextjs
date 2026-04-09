@@ -102,8 +102,9 @@ class AlphaAgent {
     }
 
     getAllMissions(userId?: string): AlphaMissionStatus[] {
+        if (!userId) return [];
         return Array.from(this.activeMissions.values())
-            .filter(m => m.userId === userId || m.userId === 'anonymous');
+            .filter(m => m.userId === userId);
     }
 }
 

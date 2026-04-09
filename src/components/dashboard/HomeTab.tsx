@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical } from 'lucide-react';
+import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical, Sparkles, Bot, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
@@ -193,13 +193,43 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
+                                className="space-y-3"
                             >
-                                <MomentumHUD 
+                                <MomentumHUD
                                     score={momentumScore}
                                     streak={loginStreak}
                                     activity24h={activity24h}
                                     newLeads={newLeads24h}
                                 />
+                                {/* AI Agent Connect Cards */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => router.push('/dashboard/marketplace?mcp=claude')}
+                                        className="group flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left"
+                                    >
+                                        <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                                            <Bot className="w-4 h-4 text-indigo-400" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-indigo-300 leading-tight">Claude AI</p>
+                                            <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
+                                        </div>
+                                        <ArrowRight className="w-3.5 h-3.5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    </button>
+                                    <button
+                                        onClick={() => router.push('/dashboard/marketplace?mcp=manus')}
+                                        className="group flex items-center gap-3 p-3.5 rounded-2xl bg-teal-500/5 border border-teal-500/20 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all text-left"
+                                    >
+                                        <div className="w-9 h-9 rounded-xl bg-teal-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                                            <Sparkles className="w-4 h-4 text-teal-400" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-teal-300 leading-tight">Manus AI</p>
+                                            <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
+                                        </div>
+                                        <ArrowRight className="w-3.5 h-3.5 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    </button>
+                                </div>
                             </motion.div>
                         )}
 

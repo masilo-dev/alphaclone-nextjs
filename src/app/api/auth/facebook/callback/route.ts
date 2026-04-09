@@ -44,7 +44,11 @@ export async function GET(req: NextRequest) {
         `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${tokenData.access_token}`
     );
     const longLivedData = await longLivedRes.json();
-    const userToken = longLivedData.access_token || tokenData.access_token;
+    if (!longLivedRes.ok || !longLivedData.access_token) {
+        console.error('[Facebook Callback] Long-lived token exchange failed:', longLivedData);
+        return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=token_refresh_failed`);
+    }
+    const userToken = longLivedData.access_token;
 
     // Step 3: Fetch the user's Pages with their individual Page Access Tokens.
     // IMPORTANT: We request `tasks` so we can verify the user has MANAGE/ADVERTISE

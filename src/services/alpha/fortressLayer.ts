@@ -1,4 +1,5 @@
 import { UserContext } from './alphaAgent';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 
 export interface TenantContext {
     id: string;
@@ -21,17 +22,29 @@ class TenantFortress {
     // 3. Absolute memory isolation (No cross-tenant leakage)
 
     async validateAccess(user: UserContext, targetTenantId: string): Promise<FortressSession> {
-        // In a real implementation, this would verify against Supabase 'profiles' or 'organizations' table
-        // For now, we simulate the fortress guard
-        
         console.log(`FORTRESS_GUARD: Validating access for ${user.id} to tenant ${targetTenantId}...`);
-        
-        // Mock validation logic
+
+        if (user.id === 'anonymous' || !user.id) {
+            throw new Error('FORTRESS_DENIED: Anonymous users cannot access tenant resources.');
+        }
+
+        const supabase = createSupabaseAdminClient();
+        const { data, error } = await supabase
+            .from('tenant_users')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('tenant_id', targetTenantId)
+            .single();
+
+        if (error || !data) {
+            throw new Error(`FORTRESS_DENIED: User ${user.id} is not a member of tenant ${targetTenantId}.`);
+        }
+
         const session: FortressSession = {
             tenantId: targetTenantId,
             operatorId: user.id,
             timestamp: Date.now(),
-            accessLevel: (user.role as any) || 'member'
+            accessLevel: (data.role as any) || 'member'
         };
 
         return session;

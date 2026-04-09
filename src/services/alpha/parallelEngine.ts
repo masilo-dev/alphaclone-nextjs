@@ -41,12 +41,22 @@ Response Format:
             logCallback(`${agent.id.toUpperCase()}: ${content}`);
 
             if (content.startsWith('EXECUTE:')) {
-                const match = content.match(/EXECUTE:\s*(\w+)\|({.*})/);
+                const match = content.match(/EXECUTE:\s*(\w+)\|([\s\S]*)/);
                 if (match) {
-                    const [, toolName, argsJson] = match;
+                    const [, toolName, rawArgs] = match;
                     const tool = ALPHA_TOOLS[toolName];
                     if (tool) {
                         try {
+                            // Extract the first complete JSON object from the args string
+                            const jsonStart = rawArgs.indexOf('{');
+                            const jsonStr = jsonStart !== -1 ? rawArgs.slice(jsonStart) : rawArgs;
+                            // Find balanced closing brace
+                            let depth = 0, end = -1;
+                            for (let i = 0; i < jsonStr.length; i++) {
+                                if (jsonStr[i] === '{') depth++;
+                                else if (jsonStr[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+                            }
+                            const argsJson = end !== -1 ? jsonStr.slice(0, end + 1) : jsonStr;
                             const args = JSON.parse(argsJson);
                             const result = await tool.execute({ 
                                 ...args, 
@@ -59,7 +69,7 @@ Response Format:
                             
                             // Store successful pattern in episodic memory
                             await memorySystem.store({
-                                tenantId: user?.id || 'anonymous',
+                                tenantId: user?.tenantId || user?.id || 'anonymous',
                                 userId: user?.id || 'anonymous',
                                 type: 'tool_success',
                                 content: { tool: toolName, task: task.description },

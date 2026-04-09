@@ -6,7 +6,7 @@ import {
   CheckCircle, Copy, ChevronRight, Download, Monitor,
   FileText, Zap, ArrowRight, Sparkles, Lock, Shield,
   MessageSquare, Users, TrendingUp, ClipboardList, Bot,
-  ExternalLink, Info
+  ExternalLink, Info, DollarSign, Briefcase, Star, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
@@ -14,14 +14,17 @@ import { MCPAuthService } from '@/services/mcp/MCPAuthService';
 import { supabase } from '@/lib/supabase';
 import EnterpriseDPA from './EnterpriseDPA';
 
-// ── What Claude can do when connected ─────────────────────────────────────────
+// ── What Claude / Manus can do when connected ─────────────────────────────────
 const CLAUDE_CAPABILITIES = [
-  { icon: Users, title: 'Find & Add Leads', desc: 'Ask Claude: "Add John Smith from ABC Corp as a lead" — done instantly.' },
-  { icon: ClipboardList, title: 'Create Tasks', desc: 'Say: "Create a follow-up task for tomorrow at 9am" — it appears in your task list.' },
-  { icon: TrendingUp, title: 'Check Your Revenue', desc: 'Ask: "How much money is outstanding this month?" — Claude will tell you.' },
-  { icon: MessageSquare, title: 'Read Your Messages', desc: 'Ask: "What are my latest client messages?" and Claude will summarise them.' },
-  { icon: FileText, title: 'View Your Quotes', desc: 'Ask: "Which quotes are still waiting for a response?" — Claude will list them.' },
-  { icon: Sparkles, title: 'Update Projects', desc: 'Say: "Mark the XYZ project as complete" — it updates immediately.' },
+  { icon: Users, title: 'Add & Qualify Leads', desc: '"Add Sarah from TechCorp as a lead and mark her as qualified" — it\'s in CRM instantly.' },
+  { icon: Search, title: 'Search Your CRM', desc: '"Show me all new leads from this week" or "Which leads are still uncontacted?" — instant answers.' },
+  { icon: Briefcase, title: 'Manage Deals', desc: '"Create a deal for £5,000 with Acme Ltd at the proposal stage" — pipeline updated.' },
+  { icon: ClipboardList, title: 'Schedule Tasks', desc: '"Create a follow-up call with John for Friday at 2pm, high priority" — it appears immediately.' },
+  { icon: TrendingUp, title: 'Revenue & Invoices', desc: '"How much is outstanding this month?" or "What\'s my total paid revenue?" — real-time data.' },
+  { icon: MessageSquare, title: 'Read Messages', desc: '"What are my latest client messages?" — Claude reads and summarises them for you.' },
+  { icon: FileText, title: 'Draft Contracts', desc: '"Draft an NDA for client Acme Ltd, 12-month term, mutual confidentiality" — saved to Contracts.' },
+  { icon: DollarSign, title: 'Log Expenses', desc: '"Log a $49 expense for Notion subscription under Software" — saved to Accounting.' },
+  { icon: Star, title: 'View Quotes & Projects', desc: '"Which quotes are waiting for a response?" or "Update the XYZ project to complete".' },
 ];
 
 // ── Setup steps (plain English) ────────────────────────────────────────────────
@@ -81,9 +84,13 @@ const SETUP_STEPS = [
 ];
 
 // ── Main Component ─────────────────────────────────────────────────────────────
-const MCPSetupGuide: React.FC = () => {
+interface MCPSetupGuideProps {
+  initialType?: 'claude' | 'manus';
+}
+
+const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
-  const [setupType, setSetupType] = useState<'claude' | 'manus'>('claude');
+  const [setupType, setSetupType] = useState<'claude' | 'manus'>(initialType ?? 'claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
@@ -91,8 +98,12 @@ const MCPSetupGuide: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Initialize setup type from URL if present
+  // Initialize setup type from prop, then URL param as fallback
   React.useEffect(() => {
+    if (initialType) {
+      setSetupType(initialType);
+      return;
+    }
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const mcpParam = params.get('mcp');
@@ -102,7 +113,7 @@ const MCPSetupGuide: React.FC = () => {
         setSetupType('claude');
       }
     }
-  }, []);
+  }, [initialType]);
 
 
   const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
@@ -259,18 +270,32 @@ const MCPSetupGuide: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-lg font-bold text-white mb-5">Step-by-step setup guide</h2>
         <div className="space-y-4">
-          {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 6].includes(s.number)).map((step, idx) => {
+          {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 3, 6].includes(s.number)).map((step, idx) => {
             const displayNum = idx + 1;
             const isDone = completedSteps.has(step.number);
             const isOpen = expandedStep === step.number;
-            
-            // Adjust title/body for Manus
-            const stepTitle = setupType === 'manus' && step.number === 1 ? 'Go to Manus AI' : 
-                             setupType === 'manus' && step.number === 6 ? 'Start Researching with Manus' : step.title;
-            const stepBody = setupType === 'manus' && step.number === 1 ? 'Manus AI is a powerful autonomous researcher. Open the Manus dashboard to get started.' :
-                            setupType === 'manus' && step.number === 2 ? 'Manus needs your Connection URL to access your account securely. Copy the link below and paste it into the Manus "MCP Tools" configuration.' : step.body;
+
+            // Adjust title/body/action for Manus
+            const stepTitle = setupType === 'manus'
+              ? step.number === 1 ? 'Open Manus AI'
+              : step.number === 2 ? 'Copy your Connection URL'
+              : step.number === 3 ? 'Add AlphaClone to Manus MCP Settings'
+              : 'Test your connection'
+              : step.title;
+
+            const stepBody = setupType === 'manus'
+              ? step.number === 1 ? 'Manus AI is a powerful autonomous agent. Open the Manus dashboard to get started — you\'ll need to be logged in.'
+              : step.number === 2 ? 'Copy your unique Connection URL below. This is what tells Manus which AlphaClone account to connect to. Keep it private.'
+              : step.number === 3 ? 'In your Manus dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.'
+              : 'In Manus, start a new conversation and try one of these prompts to verify everything is connected:'
+              : step.body;
+
             const actionLabel = setupType === 'manus' && step.number === 1 ? 'Open Manus AI' : step.action?.label;
-            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.ai' : step.action?.url;
+            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im' : step.action?.url;
+
+            // For Manus: don't show the Claude config JSON or Mac/Windows file paths
+            const showSubSteps = setupType === 'claude' && step.subSteps;
+            const showConfigStep = setupType === 'claude' && step.isConfigStep;
 
             return (
               <motion.div
@@ -364,7 +389,7 @@ const MCPSetupGuide: React.FC = () => {
                         )}
 
                         {/* File paths */}
-                        {step.subSteps && (
+                        {showSubSteps && (
                           <div className="space-y-2 mb-4">
                             <p className="text-slate-400 text-xs font-medium mb-2">Where to find the file on your computer:</p>
                             {step.subSteps.map(sub => (
@@ -389,7 +414,7 @@ const MCPSetupGuide: React.FC = () => {
                         )}
 
                         {/* Config JSON copy */}
-                        {step.isConfigStep && (
+                        {showConfigStep && (
                           <div className="mb-4">
                             <div className="flex items-center justify-between mb-2">
                               <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Text to paste into the file:</p>
@@ -411,14 +436,22 @@ const MCPSetupGuide: React.FC = () => {
                         )}
 
                         {/* Test prompts */}
-                        {step.testPrompts && (
+                        {(step.testPrompts || (setupType === 'manus' && step.number === 6)) && (
                           <div className="mb-4">
-                            <p className="text-slate-400 text-xs font-medium mb-3">Try saying these to Claude:</p>
+                            <p className="text-slate-400 text-xs font-medium mb-3">
+                              Try saying these to {setupType === 'claude' ? 'Claude' : 'Manus'}:
+                            </p>
                             <div className="space-y-2">
-                              {step.testPrompts.map(prompt => (
-                                <div key={prompt} className="flex items-center gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                                  <MessageSquare className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                                  <span className="text-indigo-300 text-sm font-medium">{prompt}</span>
+                              {(setupType === 'manus' ? [
+                                '"Show me all my leads"',
+                                '"Add a new lead: Jane Smith, jane@acme.com, Acme Ltd"',
+                                '"What is my outstanding revenue?"',
+                                '"Draft an NDA for client Acme Ltd, 12-month term"',
+                                '"Log a $50 expense for software subscription"',
+                              ] : step.testPrompts ?? []).map((prompt: string) => (
+                                <div key={prompt} className={`flex items-center gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
+                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 ${setupType === 'manus' ? 'text-teal-400' : 'text-indigo-400'}`} />
+                                  <span className={`text-sm font-medium ${setupType === 'manus' ? 'text-teal-300' : 'text-indigo-300'}`}>{prompt}</span>
                                 </div>
                               ))}
                             </div>

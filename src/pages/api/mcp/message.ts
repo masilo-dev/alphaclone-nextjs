@@ -1,7 +1,20 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { mcpTransports } from '../../../services/mcp/mcpStore';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'OPTIONS') {
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+    return res.status(204).end();
+  }
+
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
