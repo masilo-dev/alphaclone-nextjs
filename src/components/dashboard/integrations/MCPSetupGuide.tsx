@@ -85,6 +85,7 @@ const MCPSetupGuide: React.FC = () => {
   const currentTenant = useCurrentTenantSafe();
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
+  const [setupType, setSetupType] = useState<'claude' | 'manus'>('claude');
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
   const [isDpaAccepted, setIsDpaAccepted] = useState<boolean>(true); // Default to true for non-enterprise
   const [isLoading, setIsLoading] = useState(true);
@@ -189,15 +190,31 @@ const MCPSetupGuide: React.FC = () => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Connect Claude AI to Your Account</h1>
-            <p className="text-slate-400 text-sm mt-0.5">Takes about 5 minutes. No tech skills needed.</p>
+            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : 'Manus'} AI to Your Account</h1>
+            <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
+        </div>
+
+        {/* Setup Type Selector */}
+        <div className="flex gap-2 mb-8 bg-slate-900/50 p-1 rounded-xl w-fit border border-slate-800">
+          <button
+            onClick={() => setSetupType('claude')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'claude' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Claude Desktop
+          </button>
+          <button
+            onClick={() => setSetupType('manus')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'manus' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Manus AI
+          </button>
         </div>
 
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
           <p className="text-slate-200 text-sm leading-relaxed">
-            <span className="text-white font-semibold">What does this do?</span> When you connect Claude to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to Claude</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation with Claude, and your business data gets updated automatically.
+            <span className="text-white font-semibold">What does this do?</span> When you connect {setupType === 'claude' ? 'Claude' : 'Manus'} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
           </p>
         </div>
 
@@ -219,7 +236,7 @@ const MCPSetupGuide: React.FC = () => {
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe 🔒</p>
-            <p className="text-slate-400 text-xs leading-relaxed">Claude can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
+            <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : 'Manus'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
           </div>
         </div>
       </div>
@@ -228,9 +245,18 @@ const MCPSetupGuide: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-lg font-bold text-white mb-5">Step-by-step setup guide</h2>
         <div className="space-y-4">
-          {SETUP_STEPS.map((step) => {
+          {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 6].includes(s.number)).map((step, idx) => {
+            const displayNum = idx + 1;
             const isDone = completedSteps.has(step.number);
             const isOpen = expandedStep === step.number;
+            
+            // Adjust title/body for Manus
+            const stepTitle = setupType === 'manus' && step.number === 1 ? 'Go to Manus AI' : 
+                             setupType === 'manus' && step.number === 6 ? 'Start Researching with Manus' : step.title;
+            const stepBody = setupType === 'manus' && step.number === 1 ? 'Manus AI is a powerful autonomous researcher. Open the Manus dashboard to get started.' :
+                            setupType === 'manus' && step.number === 2 ? 'Manus needs your Connection URL to access your account securely. Copy the link below and paste it into the Manus "MCP Tools" configuration.' : step.body;
+            const actionLabel = setupType === 'manus' && step.number === 1 ? 'Open Manus AI' : step.action?.label;
+            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.ai' : step.action?.url;
 
             return (
               <motion.div
@@ -251,16 +277,16 @@ const MCPSetupGuide: React.FC = () => {
                   className="w-full flex items-center gap-4 p-5 text-left"
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
-                    isDone ? 'bg-teal-500/20' : isOpen ? 'bg-indigo-500/20' : 'bg-slate-800'
+                    isDone ? 'bg-teal-500/20' : isOpen ? (setupType === 'claude' ? 'bg-indigo-500/20' : 'bg-teal-500/20') : 'bg-slate-800'
                   }`}>
                     {isDone ? <CheckCircle className="w-5 h-5 text-teal-400" /> : step.emoji}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 font-medium">STEP {step.number}</span>
+                      <span className="text-xs text-slate-500 font-medium">STEP {displayNum}</span>
                       {isDone && <span className="text-xs text-teal-400 font-semibold">✓ Done</span>}
                     </div>
-                    <p className={`font-semibold text-sm mt-0.5 ${isDone ? 'text-teal-300' : 'text-white'}`}>{step.title}</p>
+                    <p className={`font-semibold text-sm mt-0.5 ${isDone ? 'text-teal-300' : 'text-white'}`}>{stepTitle}</p>
                   </div>
                   <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
@@ -275,18 +301,18 @@ const MCPSetupGuide: React.FC = () => {
                       className="overflow-hidden"
                     >
                       <div className="px-5 pb-5 border-t border-slate-800/60">
-                        <p className="text-slate-300 text-sm leading-relaxed mt-4 mb-4">{step.body}</p>
+                        <p className="text-slate-300 text-sm leading-relaxed mt-4 mb-4">{stepBody}</p>
 
                         {/* Download action */}
                         {step.action && (
                           <a
-                            href={step.action.url}
+                            href={actionUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all mb-4"
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-teal-600 hover:bg-teal-500'}`}
                           >
                             <Download className="w-4 h-4" />
-                            {step.action.label}
+                            {actionLabel}
                             <ExternalLink className="w-3 h-3 opacity-70" />
                           </a>
                         )}

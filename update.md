@@ -8,6 +8,7 @@
 
 ### Added
 - Integrated **Claude Desktop (MCP)** and **Manus AI (MCP)** setup guides into the Marketplace.
+- Enhanced the MCP Setup Guide with platform-specific instructions for **Manus AI**.
 - Added **HubSpot Sync**, **SendGrid**, **Resend**, and **Calendly** with direct internal configuration links.
 
 ## Date: 2026-04-09 (BUILD FLAG FIX)
