@@ -83,13 +83,27 @@ const SETUP_STEPS = [
 // ── Main Component ─────────────────────────────────────────────────────────────
 const MCPSetupGuide: React.FC = () => {
   const currentTenant = useCurrentTenantSafe();
+  const [setupType, setSetupType] = useState<'claude' | 'manus'>('claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
-  const [setupType, setSetupType] = useState<'claude' | 'manus'>('claude');
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
   const [isDpaAccepted, setIsDpaAccepted] = useState<boolean>(true); // Default to true for non-enterprise
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Initialize setup type from URL if present
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const mcpParam = params.get('mcp');
+      if (mcpParam === 'manus') {
+        setSetupType('manus');
+      } else if (mcpParam === 'claude') {
+        setSetupType('claude');
+      }
+    }
+  }, []);
+
 
   const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
   const tenantId = currentTenant?.id ?? 'your-workspace-id';

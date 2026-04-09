@@ -1,5 +1,16 @@
 # Update Log
 
+## Date: 2026-04-09 (MARKETPLACE & SIDEBAR IMPROVEMENTS)
+
+### Fixed
+- **Marketplace Blinking**: Resolved flickering UI on card hover in `MarketplacePage.tsx` by refining Framer Motion animations.
+- **MCP Unresponsiveness**: Fixed the "Install" button for Claude/Manus not triggering any action. They now correctly open the setup guide modal.
+
+### Added
+- **Quick Access Sidebar**: Added a new persistent "Quick Access" section to the sidebar for all users, featuring direct links to **Claude (MCP)** and **Manus (MCP)**.
+- **Deep Linking**: Implemented URL parameter support (`?mcp=claude`) to allow sidebars and external links to trigger the Marketplace setup guides automatically.
+
+
 ## Date: 2026-04-09 (MARKETPLACE RESTORATION)
 
 ### Fixed

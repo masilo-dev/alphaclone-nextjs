@@ -49,6 +49,18 @@ const MarketplacePage: React.FC = () => {
   const [installedItems, setInstalledItems] = useState<Set<string>>(new Set());
   const [showMcpGuide, setShowMcpGuide] = useState(false);
 
+  // Handle deep linking for MCP guide
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const mcp = params.get('mcp');
+      if (mcp === 'claude' || mcp === 'manus') {
+        setShowMcpGuide(true);
+      }
+    }
+  }, []);
+
+
   // Mock marketplace data
   const [marketplaceItems] = useState<MarketplaceItem[]>([
     {
@@ -276,9 +288,12 @@ const MarketplacePage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -4 }}
-        className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all group"
+        whileHover={{ y: -8, scale: 1.02 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-teal-500/30 shadow-xl group cursor-pointer relative overflow-hidden"
       >
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-teal-500/20 to-blue-500/20 flex items-center justify-center">
@@ -495,6 +510,21 @@ const MarketplacePage: React.FC = () => {
                   </Button>
                 </div>
               </div>
+            </div>
+          </Modal>
+        )}
+      </AnimatePresence>
+
+      {/* MCP Setup Guide Modal */}
+      <AnimatePresence>
+        {showMcpGuide && (
+          <Modal
+            isOpen={showMcpGuide}
+            onClose={() => setShowMcpGuide(false)}
+            title="Setup AI Integration"
+          >
+            <div className="max-h-[80vh] overflow-y-auto custom-scrollbar">
+              <MCPSetupGuide />
             </div>
           </Modal>
         )}
