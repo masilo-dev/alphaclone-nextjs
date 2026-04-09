@@ -26,17 +26,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
-  const api_key =
-    (req.query.api_key as string | undefined) ||
-    (req.headers['x-api-key'] as string | undefined);
+  const authHeader = req.headers['authorization'];
+  let api_key = req.query.api_key as string | undefined || req.headers['x-api-key'] as string | undefined;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    api_key = authHeader.substring(7);
+  }
 
   if (!api_key) {
-    return res.status(401).json({ error: 'Missing MCP connection token. Pass ?api_key=<token> or x-api-key header.' });
+    return res.status(401).json({ error: 'Missing MCP connection token. Pass ?api_key=<token> or x-api-key header or Authorization Bearer header.' });
   }
 
   // Use the admin client to bypass RLS since the incoming request is unauthenticated (from Claude/Manus)
   let tenantId: string | null = null;
   let authError: string | null = null;
+  let authorizedScopes: string[] = [];
 
   try {
     const { createClient } = await import('@supabase/supabase-js');
@@ -48,22 +52,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
     
-    const { data, error } = await supabaseAdmin
-      .from('mcp_api_keys')
-      .select('tenant_id')
-      .eq('api_key', api_key)
-      .single();
-
-    if (error || !data) {
-      authError = 'Invalid or expired MCP connection token';
+    // Check if it's an OAuth access token first
+    if (api_key.startsWith('mcp_at_')) {
+      const { data, error } = await supabaseAdmin
+        .from('mcp_oauth_tokens')
+        .select('tenant_id, scopes, expires_at')
+        .eq('access_token', api_key)
+        .single();
+        
+      if (error || !data || new Date(data.expires_at) < new Date()) {
+        authError = 'Invalid or expired OAuth access token';
+      } else {
+        tenantId = data.tenant_id;
+        authorizedScopes = data.scopes;
+      }
     } else {
-      tenantId = data.tenant_id;
-      // Update last_used_at asynchronously
-      supabaseAdmin
+      // Fallback to static API key check
+      const { data, error } = await supabaseAdmin
         .from('mcp_api_keys')
-        .update({ last_used_at: new Date().toISOString() })
+        .select('tenant_id')
         .eq('api_key', api_key)
-        .then();
+        .single();
+
+      if (error || !data) {
+        authError = 'Invalid or expired MCP connection token';
+      } else {
+        tenantId = data.tenant_id;
+        // Static tokens get full access
+        authorizedScopes = ['*'];
+
+        // Update last_used_at asynchronously
+        supabaseAdmin
+          .from('mcp_api_keys')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('api_key', api_key)
+          .then();
+      }
     }
   } catch (err) {
     authError = String(err);
