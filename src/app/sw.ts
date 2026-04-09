@@ -18,22 +18,15 @@ const serwist = new Serwist({
     navigationPreload: true,
     runtimeCaching: [
         {
-            // Always fetch page navigations from the network — never serve from cache
-            matcher({ request }) {
-                return request.mode === 'navigate';
+            // Dashboard pages with query params (e.g. ?mcp=claude) must ALWAYS hit
+            // the network — never serve from cache to avoid 'no-response' SW errors.
+            matcher({ request, url }) {
+                return (
+                    request.mode === 'navigate' &&
+                    (url.pathname.startsWith('/dashboard') || url.search.length > 0)
+                );
             },
-            handler: new NetworkFirst({
-                networkTimeoutSeconds: 10,
-                cacheName: 'pages',
-                plugins: [
-                    {
-                        handlerDidError: async () => {
-                            // If network fails (and no cache), return the precached offline page
-                            return (await self.caches.match('/offline.html')) || Response.error();
-                        },
-                    },
-                ],
-            }),
+            handler: new NetworkOnly(),
         },
         {
             // Bypass service worker for critical API calls, Supabase, and Daily.co
@@ -57,6 +50,24 @@ const serwist = new Serwist({
                 return url.protocol === 'wss:' || url.protocol === 'ws:';
             },
             handler: new NetworkOnly(),
+        },
+        {
+            // All other page navigations: NetworkFirst with offline fallback
+            matcher({ request }) {
+                return request.mode === 'navigate';
+            },
+            handler: new NetworkFirst({
+                networkTimeoutSeconds: 10,
+                cacheName: 'pages',
+                plugins: [
+                    {
+                        handlerDidError: async () => {
+                            // If network fails (and no cache), return the precached offline page
+                            return (await self.caches.match('/offline.html')) || Response.error();
+                        },
+                    },
+                ],
+            }),
         },
         ...defaultCache,
     ],
