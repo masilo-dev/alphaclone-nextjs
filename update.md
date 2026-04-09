@@ -1,5 +1,15 @@
 # Update Log
 
+## Date: 2026-04-09
+
+### Changed
+- `src/proxy.ts` (Migrated logic from root `middleware.ts` to follow Next.js 16 deprecated convention fixes)
+- `src/instrumentation-client.ts` (Added Sentry `onRouterTransitionStart` export as required for Next.js 16 navigation instrumentation)
+
+### Removed
+- `middleware.ts` (root) - Deprecated in favor of `src/proxy.ts`
+- `instrumentation-client.ts` (root) - Replaced by `src/instrumentation-client.ts`
+
 ## Date: 2026-04-01
 
 ### Changed

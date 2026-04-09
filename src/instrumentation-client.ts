@@ -62,3 +62,6 @@ export function logError(error: Error, errorInfo?: any) {
         },
     });
 }
+
+// Required for Next.js 16/Sentry navigation instrumentation
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
