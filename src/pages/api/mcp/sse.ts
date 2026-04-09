@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMCPServer } from '../../../services/mcp/MCPServer';
-import { MCPAuthService } from '../../../services/mcp/MCPAuthService';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -27,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
-  // Auth: accept api_key as ?api_key= query param or x-api-key header
   const api_key =
     (req.query.api_key as string | undefined) ||
     (req.headers['x-api-key'] as string | undefined);
@@ -36,7 +34,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Missing MCP connection token. Pass ?api_key=<token> or x-api-key header.' });
   }
 
-  const { tenantId, error: authError } = await MCPAuthService.validateToken(api_key);
+  // Use the admin client to bypass RLS since the incoming request is unauthenticated (from Claude/Manus)
+  let tenantId: string | null = null;
+  let authError: string | null = null;
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const { ENV } = await import('../../../config/env');
+    
+    if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+    
+    const { data, error } = await supabaseAdmin
+      .from('mcp_api_keys')
+      .select('tenant_id')
+      .eq('api_key', api_key)
+      .single();
+
+    if (error || !data) {
+      authError = 'Invalid or expired MCP connection token';
+    } else {
+      tenantId = data.tenant_id;
+      // Update last_used_at asynchronously
+      supabaseAdmin
+        .from('mcp_api_keys')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('api_key', api_key)
+        .then();
+    }
+  } catch (err) {
+    authError = String(err);
+  }
 
   if (authError || !tenantId) {
     return res.status(401).json({ error: authError || 'Invalid MCP connection token' });
