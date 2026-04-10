@@ -25,20 +25,22 @@ export async function POST(req: NextRequest) {
 
         // 2. Start specialized "Support Mission"
         const result = await alphaAgent.startMission(
-            `Answer user question: ${message}`,
+            `You are Bonnie, the Alpha Support Agent. Answer the user: ${message}`,
             {
                 id: user.id,
                 name: user.user_metadata?.name || 'User',
                 role: 'user',
-                tenantId: '' // Will be resolved internally
+                tenantId: '' 
             }
         );
+
 
         // For Support Agent, we return the immediate reasoning/result
         return NextResponse.json({
             success: true,
-            reply: result.description || "I'm looking into that for you. Use the AI Studio for more complex tasks!"
+            reply: result || "I'm looking into that for you. Use the AI Studio for more complex tasks!"
         });
+
 
     } catch (error: any) {
         console.error('Support API Error:', error);

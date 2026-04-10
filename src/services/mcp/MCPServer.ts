@@ -298,6 +298,7 @@ class AlphaCloneMCPServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       const supabaseAdmin = createSupabaseAdminClient();
+      const supabase = supabaseAdmin;
       let result: any;
 
       try {

@@ -13,6 +13,8 @@ export interface SecurityLog {
     eventDetails?: any;
     severity: 'info' | 'warning' | 'critical';
     createdAt: string;
+    tenant?: { name: string };
+    user?: { name: string; email: string };
 }
 
 export const securityLogService = {
@@ -54,11 +56,6 @@ export const securityLogService = {
             console.error('Error logging security event:', err);
             return { error: err.message };
         }
-    }
-};
-
-            return { error: err.message };
-        }
     },
 
     /**
@@ -66,7 +63,7 @@ export const securityLogService = {
      */
     async getAllLogs(limit: number = 100): Promise<{ logs: SecurityLog[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await anonClient
                 .from('security_logs')
                 .select(`
                     *,
@@ -106,7 +103,7 @@ export const securityLogService = {
      */
     async getTenantLogs(tenantId: string, limit: number = 100): Promise<{ logs: SecurityLog[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await anonClient
                 .from('security_logs')
                 .select('*')
                 .eq('tenant_id', tenantId)

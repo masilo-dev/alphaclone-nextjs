@@ -2,6 +2,8 @@ import { Ratelimit, Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { securityLogService } from '../services/securityLogService';
+
 
 // Initialize Redis client from environment variables
 // Add these to your .env:

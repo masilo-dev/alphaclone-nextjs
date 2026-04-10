@@ -51,7 +51,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                         <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 p-4">
                             <div className="flex items-center space-x-2 text-white">
                                 <Bot size={20} className="animate-pulse" />
-                                <span className="font-semibold">Alpha Concierge</span>
+                                <span className="font-semibold">Bonnie (Alpha Support)</span>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
                                 <X size={20} />

@@ -1,4 +1,4 @@
-export type AgentRole = 'strategist' | 'researcher' | 'executor' | 'qa' | 'learning';
+export type AgentRole = 'strategist' | 'researcher' | 'executor' | 'qa' | 'learning' | 'support';
 
 export interface AgentConfig {
     id: AgentRole;
@@ -50,10 +50,11 @@ export const AGENT_FLEET: Record<AgentRole, AgentConfig> = {
     support: {
         id: 'support' as any,
         model: 'claude-3-5-sonnet-20240620',
-        role: 'Alpha Concierge',
-        description: 'Customer success specialist that answers FAQs and helps users navigate the platform.',
+        role: 'Bonnie',
+        description: 'Customer success specialist (Bonnie) that answers FAQs and helps users navigate the platform.',
         tools: ['semantic_assistant', 'productivity_scheduler']
     }
 };
+
 
 
