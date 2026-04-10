@@ -1,4 +1,5 @@
-import { supabase } from '../lib/supabase';
+import { createAdminSupabaseClientOrThrow } from '../lib/apiAuth';
+import { supabase as anonClient } from '../lib/supabase';
 
 export interface SecurityLog {
     id: string;
@@ -28,16 +29,19 @@ export const securityLogService = {
         deviceInfo?: any;
         eventDetails?: any;
         severity?: 'info' | 'warning' | 'critical';
+        useAdminClient?: boolean;
     }): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase
+            const client = event.useAdminClient ? createAdminSupabaseClientOrThrow() : anonClient;
+            
+            const { error } = await client
                 .from('security_logs')
                 .insert({
                     tenant_id: event.tenantId,
                     user_id: event.userId,
                     event_type: event.eventType,
                     ip_address: event.ipAddress,
-                    user_agent: event.userAgent,
+                    user_agent: event.userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Environment'),
                     location: event.location,
                     device_info: event.deviceInfo,
                     event_details: event.eventDetails,
@@ -48,6 +52,11 @@ export const securityLogService = {
             return { error: null };
         } catch (err: any) {
             console.error('Error logging security event:', err);
+            return { error: err.message };
+        }
+    }
+};
+
             return { error: err.message };
         }
     },

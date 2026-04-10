@@ -263,6 +263,24 @@ export async function rateLimitMiddleware(
     const result = await rateLimit(request, config, identifier);
 
     if (!result.success) {
+        // SECURITY SHIELD: Log the rate limit violation as a security event
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+        const pathname = request.nextUrl.pathname;
+        
+        // Fire and forget (don't block the 429 response)
+        securityLogService.logEvent({
+            eventType: 'SECURITY_VIOLATION: RATE_LIMIT_EXCEEDED',
+            ipAddress: ip,
+            severity: pathname.includes('/auth') ? 'critical' : 'warning',
+            eventDetails: {
+                pathname,
+                limit: config.limit,
+                window: config.window,
+                remaining: result.remaining
+            },
+            useAdminClient: true
+        }).catch(err => console.error('[RateLimit Log Error]', err));
+
         // Return 429 Too Many Requests
         return new NextResponse(
             JSON.stringify({
@@ -276,8 +294,7 @@ export async function rateLimitMiddleware(
                     'Content-Type': 'application/json',
                     'X-RateLimit-Limit': result.limit.toString(),
                     'X-RateLimit-Remaining': result.remaining.toString(),
-                    'X-RateLimit-Reset': result.reset.toString(),
-                    'Retry-After': Math.ceil((result.reset - Date.now()) / 1000).toString(),
+                    'X-RateLimit-Reset': Math.ceil(result.reset / 1000).toString(),
                 },
             }
         );

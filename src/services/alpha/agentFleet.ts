@@ -46,6 +46,14 @@ export const AGENT_FLEET: Record<AgentRole, AgentConfig> = {
         model: 'claude-3-5-sonnet-20240620',
         role: 'Evolution Engine',
         description: 'Analyzes mission outcomes to refine future strategies and patterns.'
+    },
+    support: {
+        id: 'support' as any,
+        model: 'claude-3-5-sonnet-20240620',
+        role: 'Alpha Concierge',
+        description: 'Customer success specialist that answers FAQs and helps users navigate the platform.',
+        tools: ['semantic_assistant', 'productivity_scheduler']
     }
 };
+
 
