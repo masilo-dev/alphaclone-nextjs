@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { ENV } from '@/config/env'
+import { createSupabaseAdminClient as createAdmin } from './supabase-admin';
 
 const allowUnsafeMockClients = process.env.ALLOW_UNSAFE_INFRASTRUCTURE_MOCKS === 'true';
 
@@ -90,26 +91,9 @@ export async function createSupabaseServerClient() {
 }
 
 /**
- * Creates a Supabase client with the service role key for administrative tasks.
- * This bypasses RLS and should ONLY be used in server-side code (API routes, Server Actions).
+ * Re-export admin client from the isomorphized helper.
+ * This is kept here for backward compatibility with App Router code.
  */
 export function createSupabaseAdminClient() {
-    if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-        if (process.env.NODE_ENV === 'production' && !allowUnsafeMockClients) {
-            throw new Error('[SupabaseAdmin] Required Supabase environment variables are missing');
-        }
-
-        return createUnavailableSupabaseClient('SupabaseAdmin');
-    }
-
-    return createServerClient(
-        ENV.VITE_SUPABASE_URL,
-        ENV.SUPABASE_SERVICE_ROLE_KEY,
-        {
-            cookies: {
-                getAll() { return [] },
-                setAll() { },
-            },
-        }
-    )
+    return createAdmin();
 }

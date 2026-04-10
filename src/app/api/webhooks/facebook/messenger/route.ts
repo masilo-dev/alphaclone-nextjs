@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import crypto from 'crypto';
 import { ENV } from '@/config/env';
+import { verifyFacebookSignature } from '@/lib/webhookUtils';
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
 
-// Facebook webhook verification (GET)
+/**
+ * Facebook Messenger Webhook Verification (GET)
+ */
 export async function GET(req: NextRequest) {
     try {
         if (!VERIFY_TOKEN) {
@@ -19,17 +21,13 @@ export async function GET(req: NextRequest) {
         const token = searchParams.get('hub.verify_token');
         const challenge = searchParams.get('hub.challenge');
 
-        console.log(`[Facebook Messenger Webhook] Incoming verification request: mode=${mode}, token=${token ? 'present' : 'missing'}`);
-
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('[Facebook Messenger Webhook] Verification successful!');
             return new Response(challenge, {
                 status: 200,
                 headers: { 'Content-Type': 'text/plain' },
             });
         }
         
-        console.warn('[Facebook Messenger Webhook] Verification failed');
         return new Response('Forbidden', { status: 403 });
     } catch (err) {
         console.error('[Facebook Messenger Webhook] GET error:', err);
@@ -37,122 +35,68 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// Messenger webhook events (POST)
+/**
+ * Facebook Messenger Webhook Events (POST)
+ */
 export async function POST(req: NextRequest) {
     try {
-        if (!APP_SECRET) {
-            console.error('[Facebook Messenger Webhook] App secret is not configured');
-            return new NextResponse('Webhook not configured', { status: 503 });
-        }
-
         const bodyText = await req.text();
-        const signatureHeader = req.headers.get('x-hub-signature-256');
+        const signature = req.headers.get('x-hub-signature-256');
 
-        if (signatureHeader) {
-            const signature = signatureHeader.replace('sha256=', '');
-            const expectedSignature = crypto
-                .createHmac('sha256', APP_SECRET)
-                .update(bodyText)
-                .digest('hex');
-
-            let isValid = false;
-            try {
-                // Both buffers must be the same length for timingSafeEqual
-                const sigBuf = Buffer.from(signature, 'hex');
-                const expBuf = Buffer.from(expectedSignature, 'hex');
-                if (sigBuf.length === expBuf.length) {
-                    isValid = crypto.timingSafeEqual(sigBuf, expBuf);
-                }
-            } catch {
-                isValid = false;
-            }
-
-            if (!isValid) {
-                console.warn('[Facebook Messenger Webhook] Rejected: invalid HMAC signature');
-                return new NextResponse('Unauthorized', { status: 401 });
-            }
-        } else {
-            console.warn('[Facebook Messenger Webhook] Rejected: missing signature header');
+        if (!verifyFacebookSignature(bodyText, signature, APP_SECRET)) {
+            console.warn('[Facebook Messenger Webhook] Rejected: invalid HMAC signature');
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
         const body = JSON.parse(bodyText);
 
-        if (body.object !== 'page') {
-            return NextResponse.json({ status: 'ignored' });
-        }
-
-        const supabaseAdmin = createSupabaseAdminClient();
-
-        for (const entry of body.entry || []) {
-            const pageId = entry.id;
+        if (body.object === 'page') {
+            const supabaseAdmin = createSupabaseAdminClient();
             
-            // Find the integration to get the tenant_id
-            const { data: integration } = await supabaseAdmin
-                .from('facebook_integrations')
-                .select('tenant_id, user_id')
-                .eq('page_id', pageId)
-                .eq('is_active', true)
-                .single();
-
-            if (!integration) continue;
-
-            for (const messagingItem of entry.messaging || []) {
-                const senderId = messagingItem.sender?.id;
-                const recipientId = messagingItem.recipient?.id;
-                const message = messagingItem.message;
-
-                if (!senderId || !recipientId) continue;
-
-                // 1. Upsert Conversation
-                const { data: conversation, error: convError } = await supabaseAdmin
-                    .from('messenger_conversations')
-                    .upsert({
-                        tenant_id: integration.tenant_id,
-                        page_id: pageId,
-                        sender_id: senderId,
-                        last_message_at: new Date().toISOString(),
-                        last_message_preview: message?.text?.substring(0, 100) || 'Attachment',
-                        is_read: false,
-                    }, { onConflict: 'tenant_id,page_id,sender_id' })
-                    .select()
+            for (const entry of body.entry) {
+                const pageId = entry.id;
+                
+                // Fetch integration to find tenant
+                const { data: integration } = await supabaseAdmin
+                    .from('tenant_integrations')
+                    .select('tenant_id, user_id')
+                    .eq('type', 'facebook')
+                    .eq('external_id', pageId)
                     .single();
 
-                if (convError || !conversation) {
-                    console.error('Error upserting messenger conversation:', convError);
-                    continue;
-                }
+                if (!integration) continue;
 
-                // 2. Insert Message
-                if (message) {
-                    const { error: msgError } = await supabaseAdmin
-                        .from('messenger_messages')
-                        .insert({
-                            conversation_id: conversation.id,
-                            mid: message.mid,
-                            sender_id: senderId,
-                            recipient_id: recipientId,
-                            text: message.text,
-                            attachments: message.attachments || [],
-                            sender_type: senderId === pageId ? 'page' : 'user',
-                            created_at: new Date(messagingItem.timestamp).toISOString(),
-                        });
+                if (entry.messaging) {
+                    for (const event of entry.messaging) {
+                        if (event.message) {
+                            const senderId = event.sender.id;
+                            
+                            // Upsert/Insert message into the database
+                            const { error: msgError } = await supabaseAdmin
+                                .from('messenger_messages')
+                                .insert({
+                                    tenant_id: integration.tenant_id,
+                                    message_id: event.message.mid,
+                                    sender_id: senderId,
+                                    recipient_id: event.recipient.id,
+                                    page_id: pageId,
+                                    text: event.message.text || null,
+                                    timestamp: event.timestamp,
+                                    received_at: new Date().toISOString()
+                                });
 
-                    if (msgError) {
-                        console.error('Error inserting messenger message:', msgError);
+                            if (msgError) {
+                                console.error('[Messenger Webhook] DB Error:', msgError);
+                            }
+                        }
                     }
                 }
-                
-                // TODO: Phase 4 - Auto-Responder Logic
-                // if (senderId !== pageId) {
-                //     await triggerAiAutoResponse(conversation, message);
-                // }
             }
         }
 
         return NextResponse.json({ status: 'ok' });
     } catch (err) {
-        console.error('Messenger webhook error:', err);
+        console.error('[Facebook Messenger Webhook] POST error:', err);
         return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
 }

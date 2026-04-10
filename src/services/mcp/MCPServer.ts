@@ -1,6 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { createSupabaseAdminClient } from '../../lib/supabase-server';
+import { createSupabaseAdminClient } from '../../lib/supabase-admin';
 import { auditLoggingService } from '../auditLoggingService';
 import Anthropic from '@anthropic-ai/sdk';
 
