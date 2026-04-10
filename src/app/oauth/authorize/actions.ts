@@ -1,6 +1,7 @@
 'use server';
 
-import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 import { validateScopes } from '@/services/mcp/MCPOAuthScopes';
 

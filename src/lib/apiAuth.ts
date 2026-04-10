@@ -1,8 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from './supabase-admin';
 
-import { ENV } from '@/config/env';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+// Re-export the isomorphized admin client for consistency
+export { createSupabaseAdminClient as createAdminSupabaseClientOrThrow };
 
 type TenantMembership = {
     tenant_id: string;
@@ -19,32 +19,21 @@ export class RouteAuthError extends Error {
     }
 }
 
-function getSupabaseUrl() {
-    return ENV.VITE_SUPABASE_URL || ENV.NEXT_PUBLIC_SUPABASE_URL;
+/**
+ * Lazy-loads the App Router Supabase client.
+ * This prevents 'next/headers' from being evaluated in the Pages Router (Legacy APIs).
+ */
+async function getSupabaseServerClient() {
+    const { createSupabaseServerClient } = await import('./supabase-server');
+    return createSupabaseServerClient();
 }
 
-export function createAdminSupabaseClientOrThrow() {
-    const supabaseUrl = getSupabaseUrl();
-    const serviceRoleKey = ENV.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-        throw new RouteAuthError(500, 'Server is misconfigured');
-    }
-
-    return createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-        },
-    });
-}
-
+/**
+ * Ensures the request is authenticated.
+ * NOTE: This is designed for App Router API routes/Server Actions.
+ */
 export async function requireAuthenticatedUser() {
-    if (!getSupabaseUrl() || !ENV.VITE_SUPABASE_ANON_KEY) {
-        throw new RouteAuthError(500, 'Server is misconfigured');
-    }
-
-    const supabase = await createSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase.auth.getUser();
 
     if (error || !data?.user?.id) {
@@ -57,6 +46,10 @@ export async function requireAuthenticatedUser() {
     };
 }
 
+/**
+ * Ensures the user has access to a specific tenant.
+ * NOTE: This is designed for App Router API routes/Server Actions.
+ */
 export async function requireTenantAccess(tenantId: string) {
     if (!tenantId?.trim()) {
         throw new RouteAuthError(400, 'tenantId required');
@@ -87,6 +80,9 @@ export async function requireTenantAccess(tenantId: string) {
     };
 }
 
+/**
+ * Standard utility for returning error responses from API routes.
+ */
 export function routeErrorResponse(error: unknown, fallbackMessage = 'Internal server error') {
     if (error instanceof RouteAuthError) {
         return NextResponse.json({ error: error.message }, { status: error.status });

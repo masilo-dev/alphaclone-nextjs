@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 // Affordable Scraping Tools Integration
 // Replaces expensive Apollo/ZoomInfo with cost-effective alternatives

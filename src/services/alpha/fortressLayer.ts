@@ -1,5 +1,5 @@
 import { UserContext } from './alphaAgent';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export interface TenantContext {
     id: string;

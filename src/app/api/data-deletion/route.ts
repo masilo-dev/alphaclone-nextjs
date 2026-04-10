@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 /** POST /api/data-deletion — general GDPR/CCPA deletion request form */
 export async function POST(req: NextRequest) {

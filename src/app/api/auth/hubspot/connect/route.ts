@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
 
 export async function GET(req: NextRequest) {

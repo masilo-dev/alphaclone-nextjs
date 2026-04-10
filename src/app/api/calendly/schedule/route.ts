@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { calendlyService } from '@/services/calendlyService';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 /**
  * Programmatic Scheduling API

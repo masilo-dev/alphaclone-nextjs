@@ -1,5 +1,5 @@
 import { aiService } from '../ai/aiService';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { gmailService } from '@/services/gmailService';
