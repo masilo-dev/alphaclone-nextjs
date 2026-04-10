@@ -28,6 +28,18 @@ export async function updateSession(request: NextRequest) {
         if (rateLimitResponse) return rateLimitResponse;
     }
 
+    // AI Agent and Scraper routes - Protection against resource/cost exhaustion
+    if (pathname.includes('/api/alpha/')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.heavy);
+        if (rateLimitResponse) return rateLimitResponse;
+    }
+
+    if (pathname.includes('/api/scraper/')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.standard);
+        if (rateLimitResponse) return rateLimitResponse;
+    }
+
+
     // API routes - moderate rate limiting
     if (pathname.startsWith('/api/')) {
         const isHeavyEndpoint = pathname.includes('/ai/') || pathname.includes('/export') || pathname.includes('/generate');

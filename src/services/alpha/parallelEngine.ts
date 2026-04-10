@@ -5,6 +5,7 @@ import { ALPHA_TOOLS } from './tools';
 import { UserContext } from './alphaAgent';
 import { healingEngine } from './healingEngine';
 import { memorySystem } from './memorySystem';
+import { auditLoggingService } from '../auditLoggingService';
 
 export class ParallelExecutionEngine {
     private maxConcurrent = 5;
@@ -58,12 +59,23 @@ Response Format:
                         const argsJson = jsonEnd !== -1 ? jsonStr.slice(0, jsonEnd + 1) : jsonStr;
                         
                         const args = JSON.parse(argsJson);
+                        
+                        // Persistent Audit Log for AI Action
+                        await auditLoggingService.logAction(
+                            `AI_TOOL_EXECUTION: ${toolName}`,
+                            'alpha_mission',
+                            task.id,
+                            { agent: agent.id, task: task.description },
+                            { args, missionId: task.parentId }
+                        );
+
                         const result = await tool.execute({ 
                             ...args, 
                             userId: user?.id,
                             tenantId: user?.tenantId,
                             account_id: args.account_id || user?.id 
                         });
+
                         alphaOrchestrator.updateTaskStatus(task.parentId, task.id, 'completed', result);
                         logCallback(`SUCCESS [${toolName}]: Execution verified.`);
 

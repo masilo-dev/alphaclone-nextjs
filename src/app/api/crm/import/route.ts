@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import * as Sentry from '@sentry/nextjs';
 import { requireTenantAccess, routeErrorResponse, createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
 
         if (error) {
             console.error('Import error:', error);
+            Sentry.captureException(error, { tags: { service: 'crm_import', op: 'upsert' } });
             return NextResponse.json({ error: 'Failed to import clients', details: error.message }, { status: 500 });
         }
 
@@ -77,7 +79,8 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
+        console.error('CRM import fatal error:', error);
+        Sentry.captureException(error, { tags: { service: 'crm_import', op: 'fatal' } });
         return routeErrorResponse(error, 'Import failed');
     }
 }
-

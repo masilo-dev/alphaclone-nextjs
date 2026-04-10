@@ -40,11 +40,12 @@ class AuditLoggingService {
         entity_id: entityId,
         old_value: oldValue,
         new_value: newValue,
-        user_agent: navigator.userAgent,
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Environment',
         ip_address: ipBox.ip,
         city: ipBox.city,
         country: ipBox.country
       };
+
 
       const { error } = await supabase
         .from('audit_logs')
