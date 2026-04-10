@@ -43,7 +43,15 @@ export class BrowserManager {
       console.warn('[BrowserManager] All remote providers exhausted/down.');
     }
 
-    // 2. Local Fallback Strategy
+    // 2. Local Fallback Strategy (Dev only)
+    const isDev = process.env.NODE_ENV === 'development' || !process.env.VERCEL;
+    
+    if (!isDev) {
+      const msg = 'Fatal: Local browser fallback is disabled in production. Ensure BROWSER_WS_ENDPOINT is configured.';
+      console.error(`[BrowserManager] ${msg}`);
+      throw new Error(msg);
+    }
+
     console.log('[BrowserManager] Reverting to Local Browser Cluster...');
     try {
       this.browser = await chromium.launch({ 
@@ -56,6 +64,7 @@ export class BrowserManager {
       console.error(`[BrowserManager] ${msg}:`, e.message);
       throw new Error(msg);
     }
+
   }
 
   static async createPage(): Promise<{ page: Page, browser: Browser }> {
