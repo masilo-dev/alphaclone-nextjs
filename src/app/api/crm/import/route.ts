@@ -1,25 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
-import { ENV } from '@/config/env';
+import { requireTenantAccess, routeErrorResponse, createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
     try {
-        const supabaseAdmin = createClient(
-            ENV.VITE_SUPABASE_URL,
-            ENV.SUPABASE_SERVICE_ROLE_KEY
-        );
-
         const formData = await req.formData();
         const file = formData.get('file') as File;
         const tenantId = formData.get('tenantId') as string;
 
-        if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-        }
-
         if (!tenantId) {
             return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
+        }
+
+        // "?"? SECURITY CHECK "?"?
+        // Verifies user is authenticated and belongs to the requested tenant
+        await requireTenantAccess(tenantId);
+        
+        // Use the admin client for cross-RLS import operations
+        const supabaseAdmin = createAdminSupabaseClientOrThrow();
+
+        if (!file) {
+            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
         const buffer = await file.arrayBuffer();
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No valid client data found' }, { status: 400 });
         }
 
-        // Upsert into business_clients
+        // Upsert into business_clients using privileged client
         const { error } = await supabaseAdmin
             .from('business_clients')
             .upsert(clients, { onConflict: 'tenant_id, email' });
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('API Error:', error);
-        return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+        return routeErrorResponse(error, 'Import failed');
     }
 }
+

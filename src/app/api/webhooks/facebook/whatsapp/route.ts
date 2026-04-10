@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
+import { ENV } from '@/config/env';
 
-const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
-const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
+const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
+const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
 
 /**
  * Facebook/WhatsApp Webhook Verification (GET)

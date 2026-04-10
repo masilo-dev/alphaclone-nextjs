@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { gmailServerService } from '@/services/server/gmailServerService';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
     try {
@@ -10,6 +11,15 @@ export async function POST(req: NextRequest) {
 
         if (!userId || !to || !subject || !messageBody) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+        }
+
+        // "?"? SECURITY CHECK "?"?
+        // Verifies user is logged in
+        const { user } = await requireAuthenticatedUser();
+
+        // Ensure user can only send as themselves
+        if (user.id !== userId) {
+            return NextResponse.json({ error: 'Forbidden: You can only send emails from your own account' }, { status: 403 });
         }
 
         const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
@@ -76,7 +86,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(data);
     } catch (err: any) {
-        console.error('Gmail Send Proxy Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return routeErrorResponse(err, 'Failed to send message');
     }
 }
+

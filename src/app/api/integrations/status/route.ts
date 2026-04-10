@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenantId');
+    const tenantId = searchParams.get('tenantId') || searchParams.get('tenant_id');
 
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
@@ -20,12 +20,19 @@ export async function GET(req: NextRequest) {
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
     const integrationStatus = await checkAllIntegrations(tenantId, supabase);
+    
+    // Map integrations by type so UI components like data.sendgrid and data.resend work
+    const mappedIntegrations = integrationStatus.reduce((acc, int) => ({
+      ...acc,
+      [int.type]: int
+    }), {});
 
     return NextResponse.json({
       success: true,
       tenantId,
       overallStatus: calculateOverallStatus(integrationStatus),
       integrations: integrationStatus,
+      ...mappedIntegrations,
       timestamp: new Date().toISOString()
     });
 
@@ -71,6 +78,11 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
       name: 'SendGrid',
       type: 'sendgrid',
       checkFunction: checkSendGridIntegration
+    },
+    {
+      name: 'Resend',
+      type: 'resend',
+      checkFunction: checkResendIntegration
     }
   ];
 
@@ -593,6 +605,57 @@ async function checkSendGridIntegration(tenantId: string, supabase: any) {
     percentage,
     issues,
     actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkResendIntegration(tenantId: string, supabase: any) {
+  // Use tenant_integrations for Resend (as per send/route.ts)
+  const { data: integration, error } = await supabase
+    .from('tenant_integrations')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('integration_type', 'resend')
+    .eq('status', 'active')
+    .single();
+
+  if (error || !integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Resend integration not connected'],
+      actions: ['Connect Resend account'],
+      connected: false
+    };
+  }
+
+  const issues = [];
+  const actions = [];
+  let percentage = 0;
+
+  // Check required fields
+  if (!integration.access_token) {
+    issues.push('API key missing');
+    actions.push('Reconnect Resend to get API key');
+  } else {
+    percentage += 50;
+  }
+
+  if (!integration.domain) {
+    issues.push('Domain missing');
+    actions.push('Set domain');
+  } else {
+    percentage += 50;
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    domain: integration.domain,
+    updated_at: integration.updated_at,
     connected: true,
     lastChecked: new Date().toISOString()
   };

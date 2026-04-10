@@ -40,32 +40,33 @@ Response Format:
             const content = aiResponse.content.trim();
             logCallback(`${agent.id.toUpperCase()}: ${content}`);
 
-            if (content.startsWith('EXECUTE:')) {
-                const match = content.match(/EXECUTE:\s*(\w+)\|([\s\S]*)/);
-                if (match) {
-                    const [, toolName, rawArgs] = match;
-                    const tool = ALPHA_TOOLS[toolName];
-                    if (tool) {
-                        try {
-                            // Extract the first complete JSON object from the args string
-                            const jsonStart = rawArgs.indexOf('{');
-                            const jsonStr = jsonStart !== -1 ? rawArgs.slice(jsonStart) : rawArgs;
-                            // Find balanced closing brace
-                            let depth = 0, end = -1;
-                            for (let i = 0; i < jsonStr.length; i++) {
-                                if (jsonStr[i] === '{') depth++;
-                                else if (jsonStr[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
-                            }
-                            const argsJson = end !== -1 ? jsonStr.slice(0, end + 1) : jsonStr;
-                            const args = JSON.parse(argsJson);
-                            const result = await tool.execute({ 
-                                ...args, 
-                                userId: user?.id,
-                                tenantId: user?.tenantId,
-                                account_id: args.account_id || user?.id 
-                            });
-                            alphaOrchestrator.updateTaskStatus(task.parentId, task.id, 'completed', result);
-                            logCallback(`SUCCESS [${toolName}]: Execution verified.`);
+            // Robust multi-line extraction for commands
+            const executeMatch = content.match(/EXECUTE:\s*(\w+)\|([\s\S]*)/);
+            const completeMatch = content.includes('TASK_COMPLETE:');
+
+            if (executeMatch) {
+                const [, toolName, rawArgs] = executeMatch;
+                const tool = ALPHA_TOOLS[toolName];
+                if (tool) {
+                    try {
+                        // Extract the first complete JSON object from the args string
+                        const jsonStart = rawArgs.indexOf('{');
+                        const jsonStr = jsonStart !== -1 ? rawArgs.slice(jsonStart) : rawArgs;
+                        
+                        // Extract until the last } in the string to handle multi-line or trailing text
+                        const jsonEnd = jsonStr.lastIndexOf('}');
+                        const argsJson = jsonEnd !== -1 ? jsonStr.slice(0, jsonEnd + 1) : jsonStr;
+                        
+                        const args = JSON.parse(argsJson);
+                        const result = await tool.execute({ 
+                            ...args, 
+                            userId: user?.id,
+                            tenantId: user?.tenantId,
+                            account_id: args.account_id || user?.id 
+                        });
+                        alphaOrchestrator.updateTaskStatus(task.parentId, task.id, 'completed', result);
+                        logCallback(`SUCCESS [${toolName}]: Execution verified.`);
+
                             
                             // Store successful pattern in episodic memory
                             await memorySystem.store({

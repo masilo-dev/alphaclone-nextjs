@@ -1,8 +1,9 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { supabase } from '../../lib/supabase';
+import { createSupabaseAdminClient } from '../../lib/supabase-server';
 import { auditLoggingService } from '../auditLoggingService';
 import Anthropic from '@anthropic-ai/sdk';
+
 
 /**
  * AlphaClone MCP Server
@@ -296,6 +297,7 @@ class AlphaCloneMCPServer {
     // ── Tool Execution ─────────────────────────────────────────────────────────
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      const supabaseAdmin = createSupabaseAdminClient();
       let result: any;
 
       try {
@@ -303,7 +305,7 @@ class AlphaCloneMCPServer {
         // ── get_clients ────────────────────────────────────────────────────
         case 'get_clients': {
           const { tenant_id, status, limit = 20 } = args as Record<string, any>;
-          let query = supabase
+          let query = supabaseAdmin
             .from('business_clients')
             .select('id, name, email, phone, company, status, created_at, source')
             .eq('tenant_id', tenant_id)
@@ -318,7 +320,7 @@ class AlphaCloneMCPServer {
         // ── create_client ──────────────────────────────────────────────────
         case 'create_client': {
           const { tenant_id, name, email, phone, company, status = 'lead', source = 'MCP Agent' } = args as Record<string, any>;
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('business_clients')
             .insert({ tenant_id, name, email, phone, company, status, source })
             .select('id, name, email')
@@ -331,7 +333,7 @@ class AlphaCloneMCPServer {
         // ── get_leads ──────────────────────────────────────────────────────
         case 'get_leads': {
           const { tenant_id, status, stage, limit = 20 } = args as Record<string, any>;
-          let query = supabase
+          let query = supabaseAdmin
             .from('leads')
             .select('id, business_name, contact_name, email, phone, industry, status, stage, source, notes, created_at')
             .eq('tenant_id', tenant_id)
@@ -348,7 +350,7 @@ class AlphaCloneMCPServer {
         // ── create_lead ────────────────────────────────────────────────────
         case 'create_lead': {
           const { tenant_id, business_name, contact_name, email, phone, industry, source = 'AI Agent', notes } = args as Record<string, any>;
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('leads')
             .insert({
               tenant_id,
@@ -377,7 +379,7 @@ class AlphaCloneMCPServer {
           if (stage) update.stage = stage;
           if (notes) update.notes = notes;
           if (Object.keys(update).length === 0) throw new Error('Provide at least one of: status, stage, notes');
-          const { error } = await supabase
+          const { error } = await supabaseAdmin
             .from('leads')
             .update(update)
             .eq('id', lead_id)
@@ -390,7 +392,7 @@ class AlphaCloneMCPServer {
         // ── get_deals ──────────────────────────────────────────────────────
         case 'get_deals': {
           const { tenant_id, stage, limit = 20 } = args as Record<string, any>;
-          let query = supabase
+          let query = supabaseAdmin
             .from('deals')
             .select('id, name, value, stage, description, source, created_at')
             .eq('tenant_id', tenant_id)
@@ -406,7 +408,7 @@ class AlphaCloneMCPServer {
         // ── create_deal ────────────────────────────────────────────────────
         case 'create_deal': {
           const { tenant_id, name, value, stage = 'qualified', description } = args as Record<string, any>;
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('deals')
             .insert({ tenant_id, name, value: value || 0, stage, description, source: 'MCP Agent' })
             .select('id, name, value, stage')
@@ -419,7 +421,7 @@ class AlphaCloneMCPServer {
         // ── get_projects ───────────────────────────────────────────────────
         case 'get_projects': {
           const { tenant_id, status } = args as Record<string, any>;
-          let query = supabase
+          let query = supabaseAdmin
             .from('business_projects')
             .select('id, name, status, due_date, description, created_at')
             .eq('tenant_id', tenant_id)
@@ -436,7 +438,7 @@ class AlphaCloneMCPServer {
           const { tenant_id, project_id, status, notes } = args as Record<string, any>;
           const update: Record<string, any> = { status };
           if (notes) update.description = notes;
-          const { error } = await supabase
+          const { error } = await supabaseAdmin
             .from('business_projects')
             .update(update)
             .eq('id', project_id)
@@ -449,7 +451,7 @@ class AlphaCloneMCPServer {
         // ── get_tasks ──────────────────────────────────────────────────────
         case 'get_tasks': {
           const { tenant_id, project_id, assigned_to, completed } = args as Record<string, any>;
-          let query = supabase
+          let query = supabaseAdmin
             .from('tasks')
             .select('id, title, description, status, priority, due_date, assigned_to, project_id')
             .eq('tenant_id', tenant_id)
@@ -466,7 +468,7 @@ class AlphaCloneMCPServer {
         // ── create_task ────────────────────────────────────────────────────
         case 'create_task': {
           const { tenant_id, title, description, project_id, assigned_to, due_date, priority = 'medium' } = args as Record<string, any>;
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('tasks')
             .insert({ tenant_id, title, description, project_id, assigned_to, due_date, priority, completed: false })
             .select('id, title, due_date, priority')

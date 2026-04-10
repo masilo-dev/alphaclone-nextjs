@@ -32,6 +32,11 @@ const envSchema = z.object({
     // Resend
     RESEND_API_KEY: z.string().optional(),
 
+    // Facebook
+    FACEBOOK_VERIFY_TOKEN: z.string().optional(),
+    FACEBOOK_APP_SECRET: z.string().optional(),
+    FACEBOOK_PAGE_ACCESS_TOKEN: z.string().optional(),
+
     // Optional
     VITE_SENTRY_DSN: z.string().url().optional(),
     VITE_VAPID_PUBLIC_KEY: z.string().optional(),
@@ -66,6 +71,13 @@ const envSchema = z.object({
     // QStash (for auto-responder delays)
     QSTASH_TOKEN: z.string().optional(),
     QSTASH_URL: z.string().url().optional(),
+
+    // Redis Infrastructure (Upstash)
+    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+    // Browserless Infrastructure
+    BROWSER_WS_ENDPOINT: z.string().url().optional(),
 
     // App URL for OAuth redirects
     NEXT_PUBLIC_APP_URL: z.string().url().optional().default('https://alphaclone.tech'),
@@ -110,6 +122,10 @@ function validateEnv() {
 
         RESEND_API_KEY: process.env.RESEND_API_KEY,
 
+        FACEBOOK_VERIFY_TOKEN: process.env.FACEBOOK_VERIFY_TOKEN || process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
+        FACEBOOK_APP_SECRET: process.env.FACEBOOK_APP_SECRET,
+        FACEBOOK_PAGE_ACCESS_TOKEN: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
+
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
         ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
@@ -121,6 +137,11 @@ function validateEnv() {
 
         QSTASH_TOKEN: process.env.QSTASH_TOKEN,
         QSTASH_URL: process.env.QSTASH_URL,
+
+        UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+        UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+
+        BROWSER_WS_ENDPOINT: process.env.BROWSER_WS_ENDPOINT,
 
         NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'https://alphaclone.tech',
     };
