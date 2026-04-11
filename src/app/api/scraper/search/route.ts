@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import {
+  fetchSerpLeadsViaBrowser,
+  hasRemoteBrowserConfigured,
+} from '@/lib/scraper/browserSerpLeads';
 
 // ─── Per-tenant in-process quota cache ────────────────────────────────────────
 // key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
@@ -29,7 +33,7 @@ export interface LeadResult {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source:        'yelp' | 'here' | 'osm';
+  source:        'yelp' | 'here' | 'osm' | 'browser';
   lat?:          number;
   lng?:          number;
   hasContact:    boolean;   // true = phone OR email present
@@ -43,8 +47,8 @@ function hasContactInfo(r: Partial<LeadResult>): boolean {
   return phone.length > 0 || email.length > 0;
 }
 
-function enrichWithContactFlag(leads: LeadResult[]): LeadResult[] {
-  return leads.map(l => ({ ...l, hasContact: hasContactInfo(l) }));
+function enrichWithContactFlag(leads: Array<Omit<LeadResult, 'hasContact'> & Partial<Pick<LeadResult, 'hasContact'>>>): LeadResult[] {
+  return leads.map((l) => ({ ...l, hasContact: hasContactInfo(l) }));
 }
 
 // ─── Strategy 1 (Fallback): Yelp Fusion ───────────────────────────────────────
@@ -122,6 +126,43 @@ async function fetchHERE(niche: string, location: string, limit = 20): Promise<L
     }));
 }
 
+// ─── Overpass API mirrors (rotate on 429 / timeout; public instances are rate-limited) ──
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+
+async function postOverpassQuery(queryBody: string): Promise<Response> {
+  let lastError: Error | null = null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, 2000 * attempt));
+      }
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          body: queryBody,
+          headers: { 'Content-Type': 'text/plain' },
+          signal: AbortSignal.timeout(45000),
+        });
+        if (res.status === 429) {
+          lastError = new Error(`Overpass 429`);
+          break;
+        }
+        if (!res.ok) {
+          lastError = new Error(`Overpass ${res.status}`);
+          continue;
+        }
+        return res;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+      }
+    }
+  }
+  throw lastError || new Error('Overpass request failed');
+}
+
 // ─── Strategy 3 (PRIMARY): OpenStreetMap / Overpass ───────────────────────────
 // OSM is always free. Always runs first. Widens bbox until targetMin VERIFIED leads found.
 // "Verified" = has phone OR email in OSM tags.
@@ -190,12 +231,7 @@ out center ${fetchLimit};
     `.trim();
 
     try {
-      const res = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST', body: q,
-        headers: { 'Content-Type': 'text/plain' },
-        signal: AbortSignal.timeout(30000),
-      });
-      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      const res = await postOverpassQuery(q);
       const data = await res.json();
       const all = (data.elements || []).filter((el: any) => el.tags?.name);
       // Filter to only elements that have phone OR email in OSM tags
@@ -337,7 +373,7 @@ export async function POST(request: Request) {
 
     const results: LeadResult[] = [];
     const sourceErrors: Record<string, string> = {};
-    const sourceCounts: Record<string, number>  = { osm: 0, yelp: 0, here: 0 };
+    const sourceCounts: Record<string, number>  = { osm: 0, yelp: 0, here: 0, browser: 0 };
 
     // ── Step 1: OSM runs FIRST (primary, always free) ─────────────────────────
     try {
@@ -381,6 +417,26 @@ export async function POST(request: Request) {
       } else {
         sourceErrors.here = (hereRes.reason as Error).message;
         console.warn('[Scraper] HERE fallback failed:', sourceErrors.here);
+      }
+    }
+
+    // Step 3: Browser-based SERP supplement (Browserbase or BROWSER_WS_ENDPOINT)
+    const stillNeed = results.length < LEADS_PER_SEARCH;
+    if (stillNeed && hasRemoteBrowserConfigured()) {
+      try {
+        const want = LEADS_PER_SEARCH - results.length + 5;
+        const browserRows = await fetchSerpLeadsViaBrowser(niche, location, want);
+        const verified = browserRows.filter((r) => hasContactInfo(r));
+        results.push(...enrichWithContactFlag(verified));
+        sourceCounts.browser = verified.length;
+        const rejected = browserRows.length - verified.length;
+        if (rejected > 0) {
+          console.log(`[Scraper] Browser SERP: ${rejected} rows rejected (no contact info)`);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        sourceErrors.browser = msg;
+        console.warn('[Scraper] Browser SERP supplement failed:', msg);
       }
     }
 

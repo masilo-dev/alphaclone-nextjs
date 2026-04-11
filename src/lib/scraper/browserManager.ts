@@ -1,20 +1,28 @@
+import Browserbase from '@browserbasehq/sdk';
 import { chromium, Browser, Page } from 'playwright-core';
 
 /**
  * Universal Browser Manager for Lead Acquisition
- * 
+ *
  * Supports:
  * - Multi-provider load balancing (e.g., Browserless & BrowserCat)
+ * - Browserbase managed sessions (BROWSERBASE_API_KEY)
  * - Automatic Failover (tries next provider if one fails or hits limits)
  * - Local Chromium fallback for development
  */
 
 export class BrowserManager {
   private static browser: Browser | null = null;
+  private static browserbaseSessionId: string | null = null;
 
   static async getBrowser(): Promise<Browser> {
-    if (this.browser && this.browser.isConnected()) {
+    if (this.browser?.isConnected()) {
       return this.browser;
+    }
+    if (this.browser) {
+      await this.browser.close().catch(() => null);
+      this.browser = null;
+      this.browserbaseSessionId = null;
     }
 
     const endpointString = process.env.BROWSER_WS_ENDPOINT || '';
@@ -43,11 +51,34 @@ export class BrowserManager {
       console.warn('[BrowserManager] All remote providers exhausted/down.');
     }
 
+    // 1b. Browserbase (managed CDP session)
+    const browserbaseKey = process.env.BROWSERBASE_API_KEY?.trim();
+    if (browserbaseKey) {
+      try {
+        const bb = new Browserbase({ apiKey: browserbaseKey });
+        const projectId = process.env.BROWSERBASE_PROJECT_ID?.trim();
+        const session = await bb.sessions.create({
+          projectId: projectId || undefined,
+          timeout: 900,
+        });
+        this.browserbaseSessionId = session.id;
+        this.browser = await chromium.connectOverCDP(session.connectUrl, { timeout: 60000 });
+        console.log(`[BrowserManager] Browserbase session ${session.id}`);
+        return this.browser;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.warn(`[BrowserManager] Browserbase connection failed: ${msg}`);
+        this.browserbaseSessionId = null;
+        this.browser = null;
+      }
+    }
+
     // 2. Local Fallback Strategy (Dev only)
     const isDev = process.env.NODE_ENV === 'development' || !process.env.VERCEL;
     
     if (!isDev) {
-      const msg = 'Fatal: Local browser fallback is disabled in production. Ensure BROWSER_WS_ENDPOINT is configured.';
+      const msg =
+        'Fatal: Local browser fallback is disabled in production. Set BROWSERBASE_API_KEY, BROWSER_WS_ENDPOINT, or another remote CDP endpoint.';
       console.error(`[BrowserManager] ${msg}`);
       throw new Error(msg);
     }
@@ -78,9 +109,22 @@ export class BrowserManager {
   }
 
   static async close() {
+    const sessionId = this.browserbaseSessionId;
+    this.browserbaseSessionId = null;
+    if (sessionId && process.env.BROWSERBASE_API_KEY?.trim()) {
+      try {
+        const bb = new Browserbase({ apiKey: process.env.BROWSERBASE_API_KEY.trim() });
+        await bb.sessions.update(sessionId, { status: 'REQUEST_RELEASE' });
+      } catch {
+        /* session may already be completed */
+      }
+    }
     if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
+      try {
+        await this.browser.close();
+      } finally {
+        this.browser = null;
+      }
     }
   }
 }

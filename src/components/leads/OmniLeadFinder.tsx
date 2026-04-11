@@ -39,20 +39,21 @@ interface ScrapedLead {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source?:       'yelp' | 'here' | 'osm';
+  source?:       'yelp' | 'here' | 'osm' | 'browser';
   status:        'pending' | 'saved' | 'failed';
   lat?:          number;
   lng?:          number;
   qualification?: QualificationResult;  // added by engine post-search
 }
 
-type SourceFilter = 'all' | 'yelp' | 'here' | 'osm';
+type SourceFilter = 'all' | 'yelp' | 'here' | 'osm' | 'browser';
 type SortMode     = 'default' | 'rating_desc' | 'rating_asc';
 
 const SOURCE_COLORS: Record<string, string> = {
   yelp: 'text-orange-400 border-orange-500/30 bg-orange-500/10',
   here: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+  browser: 'text-violet-400 border-violet-500/30 bg-violet-500/10',
 };
 
 // ── Industry Groups ──────────────────────────────────────
@@ -364,7 +365,7 @@ export default function OmniLeadFinder() {
             // Update progress and results
             setProgress({ percent: 85, message: 'Qualifying leads...' });
             setResults(leads);
-            setSourceStats(data.sourceStats || {});
+            setSourceStats(data.sources || data.sourceStats || {});
             setFallbackUsed(!!data.fallbackUsed);
 
             // Qualify leads
@@ -380,7 +381,7 @@ export default function OmniLeadFinder() {
             const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
             toast.success(`Found ${leads.length} leads${rejMsg}`);
 
-            return { leads: qualifiedLeads, sourceStats: data.sourceStats };
+            return { leads: qualifiedLeads, sourceStats: data.sources || data.sourceStats };
         } catch (err: any) {
             toast.error(err.message || 'Search failed');
             throw err;
@@ -414,7 +415,7 @@ export default function OmniLeadFinder() {
               AlphaClone Business Lead
             </h1>
             <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
-              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> · Fallbacks: Yelp · HERE Maps
+              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> · Fallbacks: Yelp · HERE · Browser (remote CDP / Browserbase)
               {fallbackUsed && <span className="block sm:inline sm:ml-2 text-amber-400">Fallback sources used</span>}
             </p>
           </div>
@@ -589,10 +590,18 @@ export default function OmniLeadFinder() {
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Source</label>
               <div className="flex flex-wrap gap-1">
-                {(['all', 'osm', 'yelp', 'here'] as SourceFilter[]).map(src => (
+                {(['all', 'osm', 'yelp', 'here', 'browser'] as SourceFilter[]).map(src => (
                   <button key={src} onClick={() => setFilterSource(src)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${filterSource === src ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'}`}>
-                    {src === 'all' ? 'All' : src === 'osm' ? 'OSM' : src === 'yelp' ? 'Yelp' : 'HERE'}
+                    {src === 'all'
+                      ? 'All'
+                      : src === 'osm'
+                        ? 'OSM'
+                        : src === 'yelp'
+                          ? 'Yelp'
+                          : src === 'here'
+                            ? 'HERE'
+                            : 'Browser'}
                   </button>
                 ))}
               </div>

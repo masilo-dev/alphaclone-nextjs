@@ -18,7 +18,12 @@ const envSchema = z.object({
     OPENROUTER_API_KEY: z.string().optional(),
     VITE_GEMINI_API_KEY: z.string().optional(),
     GOOGLE_API_KEY: z.string().optional(),
+    /** Browser Maps SDK only; use NEXT_PUBLIC_GOOGLE_MAPS_API_KEY with referrer restrictions */
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
     MANUS_API_KEY: z.string().optional(),
+
+    CRON_SECRET: z.string().optional(),
+    INTERNAL_API_KEY: z.string().optional(),
 
     // Daily.co
     VITE_DAILY_DOMAIN: z.string().optional(),
@@ -76,8 +81,12 @@ const envSchema = z.object({
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
-    // Browserless Infrastructure
+    // Browserless / remote CDP
     BROWSER_WS_ENDPOINT: z.string().url().optional(),
+
+    // Browserbase (managed Playwright CDP sessions)
+    BROWSERBASE_API_KEY: z.string().optional(),
+    BROWSERBASE_PROJECT_ID: z.string().optional(),
 
     // App URL for OAuth redirects
     NEXT_PUBLIC_APP_URL: z.string().url().optional().default('https://alphaclone.tech'),
@@ -104,9 +113,17 @@ function validateEnv() {
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
         OPENAI_API_KEY: process.env.OPENAI_API_KEY,
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
-        VITE_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY,
-        GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
-        MANUS_API_KEY: process.env.MANUS_API_KEY || process.env.NEXT_PUBLIC_MANUS_API_KEY || process.env.VITE_MANUS_API_KEY,
+        VITE_GEMINI_API_KEY:
+            process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+            process.env.VITE_GEMINI_API_KEY ||
+            process.env.GEMINI_API_KEY ||
+            process.env.GOOGLE_AI_KEY ||
+            process.env.GOOGLE_AI_API_KEY ||
+            process.env.GOOGLE_API_KEY,
+        GOOGLE_API_KEY:
+            process.env.GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+        MANUS_API_KEY: process.env.MANUS_API_KEY,
 
         VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
         DAILY_API_KEY: process.env.DAILY_API_KEY,
@@ -150,6 +167,9 @@ function validateEnv() {
 
         BROWSER_WS_ENDPOINT: process.env.BROWSER_WS_ENDPOINT,
 
+        BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
+        BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
+
         NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'https://alphaclone.tech',
 
         ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID || process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID,
@@ -158,6 +178,9 @@ function validateEnv() {
             process.env.ZOOM_OAUTH_SCOPES ||
             'user:read:user meeting:read meeting:write',
         ZOOM_WEBHOOK_SECRET_TOKEN: process.env.ZOOM_WEBHOOK_SECRET_TOKEN,
+
+        CRON_SECRET: process.env.CRON_SECRET,
+        INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
     };
 
     Object.keys(rawEnv).forEach(key => {
