@@ -9,12 +9,26 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const tenantIdParam = req.nextUrl.searchParams.get('tenant_id')?.trim() || null;
+    if (tenantIdParam) {
+        const { data: member, error: memErr } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .eq('tenant_id', tenantIdParam)
+            .maybeSingle();
+        if (memErr || !member) {
+            return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
+        }
+    }
+
     const appId = process.env.FACEBOOK_APP_ID;
     if (!appId) {
         return NextResponse.json({ error: 'FACEBOOK_APP_ID not configured' }, { status: 500 });
     }
 
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/facebook/callback`;
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
+    const redirectUri = `${appUrl}/api/auth/facebook/callback`;
     const scopes = [
         'pages_show_list',
         'pages_read_engagement',
@@ -25,7 +39,9 @@ export async function GET(req: NextRequest) {
         'ads_management',
     ].join(',');
 
-    const state = Buffer.from(JSON.stringify({ userId: user.id, ts: Date.now() })).toString('base64url');
+    const state = Buffer.from(
+        JSON.stringify({ userId: user.id, tenantId: tenantIdParam, ts: Date.now() })
+    ).toString('base64url');
 
     const authUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');
     authUrl.searchParams.set('client_id', appId);

@@ -67,7 +67,7 @@ const SuperAdminTenantsTab: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 p-4 md:p-6 animate-fade-in">
+        <div className="space-y-6 p-3 sm:p-4 md:p-6 animate-fade-in min-w-0">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -98,8 +98,8 @@ const SuperAdminTenantsTab: React.FC = () => {
             </div>
 
             {/* Tenants Table */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-                <table className="w-full text-left border-collapse">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-x-auto backdrop-blur-sm min-w-0">
+                <table className="w-full min-w-[920px] text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-sm">
                             <th className="p-4 font-medium">Business Name</th>

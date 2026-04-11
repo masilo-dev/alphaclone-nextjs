@@ -295,8 +295,8 @@ const ArticleEditor: React.FC = () => {
             </div>
 
             {/* Articles List */}
-            <div className="bg-slate-800 rounded-lg overflow-hidden">
-                <table className="w-full">
+            <div className="bg-slate-800 rounded-lg overflow-x-auto min-w-0">
+                <table className="w-full min-w-[640px]">
                     <thead className="bg-slate-700">
                         <tr>
                             <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Title</th>

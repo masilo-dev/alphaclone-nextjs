@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Sparkles, Send, Mail, Loader2, Check, AlertCircle,
-  Zap, Edit3, Eye, ChevronDown, Clock, BarChart2,
+  Zap, Edit3, Eye, Clock,
+  Briefcase, Smile, Gift,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
@@ -33,11 +34,11 @@ interface GeneratedEmail {
 
 type SendStatus = 'idle' | 'generating' | 'preview' | 'sending' | 'done';
 
-const TONES = [
-  { id: 'professional', label: 'Professional', icon: '💼' },
-  { id: 'friendly',     label: 'Friendly',     icon: '👋' },
-  { id: 'direct',       label: 'Direct',        icon: '⚡' },
-  { id: 'value_add',    label: 'Value-Add',     icon: '🎁' },
+const TONES: { id: string; label: string; Icon: typeof Briefcase }[] = [
+  { id: 'professional', label: 'Professional', Icon: Briefcase },
+  { id: 'friendly', label: 'Friendly', Icon: Smile },
+  { id: 'direct', label: 'Direct', Icon: Zap },
+  { id: 'value_add', label: 'Value-Add', Icon: Gift },
 ];
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -175,7 +176,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
@@ -184,30 +185,30 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-5xl max-h-[90vh] bg-slate-950 border border-slate-800 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-5xl max-h-[100dvh] sm:max-h-[90vh] min-h-0 sm:min-h-0 bg-slate-950 border border-slate-800 rounded-none sm:rounded-2xl lg:rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between gap-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-teal-400" />
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3 flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
             </div>
-            <div>
-              <h2 className="text-lg font-black text-white">Outreach Automation</h2>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-black text-white truncate">Outreach Automation</h2>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest truncate">
                 {industry} · {emailable.length} emailable · {noEmail.length} phone-only
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2.5 text-slate-500 hover:text-white hover:bg-slate-900 rounded-xl transition-all">
+          <button type="button" onClick={onClose} className="p-2 sm:p-2.5 text-slate-500 hover:text-white hover:bg-slate-900 rounded-xl transition-all shrink-0" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row">
 
           {/* ── Left: Config pane ──────────────────────────────────────────── */}
-          <div className="w-80 flex-shrink-0 border-r border-slate-800 overflow-y-auto p-5 space-y-6 bg-slate-950/60">
+          <div className="w-full lg:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-slate-800 lg:overflow-y-auto p-4 sm:p-5 space-y-5 sm:space-y-6 bg-slate-950/60 lg:max-h-full">
 
             {/* Lead summary */}
             <div className="space-y-2">
@@ -229,7 +230,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
               </div>
               {noEmail.length > 0 && (
                 <p className="text-[10px] text-amber-400/80 mt-1">
-                  ⚠ {noEmail.length} lead{noEmail.length > 1 ? 's have' : ' has'} no email — phone follow-up recommended
+                  {noEmail.length} lead{noEmail.length > 1 ? 's have' : ' has'} no email. Phone follow-up recommended.
                 </p>
               )}
             </div>
@@ -238,11 +239,15 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tone of Voice</p>
               <div className="grid grid-cols-2 gap-2">
-                {TONES.map(t => (
-                  <button key={t.id} onClick={() => setTone(t.id)}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${tone === t.id ? 'bg-teal-500/10 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-400 hover:border-slate-700'}`}>
-                    <span className="text-lg leading-none">{t.icon}</span>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mt-1">{t.label}</p>
+                {TONES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTone(t.id)}
+                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${tone === t.id ? 'bg-teal-500/10 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-400 hover:border-slate-700'}`}
+                  >
+                    <t.Icon className="w-4 h-4 text-teal-400/90" aria-hidden />
+                    <p className="text-[10px] font-bold uppercase tracking-wider">{t.label}</p>
                   </button>
                 ))}
               </div>
@@ -284,7 +289,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                 <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${queueOnly ? 'left-0.5' : 'left-[22px]'}`} />
               </button>
               <div>
-                <p className="text-xs font-bold text-white">{queueOnly ? '📋 Queue Only' : '🚀 Send Immediately'}</p>
+                <p className="text-xs font-bold text-white">{queueOnly ? 'Queue only' : 'Send immediately'}</p>
                 <p className="text-[10px] text-slate-500">{queueOnly ? 'Review in CRM before sending' : 'Send via Zoho Mail now'}</p>
               </div>
             </div>
@@ -306,12 +311,14 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
           </div>
 
           {/* ── Right: Preview / Results pane ─────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div className="flex-1 min-w-0 min-h-[12rem] lg:overflow-y-auto p-4 sm:p-5 space-y-4 lg:max-h-full">
 
             {status === 'idle' && (
               <div className="h-full flex flex-col items-center justify-center text-center gap-4 text-slate-600 py-16">
                 <Sparkles className="w-12 h-12 opacity-20" />
-                <p className="text-sm">Configure your tone and click <strong className="text-slate-400">Generate Emails</strong> to produce<br />personalized outreach for {emailable.length} lead{emailable.length !== 1 ? 's' : ''}.</p>
+                <p className="text-sm px-2 max-w-md">
+                  Configure your tone and click <strong className="text-slate-400">Generate Emails</strong> to produce personalized outreach for {emailable.length} lead{emailable.length !== 1 ? 's' : ''}.
+                </p>
                 {/* Pitch angle legend */}
                 {leads.length > 0 && (
                   <div className="mt-4 w-full max-w-sm space-y-2 text-left">
@@ -340,11 +347,12 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
             {status === 'preview' && emails.length > 0 && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-white">{emails.length} emails ready to send</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-bold text-white min-w-0">{emails.length} emails ready to send</p>
                   <button
+                    type="button"
                     onClick={handleSendAll}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all w-full sm:w-auto shrink-0"
                   >
                     <Send className="w-4 h-4" />
                     {queueOnly ? 'Queue All' : 'Send All'}
@@ -384,7 +392,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                             className="w-full text-xs font-bold bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-teal-300 focus:outline-none"
                           />
                         ) : (
-                          <p className="text-xs font-bold text-teal-300">📧 {email.subject}</p>
+                          <p className="text-xs font-bold text-teal-300 break-words">{email.subject}</p>
                         )}
                       </div>
                       {/* Body */}
@@ -415,7 +423,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             {status === 'done' && sendResults.length > 0 && (
               <div className="space-y-4">
                 {/* Summary strip */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 xs:grid-cols-3 gap-3">
                   {[
                     { label: 'Sent',   count: sendResults.filter(r => r.status === 'sent').length,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
                     { label: 'Queued', count: sendResults.filter(r => r.status === 'queued').length, color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'   },

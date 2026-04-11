@@ -11,6 +11,7 @@ import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { PastEventPromptModal } from './PastEventPromptModal';
+import { useTenant } from '@/contexts/TenantContext';
 
 /**
  * Helper to parse Calendly Q&A JSON
@@ -45,6 +46,7 @@ interface CalendarProps {
  * - Improved modal UX
  */
 const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
+    const { currentTenant } = useTenant();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showEventModal, setShowEventModal] = useState(false);
@@ -336,9 +338,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 const reason = prompt('Please provide a reason for cancellation (sent to the invitee):', 'Canceled via CRM Dashboard');
                 if (reason === null) return; // User canceled the prompt
 
-                const currentTenant = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('alpha_tenant') || '{}') : null;
                 if (!currentTenant?.id) {
-                    toast.error('Session error: No tenant ID found');
+                    toast.error('No active organization. Select a workspace and try again.');
                     return;
                 }
 

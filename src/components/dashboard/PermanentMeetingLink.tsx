@@ -6,6 +6,7 @@ import { dailyService } from '../../services/dailyService';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
+import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
 
 interface PermanentMeetingLinkProps {
     user: User;
@@ -42,6 +43,17 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
         try {
             setRoomData(prev => ({ ...prev, loading: true, error: null }));
 
+            const prefs = await fetchDashboardPreferences(user.id);
+            const cached = prefs.permanentMeetingLink;
+            if (cached?.link && cached?.roomUrl) {
+                setRoomData({
+                    link: cached.link,
+                    url: cached.roomUrl,
+                    loading: false,
+                    error: null,
+                });
+            }
+
             // Call API to create/get permanent room
             const response = await fetch('/api/daily/create-permanent-room', {
                 method: 'POST',
@@ -72,13 +84,14 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
                 error: null
             });
 
-            // Store in localStorage for quick access
-            localStorage.setItem(`permanent_room_${user.id}`, JSON.stringify({
-                roomName: data.name,
-                roomUrl: data.url,
-                link: shareLink,
-                createdAt: new Date().toISOString()
-            }));
+            await mergeDashboardPreferences(user.id, {
+                permanentMeetingLink: {
+                    roomName: data.name,
+                    roomUrl: data.url,
+                    link: shareLink,
+                    createdAt: new Date().toISOString(),
+                },
+            });
 
         } catch (err) {
             console.error('Failed to initialize permanent room:', err);

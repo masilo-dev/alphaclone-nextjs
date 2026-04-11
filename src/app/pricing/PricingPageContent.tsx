@@ -371,8 +371,8 @@ export default function PricingPageContent() {
                                 exit={{ height: 0, opacity: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="overflow-x-auto rounded-2xl border border-slate-800">
-                                    <table className="w-full">
+                                <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                                    <table className="w-full min-w-[520px]">
                                         <thead>
                                             <tr className="border-b border-slate-800 bg-slate-900/50">
                                                 <th className="text-left py-4 px-6 text-slate-400 text-sm font-semibold">Feature</th>

@@ -20,46 +20,66 @@ import { SendGridIntegration } from '../integrations/SendGridIntegration';
 import { ResendIntegration } from '../integrations/ResendIntegration';
 import { PlaywrightIntegration } from '../integrations/PlaywrightIntegration';
 import { IntegrationMarketplaceDashboard } from '../integrations/IntegrationMarketplaceDashboard';
+import { VideoMeetingsAndMcpSetup } from './VideoMeetingsAndMcpSetup';
 import { useIntegrations } from '../../../hooks/useIntegrations';
+import { useTenant } from '@/contexts/TenantContext';
+import { supabase } from '@/lib/supabase';
 
 export function IntegrationSettings() {
-  const { integrations, loading, connected, disconnect } = useIntegrations();
+  const { currentTenant } = useTenant();
+  const { integrations, loading, connected, disconnect, refresh } = useIntegrations();
   const [activeTab, setActiveTab] = useState('marketplace');
   const [syncStatus, setSyncStatus] = useState<Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }>>({});
   const [errorLogs, setErrorLogs] = useState<Array<{ id: string; integration: string; error: string; timestamp: string }>>([]);
+  const [errorLogsLoading, setErrorLogsLoading] = useState(false);
 
-  // Simulate sync status updates
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newStatus: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
-      connected.forEach(int => {
-        const isHealthy = Math.random() > 0.1; // 90% healthy
-        newStatus[int.id] = {
-          lastSync: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-          status: isHealthy ? 'synced' : 'error'
-        };
-      });
-      setSyncStatus(newStatus);
-    }, 30000); // Update every 30 seconds
-
-    // Initialize with mock data
-    const initialStatus: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
-    connected.forEach(int => {
-      initialStatus[int.id] = {
-        lastSync: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-        status: 'synced'
+    const next: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
+    connected.forEach((int) => {
+      const ok = int.status === 'connected';
+      next[int.id] = {
+        lastSync: int.connectedAt || '',
+        status: ok ? 'synced' : 'error',
       };
     });
-    setSyncStatus(initialStatus);
-
-    // Mock error logs
-    setErrorLogs([
-      { id: '1', integration: 'slack', error: 'Rate limit exceeded (429)', timestamp: new Date(Date.now() - 3600000).toISOString() },
-      { id: '2', integration: 'sendgrid', error: 'API key invalid', timestamp: new Date(Date.now() - 7200000).toISOString() },
-    ]);
-
-    return () => clearInterval(interval);
+    setSyncStatus(next);
   }, [connected]);
+
+  useEffect(() => {
+    if (activeTab !== 'activity' || !currentTenant?.id) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setErrorLogsLoading(true);
+      const { data, error } = await supabase
+        .from('error_logs')
+        .select('id, error_type, error_message, endpoint, created_at')
+        .eq('tenant_id', currentTenant.id)
+        .order('created_at', { ascending: false })
+        .limit(40);
+
+      if (cancelled) return;
+      setErrorLogsLoading(false);
+
+      if (error || !data) {
+        setErrorLogs([]);
+        return;
+      }
+
+      setErrorLogs(
+        data.map((row: { id: string; error_type?: string; error_message?: string; endpoint?: string | null; created_at?: string }) => ({
+          id: row.id,
+          integration: row.endpoint || row.error_type || 'system',
+          error: row.error_message || 'Unknown error',
+          timestamp: row.created_at || new Date().toISOString(),
+        }))
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, currentTenant?.id]);
 
   const tabs = [
     { id: 'marketplace', label: 'Marketplace',  icon: Globe        },
@@ -77,6 +97,8 @@ export function IntegrationSettings() {
           Connect tools that power your workflow. All connections are stored securely per workspace.
         </p>
       </div>
+
+      <VideoMeetingsAndMcpSetup />
 
       {/* Tab bar */}
       <div className="flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
@@ -184,6 +206,9 @@ export function IntegrationSettings() {
         {activeTab === 'preferences' && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-white">Global Preferences</h2>
+            <p className="text-sm text-slate-500">
+              Workspace-wide integration policies are managed from Security and Billing. Toggles below are UI placeholders until synced settings are enabled.
+            </p>
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
               {[
                 { label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: true },
@@ -216,7 +241,11 @@ export function IntegrationSettings() {
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white">Sync Status</h3>
-                <button className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => refresh()}
+                  className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                >
                   <RefreshCw className="w-3 h-3" /> Refresh
                 </button>
               </div>
@@ -230,7 +259,9 @@ export function IntegrationSettings() {
                   {connected.map(int => {
                     const status = syncStatus[int.id];
                     const isHealthy = status?.status === 'synced';
-                    const lastSyncTime = status?.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never';
+                    const lastSyncTime = status?.lastSync
+                      ? new Date(status.lastSync).toLocaleString()
+                      : 'Not recorded';
                     
                     return (
                       <div key={int.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
@@ -256,13 +287,19 @@ export function IntegrationSettings() {
             {/* Error Logs */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-white">Error Logs</h3>
-                <span className="text-xs text-slate-500">{errorLogs.length} errors</span>
+                <h3 className="text-sm font-medium text-white">Workspace error log</h3>
+                <span className="text-xs text-slate-500">
+                  {errorLogsLoading ? 'Loading…' : `${errorLogs.length} entries`}
+                </span>
               </div>
               
-              {errorLogs.length === 0 ? (
+              {errorLogsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-teal-400 animate-spin" />
+                </div>
+              ) : errorLogs.length === 0 ? (
                 <p className="text-slate-500 text-sm text-center py-6">
-                  No errors logged. All integrations are running smoothly.
+                  No recent errors recorded for this workspace.
                 </p>
               ) : (
                 <div className="space-y-3">

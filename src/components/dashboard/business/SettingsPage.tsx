@@ -234,6 +234,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             setActiveTab('booking');
         }
 
+        const fbOk = searchParams?.get('fb_connected');
+        if (fbOk === 'true') {
+            toast.success('Facebook connected for this workspace.');
+            setActiveTab('integrations');
+        }
+        const fbErr = searchParams?.get('fb_error');
+        if (fbErr) {
+            toast.error(`Facebook connection failed: ${decodeURIComponent(fbErr)}`);
+            setActiveTab('integrations');
+        }
 
     }, [searchParams]);
 

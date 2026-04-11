@@ -893,7 +893,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </div>
                                 </div>
 
-                                <table className="w-full mb-6">
+                                <div className="overflow-x-auto min-w-0 mb-6">
+                                <table className="w-full min-w-[400px]">
                                     <thead>
                                         <tr className="border-b-2 border-slate-700">
                                             <th className="text-left py-2">Description</th>
@@ -913,6 +914,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
 
                                 <div className="flex justify-end">
                                     <div className="w-64">

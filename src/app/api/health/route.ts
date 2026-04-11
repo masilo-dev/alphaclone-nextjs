@@ -100,9 +100,12 @@ export async function GET() {
         platform: process.platform,
     };
 
-    // Determine overall health
+    // Determine overall health (optional services may be skipped, e.g. Redis)
     const allHealthy = Object.values(checks).every(
-        check => !check.status || check.status === 'healthy'
+        (check) =>
+            !check?.status ||
+            check.status === 'healthy' ||
+            check.status === 'skipped'
     );
 
     const overallStatus = allHealthy ? 'healthy' : 'degraded';

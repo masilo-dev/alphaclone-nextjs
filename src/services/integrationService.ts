@@ -31,6 +31,8 @@ export interface IntegrationCatalogEntry {
   oauthFlow?: boolean;   // true = OAuth redirect; false = API key entry
   popular?: boolean;
   new?: boolean;
+  /** When no row exists in tenant_integrations, use this instead of "available". */
+  defaultStatus?: IntegrationStatus;
 }
 
 export interface TenantIntegration extends IntegrationCatalogEntry {
@@ -144,6 +146,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     features: ['Video meetings', 'Screen sharing', 'Recording', 'Calendar integration'],
     oauthFlow: true,
     new: false,
+    docsUrl: 'https://developers.zoom.us/docs/integrations/oauth/',
   },
   // ── Analytics ─────────────────────────────────────────────────────────────
   {
@@ -211,10 +214,21 @@ export const integrationService = {
       (data as IntegrationRow[] || []).map((row: IntegrationRow) => [row.integration_id, row])
     );
 
-    return INTEGRATION_CATALOG.map(entry => {
+    const { data: mcpKeyRow } = await supabase
+      .from('mcp_api_keys')
+      .select('api_key')
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    return INTEGRATION_CATALOG.map((entry) => {
       const row = rowMap.get(entry.id);
-      
-      let status = (row?.status as IntegrationStatus) ?? 'available';
+
+      let status: IntegrationStatus =
+        (row?.status as IntegrationStatus) ?? entry.defaultStatus ?? 'available';
+
+      if ((entry.id === 'claude-mcp' || entry.id === 'manus-mcp') && mcpKeyRow?.api_key) {
+        status = 'connected';
+      }
 
       return {
         ...entry,
@@ -245,6 +259,25 @@ export const integrationService = {
       return { success: false, error: `Unknown integration: ${integrationId}` };
     }
 
+    if (integrationId === 'zoom') {
+      return {
+        success: true,
+        redirectUrl: `/api/zoom/oauth?tenant_id=${encodeURIComponent(tenantId)}`,
+      };
+    }
+
+    if (integrationId === 'claude-mcp' || integrationId === 'manus-mcp') {
+      const mcp = integrationId === 'manus-mcp' ? 'manus' : 'claude';
+      return { success: true, redirectUrl: `/dashboard/marketplace?mcp=${mcp}` };
+    }
+
+    if (integrationId === 'facebook-leads') {
+      return {
+        success: true,
+        redirectUrl: `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(tenantId)}`,
+      };
+    }
+
     // OAuth integrations: return a redirect URL for the OAuth flow
     if (catalog.oauthFlow) {
       const redirectMap: Record<string, string> = {
@@ -253,8 +286,6 @@ export const integrationService = {
         hubspot: '/api/hubspot/oauth',
         'google-calendar': '/api/google/oauth?scope=calendar',
         'google-analytics': '/api/google/oauth?scope=analytics',
-        zoom: '/api/zoom/oauth',
-        'facebook-leads': '/api/facebook/oauth',
         'zoho-mail': '/api/zoho/oauth',
         calendly: '/api/calendly/oauth',
       };
@@ -286,6 +317,33 @@ export const integrationService = {
    * Disconnects an integration for a tenant.
    */
   async disconnect(tenantId: string, integrationId: string): Promise<{ success: boolean; error?: string }> {
+    if (integrationId === 'claude-mcp' || integrationId === 'manus-mcp') {
+      const { MCPAuthService } = await import('@/services/mcp/MCPAuthService');
+      const revoked = await MCPAuthService.revokeAllForTenant(tenantId);
+      if (!revoked.success && revoked.error) {
+        console.error('[integrationService] MCP revoke:', revoked.error);
+      }
+      await supabase
+        .from('tenant_integrations')
+        .update({ status: 'available', metadata: {} })
+        .eq('tenant_id', tenantId)
+        .in('integration_id', ['claude-mcp', 'manus-mcp']);
+      return { success: true };
+    }
+
+    if (integrationId === 'facebook-leads') {
+      await supabase
+        .from('facebook_integrations')
+        .update({ is_active: false })
+        .eq('tenant_id', tenantId);
+      await supabase
+        .from('tenant_integrations')
+        .update({ status: 'available', metadata: {} })
+        .eq('tenant_id', tenantId)
+        .eq('integration_id', 'facebook-leads');
+      return { success: true };
+    }
+
     const { error } = await supabase
       .from('tenant_integrations')
       .update({ status: 'available', metadata: {} })

@@ -309,8 +309,8 @@ export default function AccountingDashboard() {
                                 No recent transactions found.
                             </div>
                         ) : (
-                            <div className="min-w-full overflow-x-auto">
-                                <table className="w-full text-sm text-left border-collapse">
+                            <div className="w-full overflow-x-auto min-w-0">
+                                <table className="w-full min-w-[480px] text-sm text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-slate-800 text-slate-400 mb-2 font-medium">
                                             <th className="pb-3 px-2">Date</th>

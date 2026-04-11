@@ -7,6 +7,7 @@ import { Resend } from 'resend';
 // const supabase = createClient(...);
 
 import { ENV } from '@/config/env';
+import { isTurnstileEnforced, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
     const DAILY_API_KEY = ENV.DAILY_API_KEY;
@@ -29,12 +30,25 @@ export async function POST(req: Request) {
             client_phone,
             client_notes,
             time_zone,
-            booking_type_name // pass explicitly to save query
+            booking_type_name,
+            turnstile_token,
         } = body;
 
-        // 1. Validation
         if (!tenant_id || !booking_type_id || !start_time || !client_email) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        if (isTurnstileEnforced()) {
+            if (!turnstile_token?.trim()) {
+                return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
+            }
+            const ok = await verifyTurnstileToken(turnstile_token);
+            if (!ok) {
+                return NextResponse.json(
+                    { error: 'Security verification failed. Please try again.' },
+                    { status: 403 }
+                );
+            }
         }
 
         // 1b. Fetch Plan and Enforce Limits

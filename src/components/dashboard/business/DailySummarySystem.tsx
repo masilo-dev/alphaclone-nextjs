@@ -65,12 +65,25 @@ const DailySummarySystem: React.FC = () => {
         { count: leadsCount },
         { count: emailsCount },
         { count: contractsCount },
-        { data: invoiceData }
+        { data: invoiceData },
+        { count: tasksDoneCount },
+        { count: meetingsCount },
       ] = await Promise.all([
         supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
         supabase.from('emails').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
         supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
-        supabase.from('invoices').select('total_amount').eq('tenant_id', currentTenant.id).gte('created_at', startOfDay)
+        supabase.from('invoices').select('total_amount').eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
+        supabase
+          .from('tasks')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', currentTenant.id)
+          .eq('status', 'completed')
+          .gte('updated_at', startOfDay),
+        supabase
+          .from('calendar_events')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', currentTenant.id)
+          .gte('start_time', startOfDay),
       ]);
 
       const todayRevenue = invoiceData?.reduce((sum: number, inv: any) => sum + (inv.total_amount || 0), 0) || 0;
@@ -85,8 +98,8 @@ const DailySummarySystem: React.FC = () => {
           emailsSent: emailsCount || 0,
           contractsCreated: contractsCount || 0,
           invoicesIssued: invoiceData?.length || 0,
-          tasksCompleted: 0, // Placeholder as task table name might vary
-          meetingsScheduled: 0, // Placeholder
+          tasksCompleted: tasksDoneCount || 0,
+          meetingsScheduled: meetingsCount || 0,
           revenue: todayRevenue,
           activeUsers: 1 // Default
         },
@@ -169,8 +182,14 @@ const DailySummarySystem: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!currentTenant?.id) {
+      setSummaries([]);
+      setCurrentSummary(null);
+      setLoading(false);
+      return;
+    }
     loadSummaries();
-  }, []);
+  }, [currentTenant?.id]);
 
   useEffect(() => {
     if (!autoRefresh) return;

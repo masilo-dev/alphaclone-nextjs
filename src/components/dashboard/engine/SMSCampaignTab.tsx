@@ -498,8 +498,8 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             <p className="text-slate-500 text-sm">No messages yet</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-2xl border border-slate-800">
-                            <table className="w-full text-sm">
+                        <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                            <table className="w-full min-w-[640px] text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-800 bg-slate-900/50">
                                         {['To', 'Message', 'Status', 'SID', 'Sent'].map(h => (

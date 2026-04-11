@@ -75,11 +75,16 @@
   color-scheme: dark;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background-color: #020D1A;
   color: var(--foreground);
   scroll-behavior: smooth;
   @apply text-sm antialiased;
+  overflow-x: clip;
 }
 
 /* Typography Overrides - Scoped to Marketing Theme */

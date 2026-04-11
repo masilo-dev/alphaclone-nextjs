@@ -81,6 +81,11 @@ const envSchema = z.object({
 
     // App URL for OAuth redirects
     NEXT_PUBLIC_APP_URL: z.string().url().optional().default('https://alphaclone.tech'),
+
+    // Zoom OAuth (user-managed app)
+    ZOOM_CLIENT_ID: z.string().optional(),
+    ZOOM_CLIENT_SECRET: z.string().optional(),
+    ZOOM_OAUTH_SCOPES: z.string().optional(),
 });
 
 /**
@@ -144,6 +149,12 @@ function validateEnv() {
         BROWSER_WS_ENDPOINT: process.env.BROWSER_WS_ENDPOINT,
 
         NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'https://alphaclone.tech',
+
+        ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID || process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID,
+        ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET,
+        ZOOM_OAUTH_SCOPES:
+            process.env.ZOOM_OAUTH_SCOPES ||
+            'user:read:user meeting:read meeting:write',
     };
 
     Object.keys(rawEnv).forEach(key => {

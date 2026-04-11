@@ -29,8 +29,13 @@ interface Folder {
 
 import LeadOutreachModal from './LeadOutreachModal';
 import CRMContactPickerModal from './CRMContactPickerModal';
+import { supabase } from '@/lib/supabase';
 
-export default function ZohoMailView() {
+type ZohoMailViewProps = {
+    userId?: string;
+};
+
+export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) {
     const [folders, setFolders] = useState<Folder[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [selectedFolder, setSelectedFolder] = useState<string>('1'); // Inbox
@@ -309,9 +314,16 @@ export default function ZohoMailView() {
     };
 
     const handleSaveTask = async (taskData: { title: string; description: string; priority: string }) => {
-        // Get current user ID from localStorage or context
-        const userId = localStorage.getItem('userId') || '';
-        
+        let userId = userIdProp?.trim() || '';
+        if (!userId) {
+            const { data: { user } } = await supabase.auth.getUser();
+            userId = user?.id || '';
+        }
+        if (!userId) {
+            toast.error('Sign in required to create a task.');
+            return;
+        }
+
         try {
             const { error } = await taskService.createTask(userId, {
                 title: taskData.title,

@@ -81,6 +81,30 @@ export async function requireTenantAccess(tenantId: string) {
 }
 
 /**
+ * Platform super-admin: profiles.role = 'admin' (not tenant-scoped).
+ */
+export async function requirePlatformSuperAdmin() {
+    const { supabase, user } = await requireAuthenticatedUser();
+
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[apiAuth] requirePlatformSuperAdmin profile:', error.message);
+        throw new RouteAuthError(500, 'Failed to verify admin access');
+    }
+
+    if (profile?.role !== 'admin') {
+        throw new RouteAuthError(403, 'Forbidden');
+    }
+
+    return { supabase, user };
+}
+
+/**
  * Standard utility for returning error responses from API routes.
  */
 export function routeErrorResponse(error: unknown, fallbackMessage = 'Internal server error') {

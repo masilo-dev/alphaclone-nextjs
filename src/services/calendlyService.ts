@@ -7,20 +7,20 @@ export const calendlyService = {
      * Get the active Calendly configuration for the current tenant
      */
     async getConfig(tenantId?: string) {
-        // Client-side fallback
-        if (typeof window !== 'undefined' && !tenantId) {
-            const tenant = JSON.parse(localStorage.getItem('alpha_tenant') || '{}');
-            return tenant?.settings?.calendly;
+        let resolvedId = tenantId;
+        if (!resolvedId && typeof window !== 'undefined') {
+            resolvedId = tenantService.getCurrentTenantId() ?? undefined;
         }
 
-        // Server-side: fetch from database
-        if (tenantId) {
+        if (resolvedId) {
             const { data: tenant } = await supabase
                 .from('tenants')
                 .select('settings')
-                .eq('id', tenantId)
-                .single();
-            return (tenant?.settings as any)?.calendly;
+                .eq('id', resolvedId)
+                .maybeSingle();
+            return (tenant?.settings as Record<string, unknown> | null)?.calendly as
+                | Record<string, unknown>
+                | undefined;
         }
 
         return null;

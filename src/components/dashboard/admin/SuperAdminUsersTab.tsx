@@ -93,7 +93,7 @@ const SuperAdminUsersTab: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in min-w-0">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -109,7 +109,7 @@ const SuperAdminUsersTab: React.FC = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <Input
                             placeholder="Search email or name..."
-                            className="pl-10 w-64 h-10 bg-slate-900/50 border-slate-800"
+                            className="pl-10 w-full max-w-full sm:w-64 sm:max-w-xs h-10 bg-slate-900/50 border-slate-800"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -134,8 +134,8 @@ const SuperAdminUsersTab: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md">
-                <table className="w-full text-left border-collapse">
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-x-auto backdrop-blur-md min-w-0">
+                <table className="w-full min-w-[720px] text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-500 text-[10px] uppercase tracking-widest font-black">
                             <th className="p-4">User Identity</th>

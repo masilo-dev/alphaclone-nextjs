@@ -4,7 +4,8 @@ import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
 import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X, History } from 'lucide-react';
 import { User, Invoice } from '../../types';
-import { businessInvoiceService } from '../../services/businessInvoiceService';
+import { businessInvoiceService, type BusinessInvoice } from '../../services/businessInvoiceService';
+import { cronService } from '../../services/cronService';
 import { paymentService } from '../../services/paymentService';
 import { useTenant } from '@/contexts/TenantContext';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -14,6 +15,22 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from 'framer-motion';
 import { exportToCSV } from '../../utils/exportUtils';
 import { ChartContainer } from '../ui/ChartContainer';
+
+function mapBusinessInvoiceToFinanceRow(bi: BusinessInvoice): Invoice {
+    let status: Invoice['status'] = 'Unpaid';
+    if (bi.status === 'paid') status = 'Paid';
+    else if (bi.status === 'overdue') status = 'Overdue';
+    return {
+        id: bi.id,
+        projectId: bi.projectId || '',
+        projectName: bi.invoiceNumber || 'Invoice',
+        clientId: bi.clientId || '',
+        amount: bi.total,
+        status,
+        dueDate: bi.dueDate,
+        description: (bi.notes || '').slice(0, 240),
+    };
+}
 
 interface FinanceTabProps {
     user: User;
@@ -263,7 +280,7 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
 
             {/* Footer note */}
             <div className="text-center text-xs text-slate-500 bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                🔒 Payments are securely processed by <span className="font-bold text-slate-400">Stripe</span>. You can cancel or change your plan at any time from your billing portal.
+                Payments are securely processed by <span className="font-bold text-slate-400">Stripe</span>. You can cancel or change your plan at any time from your billing portal.
             </div>
         </div>
     );
@@ -273,6 +290,8 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
 const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handlePayClick, onCreateInvoice, initialSubTab = 'invoices' }) => {
     const { currentTenant: tenant } = useTenant();
     const { format } = useCurrency();
+    const [tenantInvoices, setTenantInvoices] = React.useState<Invoice[]>([]);
+    const [tenantInvoicesLoading, setTenantInvoicesLoading] = React.useState(false);
     const [isExporting, setIsExporting] = React.useState(false);
     const [subTab, setSubTab] = React.useState<'invoices' | 'quotes' | 'subscription' | 'receipts'>(initialSubTab);
     const [payments, setPayments] = React.useState<any[]>([]);
@@ -290,15 +309,52 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     }, [subTab, user.id]);
     const [showPDFPreview, setShowPDFPreview] = React.useState<string | null>(null);
     const [showRecurringModal, setShowRecurringModal] = React.useState(false);
+    const [recurringSchedules, setRecurringSchedules] = React.useState<
+        Array<{
+            id: string;
+            clientName: string;
+            amount: string;
+            frequency: string;
+            startDate: string;
+            description: string;
+            active: boolean;
+        }>
+    >([]);
+    const [recurringListLoading, setRecurringListLoading] = React.useState(false);
     const [recurringConfig, setRecurringConfig] = React.useState({
         clientName: '',
         amount: '',
-        frequency: 'monthly' as 'monthly' | 'weekly' | 'yearly',
+        frequency: 'monthly' as 'monthly' | 'weekly' | 'yearly' | 'daily',
         startDate: '',
         description: ''
     });
 
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+
+    const displayInvoices = filteredInvoices.length > 0 ? filteredInvoices : tenantInvoices;
+
+    React.useEffect(() => {
+        if (filteredInvoices.length > 0 || !tenant?.id || !isAdmin) {
+            if (filteredInvoices.length > 0) setTenantInvoices([]);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            setTenantInvoicesLoading(true);
+            const { invoices, error } = await businessInvoiceService.getInvoices(tenant.id);
+            if (cancelled) return;
+            if (error) {
+                toast.error('Could not load invoices for this organization.');
+                setTenantInvoices([]);
+            } else {
+                setTenantInvoices((invoices || []).map(mapBusinessInvoiceToFinanceRow));
+            }
+            setTenantInvoicesLoading(false);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [filteredInvoices.length, tenant?.id, isAdmin]);
 
     const [pnlData, setPnlData] = React.useState<any>(null);
     const [isGeneratingPnL, setIsGeneratingPnL] = React.useState(false);
@@ -306,30 +362,84 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
     // Expenses
     const [isExpenseModalOpen, setIsExpenseModalOpen] = React.useState(false);
 
-    const handleSaveRecurringInvoice = () => {
+    const loadRecurringSchedules = React.useCallback(async () => {
+        if (!tenant?.id) return;
+        setRecurringListLoading(true);
+        const { data, error } = await cronService.getRecurringInvoices(tenant.id);
+        setRecurringListLoading(false);
+        if (error) {
+            toast.error(error);
+            return;
+        }
+        setRecurringSchedules(
+            (data || []).map((r) => ({
+                id: r.id,
+                clientName: r.clientName,
+                amount: r.amount,
+                frequency: r.frequency,
+                startDate: r.startDate,
+                description: r.description,
+                active: r.active !== false,
+            }))
+        );
+    }, [tenant?.id]);
+
+    React.useEffect(() => {
+        if (showRecurringModal && tenant?.id && isAdmin) {
+            loadRecurringSchedules();
+        }
+    }, [showRecurringModal, tenant?.id, isAdmin, loadRecurringSchedules]);
+
+    const handleSaveRecurringInvoice = async () => {
         if (!recurringConfig.clientName || !recurringConfig.amount || !recurringConfig.startDate) {
             toast.error('Please fill in all required fields');
             return;
         }
+        if (!tenant?.id) {
+            toast.error('No active organization');
+            return;
+        }
+        const amt = parseFloat(recurringConfig.amount);
+        if (Number.isNaN(amt) || amt <= 0) {
+            toast.error('Enter a valid amount');
+            return;
+        }
 
-        // Save to localStorage (in a real app, this would go to a database)
-        const recurringInvoices = JSON.parse(localStorage.getItem('recurring_invoices') || '[]');
-        recurringInvoices.push({
-            id: Date.now().toString(),
-            ...recurringConfig,
-            createdAt: new Date().toISOString()
+        const toastId = toast.loading('Saving schedule…');
+        const { success, error } = await cronService.createRecurringInvoice({
+            clientName: recurringConfig.clientName.trim(),
+            amount: String(amt),
+            frequency: recurringConfig.frequency,
+            startDate: recurringConfig.startDate,
+            description: recurringConfig.description.trim(),
+            tenantId: tenant.id,
         });
-        localStorage.setItem('recurring_invoices', JSON.stringify(recurringInvoices));
 
-        toast.success('Recurring invoice schedule saved');
-        setShowRecurringModal(false);
+        if (!success) {
+            toast.error(error || 'Could not save schedule', { id: toastId });
+            return;
+        }
+
+        toast.success('Recurring schedule saved to your workspace', { id: toastId });
         setRecurringConfig({
             clientName: '',
             amount: '',
             frequency: 'monthly',
             startDate: '',
-            description: ''
+            description: '',
         });
+        await loadRecurringSchedules();
+    };
+
+    const handleDeleteRecurring = async (id: string) => {
+        const toastId = toast.loading('Removing schedule…');
+        const { success, error } = await cronService.deleteRecurringInvoice(id);
+        if (!success) {
+            toast.error(error || 'Could not remove schedule', { id: toastId });
+            return;
+        }
+        toast.success('Schedule removed', { id: toastId });
+        await loadRecurringSchedules();
     };
 
     React.useEffect(() => {
@@ -475,8 +585,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
         }
     };
 
-    const totalRevenue = pnlData ? pnlData.totalRevenue : filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
-    const outstanding = filteredInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalRevenue = pnlData ? pnlData.totalRevenue : displayInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
+    const outstanding = displayInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
 
     // Dynamic from backend accounting
     const totalExpenses = pnlData ? pnlData.totalExpenses : 0;
@@ -527,7 +637,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         </Button>
                         <Button
                             variant="secondary"
-                            onClick={() => exportToCSV(filteredInvoices, 'Invoices')}
+                            onClick={() => exportToCSV(displayInvoices, 'Invoices')}
                             icon={<Download className="w-4 h-4" />}
                             className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                         >
@@ -556,7 +666,10 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         {isAdmin && (
                             <>
                                 <Button
-                                    onClick={onCreateInvoice}
+                                    onClick={() => {
+                                        if (onCreateInvoice) onCreateInvoice();
+                                        else toast.info('Use Billing Center to create and send invoices.');
+                                    }}
                                     className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                                 >
                                     Create Invoice
@@ -638,8 +751,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                             <p className="text-slate-400 text-sm">Completed payments will appear here with receipt details.</p>
                         </div>
                     ) : (
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-                            <table className="w-full text-left text-sm">
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto min-w-0">
+                            <table className="w-full min-w-[640px] text-left text-sm">
                                 <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-500">
                                     <tr>
                                         <th className="px-6 py-4">Date</th>
@@ -685,7 +798,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                     {/* Receipt Modal */}
                     {selectedReceipt && (
                         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedReceipt(null)}>
-                            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-md" onClick={e => e.stopPropagation()}>
+                            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 sm:p-8 w-full max-w-md max-h-[90dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-bold text-white">Payment Receipt</h3>
                                     <button onClick={() => setSelectedReceipt(null)} className="text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
@@ -789,48 +902,33 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                         </div>
                     </div>
 
-                    {/* Payment Health (Dunning) Section */}
                     {isAdmin && (
                         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl mb-6">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                    <ShieldCheck className="w-5 h-5 text-teal-400" /> Payment Health & Dunning
+                                    <ShieldCheck className="w-5 h-5 text-teal-400" /> Receivables snapshot
                                 </h3>
-                                <Badge variant="success">Active Recovery</Badge>
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <p className="text-sm text-slate-400 mb-4">
+                                Overdue count is based on invoices loaded below. Payment retries and dunning rules are configured from Billing Center and your payment provider.
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Failed Attempts (30d)</p>
+                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Overdue invoices</p>
                                     <p className="text-2xl font-bold text-white">
-                                        {filteredInvoices.filter(i => i.status === 'Overdue').length}
+                                        {displayInvoices.filter(i => i.status === 'Overdue').length}
                                     </p>
-                                    <p className="text-[10px] text-slate-500">Automated retries in progress</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Recovery Rate</p>
-                                    <p className="text-2xl font-bold text-teal-400">92.4%</p>
-                                    <p className="text-[10px] text-teal-500/50">+2.1% from last month</p>
+                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Outstanding balance</p>
+                                    <p className="text-2xl font-bold text-orange-400">{format(outstanding)}</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Next Auto-Retry</p>
-                                    <p className="text-2xl font-bold text-white">Tomorrow</p>
-                                    <p className="text-[10px] text-slate-500">Scheduled for 04:00 AM UTC</p>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                    <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                                    Smart Dunning AI is optimizing retry windows
-                                </div>
-                                <button className="text-xs text-teal-400 hover:text-teal-300 font-bold">Configure Dunning Rules</button>
                             </div>
                         </div>
                     )}
 
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
-                        <table className="w-full text-left text-sm text-slate-400">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto min-w-0">
+                        <table className="w-full min-w-[720px] text-left text-sm text-slate-400">
                             <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-500">
                                 <tr>
                                     <th className="px-6 py-4">Invoice ID</th>
@@ -842,7 +940,14 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800">
-                                {filteredInvoices.map((inv) => (
+                                {tenantInvoicesLoading && filteredInvoices.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                                            Loading invoices...
+                                        </td>
+                                    </tr>
+                                )}
+                                {!tenantInvoicesLoading && displayInvoices.map((inv) => (
                                     <tr key={inv.id} className="hover:bg-slate-800/50 transition-colors">
                                         <td className="px-6 py-4 font-mono text-xs text-white">#{inv.id.toUpperCase()}</td>
                                         <td className="px-6 py-4">
@@ -894,7 +999,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredInvoices.length === 0 && (
+                                {!tenantInvoicesLoading && displayInvoices.length === 0 && (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                                             No invoices found.
@@ -947,8 +1052,40 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
             {/* Recurring Invoice Modal */}
             {showRecurringModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
-                        <h3 className="text-xl font-bold text-white mb-4">Setup Recurring Invoice</h3>
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold text-white mb-2">Recurring invoices</h3>
+                        <p className="text-sm text-slate-400 mb-4">
+                            Schedules are stored for your organization and processed by automated billing jobs.
+                        </p>
+
+                        {recurringListLoading ? (
+                            <p className="text-slate-500 text-sm py-4">Loading schedules…</p>
+                        ) : recurringSchedules.length > 0 ? (
+                            <div className="mb-6 space-y-2 max-h-40 overflow-y-auto border border-slate-800 rounded-lg p-3">
+                                {recurringSchedules.map((row) => (
+                                    <div
+                                        key={row.id}
+                                        className="flex items-center justify-between gap-2 text-sm text-slate-300 border-b border-slate-800/80 pb-2 last:border-0 last:pb-0"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="font-medium text-white truncate">{row.clientName}</div>
+                                            <div className="text-xs text-slate-500">
+                                                {format(parseFloat(row.amount) || 0)} · {row.frequency} · starts {row.startDate}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteRecurring(row.id)}
+                                            className="text-xs text-red-400 hover:text-red-300 shrink-0"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+
+                        <h4 className="text-sm font-semibold text-white mb-3">New schedule</h4>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-1">Client Name *</label>
@@ -974,11 +1111,17 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 <label className="block text-sm font-medium text-slate-400 mb-1">Frequency</label>
                                 <select
                                     value={recurringConfig.frequency}
-                                    onChange={(e) => setRecurringConfig({...recurringConfig, frequency: e.target.value as any})}
+                                    onChange={(e) =>
+                                        setRecurringConfig({
+                                            ...recurringConfig,
+                                            frequency: e.target.value as typeof recurringConfig.frequency,
+                                        })
+                                    }
                                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
                                 >
-                                    <option value="monthly">Monthly</option>
+                                    <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
                                     <option value="yearly">Yearly</option>
                                 </select>
                             </div>

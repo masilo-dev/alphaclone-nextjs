@@ -219,8 +219,8 @@ export function PrivacyPolicy() {
 
          <Section id="data-sharing" title="5. Data Sharing & Third Parties">
             <p>We do not sell, rent, or trade your personal data. We share data only with the following service providers, strictly for the purpose of delivering our service:</p>
-            <div className="mt-4 overflow-x-auto">
-               <table className="w-full text-xs border-collapse">
+            <div className="mt-4 overflow-x-auto min-w-0">
+               <table className="w-full min-w-[480px] text-xs border-collapse">
                   <thead>
                      <tr className="border-b border-slate-700">
                         <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Provider</th>
@@ -554,8 +554,8 @@ const cookieCategories = [
 
 function CookieCategoryTable({ cookies }: { cookies: typeof cookieCategories[0]['cookies'] }) {
    return (
-      <div className="mt-3 overflow-x-auto">
-         <table className="w-full text-xs border-collapse">
+      <div className="mt-3 overflow-x-auto min-w-0">
+         <table className="w-full min-w-[520px] text-xs border-collapse">
             <thead>
                <tr className="border-b border-slate-700/50">
                   <th className="text-left py-2 pr-3 text-slate-400 font-semibold w-1/3">Cookie Name</th>

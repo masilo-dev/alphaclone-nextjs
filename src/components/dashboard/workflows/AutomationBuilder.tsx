@@ -23,7 +23,7 @@ import { supabase } from '../../../lib/supabase';
 
 // Define custom node types for a premium feel
 const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
-  <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white min-w-[200px] border border-indigo-400">
+  <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border border-indigo-400">
     <div className="flex items-center gap-2 font-bold mb-1">
       <Zap className="w-4 h-4 text-indigo-100" />
       {data.label}
@@ -33,29 +33,40 @@ const TriggerNode = ({ data }: { data: { label: string; description: string } })
   </div>
 );
 
-const NODE_STYLES: Record<string, { border: string; icon: string }> = {
-  zoho: { border: 'border-blue-500', icon: '🔷' },
-  zoho_mail: { border: 'border-sky-500', icon: '📧' },
-  ai: { border: 'border-purple-500', icon: '🤖' },
-  document: { border: 'border-amber-500', icon: '📄' },
-  campaign: { border: 'border-indigo-500', icon: '📢' },
-  task: { border: 'border-green-500', icon: '✅' },
-  finance: { border: 'border-emerald-500', icon: '💰' },
-  notify: { border: 'border-orange-500', icon: '🔔' },
-  meeting: { border: 'border-cyan-500', icon: '📅' },
-  project: { border: 'border-indigo-400', icon: '📁' },
-  email: { border: 'border-teal-500', icon: '✉️' },
+const NODE_STYLES: Record<string, { border: string }> = {
+  zoho: { border: 'border-blue-500' },
+  zoho_mail: { border: 'border-sky-500' },
+  ai: { border: 'border-purple-500' },
+  document: { border: 'border-amber-500' },
+  campaign: { border: 'border-indigo-500' },
+  task: { border: 'border-green-500' },
+  finance: { border: 'border-emerald-500' },
+  notify: { border: 'border-orange-500' },
+  meeting: { border: 'border-cyan-500' },
+  project: { border: 'border-indigo-400' },
+  email: { border: 'border-teal-500' },
+  ops: { border: 'border-slate-400' },
 };
 
+function typeAbbrev(type: string) {
+  const t = (type || 'op').replace(/_/g, ' ');
+  const parts = t.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return (parts[0] || 'OP').slice(0, 2).toUpperCase();
+}
+
 const ActionNode = ({ data }: { data: { label: string; description: string; type: string } }) => {
-  const style = NODE_STYLES[data.type] || { border: 'border-slate-200 dark:border-slate-700', icon: '⚡' };
+  const style = NODE_STYLES[data.type] || { border: 'border-slate-200 dark:border-slate-700' };
+  const abbr = typeAbbrev(data.type);
 
   return (
-    <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[200px] border-2 ${style.border}`}>
+    <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
       <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
-      <div className="flex items-center gap-2 font-bold text-sm mb-1">
-        <span className="text-base">{style.icon}</span>
-        {data.label}
+      <div className="flex items-center gap-2 font-bold text-sm mb-1 min-w-0">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-[9px] font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
+          {abbr}
+        </span>
+        <span className="truncate">{data.label}</span>
       </div>
       <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">{data.description}</div>
       <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
@@ -398,10 +409,10 @@ export default function AutomationBuilder() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner min-h-[700px]">
+    <div className="w-full h-full min-w-0 min-h-[min(100dvh,720px)] sm:min-h-[640px] lg:min-h-[700px] flex flex-col bg-slate-50 dark:bg-slate-950 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner">
         {/* Main Tab Controller */}
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-2 flex items-center justify-between z-20">
-            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between z-20 min-w-0">
+            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
                 {[
                     { id: 'editor', label: 'Builder', icon: Zap },
                     { id: 'history', label: 'Audit Trail', icon: History },
@@ -410,7 +421,7 @@ export default function AutomationBuilder() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
                             activeTab === tab.id
                                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
@@ -422,8 +433,8 @@ export default function AutomationBuilder() {
                 ))}
             </div>
             
-            <div className="flex items-center gap-3">
-                <div className="hidden md:block text-right">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
+                <div className="hidden md:block text-right min-w-0">
                     <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
                     <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
                         {workflowId ? 'Syncing Cloud' : 'New Draft'}
@@ -598,7 +609,7 @@ export default function AutomationBuilder() {
         )}
 
         {activeTab === 'history' && (
-            <div className="w-full h-full bg-slate-50 dark:bg-slate-950 p-8 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-8">
                     <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                         <History className="w-6 h-6 text-indigo-500" /> Audit Trail
@@ -626,8 +637,8 @@ export default function AutomationBuilder() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl">
-                        <table className="w-full text-left border-collapse">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl overflow-x-auto">
+                        <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                                     <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Execution Date</th>
@@ -665,7 +676,7 @@ export default function AutomationBuilder() {
         )}
 
         {activeTab === 'templates' && (
-            <div className="w-full h-full bg-slate-50 dark:bg-slate-950 p-8 flex flex-col animate-in fade-in scale-in-95 duration-500">
+            <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in scale-in-95 duration-500">
                 <div className="mb-8">
                     <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                         <LayoutTemplate className="w-6 h-6 text-indigo-500" /> Automation Templates

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function POST(request: NextRequest) {
@@ -51,8 +52,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Send email notification to sales team
-    // await sendEmailNotification(data);
+    const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();
+    const resendKey = process.env.RESEND_API_KEY;
+    const fromAddress = process.env.RESEND_CONTACT_FROM?.trim() || 'AlphaClone <bookings@resend.dev>';
+    if (salesInbox && resendKey) {
+      try {
+        const resend = new Resend(resendKey);
+        await resend.emails.send({
+          from: fromAddress,
+          to: salesInbox,
+          replyTo: email,
+          subject: `Website contact: ${subject || 'General inquiry'}`,
+          text: `From: ${name} <${email}>\nCompany: ${company || '—'}\n\n${message}`,
+        });
+      } catch (notifyErr) {
+        console.error('Contact form sales notification failed:', notifyErr);
+      }
+    }
 
     return NextResponse.json(
       { 

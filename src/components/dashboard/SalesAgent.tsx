@@ -992,7 +992,7 @@ const SalesAgent: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
+        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col px-4 py-4 sm:px-6 sm:py-6 lg:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">

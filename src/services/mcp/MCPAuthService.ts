@@ -127,4 +127,19 @@ export class MCPAuthService {
       return false;
     }
   }
+
+  /**
+   * Revoke MCP API access for a tenant (Claude / Manus shared key).
+   */
+  static async revokeAllForTenant(tenantId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.from('mcp_api_keys').delete().eq('tenant_id', tenantId);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
 }

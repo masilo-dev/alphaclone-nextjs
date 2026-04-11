@@ -57,8 +57,17 @@ export function useIntegrations(): UseIntegrationsReturn {
       }
 
       if (result.redirectUrl) {
+        const url = result.redirectUrl;
+        const isInternal = url.startsWith('/') && !url.startsWith('//');
+        if (isInternal) {
+          toast.success('Opening setup…');
+          setTimeout(() => {
+            window.location.assign(url);
+          }, 400);
+          return;
+        }
         toast.success('Redirecting to authorization…');
-        setTimeout(() => window.open(result.redirectUrl, '_blank'), 800);
+        setTimeout(() => window.open(url, '_blank'), 800);
         return;
       }
 

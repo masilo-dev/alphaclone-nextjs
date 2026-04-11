@@ -1154,7 +1154,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/zoho/mail':
         return (
           <React.Suspense fallback={<TabSkeleton rows={6} showStats={false} />}>
-            <ZohoMailView />
+            <ZohoMailView userId={user.id} />
           </React.Suspense>
         );
 
@@ -1623,7 +1623,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30">
+    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30">
       <ConnectionStatus />
 
       <WelcomeModal
@@ -1893,8 +1893,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
+              <div className="hidden md:flex items-center shrink-0">
                 <MomentumHUD 
                   score={dashboardStats?.momentumScore || 0}
                   streak={dashboardStats?.loginStreak || 0}
@@ -2009,6 +2009,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         onCreateInvoice={() => setCreateInvoiceOpen(true)}
         onCreateTask={() => setCreateTaskOpen(true)}
         onCreateProject={() => setCreateProjectOpen(true)}
+        userId={user.id}
       />
 
 

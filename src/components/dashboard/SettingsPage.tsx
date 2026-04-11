@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     CreditCard,
     Shield,
@@ -35,7 +35,7 @@ import { Building, Trash2 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import ZohoIntegration from './business/ZohoIntegration';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 interface SettingsPageProps {
     user: UserType;
@@ -43,22 +43,60 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const zoomHandledRef = useRef(false);
     const initialSection = searchParams?.get('section') as any;
 
-    const validSections = ['profile', 'notifications', 'security', 'appearance', 'billing', 'booking'];
-    const defaultSection = validSections.includes(initialSection) ? initialSection : 'profile';
+    const validSections = [
+        'profile',
+        'notifications',
+        'security',
+        'appearance',
+        'billing',
+        'booking',
+        'branding',
+        'integrations',
+    ] as const;
+    const defaultSection = validSections.includes(initialSection as (typeof validSections)[number])
+        ? initialSection
+        : 'profile';
 
     const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | 'integrations' | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const { currentTenant } = useTenant();
 
-    // Fix hydration issue - set initial section after mount
+    // Hydration + deep links (Zoom OAuth return, integrations tab)
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const isMobile = window.innerWidth < 1024;
-            setActiveSection(isMobile ? null : defaultSection);
+        if (typeof window === 'undefined') return;
+
+        const isMobile = window.innerWidth < 1024;
+        const section = searchParams?.get('section');
+        const zoomOk = searchParams?.get('zoom') === 'connected';
+        const zoomErr = searchParams?.get('zoom_error');
+        const valid = new Set<string>(validSections);
+
+        let next: typeof activeSection;
+        if (zoomOk || section === 'integrations') {
+            next = 'integrations';
+        } else if (section && valid.has(section)) {
+            next = section as typeof activeSection;
+        } else {
+            next = isMobile ? null : (defaultSection as typeof activeSection);
         }
-    }, [defaultSection]);
+
+        setActiveSection(next);
+
+        if (zoomOk) {
+            if (!zoomHandledRef.current) {
+                zoomHandledRef.current = true;
+                toast.success('Zoom connected for this workspace.');
+            }
+            router.replace('/dashboard/settings?section=integrations', { scroll: false });
+        } else if (zoomErr) {
+            toast.error(`Zoom connection failed: ${zoomErr}`);
+            router.replace('/dashboard/settings?section=integrations', { scroll: false });
+        }
+    }, [searchParams, defaultSection, router]);
 
     const [profileData, setProfileData] = useState({
         name: user.name,
@@ -207,7 +245,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         if (!currentTenant?.id) return;
         setIsToppingUp(true);
         // During Beta (until March), we'll just show a notification
-        toast("AI Credit purchasing will be available in March. Beta users currently have expanded limits.", { icon: 'ℹ️' });
+        toast('AI credit purchasing is not enabled for this deployment. Beta limits apply.');
         setIsToppingUp(false);
     };
 

@@ -140,7 +140,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     showInPortfolio: false
                 };
 
-                console.log("Creating project:", projectToCreate);
                 const { project, error } = await projectService.createProject(projectToCreate);
 
                 if (error) {
@@ -196,15 +195,15 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full flex flex-col space-y-6 p-8 overflow-y-auto custom-scrollbar">
+        <div className="h-full flex flex-col space-y-4 sm:space-y-6 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="p-3 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl shadow-xl shadow-violet-500/20">
-                            <Briefcase className="w-6 h-6 text-white" />
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 min-w-0">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-1 min-w-0">
+                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl sm:rounded-2xl shadow-xl shadow-violet-500/20 shrink-0">
+                            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
-                        <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight break-words">
                             Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">Overview</span>
                         </h2>
                     </div>
@@ -568,8 +567,8 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
     }, [initialData]);
 
     return (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-            <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-8 max-w-md w-full shadow-2xl shadow-violet-500/10 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-[2rem] p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-violet-500/10 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>

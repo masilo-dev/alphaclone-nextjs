@@ -575,7 +575,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <p className="text-lg font-bold">{selectedClient?.name || 'Client'}</p>
                                     <p className="opacity-70">{selectedClient?.email}</p>
                                 </div>
-                                <table className="w-full mt-8 text-sm">
+                                <div className="overflow-x-auto -mx-1 px-1 min-w-0">
+                                <table className="w-full min-w-[360px] mt-8 text-sm">
                                     <thead className="border-b"><tr><th className="text-left py-2">Item</th><th className="text-right py-2">Qty</th><th className="text-right py-2">Amount</th></tr></thead>
                                     <tbody>
                                         {lineItems.map((item, i) => (
@@ -587,8 +588,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
                                 <div className="flex justify-end mt-4">
-                                    <div className="w-64 text-right">
+                                    <div className="w-full max-w-xs sm:w-64 text-right">
                                         <p className="font-bold text-xl border-t pt-2">Total: ${getTotal().toFixed(2)} USD</p>
                                     </div>
                                 </div>

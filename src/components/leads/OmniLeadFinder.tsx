@@ -20,7 +20,7 @@ import { OutreachPanel } from './OutreachPanel';
 const LeadMapView = dynamic(() => import('./LeadMapView'), {
   ssr: false,
   loading: () => (
-    <div className="w-full flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40" style={{ height: 480 }}>
+    <div className="w-full min-h-[min(100vw,260px)] h-[min(50svh,520px)] sm:min-h-[320px] md:h-[480px] max-h-[640px] flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40">
       <div className="text-slate-500 text-sm flex items-center gap-2">
         <RefreshCw className="w-4 h-4 animate-spin" /> Loading map...
       </div>
@@ -57,24 +57,24 @@ const SOURCE_COLORS: Record<string, string> = {
 
 // ── Industry Groups ──────────────────────────────────────
 const INDUSTRY_GROUPS: Record<string, string[]> = {
-  '🏠 Home Services': [
+  'Home Services': [
     'HVAC', 'Plumbing', 'Electrician', 'Roofing', 'Landscaping',
     'Cleaning Service', 'Pest Control', 'Pool Service', 'Painting',
     'Flooring', 'Window Cleaning', 'Garage Door Repair', 'Handyman',
     'Gutter Cleaning', 'Tree Service', 'Locksmith', 'Solar Installation',
   ],
-  '🏥 Healthcare': [
+  Healthcare: [
     'Dentist', 'Chiropractor', 'Physical Therapist', 'Optometrist',
     'Dermatologist', 'Pediatrician', 'Veterinarian', 'Pharmacy',
     'Mental Health Counselor', 'Massage Therapist', 'Urgent Care',
     'Acupuncture', 'Hearing Clinic',
   ],
-  '🍽️ Food & Hospitality': [
+  'Food & Hospitality': [
     'Restaurant', 'Cafe', 'Bakery', 'Bar', 'Catering',
     'Food Truck', 'Hotel', 'Bed and Breakfast', 'Night Club',
     'Pizza Shop', 'Sushi', 'Steakhouse',
   ],
-  '⚖️ Professional Services': [
+  'Professional Services': [
     'Law Firm', 'Accountant', 'Financial Advisor', 'Insurance Agent',
     'Real Estate Agent', 'Mortgage Broker', 'Business Consultant',
     'Marketing Agency', 'Advertising Agency', 'PR Firm',
@@ -85,27 +85,27 @@ const INDUSTRY_GROUPS: Record<string, string[]> = {
     'Auto Body Shop', 'Tire Shop', 'Moving Company', 'Trucking',
     'Limousine Service', 'Auto Glass',
   ],
-  '💻 Tech & Digital': [
+  'Tech & Digital': [
     'IT Services', 'Web Design', 'Software Development',
     'Cyber Security', 'Data Recovery', 'Phone Repair',
     'IT Support', 'AI Consulting',
   ],
-  '🏋️‍♂️ Fitness & Wellness': [
+  'Fitness & Wellness': [
     'Gym', 'Yoga Studio', 'Pilates', 'Personal Trainer',
     'Spa', 'Nail Salon', 'Hair Salon', 'Barber Shop',
     'Tanning Salon', 'Tattoo Studio',
   ],
-  '🏗️ Construction': [
+  Construction: [
     'General Contractor', 'Cabinet Maker', 'Concrete', 'Demolition',
     'Fencing', 'Masonry', 'Insulation', 'Drywall',
     'Excavation', 'Paving',
   ],
-  '📦 Retail & Commerce': [
+  'Retail & Commerce': [
     'Grocery Store', 'Clothing Store', 'Furniture Store',
     'Pet Store', 'Bookstore', 'Gift Shop', 'Hardware Store',
     'Jewellery Store', 'Electronics Store',
   ],
-  '🎓 Education': [
+  Education: [
     'Tutoring', 'Driving School', 'Music School',
     'Childcare', 'Preschool', 'Language School',
     'Art Classes', 'Dance Studio',
@@ -378,7 +378,7 @@ export default function OmniLeadFinder() {
             setProgress({ percent: 100, message: 'Done' });
 
             const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
-            toast.success(`✅ Found ${leads.length} leads${rejMsg}`);
+            toast.success(`Found ${leads.length} leads${rejMsg}`);
 
             return { leads: qualifiedLeads, sourceStats: data.sourceStats };
         } catch (err: any) {
@@ -404,21 +404,21 @@ export default function OmniLeadFinder() {
         )}
       </AnimatePresence>
 
-      <div className="p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
+      <div className="p-3 sm:p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-[10px] font-bold tracking-wider uppercase mb-1">
-              <Zap className="w-2.5 h-2.5 fill-current" /> Enterprise Engine
+              <Zap className="w-2.5 h-2.5 fill-current shrink-0" /> Enterprise Engine
             </div>
-            <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300">
+            <h1 className="text-lg sm:text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 break-words">
               AlphaClone Business Lead
             </h1>
-            <p className="text-slate-500 text-xs mt-0.5">
+            <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
               Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> · Fallbacks: Yelp · HERE Maps
-              {fallbackUsed && <span className="ml-2 text-amber-400">↳ Fallbacks activated</span>}
+              {fallbackUsed && <span className="block sm:inline sm:ml-2 text-amber-400">Fallback sources used</span>}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col gap-2 w-full sm:w-auto sm:items-end shrink-0">
             {Object.keys(sourceStats).length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
                 {Object.entries(sourceStats).map(([src, count]) =>
@@ -431,9 +431,9 @@ export default function OmniLeadFinder() {
               </div>
             )}
             {dailyQuota && (
-              <div className="flex items-center gap-2 text-[10px]">
-                <span className="text-slate-500">Daily quota:</span>
-                <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+              <div className="flex flex-wrap items-center gap-2 text-[10px] w-full sm:w-auto justify-between sm:justify-end">
+                <span className="text-slate-500 shrink-0">Daily quota:</span>
+                <div className="flex-1 sm:flex-initial min-w-[5rem] sm:w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       dailyQuota.remaining <= 20 ? 'bg-rose-500' :
@@ -485,21 +485,21 @@ export default function OmniLeadFinder() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-          <div className="flex items-center gap-2">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sort</span>
-            <div className="flex rounded-lg overflow-hidden border border-slate-700 text-[11px] font-semibold">
-              {([['default', 'Default'], ['rating_desc', '★ High to Low'], ['rating_asc', '★ Low to High']] as [SortMode, string][]).map(([mode, label]) => (
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 p-3 bg-slate-900/40 rounded-xl border border-slate-800 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 overflow-x-auto pb-0.5 -mx-0.5 px-0.5 [scrollbar-width:thin] sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Sort</span>
+            <div className="flex rounded-lg overflow-hidden border border-slate-700 text-[10px] sm:text-[11px] font-semibold shrink-0">
+              {([['default', 'Default'], ['rating_desc', 'Rating high'], ['rating_asc', 'Rating low']] as [SortMode, string][]).map(([mode, label]) => (
                 <button key={mode} type="button" onClick={() => setSortMode(mode)}
-                  className={`px-2.5 py-1 transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+                  className={`px-2 sm:px-2.5 py-1.5 sm:py-1 whitespace-nowrap transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
                   {label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setAutoSave(v => !v)}>
+          <div className="flex items-center gap-2 cursor-pointer select-none shrink-0" onClick={() => setAutoSave(v => !v)}>
             <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${autoSave ? 'bg-teal-500' : 'bg-slate-700'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${autoSave ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </div>
@@ -508,7 +508,7 @@ export default function OmniLeadFinder() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => !scanning && setUsePlaywright(v => !v)}>
+          <div className="flex items-center gap-2 cursor-pointer select-none shrink-0" onClick={() => !scanning && setUsePlaywright(v => !v)}>
             <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${usePlaywright ? 'bg-amber-500' : 'bg-slate-700'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${usePlaywright ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </div>
@@ -560,7 +560,7 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 min-w-0">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search results</label>
               <div className="relative">
@@ -580,7 +580,7 @@ export default function OmniLeadFinder() {
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${
                       filterTier === tier ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
                     }`}>
-                    {tier === 'all' ? 'All' : tier === 'hot' ? '🔥 Hot' : tier === 'warm' ? '🌡️ Warm' : tier === 'cold' ? '🧊 Cold' : '✕ Skip'}
+                    {tier === 'all' ? 'All' : tier === 'hot' ? 'Hot' : tier === 'warm' ? 'Warm' : tier === 'cold' ? 'Cold' : 'Skip'}
                   </button>
                 ))}
               </div>
@@ -592,7 +592,7 @@ export default function OmniLeadFinder() {
                 {(['all', 'osm', 'yelp', 'here'] as SourceFilter[]).map(src => (
                   <button key={src} onClick={() => setFilterSource(src)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${filterSource === src ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'}`}>
-                    {src === 'all' ? 'All' : src === 'osm' ? '🟢 OSM' : src === 'yelp' ? '🟠 Yelp' : '🔵 HERE'}
+                    {src === 'all' ? 'All' : src === 'osm' ? 'OSM' : src === 'yelp' ? 'Yelp' : 'HERE'}
                   </button>
                 ))}
               </div>
@@ -625,8 +625,8 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-1 border-t border-slate-800/50 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center pt-1 border-t border-slate-800/50 flex-wrap">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
               <button onClick={selectAll} className="text-[10px] text-teal-400 hover:text-teal-300 font-bold">Select all</button>
               {selectedSet.size > 0 && (
                 <>
@@ -641,7 +641,7 @@ export default function OmniLeadFinder() {
                 </>
               )}
             </div>
-            <div className="flex gap-1 bg-slate-950/70 rounded-lg p-0.5 border border-slate-800">
+            <div className="flex gap-1 bg-slate-950/70 rounded-lg p-0.5 border border-slate-800 self-start sm:self-auto shrink-0">
               {(['grid', 'map'] as const).map(mode => (
                 <button key={mode} onClick={() => setViewMode(mode)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${viewMode === mode ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-500 hover:text-slate-300'}`}>

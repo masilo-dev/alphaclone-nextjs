@@ -10,6 +10,7 @@ import {
     DollarSign, TrendingUp, BarChart3, Clock, Bell
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
 
 interface Command {
     id: string;
@@ -27,6 +28,7 @@ interface CommandPaletteProps {
     onCreateInvoice?: () => void;
     onCreateTask?: () => void;
     onCreateProject?: () => void;
+    userId?: string;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -34,7 +36,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     onClose,
     onCreateInvoice,
     onCreateTask,
-    onCreateProject
+    onCreateProject,
+    userId
 }) => {
     const [internalIsOpen, setInternalIsOpen] = useState(false);
     const [search, setSearch] = useState('');
@@ -127,20 +130,41 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [isOpen]); // Added isOpen to dependencies to ensure setIsOpen refers to current state source
 
     useEffect(() => {
-        const saved = localStorage.getItem('commandHistory');
-        if (saved) {
-            setRecentCommands(JSON.parse(saved));
+        if (!userId) {
+            setCommandHistoryReady(true);
+            return;
         }
-    }, []);
+        let cancelled = false;
+        setCommandHistoryReady(false);
+        (async () => {
+            const prefs = await fetchDashboardPreferences(userId);
+            if (cancelled) return;
+            if (prefs.commandHistory?.length) {
+                setRecentCommands(prefs.commandHistory.slice(0, 5));
+            } else {
+                setRecentCommands([]);
+            }
+            setCommandHistoryReady(true);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId || !commandHistoryReady) return;
+        const t = window.setTimeout(() => {
+            void mergeDashboardPreferences(userId, { commandHistory: recentCommandsRef.current });
+        }, 500);
+        return () => window.clearTimeout(t);
+    }, [recentCommands, userId, commandHistoryReady]);
 
     const handleAction = useCallback((cmd: Command) => {
         cmd.action();
-        const newRecent = [cmd.id, ...recentCommands.filter(id => id !== cmd.id)].slice(0, 5);
-        setRecentCommands(newRecent);
-        localStorage.setItem('commandHistory', JSON.stringify(newRecent));
+        setRecentCommands((prev) => [cmd.id, ...prev.filter((id) => id !== cmd.id)].slice(0, 5));
         setIsOpen(false);
         setSearch('');
-    }, [setIsOpen, recentCommands]);
+    }, [setIsOpen]);
 
     useEffect(() => {
         if (isOpen) {

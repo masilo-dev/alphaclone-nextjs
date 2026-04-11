@@ -135,11 +135,11 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 <section className="py-16 bg-transparent relative z-10">
-                    <div className="max-w-6xl mx-auto px-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 min-w-0">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
                             {stats.map((stat, idx) => (
                                 <AnimateIn key={idx} type="stagger" index={idx}>
-                                    <div className="text-center p-8 glass-card rounded-2xl border-white/[0.03] transition-all hover:scale-[1.02]">
+                                    <div className="text-center p-4 sm:p-6 md:p-8 glass-card rounded-2xl border-white/[0.03] transition-all hover:scale-[1.02]">
                                         <div className="text-4xl font-black text-teal-400 mb-2 tracking-tighter">{stat.value}</div>
                                         <div className="font-bold text-white text-sm mb-1 uppercase tracking-wider">{stat.label}</div>
                                         <div className="text-slate-500 text-xs font-medium">{stat.sub}</div>
@@ -181,7 +181,7 @@ const AboutPage: React.FC = () => {
                                     { title: 'Enterprise-Grade Security', desc: 'Isolated databases, encrypted communications, and explicit access rules come as standard.' }
                                 ].map((item, i) => (
                                     <AnimateIn key={i} type="stagger" index={i}>
-                                        <div className="p-8 rounded-3xl glass-card border-white/[0.04] relative group">
+                                        <div className="p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl glass-card border-white/[0.04] relative group">
                                             <div className="absolute -top-3 -left-3 w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center border border-teal-500/20 backdrop-blur-xl group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
                                                 <div className="text-xs font-black tracking-tighter">0{i + 1}</div>
                                             </div>
@@ -205,7 +205,7 @@ const AboutPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {whySection.map((point, i) => (
                                 <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
-                                    <div className="p-8 rounded-2xl glass-card border-white/[0.03] h-full">
+                                    <div className="p-4 sm:p-6 md:p-8 rounded-2xl glass-card border-white/[0.03] h-full">
                                         <div className="border-l-4 border-teal-500/50 pl-6 h-full flex flex-col justify-center">
                                             <h3 className="text-xl font-black text-white mb-4 tracking-tight">{point.headline}</h3>
                                             <p className="text-slate-400 leading-relaxed font-normal">{point.body}</p>

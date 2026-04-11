@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { dealService, Deal, DealStage } from '../../services/dealService';
 import { UnifiedCRMService } from '../../services/crm/UnifiedCRMService';
 import { RefreshCw, Plus, MoreHorizontal, DollarSign, Calendar } from 'lucide-react';
@@ -14,6 +17,7 @@ const STAGES: { id: DealStage; label: string; color: string }[] = [
 ];
 
 export default function CRMTab({ userId, userRole }: { userId: string; userRole?: string }) {
+    const router = useRouter();
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
@@ -67,7 +71,11 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                         <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                         {syncing ? 'Syncing...' : 'Sync CRM'}
                     </button>
-                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-sm h-10">
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/deals')}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-sm h-10"
+                    >
                         <Plus className="w-4 h-4" />
                         New Deal
                     </button>

@@ -113,6 +113,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     const [progressPercentage, setProgressPercentage] = useState(0);
     const [streak, setStreak] = useState(0);
     const [welcomeMessage, setWelcomeMessage] = useState('');
+    const [usingPlaceholderData, setUsingPlaceholderData] = useState(false);
     const greeting = getGreeting();
     const firstName = (user.name || user.email || 'there').split(' ')[0];
 
@@ -144,17 +145,17 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             setLoading(true);
             
             if (!currentTenant?.id) {
-                console.log('No tenant ID, using demo data');
                 loadDemoData();
                 return;
             }
 
-            // Load real data from API
+            setUsingPlaceholderData(false);
             const response = await fetch(`/api/dashboard/progress?tenantId=${currentTenant.id}`);
             const data = await response.json();
 
             if (data.success) {
                 const progressData = data.data;
+                setUsingPlaceholderData(false);
                 
                 setMetrics({
                     totalRevenue: progressData.totalRevenue,
@@ -181,7 +182,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         completed: progressData.onboardingProgress?.hasClients || false,
                         action: 'Add Client',
                         actionUrl: '/dashboard/crm',
-                        reward: '🎉 Client Master Badge'
+                        reward: 'Client Master badge'
                     },
                     {
                         id: 'first-invoice',
@@ -191,7 +192,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         completed: progressData.onboardingProgress?.hasRevenue || false,
                         action: 'Create Invoice',
                         actionUrl: '/dashboard/accounting',
-                        reward: '💰 Money Maker Badge'
+                        reward: 'Money Maker badge'
                     },
                     {
                         id: 'first-project',
@@ -211,17 +212,19 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         completed: progressData.onboardingProgress?.hasIntegrations || false,
                         action: 'Setup',
                         actionUrl: '/dashboard/integrations',
-                        reward: '⚡ Integration Expert'
+                        reward: 'Integration Expert badge'
                     }
                 ];
 
                 setOnboardingSteps(steps);
             } else {
+                toast.error('Could not load live dashboard metrics. Showing placeholders until data is available.');
                 loadDemoData();
             }
 
         } catch (error) {
             console.error('Error loading dashboard data:', error);
+            toast.error('Could not load live dashboard metrics. Showing placeholders.');
             loadDemoData();
         } finally {
             setLoading(false);
@@ -229,7 +232,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     };
 
     const loadDemoData = () => {
-        // Fallback demo data for development
+        setUsingPlaceholderData(true);
         const demoSteps: OnboardingStep[] = [
             {
                 id: 'first-client',
@@ -239,7 +242,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 completed: false,
                 action: 'Add Client',
                 actionUrl: '/dashboard/crm',
-                reward: '🎉 Client Master Badge'
+                reward: 'Client Master badge'
             },
             {
                 id: 'first-invoice',
@@ -249,7 +252,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 completed: false,
                 action: 'Create Invoice',
                 actionUrl: '/dashboard/accounting',
-                reward: '💰 Money Maker Badge'
+                reward: 'Money Maker badge'
             },
             {
                 id: 'first-project',
@@ -269,7 +272,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 completed: false,
                 action: 'Setup',
                 actionUrl: '/dashboard/integrations',
-                reward: '⚡ Integration Expert'
+                reward: 'Integration Expert badge'
             }
         ];
 
@@ -357,7 +360,14 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            {/* Professional Header */}
+            {usingPlaceholderData && (
+                <div
+                    role="status"
+                    className="rounded-xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-amber-100 text-sm"
+                >
+                    Sample metrics and checklist are shown until live workspace data is available or loads successfully.
+                </div>
+            )}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900">

@@ -20,6 +20,7 @@ import { taskService } from '@/services/taskService';
 import { useToast } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow, format } from 'date-fns';
+import Link from 'next/link';
 
 interface LeadDetailViewProps {
   lead: Lead;
@@ -124,13 +125,14 @@ function getNextBestAction(lead: Lead): {
 
 // Quick Action Button Component
 function QuickActionButton({ 
-  icon, label, onClick, color = 'blue', disabled = false 
+  icon, label, onClick, color = 'blue', disabled = false, title: titleAttr
 }: { 
   icon: React.ReactNode; 
   label: string; 
   onClick: () => void;
   color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'teal';
   disabled?: boolean;
+  title?: string;
 }) {
   const colorClasses = {
     blue: 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30',
@@ -143,8 +145,10 @@ function QuickActionButton({
   
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
+      title={titleAttr}
       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg ${colorClasses[color]} 
         transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium`}
     >
@@ -434,8 +438,10 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
                   <QuickActionButton
                     icon={<Zap className="w-4 h-4" />}
                     label="Enrich Data"
-                    onClick={() => {/* TODO */}}
+                    onClick={() => {}}
                     color="orange"
+                    disabled
+                    title="Coming soon"
                   />
                 </div>
               </div>
@@ -668,8 +674,16 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
                 )}
                 
                 {activeTab === 'tasks' && (
-                  <div className="text-center py-8">
-                    <p className="text-slate-500 mb-4">Tasks coming soon</p>
+                  <div className="text-center py-8 px-4">
+                    <p className="text-slate-400 mb-4 text-sm max-w-md mx-auto">
+                      Create and track tasks in Production Tasks. Link this lead when assigning work there.
+                    </p>
+                    <Link
+                      href="/dashboard/tasks"
+                      className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors"
+                    >
+                      Open tasks
+                    </Link>
                   </div>
                 )}
               </div>

@@ -126,7 +126,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                     </Button>
                 </div>
 
-                <div className="max-h-96 overflow-y-auto custom-scrollbar border border-white/5 rounded-xl">
+                <div className="max-h-96 overflow-y-auto overflow-x-auto custom-scrollbar border border-white/5 rounded-xl min-w-0">
                     {loading ? (
                         <div className="p-12 flex justify-center">
                             <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
@@ -136,7 +136,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                             {searchTerm ? 'No leads match your search.' : 'No unlinked leads found.'}
                         </div>
                     ) : (
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead className="sticky top-0 bg-slate-950 z-10 border-b border-white/5">
                                 <tr>
                                     <th className="p-4 w-10 text-center">

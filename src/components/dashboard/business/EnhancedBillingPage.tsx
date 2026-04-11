@@ -510,8 +510,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
             {/* Invoices List */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
+                <div className="overflow-x-auto min-w-0">
+                    <table className="w-full min-w-[800px]">
                         <thead className="bg-slate-800/50">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Invoice</th>

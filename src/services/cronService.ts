@@ -189,12 +189,17 @@ export const cronService = {
    */
   createRecurringInvoice: async (config: Omit<RecurringInvoiceConfig, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
     try {
+      const amountNum = typeof config.amount === 'number' ? config.amount : parseFloat(String(config.amount));
+      if (Number.isNaN(amountNum) || amountNum <= 0) {
+        return { success: false, error: 'Invalid amount' };
+      }
+
       const { error } = await supabase.from('recurring_invoices').insert({
         client_name: config.clientName,
-        amount: config.amount,
+        amount: amountNum,
         frequency: config.frequency,
         start_date: config.startDate,
-        description: config.description,
+        description: config.description || null,
         tenant_id: config.tenantId,
         active: true,
         created_at: new Date().toISOString()
@@ -219,11 +224,13 @@ export const cronService = {
         .from('recurring_invoices')
         .update({
           ...(updates.clientName && { client_name: updates.clientName }),
-          ...(updates.amount && { amount: updates.amount }),
+          ...(updates.amount !== undefined && {
+            amount: typeof updates.amount === 'number' ? updates.amount : parseFloat(String(updates.amount)),
+          }),
           ...(updates.frequency && { frequency: updates.frequency }),
           ...(updates.startDate && { start_date: updates.startDate }),
-          ...(updates.description && { description: updates.description }),
-          ...(updates.active !== undefined && { active: updates.active })
+          ...(updates.description !== undefined && { description: updates.description }),
+          ...(updates.active !== undefined && { active: updates.active }),
         })
         .eq('id', id);
 
@@ -272,7 +279,20 @@ export const cronService = {
         return { data: null, error: error.message };
       }
 
-      return { data: data as RecurringInvoiceConfig[] };
+      const mapped: RecurringInvoiceConfig[] = (data || []).map((row: Record<string, unknown>) => ({
+        id: String(row.id),
+        clientName: String(row.client_name ?? ''),
+        amount: String(row.amount ?? ''),
+        frequency: row.frequency as RecurringInvoiceConfig['frequency'],
+        startDate: String(row.start_date ?? ''),
+        description: String(row.description ?? ''),
+        tenantId: String(row.tenant_id ?? ''),
+        createdAt: String(row.created_at ?? ''),
+        lastGenerated: row.last_generated ? String(row.last_generated) : undefined,
+        active: row.active !== false,
+      }));
+
+      return { data: mapped };
     } catch (err) {
       return { data: null, error: String(err) };
     }

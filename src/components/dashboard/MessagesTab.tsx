@@ -70,6 +70,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const cachedAdminUserIdRef = useRef<string | null>(null);
 
     // Helper for admin checks
     const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
@@ -94,8 +95,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             // Client view: Fetch admin user to send messages to
             const loadAdmin = async () => {
                 try {
-                    // First, try to get from cache
-                    const cachedAdminId = localStorage.getItem('admin_user_id');
+                    const cachedAdminId = cachedAdminUserIdRef.current;
                     if (cachedAdminId) {
                         const { user: cachedAdmin, error: getUserError } = await userService.getUser(cachedAdminId);
                         if (!getUserError && cachedAdmin && cachedAdmin.role === 'admin') {
@@ -116,8 +116,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     const admin = users.find(u => u.role === 'admin');
                     if (admin) {
                         setAdminUser(admin);
-                        // Cache the admin ID for offline access
-                        localStorage.setItem('admin_user_id', admin.id);
+                        cachedAdminUserIdRef.current = admin.id;
                     } else {
                         console.error('No admin user found in the system');
                     }

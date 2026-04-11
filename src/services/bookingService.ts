@@ -73,10 +73,11 @@ export const bookingService = {
     async createBooking(
         tenantId: string,
         meetingTypeId: string,
-        startTime: string, // ISO
-        endTime: string, // ISO
-        clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string; customFields?: Record<string, any> }
-    ): Promise<{ bookingId: string | null; error: string | null }> {
+        startTime: string,
+        endTime: string,
+        clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string; customFields?: Record<string, unknown> },
+        options?: { turnstileToken?: string | null }
+    ): Promise<{ bookingId: string | null; roomUrl: string | null; error: string | null }> {
         try {
             const response = await fetch('/api/booking/create', {
                 method: 'POST',
@@ -92,23 +93,33 @@ export const bookingService = {
                     client_email: clientDetails.email,
                     client_phone: clientDetails.phone,
                     client_notes: clientDetails.notes,
-                    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    ...(options?.turnstileToken ? { turnstile_token: options.turnstileToken } : {}),
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                return { bookingId: null, error: errorData.error || `Failed to create booking: ${response.statusText}` };
+                return {
+                    bookingId: null,
+                    roomUrl: null,
+                    error: errorData.error || `Failed to create booking: ${response.statusText}`,
+                };
             }
 
-            const data = await response.json();
-            return { bookingId: data.bookingId, error: null };
+            const data = await response.json() as {
+                booking?: { id?: string };
+                bookingId?: string;
+                roomUrl?: string;
+            };
+            const bookingId = data.booking?.id ?? data.bookingId ?? null;
+            return { bookingId, error: null, roomUrl: data.roomUrl ?? null };
         } catch (err: any) {
             if (err.name === 'AbortError') {
-                return { bookingId: null, error: null };
+                return { bookingId: null, roomUrl: null, error: null };
             }
             console.error('[createBooking] Error:', err);
-            return { bookingId: null, error: String(err) };
+            return { bookingId: null, roomUrl: null, error: String(err) };
         }
     }
 };

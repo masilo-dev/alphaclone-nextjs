@@ -245,8 +245,8 @@ export function ChartOfAccountsPage() {
                                 {accountTypeLabels[type as AccountType]}
                             </h2>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-700">
+                        <div className="overflow-x-auto min-w-0">
+                            <table className="min-w-[720px] w-full divide-y divide-slate-700">
                                 <thead className="bg-slate-900">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Code</th>

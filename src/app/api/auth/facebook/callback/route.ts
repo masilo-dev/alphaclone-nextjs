@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=missing_params`);
     }
 
-    let stateData: { userId: string; ts: number };
+    let stateData: { userId: string; ts: number; tenantId?: string | null };
     try {
         stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
     } catch {
@@ -136,6 +136,20 @@ export async function GET(req: NextRequest) {
                 warning: 'No pages found. User may not have granted pages_show_list or has no Facebook Pages.',
             },
         }, { onConflict: 'user_id,page_id' });
+    }
+
+    if (resolvedTenantId) {
+        await supabase.from('tenant_integrations').upsert(
+            {
+                tenant_id: resolvedTenantId,
+                integration_id: 'facebook-leads',
+                status: 'connected',
+                connected_at: new Date().toISOString(),
+                configured_by: stateData.userId,
+                metadata: { pages_connected: pages.length },
+            },
+            { onConflict: 'tenant_id,integration_id' }
+        );
     }
 
     return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_connected=true`);

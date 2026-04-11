@@ -151,9 +151,9 @@ const EcosystemPage: React.FC = () => {
                             Enterprise-grade architecture designed for performance, reliability, and scale.
                         </p>
                     </AnimateIn>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 min-w-0">
                         <AnimateIn type="fadeLeft">
-                            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
+                            <div className="bg-slate-900/50 p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-800">
                                 <Code className="w-10 h-10 text-teal-400 mb-4" />
                                 <h3 className="text-xl font-bold mb-4">Frontend Stack</h3>
                                 <ul className="space-y-2 text-slate-400">
@@ -165,7 +165,7 @@ const EcosystemPage: React.FC = () => {
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
+                            <div className="bg-slate-900/50 p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-800">
                                 <Database className="w-10 h-10 text-teal-400 mb-4" />
                                 <h3 className="text-xl font-bold mb-4">Backend & Data</h3>
                                 <ul className="space-y-2 text-slate-400">
@@ -177,7 +177,7 @@ const EcosystemPage: React.FC = () => {
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeRight" delay={0.2}>
-                            <div className="bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
+                            <div className="bg-slate-900/50 p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-800">
                                 <Layers className="w-10 h-10 text-teal-400 mb-4" />
                                 <h3 className="text-xl font-bold mb-4">Infrastructure</h3>
                                 <ul className="space-y-2 text-slate-400">
@@ -201,7 +201,7 @@ const EcosystemPage: React.FC = () => {
                             Built-in integrations with essential business tools. More integrations coming soon.
                         </p>
                     </AnimateIn>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto min-w-0 px-1">
                         {[
                             { name: 'Stripe', desc: 'Payment processing' },
                             { name: 'Supabase', desc: 'Database & Auth' },

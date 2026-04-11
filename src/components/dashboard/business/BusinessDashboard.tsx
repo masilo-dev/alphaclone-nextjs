@@ -226,9 +226,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
         // Fetch consolidated stats
         if (currentTenant?.id && user?.id && !dashboardStats) {
-            getDashboardStats(currentTenant.id, user.id).then((result) => {
-                if (result && result.stats) setDashboardStats(result.stats);
-            });
+            getDashboardStats(currentTenant.id, user.id)
+                .then((result) => {
+                    if (result && result.stats) setDashboardStats(result.stats);
+                })
+                .catch(() => {
+                    toast.error('Could not load workspace summary.');
+                });
         }
     }, [user, currentTenant, dashboardStats, getDashboardStats]);
 
@@ -445,7 +449,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/zoho/mail':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} />}>
-                        <ZohoMailView />
+                        <ZohoMailView userId={user.id} />
                     </React.Suspense>
                 );
 
@@ -473,7 +477,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             user={user}
                             filteredInvoices={[]}
                             handlePayClick={() => {}}
-                            onCreateInvoice={() => {}}
+                            onCreateInvoice={() => setActiveTab('/dashboard/business/billing')}
                         />
                     </React.Suspense>
                 );
@@ -569,7 +573,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Use external nav items instead of local redundant array
 
     return (
-        <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
+        <div className="flex h-screen min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}

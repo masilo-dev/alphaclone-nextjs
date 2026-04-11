@@ -263,15 +263,20 @@ const BrandingSettings = () => {
                         {/* Separator */}
                         <div className="h-0.5 w-full mb-6 opacity-20" style={{ backgroundColor: branding.brand_color_secondary }}></div>
 
-                        {/* Mock Content */}
-                        <div className="space-y-4 opacity-50 blur-[0.5px]">
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="bg-slate-100 h-20 rounded"></div>
-                                <div className="bg-slate-100 h-20 rounded"></div>
+                        <div className="space-y-3 text-xs text-slate-600 border border-dashed border-slate-200 rounded-lg p-4 bg-white/80">
+                            <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">Sample line items (preview only)</p>
+                            <div className="flex justify-between border-b border-slate-100 pb-2">
+                                <span>Service description</span>
+                                <span className="font-mono">0.00</span>
                             </div>
-                            <div className="bg-slate-100 h-8 rounded w-full mt-8"></div>
-                            <div className="bg-slate-100 h-8 rounded w-full"></div>
-                            <div className="bg-slate-100 h-8 rounded w-full"></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2">
+                                <span>Subtotal</span>
+                                <span className="font-mono">0.00</span>
+                            </div>
+                            <div className="flex justify-between font-medium text-slate-800">
+                                <span>Total due</span>
+                                <span className="font-mono">0.00</span>
+                            </div>
                         </div>
 
                         {/* Footer Preview */}

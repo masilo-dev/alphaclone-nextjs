@@ -399,8 +399,8 @@ export default function ExpenseTrackerTab() {
                     <p className="text-slate-600 text-sm mt-1">Add your first expense to start tracking spending.</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-800">
-                    <table className="w-full text-sm">
+                <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                    <table className="w-full min-w-[720px] text-sm">
                         <thead>
                             <tr className="border-b border-slate-800 bg-slate-900/50">
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>

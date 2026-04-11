@@ -125,18 +125,21 @@ jobs:
       - name: Check migration files syntax
         run: |
           echo "Checking SQL migration files..."
-          find src/supabase/migrations -name "*.sql" -type f | while read file; do
+          if [ ! -d "supabase/migrations" ]; then
+            echo "Error: supabase/migrations not found"
+            exit 1
+          fi
+          find supabase/migrations -name "*.sql" -type f | while read file; do
             echo "Validating: $file"
-            # Basic SQL syntax check (looks for common errors)
             if grep -q "DROP TABLE IF EXISTS.*CASCADE" "$file" && ! grep -q "CREATE TABLE IF NOT EXISTS" "$file"; then
-              echo "⚠️ Warning: DROP without corresponding CREATE in $file"
+              echo "Warning: DROP without corresponding CREATE in $file"
             fi
           done
 
       - name: Check for migration conflicts
         run: |
           echo "Checking for duplicate migration timestamps..."
-          duplicates=$(find src/supabase/migrations -name "*.sql" | sed 's/.*\///' | cut -d'_' -f1 | sort | uniq -d)
+          duplicates=$(find supabase/migrations -name "*.sql" | sed 's/.*\///' | cut -d'_' -f1 | sort | uniq -d)
           if [ ! -z "$duplicates" ]; then
             echo "❌ Error: Duplicate migration timestamps found:"
             echo "$duplicates"
@@ -192,9 +195,9 @@ jobs:
           echo "Migrations: ${{ needs.migrations.result }}"
           echo "Tests: ${{ needs.test.result }}"
 
-          if [[ "${{ needs.quality.result }}" == "failure" ]] || [[ "${{ needs.build.result }}" == "failure" ]]; then
-            echo "❌ CI Pipeline Failed"
+          if [[ "${{ needs.quality.result }}" == "failure" ]] || [[ "${{ needs.build.result }}" == "failure" ]] || [[ "${{ needs.migrations.result }}" == "failure" ]]; then
+            echo "CI pipeline failed"
             exit 1
           fi
 
-          echo "✅ CI Pipeline Passed"
+          echo "CI pipeline passed"

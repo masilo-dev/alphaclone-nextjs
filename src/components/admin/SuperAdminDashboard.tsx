@@ -381,9 +381,9 @@ function OverviewTab({ stats }: { stats: any }) {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0">
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {metrics.map((metric, index) => (
           <div
             key={index}
@@ -425,18 +425,18 @@ function OverviewTab({ stats }: { stats: any }) {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
         {/* Revenue Chart */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-md relative group">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-green-400" />
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-6 lg:p-8 backdrop-blur-md relative group min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 min-w-0">
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-green-400 shrink-0" />
                 Revenue Trajectory
               </h3>
               <p className="text-slate-500 text-sm">Monthly performance across all tenants</p>
             </div>
-            <select className="bg-slate-800 border-none text-xs text-white rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-teal-500">
+            <select className="bg-slate-800 border-none text-xs text-white rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-teal-500 w-full sm:w-auto shrink-0">
               <option>Last 6 Months</option>
               <option>Last Year</option>
             </select>
@@ -449,16 +449,16 @@ function OverviewTab({ stats }: { stats: any }) {
         </div>
 
         {/* User Growth Chart */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-md relative group">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-400" />
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-6 lg:p-8 backdrop-blur-md relative group min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 min-w-0">
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-400 shrink-0" />
                 Ecosystem Expansion
               </h3>
               <p className="text-slate-500 text-sm">User acquisition and retention metrics</p>
             </div>
-            <select className="bg-slate-800 border-none text-xs text-white rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-teal-500">
+            <select className="bg-slate-800 border-none text-xs text-white rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-teal-500 w-full sm:w-auto shrink-0">
               <option>Last 30 Days</option>
               <option>Total History</option>
             </select>
@@ -472,13 +472,13 @@ function OverviewTab({ stats }: { stats: any }) {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 backdrop-blur-md">
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <Zap className="w-5 h-5 text-teal-400" />
+      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-6 lg:p-8 backdrop-blur-md min-w-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 min-w-0">
+          <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <Zap className="w-5 h-5 text-teal-400 shrink-0" />
             System Pulse
           </h3>
-          <button className="text-xs text-teal-400 hover:text-teal-300 font-bold uppercase tracking-widest">
+          <button type="button" className="text-xs text-teal-400 hover:text-teal-300 font-bold uppercase tracking-widest self-start sm:self-auto">
             View All Logs
           </button>
         </div>
@@ -531,16 +531,16 @@ function TenantsTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">All Tenants</h2>
-        <button className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
+    <div className="space-y-6 min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">All Tenants</h2>
+        <button type="button" className="px-4 py-2.5 sm:py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors w-full sm:w-auto shrink-0">
           Add Tenant
         </button>
       </div>
 
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
-        <table className="w-full">
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead className="bg-slate-900/50 border-b border-slate-700">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Business Name</th>

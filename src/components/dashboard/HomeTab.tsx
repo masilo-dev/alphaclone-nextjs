@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical, Sparkles, Bot, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
@@ -8,6 +8,19 @@ import { useRouter } from 'next/navigation';
 import { AIPredictiveWidget } from './AIPredictiveWidget';
 import { MomentumHUD } from './MomentumHUD';
 import { motion } from 'framer-motion';
+import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
+
+const DEFAULT_WIDGET_IDS = ['momentum', 'agenda', 'ai-widget', 'stats'] as const;
+
+function normalizeWidgetOrder(saved: string[] | undefined): string[] {
+  if (!saved?.length) return [...DEFAULT_WIDGET_IDS];
+  const allowed = new Set<string>(DEFAULT_WIDGET_IDS);
+  const ordered = saved.filter((id) => allowed.has(id));
+  for (const id of DEFAULT_WIDGET_IDS) {
+    if (!ordered.includes(id)) ordered.push(id);
+  }
+  return ordered;
+}
 
 interface HomeTabProps {
     user: User;
@@ -113,21 +126,38 @@ const HomeTab: React.FC<HomeTabProps> = ({
     });
 
     // Widget customization state
-    const [widgetOrder, setWidgetOrder] = useState<string[]>(['momentum', 'agenda', 'ai-widget', 'stats']);
+    const [widgetOrder, setWidgetOrder] = useState<string[]>(() => [...DEFAULT_WIDGET_IDS]);
     const [draggedItem, setDraggedItem] = useState<string | null>(null);
+    const [widgetPrefsReady, setWidgetPrefsReady] = useState(false);
+    const widgetOrderRef = useRef(widgetOrder);
+    widgetOrderRef.current = widgetOrder;
 
-    // Load widget order from localStorage
     useEffect(() => {
-        const savedOrder = localStorage.getItem('widgetOrder');
-        if (savedOrder) {
-            setWidgetOrder(JSON.parse(savedOrder));
+        if (!user?.id) {
+            setWidgetPrefsReady(true);
+            return;
         }
-    }, []);
+        let cancelled = false;
+        (async () => {
+            const prefs = await fetchDashboardPreferences(user.id);
+            if (cancelled) return;
+            if (prefs.widgetOrder?.length) {
+                setWidgetOrder(normalizeWidgetOrder(prefs.widgetOrder));
+            }
+            setWidgetPrefsReady(true);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.id]);
 
-    // Save widget order to localStorage
     useEffect(() => {
-        localStorage.setItem('widgetOrder', JSON.stringify(widgetOrder));
-    }, [widgetOrder]);
+        if (!user?.id || !widgetPrefsReady) return;
+        const t = window.setTimeout(() => {
+            void mergeDashboardPreferences(user.id, { widgetOrder: widgetOrderRef.current });
+        }, 600);
+        return () => window.clearTimeout(t);
+    }, [widgetOrder, user?.id, widgetPrefsReady]);
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, widgetId: string) => {
         setDraggedItem(widgetId);
