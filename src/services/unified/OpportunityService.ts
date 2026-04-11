@@ -160,7 +160,7 @@ export class OpportunityService {
       created_by: userId,
       is_automated: true,
       source: 'system'
-    }).catch(err => console.error('Failed to log activity:', err));
+    }).catch((err: any) => console.error('Failed to log activity:', err));
 
     return data;
   }
@@ -209,7 +209,7 @@ export class OpportunityService {
       is_automated: true,
       source: 'system',
       metadata: { from_stage: opportunity.stage, to_stage: stage }
-    }).catch(err => console.error('Failed to log stage change:', err));
+    }).catch((err: any) => console.error('Failed to log stage change:', err));
 
     return updated;
   }
