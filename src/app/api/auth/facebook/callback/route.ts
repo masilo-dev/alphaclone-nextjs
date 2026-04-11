@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
         .single();
 
     const pages = pagesData.data || [];
+    const resolvedTenantId = stateData.tenantId ?? tenantUser?.tenant_id ?? null;
 
     if (pages.length > 0) {
         for (const page of pages) {

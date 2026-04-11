@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, Command as CommandIcon, Globe, Settings,
@@ -43,7 +43,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const [search, setSearch] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [recentCommands, setRecentCommands] = useState<string[]>([]);
+    const [commandHistoryReady, setCommandHistoryReady] = useState(() => !userId);
+    const recentCommandsRef = useRef(recentCommands);
     const router = useRouter();
+
+    useEffect(() => {
+        recentCommandsRef.current = recentCommands;
+    }, [recentCommands]);
 
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
     const setIsOpen = (value: boolean | ((prev: boolean) => boolean)) => {

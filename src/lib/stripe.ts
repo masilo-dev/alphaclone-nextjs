@@ -1,8 +1,8 @@
 import Stripe from 'stripe';
 
-let cachedStripe: Stripe | null = null;
+let cachedStripe: ReturnType<typeof createStripeClient> | null = null;
 
-function createStripeClient(): Stripe {
+function createStripeClient() {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
 
     if (!stripeKey) {
@@ -18,7 +18,7 @@ function createStripeClient(): Stripe {
     });
 }
 
-function getStripeClient(): Stripe {
+function getStripeClient() {
     if (!cachedStripe) {
         cachedStripe = createStripeClient();
     }
@@ -26,10 +26,10 @@ function getStripeClient(): Stripe {
     return cachedStripe;
 }
 
-export const stripe = new Proxy({} as Stripe, {
+export const stripe = new Proxy({} as object, {
     get(_target, prop, receiver) {
         const client = getStripeClient() as any;
         const value = Reflect.get(client, prop, receiver);
         return typeof value === 'function' ? value.bind(client) : value;
     },
-}) as Stripe;
+}) as ReturnType<typeof createStripeClient>;

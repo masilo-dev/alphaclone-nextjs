@@ -61,7 +61,8 @@ export const calendlyService = {
         const config = await this.getConfig(tenantId);
         if (!config || !config.calendlyUserUri) throw new Error('Calendly user connection missing.');
 
-        const data = await this.fetchCalendly(`/event_types?user=${encodeURIComponent(config.calendlyUserUri)}`, {}, tenantId);
+        const userUri = String(config.calendlyUserUri);
+        const data = await this.fetchCalendly(`/event_types?user=${encodeURIComponent(userUri)}`, {}, tenantId);
         return data.collection || [];
     },
 
@@ -75,7 +76,8 @@ export const calendlyService = {
         const minTime = minStartTime ? minStartTime.toISOString() : new Date().toISOString();
 
         let allEvents: any[] = [];
-        let nextPage = `/scheduled_events?user=${encodeURIComponent(config.calendlyUserUri)}&min_start_time=${encodeURIComponent(minTime)}&status=active`;
+        const userUri = String(config.calendlyUserUri);
+        let nextPage = `/scheduled_events?user=${encodeURIComponent(userUri)}&min_start_time=${encodeURIComponent(minTime)}&status=active`;
 
         // Fetch all pages (up to a reasonable limit to prevent endless loops)
         let pages = 0;

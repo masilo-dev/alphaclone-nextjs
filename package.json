@@ -8,6 +8,7 @@
     "build:prod": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "setup:verify": "node scripts/verify-setup.js",
     "supabase:link": "npx supabase link",

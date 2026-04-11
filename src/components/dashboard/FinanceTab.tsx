@@ -668,7 +668,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 <Button
                                     onClick={() => {
                                         if (onCreateInvoice) onCreateInvoice();
-                                        else toast.info('Use Billing Center to create and send invoices.');
+                                        else toast('Use Billing Center to create and send invoices.');
                                     }}
                                     className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10"
                                 >

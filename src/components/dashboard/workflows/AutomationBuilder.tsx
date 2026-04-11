@@ -33,7 +33,7 @@ const TriggerNode = ({ data }: { data: { label: string; description: string } })
   </div>
 );
 
-const NODE_STYLES: Record<string, { border: string }> = {
+const NODE_STYLES: Record<string, { border: string; icon?: string }> = {
   zoho: { border: 'border-blue-500' },
   zoho_mail: { border: 'border-sky-500' },
   ai: { border: 'border-purple-500' },

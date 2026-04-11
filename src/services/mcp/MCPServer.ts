@@ -291,12 +291,34 @@ class AlphaCloneMCPServer {
             required: ['tenant_id'],
           },
         },
+        {
+          name: 'write_audit_log',
+          description:
+            'Insert a row into audit_logs (tenant-scoped). Use to persist agent notes, integration events, or any structured record the user asked to store.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              action: { type: 'string', description: 'Short action key, e.g. mcp_note | integration_sync | user_request' },
+              entity_type: { type: 'string', description: 'Category, e.g. mcp | lead | integration' },
+              entity_id: { type: 'string', description: 'Optional UUID of related entity' },
+              summary: { type: 'string', description: 'Human-readable one-line summary' },
+              payload: {
+                type: 'object',
+                description: 'Optional JSON object merged into new_values (along with summary and source)',
+              },
+            },
+            required: ['tenant_id', 'action', 'entity_type'],
+          },
+        },
       ],
     }));
 
     // ── Tool Execution ─────────────────────────────────────────────────────────
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+    this.server.setRequestHandler(CallToolRequestSchema, async (request: unknown) => {
+      const { name, arguments: args } = (request as {
+        params: { name: string; arguments?: Record<string, unknown> };
+      }).params;
       const supabaseAdmin = createSupabaseAdminClient();
       const supabase = supabaseAdmin;
       let result: any;
@@ -514,6 +536,32 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw new Error(`create_expense failed: ${error.message}`);
           result = { content: [{ type: 'text', text: `Expense logged: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        // ── write_audit_log ────────────────────────────────────────────────
+        case 'write_audit_log': {
+          const { tenant_id, action, entity_type, entity_id, summary, payload } = args as Record<string, any>;
+          const newValues: Record<string, unknown> = {
+            source: 'mcp_agent',
+            ...(payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {}),
+          };
+          if (summary != null && summary !== '') newValues.summary = String(summary);
+
+          const { data, error } = await supabaseAdmin
+            .from('audit_logs')
+            .insert({
+              tenant_id,
+              action: String(action).slice(0, 100),
+              entity_type: String(entity_type).slice(0, 50),
+              entity_id: entity_id || null,
+              new_values: newValues,
+            })
+            .select('id, action, entity_type, created_at')
+            .single();
+
+          if (error) throw new Error(`write_audit_log failed: ${error.message}`);
+          result = { content: [{ type: 'text', text: `Audit log written: ${JSON.stringify(data)}` }] };
           break;
         }
 
