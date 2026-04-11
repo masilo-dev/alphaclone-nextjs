@@ -80,7 +80,10 @@ export const leadScoringService = {
     if (lead.rating && lead.rating >= 4) breakdown.businessQuality += 15;
     if (lead.category && !lead.category.includes('general')) breakdown.businessQuality += 10;
     if (lead.business_name && lead.business_name.length > 10) breakdown.businessQuality += 5;
-
+    
+    // Relevance & Source Bonus (Optional)
+    if (lead.source === 'Google Maps') breakdown.businessQuality += 5; // Google leads are high-quality by default
+    
     // Online Presence Score (20% weight)
     if (lead.website) breakdown.onlinePresence += 10;
     if (lead.website && !lead.website.includes('placeholder')) breakdown.onlinePresence += 10;

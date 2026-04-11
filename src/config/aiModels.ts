@@ -12,24 +12,12 @@ export interface ClaudeModel {
 }
 
 export const CLAUDE_MODELS: ClaudeModel[] = [
-    // --- Claude 3.5 Series (Current Flagships) ---
-    { 
-        id: 'claude-3-5-sonnet-20241022', 
-        name: 'Claude 3.5 Sonnet (v2)', 
-        description: 'Elite intelligence, breakthrough speed. Best for complex logic and coding.' 
-    },
-    { 
-        id: 'claude-3-5-haiku-20241022', 
-        name: 'Claude 3.5 Haiku', 
-        description: 'The fastest, most intelligent small model in the world.' 
-    },
-
     // --- Claude 4 Series (Next Generation / 2025-2026) ---
     { 
         id: 'claude-sonnet-4-6-20260217', 
         name: 'Claude 4.6 Sonnet', 
-        description: 'Enterprise-grade orchestration and deep semantic reasoning.',
-        isFuturistic: true
+        description: 'Elite intelligence, deep semantic reasoning. The current system flagship.',
+        isFuturistic: false // Now current
     },
     { 
         id: 'claude-sonnet-4-5-20250929', 
@@ -44,24 +32,32 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
         isFuturistic: true
     },
 
-    // --- Claude 3 Series (Original) ---
+    // --- Claude 3.5 Series (Legacy / Retired) ---
     { 
-        id: 'claude-3-opus-20240229', 
-        name: 'Claude 3 Opus', 
-        description: 'Legacy powerhouse. Excels at open-ended discussion and nuance.' 
+        id: 'claude-3-5-sonnet-20241022', 
+        name: 'Claude 3.5 Sonnet (v2)', 
+        description: 'Retired flagship. Good for legacy compatibility.',
+        isLegacy: true 
     },
     { 
-        id: 'claude-3-sonnet-20240229', 
-        name: 'Claude 3 Sonnet', 
-        description: 'Legacy Sonnet model. Solid performance for general tasks.',
+        id: 'claude-3-5-haiku-20241022', 
+        name: 'Claude 3.5 Haiku', 
+        description: 'Retired high-speed model.',
         isLegacy: true
     },
-    { 
-        id: 'claude-3-haiku-20240307', 
-        name: 'Claude 3 Haiku', 
-        description: 'Lightweight and fast legacy model.',
-        isLegacy: true
+
+    // --- OpenAI Series (Modern) ---
+    {
+        id: 'gpt-4o',
+        name: 'GPT-4o',
+        description: 'Omni model from OpenAI. High-performance multi-modal intelligence.'
+    },
+    {
+        id: 'gpt-4o-mini',
+        name: 'GPT-4o mini',
+        description: 'Affordable and intelligent small model.'
     }
 ];
 
-export const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+export const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-6-20260217';
+export const DEFAULT_OPENAI_MODEL = 'gpt-4o';

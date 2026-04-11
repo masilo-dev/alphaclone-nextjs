@@ -11,7 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { ENV } from '@/config/env';
-import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL } from '@/config/aiModels';
+import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL } from '@/config/aiModels';
 
 // Initialize clients using validated ENV
 const anthropic = ENV.ANTHROPIC_API_KEY
@@ -36,19 +36,16 @@ const openRouterClient = ENV.OPENROUTER_API_KEY
 // Model pricing (per 1M tokens)
 export const MODEL_PRICING = {
   // OpenAI (per 1M tokens)
+  'gpt-4o': { input: 5, output: 15 },
+  'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10, output: 30 },
   'gpt-4': { input: 30, output: 60 },
-  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
 
   // Anthropic (per 1M tokens) - 2025/2026 pricing
   'claude-sonnet-4-6-20260217': { input: 3, output: 15 },
   'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
   'claude-haiku-4-5-20251015': { input: 0.25, output: 1.25 },
   'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
-  'claude-3-5-haiku-20241022': { input: 0.25, output: 1.25 },
-  'claude-3-opus-20240229': { input: 15, output: 75 },
-  'claude-3-sonnet-20240229': { input: 3, output: 15 },
-  'claude-3-haiku-20240307': { input: 0.25, output: 1.25 },
 };
 
 // CLAUDE_MODELS is now imported from @/config/aiModels
@@ -115,7 +112,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   // Priority 2: Try OpenAI
   if (openai) {
     try {
-      console.log('[AI Router] Attempting OpenAI (GPT-4)...');
+      console.log(`[AI Router] Attempting OpenAI (${DEFAULT_OPENAI_MODEL})...`);
       const response = await completeWithOpenAI(options);
       console.log('[AI Router] ✓ OpenAI succeeded');
       return response;
@@ -224,8 +221,7 @@ async function completeWithOpenAI(options: AIRequestOptions): Promise<AIResponse
   if (!openai) {
     throw new Error('OpenAI API key not configured');
   }
-
-  const model = options.model || 'gpt-4-turbo';
+  const model = options.model || DEFAULT_OPENAI_MODEL;
 
   const messages: any[] = [];
   if (options.systemPrompt) {

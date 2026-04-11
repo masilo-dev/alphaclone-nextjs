@@ -45,7 +45,7 @@ Format as JSON with these exact keys: strategy, tactics (array), timeline, budge
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.7 
       });
       const response = result.content;
@@ -103,7 +103,7 @@ Make it professional, legally sound, and clear.
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.3 
       });
       const contract = result.content;
@@ -376,7 +376,7 @@ Format as JSON with keys: subject, preview, body, variations (array of {subject,
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.8 
       });
       const response = result.content;
@@ -551,7 +551,7 @@ Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handl
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.6 
       });
       const response = result.content;
@@ -600,7 +600,7 @@ Rules:
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.7 
       });
       const response = result.content;

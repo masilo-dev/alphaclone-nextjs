@@ -9,6 +9,13 @@
 - **Onboarding Service**: Implemented business goal capture and questionnaire logic.
 - **Audit Service**: Added an immutable audit trail system for enterprise compliance and AI Agent observability.
 
+### 2026-04-11: AI Core Modernization & Omni Crawler Expansion
+*   **System Brain Upgrade**: Transitioned all AI services to **Claude 4.6 Sonnet** and **GPT-4o**.
+*   **Omni Crawler (Dual-Source)**: Implemented `OmniCrawlerService` for simultaneous lead discovery using **Google Maps (Places API)** and **OpenStreetMap (Overpass)**.
+*   **Intelligent Scoring**: Updated lead scoring to prioritize relevance and cross-verify data between Google and OSM.
+*   **Agent Fleet Modernization**: Upgraded the autonomous agent fleet to use next-gen models (Claude 4.6 for reasoning, GPT-4o for support).
+*   **Infrastructure**: Fixed "AI Core Offline" issues by removing retired model references and updating the AI Router's fallback chain.
+
 ## Date: 2026-04-10 (INFRASTRUCTURE HARDENING)
 
 ### Fixed

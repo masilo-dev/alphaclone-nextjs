@@ -93,7 +93,7 @@ Include all standard legal clauses and make it ready to sign.`;
             prompt,
             systemPrompt: 'You are a legal contract expert. Generate professional, legally sound contracts.',
             provider: 'anthropic',
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-sonnet-4-6-20260217',
             maxTokens: 4000,
         });
 
@@ -124,7 +124,7 @@ Return as JSON with keys: summary, keyPoints, entities, sentiment`;
             prompt,
             systemPrompt: 'You are a document analysis expert. Extract structured information from documents.',
             provider: 'anthropic',
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-sonnet-4-6-20260217',
             temperature: 0.3,
         });
 
@@ -162,7 +162,7 @@ Return as JSON with keys: subject, body`;
             prompt,
             systemPrompt: 'You are a professional email writer. Draft clear, concise, and effective emails.',
             provider: 'openai',
-            model: 'gpt-4-turbo',
+            model: 'gpt-4o',
             temperature: 0.7,
         });
 
@@ -198,7 +198,7 @@ Make it clear, comprehensive, and action-oriented.`;
             prompt,
             systemPrompt: 'You are a project management expert. Write clear project descriptions.',
             provider: 'openai',
-            model: 'gpt-4-turbo',
+            model: 'gpt-4o',
         });
 
         return response.content;
@@ -229,7 +229,7 @@ Return as JSON with keys: summary, decisions, actionItems, nextSteps`;
             prompt,
             systemPrompt: 'You are a meeting facilitator. Extract structured information from meeting notes.',
             provider: 'anthropic',
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-sonnet-4-6-20260217',
             temperature: 0.3,
         });
 
@@ -262,7 +262,7 @@ Return as JSON with the requested fields.`;
             prompt,
             systemPrompt: 'You are a data extraction expert. Extract structured data accurately.',
             provider: 'openai',
-            model: 'gpt-4-turbo',
+            model: 'gpt-4o',
             temperature: 0.2,
         });
 
@@ -285,7 +285,7 @@ ${text}`;
             prompt,
             systemPrompt: 'You are a professional translator. Provide accurate translations.',
             provider: 'openai',
-            model: 'gpt-4-turbo',
+            model: 'gpt-4o',
         });
 
         return response.content;
@@ -303,7 +303,7 @@ ${text}`;
             prompt,
             systemPrompt: 'You are a helpful business assistant. Provide clear, actionable advice.',
             provider: 'anthropic',
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-sonnet-4-6-20260217',
         });
 
         return response.content;
