@@ -16,6 +16,13 @@ export const getAvailableProviders = () => {
 };
 
 export const isAnyAIConfigured = () => {
+    // SECURITY: API Keys are not visible on the client (browser), only the server.
+    // If we are in the browser, we assume the AI is configured because the actual 
+    // validation happens on the server side via the /api/ai proxy.
+    if (typeof window !== 'undefined') {
+        return true; 
+    }
+
     const providers = getAvailableProviders();
     return providers.claude || providers.openai;
 };
@@ -205,7 +212,7 @@ export const generateOutreachMessage = async (lead: Lead) => {
     const strategy = lead.strategy || 'PROBLEM_SOLVER';
     const guard = strategyGuards[strategy] || strategyGuards['PROBLEM_SOLVER'];
 
-    const prompt = `You are a World-Class Sales Strategist and Copywriting Expert (Claude 4.5).
+    const prompt = `You are a World-Class Sales Strategist and Copywriting Expert (Claude 4.6).
 Your task is to write a hyper-personalized, high-conversion cold email for this lead.
 
 LEAD INTELLIGENCE:
@@ -235,7 +242,7 @@ STRICT FORMATTING RULES:
 - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
 - No bullet point dashes. Write in natural paragraphs.`;
 
-    const { text } = await generateText(prompt, 600, 'claude-sonnet-4-5-20250929');
+    const { text } = await generateText(prompt, 600, 'claude-sonnet-4-6-20260217');
     return text || "Personalized draft generation failed.";
 };
 
