@@ -96,3 +96,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Scratch and temporary files
+/scratch/
