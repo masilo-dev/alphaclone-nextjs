@@ -4,8 +4,8 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
-import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/common/CookieConsent";
+import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
 // import GlobalAlpha from "@/components/alpha/GlobalAlpha";
@@ -15,9 +15,10 @@ import PrismBackground from "@/components/common/PrismBackground";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  display: "optional",
-  weight: ["400", "500", "600", "700", "800", "900"],
-  preload: false,
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -71,6 +72,16 @@ export const metadata: Metadata = {
       "CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations in one platform.",
     creator: "@AlphaCloneSys",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "AlphaClone",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: [{ url: "/favicon-192x192.png", sizes: "192x192" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -78,6 +89,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
 };
 
 const organizationSchema = {
@@ -146,7 +161,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script src="/lockdown-install.js" strategy="beforeInteractive" />
+        <Script src="/lockdown-install.js?v=4" strategy="beforeInteractive" />
       </head>
       <body
         className={`${inter.variable} antialiased text-base subpixel-antialiased font-sans`}
@@ -177,7 +192,7 @@ export default function RootLayout({
           </PWAProvider>
           <CookieConsent />
         </Providers>
-        <Analytics />
+        <ConsentAwareAnalytics />
       </body>
     </html>
   );

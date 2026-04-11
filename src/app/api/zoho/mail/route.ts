@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
-import { ZohoAuthExpiredError } from '../../../../services/zoho/ZohoService';
+import { ZohoAuthExpiredError, ZohoAPIError } from '../../../../services/zoho/ZohoService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 async function getUserId(req: NextRequest): Promise<string | null> {
@@ -25,6 +25,37 @@ function handleZohoError(err: unknown): NextResponse {
             { status: 401 }
         );
     }
+
+    if (err instanceof ZohoAPIError) {
+        const status = err.status;
+        if (status === 401 || status === 403) {
+            return NextResponse.json(
+                { error: err.message, reconnect: true },
+                { status: 401 }
+            );
+        }
+        if (status === 429) {
+            return NextResponse.json(
+                { error: 'Zoho rate limit reached. Wait a minute and try again.', code: 'ZOHO_RATE_LIMIT' },
+                { status: 429 }
+            );
+        }
+        if (status >= 502 && status <= 504) {
+            return NextResponse.json(
+                {
+                    error: 'Zoho Mail is temporarily unavailable. Try again in a few minutes.',
+                    code: 'ZOHO_UPSTREAM_UNAVAILABLE',
+                },
+                { status: 503 }
+            );
+        }
+        const clientErr = status >= 400 && status < 500;
+        return NextResponse.json(
+            { error: err.message, code: 'ZOHO_API_ERROR' },
+            { status: clientErr ? status : 500 }
+        );
+    }
+
     const message = err instanceof Error ? err.message : 'Internal server error';
     console.error('[Zoho Mail API]', message);
     return NextResponse.json({ error: message }, { status: 500 });
@@ -35,7 +66,16 @@ export async function GET(req: NextRequest) {
     const action = searchParams.get('action');
     const userId = await getUserId(req);
 
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) {
+        return NextResponse.json(
+            {
+                error: 'No active session. Sign in again, then reopen Zoho Mail.',
+                code: 'NO_SUPABASE_SESSION',
+                reconnect: false,
+            },
+            { status: 401 }
+        );
+    }
 
     const zohoMail = new ZohoMailService(userId);
 
@@ -106,7 +146,16 @@ export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
     const userId = await getUserId(req);
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) {
+        return NextResponse.json(
+            {
+                error: 'No active session. Sign in again, then reopen Zoho Mail.',
+                code: 'NO_SUPABASE_SESSION',
+                reconnect: false,
+            },
+            { status: 401 }
+        );
+    }
 
     const zohoMail = new ZohoMailService(userId);
 
@@ -130,7 +179,16 @@ export async function DELETE(req: NextRequest) {
     const folderId = searchParams.get('folderId');
     const userId = await getUserId(req);
 
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId) {
+        return NextResponse.json(
+            {
+                error: 'No active session. Sign in again, then reopen Zoho Mail.',
+                code: 'NO_SUPABASE_SESSION',
+                reconnect: false,
+            },
+            { status: 401 }
+        );
+    }
     if (!messageId || !folderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
 
     const zohoMail = new ZohoMailService(userId);

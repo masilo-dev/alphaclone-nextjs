@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import Link from 'next/link';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService, BusinessClient } from '../../../services/businessClientService';
@@ -31,12 +32,53 @@ import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
 import { dailyService } from '../../../services/dailyService';
 import { callSignalingService } from '../../../services/video/CallSignalingService';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '../../common/showActionNextSteps';
 import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import * as XLSX from 'xlsx';
+
+const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
+const DealsTab = lazy(() => import('../DealsTab'));
+
+const CRM_NAV_LINKS: { href: string; label: string }[] = [
+    { href: '/dashboard/crm', label: 'Overview' },
+    { href: '/dashboard/leads', label: 'Leads pipeline' },
+    { href: '/dashboard/deals', label: 'Deals' },
+    { href: '/dashboard/contacts', label: 'Contacts' },
+];
+
+function isCrmNavActive(pathname: string, href: string): boolean {
+    if (href === '/dashboard/contacts') {
+        return pathname === '/dashboard/contacts' || pathname === '/dashboard/business/clients';
+    }
+    return pathname === href;
+}
+
+function CRMNav({ pathname }: { pathname: string }) {
+    return (
+        <nav
+            aria-label="CRM sections"
+            className="flex flex-wrap gap-2 mb-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl"
+        >
+            {CRM_NAV_LINKS.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        isCrmNavActive(pathname, link.href)
+                            ? 'bg-teal-600 text-white'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                >
+                    {link.label}
+                </Link>
+            ))}
+        </nav>
+    );
+}
 
 interface ClientsPageProps {
     user: User;
@@ -45,6 +87,7 @@ interface ClientsPageProps {
 const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const router = useRouter();
+    const pathname = usePathname() || '';
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [filteredClients, setFilteredClients] = useState<BusinessClient[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -66,11 +109,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
 
-    useEffect(() => {
-        if (currentTenant) {
-            loadClients();
-        }
+    const loadClients = useCallback(async () => {
+        if (!currentTenant) return;
+        setLoading(true);
+        const { clients: data } = await businessClientService.getClients(currentTenant.id);
+        setClients(data);
+        setLoading(false);
     }, [currentTenant]);
+
+    useEffect(() => {
+        if (!currentTenant) return;
+        if (['/dashboard/crm', '/dashboard/leads', '/dashboard/deals'].includes(pathname)) {
+            setLoading(false);
+            return;
+        }
+        void loadClients();
+    }, [currentTenant, pathname, loadClients]);
 
     useEffect(() => {
         if (stageParam) {
@@ -81,15 +135,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     useEffect(() => {
         filterClients();
     }, [clients, searchTerm, selectedStage]);
-
-    const loadClients = async () => {
-        if (!currentTenant) return;
-
-        setLoading(true);
-        const { clients: data } = await businessClientService.getClients(currentTenant.id);
-        setClients(data);
-        setLoading(false);
-    };
 
     const filterClients = () => {
         let filtered = clients;
@@ -313,12 +358,50 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+    const crmSectionFallback = (
+        <div className="flex items-center justify-center min-h-[320px] rounded-xl border border-slate-800 bg-slate-900/50">
+            <div className="text-slate-400 text-sm font-medium">Loading...</div>
+        </div>
+    );
+
+    if (pathname === '/dashboard/crm') {
+        return (
+            <div className="space-y-6 h-full min-h-[60vh]">
+                <CRMNav pathname={pathname} />
+                <CRMTab userId={user.id} userRole={user.role} />
+            </div>
+        );
+    }
+
+    if (pathname === '/dashboard/leads') {
+        return (
+            <div className="space-y-6 h-full min-h-[60vh]">
+                <CRMNav pathname={pathname} />
+                <Suspense fallback={crmSectionFallback}>
+                    <KanbanBoard />
+                </Suspense>
+            </div>
+        );
+    }
+
+    if (pathname === '/dashboard/deals') {
+        return (
+            <div className="space-y-6 h-full min-h-[60vh]">
+                <CRMNav pathname={pathname} />
+                <Suspense fallback={crmSectionFallback}>
+                    <DealsTab userId={user.id} userRole={user.role ?? 'user'} />
+                </Suspense>
+            </div>
+        );
+    }
+
     if (loading) {
         return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading clients...</div></div>;
     }
 
     return (
         <div className="space-y-6">
+            <CRMNav pathname={pathname} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -812,6 +895,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         setShowProposalModal(false);
                         setSelectedClientForProposal(null);
                         toast.success('Proposal project created!');
+                        showActionNextSteps('proposal_project_created', (path) => router.push(path));
                     }}
                 />
             )}
@@ -827,7 +911,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     onCreated={() => {
                         setShowInvoiceModal(false);
                         setSelectedClientForInvoice(null);
-                        toast.success('Invoice created successfully!');
                     }}
                 />
             )}
@@ -1431,6 +1514,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
 };
 
 const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: BusinessClient; onClose: () => void; onCreated: () => void }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const [formData, setFormData] = useState({
         invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
@@ -1476,6 +1560,8 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
             if (error) {
                 toast.error(`Failed to create invoice: ${error}`);
             } else {
+                toast.success('Invoice created successfully!');
+                showInvoiceCreatedWithSendPrompt((path) => router.push(path));
                 onCreated();
             }
         } catch (err) {

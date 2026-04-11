@@ -8,14 +8,24 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
  * Uses per-account credentials from the 'integrations' table.
  */
 export async function POST(req: NextRequest) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const payload = await req.json();
+    const internalKey = req.headers.get('x-internal-api-key');
+    const internalOk =
+        Boolean(internalKey) &&
+        internalKey === process.env.INTERNAL_API_KEY &&
+        Boolean(payload?.tenantId);
+
+    if (!internalOk) {
+        const authClient = await createSupabaseServerClient();
+        const {
+            data: { user },
+        } = await authClient.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const supabase = createSupabaseAdminClient();
 
     try {
-        const payload = await req.json();
         const { to, subject, html, text, from, fromName, tenantId, userId, replyTo } = payload;
 
         if (!to || !subject || (!html && !text)) {

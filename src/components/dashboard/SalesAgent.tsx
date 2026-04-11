@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,6 +13,7 @@ import { Button, Input, Card, Modal } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { AerialLeadNavigator } from './leads/AerialLeadNavigator';
@@ -34,6 +35,8 @@ interface ParsedContact {
 const SalesAgent: React.FC = () => {
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
+    const router = useRouter();
+    const { t } = useLanguage();
     const searchParams = useSearchParams();
     // Map URL ?tab= param to internal tab names
     const getInitialTab = (): 'leads' | 'agent' | 'omni' | 'kanban' | 'automation' => {
@@ -997,29 +1000,62 @@ const SalesAgent: React.FC = () => {
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
                         <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
-                        <span className="truncate">Growth Agent</span>
+                        <span className="truncate">{t('Growth Agent')}</span>
                     </h2>
                 </div>
-                <div className="flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
+                <div className="hidden md:flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
                     <button
+                        type="button"
                         onClick={() => setActiveTab('omni')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
                         <Globe className="w-3.5 h-3.5" />
-                        AlphaClone System Lead
+                        {t('AlphaClone System Lead')}
                     </button>
                     <button
+                        type="button"
                         onClick={() => setActiveTab('agent')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
-                        Agent Chat
+                        {t('Agent Chat')}
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/marketplace')}
+                        className="px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap text-slate-400 hover:text-white"
+                    >
+                        {t('Integrations')}
+                    </button>
+                </div>
+                <div className="md:hidden w-full min-w-0">
+                    <label htmlFor="growth-agent-view" className="sr-only">
+                        {t('Select Growth Agent mode')}
+                    </label>
+                    <select
+                        id="growth-agent-view"
+                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={activeTab === 'agent' ? 'agent' : 'omni'}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === 'marketplace') {
+                                router.push('/dashboard/marketplace');
+                                return;
+                            }
+                            if (v === 'omni' || v === 'agent') {
+                                setActiveTab(v);
+                            }
+                        }}
+                    >
+                        <option value="omni">{t('Lead search')}</option>
+                        <option value="agent">{t('Agent chat')}</option>
+                        <option value="marketplace">{t('Integration marketplace')}</option>
+                    </select>
                 </div>
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-[10px] uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                Finding Leads & Autonomous SDR System Active
+                {t('Finding Leads & Autonomous SDR System Active')}
             </div>
             {/* Aerial View - Mini Widget during search or navigation - Hidden as per user request to eliminate map visuals */}
             {/* 

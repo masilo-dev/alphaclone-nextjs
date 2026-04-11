@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, DollarSign, TrendingUp, History, MessageSquare, Phone, Mail, User, FileText } from 'lucide-react';
 import { Modal, Button, Card, Badge } from '../../ui/UIComponents';
 import { Deal, DealStage, dealService } from '../../../services/dealService';
+import { getForwardDealStages } from '../../../lib/stageProgression';
 import { taskService, Task } from '../../../services/taskService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -75,12 +76,14 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
 
             const updatedDeal = { ...deal, stage: newStage };
             if (onDealUpdate) onDealUpdate(updatedDeal);
-            toast.success(`Stage updated to ${newStage}`);
+            toast.success(`Stage updated to ${stageLabels[newStage]}`);
             fetchDealData(); // This will show the new activity log
         } catch (error) {
-            toast.error('Failed to update stage');
+            toast.error(error instanceof Error ? error.message : 'Failed to update stage');
         }
     };
+
+    const selectableStages = getForwardDealStages(deal.stage) as DealStage[];
 
     const stageLabels: Record<DealStage, string> = {
         lead: 'Lead',
@@ -134,9 +137,12 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                                 value={deal.stage}
                                 onChange={(e) => handleStageChange(e.target.value as DealStage)}
                                 className="bg-slate-800 border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm focus:ring-teal-500"
+                                title="Pipeline moves forward only; use Closed lost to exit."
                             >
-                                {Object.entries(stageLabels).map(([value, label]) => (
-                                    <option key={value} value={value}>{label}</option>
+                                {selectableStages.map((value) => (
+                                    <option key={value} value={value}>
+                                        {stageLabels[value]}
+                                    </option>
                                 ))}
                             </select>
                             <Button variant="outline" size="sm" onClick={onClose}>

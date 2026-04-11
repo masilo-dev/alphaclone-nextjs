@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     LogOut, ChevronDown, ChevronRight, ShieldAlert, Activity, Loader2,
@@ -12,6 +12,8 @@ import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import type { AcThemeMode } from '@/lib/applyAcTheme';
+import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -31,20 +33,6 @@ interface SidebarProps {
     onToggleVoice?: () => void;
 }
 
-type ThemeMode = 'light' | 'dark' | 'auto';
-
-function applyThemeClass(t: ThemeMode) {
-    const root = document.documentElement;
-    if (t === 'auto') {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        root.classList.toggle('dark',  dark);
-        root.classList.toggle('light', !dark);
-    } else {
-        root.classList.toggle('dark',  t === 'dark');
-        root.classList.toggle('light', t === 'light');
-    }
-}
-
 // ── Component ──────────────────────────────────────────────────────────────
 const Sidebar = React.memo<SidebarProps>(({
     sidebarOpen,
@@ -60,24 +48,29 @@ const Sidebar = React.memo<SidebarProps>(({
     activeBgTasksCount = 0,
 }) => {
     const router = useRouter();
-    const { languageFlag, setLanguage } = useLanguage();
+    const { language, setLanguage, languageCode, t } = useLanguage();
     const { tasks, dismissTask } = useBackgroundTasks();
 
     // ── ALL hooks must be declared before any conditional return ─────────
-    const [theme, setTheme] = useState<ThemeMode>('dark');
+    const [theme, setTheme] = useState<AcThemeMode>('dark');
     // Track which parent nav items are expanded  
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
     // Load + apply saved theme on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem('ac-theme') as ThemeMode | null;
-            const t = (saved && ['light', 'dark', 'auto'].includes(saved)) ? saved : 'dark';
+            const t = readStoredAcTheme();
             setTheme(t);
-            applyThemeClass(t);
+            applyAcThemeClass(t);
         } catch {
-            applyThemeClass('dark');
+            applyAcThemeClass('dark');
         }
+    }, []);
+
+    useEffect(() => {
+        const onRemote = () => setTheme(readStoredAcTheme());
+        window.addEventListener('ac-theme-changed', onRemote);
+        return () => window.removeEventListener('ac-theme-changed', onRemote);
     }, []);
 
     // Auto-expand parent if a child's href matches activeTab
@@ -91,10 +84,10 @@ const Sidebar = React.memo<SidebarProps>(({
         setExpanded(prev => ({ ...prev, ...autoExpand }));
     }, [activeTab, navItems]);
 
-    const handleTheme = useCallback((t: ThemeMode) => {
+    const handleTheme = useCallback((t: AcThemeMode) => {
         setTheme(t);
-        applyThemeClass(t);
-        try { localStorage.setItem('ac-theme', t); } catch { /* ignore */ }
+        applyAcThemeClass(t);
+        persistAcTheme(t);
     }, []);
 
     const navigate = useCallback((href: string) => {
@@ -109,6 +102,23 @@ const Sidebar = React.memo<SidebarProps>(({
     const toggleExpanded = useCallback((label: string) => {
         setExpanded(prev => ({ ...prev, [label]: !prev[label] }));
     }, []);
+
+    const jumpNavOptions = useMemo(() => {
+        const out: { label: string; href: string }[] = [];
+        for (const item of navItems || []) {
+            if (item.href && item.href !== '#') {
+                out.push({ label: t(item.label), href: item.href });
+            }
+            if (item.subItems?.length) {
+                for (const sub of item.subItems) {
+                    if (sub.href) {
+                        out.push({ label: `${t(item.label)}: ${t(sub.label)}`, href: sub.href });
+                    }
+                }
+            }
+        }
+        return out;
+    }, [navItems, t]);
 
     // ── Safe to early-return after all hooks ──────────────────────────────
     if (forceHidden) return null;
@@ -144,10 +154,40 @@ const Sidebar = React.memo<SidebarProps>(({
                         <Image src={LOGO_URL} alt="AlphaClone" width={36} height={36}
                             className="rounded-xl object-contain flex-shrink-0" />
                         <span className={`font-bold text-white text-lg tracking-tight transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
-                            AlphaClone
+                            {t('AlphaClone')}
                         </span>
                     </div>
                 </div>
+
+                {sidebarOpen && (
+                    <div className="md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
+                        <label htmlFor="ac-sidebar-jump" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                            {t('Jump to page')}
+                        </label>
+                        <select
+                            id="ac-sidebar-jump"
+                            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            defaultValue=""
+                            onChange={(e) => {
+                                const href = e.target.value;
+                                if (href) {
+                                    navigate(href);
+                                    (e.target as HTMLSelectElement).value = '';
+                                }
+                            }}
+                        >
+                            <option value="" disabled>
+                                {t('Select destination')}
+                            </option>
+                            {jumpNavOptions.map((opt) => (
+                                <option key={`${opt.href}-${opt.label}`} value={opt.href}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
                 {/* ── Nav ── */}
 
                 <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 custom-scrollbar transform-gpu">
@@ -159,7 +199,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                 className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-gradient-to-r from-indigo-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:border-teal-400 mb-2`}
                             >
                                 <ShieldAlert className="w-5 h-5 flex-shrink-0" />
-                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>Admin Panel</span>
+                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Admin Panel')}</span>
                             </button>
                         </div>
                     )}
@@ -183,7 +223,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                             navigate(item.href);
                                         }
                                     }}
-                                    title={!sidebarOpen ? item.label : undefined}
+                                    title={!sidebarOpen ? t(item.label) : undefined}
                                     className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative overflow-hidden active:scale-95 touch-manipulation
                                         ${active
                                             ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
@@ -194,10 +234,10 @@ const Sidebar = React.memo<SidebarProps>(({
                                     {Icon && <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />}
 
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
-                                        {item.label}
+                                        {t(item.label)}
                                         {item.comingSoon && sidebarOpen && (
                                             <span className="ml-2 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
-                                                Soon
+                                                {t('Soon')}
                                             </span>
                                         )}
                                     </span>
@@ -242,9 +282,9 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 >
                                                     {SubIcon && <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />}
                                                     <span className="whitespace-nowrap">
-                                                        {sub.label}
+                                                        {t(sub.label)}
                                                         {sub.comingSoon && (
-                                                            <span className="ml-1.5 px-1 py-0.5 text-[7px] font-black uppercase bg-slate-800 text-teal-400 border border-teal-500/20 rounded">Soon</span>
+                                                            <span className="ml-1.5 px-1 py-0.5 text-[7px] font-black uppercase bg-slate-800 text-teal-400 border border-teal-500/20 rounded">{t('Soon')}</span>
                                                         )}
                                                     </span>
                                                 </button>
@@ -266,10 +306,10 @@ const Sidebar = React.memo<SidebarProps>(({
                             <div className="px-3 py-2 bg-teal-500/10 border-b border-teal-500/20 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Activity className="w-3.5 h-3.5 text-teal-400" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">Operations</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">{t('Operations')}</span>
                                 </div>
                                 <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-[9px] font-bold text-teal-300">
-                                    {tasks.filter(t => t.status === 'running').length} Active
+                                    {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
                             </div>
                             <div className="max-h-40 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
@@ -321,7 +361,7 @@ const Sidebar = React.memo<SidebarProps>(({
                     {!sidebarOpen && (
                         <button
                             onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
-                            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+                            title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
                             className="w-full flex items-center justify-center py-2 mb-2 text-slate-500 hover:text-amber-300 transition-colors rounded-lg hover:bg-slate-800"
                         >
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -333,7 +373,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         {/* Avatar → Settings */}
                         <button
                             onClick={() => navigate('/dashboard/business/settings')}
-                            title="Settings"
+                            title={t('Settings')}
                             className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 hover:ring-2 hover:ring-teal-400 hover:ring-offset-2 hover:ring-offset-slate-900 transition-all active:scale-95"
                         >
                             {initials}
@@ -343,23 +383,24 @@ const Sidebar = React.memo<SidebarProps>(({
                             <>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-white truncate leading-tight">
-                                        {user.name || user.email?.split('@')[0] || 'User'}
+                                        {user.name || user.email?.split('@')[0] || t('User')}
                                     </p>
-                                    <p className="text-[10px] text-slate-500 truncate capitalize">{user.role || 'member'}</p>
+                                    <p className="text-[10px] text-slate-500 truncate capitalize">{user.role || t('member')}</p>
                                 </div>
 
                                 {/* Language switcher - immediate change */}
                                 <button
+                                    type="button"
                                     onClick={() => {
-                                        const currentIdx = LANGUAGES.findIndex(l => l.flag === languageFlag);
+                                        const currentIdx = LANGUAGES.findIndex((l) => l.code === language);
                                         const nextLang = LANGUAGES[(currentIdx + 1) % LANGUAGES.length];
                                         setLanguage(nextLang.code);
-                                        toast.success(`Switched to ${nextLang.label}`);
+                                        toast.success(`${t('Switched to')} ${nextLang.nativeName}`);
                                     }}
-                                    title="Switch language"
-                                    className="text-lg leading-none hover:scale-125 transition-transform flex-shrink-0"
+                                    title={t('Switch language')}
+                                    className="text-[10px] font-bold min-w-[2rem] h-8 px-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:border-teal-500/50 transition-colors flex items-center justify-center flex-shrink-0"
                                 >
-                                    {languageFlag}
+                                    {languageCode}
                                 </button>
                             </>
                         )}
@@ -367,12 +408,12 @@ const Sidebar = React.memo<SidebarProps>(({
                         {/* Logout */}
                         <button
                             onClick={onLogout}
-                            title="Log Out"
+                            title={t('Log Out')}
                             className={`flex items-center gap-1.5 text-slate-500 hover:text-red-400 transition-colors group rounded-lg hover:bg-red-500/10 active:scale-95 touch-manipulation
                                 ${sidebarOpen ? 'px-2 py-1.5' : 'p-2'}`}
                         >
                             <LogOut className="w-4 h-4 flex-shrink-0" />
-                            {sidebarOpen && <span className="text-xs font-medium whitespace-nowrap">Log out</span>}
+                            {sidebarOpen && <span className="text-xs font-medium whitespace-nowrap">{t('Log out')}</span>}
                         </button>
                     </div>
                 </div>

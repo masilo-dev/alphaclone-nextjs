@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+    const denied = denyIfCronUnauthorized(req);
+    if (denied) return denied;
+
     try {
         console.log('Workflow sweep cron triggered');
 

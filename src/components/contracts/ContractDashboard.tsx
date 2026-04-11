@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Bot, Download, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, MapPin, Mail, Briefcase, ChevronRight, Loader2, Eye, Edit3, RotateCcw, Send } from 'lucide-react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -8,8 +8,14 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { showActionNextSteps } from '../common/showActionNextSteps';
 import { format } from 'date-fns';
 import { SignaturePad } from './SignaturePad';
+import {
+    getContractProjectTypeOptions,
+    getPreferredContractProjectTypes,
+} from '../../services/universalServiceCatalog';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -47,22 +53,56 @@ interface ContractForm {
     governingLaw: string;
     // Extra
     additionalTerms: string;
+    /** Target length for AI output (PDF pages still depend on print layout). */
+    contractLength: '1' | '2' | '3' | 'full';
+    /** BCP 47 or display label; passed to the model for generation language. */
+    outputLanguage: string;
 }
 
-const PROJECT_TYPES = [
-    'Web Application Development',
-    'Mobile App Development',
-    'E-Commerce Platform',
-    'UI/UX Design',
-    'Brand Identity & Design',
-    'Digital Marketing Campaign',
-    'SEO & Content Strategy',
-    'Software Consulting',
-    'IT Infrastructure & Support',
-    'Data Analytics & Reporting',
-    'Custom Software Solution',
-    'SaaS Product Development',
+const CONTRACT_LENGTH_OPTIONS: { id: ContractForm['contractLength']; label: string; hint: string }[] = [
+    { id: '1', label: '1 page (summary)', hint: 'Short agreement: parties, scope, payment, core terms, signatures.' },
+    { id: '2', label: '2 pages (standard)', hint: 'Adds confidentiality, liability, and dispute basics.' },
+    { id: '3', label: '3 pages (detailed)', hint: 'Broader clauses while staying relatively compact.' },
+    { id: 'full', label: 'Full agreement (comprehensive)', hint: 'Full MSA-style sections; longest output.' },
 ];
+
+const OUTPUT_LANGUAGES: { code: string; label: string }[] = [
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'fr', label: 'French' },
+    { code: 'de', label: 'German' },
+    { code: 'it', label: 'Italian' },
+    { code: 'pt', label: 'Portuguese' },
+    { code: 'nl', label: 'Dutch' },
+    { code: 'pl', label: 'Polish' },
+    { code: 'sv', label: 'Swedish' },
+    { code: 'da', label: 'Danish' },
+    { code: 'no', label: 'Norwegian' },
+    { code: 'fi', label: 'Finnish' },
+    { code: 'cs', label: 'Czech' },
+    { code: 'ro', label: 'Romanian' },
+    { code: 'el', label: 'Greek' },
+    { code: 'tr', label: 'Turkish' },
+    { code: 'ar', label: 'Arabic' },
+    { code: 'he', label: 'Hebrew' },
+    { code: 'hi', label: 'Hindi' },
+    { code: 'zh', label: 'Chinese (Simplified)' },
+    { code: 'ja', label: 'Japanese' },
+    { code: 'ko', label: 'Korean' },
+];
+
+function maxTokensForLength(length: ContractForm['contractLength']): number {
+    switch (length) {
+        case '1':
+            return 1600;
+        case '2':
+            return 2600;
+        case '3':
+            return 3600;
+        default:
+            return 4500;
+    }
+}
 
 const PAYMENT_OPTIONS = [
     '50% upfront, 50% on delivery',
@@ -76,7 +116,9 @@ const PAYMENT_OPTIONS = [
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
+    const [projectTypeOptions, setProjectTypeOptions] = useState<string[]>(() => getContractProjectTypeOptions());
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [step, setStep] = useState<'form' | 'preview' | 'sign' | 'saved'>('form');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -108,7 +150,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         clientEmail: '',
         clientPhone: '',
         projectName: '',
-        projectType: PROJECT_TYPES[0],
+        projectType: getContractProjectTypeOptions()[0] ?? 'Other (describe fully in scope below)',
         projectScope: '',
         deliverables: '',
         totalAmount: '',
@@ -120,6 +162,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         jurisdiction: '',
         governingLaw: '',
         additionalTerms: '',
+        contractLength: 'full',
+        outputLanguage: 'en',
     });
 
     useEffect(() => {
@@ -130,6 +174,31 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 .catch(() => setLoadingContracts(false));
         }
     }, [currentTenant?.id]);
+
+    useEffect(() => {
+        if (!currentTenant?.id) return;
+        supabase
+            .from('business_settings')
+            .select('settings')
+            .eq('tenant_id', currentTenant.id)
+            .maybeSingle()
+            .then(({ data }: { data: { settings?: { service_sectors?: string[] } } | null }) => {
+                const sectors = data?.settings?.service_sectors ?? [];
+                const preferred = getPreferredContractProjectTypes(sectors);
+                const all = getContractProjectTypeOptions();
+                const merged = [...new Set([...preferred, ...all])];
+                setProjectTypeOptions(merged);
+            });
+    }, [currentTenant?.id]);
+
+    useEffect(() => {
+        if (projectTypeOptions.length === 0) return;
+        setForm(prev =>
+            projectTypeOptions.includes(prev.projectType)
+                ? prev
+                : { ...prev, projectType: projectTypeOptions[0] }
+        );
+    }, [projectTypeOptions]);
 
     useEffect(() => {
         if (form.clientId && clients.length > 0) {
@@ -164,7 +233,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, maxTokens: 4000, stream: true }),
+                body: JSON.stringify({
+                    prompt,
+                    maxTokens: maxTokensForLength(form.contractLength),
+                    stream: true,
+                }),
             });
 
             if (!res.ok) throw new Error('Generation failed');
@@ -197,7 +270,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             console.error('Streaming error:', err);
             toast.error('AI Streaming failed, using template...');
             // Fallback: generate from template
-            setGeneratedContract(buildTemplateContract(form));
+            setGeneratedContract(buildTemplateContract(form, form.contractLength));
             setContractId('');
             setIsSigned(false);
             setSignatureName('');
@@ -221,6 +294,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             });
             if (error) throw new Error(error);
             toast.success('Contract saved successfully!');
+            showActionNextSteps('contract_saved', (path) => router.push(path));
             setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
         } catch (e: any) {
@@ -408,9 +482,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <input className={inputCls} value={form.projectName} onChange={e => set('projectName', e.target.value)} placeholder="e.g. E-Commerce Platform Redesign" />
                                     </div>
                                     <div>
-                                        <label className={labelCls}>Project Type</label>
+                                        <label className={labelCls}>Project type</label>
+                                        <p className="text-slate-500 text-xs mb-2 leading-relaxed">
+                                            Options come from the universal service catalog (50+ lines of business). Categories you enable under Settings → Business Profile are listed first.
+                                        </p>
                                         <select className={inputCls} value={form.projectType} onChange={e => set('projectType', e.target.value)}>
-                                            {PROJECT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                            {projectTypeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
                                     </div>
                                     <div className="md:col-span-2">
@@ -454,6 +531,58 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 </div>
                             </div>
 
+                            {/* Document language & length */}
+                            <div className={sectionCls}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Languages className="w-5 h-5 text-cyan-400" />
+                                    <h2 className="text-base font-bold text-white">Contract language & length</h2>
+                                </div>
+                                <p className="text-slate-500 text-xs leading-relaxed mb-4">
+                                    The AI writes the full contract text in the language you select. PDF downloads use fixed print margins and fonts, so the number of PDF pages often differs from what you see on screen (for example, a long on-screen draft may become more pages in PDF).
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className={labelCls}>Output language</label>
+                                        <select
+                                            className={inputCls}
+                                            value={form.outputLanguage}
+                                            onChange={e => set('outputLanguage', e.target.value)}
+                                        >
+                                            {OUTPUT_LANGUAGES.map(({ code, label }) => (
+                                                <option key={code} value={code}>{label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className={labelCls}>Target length (AI)</label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {CONTRACT_LENGTH_OPTIONS.map(opt => (
+                                                <label
+                                                    key={opt.id}
+                                                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                                        form.contractLength === opt.id
+                                                            ? 'border-teal-500/60 bg-teal-500/10'
+                                                            : 'border-slate-700 bg-slate-800/40 hover:border-slate-600'
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="contractLength"
+                                                        className="mt-1"
+                                                        checked={form.contractLength === opt.id}
+                                                        onChange={() => set('contractLength', opt.id)}
+                                                    />
+                                                    <span>
+                                                        <span className="block text-sm font-semibold text-white">{opt.label}</span>
+                                                        <span className="block text-xs text-slate-500 mt-0.5">{opt.hint}</span>
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Timeline & Legal */}
                             <div className={sectionCls}>
                                 <div className="flex items-center gap-3 mb-2">
@@ -491,9 +620,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 className="w-full py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white font-bold text-base rounded-2xl transition-all shadow-lg shadow-teal-900/30 flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {isGenerating ? (
-                                    <><Loader2 className="w-5 h-5 animate-spin" /> Generating Professional Contract...</>
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> Generating contract...</>
                                 ) : (
-                                    <><Bot className="w-5 h-5" /> Generate 5-Page Professional Contract</>
+                                    <>
+                                        <Bot className="w-5 h-5" />
+                                        Generate contract
+                                        ({CONTRACT_LENGTH_OPTIONS.find(o => o.id === form.contractLength)?.label ?? 'Custom'}
+                                        {form.outputLanguage !== 'en' ? ` · ${OUTPUT_LANGUAGES.find(l => l.code === form.outputLanguage)?.label ?? form.outputLanguage}` : ''})
+                                    </>
                                 )}
                             </button>
                         </div>
@@ -570,6 +704,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 </div>
                             )}
 
+                            <p className="text-slate-500 text-xs">
+                                On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area, so page count may be higher than a rough screen estimate.
+                            </p>
                             {/* Contract Document */}
                             <div ref={printRef} className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden">
                                 <div className="p-8 md:p-12 font-serif leading-relaxed" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
@@ -595,9 +732,72 @@ function contractToHTML(text: string): string {
         .replace(/\n/g, '<br/>');
 }
 
+function outputLanguageInstruction(langCode: string): string {
+    const entry = OUTPUT_LANGUAGES.find(l => l.code === langCode);
+    const label = entry?.label ?? 'English';
+    if (langCode === 'en') {
+        return 'LANGUAGE: Write the entire agreement in English.';
+    }
+    return `LANGUAGE: Write the entire agreement in ${label}, using appropriate legal and business register for that language. Do not add a parallel English version unless a defined term or proper name requires it.`;
+}
+
+function lengthInstruction(length: ContractForm['contractLength']): { headline: string; sections: string; wordHint: string } {
+    switch (length) {
+        case '1':
+            return {
+                headline: 'You are a professional contract lawyer. Generate a concise ONE-PAGE Master Services Agreement (MSA)',
+                wordHint: 'Target about 400–650 words. Be dense and complete; avoid repetition. This should reasonably fit one printed page at typical legal font size.',
+                sections: `Use these sections (keep each tight):
+1. Parties and short recitals
+2. Scope, deliverables, and written change orders
+3. Fees, deposit, payment schedule, late payment (brief)
+4. Start date, target completion, reasonable client cooperation
+5. IP: assignment on full payment; Provider retains pre-existing tools; Client materials license
+6. Confidentiality (one compact section)
+7. Termination for convenience and cause (summary)
+8. Liability cap tied to fees paid in the prior 12 months (exclude willful misconduct / confidentiality where appropriate)
+9. Governing law, dispute resolution (negotiation then arbitration or courts as fits the stated jurisdiction)
+10. Signatures with the exact names and contact details provided`,
+            };
+        case '2':
+            return {
+                headline: 'You are a professional contract lawyer. Generate a TWO-PAGE Master Services Agreement (MSA)',
+                wordHint: 'Target about 900–1,200 words.',
+                sections: `Include: Parties & recitals; Scope, deliverables & change orders; Compensation, invoicing, expenses; Timeline & cooperation; IP (assignment, pre-existing, client materials); Confidentiality; Warranties (concise) & disclaimer; Liability cap & core indemnities; Termination & survival; Dispute & governing law; General (entire agreement, notices, assignment, independent contractors); Signatures.`,
+            };
+        case '3':
+            return {
+                headline: 'You are a professional contract lawyer. Generate a THREE-PAGE Master Services Agreement (MSA)',
+                wordHint: 'Target about 1,400–1,900 words.',
+                sections: `Numbered sections 1–10: Parties & recitals; Scope & deliverables & changes; Payment, invoicing, late fees, expenses; Timeline, milestones, cooperation; IP; Confidentiality; Warranties & disclaimer; Liability & indemnification; Termination & effect; Dispute resolution & governing law; General (force majeure, severability, amendments, counterparts); Signatures.`,
+            };
+        default:
+            return {
+                headline: 'You are a professional contract lawyer. Generate a comprehensive Master Services Agreement (MSA)',
+                wordHint: 'Full professional detail suitable for a long-form services agreement. Write every clause in full.',
+                sections: `1. PARTIES AND RECITALS
+2. SCOPE OF SERVICES AND DELIVERABLES
+3. COMPENSATION, PAYMENT TERMS, AND SCHEDULE
+4. PROJECT TIMELINE AND MILESTONES
+5. INTELLECTUAL PROPERTY RIGHTS
+6. CONFIDENTIALITY AND NON-DISCLOSURE
+7. WARRANTIES AND REPRESENTATIONS
+8. LIMITATION OF LIABILITY AND INDEMNIFICATION
+9. TERMINATION AND DISPUTE RESOLUTION
+10. GENERAL PROVISIONS (Force Majeure, Entire Agreement, Amendments, Severability, Assignment, Notices)
+11. SIGNATURES AND EXECUTION (Use exactly the provided Provider Name, Client Full Name, and contact information. Do NOT use blank lines or underscores for names, dates, or titles.)`,
+            };
+    }
+}
+
 function buildAIPrompt(f: ContractForm): string {
     const deposit = f.totalAmount ? (parseFloat(f.totalAmount) * parseFloat(f.depositPercent || '50') / 100).toLocaleString() : '0';
-    return `You are a professional contract lawyer. Generate a complete, formal, legally-structured 5-page Master Services Agreement (MSA) between the following parties. The contract must be fully professional with NO placeholder text, NO asterisks, NO brackets like [NAME] or [DATE] — use only the real information provided below. Every section must be fully written out in proper legal language.
+    const { headline, sections, wordHint } = lengthInstruction(f.contractLength);
+    const lang = outputLanguageInstruction(f.outputLanguage);
+
+    return `${headline} between the parties below. The contract must be professional with NO placeholder text, NO brackets like [NAME] or [DATE], NO unfilled underscores — only the factual details provided. ${lang}
+
+${wordHint}
 
 SERVICE PROVIDER:
 - Name: ${f.providerName}
@@ -633,23 +833,151 @@ LEGAL:
 - Governing Law: ${f.governingLaw || 'applicable law'}
 ${f.additionalTerms ? `- Additional Terms: ${f.additionalTerms}` : ''}
 
-Structure the contract with these sections:
-1. PARTIES AND RECITALS
-2. SCOPE OF SERVICES AND DELIVERABLES
-3. COMPENSATION, PAYMENT TERMS, AND SCHEDULE
-4. PROJECT TIMELINE AND MILESTONES
-5. INTELLECTUAL PROPERTY RIGHTS
-6. CONFIDENTIALITY AND NON-DISCLOSURE
-7. WARRANTIES AND REPRESENTATIONS
-8. LIMITATION OF LIABILITY AND INDEMNIFICATION
-9. TERMINATION AND DISPUTE RESOLUTION
-10. GENERAL PROVISIONS (Force Majeure, Entire Agreement, Amendments, Severability, Assignment, Notices)
-11. SIGNATURES AND EXECUTION (Use exactly the explicitly provided Provider Name, Client Full Name, and contact information. Do NOT use blank lines or underscores under any circumstances for names, dates, or titles.)
+STRUCTURE AND SECTIONS:
+${sections}
 
-Use markdown formatting: # for main title, ## for sections, **bold** for key terms. Make it exactly 5 pages worth of content. Write every clause in full — do not abbreviate or use placeholders.`;
+Use markdown: # for main title, ## for sections, **bold** for key terms.`;
 }
 
-function buildTemplateContract(f: ContractForm): string {
+function buildOnePageTemplateContract(f: ContractForm): string {
+    const amount = parseFloat(f.totalAmount || '0');
+    const depositPct = parseFloat(f.depositPercent || '50');
+    const deposit = (amount * depositPct) / 100;
+    const balance = amount - deposit;
+    const jurisdiction = f.jurisdiction || 'the jurisdiction agreed by the parties';
+    const govLaw = f.governingLaw || 'the laws of the applicable jurisdiction';
+    const today = format(new Date(), 'MMMM d, yyyy');
+
+    return `# MASTER SERVICES AGREEMENT
+
+**Date:** ${today}
+
+**${f.providerName}** ("Provider")${f.providerAddress ? `, ${f.providerAddress}` : ''}, and **${f.clientName}**${f.clientCompany && f.clientCompany !== f.clientName ? ` (${f.clientCompany})` : ''} ("Client")${f.clientAddress ? `, ${f.clientAddress}` : ''}, agree: Provider will perform **${f.projectType}** for **${f.projectName}**. Scope: ${f.projectScope || 'As agreed in writing during the project.'} Deliverables: ${f.deliverables || 'As specified in writing.'} Changes require a written change order.
+
+**Fees:** **${f.currency} ${amount.toLocaleString()}** total. ${f.paymentSchedule} Deposit (${depositPct}%): **${f.currency} ${deposit.toLocaleString()}**; balance **${f.currency} ${balance.toLocaleString()}** per invoices. Late payment may incur interest allowed by law. Work starts **${f.startDate}**; target completion **${f.endDate}**.
+
+**IP:** On full payment, Provider assigns custom work product to Client. Provider keeps pre-existing IP and general methods. Client grants a license for Client materials solely to perform the Services.
+
+**Confidentiality:** Each party protects the other's non-public information for three (3) years after this agreement ends, except information that is public, already known, or legally required to be disclosed.
+
+**Termination:** Either party may terminate with thirty (30) days' notice; fees through the termination date remain due. Either party may terminate for material breach uncured after fifteen (15) days.
+
+**Liability:** Neither party is liable for indirect or consequential damages. Total liability (except confidentiality, IP, or willful misconduct) is capped at fees paid in the twelve (12) months before the claim.
+
+**Law & disputes:** Governed by ${govLaw}. Disputes: good-faith negotiation, then binding arbitration in ${jurisdiction}, except injunctive relief may be sought for IP or confidentiality.
+
+**Entire agreement; notices:** This is the entire agreement. Notices by email to ${f.providerEmail} and ${f.clientEmail || 'the Client\'s email on file'}.
+
+---
+
+**Provider:** ${f.providerName} — ${today}  
+**Client:** ${f.clientName} — ${today}`;
+}
+
+function buildTwoPageTemplateContract(f: ContractForm): string {
+    const amount = parseFloat(f.totalAmount || '0');
+    const depositPct = parseFloat(f.depositPercent || '50');
+    const deposit = (amount * depositPct) / 100;
+    const balance = amount - deposit;
+    const jurisdiction = f.jurisdiction || 'the jurisdiction agreed by the parties';
+    const govLaw = f.governingLaw || 'the laws of the applicable jurisdiction';
+    const today = format(new Date(), 'MMMM d, yyyy');
+
+    return `# MASTER SERVICES AGREEMENT
+
+**Effective Date:** ${today}
+
+Between **${f.providerName}** ("Provider")${f.providerAddress ? `, ${f.providerAddress}` : ''}${f.providerEmail ? `, ${f.providerEmail}` : ''} and **${f.clientName}**${f.clientCompany && f.clientCompany !== f.clientName ? ` (${f.clientCompany})` : ''} ("Client")${f.clientAddress ? `, ${f.clientAddress}` : ''}${f.clientEmail ? `, ${f.clientEmail}` : ''}.
+
+---
+
+## 1. Services and deliverables
+Provider performs **${f.projectType}** for **${f.projectName}**. Scope: ${f.projectScope || 'Services as agreed between the parties.'} Deliverables: ${f.deliverables || 'Deliverables as specified in writing.'} Changes require written change orders.
+
+## 2. Compensation
+Total: **${f.currency} ${amount.toLocaleString()}**. ${f.paymentSchedule} Deposit (${depositPct}%): **${f.currency} ${deposit.toLocaleString()}**; balance **${f.currency} ${balance.toLocaleString()}** as invoiced. Late fees may apply as permitted by law. Commencement **${f.startDate}**; target completion **${f.endDate}**.
+
+## 3. Intellectual property
+On full payment, Provider assigns custom work product to Client. Provider retains pre-existing IP and general methods. Client grants a license to use Client materials solely to perform the Services.
+
+## 4. Confidentiality
+Each party protects the other's Confidential Information for three (3) years after termination, with standard exceptions (public domain, prior knowledge, independent development, legal process).
+
+## 5. Warranties and disclaimer
+Provider warrants professional performance. Client warrants rights to supplied materials. EXCEPT AS STATED, IMPLIED WARRANTIES ARE DISCLAIMED TO THE MAXIMUM EXTENT PERMITTED BY LAW.
+
+## 6. Liability and indemnity
+Neither party is liable for indirect or consequential damages. Aggregate liability (except confidentiality, IP, or willful misconduct) is limited to fees paid in the twelve (12) months preceding the claim. Each party indemnifies the other against third-party claims arising from the indemnifying party's materials or gross negligence, subject to prompt notice.
+
+## 7. Termination and dispute
+Termination for convenience: thirty (30) days' notice; fees due through termination remain payable. Termination for cause if breach uncured after fifteen (15) days. Disputes: negotiation, then binding arbitration in ${jurisdiction}, except either party may seek injunctive relief for IP or confidentiality.
+
+## 8. General
+Governing law: ${govLaw}. Entire agreement; amendments in writing; independent contractors; assignment requires consent where not unreasonable; notices by email to addresses above.
+
+---
+
+## Signatures
+
+**Provider:** ${f.providerName} — ${today}
+
+**Client:** ${f.clientName} — ${today}`;
+}
+
+function buildThreePageTemplateContract(f: ContractForm): string {
+    const amount = parseFloat(f.totalAmount || '0');
+    const depositPct = parseFloat(f.depositPercent || '50');
+    const deposit = (amount * depositPct) / 100;
+    const balance = amount - deposit;
+    const jurisdiction = f.jurisdiction || 'the jurisdiction agreed by the parties';
+    const govLaw = f.governingLaw || 'the laws of the applicable jurisdiction';
+    const today = format(new Date(), 'MMMM d, yyyy');
+
+    return `# MASTER SERVICES AGREEMENT
+
+**Effective Date:** ${today}
+
+Between **${f.providerName}** ("Provider")${f.providerAddress ? `, ${f.providerAddress}` : ''}${f.providerEmail ? `, ${f.providerEmail}` : ''} and **${f.clientName}**${f.clientCompany && f.clientCompany !== f.clientName ? ` (${f.clientCompany})` : ''} ("Client")${f.clientAddress ? `, ${f.clientAddress}` : ''}${f.clientEmail ? `, ${f.clientEmail}` : ''}.
+
+---
+
+## 1. Services and deliverables
+Provider performs **${f.projectType}** for **${f.projectName}**. Scope: ${f.projectScope || 'Services as agreed between the parties.'} Deliverables: ${f.deliverables || 'Deliverables as specified in writing.'} Changes require written change orders specifying fees and schedule impact.
+
+## 2. Compensation and invoicing
+Total: **${f.currency} ${amount.toLocaleString()}**. ${f.paymentSchedule} Deposit (${depositPct}%): **${f.currency} ${deposit.toLocaleString()}**; balance **${f.currency} ${balance.toLocaleString()}** as invoiced. Invoices payable within fourteen (14) days unless stated otherwise. Late fees as permitted by law. Reasonable expenses pre-approved in writing are reimbursable.
+
+## 3. Timeline and cooperation
+Commencement **${f.startDate}**; target completion **${f.endDate}**. Client will provide timely feedback, credentials, and materials. Client-caused delays extend timelines and are not a breach by Provider.
+
+## 4. Intellectual property
+On full payment, Provider assigns custom work product to Client. Provider retains pre-existing IP, tools, and methodologies. Client materials remain Client property; Client grants a limited license to use them to perform the Services.
+
+## 5. Confidentiality
+Each party protects the other's Confidential Information for three (3) years after termination, with standard exceptions. Either party may seek injunctive relief for misuse.
+
+## 6. Warranties and disclaimer
+Provider warrants professional, workmanlike performance. Client warrants accuracy and rights in its materials. Deliverables warranted against material defects for thirty (30) days after delivery, excluding Client modifications. EXCEPT AS STATED, IMPLIED WARRANTIES ARE DISCLAIMED TO THE MAXIMUM EXTENT PERMITTED BY LAW.
+
+## 7. Liability and indemnity
+Neither party is liable for indirect or consequential damages. Aggregate liability (except confidentiality, IP, or willful misconduct) is limited to fees paid in the twelve (12) months preceding the claim. Each party indemnifies the other against third-party claims arising from the indemnifying party's breach, materials, or gross negligence, subject to prompt notice.
+
+## 8. Termination and dispute resolution
+Termination for convenience: thirty (30) days' notice; fees through termination remain due. Termination for cause if material breach uncured after fifteen (15) days. Disputes: good-faith negotiation, then binding arbitration in ${jurisdiction}, except injunctive relief for IP or confidentiality may be sought in any competent court.
+
+## 9. General provisions
+Governing law: ${govLaw}. Entire agreement; amendments in writing; severability; assignment subject to reasonable consent; independent contractors; force majeure with prompt notice; notices by email to addresses above; electronic signatures and counterparts are valid.
+
+---
+
+## Signatures
+
+**Provider:** ${f.providerName} — ${today}
+
+**Client:** ${f.clientName} — ${today}`;
+}
+
+function buildFullTemplateContract(f: ContractForm): string {
     const amount = parseFloat(f.totalAmount || '0');
     const depositPct = parseFloat(f.depositPercent || '50');
     const deposit = (amount * depositPct / 100);
@@ -958,6 +1286,22 @@ ${f.clientPhone ? `Phone: ${f.clientPhone}` : ''}
 ---
 
 *This Master Services Agreement is a legally binding document. Both Parties are advised to review this Agreement carefully and seek independent legal counsel if needed before signing. This document was prepared using AlphaClone's professional contract generation system.*`;
+}
+
+function buildTemplateContract(
+    f: ContractForm,
+    length: ContractForm['contractLength'] = 'full'
+): string {
+    switch (length) {
+        case '1':
+            return buildOnePageTemplateContract(f);
+        case '2':
+            return buildTwoPageTemplateContract(f);
+        case '3':
+            return buildThreePageTemplateContract(f);
+        default:
+            return buildFullTemplateContract(f);
+    }
 }
 
 export default ContractDashboard;

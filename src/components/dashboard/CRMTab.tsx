@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { dealService, Deal, DealStage } from '../../services/dealService';
 import { UnifiedCRMService } from '../../services/crm/UnifiedCRMService';
 import { RefreshCw, Plus, MoreHorizontal, DollarSign, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CrmNextStepsPanel } from './crm/CrmNextStepsPanel';
+import { buildCrmOverviewNextSteps } from '../../lib/crmNextSteps';
 
 const STAGES: { id: DealStage; label: string; color: string }[] = [
     { id: 'lead', label: 'Lead', color: 'bg-slate-500' },
@@ -54,13 +56,17 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
 
     const getStageDeals = (stage: DealStage) => deals.filter(d => d.stage === stage);
 
+    const overviewNextSteps = useMemo(() => buildCrmOverviewNextSteps(deals), [deals]);
+
     return (
         <div className="h-full flex flex-col text-white">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-white">CRM Pipeline</h1>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-1">Manage deals and sync with external platforms</p>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-1">
+                        Turn pipeline data into the next customer action: dates, stages, and revenue outcomes.
+                    </p>
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto">
                     <button
@@ -81,6 +87,14 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                     </button>
                 </div>
             </div>
+
+            {!loading && (
+                <CrmNextStepsPanel
+                    heading="What to do next"
+                    subheading="Execution beats silos. Work the highest-impact moves toward signed business."
+                    items={overviewNextSteps}
+                />
+            )}
 
             {/* Kanban Board */}
             <div className="flex-1 overflow-hidden">

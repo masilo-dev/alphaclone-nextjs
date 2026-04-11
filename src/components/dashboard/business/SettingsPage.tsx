@@ -54,19 +54,10 @@ import { BackgroundColorPicker } from '../settings/BackgroundColorPicker';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useLanguage, LANGUAGES } from '../../../contexts/LanguageContext';
 import { IntegrationSettings } from '../settings/IntegrationSettings';
+import { APP_VERSION } from '../../../constants';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
-function applyThemeClass(t: ThemeMode) {
-    const root = document.documentElement;
-    if (t === 'auto') {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        root.classList.toggle('dark', dark);
-        root.classList.toggle('light', !dark);
-    } else {
-        root.classList.toggle('dark', t === 'dark');
-        root.classList.toggle('light', t === 'light');
-    }
-}
+import type { AcThemeMode } from '../../../lib/applyAcTheme';
+import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '../../../lib/applyAcTheme';
 
 interface SettingsPageProps {
     user: User;
@@ -75,24 +66,25 @@ interface SettingsPageProps {
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const { backgroundColor, setBackgroundColor } = useTheme();
-    const { language, setLanguage } = useLanguage();
+    const { language, setLanguage, t: translate } = useLanguage();
     const [activeTab, setActiveTab] = useState<'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing' | 'appearance'>('business');
-    const [uiTheme, setUiTheme] = useState<ThemeMode>('dark');
+    const [uiTheme, setUiTheme] = useState<AcThemeMode>('dark');
 
     // Load + sync theme on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem('ac-theme') as ThemeMode | null;
-            const t = (saved && ['light', 'dark', 'auto'].includes(saved)) ? saved : 'dark';
-            setUiTheme(t);
-            applyThemeClass(t);
-        } catch { applyThemeClass('dark'); }
+            const stored = readStoredAcTheme();
+            setUiTheme(stored);
+            applyAcThemeClass(stored);
+        } catch {
+            applyAcThemeClass('dark');
+        }
     }, []);
 
-    const handleTheme = useCallback((t: ThemeMode) => {
+    const handleTheme = useCallback((t: AcThemeMode) => {
         setUiTheme(t);
-        applyThemeClass(t);
-        try { localStorage.setItem('ac-theme', t); } catch { /* ignore */ }
+        applyAcThemeClass(t);
+        persistAcTheme(t);
     }, []);
     const [settings, setSettings] = useState({
         businessName: '',
@@ -774,6 +766,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 )}
                             </div>
                         </div>
+
+                        <div className="mt-6 p-4 rounded-xl border border-slate-700/80 bg-slate-800/40 space-y-2">
+                            <p className="text-xs text-slate-500">
+                                {translate('Version')} {APP_VERSION}
+                            </p>
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                                {translate('Shell language (navigation, sidebar, titles, and guided toasts) follows your Appearance selection. AI output uses the same language. Some detailed forms may still show English where not yet wrapped.')}
+                            </p>
+                        </div>
                     </>
                 )}
 
@@ -781,8 +782,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 {activeTab === 'appearance' && (
                     <div className="space-y-8">
                         <div>
-                            <h3 className="text-xl font-bold mb-1">Appearance & Language</h3>
-                            <p className="text-slate-400">Customize the look and language of your workspace</p>
+                            <h3 className="text-xl font-bold mb-1">{translate('Appearance & Language')}</h3>
+                            <p className="text-slate-400">{translate('Customize the look and language of your workspace')}</p>
                         </div>
 
                         {/* ── Language Section ── */}
@@ -790,8 +791,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="flex items-center gap-3 mb-2">
                                 <Globe className="w-5 h-5 text-teal-400" />
                                 <div>
-                                    <h4 className="text-base font-semibold text-white">Language</h4>
-                                    <p className="text-xs text-slate-400">Choose the language for AI-generated content</p>
+                                    <h4 className="text-base font-semibold text-white">{translate('Language')}</h4>
+                                    <p className="text-xs text-slate-400">{translate('AI-generated content and prompts. The rest of the dashboard follows your language choice for shell and navigation.')}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -805,7 +806,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                 : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
                                         }`}
                                     >
-                                        <span className="text-2xl leading-none">{lang.flag}</span>
+                                        <span className="text-xs font-bold w-9 h-9 flex items-center justify-center rounded-lg bg-slate-950 border border-slate-600 text-slate-200 shrink-0">
+                                            {lang.code.toUpperCase()}
+                                        </span>
                                         <div className="text-left">
                                             <p className="text-sm font-semibold">{lang.label}</p>
                                             <p className="text-xs opacity-60">{lang.nativeName}</p>
@@ -823,15 +826,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <div className="flex items-center gap-3 mb-2">
                                 <Moon className="w-5 h-5 text-teal-400" />
                                 <div>
-                                    <h4 className="text-base font-semibold text-white">Theme</h4>
-                                    <p className="text-xs text-slate-400">Select how the dashboard looks</p>
+                                    <h4 className="text-base font-semibold text-white">{translate('Theme')}</h4>
+                                    <p className="text-xs text-slate-400">{translate('Select how the dashboard looks')}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {([
-                                    { mode: 'light' as ThemeMode, label: 'Light', desc: 'Bright & clean', Icon: Sun },
-                                    { mode: 'dark'  as ThemeMode, label: 'Dark',  desc: 'Easy on eyes', Icon: Moon },
-                                    { mode: 'auto'  as ThemeMode, label: 'System', desc: 'Follows OS',   Icon: Monitor },
+                                    { mode: 'light' as AcThemeMode, label: 'Light', desc: 'Bright & clean', Icon: Sun },
+                                    { mode: 'dark'  as AcThemeMode, label: 'Dark',  desc: 'Easy on eyes', Icon: Moon },
+                                    { mode: 'auto'  as AcThemeMode, label: 'System', desc: 'Follows OS',   Icon: Monitor },
                                 ]).map(({ mode, label, desc, Icon }) => (
                                     <button
                                         key={mode}
@@ -844,8 +847,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     >
                                         <Icon className="w-5 h-5 flex-shrink-0" />
                                         <div className="text-left">
-                                            <p className="text-sm font-semibold">{label}</p>
-                                            <p className="text-xs opacity-60">{desc}</p>
+                                            <p className="text-sm font-semibold">{translate(label)}</p>
+                                            <p className="text-xs opacity-60">{translate(desc)}</p>
                                         </div>
                                         {uiTheme === mode && (
                                             <span className="ml-auto w-2 h-2 rounded-full bg-teal-400" />
@@ -859,26 +862,26 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         <div className="p-6 bg-slate-800 rounded-xl border border-slate-700">
                             <div className="flex items-center justify-between mb-4">
                                 <div>
-                                    <h4 className="text-base font-semibold text-white">Dashboard Background Color</h4>
-                                    <p className="text-sm text-slate-400">Choose a color that matches your brand</p>
+                                    <h4 className="text-base font-semibold text-white">{translate('Dashboard Background Color')}</h4>
+                                    <p className="text-sm text-slate-400">{translate('Choose a color that matches your brand')}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowColorPicker(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-sm"
                                 >
                                     <Palette className="w-4 h-4" />
-                                    Change
+                                    {translate('Change')}
                                 </button>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-lg border-2 border-slate-600" style={{ backgroundColor }} />
                                 <div>
-                                    <p className="text-sm font-medium text-white">Current</p>
+                                    <p className="text-sm font-medium text-white">{translate('Current')}</p>
                                     <p className="text-xs text-slate-400 font-mono">{backgroundColor}</p>
                                 </div>
                             </div>
                             <div className="mt-4 p-6 rounded-xl border-2 border-dashed border-slate-600 text-center" style={{ backgroundColor }}>
-                                <p className="text-slate-300 text-sm">Preview of your background</p>
+                                <p className="text-slate-300 text-sm">{translate('Preview of your background')}</p>
                             </div>
                         </div>
                     </div>
@@ -889,8 +892,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 {activeTab === 'notifications' && (
                     <div className="space-y-6">
                         <div>
-                            <h3 className="text-xl font-bold mb-4">Notification Preferences</h3>
-                            <p className="text-slate-400 mb-6">Manage how your team receives alerts</p>
+                            <h3 className="text-xl font-bold mb-4">{translate('Notification Preferences')}</h3>
+                            <p className="text-slate-400 mb-6">{translate('Manage how your team receives alerts')}</p>
                         </div>
                         <div className="space-y-4">
                             {[
@@ -901,8 +904,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             ].map((item, i) => (
                                 <div key={i} className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 bg-slate-800 rounded-xl border border-slate-700">
                                     <div>
-                                        <h4 className="font-medium text-white">{item.title}</h4>
-                                        <p className="text-sm text-slate-400">{item.desc}</p>
+                                        <h4 className="font-medium text-white">{translate(item.title)}</h4>
+                                        <p className="text-sm text-slate-400">{translate(item.desc)}</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" defaultChecked className="sr-only peer" />
@@ -917,8 +920,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 {activeTab === 'security' && (
                     <div className="space-y-6">
                         <div>
-                            <h3 className="text-xl font-bold mb-4">Security Settings</h3>
-                            <p className="text-slate-400 mb-6">Configure tenant security policies</p>
+                            <h3 className="text-xl font-bold mb-4">{translate('Security Settings')}</h3>
+                            <p className="text-slate-400 mb-6">{translate('Configure tenant security policies')}</p>
                         </div>
                         <div className="space-y-4">
                             <MFAEnrollment />

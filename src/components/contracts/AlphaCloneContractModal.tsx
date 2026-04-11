@@ -9,6 +9,8 @@ import { contractService } from '../../services/contractService';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { googleDriveService } from '../../services/googleDriveService';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { showActionNextSteps } from '../common/showActionNextSteps';
 import { User, Project } from '../../types';
 import { supabase } from '../../lib/supabase';
 import ContractDraftingVisual from './ContractDraftingVisual';
@@ -45,6 +47,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     existingContractId,
     existingContractText
 }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'drafting' | 'preview' | 'sign' | 'success'>('edit');
     const [contractText, setContractText] = useState('');
@@ -352,6 +355,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
             // Successfully started the task, move to success step
             setStep('success');
             toast.success(`Started: ${taskName}`);
+            showActionNextSteps('contract_saved', (path) => router.push(path));
         } catch (err) {
             console.error('Failed to start contract task:', err);
             toast.error('Failed to initiate contract processing');

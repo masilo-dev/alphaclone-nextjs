@@ -1,32 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { preferencesService } from '../services/dashboardService';
+import type { AcThemeMode } from '../lib/applyAcTheme';
+import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '../lib/applyAcTheme';
 
 interface ThemeToggleProps {
     userId: string;
 }
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
-    const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('dark');
-
-    const applyTheme = (newTheme: 'light' | 'dark' | 'auto') => {
-        const root = document.documentElement;
-
-        if (newTheme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.classList.toggle('dark', prefersDark);
-            root.classList.toggle('light', !prefersDark);
-        } else {
-            root.classList.toggle('dark', newTheme === 'dark');
-            root.classList.toggle('light', newTheme === 'light');
-        }
-    };
+    const [theme, setTheme] = useState<AcThemeMode>('dark');
 
     const loadTheme = async () => {
+        const stored = readStoredAcTheme();
+        applyAcThemeClass(stored);
+        setTheme(stored);
         const { preferences } = await preferencesService.getPreferences(userId);
-        if (preferences?.theme) {
-            setTheme(preferences.theme);
-            applyTheme(preferences.theme);
+        const serverTheme = preferences?.theme as AcThemeMode | undefined;
+        if (serverTheme && ['light', 'dark', 'auto'].includes(serverTheme)) {
+            setTheme(serverTheme);
+            applyAcThemeClass(serverTheme);
+            persistAcTheme(serverTheme);
         }
     };
 
@@ -34,9 +28,16 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
         loadTheme();
     }, [userId]);
 
-    const handleThemeChange = async (newTheme: 'light' | 'dark' | 'auto') => {
+    useEffect(() => {
+        const onRemote = () => setTheme(readStoredAcTheme());
+        window.addEventListener('ac-theme-changed', onRemote);
+        return () => window.removeEventListener('ac-theme-changed', onRemote);
+    }, []);
+
+    const handleThemeChange = async (newTheme: AcThemeMode) => {
         setTheme(newTheme);
-        applyTheme(newTheme);
+        applyAcThemeClass(newTheme);
+        persistAcTheme(newTheme);
         await preferencesService.updateTheme(userId, newTheme);
     };
 

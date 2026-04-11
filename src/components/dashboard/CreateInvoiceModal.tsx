@@ -1,10 +1,14 @@
+'use client';
+
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
+import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { useTenant } from '../../contexts/TenantContext';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
 import { ChevronDown, Sparkles } from 'lucide-react';
@@ -23,6 +27,7 @@ interface CreateInvoiceModalProps {
 }
 
 const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onInvoiceCreated, projects }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
     const [selectedTemplate, setSelectedTemplate] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -278,6 +283,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                 setStep('success');
                 toast.success('Invoice created and saved');
+                showInvoiceCreatedWithSendPrompt((path) => router.push(path));
                 onInvoiceCreated();
             }
         } catch (err: any) {

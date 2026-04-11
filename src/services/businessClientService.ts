@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { quotaService } from './quotaService';
+import { assertContactSalesStageTransition } from '../lib/stageProgression';
+import { tenantService } from './tenancy/TenantService';
 
 export interface BusinessClient {
     id: string;
@@ -249,6 +251,20 @@ export const businessClientService = {
      */
     async updateClient(clientId: string, updates: Partial<BusinessClient>): Promise<{ error: string | null }> {
         try {
+            if (updates.salesStage !== undefined) {
+                const tenantId = tenantService.getCurrentTenantId();
+                let query = supabase.from('business_clients').select('sales_stage').eq('id', clientId);
+                if (tenantId) {
+                    query = query.eq('tenant_id', tenantId);
+                }
+                const { data: row } = await query.single();
+                const fromStage = row?.sales_stage as string | undefined;
+                const check = assertContactSalesStageTransition(fromStage, updates.salesStage);
+                if (!check.ok) {
+                    return { error: check.message };
+                }
+            }
+
             const updateData: Record<string, any> = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -20,6 +20,9 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Lead, leadService } from '@/services/leadService';
+import { CrmNextStepsPanel } from './CrmNextStepsPanel';
+import { buildLeadKanbanNextSteps } from '@/lib/crmNextSteps';
+import { assertLeadStageTransition } from '@/lib/stageProgression';
 import { Building2, Mail, Phone, MapPin, Target, Sparkles, AlertCircle, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar } from '@/components/ui/Avatar';
@@ -79,6 +82,14 @@ function KanbanCard({ lead, isOverlay = false }: { lead: Lead, isOverlay?: boole
                         {lead.industry}
                     </span>
                 )}
+                {lead.source ? (
+                    <span
+                        className="text-[10px] text-slate-500 dark:text-slate-400 truncate block mt-0.5"
+                        title={`Lead source: ${lead.source}`}
+                    >
+                        Source: {lead.source}
+                    </span>
+                ) : null}
             </div>
         </div>
       </div>
@@ -178,6 +189,7 @@ export default function KanbanBoard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
+  const dragOriginStageRef = useRef<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
@@ -206,13 +218,17 @@ export default function KanbanBoard() {
     loadLeads();
   }, [loadLeads]);
 
+  const leadNextSteps = useMemo(() => buildLeadKanbanNextSteps(leads), [leads]);
+
   const activeId = activeLead?.id;
 
   const onDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const { data } = active;
     if (data.current?.type === 'Lead') {
-      setActiveLead(data.current.lead);
+      const l = data.current.lead as Lead;
+      dragOriginStageRef.current = l.stage;
+      setActiveLead(l);
     }
   };
 
@@ -267,6 +283,8 @@ export default function KanbanBoard() {
 
   const onDragEnd = async (event: DragEndEvent) => {
     setActiveLead(null);
+    const originStage = dragOriginStageRef.current;
+    dragOriginStageRef.current = null;
     const { active, over } = event;
     if (!over) return;
 
@@ -274,7 +292,6 @@ export default function KanbanBoard() {
     const lead = leads.find(l => l.id === leadId);
     
     if (lead) {
-        // Find what container we dropped into to ensure DB matches state
         const overData = over.data.current;
         let newStage = lead.stage;
         
@@ -284,15 +301,28 @@ export default function KanbanBoard() {
             newStage = overData.lead.stage;
         }
 
-        if (newStage) {
-            toast.promise(
-                leadService.updateLead(lead.id, { stage: newStage }),
-                {
-                    loading: 'Syncing pipeline...',
-                    success: 'Pipeline updated locally (no webhooks!)',
-                    error: 'Failed to update pipeline'
-                }
-            );
+        if (newStage && originStage != null) {
+            const check = assertLeadStageTransition(originStage, newStage);
+            if (!check.ok) {
+                toast.error(check.message);
+                await loadLeads();
+                return;
+            }
+            try {
+                await toast.promise(
+                    (async () => {
+                        const { error } = await leadService.updateLead(lead.id, { stage: newStage });
+                        if (error) throw new Error(error);
+                    })(),
+                    {
+                        loading: 'Syncing pipeline...',
+                        success: 'Pipeline updated',
+                        error: (err) => (err instanceof Error ? err.message : 'Failed to update pipeline'),
+                    }
+                );
+            } catch {
+                await loadLeads();
+            }
         }
     }
   };
@@ -307,6 +337,11 @@ export default function KanbanBoard() {
 
   return (
     <div className="w-full h-full p-4 overflow-x-auto overflow-y-hidden">
+        <CrmNextStepsPanel
+            heading="Lead execution"
+            subheading="Each card should move toward a clear decision: qualify, propose, win, or exit with a reason."
+            items={leadNextSteps}
+        />
         <DndContext 
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -314,7 +349,7 @@ export default function KanbanBoard() {
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
-            <div className="flex gap-4 h-[calc(100vh-200px)] snap-x snap-mandatory pb-4">
+            <div className="flex gap-4 h-[calc(100vh-300px)] min-h-[320px] snap-x snap-mandatory pb-4">
                 <SortableContext items={columns.map(c => c.id)}>
                     {columns.map((col) => (
                         <KanbanColumn 

@@ -2,7 +2,7 @@
 
 import { supabase } from '../../lib/supabase';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus, BarChart2, PieChart as PieChartIcon, Heart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { dealService, Deal, DealStage } from '../../services/dealService';
 import { leadService, Lead } from '../../services/leadService';
@@ -30,6 +30,8 @@ import {
     Pie
 } from 'recharts';
 import { ChartContainer } from '../ui/ChartContainer';
+import { CrmNextStepsPanel } from './crm/CrmNextStepsPanel';
+import { getForwardDealStages } from '../../lib/stageProgression';
 
 interface DealsTabProps {
     userId: string;
@@ -147,6 +149,57 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
         
         return { score, status };
     };
+
+    const dealAttentionItems = useMemo(() => {
+        if (loading) return [];
+        const open = deals.filter(
+            (d) => d.stage !== 'closed_won' && d.stage !== 'closed_lost'
+        );
+        const scored = open
+            .map((d) => ({ deal: d, ...calculateDealHealth(d) }))
+            .filter((x) => x.status !== 'healthy')
+            .sort((a, b) => a.score - b.score)
+            .slice(0, 5);
+        if (scored.length > 0) {
+            return scored.map((x) => ({
+                id: x.deal.id,
+                tone: (x.status === 'critical' ? 'urgent' : 'normal') as 'urgent' | 'normal',
+                title: x.deal.name,
+                detail: `Health score ${x.score}. ${
+                    x.status === 'critical'
+                        ? 'Update stage, close date, or probability today so the team executes on truth.'
+                        : 'Confirm the next customer action and a dated follow-up.'
+                }`,
+                actionLabel: 'Open deal',
+                onAction: () => setSelectedDealForDetail(x.deal),
+            }));
+        }
+        if (deals.length === 0) {
+            return [
+                {
+                    id: 'no-deals-yet',
+                    tone: 'normal' as 'normal',
+                    title: 'No revenue opportunities in the system',
+                    detail: 'Create deals with value and expected close. Outcomes require explicit opportunities, not only contact lists.',
+                    actionLabel: 'Create deal',
+                    onAction: () => setShowCreateModal(true),
+                },
+            ];
+        }
+        return [
+            {
+                id: 'healthy-pipeline',
+                tone: 'success' as 'success',
+                title: 'No deals flagged as off-track',
+                detail: 'Push the highest weighted opportunities: decision criteria, paperwork, and a committed timeline.',
+                actionLabel: 'Go to board',
+                onAction: () =>
+                    document
+                        .getElementById('deal-execution-board')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+            },
+        ];
+    }, [deals, loading]);
 
     useEffect(() => {
         loadDeals();
@@ -425,6 +478,14 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 )}
             </div>
 
+            {!loading && (
+                <CrmNextStepsPanel
+                    heading="What to do next"
+                    subheading="Close business by working dated next steps on real opportunities—not by staring at charts."
+                    items={dealAttentionItems}
+                />
+            )}
+
             {/* Top Stats Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="glass-panel p-4 rounded-xl border border-white/5 bg-teal-500/5">
@@ -578,7 +639,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     description="Create your first deal to start tracking your sales pipeline."
                 />
             ) : (
-                <div className="flex gap-4 overflow-x-auto pb-8 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <div
+                    id="deal-execution-board"
+                    className="flex gap-4 overflow-x-auto pb-8 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+                >
                     {stages.map((stage) => {
                         const stageDeals = getDealsByStage(stage);
                         return (
@@ -682,9 +746,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                     onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => handleStageChange(deal.id, e.target.value as DealStage)}
                                                     className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-white text-xs"
+                                                    title="Forward-only: use Closed lost to exit."
                                                 >
-                                                    {stages.map((s, idx) => (
-                                                        <option key={s} value={s} disabled={idx < stages.indexOf(deal.stage)}>
+                                                    {(getForwardDealStages(deal.stage) as DealStage[]).map((s) => (
+                                                        <option key={s} value={s}>
                                                             {stageLabels[s]}
                                                         </option>
                                                     ))}

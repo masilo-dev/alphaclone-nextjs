@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +9,7 @@ import { Button, Input } from '../ui/UIComponents';
 import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
+import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { useTenant } from '../../contexts/TenantContext';
 import { COMPREHENSIVE_INDUSTRIES, getAllIndustryNames, getServicesByIndustry, findIndustryByNameOrKeyword, ServiceItem } from '../../lib/comprehensiveIndustries';
 import { UNIVERSAL_SERVICE_CATALOG } from '../../services/universalServiceCatalog';
@@ -26,6 +30,7 @@ interface CreateInvoiceModalProps {
 }
 
 const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onInvoiceCreated, projects }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
     const [selectedTemplate, setSelectedTemplate] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -209,6 +214,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             setCreatedInvoiceId(invoice.id);
             setCreatedInvoice(invoice);
             setStep('success');
+            toast.success('Invoice created');
+            showInvoiceCreatedWithSendPrompt((path) => router.push(path));
             onInvoiceCreated();
 
         } catch (error) {
@@ -545,6 +552,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     />
                                 </div>
                             )}
+
+                            <p className="text-xs text-slate-400 leading-relaxed border border-slate-700/60 rounded-lg px-3 py-2 bg-slate-900/40">
+                                Save your services and default prices under{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onClose();
+                                        router.push('/dashboard/business/settings');
+                                    }}
+                                    className="text-teal-400 hover:text-teal-300 font-medium underline-offset-2 hover:underline"
+                                >
+                                    Business settings
+                                </button>
+                                {' '}so repeat invoices pre-fill line items.
+                            </p>
 
                             {/* Line Items */}
                             <div>

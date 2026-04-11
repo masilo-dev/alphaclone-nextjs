@@ -3,47 +3,62 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class MCPAuthService {
   /**
-   * Get or create an MCP connection token for a tenant.
-   * Auto-generation on first visit logic.
+   * Get or create an MCP connection token for the signed-in user in this workspace.
+   * Each user has their own key and MCP URL (includes tenant_id + user_id).
    */
-  static async getOrCreateToken(tenantId: string): Promise<{ token: string | null; error?: string }> {
+  static async getOrCreateToken(
+    tenantId: string,
+    userId: string
+  ): Promise<{ token: string | null; error?: string }> {
+    if (!userId) {
+      return { token: null, error: 'User must be signed in to create an MCP connection key.' };
+    }
     try {
-      // 1. Try to fetch existing token
       const { data, error } = await supabase
         .from('mcp_api_keys')
         .select('api_key')
         .eq('tenant_id', tenantId)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-         return { token: null, error: error.message };
+        return { token: null, error: error.message };
       }
 
       if (data?.api_key) {
         return { token: data.api_key };
       }
 
-      // 2. Not found, auto-generate
-      return await this.rotateToken(tenantId);
+      return await this.rotateToken(tenantId, userId);
     } catch (err) {
       return { token: null, error: String(err) };
     }
   }
 
   /**
-   * Rotate (regenerate) the MCP connection token for a tenant.
+   * Regenerate the MCP connection token for this user in this workspace.
    */
-  static async rotateToken(tenantId: string): Promise<{ token: string | null; error?: string }> {
+  static async rotateToken(
+    tenantId: string,
+    userId: string
+  ): Promise<{ token: string | null; error?: string }> {
+    if (!userId) {
+      return { token: null, error: 'User must be signed in.' };
+    }
     try {
       const newToken = `ac_mcp_${uuidv4().replace(/-/g, '')}`;
-      
+
       const { data, error } = await supabase
         .from('mcp_api_keys')
-        .upsert({
-          tenant_id: tenantId,
-          api_key: newToken,
-          updated_at: new Date().toISOString()
-        })
+        .upsert(
+          {
+            tenant_id: tenantId,
+            user_id: userId,
+            api_key: newToken,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'tenant_id,user_id' }
+        )
         .select('api_key')
         .single();
 
@@ -58,47 +73,46 @@ export class MCPAuthService {
   }
 
   /**
-   * Validate a token and return the associated tenant_id.
-   * Used by the SSE endpoint.
+   * Validate a static API key and return tenant + user bound to the connection.
    */
-  static async validateToken(token: string): Promise<{ tenantId: string | null; error?: string }> {
+  static async validateToken(
+    token: string
+  ): Promise<{ tenantId: string | null; userId: string | null; error?: string }> {
     try {
       const { data, error } = await supabase
         .from('mcp_api_keys')
-        .select('tenant_id')
+        .select('tenant_id, user_id')
         .eq('api_key', token)
         .single();
 
-      if (error) {
-        return { tenantId: null, error: 'Invalid or expired MCP connection token' };
+      if (error || !data) {
+        return { tenantId: null, userId: null, error: 'Invalid or expired MCP connection token' };
       }
 
-      // Update last_used_at asynchronously
       supabase
         .from('mcp_api_keys')
         .update({ last_used_at: new Date().toISOString() })
         .eq('api_key', token)
         .then();
 
-      return { tenantId: data.tenant_id };
+      return { tenantId: data.tenant_id, userId: data.user_id };
     } catch (err) {
-      return { tenantId: null, error: String(err) };
+      return { tenantId: null, userId: null, error: String(err) };
     }
   }
 
-  /**
-   * Record a DPA acceptance for a tenant.
-   */
-  static async recordDPAAcceptance(tenantId: string, userId: string, version: string = '1.0'): Promise<{ success: boolean; error?: string }> {
+  static async recordDPAAcceptance(
+    tenantId: string,
+    userId: string,
+    version: string = '1.0'
+  ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
-        .from('dpa_acceptances')
-        .insert({
-          tenant_id: tenantId,
-          user_id: userId,
-          dpa_version: version,
-          accepted_at: new Date().toISOString()
-        });
+      const { error } = await supabase.from('dpa_acceptances').insert({
+        tenant_id: tenantId,
+        user_id: userId,
+        dpa_version: version,
+        accepted_at: new Date().toISOString(),
+      });
 
       if (error) {
         return { success: false, error: error.message };
@@ -110,9 +124,6 @@ export class MCPAuthService {
     }
   }
 
-  /**
-   * Check if DPA is accepted for a tenant.
-   */
   static async isDPAAccepted(tenantId: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
@@ -123,17 +134,35 @@ export class MCPAuthService {
         .maybeSingle();
 
       return !!data && !error;
-    } catch (err) {
+    } catch {
       return false;
     }
   }
 
-  /**
-   * Revoke MCP API access for a tenant (Claude / Manus shared key).
-   */
+  /** Revoke MCP keys for every member of the workspace (admin / disconnect-all). */
   static async revokeAllForTenant(tenantId: string): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.from('mcp_api_keys').delete().eq('tenant_id', tenantId);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  }
+
+  /** Revoke only the current user's MCP key (per-user disconnect). */
+  static async revokeForUser(
+    tenantId: string,
+    userId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('mcp_api_keys')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('user_id', userId);
       if (error) {
         return { success: false, error: error.message };
       }

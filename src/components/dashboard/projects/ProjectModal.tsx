@@ -1,9 +1,13 @@
+'use client';
+
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Modal, Input, Button } from '../../ui/UIComponents';
 import TemplateSelector from './TemplateSelector';
 import { projectService } from '../../../services/projectService';
 import { Project } from '../../../types';
 import toast from 'react-hot-toast';
+import { showActionNextSteps } from '../../common/showActionNextSteps';
 
 interface ProjectModalProps {
     isOpen: boolean;
@@ -15,6 +19,7 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ isOpen, onClose, clientId, ownerId, ownerName, onSuccess }: ProjectModalProps) {
+    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -71,6 +76,7 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                 );
 
                 toast.success(selectedTemplateId ? 'Project created with template!' : 'Project created!');
+                showActionNextSteps('project_created', (path) => router.push(path));
                 onSuccess(project);
                 onClose();
                 // Reset form

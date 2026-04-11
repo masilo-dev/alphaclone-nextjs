@@ -1,10 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { RefreshCw, CheckCircle, AlertCircle, Database, Layout, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { showActionNextSteps } from '../../common/showActionNextSteps';
 
 export default function ZohoCRMIntegration() {
+    const router = useRouter();
     const { user } = useAuth();
     const [syncing, setSyncing] = useState(false);
     const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message?: string }>({ type: 'idle' });
@@ -24,6 +28,8 @@ export default function ZohoCRMIntegration() {
             const data = await res.json();
             if (res.ok) {
                 setStatus({ type: 'success', message: data.message });
+                toast.success(data.message || 'Zoho sync completed');
+                showActionNextSteps('zoho_sync_done', (path) => router.push(path));
             } else {
                 setStatus({ type: 'error', message: data.error });
             }

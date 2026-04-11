@@ -21,7 +21,8 @@ import {
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
 import { Button, Card, Input, Modal } from './ui/UIComponents';
-import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL } from '../constants';
+import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL, APP_NAME } from '../constants';
+import { useLanguage } from '../contexts/LanguageContext';
 import Image from 'next/image';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole } from '../types';
 import BusinessDashboard from './dashboard/business/BusinessDashboard';
@@ -140,6 +141,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const location = usePathname();
   const router = useRouter();
   const { currentTenant, getDashboardStats, error: tenantError } = useTenant();
+  const { t } = useLanguage();
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   // Prevent duplicate data loads when TenantContext resolves after initial render
   const dataLoadedRef = useRef(false);
@@ -1623,7 +1625,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }
 
   return (
-    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30">
+    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root">
       <ConnectionStatus />
 
       <WelcomeModal
@@ -1879,9 +1881,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950 ac-dashboard-shell-bg">
         {/* Header - Visible in all dashboard views */}
-        <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe">
+        <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header">
           <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
@@ -1889,7 +1891,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                 <Image src={LOGO_URL} alt="Logo" width={32} height={32} className="rounded-lg flex-shrink-0" />
-                <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none">AlphaClone Systems</h1>
+                <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none ac-dashboard-mobile-title">{t(APP_NAME)}</h1>
               </div>
             </div>
 
@@ -1923,7 +1925,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </header>
 
         {/* Main Content Area */}
-        <main id="main-content" className={`flex-1 ${['/dashboard/mail', '/dashboard/gmail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0`} role="main">
+        <main id="main-content" className={`flex-1 ${['/dashboard/mail', '/dashboard/gmail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
           <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${activeTab === '/dashboard/gmail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
             {/* Background decorative elements */}

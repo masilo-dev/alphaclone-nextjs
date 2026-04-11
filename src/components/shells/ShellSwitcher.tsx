@@ -5,8 +5,11 @@ import { usePWA } from '@/contexts/PWAContext';
 import MarketingShell from './MarketingShell';
 import AppShell from './AppShell';
 import Splash from '@/components/pwa/Splash';
+import PwaInstallNudge from '@/components/common/PwaInstallNudge';
 
 import { usePathname } from 'next/navigation';
+
+const isDev = process.env.NODE_ENV === 'development';
 
 export default function ShellSwitcher({ children }: { children: React.ReactNode }) {
     const { isPWA, isLoading } = usePWA();
@@ -20,16 +23,20 @@ export default function ShellSwitcher({ children }: { children: React.ReactNode 
     }
 
     if (isLoading) {
-        console.log('[ShellSwitcher] Waiting for PWA status check...');
+        if (isDev) console.log('[ShellSwitcher] Waiting for PWA status check...');
         return <Splash />;
     }
 
-
-    console.log('[ShellSwitcher] Shell decision:', { isPWA, pathname });
+    if (isDev) console.log('[ShellSwitcher] Shell decision:', { isPWA, pathname });
 
     if (isPWA) {
         return <AppShell>{children}</AppShell>;
     }
 
-    return <MarketingShell>{children}</MarketingShell>;
+    return (
+        <MarketingShell>
+            {children}
+            <PwaInstallNudge />
+        </MarketingShell>
+    );
 }

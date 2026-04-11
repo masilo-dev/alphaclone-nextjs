@@ -81,11 +81,29 @@ const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
+import { BusinessOsMindsetBar } from '@/components/dashboard/business/BusinessOsMindsetBar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import NotificationCenter from '../NotificationCenter';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+/** Main content uses full bleed (no outer padding); mindset bar gets its own horizontal inset. */
+const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
+    '/dashboard/mail',
+    '/dashboard/gmail',
+    '/dashboard/business/projects',
+    '/dashboard/tasks',
+    '/dashboard/sales-agent',
+    '/dashboard/crm',
+    '/dashboard/contacts',
+    '/dashboard/business/clients',
+    '/dashboard/leads',
+    '/dashboard/deals',
+    '/dashboard/zoho/mail',
+    '/dashboard/zoho/crm',
+];
 
 interface BusinessDashboardProps {
     user: User;
@@ -98,6 +116,7 @@ interface BusinessDashboardProps {
 export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { t } = useLanguage();
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const currentTenant = propTenant || contextTenant;
     // Default active section within settings
@@ -491,41 +510,42 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Get current page title
     const getPageTitle = () => {
         switch (activeTab) {
-            case '/dashboard': return 'Dashboard';
-            case '/dashboard/crm':
+            case '/dashboard': return t('Dashboard');
+            case '/dashboard/crm': return t('CRM');
+            case '/dashboard/leads': return t('Leads');
+            case '/dashboard/deals': return t('Deals');
             case '/dashboard/contacts':
-            case '/dashboard/business/clients': return 'Contacts';
-            case '/dashboard/business/projects': return 'Projects';
-            case '/dashboard/business/team': return 'Team Management';
-            case '/dashboard/business/messages': return 'Messages';
-            case '/dashboard/business/calendar': return 'Calendar';
-            case '/dashboard/business/billing': return 'Billing';
-            case '/dashboard/business/reports': return 'Analytics & Reports';
-            case '/dashboard/business/settings': return 'Settings';
-            case '/dashboard/business/contracts': return 'Contracts';
-            case '/dashboard/business/documents': return 'Document Hub';
-            case '/dashboard/business/pages': return 'Pages';
-            case '/dashboard/business/contact-submissions': return 'Contact Submissions';
-            case '/dashboard/business/campaigns': return 'Campaigns';
-            case '/dashboard/business/facebook': return 'Facebook';
-            case '/dashboard/business/expenses': return 'Expense Tracker';
+            case '/dashboard/business/clients': return t('Contacts');
+            case '/dashboard/business/projects': return t('Projects');
+            case '/dashboard/business/team': return t('Team Management');
+            case '/dashboard/business/messages': return t('Messages');
+            case '/dashboard/business/calendar': return t('Calendar');
+            case '/dashboard/business/billing': return t('Billing');
+            case '/dashboard/business/reports': return t('Analytics & Reports');
+            case '/dashboard/business/settings': return t('Settings');
+            case '/dashboard/business/contracts': return t('Contracts');
+            case '/dashboard/business/documents': return t('Document Hub');
+            case '/dashboard/business/pages': return t('Pages');
+            case '/dashboard/business/contact-submissions': return t('Contact Submissions');
+            case '/dashboard/business/campaigns': return t('Campaigns');
+            case '/dashboard/business/facebook': return t('Facebook');
+            case '/dashboard/business/expenses': return t('Expense Tracker');
             case '/dashboard/automations':
-            case '/dashboard/business/workflows': return 'Workflow Builder';
-            case '/dashboard/business/sms': return 'SMS Campaigns';
-            case '/dashboard/business/social': return 'Social Media';
-            case '/dashboard/business/ingestion': return 'Lead Ingestion';
-            case '/dashboard/business/quotes': return 'Quotes & Proposals';
-            case '/dashboard/business/booking': return 'Scheduling & Booking';
-            case '/dashboard/tasks': return 'Tasks';
-            case '/dashboard/sales-agent': return 'AI Growth';
-            case '/dashboard/deals':
-            case '/dashboard/leads': return 'Deals';
-            case '/dashboard/accounting': return 'Accounting Dashboard';
+            case '/dashboard/business/workflows': return t('Workflow Builder');
+            case '/dashboard/business/sms': return t('SMS Campaigns');
+            case '/dashboard/business/social': return t('Social Media');
+            case '/dashboard/business/ingestion': return t('Lead Ingestion');
+            case '/dashboard/business/quotes': return t('Quotes & Proposals');
+            case '/dashboard/business/booking': return t('Scheduling & Booking');
+            case '/dashboard/tasks': return t('Tasks');
+            case '/dashboard/sales-agent': return t('AI Growth');
+            case '/dashboard/accounting': return t('Accounting Dashboard');
             case '/dashboard/mail':
-            case '/dashboard/gmail': return 'Mail';
-            case '/dashboard/zoho/mail': return 'Zoho Mail';
-            case '/dashboard/zoho/crm': return 'Zoho CRM Sync';
-            default: return 'AlphaClone';
+            case '/dashboard/gmail': return t('Mail');
+            case '/dashboard/zoho/mail': return t('Zoho Mail');
+            case '/dashboard/zoho/crm': return t('Zoho CRM Sync');
+            case '/dashboard/marketplace': return t('Integration Marketplace');
+            default: return t('AlphaClone');
         }
     };
 
@@ -534,7 +554,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         return (
             <div className="flex items-center justify-center h-screen bg-slate-950">
                 <div id="main-content" className="text-center">
-                    <div className="text-slate-400 text-lg animate-pulse">Loading Workspace...</div>
+                    <div className="text-slate-400 text-lg animate-pulse">{t('Loading Workspace...')}</div>
                 </div>
             </div>
         );
@@ -545,24 +565,24 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         return (
             <div className="flex items-center justify-center h-screen bg-slate-950">
                 <div id="main-content" className="text-center max-w-md p-8">
-                    <div className="text-slate-300 text-xl mb-4">No Organization Found</div>
+                    <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
                     <div className="text-slate-400 mb-6">
                         {user.role === 'client'
-                            ? "You don't have access to this business dashboard. If you're a business owner, please contact support."
-                            : "Unable to load your organization. This may be a temporary issue."}
+                            ? t("You don't have access to this business dashboard. If you're a business owner, please contact support.")
+                            : t('Unable to load your organization. This may be a temporary issue.')}
                     </div>
                     <div className="flex flex-col gap-3">
                         <button
                             onClick={() => window.location.reload()}
                             className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
                         >
-                            Retry Loading
+                            {t('Retry Loading')}
                         </button>
                         <button
                             onClick={() => onLogout()}
                             className="text-slate-500 hover:text-slate-400 text-sm transition-colors py-1"
                         >
-                            Log out and switch account
+                            {t('Log out and switch account')}
                         </button>
                     </div>
                 </div>
@@ -573,7 +593,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Use external nav items instead of local redundant array
 
     return (
-        <div className="flex h-screen min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
+        <div className="flex h-screen min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root">
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
@@ -587,7 +607,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main className="flex-1 flex flex-col min-w-0 bg-slate-950">
+            <main className="flex-1 flex flex-col min-w-0 bg-slate-950 ac-business-main">
 
                 {/* Trial Countdown Banner */}
                 {trialInfo && !trialInfo.expired && trialInfo.daysLeft <= 7 && (
@@ -653,7 +673,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 )}
 
                 {/* Header */}
-                <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full">
+                <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header">
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
                         <button
@@ -714,18 +734,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 </header>
 
                 {/* Dynamic Content Area */}
-                <div className={`flex-1 ${[
-                    '/dashboard/mail',
-                    '/dashboard/gmail',
-                    '/dashboard/business/projects',
-                    '/dashboard/tasks',
-                    '/dashboard/sales-agent',
-                    '/dashboard/crm',
-                    '/dashboard/contacts',
-                    '/dashboard/business/clients',
-                    '/dashboard/zoho/mail',
-                    '/dashboard/zoho/crm'
-                ].includes(activeTab) ? 'overflow-hidden p-0' : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'}`}>
+                <div
+                    className={`flex-1 ac-business-scroll ${
+                        DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
+                            ? 'overflow-hidden p-0'
+                            : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'
+                    }`}
+                >
                     <WidgetErrorBoundary title="Business Dashboard Error">
                         <AnimatePresence mode="wait">
                             <motion.div
@@ -734,8 +749,17 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 animate={{ opacity: 1, scale: 1, y: 0, pointerEvents: 'auto' }}
                                 exit={{ opacity: 0, scale: 0.99, y: -5, pointerEvents: 'none' }}
                                 transition={{ duration: 0.15, ease: "easeOut" }}
-                                className="h-full w-full"
+                                className="h-full w-full min-w-0"
                             >
+                                <div
+                                    className={
+                                        DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
+                                            ? 'px-4 md:px-6 pt-3 md:pt-4'
+                                            : ''
+                                    }
+                                >
+                                    <BusinessOsMindsetBar activeTab={activeTab} setActiveTab={setActiveTab} />
+                                </div>
                                 {renderBusinessContent()}
                             </motion.div>
                         </AnimatePresence>

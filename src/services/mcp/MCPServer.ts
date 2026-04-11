@@ -4,6 +4,12 @@ import { createSupabaseAdminClient } from '../../lib/supabase-admin';
 import { auditLoggingService } from '../auditLoggingService';
 import Anthropic from '@anthropic-ai/sdk';
 
+const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuidString(value: unknown): value is string {
+    return typeof value === 'string' && UUID_RE.test(value.trim());
+}
 
 /**
  * AlphaClone MCP Server
@@ -18,15 +24,62 @@ import Anthropic from '@anthropic-ai/sdk';
  * - DELETE is intentionally excluded from all tools to prevent AI-caused data loss
  * - No tools expose source code files, environment variables, or secrets
  */
+export type MCPConnectionContext = {
+  tenantId: string;
+  userId: string;
+};
+
 class AlphaCloneMCPServer {
   public server: Server;
+  private readonly ctx?: MCPConnectionContext;
 
-  constructor() {
+  constructor(ctx?: MCPConnectionContext) {
+    this.ctx = ctx;
     this.server = new Server(
       { name: 'AlphaClone-MCP', version: '2.0.0' },
       { capabilities: { tools: {} } }
     );
     this.setupToolHandlers();
+  }
+
+  /** Workspace scope for this HTTP connection (from API key or OAuth). */
+  private requireTenant(args: Record<string, any>): string {
+    if (this.ctx?.tenantId) {
+      const r = args.tenant_id;
+      if (r != null && r !== '' && typeof r === 'string' && r !== this.ctx.tenantId) {
+        throw new Error(
+          'tenant_id does not match this MCP connection. Use the tenant_id from your personal MCP URL in the dashboard.'
+        );
+      }
+      return this.ctx.tenantId;
+    }
+    const t = args.tenant_id;
+    if (!t || typeof t !== 'string') throw new Error('tenant_id is required');
+    const tid = t.trim();
+    if (!isUuidString(tid)) {
+      throw new Error(
+        'tenant_id must be a valid workspace UUID from your MCP dashboard URL, not a name or slug.'
+      );
+    }
+    return tid;
+  }
+
+  /** Profile / gamification scope (same user as the connection by default). */
+  private requireProfileUser(args: Record<string, any>): string {
+    if (this.ctx?.userId) {
+      const r = args.user_id;
+      if (r != null && r !== '' && typeof r === 'string' && r !== this.ctx.userId) {
+        throw new Error('user_id does not match this MCP connection.');
+      }
+      return this.ctx.userId;
+    }
+    const u = args.user_id;
+    if (!u || typeof u !== 'string') throw new Error('user_id is required');
+    const uid = u.trim();
+    if (!isUuidString(uid)) {
+      throw new Error('user_id must be a valid UUID from your MCP connection URL.');
+    }
+    return uid;
   }
 
   private setupToolHandlers() {
@@ -144,11 +197,12 @@ class AlphaCloneMCPServer {
         // ── Projects ───────────────────────────────────────────────────────
         {
           name: 'get_projects',
-          description: 'List all projects for a tenant.',
+          description:
+            'List business projects for the workspace. tenant_id must be the workspace UUID from your MCP URL (never a name or slug).',
           inputSchema: {
             type: 'object',
             properties: {
-              tenant_id: { type: 'string' },
+              tenant_id: { type: 'string', description: 'Workspace UUID' },
               status: { type: 'string' },
             },
             required: ['tenant_id'],
@@ -156,12 +210,13 @@ class AlphaCloneMCPServer {
         },
         {
           name: 'update_project_status',
-          description: 'Update the status of a project.',
+          description:
+            'Update a project status. project_id must be the UUID from get_projects, not the project name.',
           inputSchema: {
             type: 'object',
             properties: {
               tenant_id: { type: 'string' },
-              project_id: { type: 'string' },
+              project_id: { type: 'string', description: 'UUID from get_projects' },
               status: { type: 'string' },
               notes: { type: 'string' },
             },
@@ -176,9 +231,12 @@ class AlphaCloneMCPServer {
             type: 'object',
             properties: {
               tenant_id: { type: 'string' },
-              project_id: { type: 'string' },
+              project_id: {
+                type: 'string',
+                description: 'Optional. UUID of the linked business project (same as tasks.related_to_project).',
+              },
               assigned_to: { type: 'string' },
-              completed: { type: 'boolean' },
+              completed: { type: 'boolean', description: 'If true, only completed tasks; if false, only open tasks.' },
             },
             required: ['tenant_id'],
           },
@@ -192,7 +250,10 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string' },
               title: { type: 'string' },
               description: { type: 'string' },
-              project_id: { type: 'string' },
+              project_id: {
+                type: 'string',
+                description: 'Optional. UUID of business project to link (stored as related_to_project).',
+              },
               assigned_to: { type: 'string' },
               due_date: { type: 'string', description: 'ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)' },
               priority: { type: 'string', description: 'low | medium | high | urgent' },
@@ -327,7 +388,9 @@ class AlphaCloneMCPServer {
         switch (name) {
         // ── get_clients ────────────────────────────────────────────────────
         case 'get_clients': {
-          const { tenant_id, status, limit = 20 } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { status, limit = 20 } = a;
           let query = supabaseAdmin
             .from('business_clients')
             .select('id, name, email, phone, company, status, created_at, source')
@@ -342,26 +405,39 @@ class AlphaCloneMCPServer {
 
         // ── create_client ──────────────────────────────────────────────────
         case 'create_client': {
-          const { tenant_id, name, email, phone, company, status = 'lead', source = 'MCP Agent' } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { name, email, phone, company, status = 'lead', source = 'MCP Agent' } = a;
           const { data, error } = await supabaseAdmin
             .from('business_clients')
             .insert({ tenant_id, name, email, phone, company, status, source })
             .select('id, name, email')
             .single();
           if (error) throw new Error(`create_client failed: ${error.message}`);
-          result = { content: [{ type: 'text', text: `Client created: ${JSON.stringify(data)}` }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: `Client created: ${JSON.stringify(data)}. Next: open Contacts to verify details, advance funnel stage forward only, and attach a Deal or Invoice when there is real opportunity.`,
+              },
+            ],
+          };
           break;
         }
 
         // ── get_leads ──────────────────────────────────────────────────────
         case 'get_leads': {
-          const { tenant_id, status, stage, limit = 20 } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { status, stage, limit = 20 } = a;
           let query = supabaseAdmin
             .from('leads')
-            .select('id, business_name, contact_name, email, phone, industry, status, stage, source, notes, created_at')
+            .select(
+              'id, business_name, email, phone, industry, location, status, stage, source, notes, assigned_to, created_at'
+            )
             .eq('tenant_id', tenant_id)
             .order('created_at', { ascending: false })
-            .limit(Math.min(limit, 100));
+            .limit(Math.min(Number(limit) || 20, 100));
           if (status) query = query.eq('status', status);
           if (stage) query = query.eq('stage', stage);
           const { data, error } = await query;
@@ -372,31 +448,46 @@ class AlphaCloneMCPServer {
 
         // ── create_lead ────────────────────────────────────────────────────
         case 'create_lead': {
-          const { tenant_id, business_name, contact_name, email, phone, industry, source = 'AI Agent', notes } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { business_name, contact_name, email, phone, industry, source = 'AI Agent', notes } = a;
+          const primaryName = (business_name || contact_name || '').trim();
+          if (!primaryName) throw new Error('create_lead requires contact_name or business_name');
           const { data, error } = await supabaseAdmin
             .from('leads')
             .insert({
               tenant_id,
-              business_name: business_name || contact_name,
-              contact_name,
-              email,
-              phone,
+              business_name: primaryName,
+              email: email || null,
+              phone: phone || null,
               industry: industry || '',
               status: 'new',
               stage: 'lead',
               source,
-              notes,
+              notes: notes || null,
             })
-            .select('id, contact_name, email, status')
+            .select('id, business_name, email, status')
             .single();
           if (error) throw new Error(`create_lead failed: ${error.message}`);
-          result = { content: [{ type: 'text', text: `Lead added to CRM: ${JSON.stringify(data)}` }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: `Lead added to CRM: ${JSON.stringify(data)}. Next for the business: in AlphaClone open Leads pipeline to qualify, then create a Deal with amount and expected close; source is stored on the lead for attribution.`,
+              },
+            ],
+          };
           break;
         }
 
         // ── update_lead_status ─────────────────────────────────────────────
         case 'update_lead_status': {
-          const { tenant_id, lead_id, status, stage, notes } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { lead_id, status, stage, notes } = a;
+          if (!isUuidString(lead_id)) {
+            throw new Error('lead_id must be a valid lead UUID from get_leads');
+          }
           const update: Record<string, any> = {};
           if (status) update.status = status;
           if (stage) update.stage = stage;
@@ -405,7 +496,7 @@ class AlphaCloneMCPServer {
           const { error } = await supabaseAdmin
             .from('leads')
             .update(update)
-            .eq('id', lead_id)
+            .eq('id', lead_id.trim())
             .eq('tenant_id', tenant_id);
           if (error) throw new Error(`update_lead_status failed: ${error.message}`);
           result = { content: [{ type: 'text', text: `Lead ${lead_id} updated: ${JSON.stringify(update)}` }] };
@@ -414,7 +505,9 @@ class AlphaCloneMCPServer {
 
         // ── get_deals ──────────────────────────────────────────────────────
         case 'get_deals': {
-          const { tenant_id, stage, limit = 20 } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { stage, limit = 20 } = a;
           let query = supabaseAdmin
             .from('deals')
             .select('id, name, value, stage, description, source, created_at')
@@ -430,20 +523,31 @@ class AlphaCloneMCPServer {
 
         // ── create_deal ────────────────────────────────────────────────────
         case 'create_deal': {
-          const { tenant_id, name, value, stage = 'qualified', description } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { name, value, stage = 'qualified', description } = a;
           const { data, error } = await supabaseAdmin
             .from('deals')
             .insert({ tenant_id, name, value: value || 0, stage, description, source: 'MCP Agent' })
             .select('id, name, value, stage')
             .single();
           if (error) throw new Error(`create_deal failed: ${error.message}`);
-          result = { content: [{ type: 'text', text: `Deal created: ${JSON.stringify(data)}` }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: `Deal created: ${JSON.stringify(data)}. Next: set expected close and probability in Deals, tie to a contact, and when won use Billing/Accounting so revenue is recorded.`,
+              },
+            ],
+          };
           break;
         }
 
         // ── get_projects ───────────────────────────────────────────────────
         case 'get_projects': {
-          const { tenant_id, status } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { status } = a;
           let query = supabaseAdmin
             .from('business_projects')
             .select('id, name, status, due_date, description, created_at')
@@ -458,13 +562,18 @@ class AlphaCloneMCPServer {
 
         // ── update_project_status ──────────────────────────────────────────
         case 'update_project_status': {
-          const { tenant_id, project_id, status, notes } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { project_id, status, notes } = a;
+          if (!isUuidString(project_id)) {
+            throw new Error('project_id must be a valid UUID from get_projects (not a project name)');
+          }
           const update: Record<string, any> = { status };
           if (notes) update.description = notes;
           const { error } = await supabaseAdmin
             .from('business_projects')
             .update(update)
-            .eq('id', project_id)
+            .eq('id', project_id.trim())
             .eq('tenant_id', tenant_id);
           if (error) throw new Error(`update_project_status failed: ${error.message}`);
           result = { content: [{ type: 'text', text: `Project ${project_id} updated to: ${status}` }] };
@@ -473,15 +582,30 @@ class AlphaCloneMCPServer {
 
         // ── get_tasks ──────────────────────────────────────────────────────
         case 'get_tasks': {
-          const { tenant_id, project_id, assigned_to, completed } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { project_id, assigned_to, completed } = a;
           let query = supabaseAdmin
             .from('tasks')
-            .select('id, title, description, status, priority, due_date, assigned_to, project_id')
+            .select(
+              'id, title, description, status, priority, due_date, assigned_to, related_to_project, related_to_contact, related_to_deal, related_to_lead, created_at'
+            )
             .eq('tenant_id', tenant_id)
             .limit(50);
-          if (project_id) query = query.eq('project_id', project_id);
-          if (assigned_to) query = query.eq('assigned_to', assigned_to);
-          if (completed !== undefined) query = query.eq('completed', completed);
+          if (project_id) {
+            if (!isUuidString(project_id)) {
+              throw new Error('project_id must be a valid business project UUID from get_projects');
+            }
+            query = query.eq('related_to_project', project_id.trim());
+          }
+          if (assigned_to) {
+            if (!isUuidString(assigned_to)) {
+              throw new Error('assigned_to must be a valid user profile UUID');
+            }
+            query = query.eq('assigned_to', assigned_to.trim());
+          }
+          if (completed === true) query = query.eq('status', 'completed');
+          if (completed === false) query = query.neq('status', 'completed');
           const { data, error } = await query;
           if (error) throw new Error(`get_tasks failed: ${error.message}`);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -490,11 +614,28 @@ class AlphaCloneMCPServer {
 
         // ── create_task ────────────────────────────────────────────────────
         case 'create_task': {
-          const { tenant_id, title, description, project_id, assigned_to, due_date, priority = 'medium' } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { title, description, project_id, assigned_to, due_date, priority = 'medium' } = a;
+          if (project_id != null && project_id !== '' && !isUuidString(project_id)) {
+            throw new Error('project_id must be a valid business project UUID or omitted');
+          }
+          if (assigned_to != null && assigned_to !== '' && !isUuidString(assigned_to)) {
+            throw new Error('assigned_to must be a valid user UUID or omitted');
+          }
           const { data, error } = await supabaseAdmin
             .from('tasks')
-            .insert({ tenant_id, title, description, project_id, assigned_to, due_date, priority, completed: false })
-            .select('id, title, due_date, priority')
+            .insert({
+              tenant_id,
+              title,
+              description: description ?? null,
+              related_to_project: project_id && isUuidString(project_id) ? project_id.trim() : null,
+              assigned_to: assigned_to && isUuidString(assigned_to) ? assigned_to.trim() : null,
+              due_date: due_date ?? null,
+              priority,
+              status: 'todo',
+            })
+            .select('id, title, due_date, priority, related_to_project')
             .single();
           if (error) throw new Error(`create_task failed: ${error.message}`);
           result = { content: [{ type: 'text', text: `Task created: ${JSON.stringify(data)}` }] };
@@ -503,7 +644,9 @@ class AlphaCloneMCPServer {
 
         // ── get_expenses ───────────────────────────────────────────────────
         case 'get_expenses': {
-          const { tenant_id, status, from_date, to_date } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { status, from_date, to_date } = a;
           let query = supabase
             .from('expenses')
             .select('id, description, amount, category, date, status, receipt_url, created_at')
@@ -521,7 +664,9 @@ class AlphaCloneMCPServer {
 
         // ── create_expense ─────────────────────────────────────────────────
         case 'create_expense': {
-          const { tenant_id, description, amount, category, date } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { description, amount, category, date } = a;
           const { data, error } = await supabase
             .from('expenses')
             .insert({
@@ -541,7 +686,9 @@ class AlphaCloneMCPServer {
 
         // ── write_audit_log ────────────────────────────────────────────────
         case 'write_audit_log': {
-          const { tenant_id, action, entity_type, entity_id, summary, payload } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { action, entity_type, entity_id, summary, payload } = a;
           const newValues: Record<string, unknown> = {
             source: 'mcp_agent',
             ...(payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {}),
@@ -567,7 +714,8 @@ class AlphaCloneMCPServer {
 
         // ── get_revenue_summary ────────────────────────────────────────────
         case 'get_revenue_summary': {
-          const { tenant_id } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
           const { data, error } = await supabase
             .from('business_invoices')
             .select('total_amount, status, created_at')
@@ -587,7 +735,9 @@ class AlphaCloneMCPServer {
 
         // ── generate_contract_draft ────────────────────────────────────────
         case 'generate_contract_draft': {
-          const { tenant_id, contract_type, client_name, key_terms } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { contract_type, client_name, key_terms } = a;
 
           const apiKey = process.env.ANTHROPIC_API_KEY;
           if (!apiKey) throw new Error('AI service not configured. Please contact your administrator.');
@@ -638,7 +788,8 @@ class AlphaCloneMCPServer {
 
         // ── get_momentum_score ─────────────────────────────────────────────
         case 'get_momentum_score': {
-          const { user_id } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const user_id = this.requireProfileUser(a);
           const { data, error } = await supabase
             .from('profiles')
             .select('xp, level, streak_count, momentum_score')
@@ -651,7 +802,9 @@ class AlphaCloneMCPServer {
 
         // ── get_recent_messages ────────────────────────────────────────────
         case 'get_recent_messages': {
-          const { tenant_id, limit = 10 } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { limit = 10 } = a;
           const { data, error } = await supabase
             .from('messages')
             .select('id, content, sender_id, created_at, thread_id')
@@ -665,7 +818,9 @@ class AlphaCloneMCPServer {
 
         // ── get_quotes ─────────────────────────────────────────────────────
         case 'get_quotes': {
-          const { tenant_id, status } = args as Record<string, any>;
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { status } = a;
           let query = supabase
             .from('quotes')
             .select('id, title, status, total_amount, client_id, created_at, valid_until')
@@ -683,12 +838,12 @@ class AlphaCloneMCPServer {
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────
-        const tenant_id = (args as any)?.tenant_id;
-        if (tenant_id) {
+        const auditTenant = this.ctx?.tenantId ?? (args as Record<string, any>)?.tenant_id;
+        if (auditTenant) {
           auditLoggingService.logAction(
             `mcp_tool_execute:${name}`,
             'mcp_integration',
-            tenant_id,
+            auditTenant as string,
             args,
             result
           ).catch(err => console.error('Failed to log MCP audit:', err));
@@ -705,7 +860,7 @@ class AlphaCloneMCPServer {
 
 export const mcpServerInstance = new AlphaCloneMCPServer();
 
-// Factory for stateless per-request server instances (Streamable HTTP transport)
-export function createMCPServer(): AlphaCloneMCPServer {
-  return new AlphaCloneMCPServer();
+/** Per-request MCP server bound to the authenticated tenant + user (from API key or OAuth). */
+export function createMCPServer(ctx?: MCPConnectionContext): AlphaCloneMCPServer {
+  return new AlphaCloneMCPServer(ctx);
 }

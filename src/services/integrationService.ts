@@ -195,7 +195,10 @@ export const integrationService = {
    * Returns the static catalog enriched with per-tenant connection status.
    * Falls back to 'available' if DB row is absent.
    */
-  async getIntegrationsForTenant(tenantId: string): Promise<TenantIntegration[]> {
+  async getIntegrationsForTenant(
+    tenantId: string,
+    currentUserId?: string | null
+  ): Promise<TenantIntegration[]> {
     if (!tenantId) {
       return INTEGRATION_CATALOG.map(entry => ({ ...entry, status: 'available' as IntegrationStatus }));
     }
@@ -214,11 +217,16 @@ export const integrationService = {
       (data as IntegrationRow[] || []).map((row: IntegrationRow) => [row.integration_id, row])
     );
 
-    const { data: mcpKeyRow } = await supabase
-      .from('mcp_api_keys')
-      .select('api_key')
-      .eq('tenant_id', tenantId)
-      .maybeSingle();
+    let mcpKeyRow: { api_key: string } | null = null;
+    if (currentUserId) {
+      const { data } = await supabase
+        .from('mcp_api_keys')
+        .select('api_key')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+      mcpKeyRow = data;
+    }
 
     return INTEGRATION_CATALOG.map((entry) => {
       const row = rowMap.get(entry.id);
@@ -316,18 +324,28 @@ export const integrationService = {
   /**
    * Disconnects an integration for a tenant.
    */
-  async disconnect(tenantId: string, integrationId: string): Promise<{ success: boolean; error?: string }> {
+  async disconnect(
+    tenantId: string,
+    integrationId: string,
+    currentUserId?: string | null
+  ): Promise<{ success: boolean; error?: string }> {
     if (integrationId === 'claude-mcp' || integrationId === 'manus-mcp') {
       const { MCPAuthService } = await import('@/services/mcp/MCPAuthService');
-      const revoked = await MCPAuthService.revokeAllForTenant(tenantId);
+      const revoked = currentUserId
+        ? await MCPAuthService.revokeForUser(tenantId, currentUserId)
+        : await MCPAuthService.revokeAllForTenant(tenantId);
       if (!revoked.success && revoked.error) {
         console.error('[integrationService] MCP revoke:', revoked.error);
       }
-      await supabase
+      let ti = supabase
         .from('tenant_integrations')
         .update({ status: 'available', metadata: {} })
         .eq('tenant_id', tenantId)
         .in('integration_id', ['claude-mcp', 'manus-mcp']);
+      if (currentUserId) {
+        ti = ti.eq('configured_by', currentUserId);
+      }
+      await ti;
       return { success: true };
     }
 

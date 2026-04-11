@@ -32,6 +32,8 @@ import { Button, Modal, Input } from '../ui/UIComponents';
 import { TaskCountdown } from './tasks/TaskCountdown';
 import { CollaborativeTaskNotes } from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { showActionNextSteps } from '../common/showActionNextSteps';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
@@ -47,6 +49,7 @@ interface TasksTabProps {
 }
 
 const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
+    const router = useRouter();
     const [filter, setFilter] = useState<'all' | 'my_tasks' | 'overdue' | 'completed'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -263,6 +266,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     }
                 }
                 toast.success('Task created successfully!');
+                showActionNextSteps('task_created', (path) => router.push(path));
             }
             setShowCreateModal(false);
             setEditingTask(null);

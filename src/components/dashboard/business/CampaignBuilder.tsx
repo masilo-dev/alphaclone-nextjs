@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
     ChevronDown, ChevronUp, Sparkles, Tag, FileText, CheckCircle2, Loader2
@@ -6,6 +9,7 @@ import {
 import { emailCampaignService, EmailCampaign, EmailTemplate } from '../../../services/emailCampaignService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
+import { showActionNextSteps } from '@/components/common/showActionNextSteps';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
@@ -19,6 +23,7 @@ const statusColors: Record<string, string> = {
 const VARIABLE_TAGS = ['{{name}}', '{{firstName}}', '{{lastName}}', '{{email}}', '{{company}}'];
 
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
+    const router = useRouter();
     const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,6 +82,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         }
 
         toast.success('Campaign created!', { id: toastId });
+        showActionNextSteps('campaign_created', (path) => router.push(path));
         setView('list');
         setForm({ name: '', subject: '', bodyHtml: '', fromName: 'AlphaClone Systems', fromEmail: '', scheduledAt: '', scheduleEnabled: false });
         loadData();
@@ -87,8 +93,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         setSending(campaignId);
         const toastId = toast.loading('Sending campaign...');
         const { success, error } = await emailCampaignService.sendCampaign(campaignId);
-        if (success) toast.success('Campaign sent!', { id: toastId });
-        else toast.error(error || 'Failed to send', { id: toastId });
+        if (success) {
+            toast.success('Campaign sent!', { id: toastId });
+            showActionNextSteps('campaign_sent', (path) => router.push(path));
+        } else toast.error(error || 'Failed to send', { id: toastId });
         setSending(null);
         loadData();
     };

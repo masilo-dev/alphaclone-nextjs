@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
@@ -27,6 +28,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const cleanup = setupGlobalErrorHandlers();
         return cleanup;
+    }, []);
+
+    useLayoutEffect(() => {
+        applyAcThemeClass(readStoredAcTheme());
     }, []);
 
     return (

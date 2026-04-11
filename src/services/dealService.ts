@@ -5,6 +5,7 @@ import { fileUploadService } from './fileUploadService';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
+import { assertDealStageTransition } from '../lib/stageProgression';
 
 export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 export type DealSource = 'referral' | 'website' | 'cold_outreach' | 'social_media' | 'event' | 'partner' | 'organic' | 'other';
@@ -347,7 +348,6 @@ export const dealService: DealService = {
         try {
             const tenantId = this.getTenantId();
 
-            // Validate forward-only stage progression
             if (updates.stage) {
                 const { data: existingDeal } = await supabase
                     .from('deals')
@@ -357,13 +357,9 @@ export const dealService: DealService = {
                     .single();
 
                 if (existingDeal) {
-                    const stageOrder: DealStage[] = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
-                    const currentIdx = stageOrder.indexOf(existingDeal.stage as DealStage);
-                    const newIdx = stageOrder.indexOf(updates.stage);
-
-                    // Allow moving to closed_lost from anywhere, but otherwise enforce forward progression
-                    if (newIdx < currentIdx && updates.stage !== 'closed_lost') {
-                        return { deal: null, error: 'Cannot move deal back to a previous stage' };
+                    const check = assertDealStageTransition(existingDeal.stage, updates.stage);
+                    if (!check.ok) {
+                        return { deal: null, error: check.message };
                     }
                 }
             }

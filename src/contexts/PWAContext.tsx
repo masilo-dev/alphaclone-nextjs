@@ -18,7 +18,9 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
         // Check immediately on mount
         const checkPWA = () => {
             const pwaStatus = isPWA();
-            console.log('[PWAContext] PWA check complete:', pwaStatus);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('[PWAContext] PWA check complete:', pwaStatus);
+            }
             setIsPwaMode(pwaStatus);
             setIsLoading(false);
         };

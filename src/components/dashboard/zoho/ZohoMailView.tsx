@@ -103,17 +103,50 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         return messages.filter(msg => msg.category === categoryFilter);
     }, [messages, categoryFilter]);
 
-    // Central fetch helper — detects AUTH_EXPIRED (reconnect: true) from API
+    // Central fetch helper — session cookies + clear errors for Zoho vs login
     const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
-        const res = await fetch(url, options);
-        const data = await res.json();
-        if (res.status === 401 && data?.reconnect) {
-            setNeedsReconnect(true);
-            setError('Your Zoho session has expired. Please reconnect your account.');
+        const res = await fetch(url, { credentials: 'include', ...options });
+        const raw = await res.text();
+        let data: Record<string, unknown> = {};
+        try {
+            data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+        } catch {
+            data = { error: raw?.slice(0, 200) || `HTTP ${res.status}` };
+        }
+        if (res.status === 401) {
+            if (data?.code === 'NO_SUPABASE_SESSION') {
+                setNeedsReconnect(false);
+                setError(
+                    typeof data.error === 'string'
+                        ? data.error
+                        : 'Sign in again to load mail. Third-party cookie blocking can also break the session.'
+                );
+                return null;
+            }
+            if (data?.reconnect) {
+                setNeedsReconnect(true);
+                setError(
+                    typeof data.error === 'string'
+                        ? data.error
+                        : 'Your Zoho connection needs to be renewed. Reconnect Zoho under Integrations.'
+                );
+                return null;
+            }
+            setError(typeof data.error === 'string' ? data.error : 'Unauthorized');
+            return null;
+        }
+        if (res.status === 503 && data?.code === 'ZOHO_UPSTREAM_UNAVAILABLE') {
+            setError(
+                typeof data.error === 'string'
+                    ? data.error
+                    : 'Zoho Mail is temporarily unavailable.'
+            );
             return null;
         }
         if (!res.ok) {
-            setError(data?.error || `Request failed (${res.status})`);
+            setError(
+                typeof data.error === 'string' ? data.error : `Request failed (${res.status})`
+            );
             return null;
         }
         return data;
@@ -166,7 +199,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 setSelectedMessage(id);
                 setEmailSummary(null);
                 setReplySuggestions([]);
-                fetch(`/api/zoho/mail?action=markRead&messageId=${id}&folderId=${selectedFolder}`).catch(() => {});
+                fetch(`/api/zoho/mail?action=markRead&messageId=${id}&folderId=${selectedFolder}`, {
+                    credentials: 'include',
+                }).catch(() => {});
             }
         } finally {
             setLoading(false);
@@ -176,8 +211,21 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const handleSubscribeAutoResponder = async () => {
         setAiGenerating(true);
         try {
-            const res = await fetch('/api/zoho/mail?action=subscribe', { method: 'POST' });
-            const data = await res.json();
+            const res = await fetch('/api/zoho/mail?action=subscribe', {
+                method: 'POST',
+                credentials: 'include',
+            });
+            const subRaw = await res.text();
+            let data: { success?: boolean; error?: string; reconnect?: boolean } = {};
+            try {
+                data = subRaw ? JSON.parse(subRaw) : {};
+            } catch {
+                data = { error: subRaw?.slice(0, 120) || `HTTP ${res.status}` };
+            }
+            if (res.status === 401 && data.reconnect) {
+                setNeedsReconnect(true);
+                throw new Error(data.error || 'Reconnect Zoho under Integrations.');
+            }
             if (res.ok && data?.success) {
                 toast.success('AI Auto-Responder active!');
             } else {

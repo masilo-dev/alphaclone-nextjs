@@ -33,7 +33,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { googleMapsService } from '../../../services/googleMapsService';
-import { ENV } from '../../../config/env';
+import { getPublicGoogleMapsApiKey } from '@/config/publicEnv';
 
 interface LeadDetailModalProps {
     isOpen: boolean;
@@ -373,7 +373,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             // 1. Validate Address (if not already done)
             if (!lead.isAddressValid && lead.location) {
                 toast.loading('Validating address...', { id: toastId });
-                const apiKey = ENV.GOOGLE_API_KEY || '';
+                const apiKey = getPublicGoogleMapsApiKey();
                 const { valid, formattedAddress } = await googleMapsService.validateAddress(lead.location, apiKey);
                 if (valid && formattedAddress) {
                     await leadService.updateLead(lead.id, { location: formattedAddress });
@@ -465,7 +465,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         const toastId = toast.loading("Validating address with Google API...");
 
         try {
-            const apiKey = ENV.GOOGLE_API_KEY || '';
+            const apiKey = getPublicGoogleMapsApiKey();
             const { valid, formattedAddress, location, error } = await googleMapsService.validateAddress(lead.location, apiKey);
 
             if (error) throw new Error(error);

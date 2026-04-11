@@ -87,6 +87,67 @@ body {
   overflow-x: clip;
 }
 
+/* Dashboard light theme: main shell surfaces (inner widgets keep their own styles) */
+html.light .ac-dashboard-root {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+html.light .ac-dashboard-shell-bg,
+html.light .ac-dashboard-main {
+  background-color: #f1f5f9;
+}
+
+html.light .ac-dashboard-header {
+  background-color: rgba(255, 255, 255, 0.92);
+  border-bottom-color: #e2e8f0;
+}
+
+html.light .ac-dashboard-mobile-title {
+  color: #0f172a;
+}
+
+html.light .ac-business-root,
+html.light .ac-business-main,
+html.light .ac-business-scroll {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+html.light .ac-business-header {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-bottom-color: #e2e8f0;
+}
+
+html.light .ac-business-header h1 {
+  color: rgb(15 23 42 / 0.9);
+}
+
+/* Broader light surfaces inside dashboard content (cards and panels) */
+html.light #main-content .bg-slate-950,
+html.light .ac-business-scroll .bg-slate-950 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light #main-content .bg-slate-900,
+html.light .ac-business-scroll .bg-slate-900 {
+  background-color: #f8fafc !important;
+}
+
+html.light #main-content .border-slate-800,
+html.light .ac-business-scroll .border-slate-800,
+html.light #main-content .border-slate-700,
+html.light .ac-business-scroll .border-slate-700 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light #main-content .text-slate-200,
+html.light .ac-business-scroll .text-slate-200,
+html.light #main-content .text-slate-300,
+html.light .ac-business-scroll .text-slate-300 {
+  color: #334155 !important;
+}
+
 /* Typography Overrides - Scoped to Marketing Theme */
 .marketing-theme {
   font-family: var(--font-inter), sans-serif;

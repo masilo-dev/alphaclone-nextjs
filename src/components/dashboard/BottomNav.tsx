@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -11,6 +13,7 @@ import {
     Calendar
 } from 'lucide-react';
 import { UserRole } from '../../types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BottomNavProps {
     activeTab: string;
@@ -28,22 +31,23 @@ const BottomNav: React.FC<BottomNavProps> = ({
     userRole = 'client'
 }) => {
     const router = useRouter();
+    const { t } = useLanguage();
 
     const mobileNavItems = useMemo(() => {
         if (userRole === 'tenant_admin') {
             return [
-                { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-                { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
-                { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-                { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
+                { labelKey: 'Home', href: '/dashboard', icon: LayoutDashboard },
+                { labelKey: 'Contacts', href: '/dashboard/business/clients', icon: Users },
+                { labelKey: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+                { labelKey: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
             ];
         }
 
         return [
-            { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-            { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-            { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-            { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+            { labelKey: 'Home', href: '/dashboard', icon: LayoutDashboard },
+            { labelKey: 'Projects', href: '/dashboard/projects', icon: Briefcase },
+            { labelKey: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+            { labelKey: 'Finance', href: '/dashboard/finance', icon: DollarSign },
         ];
     }, [userRole]);
 
@@ -74,7 +78,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                                 )}
                             </div>
                             <span className="text-[10px] font-medium tracking-wide">
-                                {item.label}
+                                {t(item.labelKey)}
                             </span>
                         </button>
                     );
@@ -86,7 +90,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                     className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-500 hover:text-slate-300 active:scale-95 transition-transform"
                 >
                     <Menu className="w-6 h-6" />
-                    <span className="text-[10px] font-medium tracking-wide">Menu</span>
+                    <span className="text-[10px] font-medium tracking-wide">{t('Menu')}</span>
                 </button>
             </div>
         </div>

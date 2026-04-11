@@ -1,35 +1,50 @@
-// SES Lockdown Configuration & Console Noise Suppression
-// This script runs before the main bundle to intercept and suppress non-critical SES "unpermitted intrinsics" warnings.
+// Suppress SES (Secure ECMAScript) console noise from wallet extensions (e.g. MetaMask) and similar.
+// Does not install lockdown — only filters console output.
+(function () {
+  function isSesNoise(s) {
+    if (typeof s !== 'string') return false;
+    return (
+      s.includes('SES Removing unpermitted intrinsics') ||
+      s.includes('Removing unpermitted intrinsics') ||
+      s.includes('unpermitted intrinsics') ||
+      s.includes('lockdown-install.js') ||
+      (s.includes('SES') && s.includes('intrinsic')) ||
+      s.includes('AlphaClone SES Surface Hardened')
+    );
+  }
 
-(function() {
+  function shouldSuppress(args) {
+    for (let i = 0; i < args.length; i++) {
+      if (typeof args[i] === 'string' && isSesNoise(args[i])) return true;
+    }
+    return false;
+  }
+
+  const originalLog = console.log;
   const originalWarn = console.warn;
   const originalError = console.error;
 
-  console.warn = function(...args) {
-    if (args[0] && typeof args[0] === 'string' && (
-      args[0].includes('SES Removing unpermitted intrinsics') ||
-      args[0].includes('lockdown-install.js') ||
-      args[0].includes('Removing unpermitted intrinsics') ||
-      args[0].includes('unpermitted intrinsics') ||
-      args[0].includes('SES ')
-    )) {
-      return; // Suppress SES noise
-    }
+  console.log = function () {
+    const args = Array.prototype.slice.call(arguments);
+    if (shouldSuppress(args)) return;
+    originalLog.apply(console, args);
+  };
+
+  console.warn = function () {
+    const args = Array.prototype.slice.call(arguments);
+    if (shouldSuppress(args)) return;
     originalWarn.apply(console, args);
   };
 
-  // Also intercept specific Facebook SDK failed preloads/loads and SW errors
-  console.error = function(...args) {
+  console.error = function () {
+    const args = Array.prototype.slice.call(arguments);
+    if (shouldSuppress(args)) return;
     const msg = args[0] && typeof args[0] === 'string' ? args[0] : '';
-    if (
-      (msg.includes('Failed to load resource: the server responded with status 403') && msg.includes('facebook')) ||
-      msg.includes('no-response: no-response') ||
-      msg.includes('SES ')
-    ) {
-      return; // Suppress transient errors and SES noise
-    }
+    if (msg.includes('Failed to load resource') && msg.includes('facebook') && msg.includes('403')) return;
     originalError.apply(console, args);
   };
 
-  console.log("AlphaClone SES Surface Hardened. Log interceptors active.");
+  if (typeof window !== 'undefined' && window.location.search.indexOf('debug_ses=1') !== -1) {
+    originalLog.call(console, '[AlphaClone] SES console filters active (debug_ses=1)');
+  }
 })();

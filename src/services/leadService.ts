@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
+import { assertLeadStageTransition } from '../lib/stageProgression';
 
 export interface Lead {
     id: string;
@@ -307,12 +308,9 @@ export const leadService = {
                 .single();
 
             if (existingLead) {
-                const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
-                const currentIdx = stageOrder.indexOf(existingLead.stage);
-                const newIdx = stageOrder.indexOf(updates.stage);
-
-                if (newIdx < currentIdx && updates.stage !== 'lost') {
-                    return { error: 'Cannot move lead back to a previous stage' };
+                const check = assertLeadStageTransition(existingLead.stage, updates.stage);
+                if (!check.ok) {
+                    return { error: check.message };
                 }
             }
         }

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Plane, Camera, Compass, Play, Pause, ExternalLink } from 'lucide-react';
-import { ENV } from '../../../config/env';
+import { getPublicGoogleMapsApiKey } from '@/config/publicEnv';
 
 interface AerialLeadNavigatorProps {
     leads: {
@@ -48,7 +48,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
         setDronePositions(newPositions);
     }, []);
 
-    const apiKey = ENV.GOOGLE_API_KEY || '';
+    const apiKey = getPublicGoogleMapsApiKey();
 
     useEffect(() => {
         if (!apiKey) return;

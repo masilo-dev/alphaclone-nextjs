@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { MCPAuthService } from '@/services/mcp/MCPAuthService';
 import { supabase } from '@/lib/supabase';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import EnterpriseDPA from './EnterpriseDPA';
 
 // ── What Claude / Manus can do when connected ─────────────────────────────────
@@ -96,7 +97,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
   const [isDpaAccepted, setIsDpaAccepted] = useState<boolean>(true); // Default to true for non-enterprise
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Initialize setup type from prop, then URL param as fallback
   React.useEffect(() => {
@@ -119,39 +120,76 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
   const tenantId = currentTenant?.id ?? 'your-workspace-id';
 
-  // 1. Fetch Auth & Token Context
+  const mcpOrigin =
+    typeof window !== 'undefined' ? window.location.origin : 'https://alphaclone.tech';
+
+  const buildConnectionUrl = (token: string | null, workspaceId: string, userId: string) => {
+    const params = new URLSearchParams({
+      api_key: token || 'YOUR_KEY_HERE',
+      tenant_id: workspaceId,
+      user_id: userId || 'YOUR_USER_ID_HERE',
+    });
+    return `${mcpOrigin}/api/mcp/sse?${params.toString()}`;
+  };
+
+  // Auth + per-user MCP token (reloads when session or workspace changes)
   React.useEffect(() => {
-    async function init() {
-      setIsLoading(true);
+    let cancelled = false;
+
+    async function loadForUser(user: User | null) {
+      setCurrentUser(user);
+
+      if (tenantId === 'your-workspace-id' || !user?.id) {
+        if (!cancelled) {
+          setConnectionToken(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (!cancelled) setIsLoading(true);
       try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(user);
+        const { token, error: tokenErr } = await MCPAuthService.getOrCreateToken(tenantId, user.id);
+        if (tokenErr) console.error('MCP token:', tokenErr);
+        if (!cancelled) setConnectionToken(token);
 
-        if (tenantId !== 'your-workspace-id') {
-          // Check token
-          const { token } = await MCPAuthService.getOrCreateToken(tenantId);
-          setConnectionToken(token);
-
-          // Check DPA if enterprise
-          if (isEnterprise) {
-            const accepted = await MCPAuthService.isDPAAccepted(tenantId);
-            setIsDpaAccepted(accepted);
-          }
+        if (isEnterprise) {
+          const accepted = await MCPAuthService.isDPAAccepted(tenantId);
+          if (!cancelled) setIsDpaAccepted(accepted);
         }
       } catch (err) {
         console.error('Failed to initialize MCP guide:', err);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
-    init();
+
+    void supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => loadForUser(data.user));
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        void loadForUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [tenantId, isEnterprise]);
 
   const handleRotateToken = async () => {
+    if (!currentUser?.id) {
+      toast.error('You must be signed in to regenerate your connection key.');
+      return;
+    }
     if (!window.confirm('Are you sure? Your old connection key will stop working immediately.')) return;
-    
-    const { token, error } = await MCPAuthService.rotateToken(tenantId);
+
+    const { token, error } = await MCPAuthService.rotateToken(tenantId, currentUser.id);
     if (token) {
       setConnectionToken(token);
       toast.success('Connection key regenerated!');
@@ -160,14 +198,16 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     }
   };
 
-  const connectionUrl = `https://alphaclone.tech/api/mcp/sse?api_key=${connectionToken || 'YOUR_KEY_HERE'}`;
+  const userIdForMcp = currentUser?.id ?? '';
+  const connectionUrl = buildConnectionUrl(connectionToken, tenantId, userIdForMcp);
 
   const configJson = `{
   "mcpServers": {
     "alphaclone": {
       "url": "${connectionUrl}",
       "headers": {
-        "x-tenant-id": "${tenantId}"
+        "x-tenant-id": "${tenantId}",
+        "x-user-id": "${userIdForMcp || 'YOUR_USER_ID_HERE'}"
       }
     }
   }

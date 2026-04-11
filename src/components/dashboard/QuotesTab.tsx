@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search, Edit, PenLine } from 'lucide-react';
 import { quoteService, Quote, QuoteItem } from '../../services/quoteService';
@@ -12,6 +15,7 @@ import { Button, Modal, Input } from '../ui/UIComponents';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import toast from 'react-hot-toast';
+import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { useCurrency } from '../../hooks/useCurrency';
 import { exportToCSV } from '../../utils/exportUtils';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
@@ -32,6 +36,7 @@ interface QuotesTabProps {
 }
 
 const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const { format, currencyCode } = useCurrency();
     const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -453,6 +458,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             await quoteService.updateQuote(quote.id, { status: 'converted' as any }); // Cast to 'any' if 'converted' is not in QuoteStatus type yet
 
             toast.success('Quote converted to Invoice successfully!');
+            showInvoiceCreatedWithSendPrompt((path) => router.push(path));
             setShowViewModal(false);
             loadQuotes();
         } catch (err: any) {
