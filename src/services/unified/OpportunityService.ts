@@ -233,7 +233,7 @@ export class OpportunityService {
       value_by_stage: {} as Record<string, number>
     };
 
-    data?.forEach(opt => {
+    data?.forEach((opt: any) => {
       const stage = opt.stage;
       const amount = Number(opt.amount) || 0;
       const probability = opt.probability || 0;
