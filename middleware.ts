@@ -36,6 +36,10 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         /*
+         * Root must be listed explicitly; the catch-all below can omit pathname "/".
+         */
+        '/',
+        /*
          * Match all request paths except for the ones starting with:
          * - _next/static (static files)
          * - _next/image (image optimization files)

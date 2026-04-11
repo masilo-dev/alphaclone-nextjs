@@ -86,6 +86,8 @@ const envSchema = z.object({
     ZOOM_CLIENT_ID: z.string().optional(),
     ZOOM_CLIENT_SECRET: z.string().optional(),
     ZOOM_OAUTH_SCOPES: z.string().optional(),
+    /** Secret token from Zoom app Features (webhooks) — required to verify deauthorization / event notifications */
+    ZOOM_WEBHOOK_SECRET_TOKEN: z.string().optional(),
 });
 
 /**
@@ -155,6 +157,7 @@ function validateEnv() {
         ZOOM_OAUTH_SCOPES:
             process.env.ZOOM_OAUTH_SCOPES ||
             'user:read:user meeting:read meeting:write',
+        ZOOM_WEBHOOK_SECRET_TOKEN: process.env.ZOOM_WEBHOOK_SECRET_TOKEN,
     };
 
     Object.keys(rawEnv).forEach(key => {
