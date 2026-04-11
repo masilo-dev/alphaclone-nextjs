@@ -1,6 +1,23 @@
 # Update Log
 
-## Date: 2026-04-09 (MARKETPLACE & SIDEBAR IMPROVEMENTS)
+## Date: 2026-04-11 (ENTERPRISE CORE SYSTEMS)
+
+### Added
+- **Opportunity Service**: Implemented unified sales pipeline management with stage tracking and weighted value analysis.
+- **Activity Service**: Launched a universal timeline service supporting polymorphic entity relations (Companies, Contacts, Opportunities).
+- **Unified Message Service**: Centralized inbox service for Gmail, Zoho, SMS, and Slack aggregations.
+- **Onboarding Service**: Implemented business goal capture and questionnaire logic.
+- **Audit Service**: Added an immutable audit trail system for enterprise compliance and AI Agent observability.
+
+## Date: 2026-04-10 (INFRASTRUCTURE HARDENING)
+
+### Fixed
+- **Vercel Build Stability**: Resolved `next/headers` evaluated in Pages Router by implementing lazy-loading in `@/lib/apiAuth` and `@/lib/supabase-server`.
+- **Database Schema**: Applied migrations for `unified_data_architecture`, `audit_logs`, and `onboarding_goals`.
+
+### Added
+- **Tenant Context RPC**: Added a fast-path RPC for verifying tenant membership in edge functions.
+
 
 ### Fixed
 - **Marketplace Blinking**: Resolved flickering UI on card hover in `MarketplacePage.tsx` by refining Framer Motion animations.

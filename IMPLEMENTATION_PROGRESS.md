@@ -32,14 +32,11 @@
 **Files**:
 - ✅ `src/services/unified/CompanyService.ts` - Complete CRUD for companies
 - ✅ `src/services/unified/ContactService.ts` - Complete CRUD for contacts
-
-**What they do**:
-- Get, list, create, update, delete companies/contacts
-- Search with full-text
-- Link relationships automatically
-- Update health scores
-- Touch timestamps (track activity)
-- Tag management
+- ✅ `src/services/unified/OpportunityService.ts` - Complete CRUD for sales pipeline
+- ✅ `src/services/unified/ActivityService.ts` - Universal timeline for everything
+- ✅ `src/services/unified/UnifiedMessageService.ts` - All communication in one place
+- ✅ `src/services/onboarding/OnboardingService.ts` - Business goal capture
+- ✅ `src/services/monitoring/AuditService.ts` - Immutable audit trail
 
 **Safety**:
 - ✅ Uses existing tenant service for multi-tenancy

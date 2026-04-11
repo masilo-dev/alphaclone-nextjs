@@ -1,5 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+
 import { ENV } from '@/config/env'
 import { createSupabaseAdminClient as createAdmin } from './supabase-admin';
 
@@ -64,6 +64,7 @@ export async function createSupabaseServerClient() {
         return createUnavailableSupabaseClient('SupabaseServer');
     }
 
+    const { cookies } = await import('next/headers');
     const cookieStore = await cookies()
 
     return createServerClient(
