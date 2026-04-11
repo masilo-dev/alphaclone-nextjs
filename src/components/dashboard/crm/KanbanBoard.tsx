@@ -165,7 +165,7 @@ function KanbanColumn({
         </h3>
       </div>
       
-      <div ref={setNodeRef} className="flex-1 p-2 overflow-y-auto min-h-[500px] flex flex-col gap-2 relative">
+      <div ref={setNodeRef} className="flex-1 min-h-[240px] max-h-[min(72vh,640px)] p-2 overflow-y-auto flex flex-col gap-2 relative">
         <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
             <KanbanCard key={lead.id} lead={lead} />
@@ -329,14 +329,14 @@ export default function KanbanBoard() {
 
   if (loading) {
       return (
-          <div className="w-full h-full flex items-center justify-center p-12">
+          <div className="w-full min-h-[240px] flex items-center justify-center p-12">
               <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full" />
           </div>
       );
   }
 
   return (
-    <div className="w-full h-full p-4 overflow-x-auto overflow-y-hidden">
+    <div className="w-full min-w-0 p-4 pb-8 overflow-x-auto">
         <CrmNextStepsPanel
             heading="Lead execution"
             subheading="Each card should move toward a clear decision: qualify, propose, win, or exit with a reason."
@@ -349,7 +349,7 @@ export default function KanbanBoard() {
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
-            <div className="flex gap-4 h-[calc(100vh-300px)] min-h-[320px] snap-x snap-mandatory pb-4">
+            <div className="flex gap-4 min-h-[280px] snap-x snap-mandatory pb-4 items-stretch">
                 <SortableContext items={columns.map(c => c.id)}>
                     {columns.map((col) => (
                         <KanbanColumn 

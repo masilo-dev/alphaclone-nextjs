@@ -113,28 +113,34 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const isConnected = pages.length > 0;
 
     const loadData = useCallback(async () => {
-        if (!user || !tenant?.id) {
+        if (!user?.id) {
             setLoading(false);
             return;
         }
         setLoading(true);
+        const tenantId = tenant?.id;
+        const leadsQuery = tenantId
+            ? supabase
+                  .from('facebook_leads')
+                  .select('*')
+                  .eq('tenant_id', tenantId)
+                  .order('received_at', { ascending: false })
+                  .limit(100)
+            : Promise.resolve({ data: [] as FacebookLead[], error: null });
+        const convQuery = tenantId
+            ? supabase.from('messenger_conversations').select('id, is_read').eq('tenant_id', tenantId)
+            : Promise.resolve({ data: [] as { id: string; is_read: boolean }[], error: null });
+
         const [pagesRes, leadsRes, convRes] = await Promise.all([
             supabase
                 .from('facebook_integrations')
                 .select('id,page_id,page_name,is_active,connected_at')
                 .eq('user_id', user.id)
                 .eq('is_active', true),
-            supabase
-                .from('facebook_leads')
-                .select('*')
-                .eq('tenant_id', tenant?.id)
-                .order('received_at', { ascending: false })
-                .limit(100),
-            supabase
-                .from('messenger_conversations')
-                .select('id, is_read')
-                .eq('tenant_id', tenant?.id)
+            leadsQuery,
+            convQuery,
         ]);
+
         if (!pagesRes.error) setPages(pagesRes.data || []);
         if (!leadsRes.error) setLeads(leadsRes.data || []);
         if (!convRes.error) setConversations(convRes.data || []);
@@ -190,7 +196,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     }, [activeTab, selectedPageId, fetchPagePosts]);
 
     const handleConnect = () => {
-        window.location.href = '/api/auth/facebook/connect';
+        const tid = tenant?.id;
+        window.location.href = tid
+            ? `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(tid)}`
+            : '/api/auth/facebook/connect';
     };
 
     const handleDisconnect = async (pageId: string) => {
@@ -329,7 +338,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-white">Facebook Integration</h2>
-                        <p className="text-sm text-slate-400">Lead Ads capture · Page posting · Client discovery</p>
+                        <p className="text-sm text-slate-400">
+                            Your Facebook account · Lead Ads, page posts, and inbox. Each team member can connect their own account.
+                        </p>
                     </div>
                 </div>
                 {isConnected && !reconnectRequired ? (
@@ -360,10 +371,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 /* Not connected state */
                 <div className="border border-dashed border-slate-700 rounded-2xl p-12 text-center">
                     <Facebook className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-white mb-2">Connect Your Facebook Account</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">Connect your Facebook account</h3>
                     <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-                        Automatically capture Facebook Lead Ads into your CRM, post to your business page, 
-                        and find potential clients — all from one dashboard.
+                        Link your own Facebook profile and pages. Lead Ads and Messenger use your workspace; posting and tokens stay tied to you.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
                         {[
@@ -384,7 +394,6 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                     >
                         Connect with Facebook
                     </button>
-                    <p className="text-xs text-slate-600 mt-3">Requires: <code>FACEBOOK_APP_ID</code> + <code>FACEBOOK_APP_SECRET</code> in env vars</p>
                 </div>
             ) : (
                 <>

@@ -89,20 +89,14 @@ import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import NotificationCenter from '../NotificationCenter';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-/** Main content uses full bleed (no outer padding); mindset bar gets its own horizontal inset. */
+/** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). CRM pipeline routes scroll with the main column so they are not listed here. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/mail',
     '/dashboard/gmail',
     '/dashboard/business/projects',
     '/dashboard/tasks',
     '/dashboard/sales-agent',
-    '/dashboard/crm',
-    '/dashboard/contacts',
-    '/dashboard/business/clients',
-    '/dashboard/leads',
-    '/dashboard/deals',
     '/dashboard/zoho/mail',
-    '/dashboard/zoho/crm',
 ];
 
 interface BusinessDashboardProps {
@@ -735,10 +729,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
                 {/* Dynamic Content Area */}
                 <div
-                    className={`flex-1 ac-business-scroll ${
+                    className={`flex-1 min-h-0 ac-business-scroll ${
                         DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
                             ? 'overflow-hidden p-0'
-                            : 'overflow-y-auto p-4 md:p-8 dashboard-content-padding'
+                            : 'overflow-y-auto overflow-x-hidden p-4 md:p-8 dashboard-content-padding'
                     }`}
                 >
                     <WidgetErrorBoundary title="Business Dashboard Error">
@@ -749,7 +743,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 animate={{ opacity: 1, scale: 1, y: 0, pointerEvents: 'auto' }}
                                 exit={{ opacity: 0, scale: 0.99, y: -5, pointerEvents: 'none' }}
                                 transition={{ duration: 0.15, ease: "easeOut" }}
-                                className="h-full w-full min-w-0"
+                                className={`w-full min-w-0 ${
+                                    DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
+                                        ? 'h-full min-h-0'
+                                        : 'min-h-full'
+                                }`}
                             >
                                 <div
                                     className={

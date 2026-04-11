@@ -71,15 +71,28 @@ export async function GET(req: NextRequest) {
 
     const supabase = createSupabaseAdminClient();
 
-    // Get tenant_id
-    const { data: tenantUser } = await supabase
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', stateData.userId)
-        .single();
+    // Resolve workspace: prefer tenant from OAuth state (connect?tenant_id=), verify membership, else first membership.
+    let resolvedTenantId: string | null = stateData.tenantId?.trim() || null;
+    if (resolvedTenantId) {
+        const { data: mem } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', stateData.userId)
+            .eq('tenant_id', resolvedTenantId)
+            .maybeSingle();
+        if (!mem?.tenant_id) resolvedTenantId = null;
+    }
+    if (!resolvedTenantId) {
+        const { data: first } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', stateData.userId)
+            .limit(1)
+            .maybeSingle();
+        resolvedTenantId = first?.tenant_id ?? null;
+    }
 
     const pages = pagesData.data || [];
-    const resolvedTenantId = stateData.tenantId ?? tenantUser?.tenant_id ?? null;
 
     if (pages.length > 0) {
         for (const page of pages) {
@@ -94,7 +107,7 @@ export async function GET(req: NextRequest) {
 
             await supabase.from('facebook_integrations').upsert({
                 user_id: stateData.userId,
-                tenant_id: tenantUser?.tenant_id,
+                tenant_id: resolvedTenantId,
                 page_id: page.id,
                 page_name: page.name,
                 // Always store the Page Access Token — never use the user token for page actions
@@ -123,7 +136,7 @@ export async function GET(req: NextRequest) {
         console.warn('[Facebook Callback] No pages returned for user:', stateData.userId);
         await supabase.from('facebook_integrations').upsert({
             user_id: stateData.userId,
-            tenant_id: tenantUser?.tenant_id,
+            tenant_id: resolvedTenantId,
             page_id: profileData.id,
             page_name: profileData.name,
             page_access_token: null,

@@ -59,7 +59,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
     const overviewNextSteps = useMemo(() => buildCrmOverviewNextSteps(deals), [deals]);
 
     return (
-        <div className="h-full flex flex-col text-white">
+        <div className="w-full min-w-0 flex flex-col text-white pb-8">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -97,10 +97,10 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
             )}
 
             {/* Kanban Board */}
-            <div className="flex-1 overflow-hidden">
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 h-full pb-4">
+            <div className="w-full min-w-0">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 pb-4 items-start">
                     {STAGES.map(stage => (
-                        <div key={stage.id} className="min-w-0 flex flex-col bg-slate-800/50 rounded-xl border border-white/5">
+                        <div key={stage.id} className="min-w-0 flex flex-col bg-slate-800/50 rounded-xl border border-white/5 max-h-[min(75vh,720px)]">
                             {/* Stage Header */}
                             <div className={`px-2 py-2 border-b border-slate-700 flex items-center gap-1.5 ${stage.color} bg-opacity-10`}>
                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${stage.color}`} />
@@ -111,7 +111,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                             </div>
 
                             {/* Deals List */}
-                            <div className="flex-1 p-1.5 overflow-y-auto space-y-1.5 custom-scrollbar max-h-[calc(100vh-320px)]">
+                            <div className="flex-1 min-h-0 p-1.5 overflow-y-auto space-y-1.5 custom-scrollbar">
                                 {loading ? (
                                     <div className="animate-pulse space-y-2">
                                         <div className="h-24 bg-slate-800 rounded-lg" />

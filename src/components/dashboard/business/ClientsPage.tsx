@@ -366,7 +366,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (pathname === '/dashboard/crm') {
         return (
-            <div className="space-y-6 h-full min-h-[60vh]">
+            <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
                 <CRMNav pathname={pathname} />
                 <CRMTab userId={user.id} userRole={user.role} />
             </div>
@@ -375,7 +375,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (pathname === '/dashboard/leads') {
         return (
-            <div className="space-y-6 h-full min-h-[60vh]">
+            <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
                 <CRMNav pathname={pathname} />
                 <Suspense fallback={crmSectionFallback}>
                     <KanbanBoard />
@@ -386,7 +386,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (pathname === '/dashboard/deals') {
         return (
-            <div className="space-y-6 h-full min-h-[60vh]">
+            <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
                 <CRMNav pathname={pathname} />
                 <Suspense fallback={crmSectionFallback}>
                     <DealsTab userId={user.id} userRole={user.role ?? 'user'} />
