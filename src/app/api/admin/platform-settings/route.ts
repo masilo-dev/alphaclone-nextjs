@@ -95,9 +95,6 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ ok: true, settings: next, envStatus: buildEnvStatus() });
   } catch (e) {
-    if (e instanceof RouteAuthError) {
-      return NextResponse.json({ error: e.message }, { status: e.status });
-    }
     return routeErrorResponse(e);
   }
 }
