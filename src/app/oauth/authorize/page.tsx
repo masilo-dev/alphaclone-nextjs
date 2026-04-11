@@ -40,6 +40,7 @@ function AuthorizeForm() {
         setError(result.error);
         setLoading(false);
       } else if (result.redirect) {
+        // eslint-disable-next-line react-hooks/immutability
         window.location.href = result.redirect;
       }
     } catch (err) {
@@ -52,6 +53,7 @@ function AuthorizeForm() {
     if (redirect_uri) {
       let url = `${redirect_uri}?error=access_denied`;
       if (state) url += `&state=${encodeURIComponent(state)}`;
+      // eslint-disable-next-line react-hooks/immutability
       window.location.href = url;
     }
   };

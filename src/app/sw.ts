@@ -53,15 +53,9 @@ const serwist = new Serwist({
     runtimeCaching: [
         {
             // ALL dashboard routes must bypass the cache entirely.
-            // This covers full page navigations AND Next.js client-side RSC data fetches.
-            matcher({ request, url }) {
-                const isNavigate = request.mode === 'navigate';
-                const isRSC = request.headers.get('rsc') === '1' || request.headers.get('next-router-prefetch') === '1';
-                
-                return (
-                    (isNavigate || isRSC) &&
-                    url.pathname.startsWith('/dashboard')
-                );
+            // This covers full page navigations, RSC data fetches, and any other subresources.
+            matcher({ url }) {
+                return url.pathname.startsWith('/dashboard');
             },
             handler: safeNetworkOnly,
         },
@@ -105,6 +99,14 @@ const serwist = new Serwist({
         },
         ...defaultCache,
     ],
+});
+
+// Ultimate safety net — never allow an unhandled error to throw "no-response".
+serwist.setCatchHandler(async ({ request }) => {
+    if (request.mode === 'navigate') {
+        return (await self.caches.match('/offline.html')) || Response.error();
+    }
+    return new Response(null, { status: 503, statusText: 'Service Unavailable' });
 });
 
 serwist.addEventListeners();

@@ -9,6 +9,15 @@
 - **Onboarding Service**: Implemented business goal capture and questionnaire logic.
 - **Audit Service**: Added an immutable audit trail system for enterprise compliance and AI Agent observability.
 
+## Date: 2026-04-11 (DASHBOARD & SERVICE WORKER HARDENING)
+
+### Fixed
+- **Service Worker Reliability**: Resolved `no-response` errors on dashboard routes by simplifying the URL matcher and implementing a global `setCatchHandler` as a safety net.
+- **Facebook Connection**: Restored functionality to the Facebook business integration by ensuring the service worker does not intercept or block critical transition routes.
+
+### Changed
+- **Logs & Diagnostics**: Enhanced console cleanliness by implementing robust interceptors in `lockdown-install.js` to suppress SES "unpermitted intrinsics" noise and transient 403 errors from external SDKs.
+
 ### 2026-04-11: AI Core Modernization & Omni Crawler Expansion
 *   **System Brain Upgrade**: Transitioned all AI services to **Claude 4.6 Sonnet** and **GPT-4o**.
 *   **Omni Crawler (Dual-Source)**: Implemented `OmniCrawlerService` for simultaneous lead discovery using **Google Maps (Places API)** and **OpenStreetMap (Overpass)**.
