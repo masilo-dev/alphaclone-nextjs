@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
       script-src-elem 'self' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https: http:;
-      media-src 'self' blob:;
+      media-src 'self' blob: data: https:;
       font-src 'self' data: https://fonts.gstatic.com;
       object-src 'self' blob: data:;
       base-uri 'self';
@@ -100,7 +100,7 @@ const nextConfig: NextConfig = {
       },
       {
         key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=(), xr-spatial-tracking=()',
+        value: 'camera=(self), microphone=(self), geolocation=(), xr-spatial-tracking=()',
       },
       {
         key: 'Strict-Transport-Security',

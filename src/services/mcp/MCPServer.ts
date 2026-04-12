@@ -28,7 +28,7 @@ function supabaseErrorToMcpClientError(toolName: string, message: string): Error
     m.includes('invalid input syntax')
   ) {
     return new Error(
-      'Workspace data is temporarily unavailable. Please try again shortly. If this continues, contact support so your account can be verified.'
+      'Workspace data could not be loaded (database or schema error on our side). Retry shortly. If it persists, contact support with your workspace ID and the MCP tool name you used.'
     );
   }
   return new Error(MCP_GENERIC_OPERATION_ERROR);

@@ -203,7 +203,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             router.replace('/dashboard/business/facebook', { scroll: false });
             return;
         }
-        if (fbErr) {
+        if (fbErr === 'app_not_configured') {
+            toast.error(
+                'Facebook is not configured for this deployment. Set FACEBOOK_APP_ID and the callback URL in the server environment (e.g. Vercel).'
+            );
+            router.replace('/dashboard/business/facebook', { scroll: false });
+        } else if (fbErr) {
             toast.error('Facebook could not be connected. Please try again or contact support.');
             router.replace('/dashboard/business/facebook', { scroll: false });
         }

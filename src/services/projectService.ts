@@ -166,12 +166,21 @@ export const projectService = {
         }
     },
 
+    /** Empty strings become null so Postgres date columns do not receive "". */
+    normalizeDateField(value: string | undefined | null): string | null {
+        if (value == null) return null;
+        const s = String(value).trim();
+        return s.length > 0 ? s : null;
+    },
+
     /**
      * Create a new project (with tenant assignment)
      */
     async createProject(project: Omit<Project, 'id'>, templateId?: string): Promise<{ project: Project | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            const dueDate = this.normalizeDateField(project.dueDate);
+            const startDate = this.normalizeDateField(project.startDate);
 
             const { data, error } = await supabase
                 .from('projects')
@@ -184,8 +193,8 @@ export const projectService = {
                     status: project.status,
                     current_stage: project.currentStage,
                     progress: project.progress,
-                    due_date: project.dueDate,
-                    start_date: project.startDate,
+                    due_date: dueDate,
+                    start_date: startDate,
                     team: project.team,
                     image: project.image,
                     description: project.description,
@@ -218,6 +227,7 @@ export const projectService = {
                 currentStage: data.current_stage,
                 progress: data.progress,
                 dueDate: data.due_date,
+                startDate: data.start_date,
                 team: data.team || [],
                 image: data.image,
                 description: data.description,
@@ -271,7 +281,12 @@ export const projectService = {
             if (updates.status !== undefined) updateData.status = updates.status;
             if (updates.currentStage !== undefined) updateData.current_stage = updates.currentStage;
             if (updates.progress !== undefined) updateData.progress = updates.progress;
-            if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
+            if (updates.dueDate !== undefined) {
+                updateData.due_date = this.normalizeDateField(updates.dueDate);
+            }
+            if (updates.startDate !== undefined) {
+                updateData.start_date = this.normalizeDateField(updates.startDate);
+            }
             if (updates.team !== undefined) updateData.team = updates.team;
             if (updates.image !== undefined) updateData.image = updates.image;
             if (updates.description !== undefined) updateData.description = updates.description;
