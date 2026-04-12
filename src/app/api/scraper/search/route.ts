@@ -9,6 +9,9 @@ import {
   hasRemoteBrowserConfigured,
 } from '@/lib/scraper/browserSerpLeads';
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 // ─── Per-tenant in-process quota cache ────────────────────────────────────────
 // key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
 // This is a fast in-memory layer — Supabase is the durable store.

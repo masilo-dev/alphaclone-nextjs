@@ -15,6 +15,14 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
+        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_SERWIST !== 'true') {
+            void navigator.serviceWorker?.getRegistrations?.().then((regs) => {
+                regs.forEach((r) => void r.unregister());
+            });
+        }
+    }, []);
+
+    useEffect(() => {
         // Check immediately on mount
         const checkPWA = () => {
             const pwaStatus = isPWA();

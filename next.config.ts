@@ -3,10 +3,16 @@ import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+// PWA worker is opt-in in production: it intercepts /api and /dashboard and has caused
+// false 503s behind Cloudflare and with extensions (SES lockdown). Dev stays off.
+const serwistDisabled =
+  process.env.NODE_ENV === "development" ||
+  process.env.ENABLE_SERWIST !== "true";
+
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
-  disable: process.env.NODE_ENV === "development",
+  disable: serwistDisabled,
 });
 
 const nextConfig: NextConfig = {
@@ -19,6 +25,8 @@ const nextConfig: NextConfig = {
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_ENABLE_SERWIST:
+      process.env.ENABLE_SERWIST === 'true' ? 'true' : 'false',
   },
   images: {
     formats: ['image/avif', 'image/webp'],
