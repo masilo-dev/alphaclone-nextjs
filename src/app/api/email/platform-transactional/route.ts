@@ -34,8 +34,6 @@ export async function POST(req: NextRequest) {
         const templateName = String(body?.templateName ?? '');
         const variables = (body?.variables ?? {}) as Record<string, string | number>;
 
-        const admin = createSupabaseAdminClient();
-
         const authHeader = req.headers.get('authorization');
         const token = authHeader?.startsWith('Bearer ')
             ? authHeader.slice('Bearer '.length).trim()
@@ -57,6 +55,18 @@ export async function POST(req: NextRequest) {
 
         if (!USER_INITIATED_PLATFORM_TEMPLATES.has(templateName)) {
             return NextResponse.json({ error: 'Template not allowed' }, { status: 400 });
+        }
+
+        let admin: ReturnType<typeof createSupabaseAdminClient>;
+        try {
+            admin = createSupabaseAdminClient();
+        } catch {
+            return NextResponse.json({
+                success: false,
+                skipped: true,
+                code: 'SUPABASE_ADMIN_NOT_CONFIGURED',
+                error: 'SUPABASE_SERVICE_ROLE_KEY or Supabase URL is missing on the server.',
+            });
         }
 
         const normalizedEmail = user.email.toLowerCase().trim();
@@ -83,10 +93,15 @@ export async function POST(req: NextRequest) {
         });
 
         if (!result.success) {
-            return NextResponse.json(
-                { success: false, error: result.error },
-                { status: result.error === 'Email service not configured' ? 503 : 400 }
-            );
+            if (result.error === 'Email service not configured') {
+                return NextResponse.json({
+                    success: false,
+                    skipped: true,
+                    code: 'EMAIL_NOT_CONFIGURED',
+                    error: 'No SENDGRID_API_KEY or RESEND_API_KEY in the deployment environment.',
+                });
+            }
+            return NextResponse.json({ success: false, error: result.error }, { status: 400 });
         }
 
         return NextResponse.json({ success: true, skipped: result.skipped ?? false });

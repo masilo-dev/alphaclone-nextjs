@@ -17,15 +17,24 @@ declare const self: ServiceWorkerGlobalScope;
 // PrecacheStrategy (which has no handlerDidError) causing uncaught "no-response".
 disableNavigationPreload();
 
-// Safe NetworkOnly handler — never rejects the FetchEvent promise.
-const safeNetworkOnly = new NetworkOnly({
+// Network-only with one live retry, then real network error (never a fake HTTP 503).
+const networkOnlyRetryOrError = new NetworkOnly({
     plugins: [
         {
-            handlerDidError: async () =>
-                new Response(null, { status: 503, statusText: 'Service Unavailable' }),
+            handlerDidError: async ({ request }) => {
+                try {
+                    return await fetch(request instanceof Request ? request : new Request(request));
+                } catch {
+                    return Response.error();
+                }
+            },
         },
     ],
 });
+
+// API and dashboard: same behavior — synthetic 503 breaks debugging and hides real status codes.
+const apiNetworkOnly = networkOnlyRetryOrError;
+const dashboardNetworkOnly = networkOnlyRetryOrError;
 
 const serwist = new Serwist({
     precacheEntries: self.__SW_MANIFEST,
@@ -44,7 +53,7 @@ const serwist = new Serwist({
                     try {
                         return await fetch(request instanceof Request ? request : new Request(request));
                     } catch {
-                        return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+                        return Response.error();
                     }
                 },
             },
@@ -53,14 +62,13 @@ const serwist = new Serwist({
     runtimeCaching: [
         {
             // ALL dashboard routes must bypass the cache entirely.
-            // This covers full page navigations, RSC data fetches, and any other subresources.
             matcher({ url }) {
                 return url.pathname.startsWith('/dashboard');
             },
-            handler: safeNetworkOnly,
+            handler: dashboardNetworkOnly,
         },
         {
-            // Bypass service worker for API calls, Supabase, and Daily.co
+            // API and third-party: pass through to network without synthetic 503 on failure.
             matcher({ url }) {
                 return (
                     url.pathname.startsWith("/api/") ||
@@ -71,14 +79,14 @@ const serwist = new Serwist({
                     url.pathname.includes("/rest/v1/")
                 );
             },
-            handler: safeNetworkOnly,
+            handler: apiNetworkOnly,
         },
         {
             // WebSockets cannot be intercepted — route them through safely.
             matcher({ url }) {
                 return url.protocol === 'wss:' || url.protocol === 'ws:';
             },
-            handler: safeNetworkOnly,
+            handler: networkOnlyRetryOrError,
         },
         {
             // All other page navigations: NetworkFirst with offline fallback
@@ -101,12 +109,12 @@ const serwist = new Serwist({
     ],
 });
 
-// Ultimate safety net — never allow an unhandled error to throw "no-response".
+// Ultimate safety net — avoid synthetic 503 on APIs (use real network error instead).
 serwist.setCatchHandler(async ({ request }) => {
     if (request.mode === 'navigate') {
         return (await self.caches.match('/offline.html')) || Response.error();
     }
-    return new Response(null, { status: 503, statusText: 'Service Unavailable' });
+    return Response.error();
 });
 
 serwist.addEventListeners();
