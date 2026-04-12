@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { Receiver } from '@upstash/qstash';
@@ -61,19 +62,19 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[Zoho Auto-Responder Worker] Failed to send reply:', err);
-        
+
         if (logId) {
             await supabase
                 .from('zoho_auto_responder_logs')
-                .update({ 
-                    triage_status: 'error', 
-                    error_message: err.message 
+                .update({
+                    triage_status: 'error',
+                    error_message: 'Auto-reply failed',
                 })
                 .eq('id', logId);
         }
-        
-        return NextResponse.json({ error: err.message }, { status: 500 });
+
+        return clientErrorResponse(err, { request: req, scope: 'webhooks/zoho/process-reply' });
     }
 }

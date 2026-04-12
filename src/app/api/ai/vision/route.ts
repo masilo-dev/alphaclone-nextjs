@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { ENV } from '@/config/env';
+import { UNITS_PER_VISION } from '@/config/aiUsageQuotas';
+import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { ENV } from '@/config/env';
 
 export const maxDuration = 60; // Allow more time for AI vision processing
 export const dynamic = 'force-dynamic';
@@ -27,6 +30,31 @@ export async function POST(req: NextRequest) {
 
         if (!tenantId) {
             return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
+        }
+
+        const { data: membership } = await supabase
+            .from('user_tenant_roles')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .eq('tenant_id', tenantId)
+            .maybeSingle();
+
+        if (!membership?.tenant_id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const admin = createSupabaseAdminClient();
+        const { data: tenantRow } = await admin
+            .from('tenants')
+            .select('subscription_plan')
+            .eq('id', tenantId)
+            .maybeSingle();
+        const plan = (tenantRow?.subscription_plan as string) || 'free';
+
+        const usesRemoteAi = Boolean(ENV.OPENAI_API_KEY || ENV.ANTHROPIC_API_KEY);
+        if (usesRemoteAi) {
+            const blocked = await consumeAiUnitsOr429(admin, tenantId, plan, UNITS_PER_VISION);
+            if (blocked) return blocked;
         }
 
         // 1. Convert File to Base64
@@ -174,9 +202,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('OCR/Vision processing error:', error);
-        return NextResponse.json({
-            error: 'Failed to process receipt',
-            details: error.message
-        }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'ai/vision' });
     }
 }

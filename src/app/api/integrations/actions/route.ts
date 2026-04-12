@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -49,9 +51,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Integration action error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'integrations/actions.POST' });
   }
 }
 
@@ -144,7 +146,7 @@ async function handleSlackAction(tenantId: string, action: string, config: any, 
         return { success: false, error: 'Unsupported Slack action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -219,7 +221,7 @@ async function handleFacebookAction(tenantId: string, action: string, config: an
         return { success: false, error: 'Unsupported Facebook action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -317,7 +319,7 @@ async function handleTwilioAction(tenantId: string, action: string, config: any,
         return { success: false, error: 'Unsupported Twilio action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -394,7 +396,7 @@ async function handleGoogleCalendarAction(tenantId: string, action: string, conf
         return { success: false, error: 'Unsupported Google Calendar action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -452,7 +454,7 @@ async function handleStripeAction(tenantId: string, action: string, config: any,
         return { success: false, error: 'Unsupported Stripe action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -520,7 +522,7 @@ async function handleHubSpotAction(tenantId: string, action: string, config: any
         return { success: false, error: 'Unsupported HubSpot action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -600,7 +602,7 @@ async function handleSendGridAction(tenantId: string, action: string, config: an
         return { success: false, error: 'Unsupported SendGrid action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -626,7 +628,8 @@ async function testSlackIntegration(webhookUrl: string) {
 
     return { success: response.ok, status: response.status };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testSlack:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }
 
@@ -639,7 +642,8 @@ async function testFacebookIntegration(accessToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testFacebook:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }
 
@@ -659,7 +663,8 @@ async function testTwilioIntegration(accountSid: string, authToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testTwilio:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }
 
@@ -672,6 +677,7 @@ async function testGoogleCalendarIntegration(accessToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testGoogleCalendar:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }

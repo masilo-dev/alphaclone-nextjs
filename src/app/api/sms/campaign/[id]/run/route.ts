@@ -142,6 +142,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             const result = await twilioRes.json();
             const success = !result.code && result.sid;
 
+            if (!success) {
+                console.warn('[sms/campaign/run] Twilio error for lead', recipient.leadId, result);
+            }
+
             await supabase.from('sms_messages').insert({
                 tenant_id: campaign.tenant_id,
                 campaign_id: campaignId,
@@ -151,7 +155,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
                 body: campaign.message_body,
                 status: success ? 'sent' : 'failed',
                 twilio_sid: result.sid || null,
-                error_message: success ? null : (result.message || 'Unknown error'),
+                error_message: success ? null : 'Twilio send failed',
                 sent_at: success ? new Date().toISOString() : null,
             });
 

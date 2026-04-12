@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed } from '@/lib/api/operationResult';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -31,9 +33,9 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Contract management error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'contracts/management.POST' });
   }
 }
 
@@ -95,7 +97,7 @@ async function createContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract created successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('contracts/management', error);
   }
 }
 
@@ -123,7 +125,7 @@ async function updateContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract updated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('contracts/management', error);
   }
 }
 
@@ -163,7 +165,7 @@ async function getContracts(tenantId: string, config: any, supabase: any) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('contracts/management', error);
   }
 }
 
@@ -215,7 +217,7 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract downloaded successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('contracts/management', error);
   }
 }
 
@@ -237,7 +239,7 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract deleted successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('contracts/management', error);
   }
 }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
@@ -42,7 +43,6 @@ export async function GET(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Campaign Processing Error:', err);
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        return NextResponse.json({ error: message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'cron/process-campaigns.GET' });
     }
 }

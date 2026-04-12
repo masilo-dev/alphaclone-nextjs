@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
@@ -106,20 +107,18 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ url: accountLink.url });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Stripe Connect onboarding error:', error);
-
-        let errorMessage = error.message || 'Internal Server Error';
-        let statusCode = 500;
-
-        if (error.message?.includes('responsibilities of managing losses')) {
-            errorMessage = 'Compliance Required: Please visit your Stripe Dashboard (Settings > Connect > Platform Profile) to acknowledge responsibility for connected account losses.';
-            statusCode = 400; // Use 400 for client/setup level resolution
+        const internal = error instanceof Error ? error.message : '';
+        if (internal.includes('responsibilities of managing losses')) {
+            return NextResponse.json(
+                {
+                    error: 'Compliance required: open your Stripe Dashboard (Settings, Connect, Platform profile) and acknowledge platform responsibilities for connected accounts.',
+                    code: 'STRIPE_CONNECT_COMPLIANCE',
+                },
+                { status: 400 }
+            );
         }
-
-        return NextResponse.json(
-            { error: errorMessage },
-            { status: statusCode }
-        );
+        return clientErrorResponse(error, { request: req, scope: 'stripe/connect/onboarding.POST' });
     }
 }

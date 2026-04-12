@@ -28,12 +28,12 @@ export async function GET() {
         checks.database = {
             status: dbError ? 'unhealthy' : 'healthy',
             responseTime: Date.now() - startTime,
-            error: dbError?.message,
+            error: dbError ? 'unavailable' : undefined,
         };
-    } catch (error) {
+    } catch {
         checks.database = {
             status: 'unhealthy',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: 'unavailable',
         };
     }
 
@@ -47,10 +47,10 @@ export async function GET() {
                 status: 'healthy',
                 responseTime: Date.now() - redisStart,
             };
-        } catch (error) {
+        } catch {
             checks.redis = {
                 status: 'unhealthy',
-                error: error instanceof Error ? error.message : 'Unknown error',
+                error: 'unavailable',
             };
         }
     } else {
@@ -68,10 +68,10 @@ export async function GET() {
             responseTime: Date.now() - authStart,
             error: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY ? undefined : 'Supabase auth configuration is incomplete',
         };
-    } catch (error) {
+    } catch {
         checks.auth = {
             status: 'unhealthy',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: 'unavailable',
         };
     }
 

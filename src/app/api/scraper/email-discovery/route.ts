@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import * as cheerio from 'cheerio';
 
@@ -430,11 +431,12 @@ export async function POST(request: Request) {
           status: 'success', 
           count: results.length 
         };
-      } catch (err: any) {
-        sourceStatus[method] = { 
-          status: 'error', 
+      } catch (err: unknown) {
+        console.warn('[EmailDiscovery] method failed:', method, err);
+        sourceStatus[method] = {
+          status: 'error',
           count: 0,
-          error: err.message 
+          error: 'This discovery method did not complete. Try again.',
         };
       }
     }
@@ -477,12 +479,9 @@ export async function POST(request: Request) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[EmailDiscovery] Fatal error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Internal error' 
-    }, { status: 500 });
+    return clientErrorResponse(error, { request, scope: 'scraper/email-discovery.POST' });
   }
 }
 

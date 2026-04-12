@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
@@ -39,9 +41,9 @@ export async function POST(req: Request) {
             try {
                 const res = await hubspotService.syncLeadToHubSpot(userId, deal || lead);
                 results.push({ provider: 'hubspot', status: 'success', data: res });
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error('HubSpot Sync Error:', e);
-                results.push({ provider: 'hubspot', status: 'failed', error: e.message });
+                results.push({ provider: 'hubspot', status: 'failed', error: OPERATION_FAILED_MESSAGE });
             }
         }
 
@@ -58,21 +60,21 @@ export async function POST(req: Request) {
                     res = await zohoCRM.upsertDeal(deal);
                 }
                 results.push({ provider: 'zoho', status: 'success', data: res });
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error('Zoho CRM Sync Error:', e);
                 const isAuthExpired = e instanceof ZohoAuthExpiredError;
                 results.push({
                     provider: 'zoho',
                     status: 'failed',
-                    error: e.message,
+                    error: OPERATION_FAILED_MESSAGE,
                     reconnect: isAuthExpired,
                 });
             }
         }
 
         return NextResponse.json({ success: true, results });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('CRM Sync Error:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'crm/sync/push.POST' });
     }
 }

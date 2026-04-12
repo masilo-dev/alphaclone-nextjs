@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { runWorkflow, WorkflowDefinition, ExecutionContext, TriggerType } from '@/services/engine/WorkflowExecutor';
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
             .eq('trigger_type', trigger_type)
             .eq('is_active', true);
 
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return clientErrorResponse(error, { request: req, scope: 'engine/execute' });
         if (!workflows || workflows.length === 0) {
             return NextResponse.json({ executed: 0, results: [] });
         }

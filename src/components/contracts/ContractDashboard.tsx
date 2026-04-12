@@ -321,28 +321,30 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
-    const inputCls = 'w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all text-sm';
+    const inputCls = 'w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all text-sm';
     const labelCls = 'block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5';
-    const sectionCls = 'bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4';
+    const sectionCls = 'bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4';
 
     return (
-        <div className="min-h-full text-white">
+        <div className="min-h-full text-white px-1 sm:px-0">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Contract Generator</h1>
-                    <p className="text-slate-400 text-sm mt-1">AI-powered professional contracts — fully customized, legally structured</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl font-bold text-white">Contract Generator</h1>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">AI-assisted contracts tailored to your client and scope.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0 w-full sm:w-auto">
                     <button
+                        type="button"
                         onClick={() => setActiveView('new')}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
                     >
                         New Contract
                     </button>
                     <button
+                        type="button"
                         onClick={() => setActiveView('list')}
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeView === 'list' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'list' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
                     >
                         Saved ({savedContracts.length})
                     </button>
@@ -351,26 +353,27 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
             {/* Saved Contracts List */}
             {activeView === 'list' && (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                     {loadingContracts ? (
                         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
                     ) : savedContracts.length === 0 ? (
-                        <div className="text-center py-20 text-slate-500">
-                            <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                            <p>No saved contracts yet. Generate your first one!</p>
+                        <div className="text-center py-16 sm:py-20 text-slate-500 text-sm px-4">
+                            <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 opacity-30" />
+                            <p>No saved contracts yet. Generate your first one.</p>
                         </div>
                     ) : savedContracts.map((c: any) => (
-                        <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center justify-between hover:border-teal-500/30 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center">
-                                    <FileText className="w-5 h-5 text-teal-400" />
+                        <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all">
+                            <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
                                 </div>
-                                <div>
-                                    <p className="font-semibold text-white">{c.title}</p>
-                                    <p className="text-xs text-slate-500">{c.status} · {c.currency} {c.value?.toLocaleString()} · {c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : ''}</p>
+                                <div className="min-w-0">
+                                    <p className="font-semibold text-white text-sm sm:text-base truncate">{c.title}</p>
+                                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">{c.status} · {c.currency} {c.value?.toLocaleString()} · {c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : ''}</p>
                                 </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => {
                                     setGeneratedContract(c.content);
                                     setContractId(c.id);
@@ -386,7 +389,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     setStep('preview');
                                     setActiveView('new');
                                 }}
-                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
+                                className="w-full sm:w-auto justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shrink-0"
                             >
                                 <Eye className="w-4 h-4" /> View
                             </button>

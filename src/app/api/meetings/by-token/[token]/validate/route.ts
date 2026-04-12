@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 
 interface MeetingValidationResult {
@@ -84,8 +85,6 @@ export async function GET(
 
     } catch (error) {
         console.error('Error in validation route:', error);
-        return NextResponse.json({
-            error: error instanceof Error ? error.message : 'Failed to validate meeting link'
-        }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'meetings/by-token/validate.GET' });
     }
 }

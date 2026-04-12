@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
@@ -43,6 +44,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url });
     } catch (err: any) {
         console.error('Stripe Top-up Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'stripe/create-topup-session' });
     }
 }

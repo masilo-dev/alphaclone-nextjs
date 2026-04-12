@@ -14,8 +14,11 @@ export async function GET(req: NextRequest) {
         const isConnected = await zohoService.checkIntegration();
         
         return NextResponse.json({ isConnected });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Zoho Status Check Error:', err);
-        return NextResponse.json({ isConnected: false, error: err.message }, { status: 500 });
+        return NextResponse.json(
+            { isConnected: false, error: 'Status check failed', code: 'ZOHO_STATUS_ERROR' },
+            { status: 500 }
+        );
     }
 }

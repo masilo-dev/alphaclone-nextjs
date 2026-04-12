@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
@@ -48,7 +49,11 @@ export async function GET(req: NextRequest) {
       console.error('[Facebook Posts] Graph API error:', fbData.error);
       const isAuthError = fbData.error.code === 190 || fbData.error.code === 102 || fbData.error.message?.includes('access token');
       return NextResponse.json(
-        { error: fbData.error.message, action: isAuthError ? 'reconnect' : undefined },
+        {
+          error: 'Facebook could not load posts for this page.',
+          code: 'FACEBOOK_GRAPH_ERROR',
+          action: isAuthError ? 'reconnect' : undefined,
+        },
         { status: isAuthError ? 403 : 400 }
       );
     }
@@ -83,10 +88,7 @@ export async function GET(req: NextRequest) {
       posts,
       paging: fbData.paging || null,
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || 'Failed to fetch page posts' },
-      { status: 500 },
-    );
+  } catch (err: unknown) {
+    return clientErrorResponse(err, { request: req, scope: 'facebook/posts.GET' });
   }
 }

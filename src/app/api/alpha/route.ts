@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { alphaAgent } from '@/services/alpha/alphaAgent';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ missionId, status: 'started' });
     } catch (error: any) {
         console.error('[Alpha API] Error starting mission:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'alpha' });
     }
 }
 
@@ -92,6 +93,6 @@ export async function GET(req: Request) {
         return NextResponse.json(missions);
     } catch (error: any) {
         console.error('[Alpha API] Error fetching mission status:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'alpha' });
     }
 }

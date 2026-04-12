@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_URL = 'https://api.daily.co/v1';
@@ -8,11 +9,8 @@ export async function POST(req: Request) {
         console.error('[Daily] DAILY_API_KEY is not set; room creation disabled');
         return NextResponse.json(
             {
-                error: 'Daily API key not configured',
+                error: 'Video rooms are not configured for this environment.',
                 code: 'DAILY_NOT_CONFIGURED',
-                details:
-                    'Set DAILY_API_KEY in Vercel Project Settings (or local .env). Optional: NEXT_PUBLIC_DAILY_DOMAIN for your *.daily.co subdomain.',
-                setup_guide: 'https://docs.daily.co/reference/rest-api',
             },
             { status: 422 }
         );
@@ -42,10 +40,13 @@ export async function POST(req: Request) {
         if (!response.ok) {
             const error = await response.json();
             console.error('Daily.co API error:', error);
-            return NextResponse.json({
-                error: error.info || 'Failed to create room',
-                details: error
-            }, { status: response.status });
+            return NextResponse.json(
+                {
+                    error: 'Failed to create video room. Please try again.',
+                    code: 'DAILY_API_ERROR',
+                },
+                { status: response.status >= 400 && response.status < 600 ? response.status : 502 }
+            );
         }
 
         const room = await response.json();
@@ -53,12 +54,7 @@ export async function POST(req: Request) {
 
     } catch (error) {
         console.error('Unhandled error in Daily room creation:', error);
-        // Explicitly log this so the user can see it in terminal
         console.error('Error details:', error instanceof Error ? error.stack : String(error));
-
-        return NextResponse.json({
-            error: 'Internal server error',
-            details: error instanceof Error ? error.message : String(error)
-        }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'daily/create-room.POST' });
     }
 }

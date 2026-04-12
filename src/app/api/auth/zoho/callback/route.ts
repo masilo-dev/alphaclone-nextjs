@@ -92,8 +92,8 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&success=zoho_connected`);
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Zoho Auth Callback Error:', err);
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&error=${encodeURIComponent(err.message)}`);
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&error=zoho_callback_failed`);
     }
 }

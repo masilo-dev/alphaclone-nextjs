@@ -42,7 +42,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toast(message, {
             duration: 4000,
             position: 'top-right',
-            icon: 'ℹ️',
             style: {
                 background: '#0f172a',
                 color: '#fff',

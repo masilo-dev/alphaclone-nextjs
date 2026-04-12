@@ -50,13 +50,19 @@ export async function POST(req: NextRequest) {
     if (data.error) {
         console.error('[Facebook Photo Upload] Graph API error:', data.error);
         if (data.error.code === 200 || data.error.message?.includes('pages_manage_posts')) {
-            return NextResponse.json({
-                error: 'Permission denied. Please disconnect and reconnect your Facebook page to grant photo posting permission.',
-                action: 'reconnect',
-                fb_error: data.error,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    error: 'Permission denied. Reconnect your Facebook page to grant photo posting permission.',
+                    code: 'FACEBOOK_PERMISSION',
+                    action: 'reconnect',
+                },
+                { status: 403 }
+            );
         }
-        return NextResponse.json({ error: data.error.message || 'Photo upload failed', fb_error: data.error }, { status: 400 });
+        return NextResponse.json(
+            { error: 'Photo upload failed', code: 'FACEBOOK_GRAPH_ERROR' },
+            { status: 400 }
+        );
     }
 
     return NextResponse.json({ success: true, post_id: data.id || data.post_id });

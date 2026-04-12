@@ -1,4 +1,8 @@
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { resolveTenantContextForUser } from '@/lib/quotas/resolveTenantForAiRequest';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface LeadForGeneration {
@@ -42,6 +46,12 @@ const PITCH_HOOKS: Record<string, string> = {
  */
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const {
       leads,
@@ -49,17 +59,37 @@ export async function POST(request: Request) {
       tone = 'professional',
       customContext = '',
       senderName = 'the AlphaClone team',
+      tenantId: bodyTenantId,
     }: {
       leads: LeadForGeneration[];
       industry: string;
       tone?: string;
       customContext?: string;
       senderName?: string;
+      tenantId?: string;
     } = body;
 
     if (!leads?.length) {
       return NextResponse.json({ error: 'No leads provided' }, { status: 400 });
     }
+
+    const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
+    if (!ctx) {
+      return NextResponse.json(
+        {
+          error: 'A workspace is required. Select your organization or pass tenantId.',
+          code: 'TENANT_REQUIRED',
+        },
+        { status: 400 }
+      );
+    }
+
+    const inbound = await headers();
+    const cookieHeader = inbound.get('cookie') || '';
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+      'http://localhost:3000';
 
     const TONE_DESCRIPTIONS: Record<string, string> = {
       professional: 'formal, expert, and business-focused',
@@ -123,10 +153,17 @@ Return this exact JSON structure (array of objects):
 ]
 `;
         try {
-            const aiRes = await fetch(`${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/ai/generate`, {
+            const aiRes = await fetch(`${baseUrl.replace(/\/$/, '')}/api/ai/generate`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, maxTokens: 4096 }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+                },
+                body: JSON.stringify({
+                    prompt,
+                    maxTokens: 4096,
+                    tenantId: ctx.tenantId,
+                }),
             });
 
             if (!aiRes.ok) throw new Error('AI generation failed');
@@ -137,8 +174,8 @@ Return this exact JSON structure (array of objects):
             if (!jsonMatch) throw new Error('AI response was not valid JSON array');
 
             return JSON.parse(jsonMatch[0]) as Array<{ index: number; subject: string; body: string }>;
-        } catch (e: any) {
-            console.error('[Outreach/Generate Batch] Error:', e.message);
+        } catch (e: unknown) {
+            console.error('[Outreach/Generate Batch] Error:', e);
             // Fallback for failed batch
             return batchLeadsJson.map(b => ({
                 index: b.index,
@@ -164,8 +201,8 @@ Return this exact JSON structure (array of objects):
 
     return NextResponse.json({ success: true, emails });
 
-  } catch (error: any) {
-    console.error('[Outreach/Generate]', error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('[Outreach/Generate]', error);
+    return clientErrorResponse(error, { request, scope: 'outreach/generate.POST' });
   }
 }

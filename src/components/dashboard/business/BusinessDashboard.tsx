@@ -81,7 +81,6 @@ const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
-import { BusinessOsMindsetBar } from '@/components/dashboard/business/BusinessOsMindsetBar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
@@ -749,15 +748,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                         : 'min-h-full'
                                 }`}
                             >
-                                <div
-                                    className={
-                                        DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
-                                            ? 'px-4 md:px-6 pt-3 md:pt-4'
-                                            : ''
-                                    }
-                                >
-                                    <BusinessOsMindsetBar activeTab={activeTab} setActiveTab={setActiveTab} />
-                                </div>
                                 {renderBusinessContent()}
                             </motion.div>
                         </AnimatePresence>

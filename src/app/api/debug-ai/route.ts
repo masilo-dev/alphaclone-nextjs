@@ -26,8 +26,9 @@ export async function GET() {
             error: res.error,
             latency: Date.now() - start
         };
-    } catch (e: any) {
-        status.tests.unifiedService = { success: false, error: e.message };
+    } catch (e: unknown) {
+        console.error('[debug-ai] unifiedService:', e);
+        status.tests.unifiedService = { success: false, error: 'Test failed' };
     }
 
     return NextResponse.json(status);

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
@@ -54,9 +55,6 @@ export async function GET(req: Request) {
 
     } catch (error: any) {
         console.error('Stripe Connect callback error:', error);
-        return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
-            { status: 500 }
-        );
+        return clientErrorResponse(error, { request: req, scope: 'stripe/connect/callback' });
     }
 }

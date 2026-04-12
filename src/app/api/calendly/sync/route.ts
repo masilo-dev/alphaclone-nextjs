@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
@@ -162,6 +163,6 @@ export async function POST(req: Request) {
 
     } catch (err: any) {
         console.error('API /calendly/sync Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'calendly/sync' });
     }
 }

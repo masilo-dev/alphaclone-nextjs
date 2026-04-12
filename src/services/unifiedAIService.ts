@@ -1,6 +1,7 @@
 import { ENV } from '../config/env';
-import { Lead } from './leadService';
 import { withLanguage, getLanguageInstruction } from '@/lib/languageUtils';
+import { tenantService } from '@/services/tenancy/TenantService';
+import { Lead } from './leadService';
 
 
 // API Keys from validated ENV
@@ -30,11 +31,19 @@ export const isAnyAIConfigured = () => {
 /**
  * Generate text content using the first available AI provider (proxied through server-side route)
  */
-export const generateText = async (prompt: string, maxTokens: number = 2048, model?: string): Promise<{ text: string | null; error: any }> => {
+export const generateText = async (
+    prompt: string,
+    maxTokens: number = 2048,
+    model?: string,
+    tenantIdOverride?: string | null
+): Promise<{ text: string | null; error: any }> => {
     try {
-        console.log('🔄 Calling Server-side AI Generate Proxy...');
+        console.log('[unifiedAIService] Calling /api/ai/generate');
         // Append the user's chosen language instruction to every prompt
         const localizedPrompt = withLanguage(prompt);
+        const tenantId =
+            tenantIdOverride ??
+            (typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null);
         const response = await fetch('/api/ai/generate', {
             method: 'POST',
             headers: {
@@ -43,7 +52,8 @@ export const generateText = async (prompt: string, maxTokens: number = 2048, mod
             body: JSON.stringify({
                 prompt: localizedPrompt,
                 maxTokens,
-                model
+                model,
+                ...(tenantId ? { tenantId } : {}),
             })
         });
 
@@ -121,13 +131,16 @@ export const chatWithGrowthAgent = async (
     try {
         // Append language instruction to the system prompt
         const localizedSystem = GROWTH_AGENT_SYSTEM_PROMPT + getLanguageInstruction();
+        const tenantId =
+            typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null;
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 history,
                 message,
-                systemPrompt: localizedSystem
+                systemPrompt: localizedSystem,
+                ...(tenantId ? { tenantId } : {}),
             })
         });
 
@@ -161,7 +174,9 @@ export const chatWithAI = async (
     model?: string
 ): Promise<{ text: string; grounding: any }> => {
     try {
-        console.log('🔄 Calling Server-side AI Proxy...');
+        console.log('[unifiedAIService] Calling /api/ai/chat');
+        const tenantId =
+            typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null;
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: {
@@ -171,7 +186,8 @@ export const chatWithAI = async (
                 history,
                 message,
                 image,
-                model
+                model,
+                ...(tenantId ? { tenantId } : {}),
             })
         });
 
@@ -361,6 +377,11 @@ export const generateLeads = async (industry: string, location: string, googleAp
 
     try {
         console.log('🔄 Calling Server-side AI Leads Proxy...');
+        const tenantId =
+            typeof window !== 'undefined'
+                ? (await import('./tenancy/TenantService')).tenantService.getCurrentTenantId()
+                : null;
+
         const response = await fetch('/api/ai/leads', {
             method: 'POST',
             headers: {
@@ -370,13 +391,24 @@ export const generateLeads = async (industry: string, location: string, googleAp
                 industry,
                 location,
                 mode,
-                filters
+                filters,
+                tenantId: tenantId || undefined,
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate leads');
+            const errorData = await response.json().catch(() => ({}));
+            const msg =
+                errorData.error ||
+                errorData.message ||
+                (response.status === 429
+                    ? `Daily AI lead limit reached for your plan (${errorData.limit ?? '?'} per day, UTC). Resets at ${errorData.resetsAt ?? 'midnight UTC'}.`
+                    : 'Failed to generate leads');
+            const err = new Error(msg) as Error & { quota?: unknown };
+            if (errorData.code === 'AI_LEAD_QUOTA_EXCEEDED') {
+                err.quota = errorData;
+            }
+            throw err;
         }
 
         const { leads, rawMapsData } = await response.json();

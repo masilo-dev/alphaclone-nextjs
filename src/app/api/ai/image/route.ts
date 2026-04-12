@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { UNITS_PER_IMAGE } from '@/config/aiUsageQuotas';
+import {
+    isPlatformSuperAdmin,
+    resolveTenantContextForUser,
+    skipAiQuotaForAdminMode,
+} from '@/lib/quotas/resolveTenantForAiRequest';
+import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,7 +23,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { prompt, size = '1024x1024' } = await req.json();
+    const { prompt, size = '1024x1024', tenantId: bodyTenantId, mode } = await req.json();
     if (!prompt?.trim()) {
         return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
@@ -28,6 +36,25 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
         return NextResponse.json({ error: 'OpenAI API key not configured on server' }, { status: 500 });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const superAdmin = await isPlatformSuperAdmin(supabase, user.id);
+    const skipQuota = skipAiQuotaForAdminMode(mode, superAdmin);
+
+    if (!skipQuota) {
+        const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
+        if (!ctx) {
+            return NextResponse.json(
+                {
+                    error: 'A workspace is required. Select your organization or pass tenantId.',
+                    code: 'TENANT_REQUIRED',
+                },
+                { status: 400 }
+            );
+        }
+        const blocked = await consumeAiUnitsOr429(admin, ctx.tenantId, ctx.plan, UNITS_PER_IMAGE);
+        if (blocked) return blocked;
     }
 
     try {
@@ -49,9 +76,11 @@ export async function POST(req: NextRequest) {
 
         if (!response.ok) {
             const err = await response.json();
-            const msg = err.error?.message || 'Image generation failed';
-            console.error('DALL-E 3 error:', msg);
-            return NextResponse.json({ error: msg }, { status: response.status });
+            console.error('DALL-E 3 error:', err);
+            return NextResponse.json(
+                { error: 'Image generation failed', code: 'DALLE_ERROR' },
+                { status: response.status >= 400 && response.status < 600 ? response.status : 502 }
+            );
         }
 
         const data = await response.json();
@@ -69,9 +98,6 @@ export async function POST(req: NextRequest) {
         });
     } catch (error: any) {
         console.error('AI Image Generation Error:', error);
-        return NextResponse.json(
-            { error: error.message || 'Failed to generate image' },
-            { status: 500 }
-        );
+        return clientErrorResponse(error, { request: req, scope: 'ai/image' });
     }
 }

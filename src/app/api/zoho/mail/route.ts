@@ -13,24 +13,26 @@ async function getUserId(req: NextRequest): Promise<string | null> {
 }
 
 function handleZohoError(err: unknown): NextResponse {
-    const isMissingConfig = err instanceof Error && (
-        err.message.includes('missing mailApiHost') || 
-        err.message.includes('missing accountId') ||
-        err.message.includes('is not fully configured')
-    );
+    const isMissingConfig =
+        err instanceof Error &&
+        (err.message.includes('missing mailApiHost') ||
+            err.message.includes('missing accountId') ||
+            err.message.includes('is not fully configured'));
 
     if (err instanceof ZohoAuthExpiredError || isMissingConfig) {
+        console.error('[Zoho Mail API] auth/config:', err);
         return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Authentication required', reconnect: true },
+            { error: 'Zoho Mail session expired or setup is incomplete.', code: 'ZOHO_RECONNECT', reconnect: true },
             { status: 401 }
         );
     }
 
     if (err instanceof ZohoAPIError) {
+        console.error('[Zoho Mail API] ZohoAPIError', err.status, err.message);
         const status = err.status;
         if (status === 401 || status === 403) {
             return NextResponse.json(
-                { error: err.message, reconnect: true },
+                { error: 'Zoho Mail rejected this request. Reconnect Zoho and try again.', code: 'ZOHO_FORBIDDEN', reconnect: true },
                 { status: 401 }
             );
         }
@@ -51,14 +53,13 @@ function handleZohoError(err: unknown): NextResponse {
         }
         const clientErr = status >= 400 && status < 500;
         return NextResponse.json(
-            { error: err.message, code: 'ZOHO_API_ERROR' },
+            { error: 'Zoho Mail request failed. Try again or reconnect the integration.', code: 'ZOHO_API_ERROR' },
             { status: clientErr ? status : 500 }
         );
     }
 
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    console.error('[Zoho Mail API]', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Zoho Mail API]', err);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.', code: 'INTERNAL_ERROR' }, { status: 500 });
 }
 
 export async function GET(req: NextRequest) {

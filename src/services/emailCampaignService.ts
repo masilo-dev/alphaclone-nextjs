@@ -77,13 +77,62 @@ export interface RecipientData {
     [key: string]: any;
 }
 
+type EmailTemplateRow = {
+    id: string;
+    name: string;
+    subject: string;
+    body_html: string;
+    body_text: string | null;
+    category: string | null;
+    variables: unknown;
+    thumbnail_url: string | null;
+    created_by: string | null;
+    is_system: boolean | null;
+    metadata: unknown;
+    created_at: string;
+    updated_at: string;
+    tenant_id: string | null;
+};
+
+function dedupeTemplatesByName(rows: EmailTemplateRow[], tenantId: string | null): EmailTemplateRow[] {
+    const map = new Map<string, EmailTemplateRow>();
+    for (const row of rows) {
+        const existing = map.get(row.name);
+        if (!existing) {
+            map.set(row.name, row);
+            continue;
+        }
+        const score = (r: EmailTemplateRow) =>
+            tenantId && r.tenant_id === tenantId ? 2 : r.tenant_id === null ? 1 : 0;
+        if (score(row) > score(existing)) {
+            map.set(row.name, row);
+        }
+    }
+    return Array.from(map.values());
+}
+
+function pickTemplateRow(rows: EmailTemplateRow[], tenantId: string | null): EmailTemplateRow | null {
+    if (!rows.length) return null;
+    if (tenantId) {
+        return rows.find((r) => r.tenant_id === tenantId) ?? rows.find((r) => r.tenant_id === null) ?? rows[0] ?? null;
+    }
+    return rows.find((r) => r.tenant_id === null) ?? rows[0] ?? null;
+}
+
 export const emailCampaignService = {
     /**
      * Get all email templates
      */
     async getTemplates(category?: string): Promise<{ templates: EmailTemplate[]; error: string | null }> {
         try {
-            let query = supabase.from('email_templates').select('*').eq('tenant_id', tenantService.getCurrentTenantId());
+            const tenantId = tenantService.getCurrentTenantId();
+            let query = supabase.from('email_templates').select('*');
+
+            if (tenantId) {
+                query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
+            } else {
+                query = query.is('tenant_id', null);
+            }
 
             if (category) {
                 query = query.eq('category', category);
@@ -93,18 +142,22 @@ export const emailCampaignService = {
 
             if (error) throw error;
 
-            const templates: EmailTemplate[] = (data || []).map((t: any) => ({
+            const rows = dedupeTemplatesByName((data || []) as EmailTemplateRow[], tenantId).sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+
+            const templates: EmailTemplate[] = rows.map((t: EmailTemplateRow) => ({
                 id: t.id,
                 name: t.name,
                 subject: t.subject,
                 bodyHtml: t.body_html,
-                bodyText: t.body_text,
-                category: t.category,
-                variables: t.variables || [],
-                thumbnailUrl: t.thumbnail_url,
-                createdBy: t.created_by,
-                isSystem: t.is_system,
-                metadata: t.metadata || {},
+                bodyText: t.body_text ?? undefined,
+                category: t.category ?? undefined,
+                variables: (t.variables as string[]) || [],
+                thumbnailUrl: t.thumbnail_url ?? undefined,
+                createdBy: t.created_by ?? undefined,
+                isSystem: Boolean(t.is_system),
+                metadata: (t.metadata as object) || {},
                 createdAt: t.created_at,
                 updatedAt: t.updated_at,
             }));
@@ -635,34 +688,47 @@ export const emailCampaignService = {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const { count, error: countError } = await supabase
-                .from('email_logs')
-                .select('*', { count: 'exact', head: true })
-                .eq('tenant_id', tenantId)
-                .gte('sent_at', today.toISOString());
+            if (tenantId) {
+                const { count, error: countError } = await supabase
+                    .from('email_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', today.toISOString());
 
-            if (countError) console.error('Error checking email limit:', countError);
+                if (countError) console.error('Error checking email limit:', countError);
 
-            if (count !== null && count >= 100) {
-                console.warn(`Daily email limit reached for tenant ${tenantId}. Skipping transactional email: ${templateName}`);
-                return { success: false, error: 'Daily email limit reached' };
+                if (count !== null && count >= 100) {
+                    console.warn(
+                        `Daily email limit reached for tenant ${tenantId}. Skipping transactional email: ${templateName}`
+                    );
+                    return { success: false, error: 'Daily email limit reached' };
+                }
             }
 
-            // 2. Fetch template
-            const { data: template, error: tError } = await supabase
-                .from('email_templates')
-                .select('*')
-                .eq('name', templateName)
-                .single();
+            // 2. Fetch template (tenant override wins over global rows)
+            let templateQuery = supabase.from('email_templates').select('*').eq('name', templateName);
+            if (tenantId) {
+                templateQuery = templateQuery.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
+            } else {
+                templateQuery = templateQuery.is('tenant_id', null);
+            }
 
-            if (tError || !template) {
+            const { data: templateRows, error: tError } = await templateQuery;
+
+            if (tError) {
+                throw new Error(`Template not found: ${templateName}`);
+            }
+
+            const template = pickTemplateRow((templateRows || []) as EmailTemplateRow[], tenantId);
+
+            if (!template) {
                 throw new Error(`Template not found: ${templateName}`);
             }
 
             // 3. Replace variables in subject and body
             let subject = template.subject;
             let html = template.body_html;
-            let text = template.body_text || '';
+            let text = template.body_text ?? '';
 
             Object.entries(variables).forEach(([key, value]) => {
                 const regex = new RegExp(`{{${key}}}`, 'g');

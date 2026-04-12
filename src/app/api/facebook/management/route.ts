@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed } from '@/lib/api/operationResult';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -31,9 +33,9 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Facebook management error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'facebook/management.POST' });
   }
 }
 
@@ -75,7 +77,8 @@ async function createFacebookPost(tenantId: string, config: any, supabase: any) 
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: result.error?.message || 'Failed to create post' };
+      console.error('[facebook/management] create post Graph error:', result.error);
+      return { success: false, error: 'Failed to create post' };
     }
 
     // Save post to database
@@ -97,7 +100,7 @@ async function createFacebookPost(tenantId: string, config: any, supabase: any) 
       message: scheduledTime ? 'Post scheduled successfully' : 'Post published successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -167,7 +170,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       message: `Page ${pageAction} completed successfully`
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -225,7 +228,7 @@ async function generateContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract generated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -253,7 +256,7 @@ async function updateContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract updated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -292,7 +295,7 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract downloaded successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 

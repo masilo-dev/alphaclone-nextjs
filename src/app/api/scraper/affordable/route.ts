@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 // Affordable Scraping Tools Integration
@@ -375,11 +376,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(results);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AffordableScraper] Fatal error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Internal error' 
-    }, { status: 500 });
+    return clientErrorResponse(error, { request, scope: 'scraper/affordable.POST' });
   }
 }

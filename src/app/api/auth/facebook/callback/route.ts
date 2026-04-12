@@ -1,6 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
+const ALLOWED_FB_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
+
+type FacebookOAuthState = {
+    userId: string;
+    ts: number;
+    tenantId?: string | null;
+    returnTo?: string | null;
+};
+
+function redirectOAuthEarly(appUrl: string, fbError: string): NextResponse {
+    const u = new URL('/dashboard/business/settings', appUrl);
+    u.searchParams.set('tab', 'integrations');
+    u.searchParams.set('fb_error', fbError);
+    return NextResponse.redirect(u.toString());
+}
+
+function redirectOAuthComplete(
+    appUrl: string,
+    stateData: FacebookOAuthState | null,
+    result: { ok: true } | { ok: false; fbError: string }
+): NextResponse {
+    const path =
+        stateData?.returnTo &&
+        (ALLOWED_FB_RETURN as readonly string[]).includes(stateData.returnTo)
+            ? stateData.returnTo
+            : '/dashboard/business/settings';
+    const u = new URL(path, appUrl);
+    if (path === '/dashboard/business/settings') {
+        u.searchParams.set('tab', 'integrations');
+    }
+    if (result.ok) {
+        u.searchParams.set('fb_connected', 'true');
+    } else {
+        u.searchParams.set('fb_error', result.fbError);
+    }
+    return NextResponse.redirect(u.toString());
+}
+
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
@@ -10,25 +48,24 @@ export async function GET(req: NextRequest) {
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || '').replace(/\/$/, '');
 
     if (error) {
-        return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=${error}`);
+        return redirectOAuthEarly(appUrl, error);
     }
 
     if (!code || !state) {
-        return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=missing_params`);
+        return redirectOAuthEarly(appUrl, 'missing_params');
     }
 
-    let stateData: { userId: string; ts: number; tenantId?: string | null };
+    let stateData: FacebookOAuthState;
     try {
         stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
     } catch {
-        return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=invalid_state`);
+        return redirectOAuthEarly(appUrl, 'invalid_state');
     }
 
     const appId = process.env.FACEBOOK_APP_ID!;
     const appSecret = process.env.FACEBOOK_APP_SECRET!;
     const redirectUri = `${appUrl}/api/auth/facebook/callback`;
 
-    // Step 1: Exchange code for short-lived user access token
     const tokenRes = await fetch(
         `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`
     );
@@ -36,24 +73,19 @@ export async function GET(req: NextRequest) {
 
     if (!tokenData.access_token) {
         console.error('[Facebook Callback] Token exchange failed:', tokenData);
-        return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=token_exchange_failed`);
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'token_exchange_failed' });
     }
 
-    // Step 2: Exchange for long-lived user access token (60-day token)
     const longLivedRes = await fetch(
         `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${tokenData.access_token}`
     );
     const longLivedData = await longLivedRes.json();
     if (!longLivedRes.ok || !longLivedData.access_token) {
         console.error('[Facebook Callback] Long-lived token exchange failed:', longLivedData);
-        return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_error=token_refresh_failed`);
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'token_refresh_failed' });
     }
     const userToken = longLivedData.access_token;
 
-    // Step 3: Fetch the user's Pages with their individual Page Access Tokens.
-    // IMPORTANT: We request `tasks` so we can verify the user has MANAGE/ADVERTISE
-    // permission on each page, which is required for pages_manage_posts to work.
-    // Page Access Tokens returned here are long-lived (never expire while the user token is valid).
     const pagesRes = await fetch(
         `https://graph.facebook.com/v19.0/me/accounts?access_token=${userToken}&fields=id,name,access_token,tasks,category`
     );
@@ -63,7 +95,6 @@ export async function GET(req: NextRequest) {
         console.error('[Facebook Callback] Failed to fetch pages:', pagesData.error);
     }
 
-    // Step 4: Get user profile
     const profileRes = await fetch(
         `https://graph.facebook.com/v19.0/me?access_token=${userToken}&fields=id,name,email`
     );
@@ -71,7 +102,6 @@ export async function GET(req: NextRequest) {
 
     const supabase = createSupabaseAdminClient();
 
-    // Resolve workspace: prefer tenant from OAuth state (connect?tenant_id=), verify membership, else first membership.
     let resolvedTenantId: string | null = stateData.tenantId?.trim() || null;
     if (resolvedTenantId) {
         const { data: mem } = await supabase
@@ -96,9 +126,6 @@ export async function GET(req: NextRequest) {
 
     if (pages.length > 0) {
         for (const page of pages) {
-            // page.access_token is a Page Access Token — this is what must be used
-            // for pages_manage_posts and pages_read_engagement. Using the user token
-            // instead will cause the "requires pages_manage_posts" error.
             const hasManageTask = Array.isArray(page.tasks) && (
                 page.tasks.includes('MANAGE') ||
                 page.tasks.includes('ADVERTISE') ||
@@ -110,7 +137,6 @@ export async function GET(req: NextRequest) {
                 tenant_id: resolvedTenantId,
                 page_id: page.id,
                 page_name: page.name,
-                // Always store the Page Access Token — never use the user token for page actions
                 page_access_token: page.access_token,
                 user_access_token: userToken,
                 app_scoped_user_id: profileData.id,
@@ -130,9 +156,6 @@ export async function GET(req: NextRequest) {
             }, { onConflict: 'user_id,page_id' });
         }
     } else {
-        // No pages returned — this means the user either has no pages or
-        // did not grant pages_show_list. Save user-level token as fallback
-        // but flag that posting may not work.
         console.warn('[Facebook Callback] No pages returned for user:', stateData.userId);
         await supabase.from('facebook_integrations').upsert({
             user_id: stateData.userId,
@@ -166,5 +189,5 @@ export async function GET(req: NextRequest) {
         );
     }
 
-    return NextResponse.redirect(`${appUrl}/dashboard/business/settings?tab=integrations&fb_connected=true`);
+    return redirectOAuthComplete(appUrl, stateData, { ok: true });
 }

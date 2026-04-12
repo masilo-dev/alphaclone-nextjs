@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { hubspotService } from '@/services/hubspotService';
 
@@ -19,6 +20,6 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json(result);
     } catch (err: any) {
         console.error('HubSpot Delete API Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'hubspot/delete' });
     }
 }

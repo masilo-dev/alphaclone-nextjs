@@ -59,17 +59,20 @@ export async function POST(req: NextRequest) {
 
         // Provide a helpful message for the specific permissions error (code 200)
         if (data.error.code === 200 || data.error.message?.includes('pages_manage_posts')) {
-            return NextResponse.json({
-                error: 'Posting failed: your Facebook account needs to be reconnected to grant the required page permissions (pages_manage_posts). Please disconnect and reconnect your Facebook page.',
-                action: 'reconnect',
-                fb_error: data.error,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    error: 'Reconnect your Facebook page to grant required posting permissions.',
+                    code: 'FACEBOOK_PERMISSION',
+                    action: 'reconnect',
+                },
+                { status: 403 }
+            );
         }
 
-        return NextResponse.json({
-            error: data.error.message || 'Failed to post to Facebook',
-            fb_error: data.error,
-        }, { status: 400 });
+        return NextResponse.json(
+            { error: 'Failed to post to Facebook', code: 'FACEBOOK_GRAPH_ERROR' },
+            { status: 400 }
+        );
     }
 
     return NextResponse.json({ success: true, post_id: data.id || data.post_id });

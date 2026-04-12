@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
@@ -37,6 +38,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('Contract Sign Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'contracts/sign' });
     }
 }

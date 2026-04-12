@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
@@ -50,10 +51,10 @@ export async function GET(req: NextRequest) {
 
         if (stateError || !stateRecord) {
             console.error('Failed to create OAuth state:', stateError);
-            return NextResponse.json({
-                error: 'Failed to initialize secure connection',
-                details: stateError?.message || 'State record empty'
-            }, { status: 500 });
+            return NextResponse.json(
+                { error: 'Failed to initialize secure connection', code: 'OAUTH_STATE_FAILED' },
+                { status: 500 }
+            );
         }
 
         const stateNonce = stateRecord.id;
@@ -84,9 +85,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(authUrl);
     } catch (err: any) {
         console.error('Gmail Connect Error (caught):', err);
-        return NextResponse.json({
-            error: 'Internal Server Error',
-            details: err.message || 'Unknown error'
-        }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'auth/google/gmail/connect' });
     }
 }

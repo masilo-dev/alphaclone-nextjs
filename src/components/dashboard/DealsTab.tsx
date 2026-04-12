@@ -2,7 +2,8 @@
 
 import { supabase } from '../../lib/supabase';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { TrendingUp, Plus, DollarSign, Calendar, User, Target, UserPlus, BarChart2, PieChart as PieChartIcon, Heart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { dealService, Deal, DealStage } from '../../services/dealService';
 import { leadService, Lead } from '../../services/leadService';
@@ -39,6 +40,11 @@ interface DealsTabProps {
 }
 
 const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const canManagePipeline =
+        userRole === 'admin' || userRole === 'tenant_admin' || userRole === 'business_dashboard';
+
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
     const [pipelineStats, setPipelineStats] = useState<any[]>([]);
@@ -57,6 +63,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
     const [selectedDealForDetail, setSelectedDealForDetail] = useState<Deal | null>(null);
     const [dealDocuments, setDealDocuments] = useState<any[]>([]);
+    const [dealPrefillLeadId, setDealPrefillLeadId] = useState<string | null>(null);
 
     // Create deal form state
     const [dealForm, setDealForm] = useState({
@@ -348,17 +355,28 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
         }
     };
 
-    const handleLeadSelected = (lead: Lead) => {
+    const handleLeadSelected = useCallback((lead: Lead) => {
         setSelectedLead(lead);
-        // Pre-fill form with lead data
         setDealForm({
             name: `${lead.businessName} - ${lead.industry || 'Deal'}`,
-            value: '',
+            value: lead.value != null && lead.value > 0 ? String(lead.value) : '',
             probability: '50',
             expectedCloseDate: '',
-            description: `Lead from ${lead.source}. Contact: ${lead.email || lead.phone || 'N/A'}`
+            description: `Lead from ${lead.source || 'pipeline'}. Contact: ${lead.email || lead.phone || 'N/A'}`,
         });
-    };
+    }, []);
+
+    useEffect(() => {
+        const open =
+            searchParams.get('createFromLead') === '1' ||
+            searchParams.get('fromLead') === 'true' ||
+            searchParams.get('createFromLead') === 'true';
+        const lid = searchParams.get('leadId');
+        if (!open) return;
+        setShowCreateFromLeadModal(true);
+        if (lid) setDealPrefillLeadId(lid);
+        router.replace('/dashboard/deals', { scroll: false });
+    }, [searchParams, router]);
 
     const handleViewLead = async (leadId: string) => {
         const { lead, error } = await leadService.getLeadById(leadId);
@@ -396,12 +414,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 // Mark lead as converted
                 await leadService.updateLead(selectedLead.id, {
                     stage: 'qualified',
-                    status: 'Converted to Deal'
                 });
 
-                toast.success('Deal created from lead successfully!');
+                toast.success('Deal created from lead.');
                 setShowCreateFromLeadModal(false);
                 setSelectedLead(null);
+                setDealPrefillLeadId(null);
                 // Reset form
                 setDealForm({
                     name: '',
@@ -459,7 +477,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         {deals.length} deals | Weighted Value: {formatCurrency(weightedValue)}
                     </p>
                 </div>
-                {(userRole === 'admin' || userRole === 'tenant_admin') && (
+                {canManagePipeline && (
                     <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                         <Button
                             variant="outline"
@@ -538,7 +556,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
             </div>
 
             {/* Sales Analytics Section */}
-            {(userRole === 'admin' || userRole === 'tenant_admin') && (
+            {canManagePipeline && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div className="glass-panel p-4 md:p-6 rounded-2xl border border-white/5 bg-slate-900/50">
                         <div className="flex items-center justify-between mb-6">
@@ -740,7 +758,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                 </div>
                                             )}
 
-                                            {(userRole === 'admin' || userRole === 'tenant_admin') && (
+                                            {canManagePipeline && (
                                                 <select
                                                     value={deal.stage}
                                                     onClick={(e) => e.stopPropagation()}
@@ -834,6 +852,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     <Modal isOpen={showCreateFromLeadModal} onClose={() => {
                         setShowCreateFromLeadModal(false);
                         setSelectedLead(null);
+                        setDealPrefillLeadId(null);
                     }} title="Create Deal from Lead">
                         <div className="space-y-4">
                             {/* Lead Selector */}
@@ -842,6 +861,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                     Select Lead *
                                 </label>
                                 <LeadSelector
+                                    key={dealPrefillLeadId || 'selector'}
+                                    initialLeadId={dealPrefillLeadId}
                                     onSelect={handleLeadSelected}
                                     filter="all"
                                     placeholder="Choose a lead to convert..."
@@ -849,7 +870,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                 {selectedLead && (
                                     <div className="mt-2 p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg">
                                         <p className="text-xs text-teal-400">
-                                            ✓ Selected: {selectedLead.businessName}
+                                            Selected: {selectedLead.businessName}
                                         </p>
                                         {selectedLead.email && (
                                             <p className="text-xs text-slate-400 mt-1">
@@ -910,6 +931,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                 <Button variant="outline" onClick={() => {
                                     setShowCreateFromLeadModal(false);
                                     setSelectedLead(null);
+                                    setDealPrefillLeadId(null);
                                 }}>Cancel</Button>
                                 <Button onClick={handleCreateDealFromLead} disabled={isSubmitting || !selectedLead}>
                                     {isSubmitting ? 'Creating...' : 'Create Deal'}

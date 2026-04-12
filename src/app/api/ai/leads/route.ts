@@ -1,28 +1,108 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import {
+    describeMissingVersusHigherPlans,
+    pricingUpgradeUrl,
+} from '@/config/aiLeadQuotas';
+import { UNITS_PER_LEAD_AI_PASS } from '@/config/aiUsageQuotas';
+import {
+    getAiLeadQuotaStatus,
+    recordAiLeadsGenerated,
+    reserveAiLeadBatch,
+} from '@/lib/quotas/aiLeadGenerationQuota';
+import {
+    isPlatformSuperAdmin,
+    resolveTenantContextForUser,
+    skipAiQuotaForAdminMode,
+} from '@/lib/quotas/resolveTenantForAiRequest';
+import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { routeAIRequest } from '@/services/aiRouter';
 import { googlePlacesService } from '@/services/googlePlacesService';
-import { getAvailableProviders as getAIProviders } from '@/services/unifiedAIService';
 import { ENV } from '../../../../config/env';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
+export const maxDuration = 60;
+
+const CLAUDE_45_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_BATCH_MAX = 5;
 
 /**
  * AI Lead Generation API Route
- * Now uses smart routing: Anthropic (Claude) → OpenAI (GPT-4) → Gemini
- * Automatically falls back if primary provider fails
+ * Enforces per-tenant daily limits by subscription (UTC day). Super-admin platform role bypasses when mode=admin.
  */
 export async function POST(req: Request) {
     const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const { industry, location, filters } = await req.json();
+        const body = await req.json();
+        const { industry, location, filters, tenantId: bodyTenantId, mode } = body as {
+            industry?: string;
+            location?: string;
+            filters?: string;
+            tenantId?: string;
+            mode?: string;
+        };
 
         if (!industry || !location) {
             return NextResponse.json({ error: 'Industry and location are required' }, { status: 400 });
+        }
+
+        const superAdmin = await isPlatformSuperAdmin(supabase, user.id);
+        const skipQuota = skipAiQuotaForAdminMode(mode, superAdmin);
+
+        const admin = createSupabaseAdminClient();
+
+        let tenantId: string | null = null;
+        let plan = 'free';
+
+        if (!skipQuota) {
+            const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
+            if (!ctx) {
+                return NextResponse.json(
+                    {
+                        error: 'A workspace is required. Select your organization or pass tenantId.',
+                        code: 'TENANT_REQUIRED',
+                    },
+                    { status: 400 }
+                );
+            }
+            tenantId = ctx.tenantId;
+            plan = ctx.plan;
+        }
+
+        let capBatch = DEFAULT_BATCH_MAX;
+
+        if (!skipQuota && tenantId) {
+            const reserved = await reserveAiLeadBatch(
+                admin,
+                tenantId,
+                plan,
+                DEFAULT_BATCH_MAX
+            );
+            if (!reserved.allowed) {
+                const st = reserved.status;
+                return NextResponse.json(
+                    {
+                        error: 'Daily AI lead limit reached for your subscription.',
+                        code: 'AI_LEAD_QUOTA_EXCEEDED',
+                        plan,
+                        limit: st.limit,
+                        used: st.used,
+                        remaining: 0,
+                        resetsAt: st.resetsAt,
+                        upgradeUrl: pricingUpgradeUrl(),
+                        missingFeatures: describeMissingVersusHigherPlans(plan),
+                    },
+                    { status: 429 }
+                );
+            }
+            capBatch = reserved.capThisBatch;
         }
 
         const googleApiKey = ENV.GOOGLE_API_KEY;
@@ -33,19 +113,21 @@ export async function POST(req: Request) {
 
         let rawMapsData: any[] = [];
 
-        // 1. Try real lookup first if API key is available
         if (googleApiKey) {
             console.log(`[Lead Gen] Attempting Google Places search for: ${industry} in ${location}`);
-            const { places, rawResults, error: placesError } = await googlePlacesService.searchPlaces(`${industry} in ${location}`, googleApiKey);
+            const { places, rawResults, error: placesError } = await googlePlacesService.searchPlaces(
+                `${industry} in ${location}`,
+                googleApiKey
+            );
 
             if (!placesError && places && places.length > 0) {
-                console.log(`[Lead Gen] ✓ Found ${places.length} real leads from Google`);
+                console.log(`[Lead Gen] Found ${places.length} real leads from Google (capping at ${capBatch})`);
                 rawMapsData = rawResults || [];
-                leads = places.map(p => ({
+                leads = places.slice(0, capBatch).map((p) => ({
                     id: Math.random().toString(36).substring(2, 10),
                     ...p,
                     estimatedValue: Math.floor(Math.random() * (50000 - 5000 + 1)) + 5000,
-                    notes: `Real business found via Google Maps. Matches "${industry}" in "${location}".`
+                    notes: `Real business found via Google Maps. Matches "${industry}" in "${location}".`,
                 }));
                 source = 'Google Maps';
             } else if (placesError) {
@@ -53,13 +135,19 @@ export async function POST(req: Request) {
             }
         }
 
-        const CLAUDE_45_MODEL = 'claude-sonnet-4-5-20250929';
-
-        // 2. If no real leads or no API key, fallback to AI generation
         if (leads.length === 0) {
-            console.log('[Lead Gen] Using Claude 4.5 (Senior SDR Persona) for high-fidelity discovery...');
+            console.log(`[Lead Gen] Using Claude 4.5 for up to ${capBatch} leads...`);
+            if (!skipQuota && tenantId) {
+                const blocked = await consumeAiUnitsOr429(
+                    admin,
+                    tenantId,
+                    plan,
+                    UNITS_PER_LEAD_AI_PASS
+                );
+                if (blocked) return blocked;
+            }
             const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone, powered by Claude 4.5.
-Your task is to identify EXACTLY 5 high-fidelity business leads.
+Your task is to identify EXACTLY ${capBatch} high-fidelity business leads (no more, no less).
 
 SEARCH SPECIFICATION:
 - Industry/Service: "${industry}"
@@ -92,7 +180,7 @@ Strict Schema:
                 prompt,
                 model: CLAUDE_45_MODEL,
                 maxTokens: 2000,
-                temperature: 0.2, // Low temp for data extraction
+                temperature: 0.2,
             });
 
             let cleanedContent = aiResponse.content;
@@ -101,7 +189,7 @@ Strict Schema:
 
             try {
                 const parsed = JSON.parse(cleanedContent);
-                leads = Array.isArray(parsed) ? parsed : (parsed.leads || [parsed]);
+                leads = Array.isArray(parsed) ? parsed : parsed.leads || [parsed];
             } catch (jsonError) {
                 console.error('[Lead Gen] AI Parsing Error:', jsonError);
                 leads = [];
@@ -112,16 +200,38 @@ Strict Schema:
             model = CLAUDE_45_MODEL;
         }
 
-        // 3. MANDATORY ENRICHMENT & DATA ANALYSIS PASS (Claude 4.5)
+        if (leads.length > capBatch) {
+            leads = leads.slice(0, capBatch);
+        }
+
         if (leads.length > 0) {
-            console.log('[Lead Gen] Running Rigorous Claude 4.5 Data Scientist Audit...');
+            console.log('[Lead Gen] Running Claude 4.5 audit pass...');
             try {
+                if (!skipQuota && tenantId) {
+                    const blocked = await consumeAiUnitsOr429(
+                        admin,
+                        tenantId,
+                        plan,
+                        UNITS_PER_LEAD_AI_PASS
+                    );
+                    if (blocked) return blocked;
+                }
                 const verificationPrompt = `You are a Senior Strategic SDR and Data Scientist Auditor at AlphaClone using Claude 4.5.
 Analyze these ${leads.length} leads for "${industry}" in "${location}". 
 Perform a deep-fidelity audit and HYPER-PERSONALIZATION ENRICHMENT.
 
 Leads to Audit/Enrich:
-${JSON.stringify(leads.map(l => ({ name: l.businessName, site: l.website, phone: l.phone, email: l.email, industry: l.industry })), null, 2)}
+${JSON.stringify(
+                    leads.map((l) => ({
+                        name: l.businessName,
+                        site: l.website,
+                        phone: l.phone,
+                        email: l.email,
+                        industry: l.industry,
+                    })),
+                    null,
+                    2
+                )}
 
 AUDIT & ENRICHMENT PARAMETERS:
 1. Contact Verification: Ensure phone and email are valid. Discover missing ones using domain heuristics.
@@ -157,10 +267,14 @@ Strict Output JSON:
                 });
 
                 try {
-                    const vData = JSON.parse(verificationResponse.content.match(/\{[\s\S]*\}/)?.[0] || '{}');
+                    const vData = JSON.parse(
+                        verificationResponse.content.match(/\{[\s\S]*\}/)?.[0] || '{}'
+                    );
                     if (vData.enrichedLeads) {
-                        leads = leads.map(lead => {
-                            const e = vData.enrichedLeads.find((v: any) => v.businessName === lead.businessName);
+                        leads = leads.map((lead) => {
+                            const e = vData.enrichedLeads.find(
+                                (v: any) => v.businessName === lead.businessName
+                            );
                             if (e) {
                                 return {
                                     ...lead,
@@ -173,12 +287,11 @@ Strict Output JSON:
                                     painPoints: e.painPoints || [],
                                     outreachHook: e.outreachHook || '',
                                     strategy: e.strategy || 'PROBLEM_SOLVER',
-                                    valueProposition: e.valueProposition || ''
+                                    valueProposition: e.valueProposition || '',
                                 };
                             }
                             return lead;
                         });
-                        console.log('[Lead Gen] ✓ Claude 4.5 Enrichment & Audit complete');
                     }
                 } catch (pErr) {
                     console.warn('[Lead Gen] Audit parsing failed:', pErr);
@@ -188,46 +301,57 @@ Strict Output JSON:
             }
         }
 
-        // 4. Final Geocoding & Address Validation
         if (leads.length > 0 && googleApiKey) {
-            console.log('[Lead Gen] Verifying physical existence via Google Maps...');
             try {
                 const { googleMapsService } = await import('@/services/googleMapsService');
 
-                leads = await Promise.all(leads.map(async (lead) => {
-                    try {
-                        if (lead.location) {
-                            const { valid, formattedAddress } = await googleMapsService.validateAddress(lead.location, googleApiKey);
-                            if (valid && formattedAddress) {
-                                return {
-                                    ...lead,
-                                    location: formattedAddress,
-                                    isAddressValid: true
-                                };
+                leads = await Promise.all(
+                    leads.map(async (lead) => {
+                        try {
+                            if (lead.location) {
+                                const { valid, formattedAddress } = await googleMapsService.validateAddress(
+                                    lead.location,
+                                    googleApiKey
+                                );
+                                if (valid && formattedAddress) {
+                                    return {
+                                        ...lead,
+                                        location: formattedAddress,
+                                        isAddressValid: true,
+                                    };
+                                }
                             }
+                            return { ...lead, isAddressValid: false };
+                        } catch {
+                            return { ...lead, isAddressValid: false };
                         }
-                        return { ...lead, isAddressValid: false };
-                    } catch (err) {
-                        return { ...lead, isAddressValid: false };
-                    }
-                }));
-                console.log('[Lead Gen] ✓ Location verification complete');
+                    })
+                );
             } catch (err) {
                 console.error('[Lead Gen] Bulk address validation failed:', err);
             }
         }
 
-        // 5. Final Filtering: Remove leads without non-negotiable contact info
-        const validatedLeads = leads.filter(l => l.email && l.phone && l.email.includes('@'));
+        const validatedLeads = leads.filter(
+            (l) => l.email && l.phone && l.email.includes('@')
+        );
 
-        // Ensure 5 lead cap and proper labeling
-        const finalLeads = validatedLeads.slice(0, 5).map(l => ({
+        const finalLeads = validatedLeads.slice(0, capBatch).map((l) => ({
             ...l,
-            foundBy: "AlphaClone Senior SDR (Claude 4.5)",
-            qualityLevel: (l.trustScore || 0) > 80 ? "Premium" : (l.isVerified ? "High" : "Discovery")
+            foundBy: 'AlphaClone Senior SDR (Claude 4.5)',
+            qualityLevel:
+                (l.trustScore || 0) > 80 ? 'Premium' : l.isVerified ? 'High' : 'Discovery',
         }));
 
-        console.log(`[Lead Gen] Final delivery: ${finalLeads.length} leads (Filtered from ${leads.length})`);
+        if (!skipQuota && tenantId && finalLeads.length > 0) {
+            await recordAiLeadsGenerated(admin, tenantId, finalLeads.length);
+        }
+
+        const nextQuota = !skipQuota && tenantId
+            ? await getAiLeadQuotaStatus(admin, tenantId, plan)
+            : null;
+
+        console.log(`[Lead Gen] Final delivery: ${finalLeads.length} leads`);
 
         return NextResponse.json({
             leads: finalLeads,
@@ -235,12 +359,18 @@ Strict Output JSON:
             model,
             source,
             isAIVerified: true,
-            auditor: "Claude 4.5 Data Scientist"
+            auditor: 'Claude 4.5 Data Scientist',
+            quota: nextQuota
+                ? {
+                      limit: nextQuota.limit,
+                      used: nextQuota.used,
+                      remaining: nextQuota.remaining,
+                      resetsAt: nextQuota.resetsAt,
+                  }
+                : undefined,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Lead Generation API Error:', error);
-        return NextResponse.json({
-            error: error.message || 'Failed to generate leads'
-        }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'ai/leads' });
     }
 }

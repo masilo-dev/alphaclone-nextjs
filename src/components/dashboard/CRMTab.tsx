@@ -68,11 +68,12 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                         Turn pipeline data into the next customer action: dates, stages, and revenue outcomes.
                     </p>
                 </div>
-                <div className="flex gap-3 w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <button
+                        type="button"
                         onClick={handleSync}
                         disabled={syncing}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-white/10 disabled:opacity-50 text-sm h-10"
+                        className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-white/10 disabled:opacity-50 text-xs sm:text-sm h-10"
                     >
                         <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                         {syncing ? 'Syncing...' : 'Sync CRM'}
@@ -80,10 +81,17 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                     <button
                         type="button"
                         onClick={() => router.push('/dashboard/deals')}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-sm h-10"
+                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
                     >
                         <Plus className="w-4 h-4" />
                         New Deal
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/deals?createFromLead=1')}
+                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-teal-500/30 text-teal-300 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
+                    >
+                        From Lead
                     </button>
                 </div>
             </div>
@@ -98,7 +106,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
 
             {/* Kanban Board */}
             <div className="w-full min-w-0">
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 pb-4 items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 pb-4 items-start">
                     {STAGES.map(stage => (
                         <div key={stage.id} className="min-w-0 flex flex-col bg-slate-800/50 rounded-xl border border-white/5 max-h-[min(75vh,720px)]">
                             {/* Stage Header */}

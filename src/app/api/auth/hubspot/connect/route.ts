@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
@@ -59,6 +60,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(authUrl.toString());
     } catch (err: any) {
         console.error('HubSpot Connect Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'auth/hubspot/connect' });
     }
 }

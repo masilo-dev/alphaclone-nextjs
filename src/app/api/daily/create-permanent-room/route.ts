@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 
@@ -102,7 +103,11 @@ export async function POST(req: Request) {
             .single();
 
         if (dbError) {
-            return NextResponse.json({ error: 'Failed to save room to database', details: dbError }, { status: 500 });
+            console.error('[daily/create-permanent-room] dbError:', dbError);
+            return NextResponse.json(
+                { error: 'Failed to save room to database', code: 'VIDEO_ROOM_DB_ERROR' },
+                { status: 500 }
+            );
         }
 
         return NextResponse.json({
@@ -115,6 +120,6 @@ export async function POST(req: Request) {
 
     } catch (error) {
         console.error('Error creating permanent room:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'daily/create-permanent-room.POST' });
     }
 }

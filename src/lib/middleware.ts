@@ -3,40 +3,49 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { rateLimitMiddleware, rateLimitConfigs } from './rateLimit'
 
 export async function updateSession(request: NextRequest) {
-    // Apply rate limiting based on route
     const pathname = request.nextUrl.pathname;
+    const requestId = request.headers.get('x-request-id')?.trim() || crypto.randomUUID();
+    const forwardHeaders = new Headers(request.headers);
+    forwardHeaders.set('x-request-id', requestId);
+
+    const withRequestIdHeader = (res: NextResponse) => {
+        res.headers.set('x-request-id', requestId);
+        return res;
+    };
 
     // DIRECT BYPASS: Ensure direct Supabase Auth and Storage calls are never intercepted by application middleware logic
     // This is a safety layer for the "Unexpected end of JSON input" error and prevents binary corruption
     if (pathname.includes('/auth/v1/') || pathname.includes('/storage/v1/')) {
-        return NextResponse.next();
+        return withRequestIdHeader(
+            NextResponse.next({ request: { headers: forwardHeaders } })
+        );
     }
 
     // Authentication routes - enabled for Phase 1 hardening
     if (pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     if (pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.signup);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     if (pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.passwordReset);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     // AI Agent and Scraper routes - Protection against resource/cost exhaustion
     if (pathname.includes('/api/alpha/')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.heavy);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     if (pathname.includes('/api/scraper/')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.standard);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
 
@@ -45,20 +54,22 @@ export async function updateSession(request: NextRequest) {
         const isHeavyEndpoint = pathname.includes('/ai/') || pathname.includes('/export') || pathname.includes('/generate');
         const config = isHeavyEndpoint ? rateLimitConfigs.api.heavy : rateLimitConfigs.api.standard;
         const rateLimitResponse = await rateLimitMiddleware(request, config);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     // Contact form - prevent spam
     if (pathname.includes('/contact') && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.public.contact);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    })
+    let response = withRequestIdHeader(
+        NextResponse.next({
+            request: {
+                headers: forwardHeaders,
+            },
+        })
+    );
 
     try {
         // Direct access to environment variables to avoid importing 'zod' or heavy config modules in Edge Runtime
@@ -84,9 +95,10 @@ export async function updateSession(request: NextRequest) {
                         cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
                         response = NextResponse.next({
                             request: {
-                                headers: request.headers,
+                                headers: forwardHeaders,
                             },
                         })
+                        response.headers.set('x-request-id', requestId);
                         cookiesToSet.forEach(({ name, value, options }) =>
                             response.cookies.set(name, value, options)
                         )

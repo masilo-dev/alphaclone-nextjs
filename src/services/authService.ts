@@ -213,13 +213,21 @@ export const authService = {
                 avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${validated.email}`,
             };
 
-            // Trigger Welcome Email (Non-blocking)
-            import('./emailCampaignService').then(({ emailCampaignService }) => {
-                emailCampaignService.sendTransactionalEmail(validated.email, 'Welcome Email', {
-                    name: validated.name,
-                    email: validated.email
-                }).catch(err => console.error('Failed to trigger welcome email:', err));
-            });
+            // Welcome email when Supabase returns a session immediately (no email-confirm gate).
+            // Otherwise triggerPlatformWelcomeIfNeeded runs after first SIGNED_IN (e.g. email link).
+            if (typeof window !== 'undefined' && data.session?.access_token) {
+                void fetch(`${window.location.origin}/api/email/platform-transactional`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${data.session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        templateName: 'Welcome Email',
+                        variables: { name: validated.name, email: validated.email },
+                    }),
+                }).catch((err) => console.error('Failed to trigger welcome email:', err));
+            }
 
             return { user, error: null };
         } catch (err: any) {
@@ -278,6 +286,30 @@ export const authService = {
                 return { error: err.errors[0]?.message || 'Validation failed' };
             }
             return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * After email confirmation or delayed session, send welcome once (server is idempotent).
+     * Skipped when welcome_email_sent_at is already set (e.g. Google handled in /auth/callback).
+     */
+    async triggerPlatformWelcomeIfNeeded(): Promise<void> {
+        if (typeof window === 'undefined') return;
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token || !session.user?.email) return;
+            if (session.user.user_metadata?.welcome_email_sent_at) return;
+
+            await fetch(`${window.location.origin}/api/email/platform-transactional`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ templateName: 'Welcome Email', variables: {} }),
+            });
+        } catch (e) {
+            console.warn('triggerPlatformWelcomeIfNeeded:', e);
         }
     },
 

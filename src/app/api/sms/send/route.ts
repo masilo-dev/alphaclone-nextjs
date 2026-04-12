@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
         const twilioData = await twilioRes.json();
 
         if (!twilioRes.ok || twilioData.code) {
+            console.error('[sms/send] Twilio error:', twilioData);
             // Log failed message
             if (tenantId) {
                 await supabase.from('sms_messages').insert({
@@ -117,14 +118,17 @@ export async function POST(req: NextRequest) {
                     body: message,
                     status: 'failed',
                     twilio_sid: twilioData.sid || null,
-                    error_message: twilioData.message || 'Twilio error',
+                    error_message: 'Twilio send failed',
                 });
             }
-            return NextResponse.json({
-                success: false,
-                error: twilioData.message || 'Twilio send failed',
-                code: twilioData.code,
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'SMS could not be sent. Verify your Twilio configuration.',
+                    code: twilioData.code ?? 'TWILIO_ERROR',
+                },
+                { status: 400 }
+            );
         }
 
         // 3. Log successful message

@@ -16,11 +16,14 @@ async function getUser(req: NextRequest) {
 
 function handleError(err: unknown): NextResponse {
     if (err instanceof ZohoAuthExpiredError) {
-        return NextResponse.json({ error: err.message, reconnect: true }, { status: 401 });
+        console.error('[Zoho Books API] auth expired:', err);
+        return NextResponse.json(
+            { error: 'Zoho Books session expired. Reconnect Zoho.', code: 'ZOHO_BOOKS_RECONNECT', reconnect: true },
+            { status: 401 }
+        );
     }
-    const msg = err instanceof Error ? err.message : 'Internal server error';
-    console.error('[Zoho Books API]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[Zoho Books API]', err);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.', code: 'INTERNAL_ERROR' }, { status: 500 });
 }
 
 // GET /api/zoho/books?action=<action>

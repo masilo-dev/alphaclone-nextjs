@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Search, ChevronDown, UserPlus, ExternalLink } from 'lucide-react';
 import { leadService, Lead } from '../../services/leadService';
 
@@ -7,19 +7,23 @@ interface LeadSelectorProps {
     filter?: 'all' | 'qualified' | 'unqualified';
     placeholder?: string;
     className?: string;
+    /** When set, selects this lead once leads are loaded (e.g. deep link from pipeline). */
+    initialLeadId?: string | null;
 }
 
 const LeadSelector: React.FC<LeadSelectorProps> = ({
     onSelect,
     filter = 'all',
     placeholder = 'Select a lead...',
-    className = ''
+    className = '',
+    initialLeadId = null,
 }) => {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(false);
+    const initialAppliedRef = useRef<string | null>(null);
 
     const loadLeads = useCallback(async () => {
         setLoading(true);
@@ -39,6 +43,21 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
     useEffect(() => {
         loadLeads();
     }, [loadLeads]);
+
+    useEffect(() => {
+        initialAppliedRef.current = null;
+    }, [initialLeadId]);
+
+    useEffect(() => {
+        if (!initialLeadId || loading || leads.length === 0) return;
+        if (initialAppliedRef.current === initialLeadId) return;
+        const found = leads.find((l) => l.id === initialLeadId);
+        if (!found) return;
+        initialAppliedRef.current = initialLeadId;
+        setSelectedLead(found);
+        setSearchQuery('');
+        onSelect(found);
+    }, [initialLeadId, leads, loading, onSelect]);
 
     const filteredLeads = leads.filter(lead =>
         lead.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||

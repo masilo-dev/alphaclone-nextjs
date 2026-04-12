@@ -148,7 +148,10 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
-        if (videoError) throw new Error('DB Error (Video): ' + videoError.message);
+        if (videoError) {
+            console.error('[BookingAPI] video_calls insert:', videoError);
+            throw new Error('VIDEO_DB_ERROR');
+        }
 
         // B. Calendar Event
         const eventStart = new Date(startTime);
@@ -179,7 +182,10 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
-        if (calError) throw new Error('DB Error (Calendar): ' + calError.message);
+        if (calError) {
+            console.error('[BookingAPI] calendar_events insert:', calError);
+            throw new Error('CALENDAR_DB_ERROR');
+        }
 
         // Update video call with event ID
         await supabaseAdmin
@@ -206,6 +212,6 @@ export async function POST(req: NextRequest) {
 
     } catch (err) {
         console.error('[BookingAPI] Creation error:', err);
-        return NextResponse.json({ error: String(err) }, { status: 500 });
+        return NextResponse.json({ error: 'Booking could not be completed', code: 'BOOKING_FAILED' }, { status: 500 });
     }
 }

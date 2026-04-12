@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
 /**
  * GET /api/leads/[id]
@@ -67,12 +68,9 @@ export async function GET(
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] GET /api/leads/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message }, 
-      { status: 500 }
-    );
+    return clientErrorResponse(error, { request: req, scope: 'leads/[id].GET' });
   }
 }
 
@@ -178,12 +176,9 @@ export async function PATCH(
       message: 'Lead updated successfully'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] PATCH /api/leads/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message }, 
-      { status: 500 }
-    );
+    return clientErrorResponse(error, { request: req, scope: 'leads/[id].PATCH' });
   }
 }
 
@@ -240,11 +235,8 @@ export async function DELETE(
       message: 'Lead deleted successfully'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] DELETE /api/leads/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message }, 
-      { status: 500 }
-    );
+    return clientErrorResponse(error, { request: req, scope: 'leads/[id].DELETE' });
   }
 }

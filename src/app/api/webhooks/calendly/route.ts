@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
     } catch (err: any) {
         console.error('Calendly Webhook Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'webhooks/calendly' });
     }
 }
 

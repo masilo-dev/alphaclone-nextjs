@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
 
     const appId = process.env.FACEBOOK_APP_ID;
     if (!appId) {
-        return NextResponse.json({ error: 'FACEBOOK_APP_ID not configured' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Facebook sign-in is temporarily unavailable. Please try again later.' },
+            { status: 503 }
+        );
     }
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
@@ -39,8 +42,23 @@ export async function GET(req: NextRequest) {
         'ads_management',
     ].join(',');
 
+    const ALLOWED_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
+    const returnToRaw = req.nextUrl.searchParams.get('return_to')?.trim();
+    let returnTo: string | null = null;
+    if (returnToRaw) {
+        const pathOnly = returnToRaw.split('?')[0];
+        if ((ALLOWED_RETURN as readonly string[]).includes(pathOnly)) {
+            returnTo = pathOnly;
+        }
+    }
+
     const state = Buffer.from(
-        JSON.stringify({ userId: user.id, tenantId: tenantIdParam, ts: Date.now() })
+        JSON.stringify({
+            userId: user.id,
+            tenantId: tenantIdParam,
+            ts: Date.now(),
+            returnTo,
+        })
     ).toString('base64url');
 
     const authUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');

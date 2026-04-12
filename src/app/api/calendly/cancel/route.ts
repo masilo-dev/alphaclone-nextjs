@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
@@ -56,7 +57,10 @@ export async function POST(req: Request) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Calendly cancellation error:', errorText);
-            return NextResponse.json({ error: 'Failed to cancel on Calendly', details: errorText }, { status: response.status });
+            return NextResponse.json(
+                { error: 'Failed to cancel on Calendly', code: 'CALENDLY_CANCEL_FAILED' },
+                { status: response.status }
+            );
         }
 
         // 4. Update the local event or delete it
@@ -76,6 +80,6 @@ export async function POST(req: Request) {
 
     } catch (err: any) {
         console.error('API /calendly/cancel Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'calendly/cancel' });
     }
 }

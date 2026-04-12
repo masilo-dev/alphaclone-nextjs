@@ -169,6 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setError(null);
                 setLoading(false);
                 refreshMfaLevel();
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    void authService.triggerPlatformWelcomeIfNeeded();
+                }
             } else if (event === 'SIGNED_OUT') {
                 setSafeUser(null);
                 setError(null);

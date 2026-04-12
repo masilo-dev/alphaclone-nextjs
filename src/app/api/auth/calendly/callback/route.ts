@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 
@@ -102,6 +103,6 @@ export async function GET(req: NextRequest) {
 
     } catch (err: any) {
         console.error('Calendly OAuth Callback Error:', err);
-        return NextResponse.json({ error: err.message || 'Failed to connect Calendly' }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'auth/calendly/callback' });
     }
 }

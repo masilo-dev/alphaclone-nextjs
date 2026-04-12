@@ -82,7 +82,7 @@ Sentry.init({
     initialScope: {
         tags: {
             environment: ENVIRONMENT,
-            runtime: 'node',
+            runtime: 'nodejs',
         },
     },
 });

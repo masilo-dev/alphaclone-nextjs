@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { alphaAgent } from '@/services/alpha/alphaAgent';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -44,6 +45,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('Support API Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'alpha/support' });
     }
 }

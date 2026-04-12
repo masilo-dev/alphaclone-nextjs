@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { expenseService } from '../../../../services/finance/ExpenseService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
         const expenses = await expenseService.getExpenses(tenantId, filters);
         return NextResponse.json(expenses);
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'finance/expenses' });
     }
 }
 
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'finance/expenses' });
     }
 }
 
@@ -101,7 +102,7 @@ export async function PATCH(req: NextRequest) {
         const expense = await expenseService.updateExpense(tenantId, expenseId, updates);
         return NextResponse.json(expense);
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'finance/expenses' });
     }
 }
 
@@ -119,6 +120,6 @@ export async function DELETE(req: NextRequest) {
         await expenseService.deleteExpense(tenantId, expenseId);
         return NextResponse.json({ success: true });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'finance/expenses' });
     }
 }

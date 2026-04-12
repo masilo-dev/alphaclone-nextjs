@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return clientErrorResponse(error, { request: req, scope: 'engine/ingest' });
 
         // Auto-create a lead if intent is high/urgent
         let lead_id: string | null = null;

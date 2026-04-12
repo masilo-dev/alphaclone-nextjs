@@ -95,81 +95,54 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
 
-// --- TENANT_ADMIN NAVIGATION (Business OS - Sequence of Momentum) ---
+// --- TENANT_ADMIN NAVIGATION (workspace: fewer top-level groups, same destinations) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
-  // ── 0. Action HUD ──
-  { label: 'Momentum Dashboard', href: '/dashboard', icon: Zap },
+  { label: 'Workspace home', href: '/dashboard', icon: Zap },
 
-  // ── 1. FIND (Lead Generation) ──
   {
-    label: 'Find Leads', href: '#', icon: Search,
+    label: 'Acquire and nurture', href: '#', icon: Search,
     subItems: [
-      { label: 'AI Lead Finder',  href: '/dashboard/sales-agent?tab=finder', icon: Search },
-      { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat',   icon: Bot   },
-      { label: 'Omni Crawler',  href: '/dashboard/sales-agent?tab=finder', icon: Zap },
+      { label: 'AI Lead Finder', href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
+      { label: 'Active Leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
+      { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
+      { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
+      { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
+      { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
     ]
   },
 
-  // ── 2. CONTACT (CRM & Outreach) ──
   {
-    label: 'Contact & CRM', href: '#', icon: Users,
-    subItems: [
-      { label: 'Active Leads',    href: '/dashboard/crm?stage=lead',          icon: TrendingUp },
-      { label: 'Contacts',        href: '/dashboard/crm?stage=customer',      icon: Users },
-      { label: 'Gmail',           href: '/dashboard/mail',                   icon: Mail },
-      { label: 'Facebook Inbox',  href: '/dashboard/business/facebook',      icon: Facebook },
-      { label: 'Zoho Mail',       href: '/dashboard/zoho/mail',               icon: Mail },
-      { label: 'SMS Outreach',    href: '/dashboard/business/sms',            icon: Smartphone },
-    ]
-  },
-
-  // ── 3. TRACK (Meetings & Scheduling) ──
-  {
-    label: 'Track & Schedule', href: '#', icon: Clock,
+    label: 'Schedule and meet', href: '#', icon: Clock,
     subItems: [
       { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-      { label: 'Booking Links',  href: '/dashboard/business/booking',  icon: Clock   },
-      { label: 'Conference Space', href: '/dashboard/business/meetings', icon: Video   },
+      { label: 'Booking Links', href: '/dashboard/business/booking', icon: Clock },
+      { label: 'Conference Space', href: '/dashboard/business/meetings', icon: Video },
     ]
   },
 
-  // ── 4. CLOSE (Deals & Legal) ──
   {
-    label: 'Close Deals', href: '#', icon: Briefcase,
+    label: 'Revenue and legal', href: '#', icon: DollarSign,
     subItems: [
-      { label: 'Deal Pipeline', href: '/dashboard/deals',             icon: TrendingUp },
-      { label: 'Proposals/Quotes',    href: '/dashboard/business/quotes',    icon: FileText },
+      { label: 'Deal Pipeline', href: '/dashboard/deals', icon: TrendingUp },
+      { label: 'Proposals and quotes', href: '/dashboard/business/quotes', icon: FileText },
       { label: 'Active Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
-    ]
-  },
-
-  // ── 5. INVOICE (Billing & Revenue) ──
-  {
-    label: 'Invoice & Pay', href: '#', icon: DollarSign,
-    subItems: [
-      { label: 'Billing Center',   href: '/dashboard/business/billing',    icon: DollarSign },
-      { label: 'Accounting Hub',    href: '/dashboard/accounting',          icon: BarChart3  },
+      { label: 'Billing Center', href: '/dashboard/business/billing', icon: DollarSign },
+      { label: 'Accounting Hub', href: '/dashboard/accounting', icon: BarChart3 },
       { label: 'Revenue Analytics', href: '/dashboard/business/daily-summary', icon: TrendingUp },
     ]
   },
 
-  // ── 6. EXECUTE (Production) ──
   {
-    label: 'Execute Work', href: '#', icon: CheckSquare,
+    label: 'Deliver and automate', href: '#', icon: CheckSquare,
     subItems: [
-      { label: 'Active Projects',       href: '/dashboard/business/projects', icon: Layers  },
-      { label: 'Production Tasks',      href: '/dashboard/tasks',             icon: CheckSquare },
-      { label: 'Shared Documents',  href: '/dashboard/business/documents',  icon: FolderOpen },
-    ]
-  },
-
-  // ── 7. AUTOMATE (The Engine) ──
-  {
-    label: 'Action Engine', href: '#', icon: Zap,
-    subItems: [
-      { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe       },
-      { label: 'Marketing Campaigns',  href: '/dashboard/business/campaigns', icon: Presentation },
-      { label: 'System Settings', href: '/dashboard/business/settings',    icon: Settings     },
+      { label: 'Active Projects', href: '/dashboard/business/projects', icon: Layers },
+      { label: 'Production Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+      { label: 'Shared Documents', href: '/dashboard/business/documents', icon: FolderOpen },
+      { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe },
+      { label: 'Marketing Campaigns', href: '/dashboard/business/campaigns', icon: Presentation },
+      { label: 'System Settings', href: '/dashboard/business/settings', icon: Settings },
     ]
   },
 ];

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
             data = deals.map((a: any) => ({
                 action: a.action,
                 timestamp: a.created_at,
-                details: JSON.stringify(a.metadata)
+                metadata: JSON.stringify(a.metadata),
             }));
         }
 
@@ -105,6 +106,6 @@ export async function GET(req: NextRequest) {
 
     } catch (error: any) {
         console.error('Export Error:', error);
-        return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'reports/export' });
     }
 }

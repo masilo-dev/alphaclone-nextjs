@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!api_key) {
     return res.status(401).json({
       error:
-        'Missing MCP connection token. Pass ?api_key=<token> or x-api-key header or Authorization Bearer header.',
+        'Connection could not be verified. Open your workspace MCP settings, copy a fresh connection key, and try again.',
     });
   }
 
@@ -64,7 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { ENV } = await import('../../../config/env');
 
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Missing Supabase environment variables');
+      console.error('[MCP SSE] Server configuration incomplete');
+      throw new Error('SERVICE_UNAVAILABLE');
     }
 
     const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
@@ -77,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .single();
 
       if (error || !data || new Date(data.expires_at) < new Date()) {
-        authError = 'Invalid or expired OAuth access token';
+        authError = 'invalid';
       } else {
         tenantId = data.tenant_id;
         userId = data.user_id;
@@ -91,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .single();
 
       if (error || !data) {
-        authError = 'Invalid or expired MCP connection token';
+        authError = 'invalid';
       } else {
         tenantId = data.tenant_id;
         userId = data.user_id;
@@ -105,23 +106,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } catch (err) {
-    authError = String(err);
+    console.error('[MCP SSE] Auth lookup failed:', err);
+    authError = 'SERVICE_UNAVAILABLE';
   }
 
   if (authError || !tenantId || !userId) {
-    return res.status(401).json({
-      error: authError || 'Invalid MCP connection token',
-    });
+    const msg =
+      authError === 'SERVICE_UNAVAILABLE'
+        ? 'The service is temporarily unavailable. Please try again in a few minutes.'
+        : 'Connection could not be verified. Open your workspace MCP settings, generate a fresh connection key, and try again.';
+    return res.status(401).json({ error: msg });
   }
 
   if (urlTenantId && urlTenantId !== tenantId) {
     return res.status(403).json({
-      error: 'tenant_id in URL does not match this connection key.',
+      error: 'This connection does not match the workspace in your request. Use the MCP URL from your dashboard.',
     });
   }
   if (urlUserId && urlUserId !== userId) {
     return res.status(403).json({
-      error: 'user_id in URL does not match this connection key.',
+      error: 'This connection does not match the user in your request. Use the MCP URL from your dashboard.',
     });
   }
 

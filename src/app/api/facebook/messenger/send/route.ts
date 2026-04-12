@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true, messageId: result.message_id });
-    } catch (err: any) {
-        return routeErrorResponse(err, err?.message || 'Internal error');
+    } catch (err: unknown) {
+        return routeErrorResponse(err, 'Failed to send message.', req);
     }
 }

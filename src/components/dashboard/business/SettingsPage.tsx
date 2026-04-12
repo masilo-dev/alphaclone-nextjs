@@ -233,7 +233,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         }
         const fbErr = searchParams?.get('fb_error');
         if (fbErr) {
-            toast.error(`Facebook connection failed: ${decodeURIComponent(fbErr)}`);
+            toast.error('Facebook could not be connected. Open the Facebook page from the sidebar and try Connect again, or contact support.');
             setActiveTab('integrations');
         }
 

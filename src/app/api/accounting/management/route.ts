@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed } from '@/lib/api/operationResult';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -41,9 +43,9 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Invoice/Accounting error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'accounting/management.POST' });
   }
 }
 
@@ -127,7 +129,7 @@ async function createInvoice(tenantId: string, config: any, supabase: any) {
       message: 'Invoice created successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -192,7 +194,7 @@ async function updateInvoice(tenantId: string, config: any, supabase: any) {
       message: 'Invoice updated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -241,7 +243,7 @@ async function getInvoices(tenantId: string, config: any, supabase: any) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -269,7 +271,7 @@ async function getInvoiceDetails(tenantId: string, config: any, supabase: any) {
       data: invoice
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -320,7 +322,7 @@ async function downloadInvoice(tenantId: string, config: any, supabase: any) {
       message: 'Invoice downloaded successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -387,7 +389,7 @@ async function sendInvoice(tenantId: string, config: any, supabase: any) {
       message: 'Invoice sent successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -449,7 +451,7 @@ async function recordPayment(tenantId: string, config: any, supabase: any) {
       message: 'Payment recorded successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -510,7 +512,7 @@ async function createExpense(tenantId: string, config: any, supabase: any) {
       message: 'Expense created successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -557,7 +559,7 @@ async function getExpenses(tenantId: string, config: any, supabase: any) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 
@@ -633,7 +635,7 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
       }
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('accounting/management', error);
   }
 }
 

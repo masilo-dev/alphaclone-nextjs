@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
@@ -31,7 +32,11 @@ export async function GET(req: NextRequest) {
         const data = await res.json();
         
         if (data.error) {
-            return NextResponse.json({ error: data.error.message }, { status: 400 });
+            console.error('[Facebook activity] Graph error:', data.error);
+            return NextResponse.json(
+                { error: 'Facebook could not load activity for this page.', code: 'FACEBOOK_GRAPH_ERROR' },
+                { status: 400 }
+            );
         }
 
         return NextResponse.json({ 
@@ -39,6 +44,6 @@ export async function GET(req: NextRequest) {
             activity: data.data || [] 
         });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message || 'Failed to fetch activity' }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'facebook/activity' });
     }
 }

@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       .single();
 
     if (logErr) {
-      console.warn('[Outreach/Send] Log insert failed (non-fatal):', logErr.message);
+      console.warn('[Outreach/Send] Log insert failed (non-fatal):', logErr);
     }
 
     const logId = logRow?.id;
@@ -132,28 +132,31 @@ export async function POST(request: Request) {
         zohoMessageId,
       });
 
-    } catch (sendErr: any) {
-      console.error('[Outreach/Send] Zoho send failed:', sendErr.message);
+    } catch (sendErr: unknown) {
+      console.error('[Outreach/Send] Zoho send failed:', sendErr);
 
       // 6b. Update log → failed
       if (logId) {
         await admin
           .from('lead_outreach_log')
-          .update({ status: 'failed', error_message: sendErr.message })
+          .update({ status: 'failed', error_message: 'Send failed' })
           .eq('id', logId);
       }
 
-      return NextResponse.json({
-        success:       false,
-        status:        'failed',
-        error:         sendErr.message,
-        logId,
-        trackingId,
-        hint:          'Check your Zoho Mail connection in Settings → Integrations',
-      }, { status: 502 });
+      return NextResponse.json(
+        {
+          success: false,
+          status: 'failed',
+          error: 'Email could not be sent. Check your Zoho Mail connection in Settings.',
+          code: 'ZOHO_SEND_FAILED',
+          logId,
+          trackingId,
+        },
+        { status: 502 }
+      );
     }
 
-  } catch (error: any) {
-    return routeErrorResponse(error, error?.message || 'Failed to send outreach email');
+  } catch (error: unknown) {
+    return routeErrorResponse(error, 'Failed to send outreach email.', request);
   }
 }

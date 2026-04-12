@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -43,7 +44,8 @@ export async function POST(req: NextRequest) {
         });
 
     if (uploadError) {
-        return NextResponse.json({ error: `Upload failed: ${uploadError.message}` }, { status: 500 });
+        console.error('[social/media/upload] storage:', uploadError);
+        return NextResponse.json({ error: 'Upload failed', code: 'STORAGE_UPLOAD_FAILED' }, { status: 500 });
     }
 
     const { data: urlData } = adminClient.storage.from('public-assets').getPublicUrl(storagePath);
@@ -66,7 +68,10 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
 
-    if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
+    if (dbErr) {
+        console.error('[social/media/upload] media_assets insert:', dbErr);
+        return NextResponse.json({ error: 'Failed to save media record', code: 'MEDIA_DB_ERROR' }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, asset });
 }
@@ -90,6 +95,6 @@ export async function GET(req: NextRequest) {
     if (assetType) query = query.eq('asset_type', assetType);
 
     const { data, error } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'social/media/upload' });
     return NextResponse.json({ assets: data });
 }

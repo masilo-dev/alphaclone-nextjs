@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { calendlyService } from '@/services/calendlyService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
@@ -38,6 +39,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, booking });
     } catch (error: any) {
         console.error('[API] Calendly Schedule Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'calendly/schedule' });
     }
 }

@@ -61,13 +61,13 @@ function CRMNav({ pathname }: { pathname: string }) {
     return (
         <nav
             aria-label="CRM sections"
-            className="flex flex-wrap gap-2 mb-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl"
+            className="flex flex-nowrap gap-1.5 sm:gap-2 mb-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl overflow-x-auto overscroll-x-contain [scrollbar-width:thin]"
         >
             {CRM_NAV_LINKS.map((link) => (
                 <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
                         isCrmNavActive(pathname, link.href)
                             ? 'bg-teal-600 text-white'
                             : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -108,6 +108,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
+    const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
 
     const loadClients = useCallback(async () => {
         if (!currentTenant) return;
@@ -131,6 +132,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setSelectedStage(stageParam);
         }
     }, [stageParam]);
+
+    useEffect(() => {
+        if (!contactParam || clients.length === 0) return;
+        const match = clients.find((c) => c.id === contactParam);
+        if (match) {
+            setSelectedClient(match);
+            setViewMode('list');
+            const base =
+                pathname === '/dashboard/business/clients' ? '/dashboard/business/clients' : '/dashboard/contacts';
+            router.replace(base, { scroll: false });
+        }
+    }, [contactParam, clients, pathname, router]);
 
     useEffect(() => {
         filterClients();
@@ -400,18 +413,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 w-full min-w-0">
             <CRMNav pathname={pathname} />
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">Contacts</h2>
-                    <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Contacts</h2>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{clients.length} total</Badge>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CRM Database</p>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CRM</p>
                     </div>
                 </div>
-                <div className="flex gap-2 items-center flex-wrap">
+                <div className="flex flex-wrap gap-2 items-center">
                     <Button
                         variant="outline"
                         onClick={handleExportExcel}
@@ -631,8 +644,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)] overflow-hidden">
-                    <div className={`flex flex-col gap-4 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
+                <div className="flex flex-col lg:flex-row gap-4 min-h-0 max-h-[min(92dvh,880px)] lg:max-h-none lg:h-[min(88dvh,900px)] overflow-hidden">
+                    <div className={`flex flex-col gap-3 sm:gap-4 min-h-0 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
                         {/* Filters */}
                         <div className="flex flex-col gap-4 shrink-0">
                             <div className="relative">
@@ -642,7 +655,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     placeholder="Search clients..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium"
+                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm font-medium"
                                 />
                             </div>
                             <select
@@ -699,32 +712,32 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Desktop Split Pane Right Side */}
-                    <div className={`flex-1 ${!selectedClient ? 'hidden md:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
+                    <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
                         {selectedClient ? (
-                            <div className="flex flex-col h-full overflow-hidden">
+                            <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden">
                                 {/* Mobile Header with Back Button */}
-                                <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                                <div className="lg:hidden flex items-center justify-between p-3 sm:p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
                                     <button 
                                         onClick={() => setSelectedClient(null)}
-                                        className="flex items-center gap-2 text-teal-400 font-medium hover:text-teal-300 transition-colors"
+                                        className="flex items-center gap-2 text-teal-400 text-sm font-medium hover:text-teal-300 transition-colors"
                                     >
                                         <ChevronLeft className="w-5 h-5" />
-                                        Back to List
+                                        Back
                                     </button>
                                     <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
                                         {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
                                     </Badge>
                                 </div>
 
-                                <div className="p-4 md:p-6 flex flex-col h-full overflow-y-auto custom-scrollbar ios-scroll">
-                                    <div className="flex justify-between items-start mb-6 shrink-0">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl">
+                                <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar ios-scroll">
+                                    <div className="flex justify-between items-start gap-3 mb-4 sm:mb-6 shrink-0">
+                                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-lg sm:text-xl md:text-2xl">
                                             {(selectedClient.name || '?').charAt(0)}
                                         </div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-white">{selectedClient.name}</h2>
-                                            {selectedClient.industry && <p className="text-slate-400">{selectedClient.industry}</p>}
+                                        <div className="min-w-0">
+                                            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">{selectedClient.name}</h2>
+                                            {selectedClient.industry && <p className="text-slate-400 text-sm truncate">{selectedClient.industry}</p>}
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
@@ -748,30 +761,49 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 shrink-0">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 shrink-0">
                                     <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-sm text-slate-400 mb-1">Email</p>
-                                        <div className="flex items-center gap-2 text-white">
+                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Email</p>
+                                        <div className="flex items-center gap-2 text-white text-sm">
                                             <Mail className="w-4 h-4 text-teal-500 shrink-0" />
                                             <span className="truncate" title={selectedClient.email || 'N/A'}>{selectedClient.email || 'N/A'}</span>
                                         </div>
                                     </div>
                                     <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-sm text-slate-400 mb-1">Phone</p>
-                                        <div className="flex items-center gap-2 text-white">
+                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Phone</p>
+                                        <div className="flex items-center gap-2 text-white text-sm">
                                             <Phone className="w-4 h-4 text-teal-500 shrink-0" />
                                             <span className="truncate">{selectedClient.phone || 'N/A'}</span>
                                         </div>
                                     </div>
+                                    {selectedClient.location ? (
+                                        <div className="bg-slate-800/50 p-3 rounded-xl sm:col-span-2">
+                                            <p className="text-xs sm:text-sm text-slate-400 mb-1">Location</p>
+                                            <p className="text-sm text-white">{selectedClient.location}</p>
+                                        </div>
+                                    ) : null}
+                                    {selectedClient.website ? (
+                                        <div className="bg-slate-800/50 p-3 rounded-xl sm:col-span-2">
+                                            <p className="text-xs sm:text-sm text-slate-400 mb-1">Website</p>
+                                            <a
+                                                href={selectedClient.website.startsWith('http') ? selectedClient.website : `https://${selectedClient.website}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-teal-400 hover:text-teal-300 truncate block"
+                                            >
+                                                {selectedClient.website}
+                                            </a>
+                                        </div>
+                                    ) : null}
                                     <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-sm text-slate-400 mb-1">Sales Stage</p>
+                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Sales Stage</p>
                                         <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
                                             {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
                                         </Badge>
                                     </div>
                                     <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-sm text-slate-400 mb-1">Potential Value</p>
-                                        <p className="font-semibold text-teal-400">${selectedClient.value.toLocaleString()}</p>
+                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Potential Value</p>
+                                        <p className="font-semibold text-teal-400 text-sm sm:text-base">${selectedClient.value.toLocaleString()}</p>
                                     </div>
                                 </div>
 
@@ -818,7 +850,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                 <div className="mt-auto">
                                     <h3 className="text-base font-semibold text-white mb-4">Quick Actions</h3>
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                                         <Button
                                             variant="secondary"
                                             size="sm"

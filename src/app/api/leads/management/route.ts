@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -35,9 +37,9 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Lead management error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'leads/management.POST' });
   }
 }
 
@@ -93,7 +95,7 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
       message: `Found ${uniqueLeads.length} leads`
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -337,7 +339,7 @@ async function saveLead(tenantId: string, config: any, supabase: any) {
       message: 'Lead saved successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -364,7 +366,7 @@ async function updateLead(tenantId: string, config: any, supabase: any) {
       message: 'Lead updated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -424,7 +426,7 @@ async function getLeads(tenantId: string, config: any, supabase: any) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -480,7 +482,7 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
       message: 'Lead converted successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -501,7 +503,7 @@ async function deleteLead(tenantId: string, config: any, supabase: any) {
       message: 'Lead deleted successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -536,8 +538,9 @@ async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
         }
 
         results.push({ leadId, result });
-      } catch (error: any) {
-        results.push({ leadId, success: false, error: error.message });
+      } catch (error: unknown) {
+        console.error('[leads/management.bulk]', leadId, error);
+        results.push({ leadId, success: false, error: OPERATION_FAILED_MESSAGE });
       }
     }
 
@@ -547,7 +550,7 @@ async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
       message: `Bulk action completed for ${leadIds.length} leads`
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -733,6 +736,6 @@ async function addLeadTag(tenantId: string, leadId: string, tag: string, supabas
 
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }

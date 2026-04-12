@@ -30,6 +30,7 @@ import { contactService } from '../../../services/contactService';
 import { projectService } from '../../../services/projectService';
 import { quoteService } from '../../../services/quoteService';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { googleMapsService } from '../../../services/googleMapsService';
@@ -44,6 +45,7 @@ interface LeadDetailModalProps {
 
 export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }: LeadDetailModalProps) {
     const { user } = useAuth();
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'notes' | 'history'>('overview');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -251,7 +253,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
             if (dealError) throw new Error(dealError);
 
-            toast.success(`✅ Lead converted to contact and deal "${dealName}" created!`);
+            toast.success(`Lead converted to contact and deal "${dealName}" created.`);
 
             // Lead status is already updated by convert_lead_to_contact() function
             if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted' });
@@ -630,6 +632,19 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                         >
                             <Zap className="w-4 h-4 sm:mr-2 text-white" />
                             <span className="hidden sm:inline">Deal</span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="border-teal-500/40 text-teal-300 hover:bg-teal-500/10 flex-1 sm:flex-none"
+                            size="sm"
+                            onClick={() => {
+                                onClose();
+                                router.push(`/dashboard/deals?createFromLead=1&leadId=${encodeURIComponent(lead.id)}`);
+                            }}
+                            title="Open deals pipeline with this lead pre-selected"
+                        >
+                            <ArrowRight className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Pipeline</span>
                         </Button>
                         <Button
                             variant="outline"

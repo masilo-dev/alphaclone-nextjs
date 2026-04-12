@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 
 /**
@@ -135,8 +136,6 @@ export async function POST(
 
     } catch (error) {
         console.error('Error ending meeting:', error);
-        return NextResponse.json({
-            error: error instanceof Error ? error.message : 'Failed to end meeting'
-        }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'meetings/by-id/end.POST' });
     }
 }

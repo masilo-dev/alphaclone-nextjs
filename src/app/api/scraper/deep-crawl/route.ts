@@ -40,8 +40,8 @@ export async function POST(request: Request) {
       if (html.length < 1500 || html.includes('javascript') && !html.includes('<body')) {
           throw new Error('Minimal content detected, switching to Browser Engine');
       }
-    } catch (e: any) {
-      console.log(`[Scraper] Static extraction failed or skipped: ${e.message}. Launching Browser Engine...`);
+    } catch (e: unknown) {
+      console.log('[Scraper] Static extraction failed or skipped. Launching Browser Engine...', e);
       try {
           const { page, browser } = await BrowserManager.createPage();
           browserInstance = browser;
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
           await page.waitForTimeout(2000); 
           html = await page.content();
           usedBrowser = true;
-      } catch (browserError: any) {
-          console.error(`[Scraper] Browser Engine also failed:`, browserError.message);
+      } catch (browserError: unknown) {
+          console.error(`[Scraper] Browser Engine also failed:`, browserError);
           if (!html) throw browserError; // Only throw if we have NOTHING
       }
     }
@@ -116,8 +116,8 @@ export async function POST(request: Request) {
       social_links: socialLinks
     });
 
-  } catch (error: any) {
-    console.error(`Deep Crawl Error:`, error.message);
+  } catch (error: unknown) {
+    console.error(`Deep Crawl Error:`, error);
     return NextResponse.json({ 
       success: false, 
       emails: [],

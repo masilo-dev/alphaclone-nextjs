@@ -104,9 +104,9 @@ export async function POST(req: Request) {
             throw new Error('STRIPE_WEBHOOK_SECRET is missing');
         }
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err: any) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    } catch (err: unknown) {
+        console.error('Webhook signature verification failed:', err);
+        return NextResponse.json({ error: 'Webhook signature verification failed', code: 'STRIPE_WEBHOOK_SIGNATURE' }, { status: 400 });
     }
 
     // Step 2: Check idempotency - has this event been processed before?
@@ -405,17 +405,18 @@ export async function POST(req: Request) {
         await recordWebhookEvent(supabaseAdmin, event, tenantId, 'processed');
 
         return NextResponse.json({ received: true, status: 'processed' });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Webhook processing error:', err);
+        const internalNote = err instanceof Error ? err.message : String(err);
 
         // Record failed webhook processing
         try {
-            await recordWebhookEvent(supabaseAdmin, event, tenantId, 'failed', err.message);
+            await recordWebhookEvent(supabaseAdmin, event, tenantId, 'failed', internalNote);
         } catch (recordErr) {
             console.error('Failed to record webhook error:', recordErr);
         }
 
         // Return 500 so Stripe will retry
-        return NextResponse.json({ error: 'Webhook processing failed', message: err.message }, { status: 500 });
+        return NextResponse.json({ error: 'Webhook processing failed', code: 'STRIPE_WEBHOOK_PROCESSING' }, { status: 500 });
     }
 }

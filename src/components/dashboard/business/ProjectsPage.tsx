@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { projectService } from '../../../services/projectService';
@@ -60,6 +61,8 @@ const getNormalizedStage = (stage: string | undefined): ProjectStage => {
 };
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
+    const router = useRouter();
+    const nextSearch = useSearchParams();
     const { currentTenant } = useTenant();
     const [projects, setProjects] = useState<BusinessProject[]>([]);
     const [clients, setClients] = useState<any[]>([]);
@@ -69,14 +72,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Deep Linking Support
-    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-
     useEffect(() => {
-        if (searchParams?.get('create') === 'true') {
+        if (nextSearch.get('create') === 'true' || nextSearch.get('new') === 'true') {
             setShowAddModal(true);
+            router.replace('/dashboard/business/projects', { scroll: false });
         }
-    }, [searchParams]);
+    }, [nextSearch, router]);
 
     const loadData = useCallback(async () => {
         if (!currentTenant) return;

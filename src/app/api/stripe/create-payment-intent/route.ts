@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
@@ -60,9 +61,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Stripe PaymentIntent error:', error);
-        return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
-            { status: 500 }
-        );
+        return clientErrorResponse(error, { request: req, scope: 'stripe/create-payment-intent' });
     }
 }

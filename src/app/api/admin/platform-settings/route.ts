@@ -39,7 +39,7 @@ export async function GET() {
       .maybeSingle();
 
     if (error) {
-      console.error('[platform-settings] GET:', error.message);
+      console.error('[platform-settings] GET:', error);
       return NextResponse.json({ error: 'Failed to load settings' }, { status: 500 });
     }
 
@@ -89,7 +89,7 @@ export async function PUT(req: NextRequest) {
     );
 
     if (error) {
-      console.error('[platform-settings] PUT:', error.message);
+      console.error('[platform-settings] PUT:', error);
       return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
     }
 

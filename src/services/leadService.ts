@@ -446,7 +446,7 @@ export const leadService = {
             if (tenantError) throw tenantError;
 
             if (tenant.subscription_plan === 'free') {
-                const MAX_LEADS_24H = 30;
+                const MAX_LEADS_24H = 50;
                 const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
                 const { count, error } = await supabase
@@ -463,7 +463,7 @@ export const leadService = {
                 if (currentCount >= MAX_LEADS_24H) {
                     return {
                         allowed: false,
-                        error: `Free plan limit reached: ${MAX_LEADS_24H} leads per 24 hours. Upgrade for unlimited lead generation.`,
+                        error: `Free plan limit reached: ${MAX_LEADS_24H} new leads per 24 hours (includes saved AI leads). Upgrade for higher limits.`,
                         remaining: 0
                     };
                 }

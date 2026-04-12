@@ -89,8 +89,8 @@ export async function GET(req: NextRequest) {
         if (integrationError) throw integrationError;
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=connected`);
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('HubSpot Callback Error:', err);
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=${encodeURIComponent(err.message)}`);
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=callback_failed`);
     }
 }

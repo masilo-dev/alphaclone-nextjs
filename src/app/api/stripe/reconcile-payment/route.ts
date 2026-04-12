@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import Stripe from 'stripe';
 
@@ -58,8 +59,8 @@ export async function POST(req: NextRequest) {
             currency: paymentIntent.currency,
             paymentIntentId,
         });
-    } catch (err: any) {
-        console.error('[Reconcile Payment]', err.message);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        console.error('[Reconcile Payment]', err);
+        return clientErrorResponse(err, { request: req, scope: 'stripe/reconcile-payment' });
     }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule' });
 
     // If publishing now (no scheduled_at, platform includes facebook), post immediately
     if (!scheduled_at && platforms?.includes('facebook') && facebook_page_id) {
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule' });
     return NextResponse.json({ posts: data });
 }
 
@@ -107,7 +108,11 @@ async function publishToFacebook(
         const result = await res.json();
 
         if (result.error) {
-            await adminClient.from('social_posts').update({ status: 'failed', error_message: result.error.message }).eq('id', postId);
+            console.error('[social/schedule] Facebook Graph error:', result.error);
+            await adminClient
+                .from('social_posts')
+                .update({ status: 'failed', error_message: 'Facebook publish failed' })
+                .eq('id', postId);
         } else {
             await adminClient.from('social_posts').update({
                 status: 'published',
@@ -116,6 +121,10 @@ async function publishToFacebook(
             }).eq('id', postId);
         }
     } catch (err) {
-        await adminClient.from('social_posts').update({ status: 'failed', error_message: String(err) }).eq('id', postId);
+        console.error('[social/schedule] publish job:', err);
+        await adminClient
+            .from('social_posts')
+            .update({ status: 'failed', error_message: 'Publish job failed' })
+            .eq('id', postId);
     }
 }

@@ -201,7 +201,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         icon: Briefcase,
                         completed: progressData.onboardingProgress?.hasProjects || false,
                         action: 'New Project',
-                        actionUrl: '/dashboard/projects',
+                        actionUrl: '/dashboard/business/projects?new=true',
                         reward: 'Project Pro Badge'
                     },
                     {
@@ -211,7 +211,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         icon: Zap,
                         completed: progressData.onboardingProgress?.hasIntegrations || false,
                         action: 'Setup',
-                        actionUrl: '/dashboard/integrations',
+                        actionUrl: '/dashboard/marketplace',
                         reward: 'Integration Expert badge'
                     }
                 ];
@@ -261,7 +261,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 icon: Briefcase,
                 completed: false,
                 action: 'New Project',
-                actionUrl: '/dashboard/projects',
+                actionUrl: '/dashboard/business/projects?new=true',
                 reward: 'Project Pro Badge'
             },
             {
@@ -271,7 +271,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 icon: Zap,
                 completed: false,
                 action: 'Setup',
-                actionUrl: '/dashboard/integrations',
+                actionUrl: '/dashboard/marketplace',
                 reward: 'Integration Expert badge'
             }
         ];
@@ -359,7 +359,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
             {usingPlaceholderData && (
                 <div
                     role="status"
@@ -368,23 +368,23 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     Sample metrics and checklist are shown until live workspace data is available or loads successfully.
                 </div>
             )}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold text-slate-900">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 truncate">
                         {greeting?.text || 'Hello'}, {firstName}
                     </h1>
-                    <p className="text-slate-600 mt-1">{welcomeMessage}</p>
+                    <p className="text-slate-600 mt-1 text-sm sm:text-base">{welcomeMessage}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <button 
                         onClick={() => router.push('/dashboard/crm?quickAdd=true')}
-                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm active:scale-95"
+                        className="px-3 py-2 sm:px-4 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm active:scale-95"
                     >
                         Quick Add
                     </button>
                     <button 
                         onClick={() => router.push('/dashboard/business/projects?new=true')}
-                        className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20 active:scale-95"
+                        className="px-3 py-2 sm:px-4 bg-teal-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/20 active:scale-95"
                     >
                         New Project
                     </button>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
         .eq('is_active', true)
         .maybeSingle();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'twilio/credentials' });
 
     if (!data) return NextResponse.json({ connected: false });
 
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
             { onConflict: 'tenant_id' }
         );
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'twilio/credentials' });
 
     return NextResponse.json({ success: true });
 }
@@ -122,7 +123,7 @@ export async function DELETE(req: NextRequest) {
         .delete()
         .eq('tenant_id', tenantId);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'twilio/credentials' });
 
     return NextResponse.json({ success: true });
 }

@@ -270,24 +270,24 @@ export const IntegrationMarketplace: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Integration Marketplace</h2>
-        <p className="text-slate-400">
-          Connect your favorite tools to streamline your workflow. Each integration earns you momentum points!
+        <h2 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2">Integration Marketplace</h2>
+        <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+          Connect your tools in one place. Optional rewards appear as momentum points in your dashboard.
         </p>
       </div>
 
       {/* Category Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 md:gap-2">
         {categories.map(category => {
           const Icon = category.icon;
           return (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+              className={`flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border transition-all ${
                 selectedCategory === category.id
                   ? 'bg-teal-500/20 border-teal-500 text-teal-300'
                   : 'border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
@@ -301,23 +301,23 @@ export const IntegrationMarketplace: React.FC = () => {
       </div>
 
       {/* Integration Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {filteredIntegrations.map(integration => {
           const Icon = integration.icon;
           const StatusIcon = getStatusIcon(integration.status);
           const statusColor = getStatusColor(integration.status);
 
           return (
-            <div key={integration.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-4">
+            <div key={integration.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 md:p-6 space-y-3 md:space-y-4">
               {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-white" />
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                  <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">{integration.name}</h3>
-                    <p className="text-sm text-slate-400">{integration.description}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold text-white">{integration.name}</h3>
+                    <p className="text-xs md:text-sm text-slate-400">{integration.description}</p>
                   </div>
                 </div>
                 

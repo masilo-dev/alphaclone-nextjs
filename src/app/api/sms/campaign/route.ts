@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'sms/campaign' });
     return NextResponse.json({ campaigns: data });
 }
 
@@ -47,6 +48,6 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return clientErrorResponse(error, { request: req, scope: 'sms/campaign' });
     return NextResponse.json({ campaign: data });
 }

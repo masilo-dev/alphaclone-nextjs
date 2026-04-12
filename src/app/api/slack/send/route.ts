@@ -54,8 +54,9 @@ export async function POST(request: NextRequest) {
     const slackData = await slackResponse.json();
 
     if (!slackData.ok) {
+      console.error('[slack/send] Slack API error:', slackData.error);
       return NextResponse.json(
-        { error: 'Failed to send Slack message', details: slackData.error },
+        { error: 'Failed to send Slack message', code: 'SLACK_API_ERROR' },
         { status: 500 }
       );
     }

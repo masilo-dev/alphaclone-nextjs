@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 
 import { hubspotService } from '@/services/hubspotService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
@@ -67,16 +69,16 @@ export async function POST(req: Request) {
                     if (!upsertError) syncedCount++;
                 }
                 results.push({ provider: 'hubspot', status: 'success', count: contacts.length });
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error('HubSpot Pull Error:', e);
-                results.push({ provider: 'hubspot', status: 'failed', error: e.message });
+                results.push({ provider: 'hubspot', status: 'failed', error: OPERATION_FAILED_MESSAGE });
             }
         }
 
 
         return NextResponse.json({ success: true, results, syncedCount });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('CRM Pull Error:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'crm/sync/pull.POST' });
     }
 }

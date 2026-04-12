@@ -27,14 +27,18 @@ export async function POST(req: NextRequest) {
             syncedCount,
             message: `Successfully synced ${syncedCount} records from Zoho CRM`,
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         if (err instanceof ZohoAuthExpiredError) {
+            console.error('[Zoho CRM Sync] auth expired:', err);
             return NextResponse.json(
-                { error: err.message, reconnect: true },
+                { error: 'Zoho CRM session expired. Reconnect Zoho.', code: 'ZOHO_CRM_RECONNECT', reconnect: true },
                 { status: 401 }
             );
         }
-        console.error('[Zoho CRM Sync]', err?.message ?? err);
-        return NextResponse.json({ error: err?.message ?? 'Sync failed' }, { status: 500 });
+        console.error('[Zoho CRM Sync]', err);
+        return NextResponse.json(
+            { error: 'Zoho CRM sync failed. Please try again.', code: 'ZOHO_CRM_SYNC_FAILED' },
+            { status: 500 }
+        );
     }
 }

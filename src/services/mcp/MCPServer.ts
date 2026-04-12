@@ -1,6 +1,8 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
+import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -9,6 +11,27 @@ const UUID_RE =
 
 function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+const MCP_GENERIC_OPERATION_ERROR =
+  'This action could not be completed right now. Please try again in a few minutes. If the issue continues, contact support.';
+
+function supabaseErrorToMcpClientError(toolName: string, message: string): Error {
+  const m = message.toLowerCase();
+  console.error(`[MCP ${toolName}]`, message);
+  if (
+    m.includes('does not exist') ||
+    m.includes('schema cache') ||
+    m.includes('could not find') ||
+    m.includes('42703') ||
+    m.includes('42p01') ||
+    m.includes('invalid input syntax')
+  ) {
+    return new Error(
+      'Workspace data is temporarily unavailable. Please try again shortly. If this continues, contact support so your account can be verified.'
+    );
+  }
+  return new Error(MCP_GENERIC_OPERATION_ERROR);
 }
 
 /**
@@ -398,7 +421,7 @@ class AlphaCloneMCPServer {
             .limit(Math.min(limit, 100));
           if (status) query = query.eq('status', status);
           const { data, error } = await query;
-          if (error) throw new Error(`get_clients failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_clients', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -413,7 +436,7 @@ class AlphaCloneMCPServer {
             .insert({ tenant_id, name, email, phone, company, status, source })
             .select('id, name, email')
             .single();
-          if (error) throw new Error(`create_client failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('create_client', error.message);
           result = {
             content: [
               {
@@ -441,7 +464,7 @@ class AlphaCloneMCPServer {
           if (status) query = query.eq('status', status);
           if (stage) query = query.eq('stage', stage);
           const { data, error } = await query;
-          if (error) throw new Error(`get_leads failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_leads', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -468,7 +491,7 @@ class AlphaCloneMCPServer {
             })
             .select('id, business_name, email, status')
             .single();
-          if (error) throw new Error(`create_lead failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
           result = {
             content: [
               {
@@ -498,7 +521,7 @@ class AlphaCloneMCPServer {
             .update(update)
             .eq('id', lead_id.trim())
             .eq('tenant_id', tenant_id);
-          if (error) throw new Error(`update_lead_status failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('update_lead_status', error.message);
           result = { content: [{ type: 'text', text: `Lead ${lead_id} updated: ${JSON.stringify(update)}` }] };
           break;
         }
@@ -516,7 +539,7 @@ class AlphaCloneMCPServer {
             .limit(Math.min(limit, 100));
           if (stage) query = query.eq('stage', stage);
           const { data, error } = await query;
-          if (error) throw new Error(`get_deals failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_deals', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -531,7 +554,7 @@ class AlphaCloneMCPServer {
             .insert({ tenant_id, name, value: value || 0, stage, description, source: 'MCP Agent' })
             .select('id, name, value, stage')
             .single();
-          if (error) throw new Error(`create_deal failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('create_deal', error.message);
           result = {
             content: [
               {
@@ -555,7 +578,7 @@ class AlphaCloneMCPServer {
             .limit(50);
           if (status) query = query.eq('status', status);
           const { data, error } = await query;
-          if (error) throw new Error(`get_projects failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_projects', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -575,7 +598,7 @@ class AlphaCloneMCPServer {
             .update(update)
             .eq('id', project_id.trim())
             .eq('tenant_id', tenant_id);
-          if (error) throw new Error(`update_project_status failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('update_project_status', error.message);
           result = { content: [{ type: 'text', text: `Project ${project_id} updated to: ${status}` }] };
           break;
         }
@@ -607,7 +630,7 @@ class AlphaCloneMCPServer {
           if (completed === true) query = query.eq('status', 'completed');
           if (completed === false) query = query.neq('status', 'completed');
           const { data, error } = await query;
-          if (error) throw new Error(`get_tasks failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_tasks', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -637,7 +660,7 @@ class AlphaCloneMCPServer {
             })
             .select('id, title, due_date, priority, related_to_project')
             .single();
-          if (error) throw new Error(`create_task failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('create_task', error.message);
           result = { content: [{ type: 'text', text: `Task created: ${JSON.stringify(data)}` }] };
           break;
         }
@@ -657,7 +680,7 @@ class AlphaCloneMCPServer {
           if (from_date) query = query.gte('date', from_date);
           if (to_date) query = query.lte('date', to_date);
           const { data, error } = await query;
-          if (error) throw new Error(`get_expenses failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_expenses', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -707,7 +730,7 @@ class AlphaCloneMCPServer {
             .select('id, action, entity_type, created_at')
             .single();
 
-          if (error) throw new Error(`write_audit_log failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('write_audit_log', error.message);
           result = { content: [{ type: 'text', text: `Audit log written: ${JSON.stringify(data)}` }] };
           break;
         }
@@ -718,12 +741,16 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const { data, error } = await supabase
             .from('business_invoices')
-            .select('total_amount, status, created_at')
+            .select('total, status, created_at')
             .eq('tenant_id', tenant_id)
             .limit(200);
-          if (error) throw new Error(`get_revenue_summary failed: ${error.message}`);
-          const paid = (data ?? []).filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + (i.total_amount || 0), 0);
-          const outstanding = (data ?? []).filter((i: any) => i.status !== 'paid').reduce((s: number, i: any) => s + (i.total_amount || 0), 0);
+          if (error) throw supabaseErrorToMcpClientError('get_revenue_summary', error.message);
+          const paid = (data ?? [])
+            .filter((i: { status?: string }) => i.status === 'paid')
+            .reduce((s: number, i: { total?: number }) => s + (Number(i.total) || 0), 0);
+          const outstanding = (data ?? [])
+            .filter((i: { status?: string }) => i.status !== 'paid')
+            .reduce((s: number, i: { total?: number }) => s + (Number(i.total) || 0), 0);
           result = {
             content: [{
               type: 'text',
@@ -739,8 +766,26 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const { contract_type, client_name, key_terms } = a;
 
+          const { data: tenantRow } = await supabaseAdmin
+            .from('tenants')
+            .select('subscription_plan')
+            .eq('id', tenant_id)
+            .maybeSingle();
+          const plan = (tenantRow?.subscription_plan as string) || 'free';
+          const quota = await consumeTenantAiUnits(
+            supabaseAdmin,
+            tenant_id,
+            plan,
+            unitsForTextGeneration(2048)
+          );
+          if (!quota.ok) {
+            throw new Error(
+              'Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.'
+            );
+          }
+
           const apiKey = process.env.ANTHROPIC_API_KEY;
-          if (!apiKey) throw new Error('AI service not configured. Please contact your administrator.');
+          if (!apiKey) throw new Error(MCP_GENERIC_OPERATION_ERROR);
 
           const anthropic = new Anthropic({ apiKey });
           const aiResponse = await anthropic.messages.create({
@@ -772,7 +817,7 @@ class AlphaCloneMCPServer {
             result = {
               content: [{
                 type: 'text',
-                text: `Contract draft generated for ${client_name} (could not save to database: ${error.message}):\n\n${contractContent}`,
+                text: `Contract draft generated for ${client_name} (could not be saved automatically — open Contracts in the app to save):\n\n${contractContent}`,
               }],
             };
           } else {
@@ -795,7 +840,7 @@ class AlphaCloneMCPServer {
             .select('xp, level, streak_count, momentum_score')
             .eq('id', user_id)
             .single();
-          if (error) throw new Error(`get_momentum_score failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_momentum_score', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -811,7 +856,7 @@ class AlphaCloneMCPServer {
             .eq('tenant_id', tenant_id)
             .order('created_at', { ascending: false })
             .limit(Math.min(limit, 50));
-          if (error) throw new Error(`get_recent_messages failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_recent_messages', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -828,7 +873,7 @@ class AlphaCloneMCPServer {
             .limit(50);
           if (status) query = query.eq('status', status);
           const { data, error } = await query;
-          if (error) throw new Error(`get_quotes failed: ${error.message}`);
+          if (error) throw supabaseErrorToMcpClientError('get_quotes', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -850,9 +895,12 @@ class AlphaCloneMCPServer {
         }
 
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`MCP Tool Execution Error [${name}]:`, error);
-        throw error;
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error(MCP_GENERIC_OPERATION_ERROR);
       }
     });
   }

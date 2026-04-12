@@ -96,9 +96,8 @@ export default function IngestionPanel() {
         const data = await res.json();
 
         if (data.success) {
-            const intentColor = data.intent.label === 'high' || data.intent.label === 'urgent' ? '🔥' : data.intent.label === 'medium' ? '⚡' : '📋';
             toast.success(
-                `${intentColor} ${data.intent.label.toUpperCase()} intent (${data.intent.score}/100)${data.lead_id ? ' · Lead created!' : ''}`,
+                `${data.intent.label.toUpperCase()} intent (${data.intent.score}/100)${data.lead_id ? ' — Lead created' : ''}`,
                 { id: toastId, duration: 4000 }
             );
             setForm({ ...EMPTY_FORM });

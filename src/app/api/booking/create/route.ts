@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
@@ -342,6 +343,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, booking, roomUrl: maskedUrl });
     } catch (err: any) {
         console.error('Booking API Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'booking/create' });
     }
 }

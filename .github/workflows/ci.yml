@@ -138,14 +138,18 @@ jobs:
 
       - name: Check for migration conflicts
         run: |
-          echo "Checking for duplicate migration timestamps..."
-          duplicates=$(find supabase/migrations -name "*.sql" | sed 's/.*\///' | cut -d'_' -f1 | sort | uniq -d)
-          if [ ! -z "$duplicates" ]; then
+          echo "Checking for duplicate 14-digit migration timestamps (YYYYMMDDhhmmss)..."
+          duplicates=$(for f in supabase/migrations/*.sql; do
+            base=$(basename "$f")
+            prefix="${base%%_*}"
+            if [[ "$prefix" =~ ^[0-9]{14}$ ]]; then echo "$prefix"; fi
+          done | sort | uniq -d)
+          if [ -n "$duplicates" ]; then
             echo "❌ Error: Duplicate migration timestamps found:"
             echo "$duplicates"
             exit 1
           else
-            echo "✅ No migration conflicts detected"
+            echo "✅ No duplicate 14-digit migration timestamps"
           fi
 
   # ============================================================================

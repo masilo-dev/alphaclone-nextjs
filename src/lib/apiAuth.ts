@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from './supabase-admin';
+import { clientErrorResponse } from './api/clientErrorResponse';
+import { RouteAuthError } from './api/routeAuthError';
+
+export { RouteAuthError };
+
+export type { ApiErrorBody } from './api/clientErrorResponse';
 
 // Re-export the isomorphized admin client for consistency
 export { createSupabaseAdminClient as createAdminSupabaseClientOrThrow };
@@ -8,16 +14,6 @@ type TenantMembership = {
     tenant_id: string;
     role: string;
 };
-
-export class RouteAuthError extends Error {
-    status: number;
-
-    constructor(status: number, message: string) {
-        super(message);
-        this.status = status;
-        this.name = 'RouteAuthError';
-    }
-}
 
 /**
  * Lazy-loads the App Router Supabase client.
@@ -37,7 +33,7 @@ export async function requireAuthenticatedUser() {
     const { data, error } = await supabase.auth.getUser();
 
     if (error || !data?.user?.id) {
-        throw new RouteAuthError(401, 'Unauthorized');
+        throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
     }
 
     return {
@@ -52,7 +48,7 @@ export async function requireAuthenticatedUser() {
  */
 export async function requireTenantAccess(tenantId: string) {
     if (!tenantId?.trim()) {
-        throw new RouteAuthError(400, 'tenantId required');
+        throw new RouteAuthError(400, 'tenantId required', 'BAD_REQUEST');
     }
 
     const { supabase, user } = await requireAuthenticatedUser();
@@ -66,11 +62,11 @@ export async function requireTenantAccess(tenantId: string) {
 
     if (error) {
         console.error('[apiAuth] Failed to verify tenant membership:', error);
-        throw new RouteAuthError(500, 'Failed to verify tenant access');
+        throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
     }
 
     if (!data) {
-        throw new RouteAuthError(403, 'Forbidden');
+        throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
     }
 
     return {
@@ -94,11 +90,11 @@ export async function requirePlatformSuperAdmin() {
 
     if (error) {
         console.error('[apiAuth] requirePlatformSuperAdmin profile:', error.message);
-        throw new RouteAuthError(500, 'Failed to verify admin access');
+        throw new RouteAuthError(500, 'Failed to verify admin access', 'INTERNAL_ERROR');
     }
 
     if (profile?.role !== 'admin') {
-        throw new RouteAuthError(403, 'Forbidden');
+        throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
     }
 
     return { supabase, user };
@@ -106,12 +102,16 @@ export async function requirePlatformSuperAdmin() {
 
 /**
  * Standard utility for returning error responses from API routes.
+ * Does not expose internal Error.message to the client (fallbackMessage is safe copy only).
  */
-export function routeErrorResponse(error: unknown, fallbackMessage = 'Internal server error') {
-    if (error instanceof RouteAuthError) {
-        return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-
-    console.error('[apiAuth] Unhandled route error:', error);
-    return NextResponse.json({ error: fallbackMessage }, { status: 500 });
+export function routeErrorResponse(
+    error: unknown,
+    fallbackMessage = 'Something went wrong. Please try again.',
+    request?: Pick<Request, 'headers'>
+): NextResponse {
+    return clientErrorResponse(error, {
+        request,
+        scope: 'apiAuth',
+        fallbackMessage,
+    });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
@@ -53,10 +54,11 @@ export async function GET(req: Request) {
                 }, { status: 403 });
             }
 
-            return NextResponse.json({ 
-                error: `Calendly API error: ${response.status}`, 
-                details: errorText 
-            }, { status: response.status });
+            console.error('Calendly event-types error body:', errorText);
+            return NextResponse.json(
+                { error: 'Calendly request failed', code: 'CALENDLY_API_ERROR', status: response.status },
+                { status: response.status }
+            );
         }
 
         const data = await response.json();
@@ -64,6 +66,6 @@ export async function GET(req: Request) {
 
     } catch (err: any) {
         console.error('API /calendly/event-types Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'calendly/event-types' });
     }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
     Facebook, Users, Megaphone, RefreshCw, CheckCircle2, XCircle,
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
@@ -82,6 +83,8 @@ export default function FacebookIntegrationTab(props: FacebookIntegrationTabProp
 }
 
 function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabProps) {
+    const router = useRouter();
+    const urlSearch = useSearchParams();
     const [activeTab, setActiveTab] = useState<'leads' | 'messenger' | 'posts' | 'post' | 'pages' | 'setup'>('leads');
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [leads, setLeads] = useState<FacebookLead[]>([]);
@@ -189,6 +192,22 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     useEffect(() => { loadData(); }, [loadData]);
 
+    // OAuth return: show feedback, strip query params, refresh pages (loadData is latest from closure).
+    useEffect(() => {
+        const fbOk = urlSearch.get('fb_connected');
+        const fbErr = urlSearch.get('fb_error');
+        if (fbOk === 'true') {
+            toast.success('Facebook connected for this workspace.');
+            void loadData();
+            router.replace('/dashboard/business/facebook', { scroll: false });
+            return;
+        }
+        if (fbErr) {
+            toast.error('Facebook could not be connected. Please try again or contact support.');
+            router.replace('/dashboard/business/facebook', { scroll: false });
+        }
+    }, [urlSearch, router, loadData]);
+
     useEffect(() => {
         if (activeTab === 'posts' && selectedPageId) {
             fetchPagePosts(selectedPageId);
@@ -197,9 +216,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     const handleConnect = () => {
         const tid = tenant?.id;
+        const returnTo = encodeURIComponent('/dashboard/business/facebook');
         window.location.href = tid
-            ? `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(tid)}`
-            : '/api/auth/facebook/connect';
+            ? `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(tid)}&return_to=${returnTo}`
+            : `/api/auth/facebook/connect?return_to=${returnTo}`;
     };
 
     const handleDisconnect = async (pageId: string) => {

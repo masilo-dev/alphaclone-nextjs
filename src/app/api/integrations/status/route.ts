@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Integration status check error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'integrations/status' });
   }
 }
 
@@ -97,13 +98,14 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
         type: integration.type,
         ...status
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('[integrations/status]', integration.type, error);
       results.push({
         name: integration.name,
         type: integration.type,
         status: 'error',
         percentage: 0,
-        issues: [error.message],
+        issues: ['Status check failed'],
         actions: [],
         connected: false
       });

@@ -96,7 +96,11 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ success: true, provider: 'sendgrid' });
             } else {
                 const errData = await response.json();
-                return NextResponse.json({ success: false, error: errData.errors?.[0]?.message || 'SendGrid failed' }, { status: response.status });
+                console.error('[email/send] SendGrid:', errData);
+                return NextResponse.json(
+                    { success: false, error: 'SendGrid rejected this send request', code: 'SENDGRID_ERROR' },
+                    { status: response.status }
+                );
             }
         } else {
             // Legacy Resend Fallback
@@ -120,7 +124,11 @@ export async function POST(req: NextRequest) {
             if (response.ok) {
                 return NextResponse.json({ success: true, id: data.id, provider: 'resend' });
             } else {
-                return NextResponse.json({ success: false, error: data.message || 'Resend failed' }, { status: response.status });
+                console.error('[email/send] Resend:', data);
+                return NextResponse.json(
+                    { success: false, error: 'Email provider rejected this send request', code: 'RESEND_ERROR' },
+                    { status: response.status }
+                );
             }
         }
 

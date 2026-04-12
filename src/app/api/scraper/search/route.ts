@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+
+const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
   fetchSerpLeadsViaBrowser,
   hasRemoteBrowserConfigured,
@@ -333,9 +336,9 @@ async function checkAndDeductQuota(tenantId: string, wantCount: number): Promise
       quotaCache.set(cacheKey, used + deductCount);
 
       return { allowed: true, remaining: remaining - deductCount, used: used + deductCount };
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If quota table doesn't exist yet, fail open (don't block searches)
-      console.warn('[Quota] Supabase quota check failed — failing open:', err.message);
+      console.warn('[Quota] Supabase quota check failed — failing open:', err);
     }
   }
 
@@ -383,9 +386,9 @@ export async function POST(request: Request) {
       results.push(...enrichWithContactFlag(verified));
       sourceCounts.osm = verified.length;
       console.log(`[Scraper] OSM returned ${osmResults.length} raw → ${verified.length} verified (with contact)`);
-    } catch (err: any) {
-      sourceErrors.osm = err.message;
-      console.warn('[Scraper] OSM failed:', err.message);
+    } catch (err: unknown) {
+      sourceErrors.osm = SOURCE_UNAVAILABLE;
+      console.warn('[Scraper] OSM failed:', err);
     }
 
     // ── Step 2: Fallbacks only if OSM < LEADS_PER_SEARCH verified leads ───────
@@ -404,8 +407,8 @@ export async function POST(request: Request) {
         const rejected = yelpRes.value.length - verified.length;
         if (rejected > 0) console.log(`[Scraper] Yelp: ${rejected} leads rejected (no contact info)`);
       } else {
-        sourceErrors.yelp = (yelpRes.reason as Error).message;
-        console.warn('[Scraper] Yelp fallback failed:', sourceErrors.yelp);
+        console.warn('[Scraper] Yelp fallback failed:', yelpRes.reason);
+        sourceErrors.yelp = SOURCE_UNAVAILABLE;
       }
 
       if (hereRes.status === 'fulfilled') {
@@ -415,8 +418,8 @@ export async function POST(request: Request) {
         const rejected = hereRes.value.length - verified.length;
         if (rejected > 0) console.log(`[Scraper] HERE: ${rejected} leads rejected (no contact info)`);
       } else {
-        sourceErrors.here = (hereRes.reason as Error).message;
-        console.warn('[Scraper] HERE fallback failed:', sourceErrors.here);
+        console.warn('[Scraper] HERE fallback failed:', hereRes.reason);
+        sourceErrors.here = SOURCE_UNAVAILABLE;
       }
     }
 
@@ -434,9 +437,8 @@ export async function POST(request: Request) {
           console.log(`[Scraper] Browser SERP: ${rejected} rows rejected (no contact info)`);
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        sourceErrors.browser = msg;
-        console.warn('[Scraper] Browser SERP supplement failed:', msg);
+        sourceErrors.browser = SOURCE_UNAVAILABLE;
+        console.warn('[Scraper] Browser SERP supplement failed:', err);
       }
     }
 
@@ -472,12 +474,12 @@ export async function POST(request: Request) {
       rejectedCount: unique.length - final.length,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof RouteAuthError) {
       return routeErrorResponse(error);
     }
 
-    console.error('[Scraper] Fatal:', error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('[Scraper] Fatal:', error);
+    return clientErrorResponse(error, { request, scope: 'scraper/search.POST' });
   }
 }

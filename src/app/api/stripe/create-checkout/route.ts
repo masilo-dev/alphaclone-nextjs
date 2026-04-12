@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
@@ -81,9 +82,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error: any) {
         console.error('Stripe checkout error:', error);
-        return NextResponse.json(
-            { error: error.message || 'Failed to create checkout session' },
-            { status: 500 }
-        );
+        return clientErrorResponse(error, { request: req, scope: 'stripe/create-checkout' });
     }
 }

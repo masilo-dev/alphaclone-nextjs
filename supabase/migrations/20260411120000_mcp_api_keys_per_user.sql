@@ -1,4 +1,5 @@
 -- MCP connection tokens: one per (tenant, user) so each team member connects their own Claude/Manus.
+-- Shared AI usage quota (consume_tenant_ai_units) is in 20260412164029_mcp_shared_tenant_ai_units_quota.sql (applied on hosted DB via Supabase MCP).
 
 DO $$
 BEGIN

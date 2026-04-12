@@ -15,7 +15,9 @@
     "supabase:push": "npx supabase db push",
     "supabase:reset": "npx supabase db reset",
     "migrate": "npx supabase db push",
-    "migrate:check": "node scripts/check-migrations.js"
+    "migrate:check": "node scripts/check-migrations.js",
+    "api:sweep-errors": "node scripts/sweep-api-errors.mjs",
+    "guidance:compact": "node scripts/compact-guidance.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",

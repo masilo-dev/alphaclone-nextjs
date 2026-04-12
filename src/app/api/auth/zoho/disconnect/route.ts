@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -14,6 +15,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (err: any) {
         console.error('Zoho Disconnect Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'auth/zoho/disconnect' });
     }
 }

@@ -104,7 +104,8 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (videoCallError || !videoCall) {
-            return NextResponse.json({ error: videoCallError?.message || 'Failed to create video call' }, { status: 500 });
+            console.error('[meetings/create] video_calls insert:', videoCallError);
+            return NextResponse.json({ error: 'Failed to create video call', code: 'VIDEO_CALL_DB_ERROR' }, { status: 500 });
         }
 
         // Step 3: Generate secure token for meeting link
@@ -127,7 +128,8 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (linkError || !meetingLink) {
-            return NextResponse.json({ error: linkError?.message || 'Failed to create meeting link' }, { status: 500 });
+            console.error('[meetings/create] meeting_links insert:', linkError);
+            return NextResponse.json({ error: 'Failed to create meeting link', code: 'MEETING_LINK_DB_ERROR' }, { status: 500 });
         }
 
         // Step 5: Return AlphaClone URL (not Daily.co URL)
@@ -145,6 +147,6 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        return routeErrorResponse(error, error instanceof Error ? error.message : 'Failed to create meeting');
+        return routeErrorResponse(error, 'Failed to create meeting.', req);
     }
 }
