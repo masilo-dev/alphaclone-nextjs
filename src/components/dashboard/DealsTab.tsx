@@ -367,6 +367,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
     }, []);
 
     useEffect(() => {
+        if (!searchParams) return;
         const open =
             searchParams.get('createFromLead') === '1' ||
             searchParams.get('fromLead') === 'true' ||
