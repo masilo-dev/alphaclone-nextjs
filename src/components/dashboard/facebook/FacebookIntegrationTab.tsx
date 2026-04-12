@@ -194,6 +194,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     // OAuth return: show feedback, strip query params, refresh pages (loadData is latest from closure).
     useEffect(() => {
+        if (!urlSearch) return;
         const fbOk = urlSearch.get('fb_connected');
         const fbErr = urlSearch.get('fb_error');
         if (fbOk === 'true') {
