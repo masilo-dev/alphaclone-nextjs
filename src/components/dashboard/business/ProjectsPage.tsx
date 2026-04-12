@@ -73,6 +73,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
+        if (!nextSearch) return;
         if (nextSearch.get('create') === 'true' || nextSearch.get('new') === 'true') {
             setShowAddModal(true);
             router.replace('/dashboard/business/projects', { scroll: false });
