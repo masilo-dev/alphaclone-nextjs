@@ -96,6 +96,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [postsLoading, setPostsLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [reconnectRequired, setReconnectRequired] = useState(false);
+    const [integrationLoadError, setIntegrationLoadError] = useState<string | null>(null);
 
     // Post form
     const [selectedPageId, setSelectedPageId] = useState('');
@@ -115,12 +116,15 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     const isConnected = pages.length > 0;
 
-    const loadData = useCallback(async () => {
+    /** Returns page count after fetch so callers (e.g. OAuth return) do not rely on async setState. */
+    const loadData = useCallback(async (): Promise<{ activePageCount: number; pagesFetchError: string | null }> => {
         if (!user?.id) {
             setLoading(false);
-            return;
+            setIntegrationLoadError(null);
+            return { activePageCount: 0, pagesFetchError: null };
         }
         setLoading(true);
+        setIntegrationLoadError(null);
         const tenantId = tenant?.id;
         const leadsQuery = tenantId
             ? supabase
@@ -144,11 +148,23 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             convQuery,
         ]);
 
-        if (!pagesRes.error) setPages(pagesRes.data || []);
+        if (pagesRes.error) {
+            console.error('[Facebook] facebook_integrations select:', pagesRes.error);
+            setIntegrationLoadError(pagesRes.error.message);
+            setPages([]);
+        } else {
+            setIntegrationLoadError(null);
+            const rows = pagesRes.data || [];
+            setPages(rows);
+            if (rows[0]) setSelectedPageId(rows[0].page_id);
+        }
         if (!leadsRes.error) setLeads(leadsRes.data || []);
         if (!convRes.error) setConversations(convRes.data || []);
-        if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
         setLoading(false);
+        return {
+            activePageCount: pagesRes.error ? 0 : (pagesRes.data || []).length,
+            pagesFetchError: pagesRes.error?.message ?? null,
+        };
     }, [user, tenant?.id]);
 
     const fetchActivity = useCallback(async (pageId: string) => {
@@ -192,21 +208,45 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    // OAuth return: show feedback, strip query params, refresh pages (loadData is latest from closure).
+    // OAuth return: reload integrations before clearing query params (avoid race with router.replace).
     useEffect(() => {
         if (!urlSearch) return;
         const fbOk = urlSearch.get('fb_connected');
         const fbErr = urlSearch.get('fb_error');
         if (fbOk === 'true') {
-            toast.success('Facebook connected for this workspace.');
-            void loadData();
-            router.replace('/dashboard/business/facebook', { scroll: false });
-            return;
+            let cancelled = false;
+            void (async () => {
+                const { activePageCount, pagesFetchError } = await loadData();
+                if (cancelled) return;
+                if (pagesFetchError) {
+                    toast.error(
+                        `Connected in Facebook, but this app could not load your pages: ${pagesFetchError}. If you are an admin, confirm Supabase migration 20260409_fix_integration_rls_policies is applied.`
+                    );
+                } else if (activePageCount === 0) {
+                    toast.error(
+                        'Facebook authorized, but no active pages were found. Create or manage a Facebook Page, grant Page permissions when connecting, or reconnect. If this persists, the connection may not have been saved (check server logs).'
+                    );
+                } else {
+                    toast.success('Facebook connected for this workspace.');
+                }
+                router.replace('/dashboard/business/facebook', { scroll: false });
+            })();
+            return () => {
+                cancelled = true;
+            };
         }
         if (fbErr === 'app_not_configured') {
             toast.error(
                 'Facebook is not configured for this deployment. Set FACEBOOK_APP_ID and the callback URL in the server environment (e.g. Vercel).'
             );
+            router.replace('/dashboard/business/facebook', { scroll: false });
+        } else if (fbErr === 'save_failed') {
+            toast.error(
+                'Facebook login worked, but saving the connection failed. Ensure the database has a unique index on (user_id, page_id) for facebook_integrations, then try Connect again.'
+            );
+            router.replace('/dashboard/business/facebook', { scroll: false });
+        } else if (fbErr === 'profile_failed') {
+            toast.error('Facebook returned an incomplete profile. Try again or check Meta app permissions.');
             router.replace('/dashboard/business/facebook', { scroll: false });
         } else if (fbErr) {
             toast.error('Facebook could not be connected. Please try again or contact support.');
@@ -396,6 +436,18 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             {!isConnected ? (
                 /* Not connected state */
                 <div className="border border-dashed border-slate-700 rounded-2xl p-12 text-center">
+                    {integrationLoadError && (
+                        <div
+                            className="mb-6 mx-auto max-w-lg rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-left text-sm text-amber-200"
+                            role="alert"
+                        >
+                            <p className="font-semibold text-amber-100">Could not load Facebook connection</p>
+                            <p className="mt-1 text-amber-200/90">{integrationLoadError}</p>
+                            <p className="mt-2 text-xs text-amber-200/70">
+                                This is often fixed by applying the latest Supabase RLS migration for facebook_integrations (auth.uid() policies). Try Refresh after your admin deploys it.
+                            </p>
+                        </div>
+                    )}
                     <Facebook className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                     <h3 className="text-lg font-bold text-white mb-2">Connect your Facebook account</h3>
                     <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">

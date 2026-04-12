@@ -123,6 +123,13 @@ export async function GET(req: NextRequest) {
     }
 
     const pages = pagesData.data || [];
+    const fbUserId = profileData?.id != null ? String(profileData.id) : null;
+    if (!fbUserId) {
+        console.error('[Facebook Callback] Missing Facebook user id from /me:', profileData);
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'profile_failed' });
+    }
+
+    let upsertFailures = 0;
 
     if (pages.length > 0) {
         for (const page of pages) {
@@ -132,14 +139,14 @@ export async function GET(req: NextRequest) {
                 page.tasks.includes('CREATE_CONTENT')
             );
 
-            await supabase.from('facebook_integrations').upsert({
+            const { error: upErr } = await supabase.from('facebook_integrations').upsert({
                 user_id: stateData.userId,
                 tenant_id: resolvedTenantId,
-                page_id: page.id,
+                page_id: String(page.id),
                 page_name: page.name,
                 page_access_token: page.access_token,
                 user_access_token: userToken,
-                app_scoped_user_id: profileData.id,
+                app_scoped_user_id: fbUserId,
                 is_active: true,
                 connected_at: new Date().toISOString(),
                 expires_at: longLivedData.expires_in
@@ -154,17 +161,21 @@ export async function GET(req: NextRequest) {
                     can_post: hasManageTask,
                 },
             }, { onConflict: 'user_id,page_id' });
+            if (upErr) {
+                console.error('[Facebook Callback] facebook_integrations upsert failed:', upErr);
+                upsertFailures += 1;
+            }
         }
     } else {
         console.warn('[Facebook Callback] No pages returned for user:', stateData.userId);
-        await supabase.from('facebook_integrations').upsert({
+        const { error: upErr } = await supabase.from('facebook_integrations').upsert({
             user_id: stateData.userId,
             tenant_id: resolvedTenantId,
-            page_id: profileData.id,
-            page_name: profileData.name,
+            page_id: fbUserId,
+            page_name: profileData.name || 'Facebook profile',
             page_access_token: null,
             user_access_token: userToken,
-            app_scoped_user_id: profileData.id,
+            app_scoped_user_id: fbUserId,
             is_active: true,
             connected_at: new Date().toISOString(),
             metadata: {
@@ -173,6 +184,16 @@ export async function GET(req: NextRequest) {
                 warning: 'No pages found. User may not have granted pages_show_list or has no Facebook Pages.',
             },
         }, { onConflict: 'user_id,page_id' });
+        if (upErr) {
+            console.error('[Facebook Callback] facebook_integrations upsert (no pages) failed:', upErr);
+            upsertFailures += 1;
+        }
+    }
+
+    const allPageUpsertsFailed = pages.length > 0 && upsertFailures >= pages.length;
+    const noPageRowFailed = pages.length === 0 && upsertFailures > 0;
+    if (allPageUpsertsFailed || noPageRowFailed) {
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'save_failed' });
     }
 
     if (resolvedTenantId) {
