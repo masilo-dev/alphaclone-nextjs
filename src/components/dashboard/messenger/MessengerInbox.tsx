@@ -21,7 +21,7 @@ interface Conversation {
     metadata: any;
     contact_id?: string;
     contacts?: {
-        name: string;
+        full_name?: string;
         email?: string;
     };
 }
@@ -94,7 +94,7 @@ export default function MessengerInbox() {
         try {
             const { data, error } = await supabase
                 .from('messenger_conversations')
-                .select('*, contacts(name, email)')
+                .select('*, contacts(full_name, email)')
                 .order('last_message_at', { ascending: false });
 
             if (error) throw error;
@@ -188,7 +188,7 @@ export default function MessengerInbox() {
     };
 
     const filteredConversations = conversations.filter(c => 
-        (c.contacts?.name || c.sender_id).toLowerCase().includes(searchTerm.toLowerCase())
+        (c.contacts?.full_name || c.sender_id).toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const activeConv = conversations.find(c => c.id === selectedConversation);
@@ -252,11 +252,11 @@ export default function MessengerInbox() {
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
                                             <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl flex items-center justify-center text-gray-400 font-bold border border-white/5 group-hover:border-blue-500/30 transition-all">
-                                                {conv.contacts?.name?.charAt(0) || <User size={18} />}
+                                                {conv.contacts?.full_name?.charAt(0) || <User size={18} />}
                                             </div>
                                             <div className="min-w-0">
                                                 <h3 className={`font-bold text-sm truncate max-w-[140px] ${!conv.is_read ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
-                                                    {conv.contacts?.name || `Customer ${conv.sender_id.substring(0, 4)}`}
+                                                    {conv.contacts?.full_name || `Customer ${conv.sender_id.substring(0, 4)}`}
                                                 </h3>
                                                 <div className="flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
@@ -292,10 +292,10 @@ export default function MessengerInbox() {
                                     </button>
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black shadow-lg">
-                                            {activeConv?.contacts?.name?.charAt(0) || 'C'}
+                                            {activeConv?.contacts?.full_name?.charAt(0) || 'C'}
                                         </div>
                                         <div>
-                                            <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.name || `Customer ${activeConv?.sender_id}`}</h2>
+                                            <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[10px] text-blue-400 font-black uppercase tracking-[0.1em]">Facebook Messenger</span>
                                                 {activeConv?.contact_id && (

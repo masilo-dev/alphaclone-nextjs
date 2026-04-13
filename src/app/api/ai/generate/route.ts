@@ -94,6 +94,22 @@ export async function POST(req: Request) {
         });
     } catch (error: any) {
         console.error('AI Generate API Error:', error);
+        const msg = String(error?.message || '').toLowerCase();
+        if (
+            msg.includes('api key') ||
+            msg.includes('provider') ||
+            msg.includes('anthropic') ||
+            msg.includes('openai') ||
+            msg.includes('gemini')
+        ) {
+            return NextResponse.json(
+                {
+                    error: 'AI provider is temporarily unavailable. Please retry in a moment.',
+                    code: 'AI_PROVIDER_UNAVAILABLE',
+                },
+                { status: 503 }
+            );
+        }
         return clientErrorResponse(error, { request: req, scope: 'ai/generate' });
     }
 }

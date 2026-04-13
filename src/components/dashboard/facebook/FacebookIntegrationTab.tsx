@@ -44,6 +44,8 @@ interface FacebookPage {
     page_name: string;
     is_active: boolean;
     connected_at: string;
+    page_access_token?: string | null;
+    metadata?: Record<string, any> | null;
 }
 
 interface FacebookLead {
@@ -131,6 +133,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [aiGenerating, setAiGenerating] = useState(false);
 
     const isConnected = pages.length > 0;
+    const hasPublishablePage = pages.some((p) => !!p.page_access_token && !p.metadata?.no_pages);
 
     /** Returns page count after fetch so callers (e.g. OAuth return) do not rely on async setState. */
     const loadData = useCallback(async (): Promise<{ activePageCount: number; pagesFetchError: string | null }> => {
@@ -157,7 +160,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         const [pagesRes, leadsRes, convRes] = await Promise.all([
             supabase
                 .from('facebook_integrations')
-                .select('id,page_id,page_name,is_active,connected_at')
+                .select('id,page_id,page_name,is_active,connected_at,page_access_token,metadata')
                 .eq('user_id', user.id)
                 .eq('is_active', true),
             leadsQuery,
@@ -172,7 +175,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             setIntegrationLoadError(null);
             const rows = pagesRes.data || [];
             setPages(rows);
-            if (rows[0]) setSelectedPageId(rows[0].page_id);
+            const preferred = rows.find((r: FacebookPage) => !!r.page_access_token && !r.metadata?.no_pages) || rows[0];
+            if (preferred) setSelectedPageId(preferred.page_id);
         }
         if (!leadsRes.error) setLeads(leadsRes.data || []);
         if (!convRes.error) setConversations(convRes.data || []);
@@ -357,6 +361,20 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const handlePost = async () => {
         if (!postMessage.trim()) return toast.error('Message is required');
         if (!selectedPageId) return toast.error('Select a Facebook Page');
+        const selectedConnection = pages.find((p) => p.page_id === selectedPageId);
+        if (selectedConnection?.metadata?.no_pages || !selectedConnection?.page_access_token) {
+            try {
+                void navigator.clipboard.writeText(postMessage.trim());
+            } catch {
+                // Ignore clipboard failures; fallback still opens Facebook.
+            }
+            const shareUrl = postLink?.trim()
+                ? `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postLink.trim())}`
+                : 'https://www.facebook.com/';
+            window.open(shareUrl, '_blank', 'noopener,noreferrer');
+            toast.success('Caption copied. Complete personal-account post in Facebook.');
+            return;
+        }
         setPosting(true);
         const toastId = toast.loading('Posting to Facebook...');
         try {
@@ -408,6 +426,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         if (!postMessage.trim()) return toast.error('Message is required');
         if (!selectedPageId) return toast.error('Select a Facebook Page');
         if (!scheduleAt) return toast.error('Select schedule date and time');
+        const selectedConnection = pages.find((p) => p.page_id === selectedPageId);
+        if (selectedConnection?.metadata?.no_pages || !selectedConnection?.page_access_token) {
+            return toast.error('Personal account is connected. Scheduling requires a Facebook Page connection.');
+        }
 
         setPosting(true);
         const toastId = toast.loading('Scheduling Facebook post...');
@@ -540,7 +562,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                     <div>
                         <h2 className="text-xl font-bold text-white">Facebook Integration</h2>
                         <p className="text-sm text-slate-400">
-                            Your Facebook account · Lead Ads, page posts, and inbox. Each team member can connect their own account.
+                            Connect your Facebook profile and Pages. Each team member can connect their own account.
                         </p>
                     </div>
                 </div>
@@ -804,7 +826,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
                             <div>
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
-                                    Facebook Page
+                                    Publishing Target
                                 </label>
                                 <select
                                     value={selectedPageId}
@@ -812,9 +834,16 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500"
                                 >
                                     {pages.map(p => (
-                                        <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
+                                        <option key={p.page_id} value={p.page_id}>
+                                            {p.page_name}{p.metadata?.no_pages || !p.page_access_token ? ' (Personal profile - read only)' : ''}
+                                        </option>
                                     ))}
                                 </select>
+                                {!hasPublishablePage && (
+                                    <p className="mt-2 text-xs text-amber-300">
+                                        Personal account connected successfully. To publish posts, connect at least one Facebook Page.
+                                    </p>
+                                )}
                             </div>
                             <div>
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
@@ -933,7 +962,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors"
                                     >
                                         {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                        {posting ? 'Posting...' : 'Post Now'}
+                                        {posting
+                                            ? 'Posting...'
+                                            : (pages.find((p) => p.page_id === selectedPageId)?.metadata?.no_pages ||
+                                               !pages.find((p) => p.page_id === selectedPageId)?.page_access_token)
+                                                ? 'Open in Facebook'
+                                                : 'Post Now'}
                                     </button>
                                     <button
                                         onClick={handleSchedulePost}
@@ -1023,6 +1057,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         <div>
                                             <p className="font-semibold text-white text-sm">{page.page_name}</p>
                                             <p className="text-xs text-slate-500">ID: {page.page_id} · Connected {new Date(page.connected_at).toLocaleDateString()}</p>
+                                            <p className="text-[11px] text-slate-400">
+                                                {page.metadata?.no_pages || !page.page_access_token
+                                                    ? 'Personal account connection (read-only tools)'
+                                                    : 'Facebook Page connection (publishing enabled)'}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">

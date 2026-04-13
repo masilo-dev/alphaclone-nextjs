@@ -18,18 +18,29 @@ export async function GET(req: NextRequest) {
   // Get integration token
   const { data: integration } = await supabase
     .from('facebook_integrations')
-    .select('page_access_token, user_access_token, tenant_id')
+    .select('page_access_token, user_access_token, tenant_id, metadata')
     .eq('user_id', user.id)
     .eq('page_id', pageId)
     .eq('is_active', true)
     .single();
 
+  // Personal profile connection can be valid but has no page feed endpoint.
+  if (integration?.metadata?.no_pages) {
+    return NextResponse.json({
+      success: true,
+      posts: [],
+      note: 'Personal account connection has no Facebook Page feed. Connect a Page to load posts.',
+    });
+  }
+
   const token = integration?.page_access_token || integration?.user_access_token;
   if (!token) {
-    return NextResponse.json(
-      { error: 'Facebook page not connected or token missing — please reconnect your page', action: 'reconnect' },
-      { status: 403 }
-    );
+    return NextResponse.json({
+      success: true,
+      posts: [],
+      note: 'No page token available for this connection.',
+      action: 'reconnect',
+    });
   }
 
   try {
@@ -48,14 +59,13 @@ export async function GET(req: NextRequest) {
     if (fbData.error) {
       console.error('[Facebook Posts] Graph API error:', fbData.error);
       const isAuthError = fbData.error.code === 190 || fbData.error.code === 102 || fbData.error.message?.includes('access token');
-      return NextResponse.json(
-        {
-          error: 'Facebook could not load posts for this page.',
-          code: 'FACEBOOK_GRAPH_ERROR',
-          action: isAuthError ? 'reconnect' : undefined,
-        },
-        { status: isAuthError ? 403 : 400 }
-      );
+      return NextResponse.json({
+        success: true,
+        posts: [],
+        note: 'Facebook could not load posts for this connection.',
+        code: 'FACEBOOK_GRAPH_ERROR',
+        action: isAuthError ? 'reconnect' : undefined,
+      });
     }
 
     const posts = (fbData.data || []) as any[];
