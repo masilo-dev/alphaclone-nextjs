@@ -32,20 +32,6 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
         isFuturistic: true
     },
 
-    // --- Claude 3.5 Series (Legacy / Retired) ---
-    { 
-        id: 'claude-3-5-sonnet-20241022', 
-        name: 'Claude 3.5 Sonnet (v2)', 
-        description: 'Retired flagship. Good for legacy compatibility.',
-        isLegacy: true 
-    },
-    { 
-        id: 'claude-3-5-haiku-20241022', 
-        name: 'Claude 3.5 Haiku', 
-        description: 'Retired high-speed model.',
-        isLegacy: true
-    },
-
     // --- OpenAI Series (Modern) ---
     {
         id: 'gpt-4o',

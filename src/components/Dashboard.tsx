@@ -50,7 +50,7 @@ interface ArchitectData {
 
 const generateContract = async (clientName: string, projectName: string): Promise<string> => {
   const prompt = `Generate a professional freelance contract for Client: ${clientName}, Project: ${projectName}. Include standard clauses.`;
-  const { text } = await generateText(prompt, 2048, 'claude-3-5-sonnet-20241022');
+  const { text } = await generateText(prompt, 2048, 'claude-sonnet-4-5-20250929');
   return text || "Contract generation failed.";
 };
 import { useBackgroundTasks } from '../contexts/BackgroundTaskContext';
@@ -806,7 +806,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     
     const prompt = `Generate technical architecture specs for a ${p.category || "Web Application"} project described as: "${p.description || "A new custom software project"}". Return ONLY a valid JSON object with keys: techStack (string), developmentPrompt (string), architectureDiagram (string description).`;
     
-    const { text } = await generateText(prompt, 1024, 'claude-3-5-sonnet-20241022');
+    const { text } = await generateText(prompt, 1024, 'claude-sonnet-4-5-20250929');
     
     try {
       const cleanJson = (text || "{}").replace(/```json/g, '').replace(/```/g, '').trim();

@@ -159,7 +159,7 @@ class AIGenerationService {
         userRole: string,
         prompt: string,
         type: 'blog' | 'email' | 'social' | 'general' = 'general',
-        model: string = 'claude-3-5-sonnet-20241022'
+        model: string = 'claude-sonnet-4-5-20250929'
     ): Promise<GenerationResult> {
         try {
             const systemPrompts = {

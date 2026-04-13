@@ -715,7 +715,7 @@ export const messageService = {
             If it's a specific question, acknowledge it and say the team will review it.
             Keep it under 3 sentences.`;
 
-            const { text: replyText } = await generateText(prompt, 256, 'claude-3-5-sonnet-20241022');
+            const { text: replyText } = await generateText(prompt, 256, 'claude-sonnet-4-5-20250929');
 
             if (!replyText) return { autoReply: null, error: 'Failed to generate reply' };
 
@@ -754,7 +754,7 @@ export const messageService = {
             Draft a polite, professional, and concise reply. 
             Keep it under 3 sentences.`;
 
-            const { text: reply } = await generateText(prompt, 256, 'claude-3-5-sonnet-20241022');
+            const { text: reply } = await generateText(prompt, 256, 'claude-sonnet-4-5-20250929');
             return { reply, error: null };
         } catch (err) {
             return { reply: null, error: err instanceof Error ? err.message : 'Unknown error' };

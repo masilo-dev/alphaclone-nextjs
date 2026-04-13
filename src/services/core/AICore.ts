@@ -166,7 +166,7 @@ Format as JSON with keys: summary, message, nextSteps (array)
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
@@ -215,7 +215,7 @@ Keep each reply under 100 words. Format as array of strings.
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
@@ -268,7 +268,7 @@ Return JSON array with: title, description, priority, estimatedHours
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
@@ -326,7 +326,7 @@ Format as JSON with keys: summary, strengths, improvements, recommendations (all
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
@@ -465,7 +465,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
