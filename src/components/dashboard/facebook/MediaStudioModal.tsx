@@ -337,6 +337,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
 
         <div className="grid gap-4 p-5 lg:grid-cols-[1fr_320px]">
           <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
+            <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-slate-800 bg-black/50 p-2">
             {isVideo ? (
               <video
                 ref={videoPreviewRef}
@@ -351,11 +352,12 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                   void generateTimelineFrames();
                   void updateCoverPreview(0);
                 }}
-                className="max-h-[60vh] w-full rounded-lg object-contain"
+                className="max-h-[60vh] w-full max-w-[960px] rounded-lg object-contain"
               />
             ) : (
-              <img src={objectUrl} alt="Editor preview" className="max-h-[60vh] w-full rounded-lg object-contain" />
+              <img src={objectUrl} alt="Editor preview" className="max-h-[60vh] w-full max-w-[960px] rounded-lg object-contain" />
             )}
+            </div>
           </div>
 
           <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4">

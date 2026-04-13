@@ -13,7 +13,13 @@ export async function GET(req: NextRequest) {
   const pageId = searchParams.get('pageId');
   const limit  = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
 
-  if (!pageId) return NextResponse.json({ error: 'pageId is required' }, { status: 400 });
+  if (!pageId) {
+    return NextResponse.json({
+      success: true,
+      posts: [],
+      note: 'No page selected.',
+    });
+  }
 
   // Get integration token
   const { data: integration } = await supabase

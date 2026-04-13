@@ -46,6 +46,11 @@ export default function MessengerInbox() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const selectedConversationRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        selectedConversationRef.current = selectedConversation;
+    }, [selectedConversation]);
 
     useEffect(() => {
         fetchConversations();
@@ -63,17 +68,21 @@ export default function MessengerInbox() {
                 { event: 'INSERT', schema: 'public', table: 'messenger_messages' }, 
                 (payload: any) => {
                     const newMsg = payload.new;
-                    if (selectedConversation && newMsg && newMsg.conversation_id === selectedConversation) {
+                    if (selectedConversationRef.current && newMsg && newMsg.conversation_id === selectedConversationRef.current) {
                         setMessages(prev => [...prev, newMsg as Message]);
                     }
                 }
             )
-            .subscribe();
+            .subscribe((status: string) => {
+                if (status === 'CHANNEL_ERROR') {
+                    console.warn('[Messenger] realtime subscription unavailable');
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [selectedConversation]);
+    }, []);
 
     useEffect(() => {
         if (selectedConversation) {
@@ -94,11 +103,36 @@ export default function MessengerInbox() {
         try {
             const { data, error } = await supabase
                 .from('messenger_conversations')
-                .select('*, contacts(full_name, email)')
+                .select('*')
                 .order('last_message_at', { ascending: false });
 
             if (error) throw error;
-            setConversations(data || []);
+            const rows = (data || []) as Conversation[];
+            const contactIds = rows
+                .map((c) => c.contact_id)
+                .filter((id): id is string => Boolean(id));
+
+            if (contactIds.length === 0) {
+                setConversations(rows);
+                return;
+            }
+
+            const { data: contactsData } = await supabase
+                .from('contacts')
+                .select('id, full_name, email')
+                .in('id', contactIds);
+
+            const contactMap = new Map<string, { full_name?: string; email?: string }>();
+            (contactsData || []).forEach((c: any) => {
+                contactMap.set(c.id, { full_name: c.full_name, email: c.email });
+            });
+
+            setConversations(
+                rows.map((c) => ({
+                    ...c,
+                    contacts: c.contact_id ? contactMap.get(c.contact_id) : undefined,
+                }))
+            );
         } catch (err) {
             console.error('Error fetching conversations:', err);
         } finally {
