@@ -10,13 +10,16 @@ export async function POST(req: NextRequest) {
     const pageId = formData.get('pageId') as string;
     const message = formData.get('message') as string;
     const file = formData.get('file') as File | null;
+    const coverFrame = formData.get('coverFrame') as File | null;
 
     if (!pageId || !file) {
         return NextResponse.json({ error: 'pageId and file are required' }, { status: 400 });
     }
 
-    if (!file.type.startsWith('image/')) {
-        return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    if (!isImage && !isVideo) {
+        return NextResponse.json({ error: 'File must be an image or video' }, { status: 400 });
     }
 
     const { data: integration } = await supabase
@@ -34,13 +37,26 @@ export async function POST(req: NextRequest) {
         }, { status: 400 });
     }
 
-    // Forward directly to Facebook Photos API using multipart/form-data with `source`
+    // Forward directly to Facebook Photos/Videos API using multipart/form-data with `source`
     const fbForm = new FormData();
     fbForm.append('source', file);
-    if (message?.trim()) fbForm.append('caption', message.trim());
+    if (message?.trim()) {
+        if (isVideo) {
+            fbForm.append('description', message.trim());
+        } else {
+            fbForm.append('caption', message.trim());
+        }
+    }
     fbForm.append('access_token', integration.page_access_token);
+    if (isVideo && coverFrame && coverFrame.type.startsWith('image/')) {
+        fbForm.append('thumb', coverFrame);
+    }
 
-    const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
+    const endpoint = isVideo
+        ? `https://graph.facebook.com/v19.0/${pageId}/videos`
+        : `https://graph.facebook.com/v19.0/${pageId}/photos`;
+
+    const res = await fetch(endpoint, {
         method: 'POST',
         body: fbForm,
     });
@@ -48,11 +64,11 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
 
     if (data.error) {
-        console.error('[Facebook Photo Upload] Graph API error:', data.error);
+        console.error('[Facebook Media Upload] Graph API error:', data.error);
         if (data.error.code === 200 || data.error.message?.includes('pages_manage_posts')) {
             return NextResponse.json(
                 {
-                    error: 'Permission denied. Reconnect your Facebook page to grant photo posting permission.',
+                    error: 'Permission denied. Reconnect your Facebook page to grant media posting permissions.',
                     code: 'FACEBOOK_PERMISSION',
                     action: 'reconnect',
                 },
@@ -60,7 +76,7 @@ export async function POST(req: NextRequest) {
             );
         }
         return NextResponse.json(
-            { error: 'Photo upload failed', code: 'FACEBOOK_GRAPH_ERROR' },
+            { error: 'Media upload failed', code: 'FACEBOOK_GRAPH_ERROR' },
             { status: 400 }
         );
     }

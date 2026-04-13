@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import MessengerInbox from '../messenger/MessengerInbox';
+import MediaStudioModal from './MediaStudioModal';
 import toast from 'react-hot-toast';
 
 // Specialized Error Boundary for Third-Party Integrations
@@ -118,6 +119,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [scheduleAt, setScheduleAt] = useState('');
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledSocialPost[]>([]);
     const [queueLoading, setQueueLoading] = useState(false);
+    const [showMediaStudio, setShowMediaStudio] = useState(false);
+    const [videoCoverFrameFile, setVideoCoverFrameFile] = useState<File | null>(null);
+    const [videoCoverTimePct, setVideoCoverTimePct] = useState<number>(0);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
     // AI generation state
@@ -321,17 +325,30 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     const clearImage = () => {
         setPostImageFile(null);
+        setVideoCoverFrameFile(null);
+        setVideoCoverTimePct(0);
         setPostImageUrl('');
         if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
         setImagePreview('');
         if (imageInputRef.current) imageInputRef.current.value = '';
     };
 
+    const handleApplyMediaStudio = (editedFile: File, meta?: { coverFrameFile?: File; coverFrameTimePct?: number }) => {
+        if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+        setPostImageFile(editedFile);
+        setImagePreview(URL.createObjectURL(editedFile));
+        setVideoCoverFrameFile(meta?.coverFrameFile ?? null);
+        setVideoCoverTimePct(meta?.coverFrameTimePct ?? 0);
+    };
+
     const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (!file.type.startsWith('image/')) return toast.error('Please select an image file');
-        if (file.size > 10 * 1024 * 1024) return toast.error('Image must be under 10MB');
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        if (!isImage && !isVideo) return toast.error('Please select an image or video file');
+        if (isImage && file.size > 10 * 1024 * 1024) return toast.error('Image must be under 10MB');
+        if (isVideo && file.size > 200 * 1024 * 1024) return toast.error('Video must be under 200MB');
         setPostImageFile(file);
         setPostImageUrl('');
         setImagePreview(URL.createObjectURL(file));
@@ -350,6 +367,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 form.append('pageId', selectedPageId);
                 form.append('message', postMessage);
                 form.append('file', postImageFile);
+                if (videoCoverFrameFile) {
+                    form.append('coverFrame', videoCoverFrameFile);
+                    form.append('coverTimePct', String(videoCoverTimePct));
+                }
                 res = await fetch('/api/facebook/upload-photo', { method: 'POST', body: form });
             } else {
                 res = await fetch('/api/facebook/post', {
@@ -508,6 +529,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     }
 
     return (
+        <>
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -823,17 +845,17 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                 </div>
                             </div>
 
-                            {/* Image Section */}
+                            {/* Media Section */}
                             <div>
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
-                                    Photo (optional)
+                                    Media (optional)
                                 </label>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-3">
                                         <input
                                             ref={imageInputRef}
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/*,video/*"
                                             onChange={handleImageFileChange}
                                             className="hidden"
                                         />
@@ -843,9 +865,18 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 text-sm transition-colors"
                                         >
                                             <Image className="w-4 h-4" />
-                                            Upload Photo
+                                            Upload Media
                                         </button>
-                                        <span className="text-slate-600 text-xs">or paste a public image URL</span>
+                                        <span className="text-slate-600 text-xs">image/video file, or image URL</span>
+                                        {postImageFile && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowMediaStudio(true)}
+                                                className="rounded-xl border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-500/20"
+                                            >
+                                                Edit in Media Studio
+                                            </button>
+                                        )}
                                     </div>
                                     {!postImageFile && (
                                         <div className="relative">
@@ -861,7 +892,15 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     )}
                                     {imagePreview && (
                                         <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
-                                            <img src={imagePreview} alt="Preview" className="w-full max-h-52 object-contain" />
+                                            {postImageFile?.type.startsWith('video/') ? (
+                                                <video
+                                                    src={imagePreview}
+                                                    controls
+                                                    className="w-full max-h-52 object-contain"
+                                                />
+                                            ) : (
+                                                <img src={imagePreview} alt="Preview" className="w-full max-h-52 object-contain" />
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={clearImage}
@@ -1280,5 +1319,13 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 </>
             )}
         </div>
+        {showMediaStudio && postImageFile && (
+            <MediaStudioModal
+                file={postImageFile}
+                onClose={() => setShowMediaStudio(false)}
+                onApply={handleApplyMediaStudio}
+            />
+        )}
+        </>
     );
 }
