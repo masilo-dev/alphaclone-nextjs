@@ -61,6 +61,15 @@ interface FacebookLead {
     field_data: Record<string, string>;
 }
 
+interface ScheduledSocialPost {
+    id: string;
+    caption: string;
+    status: 'draft' | 'scheduled' | 'queued' | 'publishing' | 'published' | 'failed' | 'cancelled';
+    scheduled_at: string | null;
+    created_at: string;
+    error_message: string | null;
+}
+
 const STATUS_COLORS: Record<string, string> = {
     new: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     contacted: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -106,6 +115,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [postImageFile, setPostImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState('');
     const [posting, setPosting] = useState(false);
+    const [scheduleAt, setScheduleAt] = useState('');
+    const [scheduledPosts, setScheduledPosts] = useState<ScheduledSocialPost[]>([]);
+    const [queueLoading, setQueueLoading] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
     // AI generation state
@@ -206,6 +218,26 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
     }, []);
 
+    const loadScheduleQueue = useCallback(async () => {
+        if (!tenant?.id) return;
+        setQueueLoading(true);
+        try {
+            const res = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(tenant.id)}&pageId=${encodeURIComponent(selectedPageId)}`);
+            const data = await res.json();
+            if (Array.isArray(data.posts)) {
+                setScheduledPosts(
+                    data.posts.filter((p: ScheduledSocialPost) =>
+                        p.status === 'scheduled' || p.status === 'queued' || p.status === 'publishing' || p.status === 'failed'
+                    )
+                );
+            }
+        } catch (err) {
+            console.error('[Facebook] Failed to load social queue:', err);
+        } finally {
+            setQueueLoading(false);
+        }
+    }, [tenant?.id, selectedPageId]);
+
     useEffect(() => { loadData(); }, [loadData]);
 
     // OAuth return: reload integrations before clearing query params (avoid race with router.replace).
@@ -259,6 +291,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             fetchPagePosts(selectedPageId);
         }
     }, [activeTab, selectedPageId, fetchPagePosts]);
+
+    useEffect(() => {
+        if ((activeTab === 'post' || activeTab === 'posts') && selectedPageId) {
+            void loadScheduleQueue();
+        }
+    }, [activeTab, selectedPageId, loadScheduleQueue]);
 
     const handleConnect = () => {
         const tid = tenant?.id;
@@ -333,6 +371,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 clearImage();
                 setActiveTab('posts');
                 setTimeout(() => fetchPagePosts(selectedPageId), 2000);
+                void loadScheduleQueue();
             } else {
                 toast.error(data.error || 'Failed to post', { id: toastId });
             }
@@ -340,6 +379,80 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             toast.error('Failed to post', { id: toastId });
         } finally {
             setPosting(false);
+        }
+    };
+
+    const handleSchedulePost = async () => {
+        if (!tenant?.id) return toast.error('Workspace is required');
+        if (!postMessage.trim()) return toast.error('Message is required');
+        if (!selectedPageId) return toast.error('Select a Facebook Page');
+        if (!scheduleAt) return toast.error('Select schedule date and time');
+
+        setPosting(true);
+        const toastId = toast.loading('Scheduling Facebook post...');
+        try {
+            const payload = {
+                tenantId: tenant.id,
+                caption: postMessage,
+                link_url: postLink || null,
+                media_urls: postImageUrl ? [postImageUrl] : [],
+                media_types: postImageUrl ? ['image'] : [],
+                platforms: ['facebook'],
+                facebook_page_id: selectedPageId,
+                scheduled_at: new Date(scheduleAt).toISOString(),
+                publish_now: false,
+            };
+
+            const res = await fetch('/api/social/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to schedule post', { id: toastId });
+                return;
+            }
+            toast.success('Post scheduled successfully', { id: toastId });
+            setScheduleAt('');
+            setPostMessage('');
+            setPostLink('');
+            clearImage();
+            void loadScheduleQueue();
+        } catch (err) {
+            console.error('[Facebook] schedule post failed:', err);
+            toast.error('Failed to schedule post', { id: toastId });
+        } finally {
+            setPosting(false);
+        }
+    };
+
+    const handleQueueAction = async (postId: string, action: 'publish_now' | 'cancel') => {
+        if (!tenant?.id) return toast.error('Workspace is required');
+        const toastId = toast.loading(action === 'publish_now' ? 'Publishing now...' : 'Cancelling post...');
+        try {
+            const res = await fetch('/api/social/schedule', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    postId,
+                    tenantId: tenant.id,
+                    action,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Action failed', { id: toastId });
+                return;
+            }
+            toast.success(action === 'publish_now' ? 'Post queued for immediate publish' : 'Post cancelled', { id: toastId });
+            void loadScheduleQueue();
+            if (selectedPageId) {
+                setTimeout(() => void fetchPagePosts(selectedPageId), 1500);
+            }
+        } catch (err) {
+            console.error('[Facebook] queue action failed:', err);
+            toast.error('Action failed', { id: toastId });
         }
     };
 
@@ -762,14 +875,100 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handlePost}
-                                disabled={posting || !postMessage.trim()}
-                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors"
-                            >
-                                {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                                {posting ? 'Posting...' : 'Post to Facebook'}
-                            </button>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">
+                                        Schedule (optional)
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={scheduleAt}
+                                        onChange={e => setScheduleAt(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500"
+                                    />
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={handlePost}
+                                        disabled={posting || !postMessage.trim()}
+                                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors"
+                                    >
+                                        {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                        {posting ? 'Posting...' : 'Post Now'}
+                                    </button>
+                                    <button
+                                        onClick={handleSchedulePost}
+                                        disabled={posting || !postMessage.trim() || !scheduleAt}
+                                        className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors"
+                                    >
+                                        {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                        Schedule Post
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-white">Publishing Queue</h4>
+                                    <button
+                                        onClick={() => void loadScheduleQueue()}
+                                        className="text-xs text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        Refresh queue
+                                    </button>
+                                </div>
+                                <div className="mb-3 flex flex-wrap gap-2 text-[11px]">
+                                    <span className="rounded-md border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-blue-300">scheduled</span>
+                                    <span className="rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-0.5 text-violet-300">queued</span>
+                                    <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-300">publishing</span>
+                                    <span className="rounded-md border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-green-300">published</span>
+                                    <span className="rounded-md border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-red-300">failed</span>
+                                    <span className="rounded-md border border-slate-600 bg-slate-800 px-2 py-0.5 text-slate-300">cancelled</span>
+                                </div>
+                                {queueLoading ? (
+                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Loading queue...
+                                    </div>
+                                ) : scheduledPosts.length === 0 ? (
+                                    <p className="text-sm text-slate-500">No scheduled or queued posts.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {scheduledPosts.slice(0, 8).map((item) => (
+                                            <div key={item.id} className="rounded-xl border border-slate-800 p-3">
+                                                <div className="mb-1 flex items-center justify-between gap-2">
+                                                    <span className="text-xs uppercase tracking-wide text-slate-400">{item.status}</span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {item.scheduled_at ? new Date(item.scheduled_at).toLocaleString() : 'Immediate'}
+                                                    </span>
+                                                </div>
+                                                <p className="line-clamp-2 text-sm text-slate-200">{item.caption}</p>
+                                                {item.error_message && (
+                                                    <p className="mt-1 text-xs text-red-400">{item.error_message}</p>
+                                                )}
+                                                <div className="mt-2 flex gap-2">
+                                                    {(item.status === 'scheduled' || item.status === 'failed') && (
+                                                        <button
+                                                            onClick={() => void handleQueueAction(item.id, 'publish_now')}
+                                                            className="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
+                                                        >
+                                                            Publish now
+                                                        </button>
+                                                    )}
+                                                    {(item.status === 'scheduled' || item.status === 'queued') && (
+                                                        <button
+                                                            onClick={() => void handleQueueAction(item.id, 'cancel')}
+                                                            className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 

@@ -123,11 +123,10 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const mcpOrigin =
     typeof window !== 'undefined' ? window.location.origin : 'https://alphaclone.tech';
 
-  const buildConnectionUrl = (token: string | null, workspaceId: string, userId: string) => {
+  const buildConnectionUrl = (token: string | null, workspaceId: string) => {
     const params = new URLSearchParams({
       api_key: token || 'YOUR_KEY_HERE',
       tenant_id: workspaceId,
-      user_id: userId || 'YOUR_USER_ID_HERE',
     });
     return `${mcpOrigin}/api/mcp/sse?${params.toString()}`;
   };
@@ -198,17 +197,12 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     }
   };
 
-  const userIdForMcp = currentUser?.id ?? '';
-  const connectionUrl = buildConnectionUrl(connectionToken, tenantId, userIdForMcp);
+  const connectionUrl = buildConnectionUrl(connectionToken, tenantId);
 
   const configJson = `{
   "mcpServers": {
     "alphaclone": {
-      "url": "${connectionUrl}",
-      "headers": {
-        "x-tenant-id": "${tenantId}",
-        "x-user-id": "${userIdForMcp || 'YOUR_USER_ID_HERE'}"
-      }
+      "url": "${connectionUrl}"
     }
   }
 }`;
