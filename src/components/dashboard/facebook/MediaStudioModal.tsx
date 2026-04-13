@@ -40,6 +40,23 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
+function dataUrlToBlob(dataUrl: string): Blob {
+  const parts = dataUrl.split(',');
+  if (parts.length !== 2) {
+    throw new Error('Invalid data URL');
+  }
+  const header = parts[0];
+  const base64 = parts[1];
+  const mimeMatch = /data:(.*?);base64/.exec(header);
+  const mime = mimeMatch?.[1] || 'image/jpeg';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes.buffer], { type: mime });
+}
+
 type Props = {
   file: File;
   onClose: () => void;
@@ -291,7 +308,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
       const edited = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '-edited.mp4', { type: 'video/mp4' });
       let coverFile: File | undefined;
       if (coverFramePreview) {
-        const coverBlob = await (await fetch(coverFramePreview)).blob();
+        const coverBlob = dataUrlToBlob(coverFramePreview);
         coverFile = new File([coverBlob], file.name.replace(/\.[^/.]+$/, '') + '-cover.jpg', { type: 'image/jpeg' });
       }
       onApply(edited, { coverFrameFile: coverFile, coverFrameTimePct: coverTimePct });

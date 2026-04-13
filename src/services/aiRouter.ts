@@ -13,6 +13,19 @@ import OpenAI from 'openai';
 import { ENV } from '@/config/env';
 import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL } from '@/config/aiModels';
 
+const STABLE_CLAUDE_SONNET_MODEL = 'claude-3-5-sonnet-20241022';
+const STABLE_CLAUDE_HAIKU_MODEL = 'claude-3-5-haiku-20241022';
+const CLAUDE_MODEL_ALIASES: Record<string, string> = {
+  'claude-sonnet-4-6-20260217': STABLE_CLAUDE_SONNET_MODEL,
+  'claude-sonnet-4-5-20250929': STABLE_CLAUDE_SONNET_MODEL,
+  'claude-haiku-4-5-20251015': STABLE_CLAUDE_HAIKU_MODEL,
+};
+
+function normalizeClaudeModel(model?: string): string {
+  const candidate = (model || DEFAULT_CLAUDE_MODEL).trim();
+  return CLAUDE_MODEL_ALIASES[candidate] || candidate;
+}
+
 // Initialize clients using validated ENV
 const anthropic = ENV.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY })
@@ -189,7 +202,7 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
     throw new Error('Anthropic API key not configured');
   }
 
-  const model = options.model || DEFAULT_CLAUDE_MODEL;
+  const model = normalizeClaudeModel(options.model);
 
   const message = await anthropic.messages.create({
     model: model,
@@ -322,7 +335,7 @@ async function chatWithAnthropic(
     throw new Error('Anthropic API key not configured');
   }
 
-  const selectedModel = model || DEFAULT_CLAUDE_MODEL;
+  const selectedModel = normalizeClaudeModel(model);
 
   // Ensure history alternates and starts with 'user'
   const messages: Anthropic.MessageParam[] = [];
@@ -581,7 +594,7 @@ export function estimateCost(prompt: string, model: string): number {
 async function streamWithAnthropic(options: AIRequestOptions): Promise<ReadableStream> {
   if (!anthropic) throw new Error('Anthropic not configured');
 
-  const model = options.model || DEFAULT_CLAUDE_MODEL;
+  const model = normalizeClaudeModel(options.model);
   const encoder = new TextEncoder();
 
   return new ReadableStream({
