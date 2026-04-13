@@ -13,17 +13,26 @@ import OpenAI from 'openai';
 import { ENV } from '@/config/env';
 import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL } from '@/config/aiModels';
 
-const STABLE_CLAUDE_SONNET_MODEL = 'claude-3-5-sonnet-20241022';
-const STABLE_CLAUDE_HAIKU_MODEL = 'claude-3-5-haiku-20241022';
+const CLAUDE_ALLOWED_MODELS = new Set<string>([
+  'claude-sonnet-4-6-20260217',
+  'claude-sonnet-4-5-20250929',
+]);
+
 const CLAUDE_MODEL_ALIASES: Record<string, string> = {
-  'claude-sonnet-4-6-20260217': STABLE_CLAUDE_SONNET_MODEL,
-  'claude-sonnet-4-5-20250929': STABLE_CLAUDE_SONNET_MODEL,
-  'claude-haiku-4-5-20251015': STABLE_CLAUDE_HAIKU_MODEL,
+  // Keep compatibility for older callers, but route only to allowed Claude 4.x models.
+  'claude-haiku-4-5-20251015': 'claude-sonnet-4-5-20250929',
+  'claude-3-5-sonnet-20241022': 'claude-sonnet-4-5-20250929',
+  'claude-3-5-haiku-20241022': 'claude-sonnet-4-5-20250929',
 };
 
 function normalizeClaudeModel(model?: string): string {
-  const candidate = (model || DEFAULT_CLAUDE_MODEL).trim();
-  return CLAUDE_MODEL_ALIASES[candidate] || candidate;
+  const rawCandidate = (model || DEFAULT_CLAUDE_MODEL).trim();
+  const candidate = CLAUDE_MODEL_ALIASES[rawCandidate] || rawCandidate;
+  if (CLAUDE_ALLOWED_MODELS.has(candidate)) {
+    return candidate;
+  }
+  // Hard guard: never call other Claude models.
+  return 'claude-sonnet-4-5-20250929';
 }
 
 // Initialize clients using validated ENV
@@ -57,8 +66,6 @@ export const MODEL_PRICING = {
   // Anthropic (per 1M tokens) - 2025/2026 pricing
   'claude-sonnet-4-6-20260217': { input: 3, output: 15 },
   'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
-  'claude-haiku-4-5-20251015': { input: 0.25, output: 1.25 },
-  'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
 };
 
 // CLAUDE_MODELS is now imported from @/config/aiModels
