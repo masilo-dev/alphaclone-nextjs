@@ -58,10 +58,10 @@ export async function POST(req: NextRequest) {
                 
                 // Fetch integration to find tenant
                 const { data: integration } = await supabaseAdmin
-                    .from('tenant_integrations')
+                    .from('facebook_integrations')
                     .select('tenant_id, user_id')
-                    .eq('type', 'facebook')
-                    .eq('external_id', pageId)
+                    .eq('page_id', pageId)
+                    .eq('is_active', true)
                     .single();
 
                 if (!integration) continue;
@@ -70,19 +70,46 @@ export async function POST(req: NextRequest) {
                     for (const event of entry.messaging) {
                         if (event.message) {
                             const senderId = event.sender.id;
+                            const recipientId = event.recipient?.id;
+                            const messageText = event.message.text || null;
+                            if (!recipientId) continue;
+
+                            // Ensure conversation exists for this sender/page pair.
+                            const { data: conversation, error: convError } = await supabaseAdmin
+                                .from('messenger_conversations')
+                                .upsert(
+                                    {
+                                        tenant_id: integration.tenant_id,
+                                        page_id: pageId,
+                                        sender_id: senderId,
+                                        last_message_preview: messageText,
+                                        last_message_at: new Date().toISOString(),
+                                        is_read: false,
+                                        metadata: {
+                                            source: 'facebook_webhook',
+                                        },
+                                    },
+                                    { onConflict: 'tenant_id,page_id,sender_id' }
+                                )
+                                .select('id')
+                                .single();
+
+                            if (convError || !conversation) {
+                                console.error('[Messenger Webhook] Conversation upsert error:', convError);
+                                continue;
+                            }
                             
-                            // Upsert/Insert message into the database
+                            // Insert inbound message.
                             const { error: msgError } = await supabaseAdmin
                                 .from('messenger_messages')
                                 .insert({
-                                    tenant_id: integration.tenant_id,
-                                    message_id: event.message.mid,
+                                    conversation_id: conversation.id,
+                                    mid: event.message.mid,
                                     sender_id: senderId,
-                                    recipient_id: event.recipient.id,
-                                    page_id: pageId,
-                                    text: event.message.text || null,
-                                    timestamp: event.timestamp,
-                                    received_at: new Date().toISOString()
+                                    recipient_id: recipientId,
+                                    text: messageText,
+                                    sender_type: 'user',
+                                    created_at: new Date().toISOString(),
                                 });
 
                             if (msgError) {
