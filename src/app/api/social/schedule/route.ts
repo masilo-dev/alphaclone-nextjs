@@ -220,7 +220,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
   try {
     const postRes = await adminClient
       .from('social_posts')
-      .select('id, tenant_id, user_id, caption, link_url, linkedin_member_id')
+      .select('id, tenant_id, user_id, caption, link_url, media_urls, linkedin_member_id')
       .eq('id', postId)
       .single();
     let post = postRes.data as {
@@ -229,13 +229,14 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       user_id: string;
       caption: string;
       link_url: string | null;
+      media_urls: string[] | null;
       linkedin_member_id: string | null;
     } | null;
     let postError = postRes.error;
     if (isMissingColumn(postError, 'linkedin_member_id')) {
       const fallbackPostRes = await adminClient
         .from('social_posts')
-        .select('id, tenant_id, user_id, caption, link_url')
+        .select('id, tenant_id, user_id, caption, link_url, media_urls')
         .eq('id', postId)
         .single();
       post = fallbackPostRes.data
@@ -306,17 +307,89 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
 
+    async function registerAndUploadLinkedInImage(authorUrn: string, imageUrl: string): Promise<string> {
+      const imageFetch = await fetchWithTimeout(imageUrl, { method: 'GET' }, 25000);
+      if (!imageFetch.ok) {
+        throw new Error(`Could not download image URL (${imageFetch.status})`);
+      }
+      const contentType = imageFetch.headers.get('content-type') || 'image/jpeg';
+      const imageBuffer = await imageFetch.arrayBuffer();
+
+      const registerRes = await fetchWithTimeout('https://api.linkedin.com/v2/assets?action=registerUpload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${integration.access_token}`,
+          'Content-Type': 'application/json',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+          registerUploadRequest: {
+            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+            owner: authorUrn,
+            serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+          },
+        }),
+      }, 25000);
+
+      const registerJson = await registerRes.json().catch(() => ({}));
+      if (!registerRes.ok) {
+        throw new Error(registerJson?.message || `LinkedIn upload register failed (${registerRes.status})`);
+      }
+
+      const value = registerJson?.value || {};
+      const assetUrn = typeof value?.asset === 'string' ? value.asset : '';
+      const uploadUrl =
+        value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl || '';
+
+      if (!assetUrn || !uploadUrl) {
+        throw new Error('LinkedIn upload response missing asset information');
+      }
+
+      const uploadRes = await fetchWithTimeout(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': contentType,
+        },
+        body: imageBuffer,
+      }, 30000);
+
+      if (!uploadRes.ok) {
+        throw new Error(`LinkedIn image upload failed (${uploadRes.status})`);
+      }
+
+      return assetUrn;
+    }
+
     const hasLink = typeof post.link_url === 'string' && post.link_url.trim().length > 0;
+    const imageUrl = Array.isArray(post.media_urls) && post.media_urls.length > 0
+      ? String(post.media_urls[0] || '').trim()
+      : '';
+    const hasImage = imageUrl.length > 0;
+
+    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' = 'NONE';
+    let media: Array<Record<string, unknown>> = [];
+
+    if (hasImage) {
+      const assetUrn = await registerAndUploadLinkedInImage(integration.linkedin_person_urn, imageUrl);
+      shareMediaCategory = 'IMAGE';
+      media = [{
+        status: 'READY',
+        media: assetUrn,
+        title: { text: 'AlphaClone Image' },
+      }];
+    } else if (hasLink) {
+      shareMediaCategory = 'ARTICLE';
+      media = [{ status: 'READY', originalUrl: post.link_url, title: { text: 'AlphaClone Link' } }];
+    }
+
     const payload = {
       author: integration.linkedin_person_urn,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
           shareCommentary: { text: post.caption },
-          shareMediaCategory: hasLink ? 'ARTICLE' : 'NONE',
-          media: hasLink
-            ? [{ status: 'READY', originalUrl: post.link_url, title: { text: 'AlphaClone Link' } }]
-            : [],
+          shareMediaCategory,
+          media,
         },
       },
       visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },

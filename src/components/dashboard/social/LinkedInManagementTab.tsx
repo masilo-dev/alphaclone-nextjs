@@ -89,6 +89,7 @@ export default function LinkedInManagementTab() {
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
   const [composeCaption, setComposeCaption] = useState('');
   const [composeLinkUrl, setComposeLinkUrl] = useState('');
+  const [composeImageUrl, setComposeImageUrl] = useState('');
   const [composeScheduledAt, setComposeScheduledAt] = useState('');
   const [composeSubmitting, setComposeSubmitting] = useState(false);
   const [aiTopic, setAiTopic] = useState('');
@@ -248,7 +249,7 @@ export default function LinkedInManagementTab() {
       toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
       return;
     }
-    const text = (replyText ?? commentByPost[post.id] || '').trim();
+    const text = (replyText ?? commentByPost[post.id] ?? '').trim();
     if (!text) return toast.error('Write a comment first');
 
     const actionKey = targetUrn ? `reply-${targetUrn}` : `comment-${post.id}`;
@@ -415,6 +416,8 @@ ${parentContext}Return only the comment text.`;
           caption,
           platforms: ['linkedin'],
           link_url: composeLinkUrl.trim() || undefined,
+          media_urls: composeImageUrl.trim() ? [composeImageUrl.trim()] : undefined,
+          media_types: composeImageUrl.trim() ? ['image'] : undefined,
           scheduled_at: publishNow ? undefined : composeScheduledAt,
           linkedin_member_id: selectedLinkedInMemberId,
         }),
@@ -427,6 +430,7 @@ ${parentContext}Return only the comment text.`;
       toast.success(publishNow ? 'LinkedIn post submitted' : 'LinkedIn post scheduled', { id: toastId });
       setComposeCaption('');
       setComposeLinkUrl('');
+      setComposeImageUrl('');
       setComposeScheduledAt('');
       await loadData();
     } catch {
@@ -649,6 +653,12 @@ ${parentContext}Return only the comment text.`;
           value={composeLinkUrl}
           onChange={(e) => setComposeLinkUrl(e.target.value)}
           placeholder="Optional link URL (https://...)"
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+        />
+        <input
+          value={composeImageUrl}
+          onChange={(e) => setComposeImageUrl(e.target.value)}
+          placeholder="Optional image URL (https://...)"
           className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
         />
         <input
