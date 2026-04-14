@@ -3,22 +3,6 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
-function normalizeScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .flatMap((value) => String(value).split(/[,\s]+/))
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(/[,\s]+/)
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
-}
-
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -29,6 +13,13 @@ async function ensureTenantMembership(userId: string, tenantId: string) {
     .maybeSingle();
   return !error && !!data;
 }
+
+type LinkedInComment = {
+  commentUrn: string;
+  text: string;
+  actor: string;
+  createdAt: number | null;
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,19 +32,15 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       tenantId?: string;
       postUrn?: string;
-      parentCommentUrn?: string;
-      text?: string;
       linkedinMemberId?: string;
     };
 
     const tenantId = body.tenantId?.trim();
     const postUrn = body.postUrn?.trim();
-    const parentCommentUrn = body.parentCommentUrn?.trim();
-    const text = body.text?.trim();
     const linkedinMemberId = body.linkedinMemberId?.trim();
 
-    if (!tenantId || !postUrn || !text) {
-      return NextResponse.json({ error: 'tenantId, postUrn, and text are required' }, { status: 400 });
+    if (!tenantId || !postUrn) {
+      return NextResponse.json({ error: 'tenantId and postUrn are required' }, { status: 400 });
     }
 
     const isMember = await ensureTenantMembership(user.id, tenantId);
@@ -64,7 +51,7 @@ export async function POST(req: NextRequest) {
     const admin = createSupabaseAdminClient();
     let query = admin
       .from('linkedin_integrations')
-      .select('linkedin_member_id, access_token, linkedin_person_urn, scopes')
+      .select('access_token')
       .eq('tenant_id', tenantId)
       .eq('user_id', user.id)
       .eq('is_active', true)
@@ -72,37 +59,35 @@ export async function POST(req: NextRequest) {
     if (linkedinMemberId) query = query.eq('linkedin_member_id', linkedinMemberId);
     const { data: li, error: liError } = await query.maybeSingle();
 
-    if (liError || !li?.access_token || !li?.linkedin_person_urn) {
+    if (liError || !li?.access_token) {
       return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });
     }
 
-    const scopes = normalizeScopes(li.scopes);
-    if (!scopes.includes('w_member_social')) {
-      return NextResponse.json({ error: 'Missing LinkedIn scope: w_member_social' }, { status: 400 });
-    }
-
-    const res = await fetch(`https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}/comments`, {
-      method: 'POST',
+    const url = `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}/comments?count=50`;
+    const res = await fetch(url, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${li.access_token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
       },
-      body: JSON.stringify({
-        actor: li.linkedin_person_urn,
-        object: postUrn,
-        parentComment: parentCommentUrn || undefined,
-        message: { text },
-      }),
     });
-
-    const raw = await res.text();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return NextResponse.json({ error: raw || `LinkedIn API error (${res.status})` }, { status: 400 });
+      const errorText = typeof data?.message === 'string' ? data.message : `LinkedIn API error (${res.status})`;
+      return NextResponse.json({ error: errorText }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    const elements = Array.isArray(data?.elements) ? data.elements : [];
+    const comments: LinkedInComment[] = elements.map((element: any) => ({
+      commentUrn: String(element?.id || element?.urn || ''),
+      text: String(element?.message?.text || ''),
+      actor: String(element?.actor || ''),
+      createdAt: typeof element?.created?.time === 'number' ? element.created.time : null,
+    }));
+
+    return NextResponse.json({ success: true, comments });
   } catch (err: unknown) {
-    return clientErrorResponse(err, { request: req, scope: 'linkedin/comment.POST' });
+    return clientErrorResponse(err, { request: req, scope: 'linkedin/comments.POST' });
   }
 }

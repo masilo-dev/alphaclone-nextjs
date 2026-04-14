@@ -28,6 +28,13 @@ interface LinkedInIntegrationRow {
   is_active: boolean;
 }
 
+interface LinkedInCommentRow {
+  commentUrn: string;
+  text: string;
+  actor: string;
+  createdAt: number | null;
+}
+
 function normalizeScopes(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     return raw
@@ -76,6 +83,9 @@ export default function LinkedInManagementTab() {
   const [reactionByPost, setReactionByPost] = useState<Record<string, string>>({});
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [aiReplyLoading, setAiReplyLoading] = useState<Record<string, boolean>>({});
+  const [commentsByPost, setCommentsByPost] = useState<Record<string, LinkedInCommentRow[]>>({});
+  const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
+  const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
   const [composeCaption, setComposeCaption] = useState('');
   const [composeLinkUrl, setComposeLinkUrl] = useState('');
@@ -232,16 +242,17 @@ export default function LinkedInManagementTab() {
     }
   };
 
-  const handleComment = async (post: LinkedInPostRow) => {
+  const handleComment = async (post: LinkedInPostRow, targetUrn?: string, replyText?: string) => {
     if (!currentTenant?.id || !post.linkedin_post_urn) return;
     if (!hasWriteScope) {
       toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
       return;
     }
-    const text = (commentByPost[post.id] || '').trim();
+    const text = (replyText ?? commentByPost[post.id] || '').trim();
     if (!text) return toast.error('Write a comment first');
 
-    setActionLoading((prev) => ({ ...prev, [`comment-${post.id}`]: true }));
+    const actionKey = targetUrn ? `reply-${targetUrn}` : `comment-${post.id}`;
+    setActionLoading((prev) => ({ ...prev, [actionKey]: true }));
     try {
       const res = await fetch('/api/linkedin/comment', {
         method: 'POST',
@@ -249,18 +260,25 @@ export default function LinkedInManagementTab() {
         body: JSON.stringify({
           tenantId: currentTenant.id,
           postUrn: post.linkedin_post_urn,
+          parentCommentUrn: targetUrn || undefined,
           text,
           linkedinMemberId: selectedLinkedInMemberId || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) return toast.error(data.error || 'Failed to post comment');
-      setCommentByPost((prev) => ({ ...prev, [post.id]: '' }));
-      toast.success('LinkedIn comment posted');
+      if (targetUrn) {
+        setReplyByComment((prev) => ({ ...prev, [targetUrn]: '' }));
+        toast.success('LinkedIn reply posted');
+      } else {
+        setCommentByPost((prev) => ({ ...prev, [post.id]: '' }));
+        toast.success('LinkedIn comment posted');
+      }
+      await loadComments(post);
     } catch {
       toast.error('Failed to post comment');
     } finally {
-      setActionLoading((prev) => ({ ...prev, [`comment-${post.id}`]: false }));
+      setActionLoading((prev) => ({ ...prev, [actionKey]: false }));
     }
   };
 
@@ -293,16 +311,20 @@ export default function LinkedInManagementTab() {
     }
   };
 
-  const handleGenerateAiReply = async (post: LinkedInPostRow) => {
-    setAiReplyLoading((prev) => ({ ...prev, [post.id]: true }));
+  const handleGenerateAiReply = async (post: LinkedInPostRow, parentCommentUrn?: string, parentCommentText?: string) => {
+    const aiKey = parentCommentUrn ? `reply-${parentCommentUrn}` : post.id;
+    setAiReplyLoading((prev) => ({ ...prev, [aiKey]: true }));
     try {
       const contextCaption = (post.caption || '').slice(0, 1200);
-      const prompt = `Write one short LinkedIn comment reply for this post. Tone: smart, friendly, light humor, business-safe, no slang. Max 220 characters.
+      const parentContext = parentCommentText
+        ? `Comment to reply to:\n${String(parentCommentText).slice(0, 700)}\n\n`
+        : '';
+      const prompt = `Write one short LinkedIn comment reply. Tone: smart, friendly, light humor, business-safe, no slang. Max 220 characters.
 
 Post caption:
 ${contextCaption}
 
-Return only the comment text.`;
+${parentContext}Return only the comment text.`;
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -320,12 +342,45 @@ Return only the comment text.`;
         toast.error(data.error || 'Failed to generate AI reply');
         return;
       }
-      setCommentByPost((prev) => ({ ...prev, [post.id]: String(data.text).trim() }));
+      if (parentCommentUrn) {
+        setReplyByComment((prev) => ({ ...prev, [parentCommentUrn]: String(data.text).trim() }));
+      } else {
+        setCommentByPost((prev) => ({ ...prev, [post.id]: String(data.text).trim() }));
+      }
       toast.success('AI quick reply ready');
     } catch {
       toast.error('Failed to generate AI reply');
     } finally {
-      setAiReplyLoading((prev) => ({ ...prev, [post.id]: false }));
+      setAiReplyLoading((prev) => ({ ...prev, [aiKey]: false }));
+    }
+  };
+
+  const loadComments = async (post: LinkedInPostRow) => {
+    if (!currentTenant?.id || !post.linkedin_post_urn) return;
+    setCommentsLoading((prev) => ({ ...prev, [post.id]: true }));
+    try {
+      const res = await fetch('/api/linkedin/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          postUrn: post.linkedin_post_urn,
+          linkedinMemberId: selectedLinkedInMemberId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Failed to load LinkedIn comments');
+        return;
+      }
+      setCommentsByPost((prev) => ({
+        ...prev,
+        [post.id]: Array.isArray(data.comments) ? data.comments : [],
+      }));
+    } catch {
+      toast.error('Failed to load LinkedIn comments');
+    } finally {
+      setCommentsLoading((prev) => ({ ...prev, [post.id]: false }));
     }
   };
 
@@ -714,6 +769,54 @@ Return only the comment text.`;
                       {actionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
                     </button>
                   </div>
+                <div className="md:col-span-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-300">Post comments</p>
+                    <button
+                      onClick={() => loadComments(post)}
+                      disabled={!!commentsLoading[post.id]}
+                      className="px-2.5 py-1 rounded-lg text-[11px] bg-slate-800 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-50"
+                    >
+                      {commentsLoading[post.id] ? 'Loading...' : 'Load Comments'}
+                    </button>
+                  </div>
+                  {(commentsByPost[post.id] || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {(commentsByPost[post.id] || []).slice(0, 20).map((comment) => (
+                        <div key={comment.commentUrn} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5 space-y-2">
+                          <p className="text-xs text-slate-300">
+                            <span className="font-semibold text-slate-200">{comment.actor || 'LinkedIn user'}:</span>{' '}
+                            {comment.text || ''}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
+                            <input
+                              value={replyByComment[comment.commentUrn] || ''}
+                              onChange={(e) => setReplyByComment((prev) => ({ ...prev, [comment.commentUrn]: e.target.value }))}
+                              placeholder="Reply to this comment..."
+                              className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                            />
+                            <button
+                              onClick={() => handleComment(post, comment.commentUrn, replyByComment[comment.commentUrn])}
+                              disabled={!hasWriteScope || !!actionLoading[`reply-${comment.commentUrn}`]}
+                              className="px-3 py-2 rounded-lg text-xs bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
+                            >
+                              {actionLoading[`reply-${comment.commentUrn}`] ? 'Replying...' : 'Reply'}
+                            </button>
+                            <button
+                              onClick={() => handleGenerateAiReply(post, comment.commentUrn, comment.text)}
+                              disabled={!!aiReplyLoading[`reply-${comment.commentUrn}`]}
+                              className="px-3 py-2 rounded-lg text-xs bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                            >
+                              {aiReplyLoading[`reply-${comment.commentUrn}`] ? 'Generating...' : 'AI Reply'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">No comments loaded yet for this post.</p>
+                  )}
+                </div>
                 </div>
               )}
             </div>
