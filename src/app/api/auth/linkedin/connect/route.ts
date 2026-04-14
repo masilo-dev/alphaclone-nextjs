@@ -15,6 +15,15 @@ type LinkedInOAuthState = {
   ts: number;
 };
 
+const LINKEDIN_REQUIRED_SCOPES = [
+  'r_verify',
+  'openid',
+  'profile',
+  'w_member_social',
+  'email',
+  'r_profile_basicinfo',
+] as const;
+
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -67,7 +76,8 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('scope', 'openid profile email w_member_social');
+    authUrl.searchParams.set('scope', LINKEDIN_REQUIRED_SCOPES.join(' '));
+    authUrl.searchParams.set('prompt', 'consent');
     authUrl.searchParams.set('state', state);
 
     return NextResponse.redirect(authUrl.toString());

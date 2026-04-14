@@ -16,6 +16,15 @@ type LinkedInOAuthState = {
   ts: number;
 };
 
+const LINKEDIN_REQUIRED_SCOPES = [
+  'r_verify',
+  'openid',
+  'profile',
+  'w_member_social',
+  'email',
+  'r_profile_basicinfo',
+] as const;
+
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
   const path =
     stateData?.returnTo &&
@@ -89,6 +98,9 @@ export async function GET(req: NextRequest) {
     const accessToken = String(tokenData.access_token);
     const scopeRaw = typeof tokenData.scope === 'string' ? tokenData.scope : '';
     const scopes = scopeRaw.split(' ').map((s: string) => s.trim()).filter(Boolean);
+    const hasWriteScope = scopes.includes('w_member_social');
+    const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope));
+    const hasAllRequiredScopes = missingScopes.length === 0;
 
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -139,12 +151,14 @@ export async function GET(req: NextRequest) {
         access_token: accessToken,
         token_expires_at: tokenExpiresAt,
         scopes,
-        is_active: true,
+        is_active: hasAllRequiredScopes,
         metadata: {
           provider: 'linkedin_oauth_connector',
           name: profileData.name || null,
           email: profileData.email || null,
           picture: profileData.picture || null,
+          write_scope_granted: hasWriteScope,
+          missing_required_scopes: missingScopes,
         },
         updated_at: new Date().toISOString(),
       },
@@ -153,6 +167,13 @@ export async function GET(req: NextRequest) {
     if (upsertError) {
       console.error('[linkedin/callback] integration upsert failed:', upsertError);
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
+    }
+
+    if (!hasWriteScope) {
+      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_w_member_social' });
+    }
+    if (!hasAllRequiredScopes) {
+      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_required_scopes' });
     }
 
     await admin.from('tenant_integrations').upsert(

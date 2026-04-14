@@ -181,6 +181,10 @@ export default function LinkedInManagementTab() {
 
   const handleComment = async (post: LinkedInPostRow) => {
     if (!currentTenant?.id || !post.linkedin_post_urn) return;
+    if (!hasWriteScope) {
+      toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+      return;
+    }
     const text = (commentByPost[post.id] || '').trim();
     if (!text) return toast.error('Write a comment first');
 
@@ -209,6 +213,10 @@ export default function LinkedInManagementTab() {
 
   const handleReaction = async (post: LinkedInPostRow) => {
     if (!currentTenant?.id || !post.linkedin_post_urn) return;
+    if (!hasWriteScope) {
+      toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+      return;
+    }
     const reactionType = reactionByPost[post.id] || 'LIKE';
     setActionLoading((prev) => ({ ...prev, [`reaction-${post.id}`]: true }));
     try {
@@ -381,7 +389,7 @@ export default function LinkedInManagementTab() {
                   />
                   <button
                     onClick={() => handleComment(post)}
-                    disabled={!!actionLoading[`comment-${post.id}`]}
+                    disabled={!hasWriteScope || !!actionLoading[`comment-${post.id}`]}
                     className="px-3 py-2 rounded-lg text-xs bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50 inline-flex items-center gap-1"
                   >
                     <MessageCircle className="w-3 h-3" />
@@ -401,7 +409,7 @@ export default function LinkedInManagementTab() {
                     </select>
                     <button
                       onClick={() => handleReaction(post)}
-                      disabled={!!actionLoading[`reaction-${post.id}`]}
+                      disabled={!hasWriteScope || !!actionLoading[`reaction-${post.id}`]}
                       className="px-3 py-2 rounded-lg text-xs bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50 inline-flex items-center gap-1"
                     >
                       <ThumbsUp className="w-3 h-3" />

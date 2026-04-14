@@ -121,6 +121,8 @@ export default function SocialMediaComposer() {
     const [linkedinCommentByPost, setLinkedinCommentByPost] = useState<Record<string, string>>({});
     const [linkedinReactionByPost, setLinkedinReactionByPost] = useState<Record<string, string>>({});
     const [linkedinActionLoading, setLinkedinActionLoading] = useState<Record<string, boolean>>({});
+    const selectedLinkedInScopes = linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
+    const hasSelectedLinkedInWriteScope = selectedLinkedInScopes.includes('w_member_social');
 
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
@@ -209,6 +211,9 @@ export default function SocialMediaComposer() {
         if (!caption.trim()) return toast.error('Caption is required');
         if (platforms.length === 0) return toast.error('Select at least one platform');
         if (!publishNow && !scheduledAt) return toast.error('Choose "Post Now" or set a schedule date');
+        if (platforms.includes('linkedin') && !hasSelectedLinkedInWriteScope) {
+            return toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+        }
 
         setSubmitting(true);
         const toastId = toast.loading(publishNow ? 'Publishing...' : 'Scheduling post...');
@@ -276,6 +281,10 @@ export default function SocialMediaComposer() {
 
     const handleLinkedInComment = async (post: SocialPost) => {
         if (!tenant?.id || !post.linkedin_post_urn) return;
+        if (!hasSelectedLinkedInWriteScope) {
+            toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+            return;
+        }
         const text = (linkedinCommentByPost[post.id] || '').trim();
         if (!text) {
             toast.error('Write a comment first');
@@ -309,6 +318,10 @@ export default function SocialMediaComposer() {
 
     const handleLinkedInReaction = async (post: SocialPost) => {
         if (!tenant?.id || !post.linkedin_post_urn) return;
+        if (!hasSelectedLinkedInWriteScope) {
+            toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+            return;
+        }
         const reactionType = linkedinReactionByPost[post.id] || 'LIKE';
         setLinkedinActionLoading((prev) => ({ ...prev, [`reaction-${post.id}`]: true }));
         try {
@@ -929,8 +942,13 @@ export default function SocialMediaComposer() {
                                         onClick={handleConnectLinkedIn}
                                         className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
                                     >
-                                        Reconnect LinkedIn
+                                        Reconnect LinkedIn With Write Scope
                                     </button>
+                                    {!hasSelectedLinkedInWriteScope && (
+                                        <p className="text-xs text-amber-300 mb-2">
+                                            Missing write scope `w_member_social`. Reconnect and approve posting permissions.
+                                        </p>
+                                    )}
                                     <div className="flex flex-wrap gap-1.5">
                                         {(linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
                                             (linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
@@ -953,12 +971,16 @@ export default function SocialMediaComposer() {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm mb-3" />
 
                             <div className="flex flex-col gap-2">
-                                <button onClick={() => handleSubmit(true)} disabled={submitting}
+                                <button
+                                    onClick={() => handleSubmit(true)}
+                                    disabled={submitting || (platforms.includes('linkedin') && !hasSelectedLinkedInWriteScope)}
                                     className="flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-colors">
                                     {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     Post Now
                                 </button>
-                                <button onClick={() => handleSubmit(false)} disabled={submitting || !scheduledAt}
+                                <button
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={submitting || !scheduledAt || (platforms.includes('linkedin') && !hasSelectedLinkedInWriteScope)}
                                     className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-40 border border-blue-500/30 text-blue-400 rounded-xl font-semibold text-sm transition-colors">
                                     <Calendar className="w-4 h-4" />
                                     Schedule Post
@@ -1048,7 +1070,7 @@ export default function SocialMediaComposer() {
                                                 />
                                                 <button
                                                     onClick={() => handleLinkedInComment(post)}
-                                                    disabled={!!linkedinActionLoading[`comment-${post.id}`]}
+                                                    disabled={!hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`comment-${post.id}`]}
                                                     className="px-3 py-2 text-xs rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
                                                 >
                                                     {linkedinActionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
@@ -1065,7 +1087,7 @@ export default function SocialMediaComposer() {
                                                     </select>
                                                     <button
                                                         onClick={() => handleLinkedInReaction(post)}
-                                                        disabled={!!linkedinActionLoading[`reaction-${post.id}`]}
+                                                        disabled={!hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`reaction-${post.id}`]}
                                                         className="px-3 py-2 text-xs rounded-lg bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
                                                     >
                                                         {linkedinActionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
