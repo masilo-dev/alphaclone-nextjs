@@ -35,6 +35,12 @@ function normalizeClaudeModel(model?: string): string {
   return 'claude-sonnet-4-5-20250929';
 }
 
+function isAnthropicModelNotFound(error: any): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  const status = Number(error?.status || 0);
+  return status === 404 && message.includes('model');
+}
+
 // Initialize clients using validated ENV
 const anthropic = ENV.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY })
@@ -211,18 +217,38 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
 
   const model = normalizeClaudeModel(options.model);
 
-  const message = await anthropic.messages.create({
-    model: model,
-    max_tokens: options.maxTokens || 8192,
-    temperature: options.temperature || 0.7,
-    system: options.systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: options.prompt,
-      },
-    ],
-  });
+  let message;
+  try {
+    message = await anthropic.messages.create({
+      model: model,
+      max_tokens: options.maxTokens || 8192,
+      temperature: options.temperature || 0.7,
+      system: options.systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: options.prompt,
+        },
+      ],
+    });
+  } catch (error: any) {
+    if (model !== 'claude-sonnet-4-5-20250929' && isAnthropicModelNotFound(error)) {
+      message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: options.maxTokens || 8192,
+        temperature: options.temperature || 0.7,
+        system: options.systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: options.prompt,
+          },
+        ],
+      });
+    } else {
+      throw error;
+    }
+  }
 
   const content = message.content[0].type === 'text' ? message.content[0].text : '';
 
@@ -377,15 +403,32 @@ async function chatWithAnthropic(
     // However, 'message' is the new user turn.
   }
 
-  const response = await anthropic.messages.create({
-    model: selectedModel,
-    max_tokens: 8192,
-    system: systemPrompt,
-    messages: [
-      ...messages,
-      { role: 'user', content: message }
-    ],
-  });
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: selectedModel,
+      max_tokens: 8192,
+      system: systemPrompt,
+      messages: [
+        ...messages,
+        { role: 'user', content: message }
+      ],
+    });
+  } catch (error: any) {
+    if (selectedModel !== 'claude-sonnet-4-5-20250929' && isAnthropicModelNotFound(error)) {
+      response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 8192,
+        system: systemPrompt,
+        messages: [
+          ...messages,
+          { role: 'user', content: message }
+        ],
+      });
+    } else {
+      throw error;
+    }
+  }
 
   const content = response.content[0].type === 'text' ? response.content[0].text : '';
 
@@ -606,14 +649,30 @@ async function streamWithAnthropic(options: AIRequestOptions): Promise<ReadableS
 
   return new ReadableStream({
     async start(controller) {
-      const stream = await anthropic.messages.create({
-        model: model,
-        max_tokens: options.maxTokens || 8192,
-        temperature: options.temperature || 0.7,
-        system: options.systemPrompt,
-        messages: [{ role: 'user', content: options.prompt }],
-        stream: true,
-      });
+      let stream: any;
+      try {
+        stream = await anthropic.messages.create({
+          model: model,
+          max_tokens: options.maxTokens || 8192,
+          temperature: options.temperature || 0.7,
+          system: options.systemPrompt,
+          messages: [{ role: 'user', content: options.prompt }],
+          stream: true,
+        });
+      } catch (error: any) {
+        if (model !== 'claude-sonnet-4-5-20250929' && isAnthropicModelNotFound(error)) {
+          stream = await anthropic.messages.create({
+            model: 'claude-sonnet-4-5-20250929',
+            max_tokens: options.maxTokens || 8192,
+            temperature: options.temperature || 0.7,
+            system: options.systemPrompt,
+            messages: [{ role: 'user', content: options.prompt }],
+            stream: true,
+          });
+        } else {
+          throw error;
+        }
+      }
 
       for await (const chunk of stream) {
         if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
