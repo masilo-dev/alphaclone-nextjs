@@ -301,8 +301,9 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     if (liError || !integration?.access_token || !integration?.linkedin_person_urn) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
     }
+    const activeIntegration = integration;
 
-    const scopes = normalizeScopes(integration.scopes);
+    const scopes = normalizeScopes(activeIntegration.scopes);
     if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
@@ -370,7 +371,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     let media: Array<Record<string, unknown>> = [];
 
     if (hasImage) {
-      const assetUrn = await registerAndUploadLinkedInImage(integration.linkedin_person_urn, imageUrl);
+      const assetUrn = await registerAndUploadLinkedInImage(activeIntegration.linkedin_person_urn, imageUrl);
       shareMediaCategory = 'IMAGE';
       media = [{
         status: 'READY',
@@ -383,7 +384,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     }
 
     const payload = {
-      author: integration.linkedin_person_urn,
+      author: activeIntegration.linkedin_person_urn,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
@@ -417,7 +418,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const postUrn = res.headers.get('x-restli-id') ?? null;
     const updateRes = await adminClient.from('social_posts').update({
       linkedin_post_urn: postUrn,
-      linkedin_member_id: integration.linkedin_member_id || post.linkedin_member_id || null,
+      linkedin_member_id: activeIntegration.linkedin_member_id || post.linkedin_member_id || null,
     }).eq('id', postId);
     if (isMissingColumn(updateRes.error, 'linkedin_member_id')) {
       await adminClient.from('social_posts').update({

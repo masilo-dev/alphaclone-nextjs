@@ -35,6 +35,16 @@ interface LinkedInCommentRow {
   createdAt: number | null;
 }
 
+interface LinkedInInboxItem {
+  postId: string;
+  postUrn: string;
+  postCaption: string;
+  commentUrn: string;
+  commentText: string;
+  actor: string;
+  createdAt: number | null;
+}
+
 function normalizeScopes(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     return raw
@@ -86,6 +96,11 @@ export default function LinkedInManagementTab() {
   const [commentsByPost, setCommentsByPost] = useState<Record<string, LinkedInCommentRow[]>>({});
   const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
   const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
+  const [inboxItems, setInboxItems] = useState<LinkedInInboxItem[]>([]);
+  const [inboxLoading, setInboxLoading] = useState(false);
+  const [inboxReplyByComment, setInboxReplyByComment] = useState<Record<string, string>>({});
+  const [inboxActionLoading, setInboxActionLoading] = useState<Record<string, boolean>>({});
+  const [inboxAiLoading, setInboxAiLoading] = useState<Record<string, boolean>>({});
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
   const [composeCaption, setComposeCaption] = useState('');
   const [composeLinkUrl, setComposeLinkUrl] = useState('');
@@ -382,6 +397,110 @@ ${parentContext}Return only the comment text.`;
       toast.error('Failed to load LinkedIn comments');
     } finally {
       setCommentsLoading((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
+  const loadInbox = async () => {
+    if (!currentTenant?.id) return;
+    setInboxLoading(true);
+    try {
+      const res = await fetch('/api/linkedin/inbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          linkedinMemberId: selectedLinkedInMemberId || undefined,
+          limit: 50,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Failed to load LinkedIn inbox');
+        return;
+      }
+      setInboxItems(Array.isArray(data.items) ? data.items : []);
+      if (data.note) {
+        toast.success('LinkedIn engagement inbox updated');
+      }
+    } catch {
+      toast.error('Failed to load LinkedIn inbox');
+    } finally {
+      setInboxLoading(false);
+    }
+  };
+
+  const handleInboxReply = async (item: LinkedInInboxItem) => {
+    if (!currentTenant?.id) return;
+    if (!hasWriteScope) {
+      toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+      return;
+    }
+    const message = (inboxReplyByComment[item.commentUrn] || '').trim();
+    if (!message) {
+      toast.error('Write a reply first');
+      return;
+    }
+    setInboxActionLoading((prev) => ({ ...prev, [item.commentUrn]: true }));
+    try {
+      const res = await fetch('/api/linkedin/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          postUrn: item.postUrn,
+          parentCommentUrn: item.commentUrn,
+          text: message,
+          linkedinMemberId: selectedLinkedInMemberId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Failed to send LinkedIn reply');
+        return;
+      }
+      setInboxReplyByComment((prev) => ({ ...prev, [item.commentUrn]: '' }));
+      toast.success('LinkedIn reply sent');
+    } catch {
+      toast.error('Failed to send LinkedIn reply');
+    } finally {
+      setInboxActionLoading((prev) => ({ ...prev, [item.commentUrn]: false }));
+    }
+  };
+
+  const handleGenerateInboxAiReply = async (item: LinkedInInboxItem) => {
+    setInboxAiLoading((prev) => ({ ...prev, [item.commentUrn]: true }));
+    try {
+      const prompt = `Write one short LinkedIn reply to this inbound comment. Tone: smart, friendly, light humor, professional-safe, no slang. Max 220 characters.
+
+Post caption:
+${String(item.postCaption || '').slice(0, 900)}
+
+Inbound comment:
+${String(item.commentText || '').slice(0, 500)}
+
+Return only the reply text.`;
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          model: 'grok-2-latest',
+          temperature: 0.9,
+          maxTokens: 120,
+          tenantId: currentTenant?.id || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.text) {
+        toast.error(data.error || 'Failed to generate AI reply');
+        return;
+      }
+      setInboxReplyByComment((prev) => ({ ...prev, [item.commentUrn]: String(data.text).trim() }));
+      toast.success('AI inbox reply ready');
+    } catch {
+      toast.error('Failed to generate AI reply');
+    } finally {
+      setInboxAiLoading((prev) => ({ ...prev, [item.commentUrn]: false }));
     }
   };
 
@@ -704,6 +823,63 @@ ${parentContext}Return only the comment text.`;
             {status}
           </button>
         ))}
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold text-white">LinkedIn Inbox</h3>
+            <p className="text-xs text-slate-400">Review inbound comments on your LinkedIn posts and reply from dashboard.</p>
+          </div>
+          <button
+            onClick={loadInbox}
+            disabled={inboxLoading}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-50"
+          >
+            {inboxLoading ? 'Loading...' : 'Load Inbox'}
+          </button>
+        </div>
+        {inboxItems.length === 0 ? (
+          <p className="text-xs text-slate-500">No inbox items loaded yet.</p>
+        ) : (
+          <div className="space-y-2 max-h-[420px] overflow-auto pr-1">
+            {inboxItems.map((item) => (
+              <div key={`${item.postUrn}-${item.commentUrn}`} className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 space-y-2">
+                <p className="text-[11px] text-slate-500">
+                  {item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown time'} | {item.actor || 'LinkedIn user'}
+                </p>
+                <p className="text-xs text-slate-300">
+                  <span className="font-semibold text-slate-200">Comment:</span> {item.commentText}
+                </p>
+                <p className="text-[11px] text-slate-500 line-clamp-2">
+                  <span className="font-semibold text-slate-400">Post:</span> {item.postCaption || 'No caption'}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
+                  <input
+                    value={inboxReplyByComment[item.commentUrn] || ''}
+                    onChange={(e) => setInboxReplyByComment((prev) => ({ ...prev, [item.commentUrn]: e.target.value }))}
+                    placeholder="Reply to this inbox comment..."
+                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  />
+                  <button
+                    onClick={() => handleInboxReply(item)}
+                    disabled={!hasWriteScope || !!inboxActionLoading[item.commentUrn]}
+                    className="px-3 py-2 rounded-lg text-xs bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
+                  >
+                    {inboxActionLoading[item.commentUrn] ? 'Replying...' : 'Reply'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateInboxAiReply(item)}
+                    disabled={!!inboxAiLoading[item.commentUrn]}
+                    className="px-3 py-2 rounded-lg text-xs bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                  >
+                    {inboxAiLoading[item.commentUrn] ? 'Generating...' : 'AI Reply'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
