@@ -121,6 +121,9 @@ export default function SocialMediaComposer() {
     const [linkedinCommentByPost, setLinkedinCommentByPost] = useState<Record<string, string>>({});
     const [linkedinReactionByPost, setLinkedinReactionByPost] = useState<Record<string, string>>({});
     const [linkedinActionLoading, setLinkedinActionLoading] = useState<Record<string, boolean>>({});
+    const [facebookCommentByPost, setFacebookCommentByPost] = useState<Record<string, string>>({});
+    const [facebookActionLoading, setFacebookActionLoading] = useState<Record<string, boolean>>({});
+    const [aiQuickReplyLoading, setAiQuickReplyLoading] = useState<Record<string, boolean>>({});
     const selectedLinkedInIntegration = linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null;
     const selectedLinkedInScopes = selectedLinkedInIntegration?.scopes || [];
     const hasSelectedLinkedInWriteScope = selectedLinkedInScopes.includes('w_member_social');
@@ -374,6 +377,83 @@ export default function SocialMediaComposer() {
         }
     };
 
+    const handleFacebookComment = async (post: SocialPost) => {
+        if (!post.facebook_post_id) return;
+        if (!selectedPageId) {
+            toast.error('Select a Facebook page first in Compose tab');
+            return;
+        }
+        const text = (facebookCommentByPost[post.id] || '').trim();
+        if (!text) {
+            toast.error('Write a Facebook comment first');
+            return;
+        }
+        setFacebookActionLoading((prev) => ({ ...prev, [post.id]: true }));
+        try {
+            const res = await fetch('/api/facebook/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pageId: selectedPageId,
+                    postId: post.facebook_post_id,
+                    message: text,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to post Facebook comment');
+                return;
+            }
+            setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: '' }));
+            toast.success('Facebook comment posted');
+        } catch {
+            toast.error('Failed to post Facebook comment');
+        } finally {
+            setFacebookActionLoading((prev) => ({ ...prev, [post.id]: false }));
+        }
+    };
+
+    const generateQuickReply = async (post: SocialPost, target: 'linkedin' | 'facebook') => {
+        const key = `${target}-${post.id}`;
+        setAiQuickReplyLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const contextText = (post.caption || '').slice(0, 1200);
+            const prompt = `Write one short ${target === 'linkedin' ? 'LinkedIn' : 'Facebook'} comment. Tone: witty, friendly, light humor, business-safe. Max 220 characters.
+
+Post context:
+${contextText}
+
+Return only the comment text.`;
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    model: 'grok-2-latest',
+                    temperature: 0.95,
+                    maxTokens: 120,
+                    tenantId: tenant?.id || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.text) {
+                toast.error(data.error || 'Failed to generate AI quick reply');
+                return;
+            }
+            const text = String(data.text).trim();
+            if (target === 'linkedin') {
+                setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: text }));
+            } else {
+                setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: text }));
+            }
+            toast.success('AI quick reply ready');
+        } catch {
+            toast.error('Failed to generate AI quick reply');
+        } finally {
+            setAiQuickReplyLoading((prev) => ({ ...prev, [key]: false }));
+        }
+    };
+
     const handleSaveEditedVideo = async (blob: Blob) => {
         if (!editingAsset || !tenant?.id) return;
         
@@ -467,7 +547,7 @@ export default function SocialMediaComposer() {
             const res = await fetch('/api/ai/image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: aiImagePrompt, size: aiImageSize }),
+                body: JSON.stringify({ prompt: aiImagePrompt, size: aiImageSize, provider: 'grok' }),
             });
             const data = await res.json();
             if (data.url) {
@@ -1083,10 +1163,34 @@ export default function SocialMediaComposer() {
                                         <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{post.error_message}</p>
                                     )}
                                     {post.facebook_post_id && (
-                                        <a href={`https://facebook.com/${post.facebook_post_id}`} target="_blank" rel="noopener noreferrer"
-                                            className="text-xs text-blue-400 hover:underline mt-1 flex items-center gap-1">
-                                            <ExternalLink className="w-3 h-3" /> View on Facebook
-                                        </a>
+                                        <div className="mt-2 space-y-2">
+                                            <a href={`https://facebook.com/${post.facebook_post_id}`} target="_blank" rel="noopener noreferrer"
+                                                className="text-xs text-blue-400 hover:underline flex items-center gap-1">
+                                                <ExternalLink className="w-3 h-3" /> View on Facebook
+                                            </a>
+                                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
+                                                <input
+                                                    value={facebookCommentByPost[post.id] || ''}
+                                                    onChange={(e) => setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                    placeholder="Write a Facebook comment..."
+                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                                />
+                                                <button
+                                                    onClick={() => handleFacebookComment(post)}
+                                                    disabled={!!facebookActionLoading[post.id]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 disabled:opacity-50"
+                                                >
+                                                    {facebookActionLoading[post.id] ? 'Posting...' : 'Comment'}
+                                                </button>
+                                                <button
+                                                    onClick={() => generateQuickReply(post, 'facebook')}
+                                                    disabled={!!aiQuickReplyLoading[`facebook-${post.id}`]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                >
+                                                    {aiQuickReplyLoading[`facebook-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
+                                                </button>
+                                            </div>
+                                        </div>
                                     )}
                                     {post.linkedin_post_urn && (
                                         <div className="mt-2 space-y-2">
@@ -1111,6 +1215,13 @@ export default function SocialMediaComposer() {
                                                     className="px-3 py-2 text-xs rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
                                                 >
                                                     {linkedinActionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
+                                                </button>
+                                                <button
+                                                    onClick={() => generateQuickReply(post, 'linkedin')}
+                                                    disabled={!!aiQuickReplyLoading[`linkedin-${post.id}`]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                >
+                                                    {aiQuickReplyLoading[`linkedin-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
                                                 </button>
                                                 <div className="flex gap-2">
                                                     <select

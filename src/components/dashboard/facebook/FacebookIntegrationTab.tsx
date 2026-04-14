@@ -6,7 +6,7 @@ import {
     Facebook, Users, Megaphone, RefreshCw, CheckCircle2, XCircle,
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
     TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown, Sparkles,
-    Activity, HelpCircle, Code2, Globe, Shield, Zap, AlertCircle
+    Activity, HelpCircle, Code2, Globe, Shield, Zap, AlertCircle, MessageCircle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -142,6 +142,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [showMediaStudio, setShowMediaStudio] = useState(false);
     const [videoCoverFrameFile, setVideoCoverFrameFile] = useState<File | null>(null);
     const [videoCoverTimePct, setVideoCoverTimePct] = useState<number>(0);
+    const [commentByPost, setCommentByPost] = useState<Record<string, string>>({});
+    const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
+    const [commentActionLoading, setCommentActionLoading] = useState<Record<string, boolean>>({});
+    const [aiReplyLoading, setAiReplyLoading] = useState<Record<string, boolean>>({});
     const imageInputRef = useRef<HTMLInputElement>(null);
 
     // AI generation state
@@ -373,6 +377,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 body: JSON.stringify({
                     prompt: aiImagePrompt,
                     size: '1024x1024',
+                    provider: 'grok',
                     tenantId: tenant?.id || undefined,
                 }),
             });
@@ -591,6 +596,96 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         if (!error) {
             setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status } : l));
             toast.success('Status updated');
+        }
+    };
+
+    const handleFacebookComment = async (postId: string, parentCommentId?: string) => {
+        if (!selectedPageId) {
+            toast.error('Select a Facebook Page first');
+            return;
+        }
+        const key = parentCommentId ? `reply-${parentCommentId}` : `post-${postId}`;
+        const message = (parentCommentId ? replyByComment[parentCommentId] : commentByPost[postId])?.trim();
+        if (!message) {
+            toast.error(parentCommentId ? 'Write a reply first' : 'Write a comment first');
+            return;
+        }
+
+        setCommentActionLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const res = await fetch('/api/facebook/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pageId: selectedPageId,
+                    postId: parentCommentId ? undefined : postId,
+                    parentCommentId: parentCommentId || undefined,
+                    message,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to publish comment');
+                return;
+            }
+
+            if (parentCommentId) {
+                setReplyByComment((prev) => ({ ...prev, [parentCommentId]: '' }));
+                toast.success('Reply posted');
+            } else {
+                setCommentByPost((prev) => ({ ...prev, [postId]: '' }));
+                toast.success('Comment posted');
+            }
+
+            await fetchPagePosts(selectedPageId);
+        } catch {
+            toast.error('Failed to publish comment');
+        } finally {
+            setCommentActionLoading((prev) => ({ ...prev, [key]: false }));
+        }
+    };
+
+    const generateFacebookQuickReply = async (post: any, parentCommentId?: string, parentCommentText?: string) => {
+        const key = parentCommentId ? `reply-${parentCommentId}` : `post-${post.id}`;
+        setAiReplyLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const postText = String(post?.message || post?.story || '').slice(0, 1200);
+            const parentContext = parentCommentText
+                ? `Comment to reply to:\n${String(parentCommentText).slice(0, 700)}\n\n`
+                : '';
+            const prompt = `Write one short Facebook comment reply. Tone: witty, friendly, light humor, professional-safe. Max 220 characters.
+
+Post context:
+${postText}
+
+${parentContext}Return only the reply text.`;
+
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    model: 'grok-2-latest',
+                    temperature: 0.95,
+                    maxTokens: 120,
+                    tenantId: tenant?.id || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.text) {
+                toast.error(data.error || 'Failed to generate AI reply');
+                return;
+            }
+            if (parentCommentId) {
+                setReplyByComment((prev) => ({ ...prev, [parentCommentId]: String(data.text).trim() }));
+            } else {
+                setCommentByPost((prev) => ({ ...prev, [post.id]: String(data.text).trim() }));
+            }
+            toast.success('AI quick reply ready');
+        } catch {
+            toast.error('Failed to generate AI reply');
+        } finally {
+            setAiReplyLoading((prev) => ({ ...prev, [key]: false }));
         }
     };
 
@@ -1422,6 +1517,86 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             >
                                                                 View on Facebook <ExternalLink className="w-3 h-3" />
                                                             </a>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                                                        <div className="mb-2 flex items-center gap-1.5 text-xs text-slate-400">
+                                                            <MessageCircle className="w-3.5 h-3.5" />
+                                                            Engagement
+                                                        </div>
+                                                        <div className="mb-3 flex gap-2">
+                                                            <input
+                                                                value={commentByPost[post.id] || ''}
+                                                                onChange={(e) =>
+                                                                    setCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))
+                                                                }
+                                                                placeholder="Write a comment on this post..."
+                                                                className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                                                            />
+                                                            <button
+                                                                onClick={() => void handleFacebookComment(post.id)}
+                                                                disabled={!!commentActionLoading[`post-${post.id}`]}
+                                                                className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                                                            >
+                                                                {commentActionLoading[`post-${post.id}`] ? 'Posting...' : 'Comment'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => void generateFacebookQuickReply(post)}
+                                                                disabled={!!aiReplyLoading[`post-${post.id}`]}
+                                                                className="rounded-lg bg-violet-600/20 border border-violet-500/30 px-3 py-2 text-xs font-semibold text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                            >
+                                                                {aiReplyLoading[`post-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
+                                                            </button>
+                                                        </div>
+
+                                                        {(post.comments?.data || []).length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {(post.comments?.data || []).slice(0, 5).map((comment: any) => (
+                                                                    <div key={comment.id} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5">
+                                                                        <p className="text-xs text-slate-200">
+                                                                            <span className="font-semibold text-slate-300">
+                                                                                {comment.from?.name || 'User'}:
+                                                                            </span>{' '}
+                                                                            {comment.message || ''}
+                                                                        </p>
+                                                                        <div className="mt-2 flex gap-2">
+                                                                            <input
+                                                                                value={replyByComment[comment.id] || ''}
+                                                                                onChange={(e) =>
+                                                                                    setReplyByComment((prev) => ({
+                                                                                        ...prev,
+                                                                                        [comment.id]: e.target.value,
+                                                                                    }))
+                                                                                }
+                                                                                placeholder="Reply to this comment..."
+                                                                                className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                                                                            />
+                                                                            <button
+                                                                                onClick={() => void handleFacebookComment(post.id, comment.id)}
+                                                                                disabled={!!commentActionLoading[`reply-${comment.id}`]}
+                                                                                className="rounded-lg bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                                                                            >
+                                                                                {commentActionLoading[`reply-${comment.id}`] ? 'Replying...' : 'Reply'}
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() =>
+                                                                                    void generateFacebookQuickReply(
+                                                                                        post,
+                                                                                        comment.id,
+                                                                                        comment.message
+                                                                                    )
+                                                                                }
+                                                                                disabled={!!aiReplyLoading[`reply-${comment.id}`]}
+                                                                                className="rounded-lg bg-violet-600/20 border border-violet-500/30 px-2.5 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                                            >
+                                                                                {aiReplyLoading[`reply-${comment.id}`] ? 'Generating...' : 'AI Reply'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-xs text-slate-500">No comments yet for this post.</p>
                                                         )}
                                                     </div>
                                                 </div>

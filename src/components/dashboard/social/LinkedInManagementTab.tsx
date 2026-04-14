@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Linkedin, RefreshCw, ExternalLink, MessageCircle, ThumbsUp, AlertTriangle, Loader2 } from 'lucide-react';
+import { Linkedin, RefreshCw, ExternalLink, MessageCircle, ThumbsUp, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +59,7 @@ export default function LinkedInManagementTab() {
   const [commentByPost, setCommentByPost] = useState<Record<string, string>>({});
   const [reactionByPost, setReactionByPost] = useState<Record<string, string>>({});
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [aiReplyLoading, setAiReplyLoading] = useState<Record<string, boolean>>({});
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -267,6 +268,42 @@ export default function LinkedInManagementTab() {
     }
   };
 
+  const handleGenerateAiReply = async (post: LinkedInPostRow) => {
+    setAiReplyLoading((prev) => ({ ...prev, [post.id]: true }));
+    try {
+      const contextCaption = (post.caption || '').slice(0, 1200);
+      const prompt = `Write one short LinkedIn comment reply for this post. Tone: smart, friendly, light humor, business-safe, no slang. Max 220 characters.
+
+Post caption:
+${contextCaption}
+
+Return only the comment text.`;
+
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          model: 'grok-2-latest',
+          temperature: 0.9,
+          maxTokens: 120,
+          tenantId: currentTenant?.id || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.text) {
+        toast.error(data.error || 'Failed to generate AI reply');
+        return;
+      }
+      setCommentByPost((prev) => ({ ...prev, [post.id]: String(data.text).trim() }));
+      toast.success('AI quick reply ready');
+    } catch {
+      toast.error('Failed to generate AI reply');
+    } finally {
+      setAiReplyLoading((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
@@ -432,6 +469,14 @@ export default function LinkedInManagementTab() {
                   >
                     <MessageCircle className="w-3 h-3" />
                     {actionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateAiReply(post)}
+                    disabled={!!aiReplyLoading[post.id]}
+                    className="px-3 py-2 rounded-lg text-xs bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50 inline-flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {aiReplyLoading[post.id] ? 'Generating...' : 'AI Quick Reply'}
                   </button>
                   <div className="flex gap-2">
                     <select

@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
       'id', 'message', 'story', 'full_picture', 'permalink_url',
       'created_time', 'type',
       'likes.summary(true)',
-      'comments.summary(true)',
+      'comments.summary(true).limit(5){id,message,created_time,from,like_count,comments.limit(3){id,message,created_time,from}}',
       'shares',
     ].join(',');
 
