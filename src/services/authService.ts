@@ -316,7 +316,7 @@ export const authService = {
     /**
      * Sign in with Google OAuth
      */
-    async signInWithGoogle(): Promise<{ error: string | null }> {
+    async signInWithGoogle(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {
         try {
             // Set a flag to help AuthContext/AuthService identify that we are in a callback loop
             // and should be more persistent with session discovery.
@@ -327,7 +327,7 @@ export const authService = {
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/business`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -355,7 +355,7 @@ export const authService = {
     /**
      * Sign in with LinkedIn OAuth
      */
-    async signInWithLinkedIn(): Promise<{ error: string | null }> {
+    async signInWithLinkedIn(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
@@ -364,7 +364,10 @@ export const authService = {
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'linkedin_oidc',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/business`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+                    queryParams: {
+                        prompt: 'consent',
+                    },
                 },
             }), 5000);
 
@@ -388,7 +391,7 @@ export const authService = {
     /**
      * Sign in with Facebook OAuth
      */
-    async signInWithFacebook(): Promise<{ error: string | null }> {
+    async signInWithFacebook(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
@@ -397,7 +400,7 @@ export const authService = {
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'facebook',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/business`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
                 },
             }), 5000);
 

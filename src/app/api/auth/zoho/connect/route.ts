@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -26,7 +27,18 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Zoho OAuth is not fully configured' }, { status: 500 });
     }
 
-    if (!state) {
+    let identityState = state;
+    if (!identityState) {
+        const supabase = await createSupabaseServerClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (user?.id) {
+            identityState = user.id;
+        }
+    }
+
+    if (!identityState) {
         return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
     }
 
@@ -49,7 +61,7 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.append('prompt', 'consent');
     authUrl.searchParams.append('scope', scopes.join(' '));
     authUrl.searchParams.append('redirect_uri', redirectUri);
-    authUrl.searchParams.append('state', JSON.stringify({ region, state }));
+    authUrl.searchParams.append('state', JSON.stringify({ region, state: identityState }));
 
     return NextResponse.redirect(authUrl.toString());
     } catch (err) {

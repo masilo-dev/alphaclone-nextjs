@@ -11,6 +11,7 @@ import {
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
+const REQUEST_BUDGET_MS = 52000;
 
 // ─── Per-tenant in-process quota cache ────────────────────────────────────────
 // key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
@@ -138,35 +139,48 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 
+class OverpassRequestError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'OverpassRequestError';
+    this.status = status;
+  }
+}
+
 async function postOverpassQuery(queryBody: string): Promise<Response> {
   let lastError: Error | null = null;
   for (const endpoint of OVERPASS_ENDPOINTS) {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 1; attempt++) {
       if (attempt > 0) {
-        await new Promise(r => setTimeout(r, 2000 * attempt));
+        await new Promise(r => setTimeout(r, 1000 * attempt));
       }
       try {
         const res = await fetch(endpoint, {
           method: 'POST',
           body: queryBody,
           headers: { 'Content-Type': 'text/plain' },
-          signal: AbortSignal.timeout(45000),
+          signal: AbortSignal.timeout(6000),
         });
         if (res.status === 429) {
-          lastError = new Error(`Overpass 429`);
-          break;
+          throw new OverpassRequestError('Overpass 429', 429);
         }
         if (!res.ok) {
-          lastError = new Error(`Overpass ${res.status}`);
+          lastError = new OverpassRequestError(`Overpass ${res.status}`, res.status);
           continue;
         }
         return res;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
+        if (lastError instanceof OverpassRequestError && lastError.status === 429) {
+          // All public mirrors are usually throttling together; fail fast to preserve runtime budget.
+          throw lastError;
+        }
       }
     }
   }
-  throw lastError || new Error('Overpass request failed');
+  throw lastError || new OverpassRequestError('Overpass request failed');
 }
 
 // ─── Strategy 3 (PRIMARY): OpenStreetMap / Overpass ───────────────────────────
@@ -202,7 +216,13 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
   
   let verifiedElements: any[] = [];
 
+  const startedAt = Date.now();
+  const OSM_BUDGET_MS = 14000;
   for (const delta of deltas) {
+    if (Date.now() - startedAt > OSM_BUDGET_MS) {
+      console.warn('[OSM] Time budget reached, returning best partial result');
+      break;
+    }
     const south = centerLat - delta;
     const north = centerLat + delta;
     const west  = centerLon - delta;
@@ -215,7 +235,7 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
     // Extended Overpass query: match by name OR by shop/amenity/office/craft category
     // We include node, way, and relation.
     const q = `
-[out:json][timeout:30];
+[out:json][timeout:12];
 (
   node["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
   node["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
@@ -249,6 +269,10 @@ out center ${fetchLimit};
       if (verifiedElements.length >= targetMin) break;
     } catch (err) {
       console.warn('[OSM] Overpass attempt failed, widening bbox:', err);
+      if (err instanceof OverpassRequestError && err.status === 429) {
+        // Avoid repeated throttled requests that can trigger serverless timeout.
+        break;
+      }
     }
   }
 
@@ -352,6 +376,9 @@ async function checkAndDeductQuota(tenantId: string, wantCount: number): Promise
 // ─── Main POST Handler ─────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
+    const requestStartedAt = Date.now();
+    const isBudgetExceeded = () => Date.now() - requestStartedAt > REQUEST_BUDGET_MS;
+
     const body = await request.json();
     const niche     = body.niche    || body.query?.split(' in ')[0]?.trim() || '';
     const location  = body.location || body.query?.split(' in ')[1]?.trim() || '';
@@ -396,7 +423,7 @@ export async function POST(request: Request) {
 
     // ── Step 2: Fallbacks only if OSM < LEADS_PER_SEARCH verified leads ───────
     const needMore = results.length < LEADS_PER_SEARCH;
-    if (needMore) {
+    if (needMore && !isBudgetExceeded()) {
       console.log(`[Scraper] OSM only got ${results.length} verified leads — activating fallbacks…`);
       const [yelpRes, hereRes] = await Promise.allSettled([
         fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy),
@@ -428,7 +455,7 @@ export async function POST(request: Request) {
 
     // Step 3: Browser-based SERP supplement (Browserbase or BROWSER_WS_ENDPOINT)
     const stillNeed = results.length < LEADS_PER_SEARCH;
-    if (stillNeed && hasRemoteBrowserConfigured()) {
+    if (stillNeed && hasRemoteBrowserConfigured() && !isBudgetExceeded()) {
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
         const browserRows = await fetchSerpLeadsViaBrowser(niche, location, want);

@@ -259,7 +259,7 @@ export default function SocialMediaComposer() {
     const handleConnectLinkedIn = async () => {
         try {
             const { authService } = await import('@/services/authService');
-            const { error } = await authService.signInWithLinkedIn();
+            const { error } = await authService.signInWithLinkedIn('/dashboard/business/social');
             if (error) toast.error(error);
         } catch {
             toast.error('Failed to start LinkedIn connection');

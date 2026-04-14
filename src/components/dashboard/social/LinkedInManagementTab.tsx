@@ -47,16 +47,18 @@ export default function LinkedInManagementTab() {
   const [commentByPost, setCommentByPost] = useState<Record<string, string>>({});
   const [reactionByPost, setReactionByPost] = useState<Record<string, string>>({});
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
     setLoading(true);
+    setSchemaWarning(null);
     const [postsRes, liRes] = await Promise.all([
       supabase
         .from('social_posts')
         .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms')
         .eq('tenant_id', currentTenant.id)
-        .contains('platforms', ['linkedin'])
+        .filter('platforms', 'cs', '{"linkedin"}')
         .order('created_at', { ascending: false })
         .limit(100),
       supabase
@@ -69,10 +71,32 @@ export default function LinkedInManagementTab() {
         .maybeSingle(),
     ]);
 
-    if (postsRes.error) toast.error('Failed to load LinkedIn posts');
-    else setPosts((postsRes.data || []) as LinkedInPostRow[]);
+    if (postsRes.error) {
+      const fallback = await supabase
+        .from('social_posts')
+        .select('id,caption,status,scheduled_at,published_at,created_at,error_message,platforms')
+        .eq('tenant_id', currentTenant.id)
+        .filter('platforms', 'cs', '{"linkedin"}')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    if (!liRes.error) setIntegration((liRes.data as LinkedInIntegrationRow | null) || null);
+      if (fallback.error) {
+        toast.error('Failed to load LinkedIn posts');
+      } else {
+        const mapped = (fallback.data || []).map((row: any) => ({ ...row, linkedin_post_urn: null }));
+        setPosts(mapped as LinkedInPostRow[]);
+        setSchemaWarning('LinkedIn post tracking migration is missing. Apply the latest social LinkedIn migration to enable full post links and actions.');
+      }
+    } else {
+      setPosts((postsRes.data || []) as LinkedInPostRow[]);
+    }
+
+    if (liRes.error) {
+      setIntegration(null);
+      setSchemaWarning((prev) => prev || 'LinkedIn integration table is missing in database. Apply latest LinkedIn migration.');
+    } else {
+      setIntegration((liRes.data as LinkedInIntegrationRow | null) || null);
+    }
     setLoading(false);
   }, [currentTenant?.id, user?.id]);
 
@@ -93,7 +117,7 @@ export default function LinkedInManagementTab() {
   const handleConnectLinkedIn = async () => {
     try {
       const { authService } = await import('@/services/authService');
-      const { error } = await authService.signInWithLinkedIn();
+      const { error } = await authService.signInWithLinkedIn('/dashboard/business/linkedin');
       if (error) toast.error(error);
     } catch {
       toast.error('Failed to start LinkedIn connection');
@@ -171,6 +195,11 @@ export default function LinkedInManagementTab() {
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        {schemaWarning && (
+          <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-200">
+            {schemaWarning}
+          </div>
+        )}
         {!integration ? (
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <p className="text-sm text-amber-300 flex items-center gap-2">
