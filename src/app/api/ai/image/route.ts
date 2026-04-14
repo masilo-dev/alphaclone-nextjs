@@ -15,6 +15,19 @@ const FREE_IMAGES_PER_DAY = 3;
 
 type ImageProvider = 'xai' | 'openai';
 
+function isMissingDailyUsageTableError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const maybeError = error as { code?: string; message?: string };
+    const message = String(maybeError.message || '').toLowerCase();
+    return (
+        maybeError.code === '42P01' ||
+        maybeError.code === 'PGRST205' ||
+        (message.includes('daily_image_generation_usage') && message.includes('schema cache')) ||
+        (message.includes('daily_image_generation_usage') && message.includes('could not find the table')) ||
+        (message.includes('relation') && message.includes('daily_image_generation_usage') && message.includes('does not exist'))
+    );
+}
+
 function getTodayUtcDate(): string {
     const now = new Date();
     const y = now.getUTCFullYear();
@@ -116,17 +129,22 @@ export async function POST(req: NextRequest) {
     // Hard free allowance for everyone: 3 images per UTC day per user.
     // This is independent from tenant AI unit quotas.
     const usageDate = getTodayUtcDate();
-    const { data: dailyUsage, error: usageReadError } = await admin
+    let usageTrackingEnabled = true;
+    let dailyUsage: { id: string; generated_count: number } | null = null;
+    const { data: usageData, error: usageReadError } = await admin
         .from('daily_image_generation_usage')
         .select('id,generated_count')
         .eq('user_id', user.id)
         .eq('usage_date', usageDate)
         .maybeSingle();
-    if (usageReadError) {
+    if (usageReadError && isMissingDailyUsageTableError(usageReadError)) {
+        usageTrackingEnabled = false;
+    } else if (usageReadError) {
         return NextResponse.json({ error: usageReadError.message }, { status: 500 });
     }
+    dailyUsage = usageData;
     const generatedToday = Number(dailyUsage?.generated_count ?? 0);
-    if (generatedToday >= FREE_IMAGES_PER_DAY) {
+    if (usageTrackingEnabled && generatedToday >= FREE_IMAGES_PER_DAY) {
         return NextResponse.json(
             {
                 error: `Daily free image limit reached (${FREE_IMAGES_PER_DAY}/day).`,
@@ -198,7 +216,7 @@ export async function POST(req: NextRequest) {
         const imageProvider = result.provider;
 
         // Increment free daily usage counter only after successful generation.
-        if (!dailyUsage) {
+        if (usageTrackingEnabled && !dailyUsage) {
             const { error: usageInsertError } = await admin
                 .from('daily_image_generation_usage')
                 .insert({
@@ -206,10 +224,13 @@ export async function POST(req: NextRequest) {
                     usage_date: usageDate,
                     generated_count: 1,
                 });
-            if (usageInsertError) {
+            if (usageInsertError && !isMissingDailyUsageTableError(usageInsertError)) {
                 return NextResponse.json({ error: usageInsertError.message }, { status: 500 });
             }
-        } else {
+            if (usageInsertError && isMissingDailyUsageTableError(usageInsertError)) {
+                usageTrackingEnabled = false;
+            }
+        } else if (usageTrackingEnabled && dailyUsage) {
             const { error: usageUpdateError } = await admin
                 .from('daily_image_generation_usage')
                 .update({
@@ -217,8 +238,11 @@ export async function POST(req: NextRequest) {
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', dailyUsage.id);
-            if (usageUpdateError) {
+            if (usageUpdateError && !isMissingDailyUsageTableError(usageUpdateError)) {
                 return NextResponse.json({ error: usageUpdateError.message }, { status: 500 });
+            }
+            if (usageUpdateError && isMissingDailyUsageTableError(usageUpdateError)) {
+                usageTrackingEnabled = false;
             }
         }
 
@@ -229,8 +253,9 @@ export async function POST(req: NextRequest) {
             provider: imageProvider,
             freeUsage: {
                 limit: FREE_IMAGES_PER_DAY,
-                used: generatedToday + 1,
-                remaining: Math.max(0, FREE_IMAGES_PER_DAY - (generatedToday + 1)),
+                used: usageTrackingEnabled ? generatedToday + 1 : null,
+                remaining: usageTrackingEnabled ? Math.max(0, FREE_IMAGES_PER_DAY - (generatedToday + 1)) : null,
+                trackingEnabled: usageTrackingEnabled,
             },
         });
     } catch (error: any) {
