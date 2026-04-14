@@ -25,9 +25,16 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const parsedState = JSON.parse(stateStr);
-        const region = parsedState?.region || 'US';
-        const userId = parsedState?.state;
+        let region = 'US';
+        let userId = '';
+        try {
+            const parsedState = JSON.parse(stateStr);
+            region = typeof parsedState?.region === 'string' && parsedState.region ? parsedState.region : 'US';
+            userId = typeof parsedState?.state === 'string' ? parsedState.state : '';
+        } catch {
+            // Backward compatibility: some legacy flows store only userId in state.
+            userId = stateStr;
+        }
         if (!userId || typeof userId !== 'string') {
             throw new Error('Invalid OAuth state payload');
         }

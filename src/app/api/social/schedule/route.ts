@@ -24,6 +24,16 @@ type PublishResult = {
   reason?: string;
 };
 
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 20000): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function isMissingColumn(error: unknown, columnName: string) {
   if (!error || typeof error !== 'object') return false;
   const maybeError = error as { code?: string; message?: string };
@@ -178,7 +188,7 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
       ? `https://graph.facebook.com/v19.0/${post.facebook_page_id}/photos`
       : `https://graph.facebook.com/v19.0/${post.facebook_page_id}/feed`;
 
-    const res = await fetch(endpoint, {
+    const res = await fetchWithTimeout(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fbBody),
@@ -312,7 +322,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
     };
 
-    const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    const res = await fetchWithTimeout('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${integration.access_token}`,
@@ -320,7 +330,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         'X-Restli-Protocol-Version': '2.0.0',
       },
       body: JSON.stringify(payload),
-    });
+    }, 25000);
 
     const rawBody = await res.text();
     if (!res.ok) {
@@ -456,7 +466,9 @@ export async function POST(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 
-    if (shouldPublishNow) void publishSocialPost(post.id);
+    if (shouldPublishNow) {
+      await publishSocialPost(post.id);
+    }
 
     return NextResponse.json({ success: true, post });
   } catch (err: unknown) {
@@ -544,7 +556,7 @@ export async function PATCH(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
 
-    void publishSocialPost(body.postId);
+    await publishSocialPost(body.postId);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'social/schedule.PATCH' });
