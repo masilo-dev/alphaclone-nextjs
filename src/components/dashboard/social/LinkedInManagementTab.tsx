@@ -81,6 +81,10 @@ export default function LinkedInManagementTab() {
   const [composeLinkUrl, setComposeLinkUrl] = useState('');
   const [composeScheduledAt, setComposeScheduledAt] = useState('');
   const [composeSubmitting, setComposeSubmitting] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiTone, setAiTone] = useState<'professional' | 'casual' | 'engaging' | 'promotional'>('professional');
+  const [aiContentType, setAiContentType] = useState<'linkedin_post' | 'linkedin_article'>('linkedin_post');
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
@@ -377,6 +381,50 @@ Return only the comment text.`;
     }
   };
 
+  const handleGenerateLinkedInContent = async () => {
+    if (!currentTenant?.id) return;
+    if (!aiTopic.trim()) {
+      toast.error('Describe the topic first');
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const promptByType: Record<typeof aiContentType, string> = {
+        linkedin_post: `Write a ${aiTone} LinkedIn post about: "${aiTopic}". Keep it practical, clear, and native to LinkedIn. Length 160-320 words. End with a subtle call-to-action. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3","tag4","tag5"]}.`,
+        linkedin_article: `Write a ${aiTone} LinkedIn article draft about: "${aiTopic}". Length 500-900 words with a strong title line, short intro, 3-5 section headings, practical insights, and concise CTA ending. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3","tag4","tag5"]}.`,
+      };
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: promptByType[aiContentType],
+          systemPrompt: 'You are an expert LinkedIn content strategist for business users. Return only valid JSON.',
+          maxTokens: aiContentType === 'linkedin_article' ? 1400 : 550,
+          temperature: 0.8,
+          model: 'grok-2-latest',
+          tenantId: currentTenant.id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.text) {
+        toast.error(data.error || 'Failed to generate LinkedIn content');
+        return;
+      }
+      try {
+        const parsed = JSON.parse(String(data.text).trim());
+        const caption = typeof parsed.caption === 'string' ? parsed.caption.trim() : '';
+        if (caption) setComposeCaption(caption);
+      } catch {
+        setComposeCaption(String(data.text).trim());
+      }
+      toast.success(aiContentType === 'linkedin_article' ? 'AI article draft generated' : 'AI LinkedIn post generated');
+    } catch {
+      toast.error('Failed to generate LinkedIn content');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
@@ -487,6 +535,53 @@ Return only the comment text.`;
         <div>
           <h3 className="text-sm font-semibold text-white">Write LinkedIn Post</h3>
           <p className="text-xs text-slate-400">Create and publish from this LinkedIn page directly.</p>
+        </div>
+        <div className="rounded-lg border border-violet-500/25 bg-violet-500/10 p-3 space-y-2">
+          <p className="text-xs font-semibold text-violet-300">AI Content Generator</p>
+          <input
+            value={aiTopic}
+            onChange={(e) => setAiTopic(e.target.value)}
+            placeholder="What should this LinkedIn content be about?"
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+          />
+          <div className="flex flex-wrap gap-2">
+            {(['professional', 'engaging', 'casual', 'promotional'] as const).map((tone) => (
+              <button
+                key={tone}
+                onClick={() => setAiTone(tone)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  aiTone === tone ? 'bg-violet-500 text-white' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                }`}
+              >
+                {tone}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setAiContentType('linkedin_post')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                aiContentType === 'linkedin_post' ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              LinkedIn Post
+            </button>
+            <button
+              onClick={() => setAiContentType('linkedin_article')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                aiContentType === 'linkedin_article' ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              LinkedIn Article
+            </button>
+            <button
+              onClick={handleGenerateLinkedInContent}
+              disabled={aiGenerating || !aiTopic.trim()}
+              className="ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
+            >
+              {aiGenerating ? 'Generating...' : 'Generate with AI'}
+            </button>
+          </div>
         </div>
         <textarea
           value={composeCaption}
