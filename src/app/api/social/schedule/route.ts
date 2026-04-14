@@ -432,7 +432,9 @@ export async function POST(req: NextRequest) {
     const scheduledAt = parsedScheduledAt ? parsedScheduledAt.toISOString() : null;
     const shouldPublishNow = body.publish_now === true || !scheduledAt;
 
-    const status = shouldPublishNow ? 'queued' : 'scheduled';
+    // Use a legacy-safe insert status; some deployments still enforce
+    // an older social_posts_status_check that rejects "queued".
+    const status = 'scheduled';
 
     const insertPayload = {
       tenant_id: tenantId,
