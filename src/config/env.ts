@@ -73,6 +73,11 @@ const envSchema = z.object({
     ZOHO_REDIRECT_URI: z.string().url().optional(),
     ZOHO_ENCRYPTION_SECRET: z.string().length(32, 'Zoho encryption secret must be exactly 32 characters').optional(),
 
+    // LinkedIn OAuth (integration connector)
+    LINKEDIN_CLIENT_ID: z.string().optional(),
+    LINKEDIN_CLIENT_SECRET: z.string().optional(),
+    LINKEDIN_REDIRECT_URI: z.string().url().optional(),
+
     // QStash (for auto-responder delays)
     QSTASH_TOKEN: z.string().optional(),
     QSTASH_URL: z.string().url().optional(),
@@ -158,6 +163,10 @@ function validateEnv() {
         ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET,
         ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI,
         ZOHO_ENCRYPTION_SECRET: process.env.ZOHO_ENCRYPTION_SECRET || process.env.ENCRYPTION_SECRET,
+
+        LINKEDIN_CLIENT_ID: process.env.LINKEDIN_CLIENT_ID || process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
+        LINKEDIN_CLIENT_SECRET: process.env.LINKEDIN_CLIENT_SECRET,
+        LINKEDIN_REDIRECT_URI: process.env.LINKEDIN_REDIRECT_URI || process.env.NEXT_PUBLIC_LINKEDIN_REDIRECT_URI,
 
         QSTASH_TOKEN: process.env.QSTASH_TOKEN,
         QSTASH_URL: process.env.QSTASH_URL,

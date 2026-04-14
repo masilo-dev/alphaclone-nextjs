@@ -104,6 +104,9 @@ export default function LinkedInManagementTab() {
   }, [currentTenant?.id, user?.id, selectedLinkedInMemberId]);
 
   useEffect(() => {
+    void import('@/services/authService').then(({ authService }) => {
+      authService.consumeLinkedInConnectStatusFromUrl();
+    });
     loadData();
   }, [loadData]);
 
@@ -123,7 +126,7 @@ export default function LinkedInManagementTab() {
   const handleConnectLinkedIn = async () => {
     try {
       const { authService } = await import('@/services/authService');
-      const { error } = await authService.connectLinkedInIntegration('/dashboard/business/linkedin');
+      const { error } = await authService.connectLinkedInIntegration('/dashboard/business/linkedin', currentTenant?.id);
       if (error) toast.error(error);
     } catch {
       toast.error('Failed to start LinkedIn connection');

@@ -392,41 +392,43 @@ export const authService = {
      * Connect LinkedIn as integration for the CURRENT signed-in user.
      * This avoids switching app account sessions during OAuth.
      */
-    async connectLinkedInIntegration(nextPath: string = '/dashboard/business/linkedin'): Promise<{ error: string | null }> {
+    async connectLinkedInIntegration(nextPath: string = '/dashboard/business/linkedin', tenantId?: string): Promise<{ error: string | null }> {
         try {
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('auth_callback_in_progress', 'true');
-            }
-
-            const auth: any = supabase.auth as any;
-            if (typeof auth.linkIdentity !== 'function') {
-                const fallback = await this.signInWithLinkedIn(nextPath);
-                return fallback;
-            }
-
-            const { error } = await withAuthTimeout(auth.linkIdentity({
-                provider: 'linkedin_oidc',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
-                    queryParams: { prompt: 'consent' },
-                },
-            }), 7000);
-
-            if (error) {
-                console.error("LinkedIn Connect Error:", error);
-                if (typeof window !== 'undefined') {
-                    sessionStorage.removeItem('auth_callback_in_progress');
-                }
-                return { error: error.message };
-            }
-
+            if (typeof window === 'undefined') return { error: 'LinkedIn connection is browser-only' };
+            const params = new URLSearchParams();
+            params.set('return_to', nextPath);
+            if (tenantId) params.set('tenant_id', tenantId);
+            window.location.href = `/api/auth/linkedin/connect?${params.toString()}`;
             return { error: null };
         } catch (err) {
-            if (typeof window !== 'undefined') {
-                sessionStorage.removeItem('auth_callback_in_progress');
-            }
             return { error: err instanceof Error ? err.message : 'Unknown error' };
         }
+    },
+
+    /**
+     * Handle LinkedIn connector callback status in dashboard routes.
+     */
+    consumeLinkedInConnectStatusFromUrl(): void {
+        if (typeof window === 'undefined') return;
+        const url = new URL(window.location.href);
+        const connected = url.searchParams.get('li_connected');
+        const liError = url.searchParams.get('li_error');
+        if (!connected && !liError) return;
+
+        if (connected === 'true') {
+            // Keep feedback concise and non-blocking
+            import('react-hot-toast').then(({ default: toast }) => {
+                toast.success('LinkedIn connected');
+            }).catch(() => { });
+        } else if (liError) {
+            import('react-hot-toast').then(({ default: toast }) => {
+                toast.error(`LinkedIn connect failed: ${liError}`);
+            }).catch(() => { });
+        }
+
+        url.searchParams.delete('li_connected');
+        url.searchParams.delete('li_error');
+        window.history.replaceState({}, '', url.toString());
     },
 
     /**

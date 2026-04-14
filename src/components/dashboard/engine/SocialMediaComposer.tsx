@@ -151,7 +151,12 @@ export default function SocialMediaComposer() {
         setLoading(false);
     }, [tenant?.id, user, selectedLinkedInMemberId]);
 
-    useEffect(() => { loadData(); }, [loadData]);
+    useEffect(() => {
+        void import('@/services/authService').then(({ authService }) => {
+            authService.consumeLinkedInConnectStatusFromUrl();
+        });
+        loadData();
+    }, [loadData]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -262,7 +267,7 @@ export default function SocialMediaComposer() {
     const handleConnectLinkedIn = async () => {
         try {
             const { authService } = await import('@/services/authService');
-            const { error } = await authService.connectLinkedInIntegration('/dashboard/business/social');
+            const { error } = await authService.connectLinkedInIntegration('/dashboard/business/social', tenant?.id);
             if (error) toast.error(error);
         } catch {
             toast.error('Failed to start LinkedIn connection');
