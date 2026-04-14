@@ -279,6 +279,31 @@ export default function SocialMediaComposer() {
         }
     };
 
+    const handleDisconnectLinkedIn = async () => {
+        if (!tenant?.id || !selectedLinkedInMemberId) return;
+        if (!confirm('Disconnect selected LinkedIn account from this workspace?')) return;
+        try {
+            const res = await fetch('/api/auth/linkedin/disconnect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    linkedinMemberId: selectedLinkedInMemberId,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to disconnect LinkedIn');
+                return;
+            }
+            toast.success('LinkedIn disconnected');
+            setSelectedLinkedInMemberId('');
+            await loadData();
+        } catch {
+            toast.error('Failed to disconnect LinkedIn');
+        }
+    };
+
     const handleLinkedInComment = async (post: SocialPost) => {
         if (!tenant?.id || !post.linkedin_post_urn) return;
         if (!hasSelectedLinkedInWriteScope) {
@@ -943,6 +968,12 @@ export default function SocialMediaComposer() {
                                         className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
                                     >
                                         Reconnect LinkedIn With Write Scope
+                                    </button>
+                                    <button
+                                        onClick={handleDisconnectLinkedIn}
+                                        className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-red-600/15 border border-red-500/30 text-red-300 hover:bg-red-600/25 transition-colors"
+                                    >
+                                        Disconnect LinkedIn
                                     </button>
                                     {!hasSelectedLinkedInWriteScope && (
                                         <p className="text-xs text-amber-300 mb-2">

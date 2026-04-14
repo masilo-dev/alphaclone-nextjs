@@ -179,6 +179,31 @@ export default function LinkedInManagementTab() {
     }
   };
 
+  const handleDisconnectLinkedIn = async () => {
+    if (!currentTenant?.id || !selectedLinkedInMemberId) return;
+    if (!window.confirm('Disconnect selected LinkedIn account from this workspace?')) return;
+    try {
+      const res = await fetch('/api/auth/linkedin/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          linkedinMemberId: selectedLinkedInMemberId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Failed to disconnect LinkedIn');
+        return;
+      }
+      toast.success('LinkedIn disconnected');
+      setSelectedLinkedInMemberId('');
+      await loadData();
+    } catch {
+      toast.error('Failed to disconnect LinkedIn');
+    }
+  };
+
   const handleComment = async (post: LinkedInPostRow) => {
     if (!currentTenant?.id || !post.linkedin_post_urn) return;
     if (!hasWriteScope) {
@@ -318,6 +343,12 @@ export default function LinkedInManagementTab() {
                 className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30"
               >
                 Reconnect LinkedIn
+              </button>
+              <button
+                onClick={handleDisconnectLinkedIn}
+                className="px-3 py-2 rounded-lg text-xs font-semibold bg-red-600/15 border border-red-500/30 text-red-300 hover:bg-red-600/25"
+              >
+                Disconnect LinkedIn
               </button>
             </div>
             <div className="flex flex-wrap gap-1.5">
