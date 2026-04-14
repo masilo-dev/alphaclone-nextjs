@@ -1,4 +1,3 @@
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-
-// Global store for MCP sessions, required because SSE endpoints and Message endpoints are polled separately
-export const mcpTransports = new Map<string, SSEServerTransport>();
+// Global store for MCP sessions, required because SSE endpoints and message endpoints are polled separately.
+// We intentionally keep the type broad because different MCP transport implementations are supported.
+export const mcpTransports = new Map<string, any>();

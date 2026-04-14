@@ -353,6 +353,39 @@ export const authService = {
     },
 
     /**
+     * Sign in with LinkedIn OAuth
+     */
+    async signInWithLinkedIn(): Promise<{ error: string | null }> {
+        try {
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('auth_callback_in_progress', 'true');
+            }
+
+            const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
+                provider: 'linkedin_oidc',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+                },
+            }), 5000);
+
+            if (error) {
+                console.error("LinkedIn SignIn Error:", error);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('auth_callback_in_progress');
+                }
+                return { error: error.message };
+            }
+
+            return { error: null };
+        } catch (err) {
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('auth_callback_in_progress');
+            }
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Sign out current user
      */
     async signOut(): Promise<{ error: string | null }> {

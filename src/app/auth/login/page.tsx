@@ -704,6 +704,32 @@ function LoginContent() {
                         </svg>
                         Sign in with Google
                     </button>
+
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            setIsLoading(true);
+                            setError('');
+                            try {
+                                const { authService } = await import('@/services/authService');
+                                const { error: linkedInError } = await authService.signInWithLinkedIn();
+                                if (linkedInError) {
+                                    setError(linkedInError);
+                                    setIsLoading(false);
+                                }
+                            } catch (err) {
+                                setError('Failed to initialize LinkedIn sign-in');
+                                setIsLoading(false);
+                            }
+                        }}
+                        disabled={isLoading}
+                        className="w-full mt-3 h-12 flex items-center justify-center gap-3 bg-[#0A66C2] hover:bg-[#0958A8] text-white font-semibold rounded-lg border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
+                        </svg>
+                        Sign in with LinkedIn
+                    </button>
                 </form>
 
                 <div className="mt-8 pt-6 border-t border-slate-800 text-center space-y-4">

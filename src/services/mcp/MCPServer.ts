@@ -13,6 +13,10 @@ function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
 }
 
+const DEAL_STAGES = new Set(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']);
+const TASK_PRIORITIES = new Set(['low', 'medium', 'high', 'urgent']);
+const LINKEDIN_REACTIONS = new Set(['LIKE', 'PRAISE', 'MAYBE', 'EMPATHY', 'INTEREST', 'APPRECIATION']);
+
 const MCP_GENERIC_OPERATION_ERROR =
   'This action could not be completed right now. Please try again in a few minutes. If the issue continues, contact support.';
 
@@ -215,6 +219,126 @@ class AlphaCloneMCPServer {
               description: { type: 'string' },
             },
             required: ['tenant_id', 'name'],
+          },
+        },
+        {
+          name: 'create_invoice',
+          description: 'Create a draft invoice in accounting for a client in this workspace.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              client_id: { type: 'string', description: 'UUID from get_clients' },
+              issue_date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
+              due_date: { type: 'string', description: 'YYYY-MM-DD' },
+              subtotal: { type: 'number' },
+              tax: { type: 'number' },
+              total: { type: 'number' },
+              notes: { type: 'string' },
+              line_items: { type: 'array', items: { type: 'object' } },
+            },
+            required: ['tenant_id', 'client_id', 'due_date', 'total'],
+          },
+        },
+        {
+          name: 'send_message',
+          description: 'Send a workspace message to a teammate or group thread.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              recipient_id: { type: 'string', description: 'Optional user UUID recipient' },
+              group_id: { type: 'string', description: 'Optional group/thread UUID' },
+              text: { type: 'string' },
+              priority: { type: 'string', description: 'low | normal | high | urgent' },
+              reply_to: { type: 'string', description: 'Optional parent message UUID' },
+            },
+            required: ['tenant_id', 'text'],
+          },
+        },
+        {
+          name: 'create_social_post',
+          description: 'Create and optionally publish a Facebook social post for a connected Page.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              page_id: { type: 'string', description: 'Connected Facebook Page ID' },
+              caption: { type: 'string' },
+              link_url: { type: 'string' },
+              hashtags: { type: 'array', items: { type: 'string' } },
+              publish_now: { type: 'boolean' },
+              scheduled_at: { type: 'string', description: 'ISO datetime for scheduled publish' },
+            },
+            required: ['tenant_id', 'page_id', 'caption'],
+          },
+        },
+        {
+          name: 'create_post',
+          description: 'Alias of create_social_post for agent compatibility.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              page_id: { type: 'string' },
+              caption: { type: 'string' },
+              link_url: { type: 'string' },
+              hashtags: { type: 'array', items: { type: 'string' } },
+              publish_now: { type: 'boolean' },
+              scheduled_at: { type: 'string' },
+            },
+            required: ['tenant_id', 'page_id', 'caption'],
+          },
+        },
+        {
+          name: 'create_linkedin_post',
+          description: 'Create and optionally publish a LinkedIn post using the connected LinkedIn account.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              text: { type: 'string', description: 'Post text content' },
+              publish_now: { type: 'boolean' },
+            },
+            required: ['tenant_id', 'text'],
+          },
+        },
+        {
+          name: 'get_linkedin_posts',
+          description: 'Get recent LinkedIn posts created from this workspace.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              limit: { type: 'number' },
+            },
+            required: ['tenant_id'],
+          },
+        },
+        {
+          name: 'create_linkedin_comment',
+          description: 'Create a comment on a LinkedIn post URN.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
+              text: { type: 'string' },
+            },
+            required: ['tenant_id', 'post_urn', 'text'],
+          },
+        },
+        {
+          name: 'create_linkedin_reaction',
+          description: 'React to a LinkedIn post URN with a supported reaction type.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
+              reaction_type: { type: 'string', description: 'LIKE | PRAISE | MAYBE | EMPATHY | INTEREST | APPRECIATION' },
+            },
+            required: ['tenant_id', 'post_urn'],
           },
         },
         // ── Projects ───────────────────────────────────────────────────────
@@ -548,10 +672,29 @@ class AlphaCloneMCPServer {
         case 'create_deal': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const owner_id = this.requireProfileUser(a);
           const { name, value, stage = 'qualified', description } = a;
+          if (!name || typeof name !== 'string' || !name.trim()) {
+            throw new Error('name is required');
+          }
+          if (!DEAL_STAGES.has(String(stage))) {
+            throw new Error('stage must be one of: lead, qualified, proposal, negotiation, closed_won, closed_lost');
+          }
+          const numericValue = Number(value ?? 0);
+          if (!Number.isFinite(numericValue) || numericValue < 0) {
+            throw new Error('value must be a non-negative number');
+          }
           const { data, error } = await supabaseAdmin
             .from('deals')
-            .insert({ tenant_id, name, value: value || 0, stage, description, source: 'MCP Agent' })
+            .insert({
+              tenant_id,
+              owner_id,
+              name: name.trim(),
+              value: numericValue,
+              stage,
+              description: typeof description === 'string' ? description : null,
+              source: 'MCP Agent',
+            })
             .select('id, name, value, stage')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_deal', error.message);
@@ -640,6 +783,12 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { title, description, project_id, assigned_to, due_date, priority = 'medium' } = a;
+          if (!title || typeof title !== 'string' || !title.trim()) {
+            throw new Error('title is required');
+          }
+          if (!TASK_PRIORITIES.has(String(priority))) {
+            throw new Error('priority must be one of: low, medium, high, urgent');
+          }
           if (project_id != null && project_id !== '' && !isUuidString(project_id)) {
             throw new Error('project_id must be a valid business project UUID or omitted');
           }
@@ -650,7 +799,7 @@ class AlphaCloneMCPServer {
             .from('tasks')
             .insert({
               tenant_id,
-              title,
+              title: title.trim(),
               description: description ?? null,
               related_to_project: project_id && isUuidString(project_id) ? project_id.trim() : null,
               assigned_to: assigned_to && isUuidString(assigned_to) ? assigned_to.trim() : null,
@@ -662,6 +811,321 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_task', error.message);
           result = { content: [{ type: 'text', text: `Task created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        // ── create_invoice ─────────────────────────────────────────────────
+        case 'create_invoice': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { client_id, issue_date, due_date, subtotal = 0, tax = 0, total, notes, line_items = [] } = a;
+          if (!isUuidString(client_id)) {
+            throw new Error('client_id must be a valid UUID from get_clients');
+          }
+          const totalNum = Number(total);
+          if (!Number.isFinite(totalNum) || totalNum < 0) {
+            throw new Error('total must be a non-negative number');
+          }
+          const invoiceNumber = `INV-${Date.now()}`;
+          const issueDate = typeof issue_date === 'string' && issue_date ? issue_date : new Date().toISOString().slice(0, 10);
+          if (typeof due_date !== 'string' || !due_date) {
+            throw new Error('due_date is required in YYYY-MM-DD format');
+          }
+          const { data, error } = await supabaseAdmin
+            .from('business_invoices')
+            .insert({
+              tenant_id,
+              client_id: client_id.trim(),
+              invoice_number: invoiceNumber,
+              issue_date: issueDate,
+              due_date,
+              status: 'draft',
+              subtotal: Number(subtotal) || 0,
+              tax: Number(tax) || 0,
+              total: totalNum,
+              notes: typeof notes === 'string' ? notes : null,
+              line_items: Array.isArray(line_items) ? line_items : [],
+            })
+            .select('id, invoice_number, status, total, due_date')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('create_invoice', error.message);
+          result = { content: [{ type: 'text', text: `Invoice created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        // ── send_message ───────────────────────────────────────────────────
+        case 'send_message': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const sender_id = this.requireProfileUser(a);
+          const { recipient_id, group_id, text, priority = 'normal', reply_to } = a;
+          if (typeof text !== 'string' || !text.trim()) {
+            throw new Error('text is required');
+          }
+          if (recipient_id && !isUuidString(recipient_id)) {
+            throw new Error('recipient_id must be a valid UUID');
+          }
+          if (group_id && !isUuidString(group_id)) {
+            throw new Error('group_id must be a valid UUID');
+          }
+          const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('name, role')
+            .eq('id', sender_id)
+            .maybeSingle();
+          const { data, error } = await supabaseAdmin
+            .from('messages')
+            .insert({
+              tenant_id,
+              sender_id,
+              sender_name: profile?.name || 'MCP Agent',
+              sender_role: profile?.role || 'member',
+              text: text.trim(),
+              recipient_id: recipient_id || null,
+              group_id: group_id || null,
+              priority: String(priority || 'normal'),
+              reply_to: reply_to || null,
+            })
+            .select('id, sender_id, recipient_id, group_id, text, created_at')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('send_message', error.message);
+          result = { content: [{ type: 'text', text: `Message sent: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        // ── create_social_post / create_post ───────────────────────────────
+        case 'create_social_post':
+        case 'create_post': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { page_id, caption, link_url, hashtags = [], publish_now = false, scheduled_at } = a;
+          if (typeof page_id !== 'string' || !page_id.trim()) throw new Error('page_id is required');
+          if (typeof caption !== 'string' || !caption.trim()) throw new Error('caption is required');
+
+          const { data: integration, error: integrationError } = await supabaseAdmin
+            .from('facebook_integrations')
+            .select('page_access_token, metadata')
+            .eq('tenant_id', tenant_id)
+            .eq('page_id', page_id.trim())
+            .eq('is_active', true)
+            .maybeSingle();
+          if (integrationError) throw supabaseErrorToMcpClientError('create_social_post', integrationError.message);
+          if (!integration?.page_access_token || integration?.metadata?.no_pages) {
+            throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
+          }
+
+          let status: 'scheduled' | 'queued' | 'published' = publish_now ? 'queued' : 'scheduled';
+          let publishedAt: string | null = null;
+          let facebookPostId: string | null = null;
+
+          if (publish_now) {
+            const graph = new URL(`https://graph.facebook.com/v19.0/${page_id.trim()}/feed`);
+            graph.searchParams.set('access_token', integration.page_access_token);
+            const body = new URLSearchParams();
+            body.set('message', caption.trim());
+            if (typeof link_url === 'string' && link_url) body.set('link', link_url);
+            const resp = await fetch(graph.toString(), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body,
+            });
+            const fb = await resp.json();
+            if (!resp.ok || fb?.error) {
+              const msg = fb?.error?.message || 'Facebook publish failed';
+              throw new Error(msg);
+            }
+            status = 'published';
+            publishedAt = new Date().toISOString();
+            facebookPostId = fb?.id || null;
+          }
+
+          const { data, error } = await supabaseAdmin
+            .from('social_posts')
+            .insert({
+              tenant_id,
+              user_id,
+              caption: caption.trim(),
+              platforms: ['facebook'],
+              link_url: typeof link_url === 'string' && link_url ? link_url : null,
+              hashtags: Array.isArray(hashtags) ? hashtags : [],
+              status,
+              scheduled_at: publish_now ? null : (typeof scheduled_at === 'string' ? scheduled_at : new Date().toISOString()),
+              published_at: publishedAt,
+              facebook_page_id: page_id.trim(),
+              facebook_post_id: facebookPostId,
+            })
+            .select('id, status, scheduled_at, published_at, facebook_post_id')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('create_social_post', error.message);
+          result = { content: [{ type: 'text', text: `Social post created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        // ── LinkedIn tools ────────────────────────────────────────────────
+        case 'create_linkedin_post': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { text, publish_now = true } = a;
+          if (typeof text !== 'string' || !text.trim()) {
+            throw new Error('text is required');
+          }
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('linkedin_person_urn, access_token, scopes')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_post', liErr.message);
+          if (!li?.access_token || !li?.linkedin_person_urn) {
+            throw new Error('LinkedIn is not connected for this workspace/user.');
+          }
+
+          const scopes = Array.isArray(li.scopes) ? li.scopes : [];
+          if (!scopes.includes('w_member_social')) {
+            throw new Error('LinkedIn connection is missing w_member_social scope.');
+          }
+
+          let linkedinPostUrn: string | null = null;
+          if (publish_now) {
+            const payload = {
+              author: li.linkedin_person_urn,
+              lifecycleState: 'PUBLISHED',
+              specificContent: {
+                'com.linkedin.ugc.ShareContent': {
+                  shareCommentary: { text: text.trim() },
+                  shareMediaCategory: 'NONE',
+                },
+              },
+              visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
+            };
+            const resp = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${li.access_token}`,
+                'Content-Type': 'application/json',
+                'X-Restli-Protocol-Version': '2.0.0',
+              },
+              body: JSON.stringify(payload),
+            });
+            const raw = await resp.text();
+            if (!resp.ok) {
+              throw new Error(`LinkedIn post failed: ${raw}`);
+            }
+            const entityUrn = resp.headers.get('x-restli-id');
+            linkedinPostUrn = entityUrn ? `urn:li:ugcPost:${entityUrn}` : null;
+          }
+
+          const { data, error } = await supabaseAdmin
+            .from('social_posts')
+            .insert({
+              tenant_id,
+              user_id,
+              caption: text.trim(),
+              platforms: ['linkedin'],
+              status: publish_now ? 'published' : 'draft',
+              published_at: publish_now ? new Date().toISOString() : null,
+              analytics: linkedinPostUrn ? { linkedin_post_urn: linkedinPostUrn } : {},
+            })
+            .select('id, status, published_at, analytics')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
+          result = { content: [{ type: 'text', text: `LinkedIn post created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        case 'get_linkedin_posts': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { limit = 20 } = a;
+          const { data, error } = await supabaseAdmin
+            .from('social_posts')
+            .select('id, caption, status, published_at, created_at, analytics')
+            .eq('tenant_id', tenant_id)
+            .contains('platforms', ['linkedin'])
+            .order('created_at', { ascending: false })
+            .limit(Math.min(Number(limit) || 20, 100));
+          if (error) throw supabaseErrorToMcpClientError('get_linkedin_posts', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'create_linkedin_comment': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { post_urn, text } = a;
+          if (typeof post_urn !== 'string' || !post_urn.trim()) throw new Error('post_urn is required');
+          if (typeof text !== 'string' || !text.trim()) throw new Error('text is required');
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('linkedin_person_urn, access_token, scopes')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_comment', liErr.message);
+          if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
+
+          const resp = await fetch('https://api.linkedin.com/v2/socialActions/' + encodeURIComponent(post_urn) + '/comments', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${li.access_token}`,
+              'Content-Type': 'application/json',
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+            body: JSON.stringify({
+              actor: li.linkedin_person_urn,
+              message: { text: text.trim() },
+            }),
+          });
+          const raw = await resp.text();
+          if (!resp.ok) throw new Error(`LinkedIn comment failed: ${raw}`);
+          result = { content: [{ type: 'text', text: 'LinkedIn comment created successfully.' }] };
+          break;
+        }
+
+        case 'create_linkedin_reaction': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { post_urn, reaction_type = 'LIKE' } = a;
+          if (typeof post_urn !== 'string' || !post_urn.trim()) throw new Error('post_urn is required');
+          const reaction = String(reaction_type).toUpperCase();
+          if (!LINKEDIN_REACTIONS.has(reaction)) {
+            throw new Error('reaction_type must be one of: LIKE, PRAISE, MAYBE, EMPATHY, INTEREST, APPRECIATION');
+          }
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('linkedin_person_urn, access_token')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_reaction', liErr.message);
+          if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
+
+          const resp = await fetch('https://api.linkedin.com/v2/reactions', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${li.access_token}`,
+              'Content-Type': 'application/json',
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+            body: JSON.stringify({
+              actor: li.linkedin_person_urn,
+              object: post_urn.trim(),
+              reactionType: reaction,
+            }),
+          });
+          const raw = await resp.text();
+          if (!resp.ok) throw new Error(`LinkedIn reaction failed: ${raw}`);
+          result = { content: [{ type: 'text', text: `LinkedIn reaction ${reaction} created successfully.` }] };
           break;
         }
 
@@ -879,7 +1343,7 @@ class AlphaCloneMCPServer {
         }
 
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_leads, create_lead, update_lead_status, get_deals, create_deal, create_task, get_tasks, generate_contract_draft, get_expenses, create_expense, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_leads, create_lead, update_lead_status, get_deals, create_deal, create_task, get_tasks, get_projects, update_project_status, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_invoice, send_message, and more.`);
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────

@@ -120,6 +120,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [posting, setPosting] = useState(false);
     const [scheduleAt, setScheduleAt] = useState('');
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledSocialPost[]>([]);
+    const [postHistory, setPostHistory] = useState<ScheduledSocialPost[]>([]);
     const [queueLoading, setQueueLoading] = useState(false);
     const [showMediaStudio, setShowMediaStudio] = useState(false);
     const [videoCoverFrameFile, setVideoCoverFrameFile] = useState<File | null>(null);
@@ -233,9 +234,15 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             const res = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(tenant.id)}&pageId=${encodeURIComponent(selectedPageId)}`);
             const data = await res.json();
             if (Array.isArray(data.posts)) {
+                const allPosts = data.posts as ScheduledSocialPost[];
                 setScheduledPosts(
-                    data.posts.filter((p: ScheduledSocialPost) =>
+                    allPosts.filter((p: ScheduledSocialPost) =>
                         p.status === 'scheduled' || p.status === 'queued' || p.status === 'publishing' || p.status === 'failed'
+                    )
+                );
+                setPostHistory(
+                    allPosts.filter((p: ScheduledSocialPost) =>
+                        p.status === 'published' || p.status === 'failed' || p.status === 'cancelled'
                     )
                 );
             }
@@ -1037,6 +1044,38 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                         </button>
                                                     )}
                                                 </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-white">Post History</h4>
+                                    <span className="text-xs text-slate-500">Tracks published, failed, and cancelled</span>
+                                </div>
+                                {queueLoading ? (
+                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Loading history...
+                                    </div>
+                                ) : postHistory.length === 0 ? (
+                                    <p className="text-sm text-slate-500">No post history yet.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {postHistory.slice(0, 12).map((item) => (
+                                            <div key={`history-${item.id}`} className="rounded-xl border border-slate-800 p-3">
+                                                <div className="mb-1 flex items-center justify-between gap-2">
+                                                    <span className="text-xs uppercase tracking-wide text-slate-400">{item.status}</span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {new Date(item.created_at).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="line-clamp-2 text-sm text-slate-200">{item.caption}</p>
+                                                {item.error_message && (
+                                                    <p className="mt-1 text-xs text-red-400">{item.error_message}</p>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

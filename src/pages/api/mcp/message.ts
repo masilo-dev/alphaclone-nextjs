@@ -31,5 +31,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Session not found' });
   }
 
-  await transport.handlePostMessage(req as any, res as any);
+  if (typeof transport.handlePostMessage === 'function') {
+    await transport.handlePostMessage(req as any, res as any);
+    return;
+  }
+
+  if (typeof transport.handleRequest === 'function') {
+    await transport.handleRequest(req as any, res as any, req.body);
+    return;
+  }
+
+  return res.status(500).json({ error: 'MCP transport session is invalid' });
 }
