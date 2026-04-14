@@ -77,6 +77,10 @@ export default function LinkedInManagementTab() {
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [aiReplyLoading, setAiReplyLoading] = useState<Record<string, boolean>>({});
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
+  const [composeCaption, setComposeCaption] = useState('');
+  const [composeLinkUrl, setComposeLinkUrl] = useState('');
+  const [composeScheduledAt, setComposeScheduledAt] = useState('');
+  const [composeSubmitting, setComposeSubmitting] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
@@ -187,6 +191,7 @@ export default function LinkedInManagementTab() {
     () => integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null,
     [integrations, selectedLinkedInMemberId]
   );
+  const canComposeLinkedIn = !!currentTenant?.id && !!selectedLinkedInMemberId && !!selectedIntegration?.is_active && hasWriteScope;
 
   const handleConnectLinkedIn = async () => {
     try {
@@ -320,6 +325,58 @@ Return only the comment text.`;
     }
   };
 
+  const handleSubmitLinkedInPost = async (publishNow: boolean) => {
+    if (!currentTenant?.id) return;
+    const caption = composeCaption.trim();
+    if (!caption) {
+      toast.error('Write post content first');
+      return;
+    }
+    if (!selectedLinkedInMemberId) {
+      toast.error('Select a LinkedIn account first');
+      return;
+    }
+    if (!selectedIntegration?.is_active || !hasWriteScope) {
+      toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+      return;
+    }
+    if (!publishNow && !composeScheduledAt) {
+      toast.error('Select schedule date/time or use Post Now');
+      return;
+    }
+
+    setComposeSubmitting(true);
+    const toastId = toast.loading(publishNow ? 'Posting to LinkedIn...' : 'Scheduling LinkedIn post...');
+    try {
+      const res = await fetch('/api/social/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          caption,
+          platforms: ['linkedin'],
+          link_url: composeLinkUrl.trim() || undefined,
+          scheduled_at: publishNow ? undefined : composeScheduledAt,
+          linkedin_member_id: selectedLinkedInMemberId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Failed to submit LinkedIn post', { id: toastId });
+        return;
+      }
+      toast.success(publishNow ? 'LinkedIn post submitted' : 'LinkedIn post scheduled', { id: toastId });
+      setComposeCaption('');
+      setComposeLinkUrl('');
+      setComposeScheduledAt('');
+      await loadData();
+    } catch {
+      toast.error('Failed to submit LinkedIn post', { id: toastId });
+    } finally {
+      setComposeSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
@@ -424,6 +481,53 @@ Return only the comment text.`;
             </div>
           </div>
         )}
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-white">Write LinkedIn Post</h3>
+          <p className="text-xs text-slate-400">Create and publish from this LinkedIn page directly.</p>
+        </div>
+        <textarea
+          value={composeCaption}
+          onChange={(e) => setComposeCaption(e.target.value)}
+          rows={5}
+          placeholder="Write your LinkedIn post..."
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 resize-none"
+        />
+        <input
+          value={composeLinkUrl}
+          onChange={(e) => setComposeLinkUrl(e.target.value)}
+          placeholder="Optional link URL (https://...)"
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+        />
+        <input
+          type="datetime-local"
+          value={composeScheduledAt}
+          onChange={(e) => setComposeScheduledAt(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+        />
+        {!canComposeLinkedIn && (
+          <p className="text-xs text-amber-300">
+            To publish, select an active LinkedIn account with write scope (`w_member_social`).
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleSubmitLinkedInPost(true)}
+            disabled={composeSubmitting || !canComposeLinkedIn}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
+          >
+            {composeSubmitting ? 'Submitting...' : 'Post Now'}
+          </button>
+          <button
+            onClick={() => handleSubmitLinkedInPost(false)}
+            disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn}
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+          >
+            Schedule Post
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2 flex-wrap">

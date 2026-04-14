@@ -43,6 +43,18 @@ interface LeadDetailModalProps {
     onLeadUpdate?: (lead: Lead) => void;
 }
 
+function getErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) return error.message;
+    if (typeof error === 'string' && error.trim()) return error;
+    if (error && typeof error === 'object') {
+        const maybeError = error as { message?: unknown; error?: unknown; details?: unknown };
+        if (typeof maybeError.message === 'string' && maybeError.message.trim()) return maybeError.message;
+        if (typeof maybeError.error === 'string' && maybeError.error.trim()) return maybeError.error;
+        if (typeof maybeError.details === 'string' && maybeError.details.trim()) return maybeError.details;
+    }
+    return 'Unknown error';
+}
+
 export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }: LeadDetailModalProps) {
     const { user } = useAuth();
     const router = useRouter();
@@ -298,8 +310,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                 toast.success('Business intelligence gathered successfully!');
                 fetchRelatedData();
             }
-        } catch (error: any) {
-            toast.error('Research failed: ' + error.message);
+        } catch (error: unknown) {
+            toast.error('Research failed: ' + getErrorMessage(error));
         } finally {
             setIsEnriching(false);
         }
@@ -346,8 +358,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
             if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted' });
             onClose();
-        } catch (error: any) {
-            toast.error('Failed to create project: ' + error.message);
+        } catch (error: unknown) {
+            toast.error('Failed to create project: ' + getErrorMessage(error));
         }
     };
 
@@ -407,7 +419,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                 stage: 'qualified',
                 contactId: contactId
             });
-            if (dealError) throw new Error(dealError);
+            if (dealError) throw new Error(`Deal step failed: ${dealError}`);
             if (!deal) throw new Error("Deal creation failed");
 
             // 5. Create Quote
@@ -419,20 +431,21 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                 currency: 'USD',
                 validForDays: 30
             });
-            if (quoteError) throw new Error(quoteError);
+            if (quoteError) throw new Error(`Quote step failed: ${quoteError}`);
             if (!quote) throw new Error("Quote creation failed");
 
             // 6. Add initial quote item
-            await quoteService.addQuoteItem(quote.id, {
+            const { error: quoteItemError } = await quoteService.addQuoteItem(quote.id, {
                 productName: 'Professional Services',
                 description: 'Solutions implementation and strategy',
                 quantity: 1,
                 unitPrice: lead.value || 0
             });
+            if (quoteItemError) throw new Error(`Quote item step failed: ${quoteItemError}`);
 
             // 7. Create Project
             toast.loading('Launching project board...', { id: toastId });
-            await projectService.createProject({
+            const { error: projectError } = await projectService.createProject({
                 ownerId: authUser.id,
                 ownerName: authUser.user_metadata?.name || authUser.email || 'System',
                 name: `${lead.businessName} Implementation`,
@@ -445,13 +458,15 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                 clientId: contactId,
                 startDate: new Date().toISOString().split('T')[0]
             });
+            if (projectError) throw new Error(`Project step failed: ${projectError}`);
 
             toast.success(`Successfully executed full flow for ${lead.businessName}!`, { id: toastId });
             if (onLeadUpdate) onLeadUpdate({ ...lead, status: 'converted', stage: 'converted' });
             setTimeout(() => onClose(), 2000); // Give user a moment to see success
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const message = getErrorMessage(err);
             console.error("Execution error", err);
-            toast.error(`Execution failed: ${err.message}`, { id: toastId });
+            toast.error(`Execution failed: ${message}`, { id: toastId });
         } finally {
             setIsLoading(false);
         }
@@ -493,9 +508,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             } else {
                 toast.error('Address could not be fully validated. Please check the details.', { id: toastId });
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Validation error", error);
-            toast.error('Validation failed: ' + error.message, { id: toastId });
+            toast.error('Validation failed: ' + getErrorMessage(error), { id: toastId });
         } finally {
             setIsValidatingAddress(false);
         }
