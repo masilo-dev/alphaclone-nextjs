@@ -199,7 +199,9 @@ export async function POST(req: NextRequest) {
             if (result.ok) {
                 break;
             }
-            lastErrorStatus = result.status >= 400 && result.status < 600 ? result.status : 502;
+            // Upstream provider 4xx/5xx should not be surfaced as client 400 for this API.
+            // Keep this endpoint's client-facing contract stable with gateway-style errors.
+            lastErrorStatus = result.status >= 500 ? 502 : 503;
             lastErrorPayload = result.error;
             console.error('AI image provider error:', { provider: p, error: result.error });
         }

@@ -564,7 +564,12 @@ Return only the comment text.`;
             const res = await fetch('/api/ai/image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: aiImagePrompt, size: aiImageSize, provider: 'grok' }),
+                body: JSON.stringify({
+                    prompt: aiImagePrompt,
+                    size: aiImageSize,
+                    provider: 'grok',
+                    tenantId: tenant?.id || undefined,
+                }),
             });
             const data = await res.json();
             if (data.url) {
