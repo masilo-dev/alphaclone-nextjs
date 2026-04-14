@@ -225,7 +225,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         setPresenceChannel(channel);
 
         return () => {
-            supabase.removeChannel(channel).catch((error) => {
+            supabase.removeChannel(channel).catch((error: unknown) => {
                 if (!isExpectedRealtimeCloseError(error)) {
                     console.warn('[Messages] presence cleanup failed:', error);
                 }

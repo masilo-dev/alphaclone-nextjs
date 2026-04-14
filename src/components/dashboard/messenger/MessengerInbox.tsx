@@ -86,7 +86,7 @@ export default function MessengerInbox() {
             });
 
         return () => {
-            supabase.removeChannel(channel).catch((error) => {
+            supabase.removeChannel(channel).catch((error: unknown) => {
                 if (!isExpectedRealtimeCloseError(error)) {
                     console.warn('[Messenger] realtime cleanup failed:', error);
                 }

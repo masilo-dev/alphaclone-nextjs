@@ -25,7 +25,6 @@ import { ENV } from '../../../../config/env';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const CLAUDE_45_MODEL = 'claude-sonnet-4-5-20250929';
 const DEFAULT_BATCH_MAX = 5;
 
 /**
@@ -108,8 +107,8 @@ export async function POST(req: Request) {
         const googleApiKey = ENV.GOOGLE_API_KEY;
         let leads: any[] = [];
         let source = 'AI Simulated';
-        let provider = 'Anthropic';
-        let model = 'Claude 4.5';
+        let provider = 'auto';
+        let model = 'auto';
 
         let rawMapsData: any[] = [];
 
@@ -136,7 +135,7 @@ export async function POST(req: Request) {
         }
 
         if (leads.length === 0) {
-            console.log(`[Lead Gen] Using Claude 4.5 for up to ${capBatch} leads...`);
+            console.log(`[Lead Gen] Using AI router for up to ${capBatch} leads...`);
             if (!skipQuota && tenantId) {
                 const blocked = await consumeAiUnitsOr429(
                     admin,
@@ -146,7 +145,7 @@ export async function POST(req: Request) {
                 );
                 if (blocked) return blocked;
             }
-            const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone, powered by Claude 4.5.
+            const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone.
 Your task is to identify EXACTLY ${capBatch} high-fidelity business leads (no more, no less).
 
 SEARCH SPECIFICATION:
@@ -178,7 +177,6 @@ Strict Schema:
 
             const aiResponse = await routeAIRequest({
                 prompt,
-                model: CLAUDE_45_MODEL,
                 maxTokens: 2000,
                 temperature: 0.2,
             });
@@ -195,9 +193,9 @@ Strict Schema:
                 leads = [];
             }
 
-            source = `Discovery (Claude 4.5)`;
-            provider = 'anthropic';
-            model = CLAUDE_45_MODEL;
+            source = `Discovery (${aiResponse.provider})`;
+            provider = aiResponse.provider;
+            model = aiResponse.model;
         }
 
         if (leads.length > capBatch) {
@@ -205,7 +203,7 @@ Strict Schema:
         }
 
         if (leads.length > 0) {
-            console.log('[Lead Gen] Running Claude 4.5 audit pass...');
+            console.log('[Lead Gen] Running AI audit pass...');
             try {
                 if (!skipQuota && tenantId) {
                     const blocked = await consumeAiUnitsOr429(
@@ -216,7 +214,7 @@ Strict Schema:
                     );
                     if (blocked) return blocked;
                 }
-                const verificationPrompt = `You are a Senior Strategic SDR and Data Scientist Auditor at AlphaClone using Claude 4.5.
+                const verificationPrompt = `You are a Senior Strategic SDR and Data Scientist Auditor at AlphaClone.
 Analyze these ${leads.length} leads for "${industry}" in "${location}". 
 Perform a deep-fidelity audit and HYPER-PERSONALIZATION ENRICHMENT.
 
@@ -261,7 +259,6 @@ Strict Output JSON:
 
                 const verificationResponse = await routeAIRequest({
                     prompt: verificationPrompt,
-                    model: CLAUDE_45_MODEL,
                     maxTokens: 2000,
                     temperature: 0.1,
                 });
@@ -338,7 +335,7 @@ Strict Output JSON:
 
         const finalLeads = validatedLeads.slice(0, capBatch).map((l) => ({
             ...l,
-            foundBy: 'AlphaClone Senior SDR (Claude 4.5)',
+            foundBy: `AlphaClone Senior SDR (${provider})`,
             qualityLevel:
                 (l.trustScore || 0) > 80 ? 'Premium' : l.isVerified ? 'High' : 'Discovery',
         }));
@@ -359,7 +356,7 @@ Strict Output JSON:
             model,
             source,
             isAIVerified: true,
-            auditor: 'Claude 4.5 Data Scientist',
+            auditor: `AI Data Scientist (${provider})`,
             quota: nextQuota
                 ? {
                       limit: nextQuota.limit,

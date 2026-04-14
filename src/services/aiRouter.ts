@@ -1,11 +1,12 @@
 /**
  * AI Router Service
- * Smart routing with fallback chain: Anthropic (Claude) → OpenAI → Gemini
+ * Smart routing with fallback chain: Anthropic (Claude) → xAI Grok → OpenAI → Gemini
  *
  * Priority Order:
  * 1. Anthropic Claude (primary - best for contracts, legal, analysis)
- * 2. OpenAI GPT-4 (secondary - good for creative tasks)
- * 3. Google Gemini (tertiary - fallback)
+ * 2. xAI Grok (secondary - strong reasoning and realtime-style answers)
+ * 3. OpenAI GPT-4 (tertiary - good for creative tasks)
+ * 4. Google Gemini (fallback)
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -50,6 +51,13 @@ const openai = ENV.OPENAI_API_KEY
   ? new OpenAI({ apiKey: ENV.OPENAI_API_KEY })
   : null;
 
+const xai = ENV.XAI_API_KEY
+  ? new OpenAI({
+      apiKey: ENV.XAI_API_KEY,
+      baseURL: 'https://api.x.ai/v1',
+    })
+  : null;
+
 const openRouterClient = ENV.OPENROUTER_API_KEY
   ? new OpenAI({
       apiKey: ENV.OPENROUTER_API_KEY,
@@ -68,6 +76,8 @@ export const MODEL_PRICING = {
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10, output: 30 },
   'gpt-4': { input: 30, output: 60 },
+  'grok-2-latest': { input: 2, output: 10 },
+  'grok-3-mini': { input: 0.3, output: 0.5 },
 
   // Anthropic (per 1M tokens) - 2025/2026 pricing
   'claude-sonnet-4-6-20260217': { input: 3, output: 15 },
@@ -87,7 +97,7 @@ export interface AIRequestOptions {
 
 export interface AIResponse {
   content: string;
-  provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter';
+  provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter';
   model: string;
   success: boolean;
   error?: string;
@@ -95,7 +105,7 @@ export interface AIResponse {
 
 export interface AIStreamResponse {
   stream: ReadableStream;
-  provider: 'anthropic' | 'openai' | 'openrouter';
+  provider: 'anthropic' | 'xai' | 'openai' | 'openrouter';
   model: string;
 }
 
@@ -116,6 +126,9 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     if (requestedModel.startsWith('gpt') && openai) {
       return await completeWithOpenAI(options);
     }
+    if (requestedModel.startsWith('grok') && xai) {
+      return await completeWithXAI(options);
+    }
     if (requestedModel.startsWith('openrouter/') && openRouterClient) {
       return await completeWithOpenRouter(options);
     }
@@ -135,7 +148,21 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
-  // Priority 2: Try OpenAI
+  // Priority 2: Try xAI Grok
+  if (xai) {
+    try {
+      console.log('[AI Router] Attempting xAI Grok...');
+      const response = await completeWithXAI(options);
+      console.log('[AI Router] ✓ xAI Grok succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `xAI failed: ${error.message}`;
+      console.error(`[AI Router] ✗ xAI Error:`, error);
+      errors.push(errorMsg);
+    }
+  }
+
+  // Priority 3: Try OpenAI
   if (openai) {
     try {
       console.log(`[AI Router] Attempting OpenAI (${DEFAULT_OPENAI_MODEL})...`);
@@ -152,7 +179,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   // All providers failed
   const finalError = errors.length > 0
     ? `All AI providers failed:\n${errors.join('\n')}`
-    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY or OPENAI_API_KEY.";
+    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, or OPENAI_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -179,6 +206,13 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'gpt-4-turbo'
       };
     }
+    if (requestedModel.startsWith('grok') && xai) {
+      return {
+        stream: await streamWithXAI(options),
+        provider: 'xai',
+        model: options.model || 'grok-2-latest'
+      };
+    }
   }
 
   // Fallback Chain (Priority 1: Anthropic)
@@ -195,7 +229,21 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
     }
   }
 
-  // Priority 2: Try OpenAI
+  // Priority 2: Try xAI Grok
+  if (xai) {
+    try {
+      console.log('[AI Router] Attempting xAI stream...');
+      return {
+        stream: await streamWithXAI(options),
+        provider: 'xai',
+        model: options.model || 'grok-2-latest'
+      };
+    } catch (error) {
+      console.warn('[AI Router] xAI stream failed, falling back...');
+    }
+  }
+
+  // Priority 3: Try OpenAI
   if (openai) {
     return {
       stream: await streamWithOpenAI(options),
@@ -260,6 +308,32 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
   };
 }
 
+async function completeWithXAI(options: AIRequestOptions): Promise<AIResponse> {
+  if (!xai) {
+    throw new Error('xAI API key not configured');
+  }
+  const model = options.model || 'grok-2-latest';
+  const messages: any[] = [];
+  if (options.systemPrompt) {
+    messages.push({ role: 'system', content: options.systemPrompt });
+  }
+  messages.push({ role: 'user', content: options.prompt });
+
+  const completion = await xai.chat.completions.create({
+    model,
+    messages,
+    max_tokens: options.maxTokens || 4096,
+    temperature: options.temperature || 0.7,
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || '',
+    provider: 'xai',
+    model,
+    success: true,
+  };
+}
+
 /**
  * Complete with OpenAI (GPT-4)
  */
@@ -311,6 +385,9 @@ export async function routeAIChat(
     if (requestedModel.startsWith('gpt') && openai) {
       return await chatWithOpenAI(history, message, systemPrompt, model);
     }
+    if (requestedModel.startsWith('grok') && xai) {
+      return await chatWithXAI(history, message, systemPrompt, model);
+    }
     if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
       // Gemini chat is fallback-only in this simplified router, but we can call it directly
       // Note: chatWithGemini handles its own model logic usually, but we should pass it if possible
@@ -334,7 +411,21 @@ export async function routeAIChat(
     }
   }
 
-  // Priority 2: Try OpenAI
+  // Priority 2: Try xAI Grok
+  if (xai) {
+    try {
+      console.log('[AI Router] Attempting xAI chat...');
+      const response = await chatWithXAI(history, message, systemPrompt);
+      console.log('[AI Router] ✓ xAI chat succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `xAI chat failed: ${error.message}`;
+      console.error(`[AI Router] ✗ ${errorMsg}`);
+      errors.push(errorMsg);
+    }
+  }
+
+  // Priority 3: Try OpenAI
   if (openai) {
     try {
       console.log('[AI Router] Attempting OpenAI chat...');
@@ -350,7 +441,7 @@ export async function routeAIChat(
 
   const finalError = errors.length > 0
     ? `All AI chat providers failed:\n${errors.join('\n')}`
-    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY or OPENAI_API_KEY.";
+    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, or OPENAI_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -491,6 +582,53 @@ async function chatWithOpenAI(
   };
 }
 
+async function chatWithXAI(
+  history: Array<{ role: string; content: string }>,
+  message: string,
+  systemPrompt?: string,
+  model?: string
+): Promise<AIResponse> {
+  if (!xai) {
+    throw new Error('xAI API key not configured');
+  }
+  const selectedModel = model || 'grok-2-latest';
+
+  const validHistory = history.filter((msg, idx) => {
+    if (idx === 0 && msg.role !== 'user') return false;
+    return true;
+  });
+
+  const chatMessages: any[] = [];
+  for (const msg of validHistory) {
+    const role = msg.role === 'user' ? 'user' : 'assistant';
+    if (chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === role) {
+      continue;
+    }
+    chatMessages.push({
+      role,
+      content: msg.content || (msg as any).text || '',
+    });
+  }
+
+  const completion = await xai.chat.completions.create({
+    model: selectedModel,
+    messages: [
+      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+      ...chatMessages,
+      { role: 'user', content: message }
+    ],
+    max_tokens: 4096,
+    temperature: 0.7,
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || '',
+    provider: 'xai',
+    model: selectedModel,
+    success: true,
+  };
+}
+
 /**
  * Complete with OpenRouter
  */
@@ -585,6 +723,7 @@ async function chatWithOpenRouter(
 export function getAvailableProviders() {
   return {
     anthropic: !!anthropic,
+    xai: !!xai,
     openai: !!openai,
     openrouter: !!openRouterClient,
     gemini: !!ENV.VITE_GEMINI_API_KEY,
@@ -596,6 +735,7 @@ export function getAvailableProviders() {
  */
 export function getPrimaryProvider(): string {
   if (anthropic) return 'Claude (Anthropic)';
+  if (xai) return 'Grok (xAI)';
   if (openRouterClient) return 'OpenRouter';
   if (openai) return 'GPT-4 (OpenAI)';
   return 'No AI provider configured';
@@ -611,8 +751,8 @@ export function getClaudeModels() {
 /**
  * Get model recommendations based on task
  */
-export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter'; model: string } {
-  const recommendations: Record<string, { provider: 'anthropic' | 'openai' | 'gemini' | 'openrouter'; model: string }> = {
+export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter'; model: string } {
+  const recommendations: Record<string, { provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter'; model: string }> = {
     'contract_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
     'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
@@ -697,6 +837,36 @@ async function streamWithOpenAI(options: AIRequestOptions): Promise<ReadableStre
     async start(controller) {
       const stream = await openai.chat.completions.create({
         model: model,
+        messages: [
+          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+          { role: 'user' as const, content: options.prompt },
+        ],
+        max_tokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          controller.enqueue(encoder.encode(content));
+        }
+      }
+      controller.close();
+    },
+  });
+}
+
+async function streamWithXAI(options: AIRequestOptions): Promise<ReadableStream> {
+  if (!xai) throw new Error('xAI not configured');
+
+  const model = options.model || 'grok-2-latest';
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const stream = await xai.chat.completions.create({
+        model,
         messages: [
           ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
           { role: 'user' as const, content: options.prompt },

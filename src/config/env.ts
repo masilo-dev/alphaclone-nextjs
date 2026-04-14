@@ -15,6 +15,9 @@ const envSchema = z.object({
     // AI Services
     ANTHROPIC_API_KEY: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
+    XAI_API_KEY: z.string().optional(),
+    GROK_API_KEY: z.string().optional(),
+    XAI_IMAGE_MODEL: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
     VITE_GEMINI_API_KEY: z.string().optional(),
     GOOGLE_API_KEY: z.string().optional(),
@@ -117,6 +120,9 @@ function validateEnv() {
 
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
         OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+        XAI_API_KEY: process.env.XAI_API_KEY || process.env.GROK_API_KEY,
+        GROK_API_KEY: process.env.GROK_API_KEY || process.env.XAI_API_KEY,
+        XAI_IMAGE_MODEL: process.env.XAI_IMAGE_MODEL || process.env.GROK_IMAGE_MODEL,
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
         VITE_GEMINI_API_KEY:
             process.env.NEXT_PUBLIC_GEMINI_API_KEY ||

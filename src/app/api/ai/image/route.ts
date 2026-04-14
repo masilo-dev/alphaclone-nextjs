@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { prompt, size = '1024x1024', tenantId: bodyTenantId, mode } = await req.json();
+    const { prompt, size = '1024x1024', tenantId: bodyTenantId, mode, provider } = await req.json();
     if (!prompt?.trim()) {
         return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
@@ -33,9 +33,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid size. Use 1024x1024, 1792x1024, or 1024x1792' }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-        return NextResponse.json({ error: 'OpenAI API key not configured on server' }, { status: 500 });
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const xaiApiKey = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
+    if (!openaiApiKey && !xaiApiKey) {
+        return NextResponse.json({ error: 'No image provider API key configured on server' }, { status: 500 });
     }
 
     const admin = createSupabaseAdminClient();
@@ -58,27 +59,38 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const response = await fetch('https://api.openai.com/v1/images/generations', {
+        const preferredProvider = typeof provider === 'string' ? provider.toLowerCase() : 'auto';
+        const useXai = (preferredProvider === 'grok' || preferredProvider === 'xai' || (!openaiApiKey && !!xaiApiKey));
+        const imageProvider = useXai ? 'xai' : 'openai';
+
+        const endpoint = imageProvider === 'xai'
+            ? 'https://api.x.ai/v1/images/generations'
+            : 'https://api.openai.com/v1/images/generations';
+        const apiKey = imageProvider === 'xai' ? xaiApiKey : openaiApiKey;
+        const model = imageProvider === 'xai'
+            ? (process.env.XAI_IMAGE_MODEL || process.env.GROK_IMAGE_MODEL || 'grok-2-image')
+            : 'dall-e-3';
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                model: 'dall-e-3',
+                model,
                 prompt: prompt.trim(),
                 n: 1,
                 size,
-                quality: 'hd',
-                style: 'vivid',
+                ...(imageProvider === 'openai' ? { quality: 'hd', style: 'vivid' } : {}),
             }),
         });
 
         if (!response.ok) {
             const err = await response.json();
-            console.error('DALL-E 3 error:', err);
+            console.error('AI image provider error:', err);
             return NextResponse.json(
-                { error: 'Image generation failed', code: 'DALLE_ERROR' },
+                { error: 'Image generation failed', code: 'IMAGE_PROVIDER_ERROR', provider: imageProvider },
                 { status: response.status >= 400 && response.status < 600 ? response.status : 502 }
             );
         }
@@ -88,13 +100,14 @@ export async function POST(req: NextRequest) {
         const revisedPrompt = data.data?.[0]?.revised_prompt;
 
         if (!imageUrl) {
-            return NextResponse.json({ error: 'No image returned from DALL-E 3' }, { status: 500 });
+            return NextResponse.json({ error: 'No image returned from provider', provider: imageProvider }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
             url: imageUrl,
             revised_prompt: revisedPrompt,
+            provider: imageProvider,
         });
     } catch (error: any) {
         console.error('AI Image Generation Error:', error);

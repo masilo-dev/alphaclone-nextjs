@@ -100,6 +100,8 @@ export async function POST(req: Request) {
             msg.includes('provider') ||
             msg.includes('anthropic') ||
             msg.includes('openai') ||
+            msg.includes('xai') ||
+            msg.includes('grok') ||
             msg.includes('gemini')
         ) {
             return NextResponse.json(

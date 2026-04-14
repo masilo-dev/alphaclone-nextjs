@@ -7,7 +7,7 @@ import {
     AIResponse as RouterResponse
 } from '../aiRouter';
 
-export type AIProvider = 'openai' | 'anthropic' | 'auto';
+export type AIProvider = 'openai' | 'anthropic' | 'xai' | 'auto';
 
 export type AIModel = string;
 
@@ -22,7 +22,7 @@ export interface AIRequest {
 
 export interface AIResponse {
     content: string;
-    provider: 'openai' | 'anthropic' | 'gemini' | 'openrouter';
+    provider: 'openai' | 'anthropic' | 'xai' | 'gemini' | 'openrouter';
     model: string;
     tokens: {
         prompt: number;
