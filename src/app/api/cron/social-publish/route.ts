@@ -17,6 +17,22 @@ function isMissingColumn(error: unknown, columnName: string) {
   return maybeError.code === '42703' && (maybeError.message || '').includes(columnName);
 }
 
+function normalizeScopes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value).split(/[,\s]+/))
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,\s]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 async function publishToFacebook(postId: string): Promise<PublishResult> {
   const adminClient = createSupabaseAdminClient();
 
@@ -112,15 +128,17 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     }
     if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
 
-    const liRes = await adminClient
+    let liQuery = adminClient
       .from('linkedin_integrations')
       .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
       .eq('tenant_id', post.tenant_id)
       .eq('user_id', post.user_id)
-      .eq('linkedin_member_id', post.linkedin_member_id || '')
       .eq('is_active', true)
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    if (post.linkedin_member_id) {
+      liQuery = liQuery.eq('linkedin_member_id', post.linkedin_member_id);
+    }
+    const liRes = await liQuery.maybeSingle();
     let li = liRes.data;
     let liError = liRes.error;
     if (isMissingColumn(liError, 'linkedin_member_id')) {
@@ -165,7 +183,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
     }
 
-    const scopes = Array.isArray(integration.scopes) ? integration.scopes : [];
+    const scopes = normalizeScopes(integration.scopes);
     if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }

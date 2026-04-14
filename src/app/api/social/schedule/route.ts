@@ -30,6 +30,30 @@ function isMissingColumn(error: unknown, columnName: string) {
   return maybeError.code === '42703' && (maybeError.message || '').includes(columnName);
 }
 
+function getMissingColumnName(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null;
+  const maybeError = error as { code?: string; message?: string };
+  if (maybeError.code !== '42703' || !maybeError.message) return null;
+  const match = maybeError.message.match(/column "([^"]+)"/i);
+  return match?.[1] || null;
+}
+
+function normalizeScopes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value).split(/[,\s]+/))
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,\s]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -41,6 +65,41 @@ async function ensureTenantMembership(userId: string, tenantId: string) {
 
   if (error || !data) return false;
   return true;
+}
+
+async function insertSocialPostWithFallback(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  payload: Record<string, unknown>
+) {
+  const mutablePayload: Record<string, unknown> = { ...payload };
+  const maxAttempts = 10;
+  let attempt = 0;
+
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    const insertRes = await supabase
+      .from('social_posts')
+      .insert(mutablePayload)
+      .select('*')
+      .single();
+
+    if (!insertRes.error) {
+      return insertRes;
+    }
+
+    const missingColumn = getMissingColumnName(insertRes.error);
+    if (!missingColumn || !(missingColumn in mutablePayload)) {
+      return insertRes;
+    }
+
+    delete mutablePayload[missingColumn];
+  }
+
+  return await supabase
+    .from('social_posts')
+    .insert(mutablePayload)
+    .select('*')
+    .single();
 }
 
 async function publishToFacebook(postId: string): Promise<PublishResult> {
@@ -142,15 +201,17 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
 
     if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
 
-    const liRes = await adminClient
+    let liQuery = adminClient
       .from('linkedin_integrations')
       .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
       .eq('tenant_id', post.tenant_id)
       .eq('user_id', post.user_id)
-      .eq('linkedin_member_id', post.linkedin_member_id || '')
       .eq('is_active', true)
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    if (post.linkedin_member_id) {
+      liQuery = liQuery.eq('linkedin_member_id', post.linkedin_member_id);
+    }
+    const liRes = await liQuery.maybeSingle();
     let li = liRes.data;
     let liError = liRes.error;
     if (isMissingColumn(liError, 'linkedin_member_id')) {
@@ -195,7 +256,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
     }
 
-    const scopes = Array.isArray(integration.scopes) ? integration.scopes : [];
+    const scopes = normalizeScopes(integration.scopes);
     if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
@@ -326,7 +387,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
     }
 
-    const scheduledAt = body.scheduled_at ? new Date(body.scheduled_at).toISOString() : null;
+    const parsedScheduledAt = body.scheduled_at ? new Date(body.scheduled_at) : null;
+    if (parsedScheduledAt && Number.isNaN(parsedScheduledAt.getTime())) {
+      return NextResponse.json({ error: 'Invalid scheduled_at date value' }, { status: 400 });
+    }
+    const scheduledAt = parsedScheduledAt ? parsedScheduledAt.toISOString() : null;
     const shouldPublishNow = body.publish_now === true || !scheduledAt;
 
     const status = shouldPublishNow ? 'queued' : 'scheduled';
@@ -347,21 +412,7 @@ export async function POST(req: NextRequest) {
       linkedin_member_id: body.linkedin_member_id || null,
     };
 
-    let { data: post, error } = await supabase
-      .from('social_posts')
-      .insert(insertPayload)
-      .select('*')
-      .single();
-    if (isMissingColumn(error, 'linkedin_member_id')) {
-      const { linkedin_member_id: _ignored, ...legacyPayload } = insertPayload;
-      const legacyInsertRes = await supabase
-        .from('social_posts')
-        .insert(legacyPayload)
-        .select('*')
-        .single();
-      post = legacyInsertRes.data;
-      error = legacyInsertRes.error;
-    }
+    const { data: post, error } = await insertSocialPostWithFallback(supabase, insertPayload);
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 

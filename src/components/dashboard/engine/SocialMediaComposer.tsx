@@ -55,6 +55,22 @@ interface LinkedInIntegration {
     is_active: boolean;
 }
 
+function normalizeScopes(raw: unknown): string[] {
+    if (Array.isArray(raw)) {
+        return raw
+            .flatMap((value) => String(value).split(/[,\s]+/))
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean);
+    }
+    if (typeof raw === 'string') {
+        return raw
+            .split(/[,\s]+/)
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean);
+    }
+    return [];
+}
+
 const STATUS_STYLE: Record<string, string> = {
     draft:       'bg-slate-700/50 text-slate-400 border-slate-700',
     scheduled:   'bg-blue-500/15 text-blue-400 border-blue-500/30',
@@ -125,7 +141,7 @@ export default function SocialMediaComposer() {
     const [facebookActionLoading, setFacebookActionLoading] = useState<Record<string, boolean>>({});
     const [aiQuickReplyLoading, setAiQuickReplyLoading] = useState<Record<string, boolean>>({});
     const selectedLinkedInIntegration = linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null;
-    const selectedLinkedInScopes = selectedLinkedInIntegration?.scopes || [];
+    const selectedLinkedInScopes = normalizeScopes(selectedLinkedInIntegration?.scopes || []);
     const hasSelectedLinkedInWriteScope = selectedLinkedInScopes.includes('w_member_social');
     const isSelectedLinkedInActive = !!selectedLinkedInIntegration?.is_active;
 

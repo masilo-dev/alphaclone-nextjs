@@ -3,6 +3,22 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
+function normalizeScopes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value).split(/[,\s]+/))
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,\s]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -58,7 +74,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });
     }
 
-    const scopes = Array.isArray(li.scopes) ? li.scopes : [];
+    const scopes = normalizeScopes(li.scopes);
     if (!scopes.includes('w_member_social')) {
       return NextResponse.json({ error: 'Missing LinkedIn scope: w_member_social' }, { status: 400 });
     }

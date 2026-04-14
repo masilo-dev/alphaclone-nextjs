@@ -410,7 +410,7 @@ function LoginContent() {
     }
 
     return (
-        <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center p-4 pt-8 pb-16 sm:py-12 relative overflow-x-hidden overflow-y-auto">
+        <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-3 py-4 sm:py-6 relative overflow-x-hidden overflow-y-auto">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/5 blur-[80px] animate-blob" />
@@ -418,41 +418,41 @@ function LoginContent() {
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-5" />
             </div>
 
-            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-5 sm:p-8 shadow-2xl relative z-10 mt-auto mb-auto flex-shrink-0 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>
-                <div className="mb-8 text-center">
+            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-6 shadow-2xl relative z-10 flex-shrink-0 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>
+                <div className="mb-5 text-center">
                     {isPWA ? (
-                        <div className="mx-auto mb-6 flex justify-center inline-block">
+                        <div className="mx-auto mb-4 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                width={80}
-                                height={80}
+                                width={64}
+                                height={64}
                                 className="object-contain"
                                 priority
                             />
                         </div>
                     ) : (
-                        <Link href="/" className="mx-auto mb-6 flex justify-center inline-block">
+                        <Link href="/" className="mx-auto mb-4 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                width={80}
-                                height={80}
+                                width={64}
+                                height={64}
                                 className="object-contain hover:scale-105 transition-transform"
                                 priority
                             />
                         </Link>
                     )}
-                    <h1 className="text-2xl font-bold text-white mb-2">AlphaClone Systems</h1>
-                    <p className="text-slate-400">
+                    <h1 className="text-xl font-bold text-white mb-1.5">AlphaClone Systems</h1>
+                    <p className="text-slate-400 text-sm">
                         {isRegistering ? 'Create your professional account' : 'Sign in to your dashboard'}
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {isRegistering && (
-                        <div className="animate-slide-up space-y-4">
-                            <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4 max-w-md mx-auto">
+                        <div className="animate-slide-up space-y-3">
+                            <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-3 max-w-md mx-auto">
                                 <button
                                     type="button"
                                     onClick={() => setIsBusiness(false)}
@@ -480,7 +480,7 @@ function LoginContent() {
                             </div>
 
                             {isBusiness && (
-                                <div className="animate-slide-up space-y-6">
+                                <div className="animate-slide-up space-y-4">
                                     <div className="max-w-md mx-auto w-full">
                                         <Input
                                             label="Business Name"
@@ -537,7 +537,7 @@ function LoginContent() {
                         </div>
                     )}
 
-                    <div className="max-w-md mx-auto w-full space-y-5">
+                    <div className="max-w-md mx-auto w-full space-y-4">
                         <Input
                             label="Email Address"
                             type="email"
@@ -655,7 +655,7 @@ function LoginContent() {
                         </Button>
                     </div>
 
-                    <div className="relative my-6">
+                    <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-slate-800"></div>
                         </div>
@@ -664,7 +664,7 @@ function LoginContent() {
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-center gap-4">
+                    <div className="flex items-center justify-center gap-3">
                         <button
                             type="button"
                             aria-label="Sign in with Google"
@@ -685,9 +685,9 @@ function LoginContent() {
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-12 h-12 flex items-center justify-center bg-white hover:bg-gray-50 rounded-full border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gray-50 rounded-full border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -715,9 +715,9 @@ function LoginContent() {
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-12 h-12 flex items-center justify-center bg-[#0A66C2] hover:bg-[#0958A8] text-white rounded-full border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-10 h-10 flex items-center justify-center bg-[#0A66C2] hover:bg-[#0958A8] text-white rounded-full border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
                             </svg>
                         </button>
@@ -742,16 +742,16 @@ function LoginContent() {
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-12 h-12 flex items-center justify-center bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-full border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-10 h-10 flex items-center justify-center bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-full border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
                             </svg>
                         </button>
                     </div>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-800 text-center space-y-4">
+                <div className="mt-6 pt-4 border-t border-slate-800 text-center space-y-3">
                     <button
                         onClick={() => {
                             setIsRegistering(!isRegistering);

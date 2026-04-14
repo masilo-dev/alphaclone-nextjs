@@ -28,6 +28,22 @@ interface LinkedInIntegrationRow {
   is_active: boolean;
 }
 
+function normalizeScopes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value).split(/[,\s]+/))
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,\s]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-700/50 text-slate-300 border-slate-700',
   scheduled: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
@@ -165,7 +181,7 @@ export default function LinkedInManagementTab() {
 
   const hasWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
-    return scopes.includes('w_member_social');
+    return normalizeScopes(scopes).includes('w_member_social');
   }, [integrations, selectedLinkedInMemberId]);
   const selectedIntegration = useMemo(
     () => integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null,
