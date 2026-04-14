@@ -23,6 +23,6 @@ if [ $? -eq 0 ]; then
     echo "🌐 Test your app at: https://alphaclone-systems-ogecwgzll-borns-projects-bfe09b9f.vercel.app"
 else
     echo "❌ Migration failed. Check the error above."
-    echo "💡 Tip: Make sure you're linked to your Supabase project"
-    echo "   Run: npx supabase link --project-ref ehekzoiogvtweugeinktn"
+    echo "Tip: Make sure you're linked to your Supabase project"
+    echo "Run: npx supabase link --project-ref <your-project-ref>"
 fi

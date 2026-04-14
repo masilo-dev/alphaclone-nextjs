@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
       .from('linkedin_integrations')
       .update({
         is_active: false,
-        access_token: null,
+        // Column is NOT NULL in schema, so blank out token instead of nulling.
+        access_token: '',
         token_expires_at: null,
         updated_at: new Date().toISOString(),
       })

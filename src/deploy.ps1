@@ -6,7 +6,11 @@ Write-Host "  AlphaClone Systems - Supabase Deployment" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-$projectRef = "ehekzoiogvtweugeinktn"
+$projectRef = $env:SUPABASE_PROJECT_REF
+if (-not $projectRef) {
+    Write-Host "Missing SUPABASE_PROJECT_REF environment variable." -ForegroundColor Red
+    exit 1
+}
 $projectUrl = "https://supabase.com/dashboard/project/$projectRef"
 
 Write-Host "Project URL: $projectUrl" -ForegroundColor Yellow
@@ -29,12 +33,12 @@ Write-Host "2. Click 'Add user' > 'Create new user'" -ForegroundColor White
 Write-Host ""
 Write-Host "Create Admin 1:" -ForegroundColor Cyan
 Write-Host "  Email: info@alphaclone.tech" -ForegroundColor White
-Write-Host "  Password: Amgseries@gmail.com" -ForegroundColor White
+Write-Host "  Password: [create strong password in dashboard]" -ForegroundColor White
 Write-Host "  Auto Confirm User: YES" -ForegroundColor White
 Write-Host ""
 Write-Host "Create Admin 2:" -ForegroundColor Cyan
 Write-Host "  Email: alphaclonesystems@hotmail.com" -ForegroundColor White
-Write-Host "  Password: Amgseries@gmail.com" -ForegroundColor White
+Write-Host "  Password: [create strong password in dashboard]" -ForegroundColor White
 Write-Host "  Auto Confirm User: YES" -ForegroundColor White
 Write-Host ""
 Write-Host "Press any key when both admin accounts are created..." -ForegroundColor Yellow
@@ -75,7 +79,7 @@ Write-Host "1. The dev server should already be running" -ForegroundColor White
 Write-Host "2. Open http://localhost:5173" -ForegroundColor White
 Write-Host "3. Click 'Login' and use admin credentials:" -ForegroundColor White
 Write-Host "   Email: info@alphaclone.tech" -ForegroundColor Yellow
-Write-Host "   Password: Amgseries@gmail.com" -ForegroundColor Yellow
+Write-Host "   Password: [your configured secure password]" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Enjoy your AlphaClone Systems dashboard! 🚀" -ForegroundColor Green
 Write-Host ""

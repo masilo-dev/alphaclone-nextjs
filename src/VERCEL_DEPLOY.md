@@ -38,17 +38,17 @@ After initial deployment, add environment variables:
 ```bash
 vercel env add VITE_SUPABASE_URL
 ```
-Enter: `https://ehekzoiogvtweugeinktn.supabase.co`
+Enter: `https://your-project-ref.supabase.co`
 
 ```bash
 vercel env add VITE_SUPABASE_ANON_KEY
 ```
-Enter: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvZ3Z0d2V1Z2Vpbmt0biIsInJvbGUiOiJhbm9uIiwiZXhwIjoyMDUyNzQyNDExfQ.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvZ3Z0d2V1Z2Vpbmt0biIsInJvbGUiOiJhbm9uIiwiZXhwIjoyMDUyNzQyNDExfQ.XZ0dzV1ZZVla3Ruilwicm9zZSI6ImFub24iLCJleHAiOjIwNTI3NDI0MTF9.zE2Mn0_vBx4tSM4L8Rh_VT2yCdvz9kMMvtKkvv9v_2vT0zek`
+Enter: `<your-supabase-anon-key>`
 
 ```bash
 vercel env add VITE_SUPABASE_SERVICE_KEY
 ```
-Enter: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvZ3Z0d2V1Z2Vpbmt0biIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE3MzM1MTg4MTEsImV4cCI6MjA0OTA5NDgxMX0.yMDgwNjgzMTYyfQ.Uiu4x2RbZ-3WyIXxV6x5Dqj2WntQnhqTG9sC9fTNS20`
+Enter: `<your-supabase-service-role-key>`
 
 ```bash
 vercel env add VITE_RESEND_API_KEY
@@ -78,7 +78,7 @@ Go to Project Settings > Environment Variables and add:
 
 | Name | Value |
 |------|-------|
-| `VITE_SUPABASE_URL` | `https://ehekzoiogvtweugeinktn.supabase.co` |
+| `VITE_SUPABASE_URL` | `https://your-project-ref.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
 | `VITE_SUPABASE_SERVICE_KEY` | Your Supabase service key |
 | `VITE_RESEND_API_KEY` | `re_your_resend_key` |

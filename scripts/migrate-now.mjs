@@ -12,8 +12,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SUPABASE_URL = 'https://ehekzoioqvtweugemktn.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTEwNzE2MiwiZXhwIjoyMDgwNjgzMTYyfQ.Uiu4x2RbZ-3WylXkV6x5Ddj2WhtOnNq1G9sC9l1NS20';
+const SUPABASE_URL =
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false }
@@ -101,10 +104,15 @@ async function main() {
     console.log('║           AlphaClone Database Migration                        ║');
     console.log('╚════════════════════════════════════════════════════════════════╝\n');
 
-    console.log('⚠️  Note: The Supabase client cannot execute raw SQL.');
-    console.log('    Please use the Supabase Dashboard SQL Editor instead.\n');
-    console.log('📋 Instructions:\n');
-    console.log('1. Go to: https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new');
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+        console.error('Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+        process.exit(1);
+    }
+
+    console.log('Database target is resolved from environment variables.');
+    console.log('Use your database dashboard SQL editor when manual execution is needed.\n');
+    console.log('Instructions:\n');
+    console.log('1. Open your project SQL editor in the provider dashboard');
     console.log('2. Copy and paste each migration file:');
     console.log('');
 

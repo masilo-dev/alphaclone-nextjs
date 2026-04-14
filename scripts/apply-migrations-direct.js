@@ -8,8 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const SUPABASE_URL = 'https://ehekzoioqvtweugemktn.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTEwNzE2MiwiZXhwIjoyMDgwNjgzMTYyfQ.Uiu4x2RbZ-3WylXkV6x5Ddj2WhtOnNq1G9sC9l1NS20';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const migrationsDir = path.join(__dirname, '..', 'src', 'supabase', 'migrations');
 
@@ -24,9 +24,10 @@ const migrations = [
 async function executeSql(sql) {
     return new Promise((resolve, reject) => {
         const data = JSON.stringify({ query: sql });
+        const parsed = new URL(SUPABASE_URL);
 
         const options = {
-            hostname: 'ehekzoioqvtweugemktn.supabase.co',
+            hostname: parsed.hostname,
             port: 443,
             path: '/rest/v1/rpc/exec',
             method: 'POST',
@@ -87,11 +88,16 @@ async function executeMigration(filename) {
 }
 
 async function main() {
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+        console.error('Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+        process.exit(1);
+    }
+
     console.log('╔════════════════════════════════════════════════════════════════╗');
     console.log('║      AlphaClone Database Migration - Direct Application        ║');
     console.log('╚════════════════════════════════════════════════════════════════╝');
     console.log('');
-    console.log(`🔗 Supabase URL: ${SUPABASE_URL}`);
+    console.log('Database target: configured via environment');
     console.log(`📝 Migrations to apply: ${migrations.length}`);
     console.log('');
 
@@ -100,8 +106,7 @@ async function main() {
     }
 
     console.log('\n✅ Migration process complete!');
-    console.log('\nVerify in Supabase Dashboard:');
-    console.log('https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/editor');
+    console.log('\nVerify migrations in your database dashboard.');
 }
 
 main().catch(console.error);

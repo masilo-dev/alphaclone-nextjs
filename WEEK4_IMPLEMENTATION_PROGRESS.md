@@ -424,13 +424,13 @@ WEEK4_IMPLEMENTATION_PROGRESS.md # This file
 ### Step 1: Backup Database
 ```bash
 # Automated backup already configured
-# Verify at: https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/database/backups
+# Verify at: https://supabase.com/dashboard/project/<your-project-ref>/database/backups
 ```
 
 ### Step 2: Apply Migration
 1. Open Supabase SQL Editor:
    ```
-   https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new
+   https://supabase.com/dashboard/project/<your-project-ref>/sql/new
    ```
 
 2. Copy contents of:

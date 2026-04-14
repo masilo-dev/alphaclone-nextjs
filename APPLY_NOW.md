@@ -7,7 +7,7 @@ Your existing tables are SAFE. These migrations only ADD new tables, never remov
 ## 🎯 Simple Steps
 
 ### Open This URL:
-**https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new**
+**https://supabase.com/dashboard/project/<your-project-ref>/sql/new**
 
 ### Then Copy/Paste Each Migration:
 
@@ -111,4 +111,4 @@ ORDER BY table_name;
 **Tables Added:** 20
 **Functions Added:** 16+
 
-**Start here:** https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new
+**Start here:** https://supabase.com/dashboard/project/<your-project-ref>/sql/new

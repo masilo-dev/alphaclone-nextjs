@@ -78,7 +78,7 @@ export default function PrivateDocsPage() {
                         <div className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/20">
                             <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Quick Links</h3>
                             <ul className="space-y-3 text-xs">
-                                <li><a href="https://supabase.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Database className="w-3 h-3" /> Supabase Console</a></li>
+                                <li><Link href="/dashboard/business/settings" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Database className="w-3 h-3" /> Database Settings</Link></li>
                                 <li><a href="https://dashboard.stripe.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Code className="w-3 h-3" /> Stripe Dashboard</a></li>
                                 <li><a href="https://vercel.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Lock className="w-3 h-3" /> Vercel Deployments</a></li>
                             </ul>
