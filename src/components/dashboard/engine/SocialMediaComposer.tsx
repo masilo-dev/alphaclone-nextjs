@@ -77,7 +77,8 @@ export default function SocialMediaComposer() {
     const [posts, setPosts] = useState<SocialPost[]>([]);
     const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
-    const [linkedinIntegration, setLinkedinIntegration] = useState<LinkedInIntegration | null>(null);
+    const [linkedinIntegrations, setLinkedinIntegrations] = useState<LinkedInIntegration[]>([]);
+    const [selectedLinkedInMemberId, setSelectedLinkedInMemberId] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'compose' | 'posts' | 'media'>('compose');
 
@@ -134,8 +135,7 @@ export default function SocialMediaComposer() {
                 .eq('tenant_id', tenant.id)
                 .eq('user_id', user.id)
                 .eq('is_active', true)
-                .limit(1)
-                .maybeSingle(),
+                .order('created_at', { ascending: false }),
         ]);
         if (!postsRes.error) setPosts(postsRes.data || []);
         if (!mediaRes.error) setMediaAssets(mediaRes.data || []);
@@ -144,10 +144,12 @@ export default function SocialMediaComposer() {
             if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
         }
         if (!linkedinRes.error) {
-            setLinkedinIntegration(linkedinRes.data || null);
+            const rows = (linkedinRes.data || []) as LinkedInIntegration[];
+            setLinkedinIntegrations(rows);
+            if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
         }
         setLoading(false);
-    }, [tenant?.id, user]);
+    }, [tenant?.id, user, selectedLinkedInMemberId]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -221,6 +223,7 @@ export default function SocialMediaComposer() {
                 hashtags,
                 scheduled_at: publishNow ? undefined : scheduledAt || undefined,
                 facebook_page_id: platforms.includes('facebook') ? selectedPageId : undefined,
+                linkedin_member_id: platforms.includes('linkedin') ? (selectedLinkedInMemberId || undefined) : undefined,
             }),
         });
         const data = await res.json();
@@ -278,7 +281,12 @@ export default function SocialMediaComposer() {
             const res = await fetch('/api/linkedin/comment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: tenant.id, postUrn: post.linkedin_post_urn, text }),
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    postUrn: post.linkedin_post_urn,
+                    text,
+                    linkedinMemberId: selectedLinkedInMemberId || undefined,
+                }),
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -302,7 +310,12 @@ export default function SocialMediaComposer() {
             const res = await fetch('/api/linkedin/reaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: tenant.id, postUrn: post.linkedin_post_urn, reactionType }),
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    postUrn: post.linkedin_post_urn,
+                    reactionType,
+                    linkedinMemberId: selectedLinkedInMemberId || undefined,
+                }),
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -875,7 +888,7 @@ export default function SocialMediaComposer() {
                                 </p>
                             )}
 
-                            {platforms.includes('linkedin') && !linkedinIntegration && (
+                            {platforms.includes('linkedin') && linkedinIntegrations.length === 0 && (
                                 <div className="mt-3 space-y-2">
                                     <p className="text-xs text-amber-400 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" /> Connect LinkedIn first
@@ -889,12 +902,33 @@ export default function SocialMediaComposer() {
                                 </div>
                             )}
 
-                            {platforms.includes('linkedin') && linkedinIntegration && (
+                            {platforms.includes('linkedin') && linkedinIntegrations.length > 0 && (
                                 <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-2.5">
                                     <p className="text-xs font-semibold text-sky-300 mb-2">LinkedIn Scopes</p>
+                                    <label className="text-xs text-slate-500 mb-1 block">LinkedIn Account</label>
+                                    <select
+                                        value={selectedLinkedInMemberId}
+                                        onChange={(e) => setSelectedLinkedInMemberId(e.target.value)}
+                                        className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-sky-500"
+                                    >
+                                        {linkedinIntegrations.map((row) => (
+                                            <option key={row.linkedin_member_id} value={row.linkedin_member_id}>
+                                                {row.linkedin_member_id}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {selectedLinkedInMemberId && (
+                                        <p className="text-[11px] text-sky-300 mb-2">Active account: {selectedLinkedInMemberId}</p>
+                                    )}
+                                    <button
+                                        onClick={handleConnectLinkedIn}
+                                        className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
+                                    >
+                                        Reconnect LinkedIn
+                                    </button>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {(linkedinIntegration.scopes || []).length > 0 ? (
-                                            (linkedinIntegration.scopes || []).map((scope) => (
+                                        {(linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
+                                            (linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
                                                 <span key={scope} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
                                                     {scope}
                                                 </span>

@@ -26,11 +26,13 @@ export async function POST(req: NextRequest) {
       tenantId?: string;
       postUrn?: string;
       text?: string;
+      linkedinMemberId?: string;
     };
 
     const tenantId = body.tenantId?.trim();
     const postUrn = body.postUrn?.trim();
     const text = body.text?.trim();
+    const linkedinMemberId = body.linkedinMemberId?.trim();
 
     if (!tenantId || !postUrn || !text) {
       return NextResponse.json({ error: 'tenantId, postUrn, and text are required' }, { status: 400 });
@@ -42,14 +44,15 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    const { data: li, error: liError } = await admin
+    let query = admin
       .from('linkedin_integrations')
-      .select('access_token, linkedin_person_urn, scopes')
+      .select('linkedin_member_id, access_token, linkedin_person_urn, scopes')
       .eq('tenant_id', tenantId)
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    if (linkedinMemberId) query = query.eq('linkedin_member_id', linkedinMemberId);
+    const { data: li, error: liError } = await query.maybeSingle();
 
     if (liError || !li?.access_token || !li?.linkedin_person_urn) {
       return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });

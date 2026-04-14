@@ -329,65 +329,88 @@ export default function OmniLeadFinder() {
         return;
     }
 
+    setScanning(true); setResults([]); setSourceStats({}); setSavedIds(new Set()); setFallbackUsed(false); clearFilters();
+    setProgress({ percent: 8, message: 'Creating search job...' });
+
     const taskId = `omni_search_${Date.now()}`;
     const taskName = `Finding ${niche} leads in ${location || 'Global'}`;
-
-    setScanning(true); setResults([]); setSourceStats({}); setSavedIds(new Set()); setFallbackUsed(false); clearFilters();
-    setProgress({ percent: 10, message: 'Geocoding broad region...' });
-
     startTask(taskId, taskName, async () => {
-        try {
-            const res = await fetch('/api/scraper/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    niche,
-                    location,
-                    sortBy: sortMode,
-                    usePlaywright,
-                    tenantId: currentTenant?.id || '',
-                }),
-            });
+      try {
+        const createRes = await fetch('/api/scraper/jobs/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            niche,
+            location,
+            sortBy: sortMode,
+            usePlaywright,
+            tenantId: currentTenant?.id || '',
+          }),
+        });
 
-            if (res.status === 429) {
-                const errData = await res.json();
-                throw new Error(errData.error || 'Rate limit exceeded. Please try again later.');
-            }
+        if (!createRes.ok) {
+          const errData = await createRes.json();
+          throw new Error(errData.error || 'Failed to create lead search job');
+        }
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error || 'Search failed');
-            }
+        const createData = await createRes.json();
+        const jobId = createData?.job?.id as string | undefined;
+        if (!jobId) throw new Error('Lead search job id missing');
 
-            const data = await res.json();
-            const leads = data.results || [];
+        let done = false;
+        let latestJob: any = createData.job;
 
-            // Update progress and results
-            setProgress({ percent: 85, message: 'Qualifying leads...' });
-            setResults(leads);
-            setSourceStats(data.sources || data.sourceStats || {});
-            setFallbackUsed(!!data.fallbackUsed);
+        while (!done) {
+          const stepRes = await fetch(`/api/scraper/jobs/${jobId}/step`, { method: 'POST' });
+          if (!stepRes.ok) {
+            const errData = await stepRes.json().catch(() => ({}));
+            throw new Error(errData.error || 'Lead job processing failed');
+          }
+          const stepData = await stepRes.json();
+          latestJob = stepData.job;
 
-            // Qualify leads
-            const qualifiedLeads = leads.map((lead: ScrapedLead) => ({
-                ...lead,
-                qualification: qualifyLead(lead, niche),
+          const partialLeads: ScrapedLead[] = Array.isArray(latestJob?.partial_results) ? latestJob.partial_results : [];
+          const qualifiedPartial = partialLeads.map((lead) => ({
+            ...lead,
+            qualification: qualifyLead(lead, niche),
+          }));
+          setResults(qualifiedPartial);
+          setSourceStats(latestJob?.source_stats || {});
+          setFallbackUsed(!!latestJob?.fallback_used);
+          setProgress({
+            percent: Number(latestJob?.progress || 0),
+            message:
+              latestJob?.current_step === 'init' ? 'Collecting OSM leads...' :
+              latestJob?.current_step === 'fallbacks' ? 'Collecting fallback leads...' :
+              latestJob?.current_step === 'browser' ? 'Collecting browser leads...' :
+              latestJob?.current_step === 'finalize' ? 'Finalizing lead list...' : 'Processing...',
+          });
+
+          if (latestJob?.status === 'completed') {
+            const finalLeads: ScrapedLead[] = Array.isArray(latestJob?.final_results) ? latestJob.final_results : qualifiedPartial;
+            const qualifiedFinal = finalLeads.map((lead) => ({
+              ...lead,
+              qualification: qualifyLead(lead, niche),
             }));
-
-            setResults(qualifiedLeads);
+            setResults(qualifiedFinal);
             setSelectedSet(new Set());
             setProgress({ percent: 100, message: 'Done' });
-
-            const rejMsg = data.rejectedCount > 0 ? ` (${data.rejectedCount} unverified discarded)` : '';
-            toast.success(`Found ${leads.length} leads${rejMsg}`);
-
-            return { leads: qualifiedLeads, sourceStats: data.sources || data.sourceStats };
-        } catch (err: any) {
-            toast.error(err.message || 'Search failed');
-            throw err;
-        } finally {
-            setTimeout(() => setScanning(false), 600);
+            toast.success(`Found ${qualifiedFinal.length} leads`);
+            done = true;
+          } else if (latestJob?.status === 'failed' || latestJob?.status === 'cancelled') {
+            throw new Error(latestJob?.error_message || 'Lead search job failed');
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 900));
+          }
         }
+
+        return { leads: latestJob?.final_results || latestJob?.partial_results || [], sourceStats: latestJob?.source_stats || {} };
+      } catch (err: any) {
+        toast.error(err.message || 'Search failed');
+        throw err;
+      } finally {
+        setTimeout(() => setScanning(false), 600);
+      }
     });
   };
 

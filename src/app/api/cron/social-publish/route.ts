@@ -81,32 +81,45 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
   try {
     const { data: post, error: postError } = await adminClient
       .from('social_posts')
-      .select('id, tenant_id, user_id, caption, link_url')
+      .select('id, tenant_id, user_id, caption, link_url, linkedin_member_id')
       .eq('id', postId)
       .single();
     if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
 
     const { data: li, error: liError } = await adminClient
       .from('linkedin_integrations')
-      .select('linkedin_person_urn, access_token, scopes')
+      .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
       .eq('tenant_id', post.tenant_id)
       .eq('user_id', post.user_id)
+      .eq('linkedin_member_id', post.linkedin_member_id || '')
       .eq('is_active', true)
       .limit(1)
       .maybeSingle();
 
-    if (liError || !li?.access_token || !li?.linkedin_person_urn) {
+    const integration = li?.access_token ? li : await (async () => {
+      const fallback = await adminClient
+        .from('linkedin_integrations')
+        .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
+        .eq('tenant_id', post.tenant_id)
+        .eq('user_id', post.user_id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      return fallback.data;
+    })();
+
+    if (liError || !integration?.access_token || !integration?.linkedin_person_urn) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
     }
 
-    const scopes = Array.isArray(li.scopes) ? li.scopes : [];
+    const scopes = Array.isArray(integration.scopes) ? integration.scopes : [];
     if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
 
     const hasLink = typeof post.link_url === 'string' && post.link_url.trim().length > 0;
     const payload = {
-      author: li.linkedin_person_urn,
+      author: integration.linkedin_person_urn,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
@@ -121,7 +134,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${li.access_token}`,
+        Authorization: `Bearer ${integration.access_token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
       },
@@ -133,7 +146,10 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     }
 
     const postUrn = res.headers.get('x-restli-id') ?? null;
-    await adminClient.from('social_posts').update({ linkedin_post_urn: postUrn }).eq('id', postId);
+    await adminClient.from('social_posts').update({
+      linkedin_post_urn: postUrn,
+      linkedin_member_id: integration.linkedin_member_id || post.linkedin_member_id || null,
+    }).eq('id', postId);
     return { ok: true, platform: 'linkedin' };
   } catch (err) {
     console.error('[cron/social-publish] linkedin publish error:', err);

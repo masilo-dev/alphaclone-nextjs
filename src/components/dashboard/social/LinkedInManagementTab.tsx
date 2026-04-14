@@ -17,6 +17,7 @@ interface LinkedInPostRow {
   published_at: string | null;
   created_at: string;
   linkedin_post_urn: string | null;
+  linkedin_member_id: string | null;
   error_message: string | null;
 }
 
@@ -42,7 +43,8 @@ export default function LinkedInManagementTab() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<LinkedInPostRow[]>([]);
-  const [integration, setIntegration] = useState<LinkedInIntegrationRow | null>(null);
+  const [integrations, setIntegrations] = useState<LinkedInIntegrationRow[]>([]);
+  const [selectedLinkedInMemberId, setSelectedLinkedInMemberId] = useState('');
   const [statusFilter, setStatusFilter] = useState<LinkedInStatusFilter>('all');
   const [commentByPost, setCommentByPost] = useState<Record<string, string>>({});
   const [reactionByPost, setReactionByPost] = useState<Record<string, string>>({});
@@ -56,7 +58,7 @@ export default function LinkedInManagementTab() {
     const [postsRes, liRes] = await Promise.all([
       supabase
         .from('social_posts')
-        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms')
+        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,error_message,platforms')
         .eq('tenant_id', currentTenant.id)
         .filter('platforms', 'cs', '{"linkedin"}')
         .order('created_at', { ascending: false })
@@ -67,8 +69,7 @@ export default function LinkedInManagementTab() {
         .eq('tenant_id', currentTenant.id)
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .limit(1)
-        .maybeSingle(),
+        .order('created_at', { ascending: false }),
     ]);
 
     if (postsRes.error) {
@@ -83,7 +84,7 @@ export default function LinkedInManagementTab() {
       if (fallback.error) {
         toast.error('Failed to load LinkedIn posts');
       } else {
-        const mapped = (fallback.data || []).map((row: any) => ({ ...row, linkedin_post_urn: null }));
+        const mapped = (fallback.data || []).map((row: any) => ({ ...row, linkedin_post_urn: null, linkedin_member_id: null }));
         setPosts(mapped as LinkedInPostRow[]);
         setSchemaWarning('LinkedIn post tracking migration is missing. Apply the latest social LinkedIn migration to enable full post links and actions.');
       }
@@ -92,27 +93,32 @@ export default function LinkedInManagementTab() {
     }
 
     if (liRes.error) {
-      setIntegration(null);
+      setIntegrations([]);
       setSchemaWarning((prev) => prev || 'LinkedIn integration table is missing in database. Apply latest LinkedIn migration.');
     } else {
-      setIntegration((liRes.data as LinkedInIntegrationRow | null) || null);
+      const rows = (liRes.data || []) as LinkedInIntegrationRow[];
+      setIntegrations(rows);
+      if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
     }
     setLoading(false);
-  }, [currentTenant?.id, user?.id]);
+  }, [currentTenant?.id, user?.id, selectedLinkedInMemberId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const filteredPosts = useMemo(() => {
-    if (statusFilter === 'all') return posts;
-    return posts.filter((post) => post.status === statusFilter);
-  }, [posts, statusFilter]);
+    const accountPosts = selectedLinkedInMemberId
+      ? posts.filter((post) => !post.linkedin_member_id || post.linkedin_member_id === selectedLinkedInMemberId)
+      : posts;
+    if (statusFilter === 'all') return accountPosts;
+    return accountPosts.filter((post) => post.status === statusFilter);
+  }, [posts, statusFilter, selectedLinkedInMemberId]);
 
   const hasWriteScope = useMemo(() => {
-    const scopes = integration?.scopes || [];
+    const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     return scopes.includes('w_member_social');
-  }, [integration]);
+  }, [integrations, selectedLinkedInMemberId]);
 
   const handleConnectLinkedIn = async () => {
     try {
@@ -134,7 +140,12 @@ export default function LinkedInManagementTab() {
       const res = await fetch('/api/linkedin/comment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: currentTenant.id, postUrn: post.linkedin_post_urn, text }),
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          postUrn: post.linkedin_post_urn,
+          text,
+          linkedinMemberId: selectedLinkedInMemberId || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) return toast.error(data.error || 'Failed to post comment');
@@ -155,7 +166,12 @@ export default function LinkedInManagementTab() {
       const res = await fetch('/api/linkedin/reaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: currentTenant.id, postUrn: post.linkedin_post_urn, reactionType }),
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          postUrn: post.linkedin_post_urn,
+          reactionType,
+          linkedinMemberId: selectedLinkedInMemberId || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) return toast.error(data.error || 'Failed to send reaction');
@@ -200,7 +216,7 @@ export default function LinkedInManagementTab() {
             {schemaWarning}
           </div>
         )}
-        {!integration ? (
+        {integrations.length === 0 ? (
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <p className="text-sm text-amber-300 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
@@ -218,11 +234,38 @@ export default function LinkedInManagementTab() {
             <div className="flex items-center gap-2 text-sm text-slate-300">
               <span className="font-semibold">Connection:</span>
               <span className="text-green-300">Active</span>
+              {selectedLinkedInMemberId && (
+                <span className="text-xs px-2 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/10 text-sky-300">
+                  Active account: {selectedLinkedInMemberId}
+                </span>
+              )}
               {!hasWriteScope && <span className="text-amber-300">Missing write scope</span>}
             </div>
+            <div className="flex items-end gap-2 flex-wrap">
+              <div>
+              <label className="text-xs text-slate-500 mb-1 block">LinkedIn account</label>
+              <select
+                value={selectedLinkedInMemberId}
+                onChange={(e) => setSelectedLinkedInMemberId(e.target.value)}
+                className="w-full md:w-[360px] px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-sky-500"
+              >
+                {integrations.map((row) => (
+                  <option key={row.linkedin_member_id} value={row.linkedin_member_id}>
+                    {row.linkedin_member_id}
+                  </option>
+                ))}
+              </select>
+              </div>
+              <button
+                onClick={handleConnectLinkedIn}
+                className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30"
+              >
+                Reconnect LinkedIn
+              </button>
+            </div>
             <div className="flex flex-wrap gap-1.5">
-              {(integration.scopes || []).length > 0 ? (
-                (integration.scopes || []).map((scope) => (
+              {(integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
+                (integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
                   <span key={scope} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800 text-slate-300">
                     {scope}
                   </span>
