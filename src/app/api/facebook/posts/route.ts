@@ -4,6 +4,27 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const runtime = 'nodejs';
 
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
+  let lastError: unknown = null;
+  for (let i = 0; i < attempts; i++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    try {
+      const response = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timeout);
+      return response;
+    } catch (error: any) {
+      clearTimeout(timeout);
+      lastError = error;
+      const causeCode = error?.cause?.code;
+      const retryable = causeCode === 'UND_ERR_SOCKET' || error?.name === 'AbortError';
+      if (!retryable || i === attempts - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 400 * (i + 1)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Fetch failed');
+}
+
 export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -59,7 +80,7 @@ export async function GET(req: NextRequest) {
     ].join(',');
 
     const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/feed?fields=${fields}&limit=${limit}&access_token=${token}`;
-    const res = await fetch(graphUrl, { next: { revalidate: 0 } });
+    const res = await fetchWithRetry(graphUrl, { next: { revalidate: 0 } });
     const fbData = await res.json();
 
     if (fbData.error) {

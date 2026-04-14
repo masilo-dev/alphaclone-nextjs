@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
+    let lastError: unknown = null;
+    for (let i = 0; i < attempts; i++) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 25000);
+        try {
+            const response = await fetch(url, { ...init, signal: controller.signal });
+            clearTimeout(timeout);
+            return response;
+        } catch (error: any) {
+            clearTimeout(timeout);
+            lastError = error;
+            const causeCode = error?.cause?.code;
+            const retryable = causeCode === 'UND_ERR_SOCKET' || error?.name === 'AbortError';
+            if (!retryable || i === attempts - 1) throw error;
+            await new Promise((resolve) => setTimeout(resolve, 400 * (i + 1)));
+        }
+    }
+    throw lastError instanceof Error ? lastError : new Error('Fetch failed');
+}
+
 export async function POST(req: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -56,19 +77,38 @@ export async function POST(req: NextRequest) {
         ? `https://graph.facebook.com/v19.0/${pageId}/videos`
         : `https://graph.facebook.com/v19.0/${pageId}/photos`;
 
-    const res = await fetch(endpoint, {
+    let res: Response;
+    try {
+        res = await fetchWithRetry(endpoint, {
         method: 'POST',
         body: fbForm,
-    });
+        });
+    } catch (error: any) {
+        console.error('[Facebook Media Upload] network failure:', error);
+        return NextResponse.json(
+            {
+                error: 'Facebook network error. Please retry.',
+                code: 'FACEBOOK_NETWORK',
+            },
+            { status: 502 }
+        );
+    }
 
     const data = await res.json();
 
     if (data.error) {
         console.error('[Facebook Media Upload] Graph API error:', data.error);
-        if (data.error.code === 200 || data.error.message?.includes('pages_manage_posts')) {
+        const message = String(data.error.message || '');
+        if (
+            data.error.code === 200 ||
+            data.error.code === 190 ||
+            message.includes('pages_manage_posts') ||
+            message.includes('pages_read_engagement') ||
+            message.includes('impersonating a')
+        ) {
             return NextResponse.json(
                 {
-                    error: 'Permission denied. Reconnect your Facebook page to grant media posting permissions.',
+                    error: 'Permission denied. Reconnect Facebook and grant all Page permissions.',
                     code: 'FACEBOOK_PERMISSION',
                     action: 'reconnect',
                 },
