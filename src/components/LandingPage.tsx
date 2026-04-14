@@ -134,7 +134,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             scrolled ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-lg' : 'bg-slate-950/80 backdrop-blur-lg'
          } ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-               <div className="flex justify-between items-center h-20">
+               <div className="flex justify-between items-center h-16 sm:h-[4.5rem]">
                   {/* Logo */}
                   <div className="flex items-center gap-3 cursor-pointer group">
                      <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
@@ -300,7 +300,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
          <main>
             {/* Hero Section */}
-            <section id="home" className="relative min-h-[95vh] flex flex-col items-center justify-center overflow-hidden pt-24 sm:pt-32">
+            <section id="home" className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-16 sm:pt-20">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[600px] opacity-40 z-0">
                   <AIWorkerGraphic />
                </div>
@@ -309,7 +309,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-10 sm:py-20 lg:py-32"
+                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-6 sm:py-12 lg:py-16"
                >
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}

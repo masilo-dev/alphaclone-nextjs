@@ -21,13 +21,13 @@
 }
 
 .font-marketing-heading {
-  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-family: "Tomato Grotesk", var(--font-inter), "Inter", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   letter-spacing: -0.02em;
   font-weight: 650;
 }
 
 .font-marketing-body {
-  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
 }
 
@@ -150,7 +150,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 /* Typography Overrides - Scoped to Marketing Theme */
 .marketing-theme {
-  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
   font-size: 15px;
   line-height: 1.6;
@@ -158,16 +158,16 @@ html.light .ac-business-scroll .text-slate-300 {
 }
 
 .marketing-theme h1 {
-  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
-  font-weight: 750;
+  font-family: "Tomato Grotesk", var(--font-inter), "Inter", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-weight: 700;
   font-size: clamp(1.75rem, 5.2vw, 3.5rem);
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
 }
 
 .marketing-theme h2 {
-  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
-  font-weight: 680;
+  font-family: "Tomato Grotesk", var(--font-inter), "Inter", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-weight: 650;
   font-size: clamp(1.4rem, 3.6vw, 2.7rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -175,14 +175,14 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .marketing-theme h3,
 .marketing-theme h4 {
-  font-family: var(--font-inter), sans-serif;
+  font-family: "Tomato Grotesk", var(--font-inter), "Inter", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-weight: 600;
   font-size: clamp(1.25rem, 3vw, 2rem);
   line-height: 1.3;
 }
 
 .marketing-theme p {
-  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
   font-size: clamp(0.95rem, 1.05vw, 1.05rem);
   line-height: 1.6;
@@ -204,7 +204,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .marketing-theme button,
 .marketing-theme .cta {
-  font-family: var(--font-inter), sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 600;
   font-size: 16px;
   line-height: 1;
@@ -219,7 +219,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .marketing-theme nav a,
 .marketing-theme .nav-link {
-  font-family: var(--font-inter), sans-serif;
+  font-family: "Tomato Grotesk", var(--font-inter), "Inter", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-weight: 500;
   font-size: 16px;
   line-height: 1;

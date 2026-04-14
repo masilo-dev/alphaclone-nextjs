@@ -152,6 +152,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [showAiPanel, setShowAiPanel] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
     const [aiTone, setAiTone] = useState<'engaging' | 'professional' | 'promotional' | 'casual'>('engaging');
+    const [aiPostType, setAiPostType] = useState<'standard' | 'facebook_200_words' | 'linkedin_article'>('facebook_200_words');
     const [aiGenerating, setAiGenerating] = useState(false);
 
     const isConnected = pages.length > 0;
@@ -693,13 +694,18 @@ ${parentContext}Return only the reply text.`;
         if (!aiTopic.trim()) return toast.error('Describe your post topic first');
         setAiGenerating(true);
         try {
+            const promptByType: Record<typeof aiPostType, string> = {
+                standard: `Write a ${aiTone} Facebook business post about: "${aiTopic}". 150-400 chars. Conversational, no hashtags (I will add those separately). End with a subtle call-to-action. Return ONLY the post text, nothing else.`,
+                facebook_200_words: `Write a ${aiTone} Facebook business post about: "${aiTopic}". The post must be approximately 200 words (180-220 words). Keep it natural and clear, and finish with a practical call-to-action. Return ONLY the post text.`,
+                linkedin_article: `Write a ${aiTone} LinkedIn article draft about: "${aiTopic}". Length 500-800 words with a clear headline, intro, 3-5 section headings, practical insights, and closing CTA. Return ONLY the article text.`,
+            };
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a ${aiTone} Facebook business post about: "${aiTopic}". 150-400 chars. Conversational, no hashtags (I will add those separately). End with a subtle call-to-action. Return ONLY the post text, nothing else.`,
+                    prompt: promptByType[aiPostType],
                     systemPrompt: 'You are an expert Facebook content strategist for businesses. Write natural, engaging posts that drive interaction. No preamble, no quotes, just the post.',
-                    maxTokens: 200,
+                    maxTokens: aiPostType === 'linkedin_article' ? 1400 : aiPostType === 'facebook_200_words' ? 500 : 220,
                     temperature: 0.8,
                 }),
             });
@@ -1024,13 +1030,36 @@ ${parentContext}Return only the reply text.`;
                                                 </button>
                                             ))}
                                         </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'standard', label: 'Standard FB' },
+                                                { id: 'facebook_200_words', label: 'FB 200 words' },
+                                                { id: 'linkedin_article', label: 'LinkedIn article' },
+                                            ].map((item) => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => setAiPostType(item.id as typeof aiPostType)}
+                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                        aiPostType === item.id ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                         <button
                                             onClick={generatePostWithAI}
                                             disabled={aiGenerating || !aiTopic.trim()}
                                             className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors"
                                         >
                                             {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                            {aiGenerating ? 'Generating...' : 'Generate Post'}
+                                            {aiGenerating
+                                                ? 'Generating...'
+                                                : aiPostType === 'linkedin_article'
+                                                    ? 'Generate LinkedIn Article'
+                                                    : aiPostType === 'facebook_200_words'
+                                                        ? 'Generate 200-word Facebook Post'
+                                                        : 'Generate Post'}
                                         </button>
                                     </div>
                                 )}

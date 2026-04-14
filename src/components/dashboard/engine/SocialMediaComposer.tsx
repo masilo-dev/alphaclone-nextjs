@@ -115,6 +115,7 @@ export default function SocialMediaComposer() {
     const [showAiPanel, setShowAiPanel] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
     const [aiTone, setAiTone] = useState<'professional' | 'casual' | 'engaging' | 'promotional'>('engaging');
+    const [aiContentType, setAiContentType] = useState<'caption' | 'facebook_200_words' | 'linkedin_article'>('caption');
     const [aiGenerating, setAiGenerating] = useState(false);
 
     // Upload state
@@ -620,13 +621,18 @@ Return only the comment text.`;
         setAiGenerating(true);
         try {
             const businessName = (tenant as any)?.name || 'our business';
+            const promptByType: Record<typeof aiContentType, string> = {
+                caption: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
+                facebook_200_words: `Write a ${aiTone} Facebook business post for ${businessName} about: "${aiTopic}". The post must be approximately 200 words (between 180 and 220 words). Keep it clear, engaging, and practical. Include a subtle call-to-action at the end. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3"]}.`,
+                linkedin_article: `Write a ${aiTone} LinkedIn article draft for ${businessName} about: "${aiTopic}". Length 500-800 words with: a strong headline, short introduction, 3-5 section headings, actionable insights, and a concise conclusion with CTA. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3","tag4","tag5"]}.`,
+            };
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
+                    prompt: promptByType[aiContentType],
                     systemPrompt: 'You are an expert social media manager. Write engaging, platform-native content. Return ONLY valid JSON with no markdown or code blocks.',
-                    maxTokens: 400,
+                    maxTokens: aiContentType === 'linkedin_article' ? 1400 : 500,
                     temperature: 0.8,
                 }),
             });
@@ -646,7 +652,7 @@ Return only the comment text.`;
                             return newTags;
                         });
                     }
-                    toast.success('AI generated caption + hashtags!');
+                    toast.success(aiContentType === 'linkedin_article' ? 'AI generated LinkedIn article draft' : 'AI generated post + hashtags');
                     setShowAiPanel(false);
                     setAiTopic('');
                 } catch (err) {
@@ -752,13 +758,36 @@ Return only the comment text.`;
                                             </button>
                                         ))}
                                     </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        {[
+                                            { id: 'caption', label: 'Caption' },
+                                            { id: 'facebook_200_words', label: 'Facebook 200 words' },
+                                            { id: 'linkedin_article', label: 'LinkedIn article' },
+                                        ].map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => setAiContentType(item.id as typeof aiContentType)}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                    aiContentType === item.id ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {item.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                     <button
                                         onClick={generateWithAI}
                                         disabled={aiGenerating || !aiTopic.trim()}
                                         className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
                                     >
                                         {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                                        {aiGenerating ? 'Generating...' : 'Generate Caption + Hashtags'}
+                                        {aiGenerating
+                                            ? 'Generating...'
+                                            : aiContentType === 'linkedin_article'
+                                                ? 'Generate LinkedIn Article'
+                                                : aiContentType === 'facebook_200_words'
+                                                    ? 'Generate Facebook 200-word Post'
+                                                    : 'Generate Caption + Hashtags'}
                                     </button>
                                 </div>
                             )}

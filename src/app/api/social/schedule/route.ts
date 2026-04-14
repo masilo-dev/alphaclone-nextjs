@@ -38,6 +38,20 @@ function getMissingColumnName(error: unknown): string | null {
   return match?.[1] || null;
 }
 
+function isStatusConstraintViolation(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const maybeError = error as { code?: string; message?: string };
+  return (
+    maybeError.code === '23514' &&
+    (maybeError.message || '').includes('social_posts_status_check')
+  );
+}
+
+function mapStatusForLegacyConstraint(status: string): string {
+  if (status === 'queued' || status === 'publishing') return 'scheduled';
+  return status;
+}
+
 function normalizeScopes(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     return raw
@@ -100,6 +114,27 @@ async function insertSocialPostWithFallback(
     .insert(mutablePayload)
     .select('*')
     .single();
+}
+
+async function updateSocialPostStatusWithFallback(
+  adminClient: ReturnType<typeof createSupabaseAdminClient>,
+  postId: string,
+  payload: Record<string, unknown>
+) {
+  const firstTry = await adminClient
+    .from('social_posts')
+    .update(payload)
+    .eq('id', postId);
+  if (!isStatusConstraintViolation(firstTry.error)) return firstTry;
+
+  const fallbackPayload = { ...payload };
+  if (typeof fallbackPayload.status === 'string') {
+    fallbackPayload.status = mapStatusForLegacyConstraint(fallbackPayload.status);
+  }
+  return await adminClient
+    .from('social_posts')
+    .update(fallbackPayload)
+    .eq('id', postId);
 }
 
 async function publishToFacebook(postId: string): Promise<PublishResult> {
@@ -346,24 +381,27 @@ async function publishSocialPost(postId: string) {
     return;
   }
 
-  await adminClient.from('social_posts').update({ status: 'publishing', error_message: null }).eq('id', postId);
+  await updateSocialPostStatusWithFallback(adminClient, postId, {
+    status: 'publishing',
+    error_message: null,
+  });
   const results = await Promise.all(jobs);
   const failed = results.filter((r) => !r.ok);
 
   if (failed.length > 0) {
     const message = failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | ');
-    await adminClient.from('social_posts').update({
+    await updateSocialPostStatusWithFallback(adminClient, postId, {
       status: 'failed',
       error_message: message,
-    }).eq('id', postId);
+    });
     return;
   }
 
-  await adminClient.from('social_posts').update({
+  await updateSocialPostStatusWithFallback(adminClient, postId, {
     status: 'published',
     published_at: new Date().toISOString(),
     error_message: null,
-  }).eq('id', postId);
+  });
 }
 
 export async function POST(req: NextRequest) {
