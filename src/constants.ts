@@ -109,6 +109,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
       { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
+      { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },
       { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
       { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
       { label: 'LinkedIn Manager', href: '/dashboard/business/linkedin', icon: Linkedin },

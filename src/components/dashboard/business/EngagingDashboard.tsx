@@ -48,7 +48,9 @@ import {
     Plus,
     Settings,
     Bell,
-    Flame
+    Flame,
+    Globe,
+    Linkedin
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { WrapChart } from '../../../lib/chartWrapper';
@@ -347,6 +349,22 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             icon: BarChart2,
             color: 'bg-orange-500',
             action: () => router.push('/dashboard/business/reports')
+        },
+        {
+            id: 'social-media-manager',
+            title: 'Social Manager',
+            description: 'Create and schedule posts',
+            icon: Globe,
+            color: 'bg-cyan-500',
+            action: () => router.push('/dashboard/business/social')
+        },
+        {
+            id: 'linkedin-manager',
+            title: 'LinkedIn Manager',
+            description: 'Manage LinkedIn posting',
+            icon: Linkedin,
+            color: 'bg-sky-500',
+            action: () => router.push('/dashboard/business/linkedin')
         }
     ];
 

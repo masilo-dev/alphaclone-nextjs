@@ -34,6 +34,12 @@ interface Message {
     created_at: string;
 }
 
+function isExpectedRealtimeCloseError(error: unknown): boolean {
+    if (!error) return false;
+    const msg = error instanceof Error ? error.message : String(error);
+    return msg.includes('WebSocket is closed before the connection is established');
+}
+
 export default function MessengerInbox() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -80,7 +86,11 @@ export default function MessengerInbox() {
             });
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(channel).catch((error) => {
+                if (!isExpectedRealtimeCloseError(error)) {
+                    console.warn('[Messenger] realtime cleanup failed:', error);
+                }
+            });
         };
     }, []);
 

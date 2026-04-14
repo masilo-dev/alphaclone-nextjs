@@ -5,6 +5,23 @@ import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { linkValidator } from '../utils/linkValidator';
 
+function isExpectedRealtimeCloseError(error: unknown): boolean {
+    if (!error) return false;
+    const msg = error instanceof Error ? error.message : String(error);
+    return msg.includes('WebSocket is closed before the connection is established');
+}
+
+async function safeRemoveRealtimeChannel(channel: any): Promise<void> {
+    if (!channel) return;
+    try {
+        await supabase.removeChannel(channel);
+    } catch (error) {
+        if (!isExpectedRealtimeCloseError(error)) {
+            console.warn('[Realtime] Failed to remove channel:', error);
+        }
+    }
+}
+
 export const messageService = {
     /**
      * Get tenant ID (required for all operations)
@@ -390,7 +407,7 @@ export const messageService = {
             });
 
         return () => {
-            supabase.removeChannel(channel);
+            void safeRemoveRealtimeChannel(channel);
         };
     },
 
@@ -689,7 +706,7 @@ export const messageService = {
      */
     unsubscribeFromMessages(channel: any) {
         if (channel) {
-            supabase.removeChannel(channel);
+            void safeRemoveRealtimeChannel(channel);
         }
     },
 

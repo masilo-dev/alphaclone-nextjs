@@ -78,7 +78,6 @@ export default function LinkedInManagementTab() {
         .select('linkedin_member_id,linkedin_person_urn,scopes,is_active')
         .eq('tenant_id', currentTenant.id)
         .eq('user_id', user.id)
-        .eq('is_active', true)
         .order('created_at', { ascending: false }),
     ]);
 
@@ -123,7 +122,6 @@ export default function LinkedInManagementTab() {
           .select('linkedin_person_urn,scopes,is_active')
           .eq('tenant_id', currentTenant.id)
           .eq('user_id', user.id)
-          .eq('is_active', true)
           .order('created_at', { ascending: false });
         if (!liFallback.error) {
           const rows = (liFallback.data || []).map((row: any) => ({
@@ -168,6 +166,10 @@ export default function LinkedInManagementTab() {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     return scopes.includes('w_member_social');
   }, [integrations, selectedLinkedInMemberId]);
+  const selectedIntegration = useMemo(
+    () => integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null,
+    [integrations, selectedLinkedInMemberId]
+  );
 
   const handleConnectLinkedIn = async () => {
     try {
@@ -315,13 +317,18 @@ export default function LinkedInManagementTab() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-slate-300">
               <span className="font-semibold">Connection:</span>
-              <span className="text-green-300">Active</span>
+              <span className={selectedIntegration?.is_active ? 'text-green-300' : 'text-amber-300'}>
+                {selectedIntegration?.is_active ? 'Active' : 'Inactive'}
+              </span>
               {selectedLinkedInMemberId && (
                 <span className="text-xs px-2 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/10 text-sky-300">
                   Active account: {selectedLinkedInMemberId}
                 </span>
               )}
               {!hasWriteScope && <span className="text-amber-300">Missing write scope</span>}
+              {!selectedIntegration?.is_active && (
+                <span className="text-amber-300">Reconnect to activate this account</span>
+              )}
             </div>
             <div className="flex items-end gap-2 flex-wrap">
               <div>

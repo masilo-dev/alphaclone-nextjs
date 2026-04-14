@@ -24,6 +24,12 @@ interface MessagesTabProps {
     handleSendMessage: (text: string, recipientId?: string, attachments?: any[], priority?: 'normal' | 'high' | 'urgent') => void;
 }
 
+function isExpectedRealtimeCloseError(error: unknown): boolean {
+    if (!error) return false;
+    const msg = error instanceof Error ? error.message : String(error);
+    return msg.includes('WebSocket is closed before the connection is established');
+}
+
 const MessagesTab: React.FC<MessagesTabProps> = ({
     user,
     filteredMessages,
@@ -219,7 +225,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         setPresenceChannel(channel);
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(channel).catch((error) => {
+                if (!isExpectedRealtimeCloseError(error)) {
+                    console.warn('[Messages] presence cleanup failed:', error);
+                }
+            });
         };
     }, [user.id]);
 

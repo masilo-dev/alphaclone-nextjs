@@ -25,6 +25,22 @@ const LINKEDIN_REQUIRED_SCOPES = [
   'r_profile_basicinfo',
 ] as const;
 
+function normalizeScopes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value).split(/[,\s]+/))
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,\s]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
   const path =
     stateData?.returnTo &&
@@ -96,11 +112,15 @@ export async function GET(req: NextRequest) {
     }
 
     const accessToken = String(tokenData.access_token);
-    const scopeRaw = typeof tokenData.scope === 'string' ? tokenData.scope : '';
-    const scopes = scopeRaw.split(' ').map((s: string) => s.trim()).filter(Boolean);
+    const scopeCandidates = [
+      tokenData.scope,
+      tokenData.scopes,
+      tokenData.granted_scopes,
+      tokenData.grantedScopes,
+    ];
+    const scopes = Array.from(new Set(scopeCandidates.flatMap((raw) => normalizeScopes(raw))));
     const hasWriteScope = scopes.includes('w_member_social');
-    const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope));
-    const hasAllRequiredScopes = missingScopes.length === 0;
+    const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope.toLowerCase()));
 
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -151,7 +171,7 @@ export async function GET(req: NextRequest) {
         access_token: accessToken,
         token_expires_at: tokenExpiresAt,
         scopes,
-        is_active: hasAllRequiredScopes,
+        is_active: hasWriteScope,
         metadata: {
           provider: 'linkedin_oauth_connector',
           name: profileData.name || null,
@@ -172,10 +192,6 @@ export async function GET(req: NextRequest) {
     if (!hasWriteScope) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_w_member_social' });
     }
-    if (!hasAllRequiredScopes) {
-      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_required_scopes' });
-    }
-
     await admin.from('tenant_integrations').upsert(
       {
         tenant_id: resolvedTenantId,
