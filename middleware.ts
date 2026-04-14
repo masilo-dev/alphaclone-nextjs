@@ -14,7 +14,7 @@ function applyRequiredOwaspHeaders(response: NextResponse) {
     if (!response.headers.has('Content-Security-Policy')) {
         response.headers.set(
             'Content-Security-Policy',
-            "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://*.zoom.us https://zoom.us;"
+            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: https: wss:; frame-src 'self' blob: data: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://*.zoom.us https://zoom.us;"
         );
     }
     return response;

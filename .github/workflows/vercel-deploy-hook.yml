@@ -1,0 +1,30 @@
+name: Vercel Deploy Hook Fallback
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  trigger-vercel-hook:
+    name: Trigger Vercel Deploy Hook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate deploy hook secret
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Missing required GitHub secret: VERCEL_DEPLOY_HOOK_URL"
+            exit 1
+          fi
+
+      - name: Trigger deploy
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          echo "Triggering Vercel deploy hook for commit $GITHUB_SHA on branch $GITHUB_REF_NAME"
+          curl -sS -X POST "$VERCEL_DEPLOY_HOOK_URL"
+          echo "Vercel deploy hook triggered."
