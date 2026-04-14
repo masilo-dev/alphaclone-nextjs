@@ -38,6 +38,16 @@ const STATUS_BADGE: Record<string, string> = {
   cancelled: 'bg-slate-600/20 text-slate-400 border-slate-600/30',
 };
 
+function isMissingRelationOrColumn(error: any, name: string) {
+  if (!error) return false;
+  const msg = String(error.message || '');
+  return (
+    (error.code === '42P01' && msg.includes(name)) ||
+    (error.code === '42703' && msg.includes(name)) ||
+    msg.includes(name)
+  );
+}
+
 export default function LinkedInManagementTab() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -73,28 +83,64 @@ export default function LinkedInManagementTab() {
     ]);
 
     if (postsRes.error) {
-      const fallback = await supabase
+      let fallback = await supabase
         .from('social_posts')
-        .select('id,caption,status,scheduled_at,published_at,created_at,error_message,platforms')
+        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms')
         .eq('tenant_id', currentTenant.id)
         .filter('platforms', 'cs', '{"linkedin"}')
         .order('created_at', { ascending: false })
         .limit(100);
 
+      if (fallback.error && isMissingRelationOrColumn(fallback.error, 'linkedin_post_urn')) {
+        fallback = await supabase
+          .from('social_posts')
+          .select('id,caption,status,scheduled_at,published_at,created_at,error_message,platforms')
+          .eq('tenant_id', currentTenant.id)
+          .filter('platforms', 'cs', '{"linkedin"}')
+          .order('created_at', { ascending: false })
+          .limit(100);
+      }
+
       if (fallback.error) {
         toast.error('Failed to load LinkedIn posts');
       } else {
-        const mapped = (fallback.data || []).map((row: any) => ({ ...row, linkedin_post_urn: null, linkedin_member_id: null }));
+        const mapped = (fallback.data || []).map((row: any) => ({
+          ...row,
+          linkedin_post_urn: row.linkedin_post_urn || null,
+          linkedin_member_id: null,
+        }));
         setPosts(mapped as LinkedInPostRow[]);
-        setSchemaWarning('LinkedIn post tracking migration is missing. Apply the latest social LinkedIn migration to enable full post links and actions.');
+        setSchemaWarning('LinkedIn post schema is behind. Apply latest LinkedIn migrations to enable full account-level features.');
       }
     } else {
       setPosts((postsRes.data || []) as LinkedInPostRow[]);
     }
 
     if (liRes.error) {
-      setIntegrations([]);
-      setSchemaWarning((prev) => prev || 'LinkedIn integration table is missing in database. Apply latest LinkedIn migration.');
+      if (isMissingRelationOrColumn(liRes.error, 'linkedin_member_id')) {
+        const liFallback = await supabase
+          .from('linkedin_integrations')
+          .select('linkedin_person_urn,scopes,is_active')
+          .eq('tenant_id', currentTenant.id)
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+        if (!liFallback.error) {
+          const rows = (liFallback.data || []).map((row: any) => ({
+            ...row,
+            linkedin_member_id: row.linkedin_person_urn || 'legacy-linkedin-account',
+          })) as LinkedInIntegrationRow[];
+          setIntegrations(rows);
+          if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
+          setSchemaWarning((prev) => prev || 'LinkedIn integration schema is behind. Apply latest LinkedIn migrations for multi-account selection.');
+        } else {
+          setIntegrations([]);
+          setSchemaWarning((prev) => prev || 'LinkedIn integration table is missing in database. Apply latest LinkedIn migration.');
+        }
+      } else {
+        setIntegrations([]);
+        setSchemaWarning((prev) => prev || 'LinkedIn integration table is missing in database. Apply latest LinkedIn migration.');
+      }
     } else {
       const rows = (liRes.data || []) as LinkedInIntegrationRow[];
       setIntegrations(rows);
