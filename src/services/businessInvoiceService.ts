@@ -38,6 +38,21 @@ export interface InvoiceLineItem {
 }
 
 export const businessInvoiceService = {
+    normalizeLineItems(lineItems: InvoiceLineItem[] | undefined): InvoiceLineItem[] {
+        const items = Array.isArray(lineItems) ? lineItems : [];
+        return items.map((item) => {
+            const quantity = Number(item?.quantity || 0);
+            const rate = Number(item?.rate || 0);
+            const amount = Math.round(quantity * rate * 100) / 100;
+            return {
+                description: item?.description || '',
+                quantity,
+                rate,
+                amount,
+            };
+        });
+    },
+
     /**
      * Parse receipt metadata from notes field
      */
@@ -407,7 +422,8 @@ export const businessInvoiceService = {
      * Calculate invoice totals
      */
     calculateTotals(lineItems: InvoiceLineItem[], taxRate: number = 0, discountAmount: number = 0): { subtotal: number; tax: number; total: number } {
-        const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+        const normalized = this.normalizeLineItems(lineItems);
+        const subtotal = normalized.reduce((sum, item) => sum + item.amount, 0);
         const tax = (subtotal - discountAmount) * (taxRate / 100);
         const total = (subtotal - discountAmount) + tax;
 
@@ -665,7 +681,7 @@ export const businessInvoiceService = {
         doc.text('AMOUNT', margin + 165, currentY + 6.5, { align: 'right' });
 
         currentY += 10;
-        const items = invoice.line_items || invoice.lineItems || [];
+        const items = this.normalizeLineItems(invoice.line_items || invoice.lineItems || []);
 
         items.forEach((item: any, index: number) => {
             if (index % 2 === 1) {
@@ -695,9 +711,15 @@ export const businessInvoiceService = {
         // --- TOTALS ---
         currentY += 10;
         const totalsX = pageWidth - margin - 60;
-        const subtotal = invoice.subtotal || 0;
-        const total = invoice.total || 0;
-        const tax = invoice.tax || 0;
+        const subtotalFromItems = Math.round(items.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
+        const discount = Number(invoice.discountAmount || invoice.discount_amount || 0);
+        const resolvedTaxRate = Number(invoice.taxRate ?? invoice.tax_rate ?? 0);
+        const computedTax = Math.round(Math.max(0, subtotalFromItems - discount) * (resolvedTaxRate / 100) * 100) / 100;
+        const subtotal = Number.isFinite(Number(invoice.subtotal)) ? Number(invoice.subtotal) : subtotalFromItems;
+        const tax = Number.isFinite(Number(invoice.tax)) ? Number(invoice.tax) : computedTax;
+        const total = Number.isFinite(Number(invoice.total))
+            ? Number(invoice.total)
+            : Math.round(((subtotalFromItems - discount) + computedTax) * 100) / 100;
 
         doc.setFontSize(9);
         doc.setTextColor(colors.text);
@@ -707,11 +729,10 @@ export const businessInvoiceService = {
 
         if (tax > 0) {
             currentY += 6;
-            doc.text(`Tax (${invoice.taxRate || invoice.tax_rate}%):`, totalsX, currentY);
+            doc.text(`Tax (${resolvedTaxRate}%):`, totalsX, currentY);
             doc.text(`$${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, currentY, { align: 'right' });
         }
 
-        const discount = invoice.discountAmount || invoice.discount_amount || 0;
         if (discount > 0) {
             currentY += 6;
             doc.text('Discount:', totalsX, currentY);

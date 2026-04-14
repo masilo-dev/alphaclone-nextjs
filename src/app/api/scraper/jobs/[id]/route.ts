@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params;
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const { data: job, error } = await supabase
       .from('lead_search_jobs')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .maybeSingle();
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'scraper/jobs/[id].GET' });

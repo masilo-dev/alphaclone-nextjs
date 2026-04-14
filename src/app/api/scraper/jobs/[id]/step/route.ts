@@ -13,8 +13,9 @@ function parseJsonObject(value: unknown): Record<string, any> {
   return {};
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params;
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { data: job, error: fetchError } = await supabase
       .from('lead_search_jobs')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .maybeSingle();
     if (fetchError) return clientErrorResponse(fetchError, { request: req, scope: 'scraper/jobs/[id]/step.POST' });
     if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
