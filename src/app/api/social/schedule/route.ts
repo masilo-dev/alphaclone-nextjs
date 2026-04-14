@@ -538,7 +538,7 @@ export async function PATCH(req: NextRequest) {
 
     const { error } = await supabase
       .from('social_posts')
-      .update({ status: 'queued', scheduled_at: null, error_message: null })
+      .update({ status: 'scheduled', scheduled_at: null, error_message: null })
       .eq('id', body.postId)
       .eq('tenant_id', body.tenantId);
 
