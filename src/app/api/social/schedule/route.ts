@@ -319,7 +319,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       const registerRes = await fetchWithTimeout('https://api.linkedin.com/v2/assets?action=registerUpload', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${integration.access_token}`,
+          Authorization: `Bearer ${activeIntegration.access_token}`,
           'Content-Type': 'application/json',
           'X-Restli-Protocol-Version': '2.0.0',
         },
@@ -399,7 +399,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const res = await fetchWithTimeout('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${integration.access_token}`,
+        Authorization: `Bearer ${activeIntegration.access_token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
       },
