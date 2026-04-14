@@ -24,6 +24,12 @@ type PublishResult = {
   reason?: string;
 };
 
+function isMissingColumn(error: unknown, columnName: string) {
+  if (!error || typeof error !== 'object') return false;
+  const maybeError = error as { code?: string; message?: string };
+  return maybeError.code === '42703' && (maybeError.message || '').includes(columnName);
+}
+
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -108,15 +114,35 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
   const adminClient = createSupabaseAdminClient();
 
   try {
-    const { data: post, error: postError } = await adminClient
+    const postRes = await adminClient
       .from('social_posts')
       .select('id, tenant_id, user_id, caption, link_url, linkedin_member_id')
       .eq('id', postId)
       .single();
+    let post = postRes.data as {
+      id: string;
+      tenant_id: string;
+      user_id: string;
+      caption: string;
+      link_url: string | null;
+      linkedin_member_id: string | null;
+    } | null;
+    let postError = postRes.error;
+    if (isMissingColumn(postError, 'linkedin_member_id')) {
+      const fallbackPostRes = await adminClient
+        .from('social_posts')
+        .select('id, tenant_id, user_id, caption, link_url')
+        .eq('id', postId)
+        .single();
+      post = fallbackPostRes.data
+        ? { ...fallbackPostRes.data, linkedin_member_id: null }
+        : null;
+      postError = fallbackPostRes.error;
+    }
 
     if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
 
-    const { data: li, error: liError } = await adminClient
+    const liRes = await adminClient
       .from('linkedin_integrations')
       .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
       .eq('tenant_id', post.tenant_id)
@@ -125,9 +151,23 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       .eq('is_active', true)
       .limit(1)
       .maybeSingle();
+    let li = liRes.data;
+    let liError = liRes.error;
+    if (isMissingColumn(liError, 'linkedin_member_id')) {
+      const fallbackLiRes = await adminClient
+        .from('linkedin_integrations')
+        .select('linkedin_person_urn, access_token, scopes')
+        .eq('tenant_id', post.tenant_id)
+        .eq('user_id', post.user_id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      li = fallbackLiRes.data ? { ...fallbackLiRes.data, linkedin_member_id: null } : null;
+      liError = fallbackLiRes.error;
+    }
 
     const integration = li?.access_token ? li : await (async () => {
-      const fallback = await adminClient
+      const fallbackRes = await adminClient
         .from('linkedin_integrations')
         .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
         .eq('tenant_id', post.tenant_id)
@@ -135,7 +175,20 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         .eq('is_active', true)
         .limit(1)
         .maybeSingle();
-      return fallback.data;
+      if (isMissingColumn(fallbackRes.error, 'linkedin_member_id')) {
+        const fallbackWithoutMember = await adminClient
+          .from('linkedin_integrations')
+          .select('linkedin_person_urn, access_token, scopes')
+          .eq('tenant_id', post.tenant_id)
+          .eq('user_id', post.user_id)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+        return fallbackWithoutMember.data
+          ? { ...fallbackWithoutMember.data, linkedin_member_id: null }
+          : null;
+      }
+      return fallbackRes.data;
     })();
 
     if (liError || !integration?.access_token || !integration?.linkedin_person_urn) {
@@ -183,10 +236,15 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     }
 
     const postUrn = res.headers.get('x-restli-id') ?? null;
-    await adminClient.from('social_posts').update({
+    const updateRes = await adminClient.from('social_posts').update({
       linkedin_post_urn: postUrn,
       linkedin_member_id: integration.linkedin_member_id || post.linkedin_member_id || null,
     }).eq('id', postId);
+    if (isMissingColumn(updateRes.error, 'linkedin_member_id')) {
+      await adminClient.from('social_posts').update({
+        linkedin_post_urn: postUrn,
+      }).eq('id', postId);
+    }
 
     return { ok: true, platform: 'linkedin' };
   } catch (err) {
@@ -273,25 +331,37 @@ export async function POST(req: NextRequest) {
 
     const status = shouldPublishNow ? 'queued' : 'scheduled';
 
-    const { data: post, error } = await supabase
+    const insertPayload = {
+      tenant_id: tenantId,
+      user_id: user.id,
+      title: body.title?.trim() || null,
+      caption: body.caption.trim(),
+      platforms: body.platforms?.length ? body.platforms : ['facebook'],
+      media_urls: body.media_urls || [],
+      media_types: body.media_types || [],
+      link_url: body.link_url || null,
+      hashtags: body.hashtags || [],
+      status,
+      scheduled_at: shouldPublishNow ? null : scheduledAt,
+      facebook_page_id: body.facebook_page_id || null,
+      linkedin_member_id: body.linkedin_member_id || null,
+    };
+
+    let { data: post, error } = await supabase
       .from('social_posts')
-      .insert({
-        tenant_id: tenantId,
-        user_id: user.id,
-        title: body.title?.trim() || null,
-        caption: body.caption.trim(),
-        platforms: body.platforms?.length ? body.platforms : ['facebook'],
-        media_urls: body.media_urls || [],
-        media_types: body.media_types || [],
-        link_url: body.link_url || null,
-        hashtags: body.hashtags || [],
-        status,
-        scheduled_at: shouldPublishNow ? null : scheduledAt,
-        facebook_page_id: body.facebook_page_id || null,
-        linkedin_member_id: body.linkedin_member_id || null,
-      })
+      .insert(insertPayload)
       .select('*')
       .single();
+    if (isMissingColumn(error, 'linkedin_member_id')) {
+      const { linkedin_member_id: _ignored, ...legacyPayload } = insertPayload;
+      const legacyInsertRes = await supabase
+        .from('social_posts')
+        .insert(legacyPayload)
+        .select('*')
+        .single();
+      post = legacyInsertRes.data;
+      error = legacyInsertRes.error;
+    }
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 

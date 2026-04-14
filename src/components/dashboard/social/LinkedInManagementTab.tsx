@@ -123,7 +123,7 @@ export default function LinkedInManagementTab() {
   const handleConnectLinkedIn = async () => {
     try {
       const { authService } = await import('@/services/authService');
-      const { error } = await authService.signInWithLinkedIn('/dashboard/business/linkedin');
+      const { error } = await authService.connectLinkedInIntegration('/dashboard/business/linkedin');
       if (error) toast.error(error);
     } catch {
       toast.error('Failed to start LinkedIn connection');

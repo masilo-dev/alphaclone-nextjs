@@ -81,6 +81,18 @@ const STATUS_COLORS: Record<string, string> = {
     disqualified: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
+const FACEBOOK_TABS = ['leads', 'messenger', 'posts', 'post', 'pages', 'setup'] as const;
+const MOBILE_PRIMARY_TABS = ['leads', 'messenger', 'post'] as const;
+const MOBILE_SECONDARY_TABS = ['posts', 'pages', 'setup'] as const;
+const TAB_LABELS: Record<(typeof FACEBOOK_TABS)[number], string> = {
+    leads: 'Leads',
+    messenger: 'Inbox',
+    posts: 'Page Posts',
+    post: 'Publish',
+    pages: 'Pages',
+    setup: 'Setup Guide',
+};
+
 interface FacebookIntegrationTabProps {
     user: any;
     tenant: any;
@@ -117,6 +129,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [postImageUrl, setPostImageUrl] = useState('');
     const [postImageFile, setPostImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState('');
+    const [mediaSource, setMediaSource] = useState<'upload' | 'ai'>('upload');
+    const [aiImagePrompt, setAiImagePrompt] = useState('');
+    const [aiImageGenerating, setAiImageGenerating] = useState(false);
+    const [aiGeneratedImageUrl, setAiGeneratedImageUrl] = useState<string | null>(null);
+    const [attachingAiImage, setAttachingAiImage] = useState(false);
     const [posting, setPosting] = useState(false);
     const [scheduleAt, setScheduleAt] = useState('');
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledSocialPost[]>([]);
@@ -339,9 +356,69 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         setVideoCoverFrameFile(null);
         setVideoCoverTimePct(0);
         setPostImageUrl('');
+        setAiGeneratedImageUrl(null);
         if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
         setImagePreview('');
         if (imageInputRef.current) imageInputRef.current.value = '';
+    };
+
+    const generateAiImage = async () => {
+        if (!aiImagePrompt.trim()) return toast.error('Describe the image you want to generate');
+        setAiImageGenerating(true);
+        setAiGeneratedImageUrl(null);
+        try {
+            const res = await fetch('/api/ai/image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: aiImagePrompt,
+                    size: '1024x1024',
+                    tenantId: tenant?.id || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.url) {
+                toast.error(data.error || 'Image generation failed');
+                return;
+            }
+            setAiGeneratedImageUrl(data.url);
+            toast.success('AI image generated');
+        } catch {
+            toast.error('Failed to generate AI image');
+        } finally {
+            setAiImageGenerating(false);
+        }
+    };
+
+    const attachGeneratedImage = async () => {
+        if (!aiGeneratedImageUrl || !tenant?.id) return;
+        setAttachingAiImage(true);
+        const toastId = toast.loading('Saving AI image...');
+        try {
+            const sourceResponse = await fetch(aiGeneratedImageUrl);
+            const sourceBlob = await sourceResponse.blob();
+            const file = new File([sourceBlob], `facebook-ai-${Date.now()}.png`, { type: 'image/png' });
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('tenantId', tenant.id);
+            const uploadRes = await fetch('/api/social/media/upload', { method: 'POST', body: fd });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok || !uploadData?.success || !uploadData?.asset?.public_url) {
+                toast.error(uploadData.error || 'Failed to save generated image', { id: toastId });
+                return;
+            }
+            const mediaUrl = uploadData.asset.public_url as string;
+            if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview);
+            setPostImageFile(null);
+            setPostImageUrl(mediaUrl);
+            setImagePreview(mediaUrl);
+            setAiGeneratedImageUrl(null);
+            toast.success('AI image attached to post', { id: toastId });
+        } catch {
+            toast.error('Failed to attach generated image', { id: toastId });
+        } finally {
+            setAttachingAiImage(false);
+        }
     };
 
     const handleApplyMediaStudio = (editedFile: File, meta?: { coverFrameFile?: File; coverFrameTimePct?: number }) => {
@@ -561,12 +638,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         <>
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
                         <Facebook className="w-5 h-5 text-blue-400" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <h2 className="text-xl font-bold text-white">Facebook Integration</h2>
                         <p className="text-sm text-slate-400">
                             Connect your Facebook profile and Pages. Each team member can connect their own account.
@@ -574,14 +651,14 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                     </div>
                 </div>
                 {isConnected && !reconnectRequired ? (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg self-start md:self-auto">
                         <CheckCircle2 className="w-4 h-4 text-green-400" />
                         <span className="text-sm text-green-400 font-medium">Connected</span>
                     </div>
                 ) : isConnected && reconnectRequired ? (
                     <button
                         onClick={handleConnect}
-                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold text-sm transition-colors animate-pulse"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-semibold text-sm transition-colors animate-pulse self-start md:self-auto"
                     >
                         <AlertCircle className="w-4 h-4" />
                         Re-connect Facebook
@@ -589,7 +666,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 ) : (
                     <button
                         onClick={handleConnect}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm transition-colors self-start md:self-auto"
                     >
                         <Facebook className="w-4 h-4" />
                         Connect Facebook
@@ -640,8 +717,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             ) : (
                 <>
                     {/* Tabs */}
-                    <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl overflow-x-auto no-scrollbar max-w-full">
-                        {(['leads', 'messenger', 'posts', 'post', 'pages', 'setup'] as const).map(tab => (
+                    <div className="hidden sm:flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl overflow-x-auto no-scrollbar max-w-full">
+                        {FACEBOOK_TABS.map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -651,12 +728,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         : 'text-slate-400 hover:text-white'
                                 }`}
                             >
-                                {tab === 'leads' && `Leads (${leads.length})`}
-                                {tab === 'messenger' && 'Inbox'}
-                                {tab === 'posts' && 'Page Posts'}
-                                {tab === 'post' && 'Publish'}
-                                {tab === 'pages' && 'Pages'}
-                                {tab === 'setup' && 'Setup Guide'}
+                                {tab === 'leads' ? `${TAB_LABELS[tab]} (${leads.length})` : TAB_LABELS[tab]}
                                 
                                 {tab === 'messenger' && conversations.some(c => !c.is_read) && (
                                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-slate-800" />
@@ -664,11 +736,52 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                             </button>
                         ))}
                     </div>
+                    <div className="sm:hidden space-y-2">
+                        <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl overflow-x-auto no-scrollbar max-w-full">
+                            {MOBILE_PRIMARY_TABS.map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all relative whitespace-nowrap ${
+                                        activeTab === tab
+                                            ? 'bg-teal-500 text-white'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
+                                >
+                                    {tab === 'leads' ? `${TAB_LABELS[tab]} (${leads.length})` : TAB_LABELS[tab]}
+                                    {tab === 'messenger' && conversations.some(c => !c.is_read) && (
+                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-slate-800" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-500">More:</span>
+                            {(() => {
+                                const isSecondaryTab =
+                                    activeTab === 'posts' || activeTab === 'pages' || activeTab === 'setup';
+                                return (
+                            <select
+                                value={isSecondaryTab ? activeTab : ''}
+                                onChange={(e) => setActiveTab(e.target.value as typeof activeTab)}
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-teal-500"
+                            >
+                                <option value="">Select section</option>
+                                {MOBILE_SECONDARY_TABS.map((tab) => (
+                                    <option key={tab} value={tab}>
+                                        {TAB_LABELS[tab]}
+                                    </option>
+                                ))}
+                            </select>
+                                );
+                            })()}
+                        </div>
+                    </div>
 
                     {/* LEADS TAB */}
                     {activeTab === 'leads' && (
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <Filter className="w-4 h-4 text-slate-400" />
                                     <select
@@ -887,6 +1000,32 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     Media (optional)
                                 </label>
                                 <div className="space-y-2">
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMediaSource('upload'); setAiGeneratedImageUrl(null); }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                                mediaSource === 'upload'
+                                                    ? 'bg-teal-500 text-white'
+                                                    : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                            }`}
+                                        >
+                                            Upload
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMediaSource('ai'); setPostImageFile(null); setPostImageUrl(''); if (imagePreview.startsWith('blob:')) URL.revokeObjectURL(imagePreview); setImagePreview(''); }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                                mediaSource === 'ai'
+                                                    ? 'bg-violet-500 text-white'
+                                                    : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                            }`}
+                                        >
+                                            Generate with AI
+                                        </button>
+                                    </div>
+                                    {mediaSource === 'upload' && (
+                                        <>
                                     <div className="flex items-center gap-3">
                                         <input
                                             ref={imageInputRef}
@@ -924,6 +1063,39 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                 placeholder="https://example.com/image.jpg"
                                                 className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
                                             />
+                                        </div>
+                                    )}
+                                        </>
+                                    )}
+                                    {mediaSource === 'ai' && (
+                                        <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 space-y-2">
+                                            <input
+                                                value={aiImagePrompt}
+                                                onChange={(e) => setAiImagePrompt(e.target.value)}
+                                                placeholder="Describe the image to generate for this post"
+                                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                                            />
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={generateAiImage}
+                                                    disabled={aiImageGenerating || !aiImagePrompt.trim()}
+                                                    className="px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs font-semibold"
+                                                >
+                                                    {aiImageGenerating ? 'Generating...' : 'Generate Image'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={attachGeneratedImage}
+                                                    disabled={attachingAiImage || !aiGeneratedImageUrl}
+                                                    className="px-3 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-xs font-semibold"
+                                                >
+                                                    {attachingAiImage ? 'Attaching...' : 'Attach to Post'}
+                                                </button>
+                                            </div>
+                                            {aiGeneratedImageUrl && (
+                                                <img src={aiGeneratedImageUrl} alt="AI generated preview" className="w-full max-h-52 object-contain rounded-lg border border-slate-700" />
+                                            )}
                                         </div>
                                     )}
                                     {imagePreview && (
@@ -1141,7 +1313,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                     {/* PAGE POSTS TAB */}
                     {activeTab === 'posts' && (
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                         <Activity className="w-5 h-5 text-blue-400" />
@@ -1149,7 +1321,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-0.5">Live feed from your Facebook page — saved to your CRM</p>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <select
                                         value={selectedPageId}
                                         onChange={e => { setSelectedPageId(e.target.value); fetchPagePosts(e.target.value); }}

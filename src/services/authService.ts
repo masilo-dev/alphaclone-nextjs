@@ -389,6 +389,47 @@ export const authService = {
     },
 
     /**
+     * Connect LinkedIn as integration for the CURRENT signed-in user.
+     * This avoids switching app account sessions during OAuth.
+     */
+    async connectLinkedInIntegration(nextPath: string = '/dashboard/business/linkedin'): Promise<{ error: string | null }> {
+        try {
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('auth_callback_in_progress', 'true');
+            }
+
+            const auth: any = supabase.auth as any;
+            if (typeof auth.linkIdentity !== 'function') {
+                const fallback = await this.signInWithLinkedIn(nextPath);
+                return fallback;
+            }
+
+            const { error } = await withAuthTimeout(auth.linkIdentity({
+                provider: 'linkedin_oidc',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+                    queryParams: { prompt: 'consent' },
+                },
+            }), 7000);
+
+            if (error) {
+                console.error("LinkedIn Connect Error:", error);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('auth_callback_in_progress');
+                }
+                return { error: error.message };
+            }
+
+            return { error: null };
+        } catch (err) {
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('auth_callback_in_progress');
+            }
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Sign in with Facebook OAuth
      */
     async signInWithFacebook(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {

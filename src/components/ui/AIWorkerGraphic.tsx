@@ -108,15 +108,24 @@ export const AIWorkerGraphic = () => {
 
                 {/* Data Flow Particles */}
                 {particles.map((p) => (
+                    (() => {
+                        const startCx = 120 + Math.cos(p.initialAngle) * p.r;
+                        const endCx = 120 + Math.cos(p.initialAngle) * (p.r * 0.2);
+                        const startCy = 120 + Math.sin(p.initialAngle) * p.r;
+                        const endCy = 120 + Math.sin(p.initialAngle) * (p.r * 0.2);
+                        return (
                     <motion.circle
                         key={`p-${p.id}`}
+                        cx={startCx}
+                        cy={startCy}
                         r="1"
                         fill="rgba(56, 189, 248, 0.9)"
+                        initial={{ cx: startCx, cy: startCy, opacity: 0, scale: 0.5 }}
                         animate={{
                             opacity: [0, 1, 0],
                             scale: [0.5, 1.2, 0.5],
-                            cx: [120 + Math.cos(p.initialAngle) * p.r, 120 + Math.cos(p.initialAngle) * (p.r * 0.2)],
-                            cy: [120 + Math.sin(p.initialAngle) * p.r, 120 + Math.sin(p.initialAngle) * (p.r * 0.2)],
+                            cx: [startCx, endCx],
+                            cy: [startCy, endCy],
                         }}
                         transition={{
                             duration: p.duration,
@@ -125,6 +134,8 @@ export const AIWorkerGraphic = () => {
                             delay: p.delay
                         }}
                     />
+                        );
+                    })()
                 ))}
 
                 {/* Floating "Code" Snippets */}

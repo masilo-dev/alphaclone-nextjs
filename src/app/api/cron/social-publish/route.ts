@@ -11,6 +11,12 @@ type PublishResult = {
   reason?: string;
 };
 
+function isMissingColumn(error: unknown, columnName: string) {
+  if (!error || typeof error !== 'object') return false;
+  const maybeError = error as { code?: string; message?: string };
+  return maybeError.code === '42703' && (maybeError.message || '').includes(columnName);
+}
+
 async function publishToFacebook(postId: string): Promise<PublishResult> {
   const adminClient = createSupabaseAdminClient();
 
@@ -79,14 +85,34 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
 async function publishToLinkedIn(postId: string): Promise<PublishResult> {
   const adminClient = createSupabaseAdminClient();
   try {
-    const { data: post, error: postError } = await adminClient
+    const postRes = await adminClient
       .from('social_posts')
       .select('id, tenant_id, user_id, caption, link_url, linkedin_member_id')
       .eq('id', postId)
       .single();
+    let post = postRes.data as {
+      id: string;
+      tenant_id: string;
+      user_id: string;
+      caption: string;
+      link_url: string | null;
+      linkedin_member_id: string | null;
+    } | null;
+    let postError = postRes.error;
+    if (isMissingColumn(postError, 'linkedin_member_id')) {
+      const fallbackPostRes = await adminClient
+        .from('social_posts')
+        .select('id, tenant_id, user_id, caption, link_url')
+        .eq('id', postId)
+        .single();
+      post = fallbackPostRes.data
+        ? { ...fallbackPostRes.data, linkedin_member_id: null }
+        : null;
+      postError = fallbackPostRes.error;
+    }
     if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
 
-    const { data: li, error: liError } = await adminClient
+    const liRes = await adminClient
       .from('linkedin_integrations')
       .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
       .eq('tenant_id', post.tenant_id)
@@ -95,9 +121,23 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       .eq('is_active', true)
       .limit(1)
       .maybeSingle();
+    let li = liRes.data;
+    let liError = liRes.error;
+    if (isMissingColumn(liError, 'linkedin_member_id')) {
+      const fallbackLiRes = await adminClient
+        .from('linkedin_integrations')
+        .select('linkedin_person_urn, access_token, scopes')
+        .eq('tenant_id', post.tenant_id)
+        .eq('user_id', post.user_id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      li = fallbackLiRes.data ? { ...fallbackLiRes.data, linkedin_member_id: null } : null;
+      liError = fallbackLiRes.error;
+    }
 
     const integration = li?.access_token ? li : await (async () => {
-      const fallback = await adminClient
+      const fallbackRes = await adminClient
         .from('linkedin_integrations')
         .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
         .eq('tenant_id', post.tenant_id)
@@ -105,7 +145,20 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         .eq('is_active', true)
         .limit(1)
         .maybeSingle();
-      return fallback.data;
+      if (isMissingColumn(fallbackRes.error, 'linkedin_member_id')) {
+        const fallbackWithoutMember = await adminClient
+          .from('linkedin_integrations')
+          .select('linkedin_person_urn, access_token, scopes')
+          .eq('tenant_id', post.tenant_id)
+          .eq('user_id', post.user_id)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+        return fallbackWithoutMember.data
+          ? { ...fallbackWithoutMember.data, linkedin_member_id: null }
+          : null;
+      }
+      return fallbackRes.data;
     })();
 
     if (liError || !integration?.access_token || !integration?.linkedin_person_urn) {
@@ -146,10 +199,15 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     }
 
     const postUrn = res.headers.get('x-restli-id') ?? null;
-    await adminClient.from('social_posts').update({
+    const updateRes = await adminClient.from('social_posts').update({
       linkedin_post_urn: postUrn,
       linkedin_member_id: integration.linkedin_member_id || post.linkedin_member_id || null,
     }).eq('id', postId);
+    if (isMissingColumn(updateRes.error, 'linkedin_member_id')) {
+      await adminClient.from('social_posts').update({
+        linkedin_post_urn: postUrn,
+      }).eq('id', postId);
+    }
     return { ok: true, platform: 'linkedin' };
   } catch (err) {
     console.error('[cron/social-publish] linkedin publish error:', err);
