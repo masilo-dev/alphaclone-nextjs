@@ -153,10 +153,13 @@ export function showActionNextSteps(
         (tid) => (
             <div
                 role="status"
-                className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-slate-600 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
+                className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-slate-500 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
-                <p className="text-sm font-bold text-white leading-snug">{pack.headline}</p>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">{pack.detail}</p>
+                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide next-step-highlight">
+                    What next
+                </div>
+                <p className="text-sm font-bold text-white leading-snug mt-2">{pack.headline}</p>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">{pack.detail}</p>
                 <div className="flex flex-wrap gap-2 mt-3">
                     {pack.links.map((l) => (
                         <button
@@ -198,10 +201,13 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                 aria-labelledby="inv-next-title"
                 className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-teal-500/40 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
+                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide next-step-highlight">
+                    What next
+                </div>
                 <p id="inv-next-title" className="text-sm font-bold text-white leading-snug">
                     {uiTranslate(lang, 'Invoice saved')}
                 </p>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
                     {uiTranslate(
                         lang,
                         'Did you already send this to the client (email, SMS, portal, or handoff)?'

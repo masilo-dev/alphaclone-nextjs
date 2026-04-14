@@ -21,13 +21,13 @@
 }
 
 .font-marketing-heading {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
   letter-spacing: -0.02em;
-  font-weight: 700;
+  font-weight: 650;
 }
 
 .font-marketing-body {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
   line-height: 1.6;
 }
 
@@ -150,25 +150,25 @@ html.light .ac-business-scroll .text-slate-300 {
 
 /* Typography Overrides - Scoped to Marketing Theme */
 .marketing-theme {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
   font-weight: 400;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
   letter-spacing: normal;
 }
 
 .marketing-theme h1 {
-  font-family: var(--font-inter), sans-serif;
-  font-weight: 800;
-  font-size: clamp(1.85rem, 6vw, 4rem);
-  line-height: 1.05;
+  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-weight: 750;
+  font-size: clamp(1.75rem, 5.2vw, 3.5rem);
+  line-height: 1.1;
   letter-spacing: -0.03em;
 }
 
 .marketing-theme h2 {
-  font-family: var(--font-inter), sans-serif;
-  font-weight: 700;
-  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-weight: 680;
+  font-size: clamp(1.4rem, 3.6vw, 2.7rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -182,10 +182,24 @@ html.light .ac-business-scroll .text-slate-300 {
 }
 
 .marketing-theme p {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-inter), "Inter", "Segoe UI", "SF Pro Text", system-ui, -apple-system, sans-serif;
   font-weight: 400;
-  font-size: clamp(1rem, 1.2vw, 1.125rem);
+  font-size: clamp(0.95rem, 1.05vw, 1.05rem);
   line-height: 1.6;
+}
+
+/* Improve readability for low-contrast dashboard helper text */
+.ac-dashboard-root .text-slate-400,
+.ac-business-root .text-slate-400,
+.ac-business-scroll .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+/* Stronger highlight chips for "next steps" guidance */
+.next-step-highlight {
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.22) 0%, rgba(20, 184, 166, 0.12) 100%);
+  border: 1px solid rgba(45, 212, 191, 0.45);
+  color: #ccfbf1;
 }
 
 .marketing-theme button,

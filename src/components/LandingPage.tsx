@@ -113,7 +113,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
    };
 
    return (
-      <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
+      <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30">
          {/* Persistent full-page animated network background with Jarvis */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             {/* Base Jarvis Image Layer */}
@@ -431,10 +431,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      viewport={{ once: true }}
                      className="text-center mb-16"
                   >
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
+                     <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
                         The Business OS That <span className="text-teal-400">Actually Works</span>
                      </h2>
-                     <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+                     <p className="text-lg text-slate-300 max-w-3xl mx-auto">
                         Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system.
                      </p>
                   </motion.div>
@@ -504,10 +504,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      viewport={{ once: true }}
                      className="text-center mb-16"
                   >
-                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
+                     <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
                         Simple, <span className="text-teal-400">Transparent Pricing</span>
                      </h2>
-                     <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+                     <p className="text-lg text-slate-300 max-w-3xl mx-auto">
                         No hidden fees. No surprise charges. Just powerful software that grows with your business.
                      </p>
                   </motion.div>
