@@ -77,6 +77,7 @@ const ExpenseTrackerTab = React.lazy(() => import('./ExpenseTrackerTab'));
 const WorkflowDashboard = React.lazy(() => import('../engine/WorkflowDashboard'));
 const SMSCampaignTab = React.lazy(() => import('../engine/SMSCampaignTab'));
 const SocialMediaComposer = React.lazy(() => import('../engine/SocialMediaComposer'));
+const LinkedInManagementTab = React.lazy(() => import('../social/LinkedInManagementTab'));
 const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 
@@ -437,6 +438,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <SocialMediaComposer />
                     </React.Suspense>
                 );
+            case '/dashboard/business/linkedin':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <LinkedInManagementTab />
+                    </React.Suspense>
+                );
             case '/dashboard/business/ingestion':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -527,6 +534,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/workflows': return t('Workflow Builder');
             case '/dashboard/business/sms': return t('SMS Campaigns');
             case '/dashboard/business/social': return t('Social Media');
+            case '/dashboard/business/linkedin': return t('LinkedIn Manager');
             case '/dashboard/business/ingestion': return t('Lead Ingestion');
             case '/dashboard/business/quotes': return t('Quotes & Proposals');
             case '/dashboard/business/booking': return t('Scheduling & Booking');

@@ -168,13 +168,13 @@ function LoginContent() {
 
                         // Redirect to dashboard for new trial users (No card required)
                         if (newTenant) {
-                            router.push('/dashboard');
+                            router.push('/dashboard/business');
                             return;
                         }
                     }
 
                     // Redirect to dashboard for normal users or if tenant creation failed
-                    router.push('/dashboard');
+                    router.push('/dashboard/business');
                 }
                 setIsLoading(false);
                 return;
@@ -207,7 +207,7 @@ function LoginContent() {
             }
 
             if (user) {
-                router.push('/dashboard');
+                router.push('/dashboard/business');
             }
             setIsLoading(false);
         } catch (err) {
@@ -247,7 +247,7 @@ function LoginContent() {
                 subscription_status: 'active'
             });
 
-            router.push('/dashboard');
+            router.push('/dashboard/business');
         } catch (err: any) {
             setError(`Payment failed: ${err.message}. Please try again.`);
         } finally {
@@ -282,7 +282,7 @@ function LoginContent() {
 
             if (verifyResponse.error) throw verifyResponse.error;
 
-            router.push('/dashboard');
+            router.push('/dashboard/business');
         } catch (err: any) {
             setError(err.message || 'Invalid verification code');
         } finally {
@@ -333,7 +333,7 @@ function LoginContent() {
                     )}
 
                     <Button
-                        onClick={() => { window.location.href = '/dashboard'; }}
+                        onClick={() => { window.location.href = '/dashboard/business'; }}
                         className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
                     >
                         Go to Dashboard
@@ -729,6 +729,32 @@ function LoginContent() {
                             <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
                         </svg>
                         Sign in with LinkedIn
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            setIsLoading(true);
+                            setError('');
+                            try {
+                                const { authService } = await import('@/services/authService');
+                                const { error: facebookError } = await authService.signInWithFacebook();
+                                if (facebookError) {
+                                    setError(facebookError);
+                                    setIsLoading(false);
+                                }
+                            } catch (err) {
+                                setError('Failed to initialize Facebook sign-in');
+                                setIsLoading(false);
+                            }
+                        }}
+                        disabled={isLoading}
+                        className="w-full mt-3 h-12 flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold rounded-lg border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
+                        </svg>
+                        Sign in with Facebook
                     </button>
                 </form>
 

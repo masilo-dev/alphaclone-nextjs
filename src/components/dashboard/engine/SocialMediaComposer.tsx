@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
     Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye, Scissors,
-    RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink,
+    RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink, Linkedin,
     Mic, MicOff, Wand2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -38,6 +38,7 @@ interface SocialPost {
     scheduled_at: string | null;
     published_at: string | null;
     facebook_post_id: string | null;
+    linkedin_post_urn: string | null;
     error_message: string | null;
     created_at: string;
 }
@@ -45,6 +46,13 @@ interface SocialPost {
 interface FacebookPage {
     page_id: string;
     page_name: string;
+}
+
+interface LinkedInIntegration {
+    linkedin_member_id: string;
+    linkedin_person_urn: string;
+    scopes: string[] | null;
+    is_active: boolean;
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -57,6 +65,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
     facebook: <Facebook className="w-3.5 h-3.5" />,
+    linkedin: <Linkedin className="w-3.5 h-3.5" />,
     platform: <Globe className="w-3.5 h-3.5" />,
 };
 
@@ -68,6 +77,7 @@ export default function SocialMediaComposer() {
     const [posts, setPosts] = useState<SocialPost[]>([]);
     const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
+    const [linkedinIntegration, setLinkedinIntegration] = useState<LinkedInIntegration | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'compose' | 'posts' | 'media'>('compose');
 
@@ -107,20 +117,34 @@ export default function SocialMediaComposer() {
 
     // Video Editing state
     const [editingAsset, setEditingAsset] = useState<MediaAsset | null>(null);
+    const [linkedinCommentByPost, setLinkedinCommentByPost] = useState<Record<string, string>>({});
+    const [linkedinReactionByPost, setLinkedinReactionByPost] = useState<Record<string, string>>({});
+    const [linkedinActionLoading, setLinkedinActionLoading] = useState<Record<string, boolean>>({});
 
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
         setLoading(true);
-        const [postsRes, mediaRes, pagesRes] = await Promise.all([
+        const [postsRes, mediaRes, pagesRes, linkedinRes] = await Promise.all([
             supabase.from('social_posts').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(50),
             supabase.from('media_assets').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user.id).eq('is_active', true),
+            supabase
+                .from('linkedin_integrations')
+                .select('linkedin_member_id,linkedin_person_urn,scopes,is_active')
+                .eq('tenant_id', tenant.id)
+                .eq('user_id', user.id)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle(),
         ]);
         if (!postsRes.error) setPosts(postsRes.data || []);
         if (!mediaRes.error) setMediaAssets(mediaRes.data || []);
         if (!pagesRes.error) {
             setFbPages(pagesRes.data || []);
             if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
+        }
+        if (!linkedinRes.error) {
+            setLinkedinIntegration(linkedinRes.data || null);
         }
         setLoading(false);
     }, [tenant?.id, user]);
@@ -232,6 +256,67 @@ export default function SocialMediaComposer() {
         toast.success('Deleted');
     };
 
+    const handleConnectLinkedIn = async () => {
+        try {
+            const { authService } = await import('@/services/authService');
+            const { error } = await authService.signInWithLinkedIn();
+            if (error) toast.error(error);
+        } catch {
+            toast.error('Failed to start LinkedIn connection');
+        }
+    };
+
+    const handleLinkedInComment = async (post: SocialPost) => {
+        if (!tenant?.id || !post.linkedin_post_urn) return;
+        const text = (linkedinCommentByPost[post.id] || '').trim();
+        if (!text) {
+            toast.error('Write a comment first');
+            return;
+        }
+        setLinkedinActionLoading((prev) => ({ ...prev, [`comment-${post.id}`]: true }));
+        try {
+            const res = await fetch('/api/linkedin/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: tenant.id, postUrn: post.linkedin_post_urn, text }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to comment on LinkedIn');
+                return;
+            }
+            setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: '' }));
+            toast.success('LinkedIn comment posted');
+        } catch {
+            toast.error('Failed to comment on LinkedIn');
+        } finally {
+            setLinkedinActionLoading((prev) => ({ ...prev, [`comment-${post.id}`]: false }));
+        }
+    };
+
+    const handleLinkedInReaction = async (post: SocialPost) => {
+        if (!tenant?.id || !post.linkedin_post_urn) return;
+        const reactionType = linkedinReactionByPost[post.id] || 'LIKE';
+        setLinkedinActionLoading((prev) => ({ ...prev, [`reaction-${post.id}`]: true }));
+        try {
+            const res = await fetch('/api/linkedin/reaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: tenant.id, postUrn: post.linkedin_post_urn, reactionType }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to react on LinkedIn');
+                return;
+            }
+            toast.success('LinkedIn reaction sent');
+        } catch {
+            toast.error('Failed to react on LinkedIn');
+        } finally {
+            setLinkedinActionLoading((prev) => ({ ...prev, [`reaction-${post.id}`]: false }));
+        }
+    };
+
     const handleSaveEditedVideo = async (blob: Blob) => {
         if (!editingAsset || !tenant?.id) return;
         
@@ -310,7 +395,7 @@ export default function SocialMediaComposer() {
 
         recognitionRef.current = recognition;
         recognition.start();
-        toast('🎙 Listening... speak your caption', { duration: 2000 });
+        toast('Listening... speak your caption', { duration: 2000 });
     };
 
     /**
@@ -763,6 +848,7 @@ export default function SocialMediaComposer() {
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Platforms</p>
                             {[
                                 { id: 'facebook', label: 'Facebook Page', icon: <Facebook className="w-4 h-4 text-blue-400" /> },
+                                { id: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="w-4 h-4 text-sky-400" /> },
                                 { id: 'platform', label: 'AlphaClone Platform', icon: <Globe className="w-4 h-4 text-teal-400" /> },
                             ].map(p => (
                                 <label key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 cursor-pointer mb-1">
@@ -787,6 +873,37 @@ export default function SocialMediaComposer() {
                                 <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
                                     <AlertTriangle className="w-3 h-3" /> Connect Facebook first
                                 </p>
+                            )}
+
+                            {platforms.includes('linkedin') && !linkedinIntegration && (
+                                <div className="mt-3 space-y-2">
+                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" /> Connect LinkedIn first
+                                    </p>
+                                    <button
+                                        onClick={handleConnectLinkedIn}
+                                        className="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
+                                    >
+                                        Connect LinkedIn
+                                    </button>
+                                </div>
+                            )}
+
+                            {platforms.includes('linkedin') && linkedinIntegration && (
+                                <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-2.5">
+                                    <p className="text-xs font-semibold text-sky-300 mb-2">LinkedIn Scopes</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {(linkedinIntegration.scopes || []).length > 0 ? (
+                                            (linkedinIntegration.scopes || []).map((scope) => (
+                                                <span key={scope} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
+                                                    {scope}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-slate-400">No scopes reported by provider metadata.</span>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                         </div>
 
@@ -872,6 +989,51 @@ export default function SocialMediaComposer() {
                                             className="text-xs text-blue-400 hover:underline mt-1 flex items-center gap-1">
                                             <ExternalLink className="w-3 h-3" /> View on Facebook
                                         </a>
+                                    )}
+                                    {post.linkedin_post_urn && (
+                                        <div className="mt-2 space-y-2">
+                                            <a
+                                                href={`https://www.linkedin.com/feed/update/${encodeURIComponent(post.linkedin_post_urn)}/`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-sky-400 hover:underline flex items-center gap-1"
+                                            >
+                                                <ExternalLink className="w-3 h-3" /> View on LinkedIn
+                                            </a>
+                                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
+                                                <input
+                                                    value={linkedinCommentByPost[post.id] || ''}
+                                                    onChange={(e) => setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                    placeholder="Write a LinkedIn comment..."
+                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                                                />
+                                                <button
+                                                    onClick={() => handleLinkedInComment(post)}
+                                                    disabled={!!linkedinActionLoading[`comment-${post.id}`]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
+                                                >
+                                                    {linkedinActionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
+                                                </button>
+                                                <div className="flex gap-2">
+                                                    <select
+                                                        value={linkedinReactionByPost[post.id] || 'LIKE'}
+                                                        onChange={(e) => setLinkedinReactionByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                        className="px-2 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                                                    >
+                                                        {['LIKE', 'PRAISE', 'APPRECIATION', 'EMPATHY', 'INTEREST', 'MAYBE'].map((value) => (
+                                                            <option key={value} value={value}>{value}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        onClick={() => handleLinkedInReaction(post)}
+                                                        disabled={!!linkedinActionLoading[`reaction-${post.id}`]}
+                                                        className="px-3 py-2 text-xs rounded-lg bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                                                    >
+                                                        {linkedinActionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-shrink-0">

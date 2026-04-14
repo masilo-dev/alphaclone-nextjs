@@ -327,7 +327,7 @@ export const authService = {
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/business`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -364,12 +364,45 @@ export const authService = {
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'linkedin_oidc',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/business`,
                 },
             }), 5000);
 
             if (error) {
                 console.error("LinkedIn SignIn Error:", error);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('auth_callback_in_progress');
+                }
+                return { error: error.message };
+            }
+
+            return { error: null };
+        } catch (err) {
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('auth_callback_in_progress');
+            }
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Sign in with Facebook OAuth
+     */
+    async signInWithFacebook(): Promise<{ error: string | null }> {
+        try {
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('auth_callback_in_progress', 'true');
+            }
+
+            const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
+                provider: 'facebook',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/business`,
+                },
+            }), 5000);
+
+            if (error) {
+                console.error("Facebook SignIn Error:", error);
                 if (typeof window !== 'undefined') {
                     sessionStorage.removeItem('auth_callback_in_progress');
                 }

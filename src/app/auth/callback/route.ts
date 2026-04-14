@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    const next = searchParams.get('next') ?? '/dashboard'
+    const next = searchParams.get('next') ?? '/dashboard/business'
 
     if (code) {
         try {
@@ -40,6 +40,65 @@ export async function GET(request: Request) {
             const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
             if (!error && session) {
                 const user = session.user
+                const provider = (session as any)?.user?.app_metadata?.provider as string | undefined
+
+                if (provider === 'linkedin_oidc') {
+                    try {
+                        const providerToken = (session as any).provider_token as string | undefined
+                        if (providerToken) {
+                            const identities = Array.isArray(user.identities) ? user.identities : []
+                            const linkedInIdentity = identities.find((identity: any) => identity?.provider === 'linkedin_oidc')
+                            const memberId =
+                                linkedInIdentity?.identity_data?.sub ||
+                                linkedInIdentity?.id ||
+                                (user.user_metadata?.sub as string | undefined)
+
+                            if (memberId) {
+                                const personUrn = `urn:li:person:${memberId}`
+                                const scopeRaw = (user.user_metadata?.provider_scopes as string | undefined) || ''
+                                const scopes = scopeRaw
+                                    .split(' ')
+                                    .map((s) => s.trim())
+                                    .filter(Boolean)
+
+                                const { data: tenantUser } = await supabase
+                                    .from('tenant_users')
+                                    .select('tenant_id')
+                                    .eq('user_id', user.id)
+                                    .order('created_at', { ascending: true })
+                                    .limit(1)
+                                    .maybeSingle()
+
+                                const tenantId = tenantUser?.tenant_id || (user.user_metadata?.tenant_id as string | undefined)
+                                if (tenantId) {
+                                    await supabase
+                                        .from('linkedin_integrations')
+                                        .upsert(
+                                            {
+                                                tenant_id: tenantId,
+                                                user_id: user.id,
+                                                linkedin_member_id: memberId,
+                                                linkedin_person_urn: personUrn,
+                                                access_token: providerToken,
+                                                token_expires_at: session.expires_at
+                                                    ? new Date(session.expires_at * 1000).toISOString()
+                                                    : null,
+                                                scopes,
+                                                is_active: true,
+                                                metadata: {
+                                                    provider: 'linkedin_oidc',
+                                                },
+                                                updated_at: new Date().toISOString(),
+                                            },
+                                            { onConflict: 'tenant_id,user_id,linkedin_member_id' }
+                                        )
+                                }
+                            }
+                        }
+                    } catch (linkedinErr) {
+                        console.error('[auth/callback] LinkedIn integration sync error:', linkedinErr)
+                    }
+                }
                 if (user.email && !user.user_metadata?.welcome_email_sent_at) {
                     try {
                         const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
@@ -82,21 +141,6 @@ export async function GET(request: Request) {
                     redirectUrl = `https://${forwardedHost}${next}`
                 } else {
                     redirectUrl = `${origin}${next}`
-                }
-
-                // Check if this is a new user (first-time sign-in)
-                // We check the 'created_at' and 'last_sign_in_at' timestamps. 
-                // If they are very close (e.g. within a few seconds), it's likely a new user.
-                const createdAt = new Date(user.created_at).getTime()
-                const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime()
-                const isNewUser = Math.abs(lastSignIn - createdAt) < 5000 // 5 seconds tolerance
-
-                if (isNewUser) {
-                    // Redirect to landing page with a special flag for new users
-                    const landingUrl = new URL(origin)
-                    landingUrl.searchParams.set('auth_status', 'new_account')
-                    landingUrl.searchParams.set('message', 'Please sign in again to confirm your account.')
-                    return NextResponse.redirect(landingUrl.toString())
                 }
 
                 return NextResponse.redirect(redirectUrl)

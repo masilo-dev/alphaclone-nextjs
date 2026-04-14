@@ -17,6 +17,12 @@ type SchedulePayload = {
   publish_now?: boolean;
 };
 
+type PublishResult = {
+  ok: boolean;
+  platform: 'facebook' | 'linkedin';
+  reason?: string;
+};
+
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -30,7 +36,7 @@ async function ensureTenantMembership(userId: string, tenantId: string) {
   return true;
 }
 
-async function publishToFacebook(postId: string) {
+async function publishToFacebook(postId: string): Promise<PublishResult> {
   const adminClient = createSupabaseAdminClient();
 
   try {
@@ -40,13 +46,9 @@ async function publishToFacebook(postId: string) {
       .eq('id', postId)
       .single();
 
-    if (postError || !post) return;
+    if (postError || !post) return { ok: false, platform: 'facebook', reason: 'post_not_found' };
     if (!post.facebook_page_id) {
-      await adminClient
-        .from('social_posts')
-        .update({ status: 'failed', error_message: 'facebook_page_id is required to publish' })
-        .eq('id', postId);
-      return;
+      return { ok: false, platform: 'facebook', reason: 'missing_page_id' };
     }
 
     const { data: integration, error: intError } = await adminClient
@@ -59,14 +61,8 @@ async function publishToFacebook(postId: string) {
       .maybeSingle();
 
     if (intError || !integration?.page_access_token) {
-      await adminClient
-        .from('social_posts')
-        .update({ status: 'failed', error_message: 'Facebook page is not connected' })
-        .eq('id', postId);
-      return;
+      return { ok: false, platform: 'facebook', reason: 'integration_missing' };
     }
-
-    await adminClient.from('social_posts').update({ status: 'publishing', error_message: null }).eq('id', postId);
 
     const imageUrl = Array.isArray(post.media_urls) ? post.media_urls[0] : undefined;
     const fbBody: Record<string, string> = {
@@ -90,32 +86,150 @@ async function publishToFacebook(postId: string) {
     const result = await res.json();
 
     if (!res.ok || result?.error) {
-      await adminClient
-        .from('social_posts')
-        .update({
-          status: 'failed',
-          error_message: result?.error?.message || 'Facebook publish failed',
-        })
-        .eq('id', postId);
-      return;
+      return {
+        ok: false,
+        platform: 'facebook',
+        reason: result?.error?.message || 'Facebook publish failed',
+      };
     }
 
-    await adminClient
-      .from('social_posts')
-      .update({
-        status: 'published',
-        facebook_post_id: result.id || result.post_id || null,
-        published_at: new Date().toISOString(),
-        error_message: null,
-      })
-      .eq('id', postId);
+    await adminClient.from('social_posts').update({
+      facebook_post_id: result.id || result.post_id || null,
+    }).eq('id', postId);
+    return { ok: true, platform: 'facebook' };
   } catch (err) {
     console.error('[social/schedule] publish job error:', err);
-    await adminClient
-      .from('social_posts')
-      .update({ status: 'failed', error_message: 'Publish job failed' })
-      .eq('id', postId);
+    return { ok: false, platform: 'facebook', reason: 'Publish job failed' };
   }
+}
+
+async function publishToLinkedIn(postId: string): Promise<PublishResult> {
+  const adminClient = createSupabaseAdminClient();
+
+  try {
+    const { data: post, error: postError } = await adminClient
+      .from('social_posts')
+      .select('id, tenant_id, user_id, caption, link_url')
+      .eq('id', postId)
+      .single();
+
+    if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
+
+    const { data: li, error: liError } = await adminClient
+      .from('linkedin_integrations')
+      .select('linkedin_person_urn, access_token, scopes')
+      .eq('tenant_id', post.tenant_id)
+      .eq('user_id', post.user_id)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (liError || !li?.access_token || !li?.linkedin_person_urn) {
+      return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
+    }
+
+    const scopes = Array.isArray(li.scopes) ? li.scopes : [];
+    if (!scopes.includes('w_member_social')) {
+      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+    }
+
+    const hasLink = typeof post.link_url === 'string' && post.link_url.trim().length > 0;
+    const payload = {
+      author: li.linkedin_person_urn,
+      lifecycleState: 'PUBLISHED',
+      specificContent: {
+        'com.linkedin.ugc.ShareContent': {
+          shareCommentary: { text: post.caption },
+          shareMediaCategory: hasLink ? 'ARTICLE' : 'NONE',
+          media: hasLink
+            ? [{ status: 'READY', originalUrl: post.link_url, title: { text: 'AlphaClone Link' } }]
+            : [],
+        },
+      },
+      visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
+    };
+
+    const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${li.access_token}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const rawBody = await res.text();
+    if (!res.ok) {
+      return {
+        ok: false,
+        platform: 'linkedin',
+        reason: rawBody || `LinkedIn publish failed with status ${res.status}`,
+      };
+    }
+
+    const postUrn = res.headers.get('x-restli-id') ?? null;
+    await adminClient.from('social_posts').update({
+      linkedin_post_urn: postUrn,
+    }).eq('id', postId);
+
+    return { ok: true, platform: 'linkedin' };
+  } catch (err) {
+    console.error('[social/schedule] linkedin publish error:', err);
+    return { ok: false, platform: 'linkedin', reason: 'LinkedIn publish failed' };
+  }
+}
+
+async function publishSocialPost(postId: string) {
+  const adminClient = createSupabaseAdminClient();
+  const { data: post } = await adminClient
+    .from('social_posts')
+    .select('id, platforms')
+    .eq('id', postId)
+    .single();
+
+  if (!post) return;
+
+  const platforms = Array.isArray(post.platforms) ? post.platforms : [];
+  const jobs: Promise<PublishResult>[] = [];
+
+  if (platforms.includes('facebook')) jobs.push(publishToFacebook(postId));
+  if (platforms.includes('linkedin')) jobs.push(publishToLinkedIn(postId));
+
+  if (jobs.length === 0) {
+    if (platforms.includes('platform')) {
+      await adminClient.from('social_posts').update({
+        status: 'published',
+        published_at: new Date().toISOString(),
+        error_message: null,
+      }).eq('id', postId);
+      return;
+    }
+    await adminClient.from('social_posts').update({
+      status: 'failed',
+      error_message: 'No supported social platform selected',
+    }).eq('id', postId);
+    return;
+  }
+
+  await adminClient.from('social_posts').update({ status: 'publishing', error_message: null }).eq('id', postId);
+  const results = await Promise.all(jobs);
+  const failed = results.filter((r) => !r.ok);
+
+  if (failed.length > 0) {
+    const message = failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | ');
+    await adminClient.from('social_posts').update({
+      status: 'failed',
+      error_message: message,
+    }).eq('id', postId);
+    return;
+  }
+
+  await adminClient.from('social_posts').update({
+    status: 'published',
+    published_at: new Date().toISOString(),
+    error_message: null,
+  }).eq('id', postId);
 }
 
 export async function POST(req: NextRequest) {
@@ -165,9 +279,7 @@ export async function POST(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 
-    if (shouldPublishNow) {
-      void publishToFacebook(post.id);
-    }
+    if (shouldPublishNow) void publishSocialPost(post.id);
 
     return NextResponse.json({ success: true, post });
   } catch (err: unknown) {
@@ -255,7 +367,7 @@ export async function PATCH(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
 
-    void publishToFacebook(body.postId);
+    void publishSocialPost(body.postId);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'social/schedule.PATCH' });
