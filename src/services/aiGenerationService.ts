@@ -90,56 +90,107 @@ class AIGenerationService {
     }
 
     /**
-     * Generate image using DALL-E 3
+     * Generate image using DALL-E 3 and store it permanently.
      */
     async generateImage(
         userId: string,
         userRole: string,
         prompt: string,
-        size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024'
+        size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024',
+        provider: 'openai' | 'xai' = 'openai'
     ): Promise<GenerationResult> {
         try {
-            const response = await fetch('https://api.openai.com/v1/images/generations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'dall-e-3',
-                    prompt: prompt,
-                    n: 1,
-                    size: size,
-                    quality: 'hd'
-                })
-            });
+            // 1. Generate via selected Provider
+            let tempUrl = '';
+            
+            if (provider === 'xai' && process.env.XAI_API_KEY) {
+                const response = await fetch('https://api.x.ai/v1/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.XAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'grok-2-latest', // Or the current supported image model
+                        prompt: prompt,
+                        n: 1,
+                        size: size
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    tempUrl = data.data[0].url;
+                }
+            }
+            
+            // Fallback to OpenAI if xAI failed or wasn't chosen
+            if (!tempUrl) {
+                const response = await fetch('https://api.openai.com/v1/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.OPENAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'dall-e-3',
+                        prompt: prompt,
+                        n: 1,
+                        size: size,
+                        quality: 'hd'
+                    })
+                });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'Failed to generate image');
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'Failed to generate image');
+                }
+
+                const data = await response.json();
+                tempUrl = data.data[0].url;
             }
 
-            const data = await response.json();
-            const imageUrl = data.data[0].url;
+            // 2. Download and Store in Supabase (Permanent Storage)
+            const imgRes = await fetch(tempUrl);
+            const arrayBuffer = await imgRes.arrayBuffer();
+            const fileName = `generated/${userId}/${Date.now()}.png`;
 
-            // Increment usage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('social-assets')
+                .upload(fileName, arrayBuffer, {
+                    contentType: 'image/png',
+                    cacheControl: '3600'
+                });
+
+            if (uploadError) {
+                // If bucket doesn't exist, fallback to 'uploads' or just use tempUrl
+                console.warn('Storage upload failed, falling back to temp URL:', uploadError);
+            }
+
+            const finalUrl = uploadData 
+                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/social-assets/${fileName}`
+                : tempUrl;
+
+            // 3. Increment usage
             await rateLimitService.incrementCount(userId, 'image');
 
-            // Save to database
+            // 4. Save to database
             await supabase.from('generated_assets').insert({
                 user_id: userId,
                 asset_type: 'image',
                 prompt: prompt,
-                url: imageUrl,
-                metadata: { size, model: 'dall-e-3' },
-                tenant_id: tenantService.getCurrentTenantId()
+                url: finalUrl,
+                metadata: { size, model: 'dall-e-3', openai_temp_url: tempUrl },
+                tenant_id: tenantService.getCurrentTenantId(),
+                storage_path: fileName,
+                bucket_id: 'social-assets'
             });
 
             const newRemaining = await rateLimitService.getRemainingGenerations(userId, userRole, 'image');
 
             return {
                 success: true,
-                url: imageUrl,
+                url: finalUrl,
                 remaining: newRemaining
             };
         } catch (error) {

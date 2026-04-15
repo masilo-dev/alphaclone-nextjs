@@ -646,6 +646,38 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
     };
 
+    const handleLike = async (targetId: string) => {
+        if (!selectedPageId) {
+            toast.error('Select a Facebook Page first');
+            return;
+        }
+        
+        const key = `like-${targetId}`;
+        setCommentActionLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const res = await fetch('/api/facebook/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pageId: selectedPageId,
+                    targetId,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to like');
+                return;
+            }
+            toast.success('Liked!');
+            // Refresh posts to see updated counts if available
+            await fetchPagePosts(selectedPageId);
+        } catch {
+            toast.error('Failed to like');
+        } finally {
+            setCommentActionLoading((prev) => ({ ...prev, [key]: false }));
+        }
+    };
+
     const generateFacebookQuickReply = async (post: any, parentCommentId?: string, parentCommentText?: string) => {
         const key = parentCommentId ? `reply-${parentCommentId}` : `post-${post.id}`;
         setAiReplyLoading((prev) => ({ ...prev, [key]: true }));
@@ -1525,18 +1557,24 @@ ${parentContext}Return only the reply text.`;
                                                         {post.message || post.story || <span className="italic text-slate-500">No text content</span>}
                                                     </p>
                                                     <div className="flex items-center gap-4 flex-wrap">
-                                                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                                                            <span>👍</span>
-                                                            {post.likes?.summary?.total_count ?? 0}
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                                                            <span>💬</span>
-                                                            {post.comments?.summary?.total_count ?? 0}
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                                                            <span>🔁</span>
-                                                            {post.shares?.count ?? 0}
-                                                        </div>
+                                                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
+1529:                                                             <button 
+1530:                                                                 onClick={() => handleLike(post.id)}
+1531:                                                                 disabled={!!commentActionLoading[`like-${post.id}`]}
+1532:                                                                 className="hover:scale-110 active:scale-95 transition-transform"
+1533:                                                             >
+1534:                                                                 {commentActionLoading[`like-${post.id}`] ? '⏳' : '👍'}
+1535:                                                             </button>
+                                                             {post.likes?.summary?.total_count ?? 0}
+                                                         </div>
+                                                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                             <span>💬</span>
+                                                             {post.comments?.summary?.total_count ?? 0}
+                                                         </div>
+                                                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                             <span>🔁</span>
+                                                             {post.shares?.count ?? 0}
+                                                         </div>
                                                         {post.permalink_url && (
                                                             <a
                                                                 href={post.permalink_url}
@@ -1607,19 +1645,26 @@ ${parentContext}Return only the reply text.`;
                                                                             >
                                                                                 {commentActionLoading[`reply-${comment.id}`] ? 'Replying...' : 'Reply'}
                                                                             </button>
-                                                                            <button
-                                                                                onClick={() =>
-                                                                                    void generateFacebookQuickReply(
-                                                                                        post,
-                                                                                        comment.id,
-                                                                                        comment.message
-                                                                                    )
-                                                                                }
-                                                                                disabled={!!aiReplyLoading[`reply-${comment.id}`]}
-                                                                                className="rounded-lg bg-violet-600/20 border border-violet-500/30 px-2.5 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
-                                                                            >
-                                                                                {aiReplyLoading[`reply-${comment.id}`] ? 'Generating...' : 'AI Reply'}
-                                                                            </button>
+                                                                             <button
+                                                                                 onClick={() =>
+                                                                                     void generateFacebookQuickReply(
+                                                                                         post,
+                                                                                         comment.id,
+                                                                                         comment.message
+                                                                                     )
+                                                                                 }
+                                                                                 disabled={!!aiReplyLoading[`reply-${comment.id}`]}
+                                                                                 className="rounded-lg bg-violet-600/20 border border-violet-500/30 px-2.5 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                                             >
+                                                                                 {aiReplyLoading[`reply-${comment.id}`] ? 'Generating...' : 'AI Reply'}
+                                                                             </button>
+                                                                             <button
+                                                                                 onClick={() => handleLike(comment.id)}
+                                                                                 disabled={!!commentActionLoading[`like-${comment.id}`]}
+                                                                                 className="p-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 transition-colors"
+                                                                             >
+                                                                                 {commentActionLoading[`like-${comment.id}`] ? <Loader2 className="w-3 h-3 animate-spin" /> : '👍'}
+                                                                             </button>
                                                                         </div>
                                                                     </div>
                                                                 ))}

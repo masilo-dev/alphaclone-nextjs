@@ -47,6 +47,8 @@ import HubspotIntegration from './HubspotIntegration';
 import ZohoIntegration from './ZohoIntegration';
 import TwilioIntegration from './TwilioIntegration';
 import SendGridIntegration from './SendGridIntegration';
+import ResendIntegration from './ResendIntegration';
+import BrevoIntegration from './BrevoIntegration';
 import MFAEnrollment from './MFAEnrollment';
 import { authService } from '../../../services/authService';
 import { Button, Modal, Input } from '../../ui/UIComponents';
@@ -1024,6 +1026,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <TwilioIntegration />
 
                             <SendGridIntegration />
+
+                            <ResendIntegration />
+
+                            <BrevoIntegration />
                         </div>
 
                         {/* AI Autonomous Response Card */}

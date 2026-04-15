@@ -603,72 +603,123 @@ export const businessInvoiceService = {
         doc.text(`ISSUED: ${invoice.issue_date || invoice.issueDate}`, pageWidth - margin, 31, { align: 'right' });
 
         // --- INFO BOXES ---
-        let currentY = 60;
+        let currentY = 55;
+        const colWidth = (contentWidth - 10) / 3;
 
-        // Bill To Box
+        // 1. FROM (Tenant) Box
         doc.setFillColor(colors.light);
-        doc.roundedRect(margin, currentY, contentWidth / 2 - 5, 40, 2, 2, 'F');
-
+        doc.roundedRect(margin, currentY, colWidth, 55, 2, 2, 'F');
+        
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(colors.accent);
-        doc.text('CLIENT / BILL TO', margin + 5, currentY + 8);
+        doc.text('FROM', margin + 5, currentY + 8);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(colors.dark);
+        doc.text(senderName, margin + 5, currentY + 16);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(colors.text);
+        let fromY = currentY + 22;
+        const tenantAddress = tenant?.address || tenant?.settings?.profile?.address;
+        const tenantPhone = tenant?.phone || tenant?.settings?.profile?.phone;
+        const tenantTaxId = tenant?.vat_number || tenant?.tax_id || tenant?.settings?.profile?.tax_id || tenant?.settings?.profile?.vat_number || tenant?.settings?.profile?.taxId;
+        
+        if (tenantAddress) {
+            const addrText = doc.splitTextToSize(tenantAddress, colWidth - 10);
+            doc.text(addrText, margin + 5, fromY);
+            fromY += (addrText.length * 4);
+        }
+        if (tenantPhone) {
+            doc.text(`Tel: ${tenantPhone}`, margin + 5, fromY);
+            fromY += 4;
+        }
+        if (tenantTaxId) {
+            doc.text(`Tax ID: ${tenantTaxId}`, margin + 5, fromY);
+        }
 
-        doc.setFontSize(11);
+        // 2. CLIENT / BILL TO Box
+        doc.setFillColor(colors.light);
+        doc.roundedRect(margin + colWidth + 5, currentY, colWidth, 55, 2, 2, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(colors.accent);
+        doc.text('CLIENT / BILL TO', margin + colWidth + 10, currentY + 8);
+        
+        doc.setFontSize(10);
         doc.setTextColor(colors.dark);
         const clientName = client?.name || invoice.client?.name || 'Valued Client';
-        doc.text(clientName, margin + 5, currentY + 16);
-
+        doc.text(clientName, margin + colWidth + 10, currentY + 16);
+        
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setTextColor(colors.text);
         let detailY = currentY + 22;
         const clientEmail = client?.email || invoice.client?.email;
         const clientCompany = client?.company || invoice.client?.company;
+        const clientAddress = client?.address || invoice.client?.address;
+        const clientPhone = client?.phone || invoice.client?.phone;
+        const clientTaxId = client?.tax_id || invoice.client?.tax_id || client?.vat_number;
 
         if (clientCompany) {
-            doc.text(clientCompany, margin + 5, detailY);
-            detailY += 5;
+            doc.text(clientCompany, margin + colWidth + 10, detailY);
+            detailY += 4;
         }
         if (clientEmail) {
-            doc.text(clientEmail, margin + 5, detailY);
+            doc.text(clientEmail, margin + colWidth + 10, detailY);
+            detailY += 4;
+        }
+        if (clientAddress) {
+            const addrText = doc.splitTextToSize(clientAddress, colWidth - 10);
+            doc.text(addrText, margin + colWidth + 10, detailY);
+            detailY += (addrText.length * 4);
+        }
+        if (clientPhone) {
+            doc.text(`Tel: ${clientPhone}`, margin + colWidth + 10, detailY);
+            detailY += 4;
+        }
+        if (clientTaxId) {
+            doc.text(`Tax ID: ${clientTaxId}`, margin + colWidth + 10, detailY);
         }
 
-        // Status / Dates Box
+        // 3. DOCUMENT DETAILS Box
         const status = invoice.status?.toUpperCase() || 'DRAFT';
         const isPaid = status === 'PAID';
 
         doc.setFillColor(colors.light);
-        doc.roundedRect(pageWidth / 2 + 5, currentY, contentWidth / 2 - 5, 40, 2, 2, 'F');
-
+        doc.roundedRect(margin + (colWidth * 2) + 10, currentY, colWidth, 55, 2, 2, 'F');
+        
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(colors.accent);
-        doc.text('DOCUMENT DETAILS', pageWidth / 2 + 10, currentY + 8);
-
+        doc.text('DOCUMENT DETAILS', margin + (colWidth * 2) + 15, currentY + 8);
+        
         doc.setFontSize(9);
         doc.setTextColor(colors.text);
         doc.setFont('helvetica', 'normal');
-        doc.text('Due Date:', pageWidth / 2 + 10, currentY + 16);
+        doc.text('Due Date:', margin + (colWidth * 2) + 15, currentY + 18);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.dark);
-        doc.text(invoice.due_date || invoice.dueDate, pageWidth / 2 + 35, currentY + 16);
-
+        doc.text(invoice.due_date || invoice.dueDate, margin + (colWidth * 2) + 15, currentY + 24);
+        
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(colors.text);
-        doc.text('Status:', pageWidth / 2 + 10, currentY + 23);
-
+        doc.text('Status:', margin + (colWidth * 2) + 15, currentY + 34);
+        
         // Status Badge
         const badgeColor = isPaid ? colors.success : (status === 'OVERDUE' ? colors.danger : colors.primary);
         doc.setFillColor(badgeColor);
-        doc.roundedRect(pageWidth / 2 + 35, currentY + 19, 20, 5, 1, 1, 'F');
+        doc.roundedRect(margin + (colWidth * 2) + 15, currentY + 38, 25, 6, 1, 1, 'F');
         doc.setFontSize(7);
         doc.setTextColor(colors.white);
         doc.setFont('helvetica', 'bold');
-        doc.text(status, pageWidth / 2 + 45, currentY + 22.5, { align: 'center' });
+        doc.text(status, margin + (colWidth * 2) + 27.5, currentY + 42.5, { align: 'center' });
 
         // --- LINE ITEMS TABLE ---
-        currentY = 115;
+        currentY = 120;
 
         doc.setFillColor(colors.primary);
         doc.roundedRect(margin, currentY, contentWidth, 10, 1, 1, 'F');
