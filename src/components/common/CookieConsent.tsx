@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield as ShieldIcon, BarChart2, Settings2, Megaphone } from 'lucide-react';
+import { X, Shield as ShieldIcon, BarChart2, Settings2, Megaphone, Lock, Eye, Database } from 'lucide-react';
 import Link from 'next/link';
-
-type ConsentMode = 'initial' | 'manage';
 
 // -------------------------------------------------------------------------------------
 // Types
@@ -37,55 +35,41 @@ function savePreferences(prefs: CookiePreferences) {
     }
 }
 
-// -------------------------------------------------------------------------------------
-// Category definitions
-// -------------------------------------------------------------------------------------
 const categories = [
     {
         key: 'necessary' as const,
         label: 'Strictly Necessary',
-        icon: ShieldIcon,
-        color: 'teal',
+        icon: Lock,
         required: true,
-        desc: 'Required for authentication, session management, and security. Cannot be disabled.',
-        examples: ['sb-auth-token (login session)', 'CSRF protection', 'Cookie consent record'],
+        desc: 'Essential for platform security, authentication, and basic functionality. Cannot be turned off.',
     },
     {
         key: 'analytics' as const,
         label: 'Analytics & Performance',
-        icon: BarChart2,
-        color: 'blue',
+        icon: Eye,
         required: false,
-        desc: 'Helps us understand how visitors interact with our site. All data is anonymized.',
-        examples: ['Google Analytics (_ga)', 'Vercel performance metrics', 'Core Web Vitals monitoring'],
+        desc: 'Helps us measure performance and improve your experience. Data is anonymized.',
     },
     {
         key: 'functional' as const,
         label: 'Functional',
-        icon: Settings2,
-        color: 'indigo',
+        icon: Database,
         required: false,
-        desc: 'Remembers your preferences like sidebar state, theme, and timezone for a better experience.',
-        examples: ['Sidebar collapse state', 'Theme preference', 'Onboarding progress'],
+        desc: 'Remembers your preferences like language, timezone, and UI state for convenience.',
     },
     {
         key: 'marketing' as const,
         label: 'Marketing',
         icon: Megaphone,
-        color: 'violet',
         required: false,
-        desc: 'Used for retargeting ads to visitors who did not complete registration. Used sparingly.',
-        examples: ['Facebook Pixel (_fbp)', 'LinkedIn Insight Tag'],
+        desc: 'Used to deliver relevant information and track the effectiveness of our growth campaigns.',
     },
 ];
 
-// -------------------------------------------------------------------------------------
-// Main component
-// -------------------------------------------------------------------------------------
 export default function CookieConsent() {
     const [visible, setVisible] = useState(false);
     const [showPreferences, setShowPreferences] = useState(false);
-    const [policyAcknowledged, setPolicyAcknowledged] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const [prefs, setPrefs] = useState<CookiePreferences>({
         necessary: true,
         analytics: false,
@@ -100,233 +84,200 @@ export default function CookieConsent() {
         } else {
             setPrefs(saved);
         }
+
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     useEffect(() => {
         const openPrefs = () => {
             setVisible(true);
             setShowPreferences(true);
-            const saved = loadPreferences();
-            setPolicyAcknowledged(saved !== null);
         };
         window.addEventListener('ac:open-cookie-preferences', openPrefs);
         return () => window.removeEventListener('ac:open-cookie-preferences', openPrefs);
     }, []);
 
-    const acceptAll = useCallback(() => {
-        if (!policyAcknowledged) return;
-        const all: CookiePreferences = { necessary: true, analytics: true, functional: true, marketing: true };
-        savePreferences(all);
-        setPrefs(all);
-        setVisible(false);
-        setPolicyAcknowledged(false);
-        dispatchConsentEvent(all);
-    }, [policyAcknowledged]);
-
-    const rejectNonEssential = useCallback(() => {
-        if (!policyAcknowledged) return;
-        const minimal: CookiePreferences = { necessary: true, analytics: false, functional: false, marketing: false };
-        savePreferences(minimal);
-        setPrefs(minimal);
-        setVisible(false);
-        setPolicyAcknowledged(false);
-        dispatchConsentEvent(minimal);
-    }, [policyAcknowledged]);
-
-    const saveCustom = useCallback(() => {
-        if (!policyAcknowledged) return;
-        savePreferences(prefs);
+    const completeConsent = useCallback((finalPrefs: CookiePreferences) => {
+        savePreferences(finalPrefs);
+        setPrefs(finalPrefs);
         setVisible(false);
         setShowPreferences(false);
-        setPolicyAcknowledged(false);
-        dispatchConsentEvent(prefs);
-    }, [prefs, policyAcknowledged]);
+        dispatchConsentEvent(finalPrefs);
+    }, []);
+
+    const acceptAll = useCallback(() => {
+        completeConsent({ necessary: true, analytics: true, functional: true, marketing: true });
+    }, [completeConsent]);
+
+    const rejectAll = useCallback(() => {
+        completeConsent({ necessary: true, analytics: false, functional: false, marketing: false });
+    }, [completeConsent]);
+
+    const saveCustom = useCallback(() => {
+        completeConsent(prefs);
+    }, [prefs, completeConsent]);
 
     const toggle = (key: keyof Omit<CookiePreferences, 'necessary'>) => {
         setPrefs(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const canSubmit = policyAcknowledged;
-
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             {visible && (
                 <>
+                    {/* Backdrop to ensure intentional choice (2026 Compliance) */}
                     <motion.div
                         key="cookie-backdrop"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[99998] bg-slate-950/85 backdrop-blur-[2px]"
+                        className="fixed inset-0 z-[99998] bg-slate-950/80 backdrop-blur-[6px]"
                         aria-hidden="true"
                     />
-                    <motion.div
-                        key="cookie-banner"
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                        className="fixed bottom-0 left-0 right-0 z-[99999] max-h-[90vh] overflow-y-auto shadow-2xl"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="cookie-consent-title"
-                    >
-                    {!showPreferences ? (
-                        /* ── Standard bottom bar ── */
-                        <div className="bg-slate-900 border-t border-slate-700/60 shadow-2xl">
-                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                                <h2 id="cookie-consent-title" className="text-sm font-bold text-white mb-2">
-                                    Cookies and similar technologies
-                                </h2>
-                                <p className="text-sm text-slate-300 leading-relaxed mb-3">
-                                    We use cookies and similar technologies to run the service, remember preferences, measure performance, and support optional marketing. Until you choose an option below, the rest of the site stays inactive. Details are in our{' '}
-                                    <Link href="/cookie-policy" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">
-                                        Cookie Policy
-                                    </Link>
-                                    . Using AlphaClone is also governed by the{' '}
-                                    <Link href="/terms-of-service" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">
-                                        Terms of Service
-                                    </Link>
-                                    {' '}and{' '}
-                                    <Link href="/privacy-policy" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">
-                                        Privacy Policy
-                                    </Link>
-                                    .
-                                </p>
-                                <label className="flex items-start gap-3 mb-4 cursor-pointer group">
-                                    <input
-                                        type="checkbox"
-                                        checked={policyAcknowledged}
-                                        onChange={e => setPolicyAcknowledged(e.target.checked)}
-                                        className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
-                                    />
-                                    <span className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300">
-                                        I have read the Cookie Policy and agree that AlphaClone may use cookies and similar technologies as described there. I understand how the platform processes data as explained in the Privacy Policy and Terms of Service.
-                                    </span>
-                                </label>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+
+                    <div className={`fixed z-[99999] inset-0 flex items-center justify-center pointer-events-none p-4 ${isMobile ? 'items-end !p-0' : ''}`}>
+                        <motion.div
+                            key="cookie-container"
+                            initial={isMobile ? { y: '100%' } : { scale: 0.9, opacity: 0 }}
+                            animate={isMobile ? { y: 0 } : { scale: 1, opacity: 1 }}
+                            exit={isMobile ? { y: '100%' } : { scale: 0.9, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                            className={`
+                                pointer-events-auto bg-[#0A0D14] border border-slate-800/60 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]
+                                flex flex-col overflow-hidden
+                                ${isMobile ? 'w-full rounded-t-[2.5rem] max-h-[85vh]' : 'w-full max-w-xl rounded-[2rem]'}
+                            `}
+                        >
+                            {!showPreferences ? (
+                                /* ── Phase 1: High-Level summary (3-Button Rule) ── */
+                                <div className="p-8 sm:p-10">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="w-12 h-12 flex items-center justify-center bg-teal-500/10 rounded-2xl border border-teal-500/20">
+                                            <ShieldIcon className="w-6 h-6 text-teal-400" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">Cookie Consent</h2>
+                                            <p className="text-xs text-teal-500/60 uppercase tracking-widest font-semibold mt-0.5">Privacy First Platform</p>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-base sm:text-lg text-slate-300 leading-relaxed mb-10">
+                                        We use cookies to maintain security, optimize performance, and personalize your experience. No marketing cookies are active unless you intentionally consent. Review our{' '}
+                                        <Link href="/cookie-policy" className="text-teal-400 hover:text-teal-300 underline underline-offset-8 decoration-teal-500/30 font-medium">Cookie Policy</Link>.
+                                    </p>
+
+                                    {/* Three-Button Rule: Equal Prominence & Height */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <button
-                                            type="button"
-                                            onClick={() => setShowPreferences(true)}
-                                            className="px-3 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors"
-                                        >
-                                            Manage
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={rejectNonEssential}
-                                            disabled={!canSubmit}
-                                            className="px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800"
-                                        >
-                                            Necessary only
-                                        </button>
-                                        <button
-                                            type="button"
                                             onClick={acceptAll}
-                                            disabled={!canSubmit}
-                                            className="px-5 py-2 text-xs font-bold text-slate-950 bg-teal-500 hover:bg-teal-400 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-teal-500"
+                                            className="h-[56px] sm:h-auto py-4 px-6 bg-teal-500 hover:bg-teal-400 text-[#020617] font-bold rounded-2xl transition-all active:scale-[0.97] text-base"
                                         >
-                                            Accept all
+                                            Accept All
+                                        </button>
+                                        <button
+                                            onClick={rejectAll}
+                                            className="h-[56px] sm:h-auto py-4 px-6 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl border border-slate-700/50 transition-all active:scale-[0.97] text-base"
+                                        >
+                                            Reject All
+                                        </button>
+                                        <button
+                                            onClick={() => setShowPreferences(true)}
+                                            className="sm:col-span-2 h-[56px] sm:h-auto py-4 px-6 bg-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 font-semibold rounded-2xl border border-dashed border-slate-800 hover:border-slate-700 transition-all active:scale-[0.97] text-base"
+                                        >
+                                            Manage Preferences
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ) : (
-                        /* ── Preferences panel (slides up from bottom) ── */
-                        <div className="bg-slate-900 border-t border-slate-700/60 shadow-2xl">
-                            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-bold text-white">Cookie Preferences</h3>
-                                    <button
-                                        onClick={() => setShowPreferences(false)}
-                                        className="text-slate-500 hover:text-white transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-3 mb-5">
-                                    {categories.map((cat) => (
-                                        <div key={cat.key} className="flex items-center justify-between gap-4 py-2 border-b border-slate-800 last:border-0">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-semibold text-white">{cat.label}</span>
-                                                    {cat.required && (
-                                                        <span className="text-[10px] text-teal-400">Always on</span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{cat.desc}</p>
+                            ) : (
+                                /* ── Phase 2: Granular Choice (Thumb-Friendly) ── */
+                                <div className="p-8 sm:p-10 flex flex-col h-full bg-[#0A0D14]">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-slate-800 rounded-lg">
+                                                <Settings2 className="w-5 h-5 text-teal-400" />
                                             </div>
-                                            <button
-                                                onClick={() => !cat.required && toggle(cat.key as keyof Omit<CookiePreferences, 'necessary'>)}
-                                                disabled={cat.required}
-                                                role="switch"
-                                                aria-checked={prefs[cat.key]}
-                                                className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${
-                                                    cat.required
-                                                        ? 'bg-teal-500 cursor-not-allowed'
-                                                        : prefs[cat.key]
-                                                            ? 'bg-teal-500 cursor-pointer'
-                                                            : 'bg-slate-700 cursor-pointer'
-                                                }`}
-                                            >
-                                                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${prefs[cat.key] ? 'translate-x-5' : 'translate-x-0'}`} />
-                                            </button>
+                                            <h2 className="text-xl sm:text-2xl font-bold text-white">Manage Settings</h2>
                                         </div>
-                                    ))}
-                                </div>
+                                        <button 
+                                            onClick={() => setShowPreferences(false)}
+                                            className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+                                            aria-label="Back"
+                                        >
+                                            <X className="w-6 h-6" />
+                                        </button>
+                                    </div>
 
-                                <label className="flex items-start gap-3 mb-4 cursor-pointer group">
-                                    <input
-                                        type="checkbox"
-                                        checked={policyAcknowledged}
-                                        onChange={e => setPolicyAcknowledged(e.target.checked)}
-                                        className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
-                                    />
-                                    <span className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300">
-                                        I confirm I have read the Cookie Policy and agree to my selected categories. I understand the Privacy Policy and Terms of Service apply to use of AlphaClone.
-                                    </span>
-                                </label>
-                                <div className="flex gap-2 justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={rejectNonEssential}
-                                        disabled={!canSubmit}
-                                        className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 border border-slate-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                        Necessary only
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={saveCustom}
-                                        disabled={!canSubmit}
-                                        className="px-5 py-2 text-xs font-bold text-slate-950 bg-teal-500 hover:bg-teal-400 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-teal-500"
-                                    >
-                                        Save preferences
-                                    </button>
+                                    <div className="space-y-4 mb-10 overflow-y-auto pr-2 custom-scrollbar">
+                                        {categories.map((cat) => (
+                                            <div key={cat.key} className="flex items-start justify-between gap-5 p-5 rounded-2xl bg-slate-900/40 border border-slate-800/50 transition-all hover:bg-slate-900/60 hover:border-slate-800">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2.5 mb-2">
+                                                        <cat.icon className="w-5 h-5 text-slate-500" />
+                                                        <span className="text-base font-bold text-white">{cat.label}</span>
+                                                        {cat.required && (
+                                                            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-lg border border-teal-500/20">Always Active</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-slate-400 leading-relaxed font-medium">{cat.desc}</p>
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={() => !cat.required && toggle(cat.key as keyof Omit<CookiePreferences, 'necessary'>)}
+                                                    disabled={cat.required}
+                                                    role="switch"
+                                                    aria-checked={prefs[cat.key]}
+                                                    className={`
+                                                        relative w-[56px] h-[32px] rounded-full transition-all flex-shrink-0 mt-1.5
+                                                        ${cat.required 
+                                                            ? 'bg-teal-500/40 cursor-not-allowed shadow-none' 
+                                                            : prefs[cat.key] 
+                                                                ? 'bg-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.3)]' 
+                                                                : 'bg-slate-800'}
+                                                    `}
+                                                >
+                                                    <span className={`
+                                                        absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-xl transition-transform duration-300 cubic-bezier(0.34, 1.56, 0.64, 1)
+                                                        ${prefs[cat.key] ? 'translate-x-[24px]' : 'translate-x-0'}
+                                                    `} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        <button
+                                            onClick={saveCustom}
+                                            className="flex-1 h-[56px] sm:h-auto py-4 px-6 bg-teal-500 hover:bg-teal-400 text-[#020617] font-bold rounded-2xl transition-all shadow-lg active:scale-[0.97] text-base"
+                                        >
+                                            Save Settings
+                                        </button>
+                                        <button
+                                            onClick={rejectAll}
+                                            className="flex-1 h-[56px] sm:h-auto py-4 px-6 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl border border-slate-700/50 transition-all active:scale-[0.97] text-base"
+                                        >
+                                            Reject All
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
-                    </motion.div>
+                            )}
+                        </motion.div>
+                    </div>
                 </>
             )}
         </AnimatePresence>
     );
 }
 
-// -------------------------------------------------------------------------------------
-// Named export for opening the preferences panel from anywhere
-// -------------------------------------------------------------------------------------
+// Global hook/helper to reopen the preferences
 export function openCookiePreferences() {
     window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'));
 }
 
 function dispatchConsentEvent(prefs: CookiePreferences) {
     window.dispatchEvent(new CustomEvent('ac:cookie-consent', { detail: prefs }));
-    // Also push to GTM dataLayer if present
     if (typeof window !== 'undefined' && (window as any).dataLayer) {
         (window as any).dataLayer.push({
             event: 'cookie_consent_update',
