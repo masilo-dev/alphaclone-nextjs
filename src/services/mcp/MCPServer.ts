@@ -929,6 +929,7 @@ class AlphaCloneMCPServer {
         case 'create_bulk_email_campaign': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const createdByUserId = this.ctx?.userId || this.requireProfileUser(a);
           const { name: campaignName, subject, body_html, target_audience, from_name, from_email, publish_now } = a;
 
           if (!campaignName || !subject || !body_html || !target_audience || !from_name || !from_email) {
@@ -962,7 +963,7 @@ class AlphaCloneMCPServer {
             from_name,
             from_email,
             status: publish_now ? 'sending' : 'draft',
-            created_by: this.ctx.userId,
+            created_by: createdByUserId,
             metadata: { bodyHtml: body_html },
             total_recipients: recipients.length
           }).select('id').single();
@@ -1606,7 +1607,7 @@ Each topic should be a specific, professional title for a long-form article.
           const planRes = await routeAutonomousTask('strategy', plannerPrompt);
           let plan: any[] = [];
           try {
-            const jsonMatch = planRes.content.match(/\[.*\]/s);
+            const jsonMatch = planRes.content.match(/\[[\s\S]*\]/);
             if (jsonMatch) plan = JSON.parse(jsonMatch[0]);
           } catch (e) {
             throw new Error('Failed to parse the autonomous plan. Please try again.');
@@ -1673,14 +1674,14 @@ Each topic should be a specific, professional title for a long-form article.
             user_id: userId,
             caption: articleRes.content,
             platforms: Array.isArray(platforms) ? platforms : ['facebook', 'linkedin'],
-            media_urls: [img.url],
+            media_urls: [imageUrl],
             status: 'scheduled',
             scheduled_at: publishTime,
             metadata: { autonomous: true, ai_image_prompt: image_prompt }
           }).select('id').single();
 
           if (error) throw supabaseErrorToMcpClientError('create_post_with_ai_image', error.message);
-          result = { content: [{ type: 'text', text: `Autonomous Creation complete! Post scheduled with AI-generated image: ${img.url}. Article length: ${articleRes.content.length} characters.` }] };
+          result = { content: [{ type: 'text', text: `Autonomous Creation complete! Post scheduled with AI-generated image: ${imageUrl}. Article length: ${articleRes.content.length} characters.` }] };
           break;
         }
 
