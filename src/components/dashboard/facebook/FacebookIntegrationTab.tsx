@@ -1558,13 +1558,13 @@ ${parentContext}Return only the reply text.`;
                                                     </p>
                                                     <div className="flex items-center gap-4 flex-wrap">
                                                          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-1529:                                                             <button 
-1530:                                                                 onClick={() => handleLike(post.id)}
-1531:                                                                 disabled={!!commentActionLoading[`like-${post.id}`]}
-1532:                                                                 className="hover:scale-110 active:scale-95 transition-transform"
-1533:                                                             >
-1534:                                                                 {commentActionLoading[`like-${post.id}`] ? '⏳' : '👍'}
-1535:                                                             </button>
+                                                             <button 
+                                                                onClick={() => handleLike(post.id)}
+                                                                disabled={!!commentActionLoading[`like-${post.id}`]}
+                                                                className="hover:scale-110 active:scale-95 transition-transform"
+                                                            >
+                                                                {commentActionLoading[`like-${post.id}`] ? '⏳' : '👍'}
+                                                            </button>
                                                              {post.likes?.summary?.total_count ?? 0}
                                                          </div>
                                                          <div className="flex items-center gap-1.5 text-xs text-slate-400">
