@@ -14,7 +14,8 @@ import {
     Eye, 
     Loader2, 
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
