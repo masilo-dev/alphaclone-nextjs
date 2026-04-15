@@ -345,7 +345,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/crm':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <CRMTab />
+                        <CRMTab userId={user.id} userRole={user.role} />
                     </React.Suspense>
                 );
             case '/dashboard/deals':
