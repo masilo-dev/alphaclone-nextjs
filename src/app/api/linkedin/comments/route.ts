@@ -21,6 +21,16 @@ type LinkedInComment = {
   createdAt: number | null;
 };
 
+function isLikelyPermissionError(payload: Record<string, unknown>) {
+  const message = String(payload?.message || payload?.error_description || '');
+  return (
+    message.toLowerCase().includes('permission') ||
+    message.toLowerCase().includes('scope') ||
+    message.toLowerCase().includes('not enough permissions') ||
+    message.toLowerCase().includes('access denied')
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -74,8 +84,15 @@ export async function POST(req: NextRequest) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (res.status === 401 || res.status === 403 || isLikelyPermissionError(data as Record<string, unknown>)) {
+        return NextResponse.json({
+          success: true,
+          comments: [],
+          warning: 'LinkedIn comment read permission is unavailable for this connection. Reconnect and approve all requested LinkedIn permissions.',
+        });
+      }
       const errorText = typeof data?.message === 'string' ? data.message : `LinkedIn API error (${res.status})`;
-      return NextResponse.json({ error: errorText }, { status: 400 });
+      return NextResponse.json({ error: errorText }, { status: 502 });
     }
 
     const elements = Array.isArray(data?.elements) ? data.elements : [];

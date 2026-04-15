@@ -13,7 +13,11 @@ function getMissingColumnName(error: unknown): string | null {
 function isMissingRelation(error: unknown, relation: string): boolean {
   if (!error || typeof error !== 'object') return false;
   const maybeError = error as { code?: string; message?: string };
-  return maybeError.code === '42P01' && (maybeError.message || '').includes(relation);
+  const message = maybeError.message || '';
+  return (
+    (maybeError.code === '42P01' && message.includes(relation)) ||
+    (maybeError.code === 'PGRST205' && message.includes(relation))
+  );
 }
 
 async function insertLeadSearchJobWithFallback(
