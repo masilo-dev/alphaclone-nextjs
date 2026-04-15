@@ -35,9 +35,15 @@ export async function GET(req: NextRequest) {
         let processed = 0;
         for (const record of waiting) {
             // Logic to trigger the next email step
-            // This pulls the next template from the sequence and sends via the campaign server
+            // 1. Move from 'waiting' to 'pending' so the campaign server picks it up
+            // 2. Call the server for that campaign
             try {
-                await sendScheduledCampaignServer(record.campaign_id, record.contact_id);
+                await admin
+                    .from('campaign_recipients')
+                    .update({ status: 'pending' })
+                    .eq('id', record.id);
+
+                await sendScheduledCampaignServer(record.campaign_id);
                 processed++;
             } catch (e) {
                 console.error(`Drip failure for ${record.email}:`, e);
