@@ -6,7 +6,7 @@ import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
     ChevronDown, ChevronUp, Sparkles, Tag, FileText, CheckCircle2, Loader2
 } from 'lucide-react';
-import { emailCampaignService, EmailCampaign, EmailTemplate } from '../../../services/emailCampaignService';
+import { emailCampaignService, EmailCampaign, EmailTemplate, MarketingContact } from '../../../services/emailCampaignService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { showActionNextSteps } from '@/components/common/showActionNextSteps';
@@ -27,6 +27,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [loading, setLoading] = useState(true);
+    const [contacts, setContacts] = useState<MarketingContact[]>([]);
+    const [contactSearch, setContactSearch] = useState('');
+    const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
     const [sending, setSending] = useState<string | null>(null);
     const [view, setView] = useState<'list' | 'create'>('list');
     const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
@@ -41,6 +44,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         fromEmail: '',
         scheduledAt: '',
         scheduleEnabled: false,
+        skipPreviouslyContacted: true,
     });
 
     useEffect(() => {
@@ -49,12 +53,14 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
     const loadData = async () => {
         setLoading(true);
-        const [campsResult, tempsResult] = await Promise.all([
+        const [campsResult, tempsResult, contactsResult] = await Promise.all([
             emailCampaignService.getCampaigns(),
             emailCampaignService.getTemplates(),
+            emailCampaignService.getMarketingContacts(),
         ]);
         if (!campsResult.error) setCampaigns(campsResult.campaigns);
         if (!tempsResult.error) setTemplates(tempsResult.templates);
+        if (!contactsResult.error) setContacts(contactsResult.contacts);
         setLoading(false);
     };
 
@@ -71,21 +77,49 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             fromEmail: form.fromEmail || 'notifications@alphaclone.tech',
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
             segmentFilter: {},
+            metadata: { bodyHtml: form.bodyHtml },
         });
         if (error) { toast.error(error, { id: toastId }); return; }
 
-        // Also update metadata with body
         if (campaign) {
-            await emailCampaignService.updateCampaign(campaign.id, {
-                metadata: { bodyHtml: form.bodyHtml }
-            } as any);
+            const recipientsResult = await emailCampaignService.addRecipientsToCampaign(campaign.id, selectedContactIds, {
+                skipPreviouslyContacted: form.skipPreviouslyContacted,
+            });
+            if (recipientsResult.error) {
+                toast.error(recipientsResult.error, { id: toastId });
+                return;
+            }
+            if (recipientsResult.added === 0) {
+                toast.error('No recipients were added. Select contacts with valid emails.', { id: toastId });
+                return;
+            }
+            if (recipientsResult.skipped > 0) {
+                toast.success(`Campaign created. ${recipientsResult.added} recipients added, ${recipientsResult.skipped} skipped (already contacted or duplicate).`, { id: toastId });
+            }
         }
 
-        toast.success('Campaign created!', { id: toastId });
+        toast.success('Campaign created for selected contacts.', { id: toastId });
         showActionNextSteps('campaign_created', (path) => router.push(path));
         setView('list');
-        setForm({ name: '', subject: '', bodyHtml: '', fromName: 'AlphaClone Systems', fromEmail: '', scheduledAt: '', scheduleEnabled: false });
+        setSelectedContactIds([]);
+        setForm({ name: '', subject: '', bodyHtml: '', fromName: 'AlphaClone Systems', fromEmail: '', scheduledAt: '', scheduleEnabled: false, skipPreviouslyContacted: true });
         loadData();
+    };
+
+    const filteredContacts = contacts.filter((c) => {
+        const needle = contactSearch.trim().toLowerCase();
+        if (!needle) return true;
+        return (
+            c.name.toLowerCase().includes(needle) ||
+            c.email.toLowerCase().includes(needle) ||
+            String(c.company || '').toLowerCase().includes(needle)
+        );
+    });
+
+    const toggleContact = (contactId: string) => {
+        setSelectedContactIds((prev) =>
+            prev.includes(contactId) ? prev.filter((id) => id !== contactId) : [...prev, contactId]
+        );
     };
 
     const handleSend = async (campaignId: string) => {
@@ -195,7 +229,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             placeholder="e.g. Hey {{firstName}}, we have something for you!"
                             className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Tip: Use <code className="text-teal-400">{'{{firstName}}'}</code> to personalize</p>
+                        <p className="text-xs text-slate-500 mt-1">Tip: Use <code className="text-teal-400">{'{{firstName}}'}</code> to personalize for each recipient</p>
                     </div>
 
                     {/* Personalization Tags */}
@@ -236,6 +270,50 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             placeholder="<p>Hi {{name}},</p><p>Your email body here...</p>"
                             className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm font-mono"
                         />
+                    </div>
+
+                    {/* Recipients */}
+                    <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <Users className="w-3 h-3" /> Bulk Recipients
+                            </label>
+                            <span className="text-xs text-slate-500">{selectedContactIds.length} selected</span>
+                        </div>
+                        <input
+                            value={contactSearch}
+                            onChange={(e) => setContactSearch(e.target.value)}
+                            placeholder="Search by name or email"
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
+                        />
+                        <div className="max-h-52 overflow-y-auto border border-slate-700 rounded-lg divide-y divide-slate-800">
+                            {filteredContacts.map((contact) => (
+                                <label key={contact.id} className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-slate-800/70 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedContactIds.includes(contact.id)}
+                                        onChange={() => toggleContact(contact.id)}
+                                        className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                    />
+                                    <div className="min-w-0">
+                                        <p className="text-white truncate">{contact.name}</p>
+                                        <p className="text-xs text-slate-400 truncate">{contact.email}</p>
+                                    </div>
+                                </label>
+                            ))}
+                            {filteredContacts.length === 0 && (
+                                <div className="px-3 py-4 text-sm text-slate-500 text-center">No contacts match your search.</div>
+                            )}
+                        </div>
+                        <label className="flex items-center gap-2 text-xs text-slate-300">
+                            <input
+                                type="checkbox"
+                                checked={form.skipPreviouslyContacted}
+                                onChange={(e) => setForm((f) => ({ ...f, skipPreviouslyContacted: e.target.checked }))}
+                                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                            />
+                            Do not send again to contacts who already received campaign emails
+                        </label>
                     </div>
 
                     {/* Schedule */}
