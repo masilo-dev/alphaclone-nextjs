@@ -2,21 +2,13 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/middleware';
 
 function applyRequiredOwaspHeaders(response: NextResponse) {
-    if (!response.headers.has('Strict-Transport-Security')) {
-        response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-    }
-    if (!response.headers.has('X-Content-Type-Options')) {
-        response.headers.set('X-Content-Type-Options', 'nosniff');
-    }
-    if (!response.headers.has('Referrer-Policy')) {
-        response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    }
-    if (!response.headers.has('Content-Security-Policy')) {
-        response.headers.set(
-            'Content-Security-Policy',
-            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: https: wss:; frame-src 'self' blob: data: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://*.zoom.us https://zoom.us;"
-        );
-    }
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: https: wss:; frame-src 'self' blob: data: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://*.zoom.us https://zoom.us;"
+    );
     return response;
 }
 
