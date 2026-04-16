@@ -101,9 +101,6 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/sales-agent',
     '/dashboard/zoho/mail',
     '/dashboard/business/messages',
-    '/dashboard/crm',
-    '/dashboard/deals',
-    '/dashboard/leads',
 ];
 
 interface BusinessDashboardProps {
