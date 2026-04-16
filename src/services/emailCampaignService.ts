@@ -634,6 +634,8 @@ export const emailCampaignService = {
             lastName: recipient.lastName || '',
             company: recipient.company || '',
             name: recipient.firstName ? (recipient.firstName + (recipient.lastName ? ' ' + recipient.lastName : '')) : recipient.email,
+            fromName: recipient.fromName || recipient.senderName || 'AlphaClone Systems',
+            senderName: recipient.senderName || recipient.fromName || 'AlphaClone Systems',
             ...recipient
         };
 
