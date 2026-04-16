@@ -16,7 +16,6 @@ export async function GET(req: NextRequest) {
     const requestedRegion = searchParams.get('region');
     const state = searchParams.get('state') || ''; // user ID or secure nonce
 
-    const hosts = ZohoService.getHostsByRegion(region);
     const clientId = ENV.ZOHO_CLIENT_ID;
     const clientSecret = ENV.ZOHO_CLIENT_SECRET;
     
@@ -57,6 +56,7 @@ export async function GET(req: NextRequest) {
             // Fall back to default region if config lookup fails.
         }
     }
+    const hosts = ZohoService.getHostsByRegion(region);
 
     const scopes = [
         // Mail
