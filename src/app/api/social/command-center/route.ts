@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+
+function isMissingRelationOrCache(error: unknown, relation: string): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const maybeError = error as { code?: string; message?: string };
+    const message = String(maybeError.message || '');
+    return (
+        (maybeError.code === '42P01' && message.includes(relation)) ||
+        (maybeError.code === 'PGRST205' && message.includes(relation))
+    );
+}
+
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const tenantId = String(searchParams.get('tenantId') || '').trim();
+        if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
+
+        const [bmRes, wlRes] = await Promise.all([
+            admin.from('social_bookmarks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            admin.from('social_watchlist').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+        ]);
+
+        if (bmRes.error || wlRes.error) {
+            const bookmarksMissing = isMissingRelationOrCache(bmRes.error, 'social_bookmarks');
+            const watchlistMissing = isMissingRelationOrCache(wlRes.error, 'social_watchlist');
+            if (bookmarksMissing || watchlistMissing) {
+                return NextResponse.json({
+                    success: true,
+                    bookmarks: [],
+                    watchlist: [],
+                    warning: 'Social workspace setup is still in progress.',
+                });
+            }
+        }
+
+        if (bmRes.error) return NextResponse.json({ error: bmRes.error.message }, { status: 500 });
+        if (wlRes.error) return NextResponse.json({ error: wlRes.error.message }, { status: 500 });
+        return NextResponse.json({ success: true, bookmarks: bmRes.data || [], watchlist: wlRes.data || [] });
+    } catch (error) {
+        return routeErrorResponse(error, 'Failed to load social workspace');
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const tenantId = String(body.tenantId || '').trim();
+        const mode = String(body.mode || '').trim();
+        if (!tenantId || !mode) return NextResponse.json({ error: 'tenantId and mode are required' }, { status: 400 });
+
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
+
+        if (mode === 'add_bookmark') {
+            const payload = {
+                tenant_id: tenantId,
+                title: String(body.title || '').trim(),
+                url: String(body.url || '').trim(),
+                platform: String(body.platform || 'facebook').trim(),
+                category: String(body.category || 'group').trim(),
+                notes: String(body.notes || '').trim(),
+            };
+            const { data, error } = await admin.from('social_bookmarks').insert(payload).select('*').single();
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true, bookmark: data });
+        }
+
+        if (mode === 'add_watchlist') {
+            const payload = {
+                tenant_id: tenantId,
+                name: String(body.name || '').trim(),
+                url: String(body.url || '').trim(),
+                platform: String(body.platform || 'linkedin').trim(),
+            };
+            const { data, error } = await admin.from('social_watchlist').insert(payload).select('*').single();
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true, watchlistItem: data });
+        }
+
+        return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
+    } catch (error) {
+        return routeErrorResponse(error, 'Failed to update social workspace');
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const tenantId = String(body.tenantId || '').trim();
+        const mode = String(body.mode || '').trim();
+        const id = String(body.id || '').trim();
+        if (!tenantId || !mode || !id) return NextResponse.json({ error: 'tenantId, mode and id are required' }, { status: 400 });
+
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
+
+        if (mode === 'delete_bookmark') {
+            const { error } = await admin.from('social_bookmarks').delete().eq('id', id).eq('tenant_id', tenantId);
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true });
+        }
+
+        if (mode === 'delete_watchlist') {
+            const { error } = await admin.from('social_watchlist').delete().eq('id', id).eq('tenant_id', tenantId);
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true });
+        }
+
+        return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
+    } catch (error) {
+        return routeErrorResponse(error, 'Failed to remove item');
+    }
+}

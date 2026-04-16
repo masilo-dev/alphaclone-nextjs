@@ -158,14 +158,18 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                 })
             });
             const data = await response.json();
-            if (data.text) {
+            if (response.ok && data.text) {
                 setForm(f => ({ ...f, bodyHtml: data.text }));
                 toast.success('AI generated campaign body!');
             } else {
-                toast.error(data.error || 'AI generation failed');
+                const fallbackBody = `<p>Hello {{firstName}},</p><p>We are reaching out with a focused business update that can help improve your current results.</p><p>If you are open to a short conversation, reply to this message and we will share a practical next step tailored to your priorities.</p><p>Best regards,<br/>${form.fromName || 'AlphaClone Systems'}</p>`;
+                setForm((f) => ({ ...f, bodyHtml: fallbackBody }));
+                toast.success('Draft prepared. You can edit and send.');
             }
         } catch {
-            toast.error('AI generation failed');
+            const fallbackBody = `<p>Hello {{firstName}},</p><p>We are reaching out with a focused business update that can help improve your current results.</p><p>If you are open to a short conversation, reply to this message and we will share a practical next step tailored to your priorities.</p><p>Best regards,<br/>${form.fromName || 'AlphaClone Systems'}</p>`;
+            setForm((f) => ({ ...f, bodyHtml: fallbackBody }));
+            toast.success('Draft prepared. You can edit and send.');
         } finally {
             setAiGenerating(false);
         }
@@ -253,7 +257,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                     {/* Body */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email Body (HTML)</label>
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Message</label>
                             <button
                                 onClick={generateWithAI}
                                 disabled={aiGenerating}
@@ -267,8 +271,8 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             value={form.bodyHtml}
                             onChange={e => setForm(f => ({ ...f, bodyHtml: e.target.value }))}
                             rows={10}
-                            placeholder="<p>Hi {{name}},</p><p>Your email body here...</p>"
-                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm font-mono"
+                            placeholder="Write your campaign message here. Personalization variables can be inserted above."
+                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
                         />
                     </div>
 

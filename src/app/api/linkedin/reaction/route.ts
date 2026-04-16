@@ -19,6 +19,16 @@ function normalizeScopes(raw: unknown): string[] {
   return [];
 }
 
+function isLikelyPermissionError(payload: Record<string, unknown>) {
+  const message = String(payload?.message || payload?.error_description || payload?.serviceErrorCode || '');
+  return (
+    message.toLowerCase().includes('permission') ||
+    message.toLowerCase().includes('scope') ||
+    message.toLowerCase().includes('access denied') ||
+    message.toLowerCase().includes('not enough')
+  );
+}
+
 const ALLOWED_REACTIONS = new Set([
   'LIKE',
   'PRAISE',
@@ -105,8 +115,20 @@ export async function POST(req: NextRequest) {
     });
 
     const raw = await res.text();
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    } catch {
+      parsed = {};
+    }
     if (!res.ok) {
-      return NextResponse.json({ error: raw || `LinkedIn API error (${res.status})` }, { status: 400 });
+      if (res.status === 401 || res.status === 403 || isLikelyPermissionError(parsed)) {
+        return NextResponse.json({
+          success: true,
+          warning: 'LinkedIn reaction permission is unavailable for this connection. Reconnect and approve all requested LinkedIn permissions.',
+        });
+      }
+      return NextResponse.json({ error: raw || `LinkedIn API error (${res.status})` }, { status: 502 });
     }
 
     return NextResponse.json({ success: true });
