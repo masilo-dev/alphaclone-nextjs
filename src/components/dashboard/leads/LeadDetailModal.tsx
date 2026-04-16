@@ -86,6 +86,28 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [isEnriching, setIsEnriching] = useState(false);
     const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [editForm, setEditForm] = useState({
+        businessName: lead.businessName || '',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        industry: lead.industry || '',
+        location: lead.location || '',
+        source: lead.source || 'Manual',
+        stage: lead.stage || 'lead',
+    });
+
+    useEffect(() => {
+        setEditForm({
+            businessName: lead.businessName || '',
+            email: lead.email || '',
+            phone: lead.phone || '',
+            industry: lead.industry || '',
+            location: lead.location || '',
+            source: lead.source || 'Manual',
+            stage: lead.stage || 'lead',
+        });
+    }, [lead]);
 
     useEffect(() => {
         if (isOpen && lead.id) {
@@ -530,6 +552,40 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         );
     };
 
+    const handleSaveLeadEdit = async () => {
+        setIsLoading(true);
+        try {
+            const { error } = await leadService.updateLead(lead.id, {
+                businessName: editForm.businessName,
+                email: editForm.email,
+                phone: editForm.phone,
+                industry: editForm.industry,
+                location: editForm.location,
+                source: editForm.source,
+                stage: editForm.stage,
+            });
+            if (error) throw new Error(error);
+            const updatedLead: Lead = {
+                ...lead,
+                businessName: editForm.businessName,
+                email: editForm.email,
+                phone: editForm.phone,
+                industry: editForm.industry,
+                location: editForm.location,
+                source: editForm.source,
+                stage: editForm.stage,
+                status: editForm.stage === 'lead' ? 'New' : editForm.stage,
+            };
+            onLeadUpdate?.(updatedLead);
+            toast.success('Lead updated');
+            setShowEditForm(false);
+        } catch (error: unknown) {
+            toast.error('Failed to update lead: ' + getErrorMessage(error));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <Modal
             isOpen={isOpen}
@@ -591,6 +647,16 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 <span className="hidden sm:inline">Email</span>
                             </Button>
                         )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-white/10 text-slate-200 hover:bg-slate-800 flex-1 sm:flex-none"
+                            onClick={() => setShowEditForm((prev) => !prev)}
+                            title="Edit lead details"
+                        >
+                            <FileText className="w-4 h-4 sm:mr-2 text-slate-300" />
+                            <span className="hidden sm:inline">{showEditForm ? 'Close Edit' : 'Edit Lead'}</span>
+                        </Button>
                         <Button
                             variant="outline"
                             size="sm"
@@ -718,6 +784,62 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950">
+                    {showEditForm && (
+                        <Card className="p-4 mb-5 border-teal-500/30 bg-teal-900/10">
+                            <h3 className="text-sm font-semibold text-white mb-3">Edit lead details</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <Input
+                                    label="Business name"
+                                    value={editForm.businessName}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, businessName: e.target.value }))}
+                                />
+                                <Input
+                                    label="Email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                                />
+                                <Input
+                                    label="Phone"
+                                    value={editForm.phone}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                                />
+                                <Input
+                                    label="Industry"
+                                    value={editForm.industry}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, industry: e.target.value }))}
+                                />
+                                <Input
+                                    label="Location"
+                                    value={editForm.location}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                                />
+                                <Input
+                                    label="Source"
+                                    value={editForm.source}
+                                    onChange={(e) => setEditForm((f) => ({ ...f, source: e.target.value }))}
+                                />
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-medium text-slate-300">Pipeline stage</label>
+                                    <select
+                                        value={editForm.stage}
+                                        onChange={(e) => setEditForm((f) => ({ ...f, stage: e.target.value }))}
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                                    >
+                                        <option value="lead">Lead</option>
+                                        <option value="qualified">Qualified</option>
+                                        <option value="proposal">Proposal</option>
+                                        <option value="negotiation">Negotiation</option>
+                                        <option value="won">Won</option>
+                                        <option value="lost">Lost</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                                <Button variant="ghost" size="sm" onClick={() => setShowEditForm(false)}>Cancel</Button>
+                                <Button size="sm" onClick={handleSaveLeadEdit} isLoading={isLoading}>Save lead</Button>
+                            </div>
+                        </Card>
+                    )}
 
                     {activeTab === 'overview' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
