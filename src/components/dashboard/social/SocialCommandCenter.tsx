@@ -17,7 +17,6 @@ import {
     CheckCircle2,
     RefreshCw
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 
@@ -38,16 +37,6 @@ interface WatchlistItem {
     last_checked_at: string | null;
     last_post_summary: string | null;
     is_active: boolean;
-}
-
-function isMissingRelationOrCache(error: unknown, relation: string): boolean {
-    if (!error || typeof error !== 'object') return false;
-    const maybeError = error as { code?: string; message?: string };
-    const message = String(maybeError.message || '');
-    return (
-        (maybeError.code === '42P01' && message.includes(relation)) ||
-        (maybeError.code === 'PGRST205' && message.includes(relation))
-    );
 }
 
 export default function SocialCommandCenter() {
@@ -82,26 +71,14 @@ export default function SocialCommandCenter() {
         setLoading(true);
         setFeatureWarning(null);
         try {
-            const [bmRes, wlRes] = await Promise.all([
-                supabase.from('social_bookmarks').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
-                supabase.from('social_watchlist').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
-            ]);
-
-            if (bmRes.error || wlRes.error) {
-                const bookmarksMissing = isMissingRelationOrCache(bmRes.error, 'social_bookmarks');
-                const watchlistMissing = isMissingRelationOrCache(wlRes.error, 'social_watchlist');
-                if (bookmarksMissing || watchlistMissing) {
-                    setBookmarks([]);
-                    setWatchlist([]);
-                    setFeatureWarning('Social command tables are not available in this database yet. Apply latest social migrations.');
-                    return;
-                }
+            const res = await fetch(`/api/social/command-center?tenantId=${encodeURIComponent(currentTenant.id)}`);
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to load social workspace');
+            setBookmarks(payload.bookmarks || []);
+            setWatchlist(payload.watchlist || []);
+            if (payload.warning) {
+                setFeatureWarning('Social workspace is being prepared. Core business areas remain fully available.');
             }
-            if (bmRes.error) throw bmRes.error;
-            if (wlRes.error) throw wlRes.error;
-
-            setBookmarks(bmRes.data || []);
-            setWatchlist(wlRes.data || []);
         } catch (error) {
             console.error('Failed to load social data:', error);
             toast.error('Failed to load command center data');
@@ -119,12 +96,17 @@ export default function SocialCommandCenter() {
         if (!currentTenant?.id) return;
         
         try {
-            const { error } = await supabase.from('social_bookmarks').insert({
-                tenant_id: currentTenant.id,
-                ...newBookmark
+            const res = await fetch('/api/social/command-center', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    mode: 'add_bookmark',
+                    ...newBookmark,
+                }),
             });
-
-            if (error) throw error;
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to add bookmark');
             
             toast.success('Bookmark added');
             setNewBookmark({ title: '', url: '', platform: 'facebook', category: 'group', notes: '' });
@@ -138,7 +120,17 @@ export default function SocialCommandCenter() {
     const handleDeleteBookmark = async (id: string) => {
         if (!confirm('Are you sure you want to delete this bookmark?')) return;
         try {
-            await supabase.from('social_bookmarks').delete().eq('id', id);
+            const res = await fetch('/api/social/command-center', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant?.id,
+                    mode: 'delete_bookmark',
+                    id,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to delete bookmark');
             toast.success('Bookmark deleted');
             loadData();
         } catch {
@@ -151,12 +143,17 @@ export default function SocialCommandCenter() {
         if (!currentTenant?.id) return;
         
         try {
-            const { error } = await supabase.from('social_watchlist').insert({
-                tenant_id: currentTenant.id,
-                ...newWatchlist
+            const res = await fetch('/api/social/command-center', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    mode: 'add_watchlist',
+                    ...newWatchlist,
+                }),
             });
-
-            if (error) throw error;
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to add to watchlist');
             
             toast.success('Added to watchlist');
             setNewWatchlist({ name: '', url: '', platform: 'linkedin' });
@@ -170,7 +167,17 @@ export default function SocialCommandCenter() {
     const handleDeleteWatchlist = async (id: string) => {
         if (!confirm('Stop monitoring this target?')) return;
         try {
-            await supabase.from('social_watchlist').delete().eq('id', id);
+            const res = await fetch('/api/social/command-center', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant?.id,
+                    mode: 'delete_watchlist',
+                    id,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to remove');
             toast.success('Removed from watchlist');
             loadData();
         } catch {
