@@ -12,6 +12,7 @@ const BASE_URL = SITE_URL && !SITE_URL.includes('localhost')
   ? SITE_URL 
   : 'https://alphaclone.tech';
 type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
+const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'];
 const DEFAULT_PROVIDER_LIMITS: Record<OutreachProvider, number> = {
   brevo: 300,
   resend: 300,
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
       queue       = false,
       deliveryProviders = [],
       preferredProvider,
-      balanceByDailyLimit = true,
+      balanceByDailyLimit = false,
     } = body;
 
     if (!tenantId)   return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
@@ -154,12 +155,25 @@ export async function POST(request: Request) {
     const { data: integrations, error: integrationsError } = await admin
       .from('integrations')
       .select('type, config, enabled')
+      .eq('tenant_id', tenantId)
       .eq('user_id', tenantCtx.user.id)
       .eq('enabled', true)
       .in('type', ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail']);
     if (integrationsError) {
       return NextResponse.json({ success: false, status: 'failed', error: integrationsError.message }, { status: 500 });
     }
+
+    const { data: profileIntegration } = await admin
+      .from('integrations')
+      .select('config')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', tenantCtx.user.id)
+      .eq('enabled', true)
+      .eq('type', 'email_profile')
+      .maybeSingle();
+    const profileConfig = (profileIntegration?.config || {}) as Record<string, unknown>;
+    const profileFromName = String(profileConfig.fromName || profileConfig.from_name || '').trim();
+    const profileFromEmail = String(profileConfig.fromEmail || profileConfig.from_email || '').trim();
 
     const providerConfigs = (integrations || [])
       .map((integration: any) => {
@@ -169,8 +183,8 @@ export async function POST(request: Request) {
         return {
           provider,
           apiKey: String(cfg.apiKey || cfg.api_key || '').trim(),
-          fromEmail: String(cfg.fromEmail || cfg.from_email || fromAddress || '').trim(),
-          fromName: String(cfg.fromName || cfg.from_name || 'AlphaClone Systems').trim(),
+          fromEmail: String(cfg.fromEmail || cfg.from_email || fromAddress || profileFromEmail || '').trim(),
+          fromName: String(cfg.fromName || cfg.from_name || profileFromName || 'AlphaClone Systems').trim(),
           dailyLimit: Number(cfg.dailyLimit || cfg.daily_limit || DEFAULT_PROVIDER_LIMITS[provider]) || DEFAULT_PROVIDER_LIMITS[provider],
         };
       })
@@ -194,100 +208,151 @@ export async function POST(request: Request) {
       );
     }
 
-    const chosenProvider = (() => {
-      if (preferred) {
-        const preferredProviderConfig = available.find((p) => p.provider === preferred);
-        if (preferredProviderConfig) return preferredProviderConfig;
+    const providerCounts = new Map<OutreachProvider, number>();
+    for (const provider of PROVIDER_FAILOVER_ORDER) {
+      providerCounts.set(provider, 0);
+    }
+
+    const shouldUseLimitBalancing = balanceByDailyLimit !== false;
+    if (shouldUseLimitBalancing) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const { data: usageRows, error: usageError } = await admin
+        .from('lead_outreach_log')
+        .select('provider')
+        .eq('tenant_id', tenantId)
+        .gte('created_at', startOfDay.toISOString())
+        .in('status', ['sent', 'delivered', 'opened', 'clicked']);
+      if (!usageError) {
+        for (const row of usageRows || []) {
+          const p = normalizeProvider((row as { provider?: unknown }).provider);
+          if (!p) continue;
+          providerCounts.set(p, (providerCounts.get(p) || 0) + 1);
+        }
       }
-      if (!balanceByDailyLimit) return available[0];
-      return [...available].sort((a, b) => b.dailyLimit - a.dailyLimit)[0];
+    }
+
+    const failoverSequence = (() => {
+      const allowed = new Set(available.map((p) => p.provider));
+      let ordered = PROVIDER_FAILOVER_ORDER.filter((provider) => allowed.has(provider));
+      if (balanceByDailyLimit === true && preferred && ordered.includes(preferred)) {
+        ordered = [preferred, ...ordered.filter((provider) => provider !== preferred)];
+      }
+      return ordered;
     })();
-    if (!chosenProvider) {
+
+    const providerQueue = failoverSequence
+      .map((providerId) => available.find((provider) => provider.provider === providerId))
+      .filter((provider): provider is { provider: OutreachProvider; apiKey: string; fromEmail: string; fromName: string; dailyLimit: number } => Boolean(provider))
+      .filter((provider) => {
+        if (!shouldUseLimitBalancing) return true;
+        return (providerCounts.get(provider.provider) || 0) < provider.dailyLimit;
+      });
+
+    if (!providerQueue.length) {
       return NextResponse.json({ success: false, status: 'failed', error: 'No provider selected' }, { status: 500 });
     }
 
-    try {
-      let providerMessageId: string | null = null;
-      if (chosenProvider.provider === 'zoho') {
-        const zohoService = new ZohoMailService(tenantCtx.user.id);
-        const sendResult = await zohoService.sendEmail({
-          toAddress: leadEmail,
-          fromAddress: chosenProvider.fromEmail || fromAddress,
-          subject,
-          content: htmlBody,
-        });
-        providerMessageId = sendResult?.data?.messageId || null;
-      } else if (chosenProvider.provider === 'gmail') {
-        const raw = encodeGmailRawMessage({
-          to: leadEmail,
-          subject,
-          html: htmlBody,
-          fromEmail: chosenProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclone.tech',
-          fromName: chosenProvider.fromName || 'AlphaClone Systems',
-        });
-        const sendResult = await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
-          method: 'POST',
-          body: JSON.stringify({ raw }),
-        });
-        providerMessageId = sendResult?.id || null;
-      } else if (chosenProvider.provider === 'brevo') {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'api-key': chosenProvider.apiKey,
-          },
-          body: JSON.stringify({
-            sender: { email: chosenProvider.fromEmail || fromAddress, name: chosenProvider.fromName || 'AlphaClone Systems' },
-            to: [{ email: leadEmail }],
+    const providerFailures: Array<{ provider: OutreachProvider; error: string }> = [];
+    let sentProvider: OutreachProvider | null = null;
+    let providerMessageId: string | null = null;
+
+    for (const selectedProvider of providerQueue) {
+      try {
+        if (selectedProvider.provider === 'zoho') {
+          const zohoService = new ZohoMailService(tenantCtx.user.id);
+          const sendResult = await zohoService.sendEmail({
+            toAddress: leadEmail,
+            fromAddress: selectedProvider.fromEmail || fromAddress,
             subject,
-            htmlContent: htmlBody,
-          }),
-        });
-        if (!response.ok) throw new Error(`Brevo send failed (${response.status})`);
-      } else if (chosenProvider.provider === 'resend') {
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${chosenProvider.apiKey}`,
-          },
-          body: JSON.stringify({
-            from: `${chosenProvider.fromName || 'AlphaClone Systems'} <${chosenProvider.fromEmail || fromAddress}>`,
+            content: htmlBody,
+          });
+          providerMessageId = sendResult?.data?.messageId || null;
+        } else if (selectedProvider.provider === 'gmail') {
+          const raw = encodeGmailRawMessage({
             to: leadEmail,
             subject,
             html: htmlBody,
-          }),
-        });
-        if (!response.ok) throw new Error(`Resend send failed (${response.status})`);
-      } else if (chosenProvider.provider === 'sendgrid') {
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${chosenProvider.apiKey}`,
-          },
-          body: JSON.stringify({
-            personalizations: [{ to: [{ email: leadEmail }] }],
-            from: {
-              email: chosenProvider.fromEmail || fromAddress,
-              name: chosenProvider.fromName || 'AlphaClone Systems',
+            fromEmail: selectedProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclone.tech',
+            fromName: selectedProvider.fromName || 'AlphaClone Systems',
+          });
+          const sendResult = await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
+            method: 'POST',
+            body: JSON.stringify({ raw }),
+          });
+          providerMessageId = sendResult?.id || null;
+        } else if (selectedProvider.provider === 'brevo') {
+          const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-key': selectedProvider.apiKey,
             },
-            subject,
-            content: [{ type: 'text/html', value: htmlBody }],
-          }),
-        });
-        if (!response.ok) throw new Error(`SendGrid send failed (${response.status})`);
-      }
+            body: JSON.stringify({
+              sender: { email: selectedProvider.fromEmail || fromAddress, name: selectedProvider.fromName || 'AlphaClone Systems' },
+              to: [{ email: leadEmail }],
+              subject,
+              htmlContent: htmlBody,
+            }),
+          });
+          if (!response.ok) throw new Error(`Brevo send failed (${response.status})`);
+        } else if (selectedProvider.provider === 'resend') {
+          const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${selectedProvider.apiKey}`,
+            },
+            body: JSON.stringify({
+              from: `${selectedProvider.fromName || 'AlphaClone Systems'} <${selectedProvider.fromEmail || fromAddress}>`,
+              to: leadEmail,
+              subject,
+              html: htmlBody,
+            }),
+          });
+          if (!response.ok) throw new Error(`Resend send failed (${response.status})`);
+        } else if (selectedProvider.provider === 'sendgrid') {
+          const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${selectedProvider.apiKey}`,
+            },
+            body: JSON.stringify({
+              personalizations: [{ to: [{ email: leadEmail }] }],
+              from: {
+                email: selectedProvider.fromEmail || fromAddress,
+                name: selectedProvider.fromName || 'AlphaClone Systems',
+              },
+              subject,
+              content: [{ type: 'text/html', value: htmlBody }],
+            }),
+          });
+          if (!response.ok) throw new Error(`SendGrid send failed (${response.status})`);
+        }
 
-      // 6a. Update log → sent
+        sentProvider = selectedProvider.provider;
+        break;
+      } catch (err) {
+        providerFailures.push({
+          provider: selectedProvider.provider,
+          error: err instanceof Error ? err.message : 'Provider send failed',
+        });
+      }
+    }
+
+    if (sentProvider) {
       if (logId) {
         await admin
           .from('lead_outreach_log')
           .update({
             status: 'sent',
             sent_at: new Date().toISOString(),
+            provider: sentProvider,
             zoho_message_id: providerMessageId,
+            error_message: providerFailures.length > 0
+              ? `Failover recovered. Previous providers failed: ${providerFailures.map((f) => `${f.provider}: ${f.error}`).join(' | ')}`
+              : null,
           })
           .eq('id', logId);
       }
@@ -297,36 +362,34 @@ export async function POST(request: Request) {
         status:     'sent',
         logId,
         trackingId,
-        provider: chosenProvider.provider,
+        provider: sentProvider,
+        failoverAttempts: providerFailures,
         messageId: providerMessageId,
       });
-
-    } catch (sendErr: unknown) {
-      console.error('[Outreach/Send] Provider send failed:', sendErr);
-
-      // 6b. Update log → failed
-      if (logId) {
-        await admin
-          .from('lead_outreach_log')
-          .update({
-            status: 'failed',
-            error_message: sendErr instanceof Error ? sendErr.message : 'Send failed',
-          })
-          .eq('id', logId);
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          status: 'failed',
-          error: 'Email could not be sent. Check your selected provider connection in Settings.',
-          code: 'OUTREACH_SEND_FAILED',
-          logId,
-          trackingId,
-        },
-        { status: 502 }
-      );
     }
+
+    if (logId) {
+      await admin
+        .from('lead_outreach_log')
+        .update({
+          status: 'failed',
+          error_message: providerFailures.map((f) => `${f.provider}: ${f.error}`).join(' | ') || 'Send failed',
+        })
+        .eq('id', logId);
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        status: 'failed',
+        error: 'Email could not be sent. All configured providers failed in fallback order.',
+        code: 'OUTREACH_SEND_FAILED',
+        logId,
+        trackingId,
+        failoverAttempts: providerFailures,
+      },
+      { status: 502 }
+    );
 
   } catch (error: unknown) {
     return routeErrorResponse(error, 'Failed to send outreach email.', request);
