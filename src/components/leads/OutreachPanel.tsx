@@ -70,7 +70,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [sendResults,   setSendResults  ] = useState<Array<{ name: string; status: 'sent' | 'queued' | 'failed'; error?: string }>>([]);
   const [queueOnly,     setQueueOnly    ] = useState(false);
   const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['brevo']);
-  const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(true);
+  const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(false);
 
   // Leads that can receive auto-outreach (have email)
   const emailable = leads.filter(l => l?.qualification?.canAutoSend && l?.email);
@@ -78,6 +78,16 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
   // Fetch user display name and Zoho sender addresses on mount
   useEffect(() => {
+    if (currentTenant?.id) {
+      fetch(`/api/email/sender-profile?tenantId=${encodeURIComponent(currentTenant.id)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.profile?.fromName) setSenderName(data.profile.fromName);
+          if (data?.profile?.fromEmail && !fromAddress) setFromAddress(data.profile.fromEmail);
+        })
+        .catch(() => {});
+    }
+
     supabase.auth.getUser().then(({ data }: { data: { user: { email?: string; user_metadata?: Record<string, string> } | null } }) => {
       if (data?.user?.user_metadata?.full_name) setSenderName(data.user.user_metadata.full_name);
       else if (data?.user?.email) setSenderName(data.user.email.split('@')[0]);
@@ -140,6 +150,17 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   // ── Send all ───────────────────────────────────────────────────────────────
   const handleSendAll = async () => {
     if (!currentTenant) { toast.error('No active workspace'); return; }
+    if (senderName && fromAddress) {
+      await fetch('/api/email/sender-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          fromName: senderName,
+          fromEmail: fromAddress,
+        }),
+      }).catch(() => null);
+    }
     setStatus('sending');
     const results: typeof sendResults = [];
 
@@ -149,9 +170,6 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
       if (!lead?.email) continue;
 
       try {
-        const providerForLead = selectedProviders.length === 0
-          ? 'brevo'
-          : selectedProviders[i % selectedProviders.length];
         const res = await fetch('/api/outreach/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -166,7 +184,6 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             score:       lead.qualification?.score || 0,
             fromAddress: fromAddress || undefined,
             queue:       queueOnly,
-            preferredProvider: providerForLead,
             deliveryProviders: selectedProviders,
             balanceByDailyLimit,
           }),

@@ -1,6 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+
+function isMissingRelationOrCache(error: unknown, relation: string): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const maybeError = error as { code?: string; message?: string };
+    const message = String(maybeError.message || '').toLowerCase();
+    const relationName = relation.toLowerCase();
+    return (
+        maybeError.code === '42P01' ||
+        maybeError.code === 'PGRST205' ||
+        (message.includes(relationName) && (message.includes('does not exist') || message.includes('schema cache')))
+    );
+}
+
+function campaignsUnavailableResponse() {
+    return NextResponse.json({
+        success: true,
+        campaigns: [],
+        warning: 'Email workspace setup is still in progress.',
+    });
+}
+
+function contactsUnavailableResponse() {
+    return NextResponse.json({
+        success: true,
+        contacts: [],
+        warning: 'Contacts are being prepared.',
+    });
+}
+
+function isWorkspaceSetupError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const maybeError = error as { code?: string; message?: string };
+    const message = String(maybeError.message || '').toLowerCase();
+    return (
+        maybeError.code === '42P01' ||
+        maybeError.code === 'PGRST205' ||
+        maybeError.code === '42501' ||
+        message.includes('schema cache') ||
+        message.includes('does not exist') ||
+        message.includes('permission denied')
+    );
+}
 
 export async function GET(request: NextRequest) {
     try {
@@ -21,6 +63,9 @@ export async function GET(request: NextRequest) {
                 .eq('tenant_id', tenantId)
                 .not('email', 'is', null)
                 .order('name', { ascending: true });
+            if (isMissingRelationOrCache(error, 'business_clients') || isWorkspaceSetupError(error)) {
+                return contactsUnavailableResponse();
+            }
             if (error) return NextResponse.json({ error: error.message }, { status: 500 });
             return NextResponse.json({ success: true, contacts: data || [] });
         }
@@ -31,9 +76,15 @@ export async function GET(request: NextRequest) {
             .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false })
             .limit(100);
+        if (isMissingRelationOrCache(error, 'email_campaigns') || isWorkspaceSetupError(error)) {
+            return campaignsUnavailableResponse();
+        }
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         return NextResponse.json({ success: true, campaigns: data || [] });
     } catch (error) {
+        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
+            return campaignsUnavailableResponse();
+        }
         return routeErrorResponse(error, 'Failed to load campaigns');
     }
 }

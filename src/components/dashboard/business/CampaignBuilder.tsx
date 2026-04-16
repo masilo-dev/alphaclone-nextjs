@@ -7,6 +7,7 @@ import {
     ChevronDown, ChevronUp, Sparkles, Tag, FileText, CheckCircle2, Loader2
 } from 'lucide-react';
 import { emailCampaignService, EmailCampaign, EmailTemplate, MarketingContact } from '../../../services/emailCampaignService';
+import { tenantService } from '../../../services/tenancy/TenantService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { showActionNextSteps } from '@/components/common/showActionNextSteps';
@@ -61,6 +62,23 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         loadData();
     }, []);
 
+    const loadSenderProfile = async () => {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return;
+        try {
+            const response = await fetch(`/api/email/sender-profile?tenantId=${encodeURIComponent(tenantId)}`);
+            const data = await response.json();
+            if (!response.ok || !data?.profile) return;
+            setForm((prev) => ({
+                ...prev,
+                fromName: prev.fromName || data.profile.fromName || 'AlphaClone Systems',
+                fromEmail: prev.fromEmail || data.profile.fromEmail || '',
+            }));
+        } catch {
+            // Non-fatal.
+        }
+    };
+
     const loadData = async () => {
         setLoading(true);
         const [campsResult, tempsResult, contactsResult] = await Promise.all([
@@ -71,6 +89,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         if (!campsResult.error) setCampaigns(campsResult.campaigns);
         if (!tempsResult.error) setTemplates(tempsResult.templates);
         if (!contactsResult.error) setContacts(contactsResult.contacts);
+        await loadSenderProfile();
         setLoading(false);
     };
 
@@ -80,6 +99,18 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             return;
         }
         const toastId = toast.loading('Creating campaign...');
+        const tenantId = tenantService.getCurrentTenantId() || '';
+        if (tenantId && form.fromName && form.fromEmail) {
+            await fetch('/api/email/sender-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    fromName: form.fromName,
+                    fromEmail: form.fromEmail,
+                }),
+            }).catch(() => null);
+        }
         const { campaign, error } = await emailCampaignService.createCampaign(userId, {
             name: form.name,
             subject: form.subject,

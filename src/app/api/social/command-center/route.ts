@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
     if (!error || typeof error !== 'object') return false;
     const maybeError = error as { code?: string; message?: string };
-    const message = String(maybeError.message || '');
+    const message = String(maybeError.message || '').toLowerCase();
+    const relationName = relation.toLowerCase();
     return (
-        (maybeError.code === '42P01' && message.includes(relation)) ||
-        (maybeError.code === 'PGRST205' && message.includes(relation))
+        (maybeError.code === '42P01' && message.includes(relationName)) ||
+        (maybeError.code === 'PGRST205' && message.includes(relationName)) ||
+        (message.includes(relationName) && (message.includes('does not exist') || message.includes('schema cache')))
     );
+}
+
+function socialWorkspaceUnavailableResponse() {
+    return NextResponse.json({
+        success: true,
+        bookmarks: [],
+        watchlist: [],
+        warning: 'Social workspace setup is still in progress.',
+    });
 }
 
 export async function GET(request: NextRequest) {
@@ -30,12 +41,7 @@ export async function GET(request: NextRequest) {
             const bookmarksMissing = isMissingRelationOrCache(bmRes.error, 'social_bookmarks');
             const watchlistMissing = isMissingRelationOrCache(wlRes.error, 'social_watchlist');
             if (bookmarksMissing || watchlistMissing) {
-                return NextResponse.json({
-                    success: true,
-                    bookmarks: [],
-                    watchlist: [],
-                    warning: 'Social workspace setup is still in progress.',
-                });
+                return socialWorkspaceUnavailableResponse();
             }
         }
 
@@ -43,6 +49,9 @@ export async function GET(request: NextRequest) {
         if (wlRes.error) return NextResponse.json({ error: wlRes.error.message }, { status: 500 });
         return NextResponse.json({ success: true, bookmarks: bmRes.data || [], watchlist: wlRes.data || [] });
     } catch (error) {
+        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
+            return socialWorkspaceUnavailableResponse();
+        }
         return routeErrorResponse(error, 'Failed to load social workspace');
     }
 }
@@ -85,6 +94,16 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
     } catch (error) {
+        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    warning: 'Social workspace setup is still in progress.',
+                    error: 'Social workspace is temporarily unavailable.',
+                },
+                { status: 503 }
+            );
+        }
         return routeErrorResponse(error, 'Failed to update social workspace');
     }
 }
@@ -114,6 +133,16 @@ export async function DELETE(request: NextRequest) {
 
         return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
     } catch (error) {
+        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    warning: 'Social workspace setup is still in progress.',
+                    error: 'Social workspace is temporarily unavailable.',
+                },
+                { status: 503 }
+            );
+        }
         return routeErrorResponse(error, 'Failed to remove item');
     }
 }

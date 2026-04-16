@@ -8,6 +8,17 @@ function getProviderName(provider: ProviderType) {
   return provider === 'resend' ? 'Resend' : 'Brevo';
 }
 
+function createWebhookToken(): string {
+  return crypto.randomUUID().replace(/-/g, '');
+}
+
+function getWebhookUrl(provider: ProviderType, token: string): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || '';
+  const normalized = siteUrl.endsWith('/') ? siteUrl.slice(0, -1) : siteUrl;
+  if (!normalized) return '';
+  return `${normalized}/api/webhooks/email/inbound/${provider}?token=${encodeURIComponent(token)}`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,10 +44,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const config = (data?.config || {}) as Record<string, unknown>;
+    const webhookToken = String(config.webhookToken || '');
     return NextResponse.json({
       success: true,
       connected: !!data?.enabled,
       config: data?.config || null,
+      webhookUrl: webhookToken ? getWebhookUrl(provider, webhookToken) : '',
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to load provider integration');
@@ -58,6 +72,17 @@ export async function POST(request: NextRequest) {
     const tenantCtx = await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
 
+    const { data: existing } = await supabase
+      .from('integrations')
+      .select('config')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', tenantCtx.user.id)
+      .eq('type', provider)
+      .maybeSingle();
+
+    const existingConfig = (existing?.config || {}) as Record<string, unknown>;
+    const webhookToken = String(existingConfig.webhookToken || createWebhookToken());
+
     const payload = {
       tenant_id: tenantId,
       user_id: tenantCtx.user.id,
@@ -65,8 +90,10 @@ export async function POST(request: NextRequest) {
       name: getProviderName(provider),
       enabled: true,
       config: {
+        ...existingConfig,
         apiKey,
         fromEmail,
+        webhookToken,
       },
     };
 
@@ -87,7 +114,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, webhookUrl: getWebhookUrl(provider, webhookToken) });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to save provider integration');
   }
