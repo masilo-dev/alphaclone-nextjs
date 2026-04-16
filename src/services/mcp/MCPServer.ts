@@ -297,18 +297,27 @@ class AlphaCloneMCPServer {
         },
         {
           name: 'create_bulk_email_campaign',
-          description: 'Draft and optionally send a personalized bulk email campaign using an external provider (Resend/Brevo/Sendgrid). Use this to send mass emails to lists.',
+          description: 'Draft and optionally send a personalized bulk email campaign using connected providers (SendGrid, Resend, Brevo, Zoho Mail, Gmail) with optional daily-limit balancing.',
           inputSchema: {
             type: 'object',
             properties: {
               tenant_id: { type: 'string' },
               name: { type: 'string', description: 'Internal name of the campaign' },
               subject: { type: 'string', description: 'Subject line of the email' },
-              body_html: { type: 'string', description: 'Full HTML body of the email. You may use {{firstName}}, {{lastName}}, {{company}} as variables.' },
+              body_html: { type: 'string', description: 'Full HTML body of the email. You may use {{name}}, {{firstName}}, {{lastName}}, {{company}}, {{fromName}} variables.' },
               target_audience: { type: 'string', description: 'Who to send this to. EXACTLY "all_leads" or "all_clients".' },
               from_name: { type: 'string', description: 'The sender display name (e.g. your username).' },
               from_email: { type: 'string', description: 'The verified sender email address.' },
               publish_now: { type: 'boolean', description: 'If true, will SEND IMMEDIATELY. If false, will save as draft in the dashboard.' },
+              delivery_providers: {
+                type: 'array',
+                items: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'] },
+                description: 'Optional provider order/filter for campaign delivery. Example: ["sendgrid","brevo","zoho"]',
+              },
+              balance_by_daily_limit: {
+                type: 'boolean',
+                description: 'If true, distribute sends across selected providers based on remaining daily limit.',
+              },
             },
             required: ['tenant_id', 'name', 'subject', 'body_html', 'target_audience', 'from_email', 'from_name'],
           },
@@ -1203,6 +1212,10 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const createdByUserId = this.ctx?.userId || this.requireProfileUser(a);
           const { name: campaignName, subject, body_html, target_audience, from_name, from_email, publish_now } = a;
+          const deliveryProviders = Array.isArray(a.delivery_providers)
+            ? a.delivery_providers.map((p: unknown) => String(p).trim().toLowerCase()).filter(Boolean)
+            : [];
+          const balanceByDailyLimit = a.balance_by_daily_limit !== false;
 
           if (!campaignName || !subject || !body_html || !target_audience || !from_name || !from_email) {
             throw new Error('Missing required fields for bulk email campaign.');
@@ -1236,7 +1249,13 @@ class AlphaCloneMCPServer {
             from_email,
             status: publish_now ? 'sending' : 'draft',
             created_by: createdByUserId,
-            metadata: { bodyHtml: body_html },
+            metadata: {
+              bodyHtml: body_html,
+              deliverySettings: {
+                selectedProviders: deliveryProviders,
+                balanceByDailyLimit,
+              },
+            },
             total_recipients: recipients.length
           }).select('id').single();
 
@@ -1258,7 +1277,7 @@ class AlphaCloneMCPServer {
           let actionText = `Email campaign draft "${campaignName}" created successfully for ${recipients.length} recipients. You can view/send it from the dashboard.`;
           
           if (publish_now) {
-             actionText = `Campaign "${campaignName}" created and immediately queued to SEND to ${recipients.length} recipients.`;
+             actionText = `Campaign "${campaignName}" created and queued to send to ${recipients.length} recipients with provider balancing.`;
              // Trigger server-side background sender
              sendScheduledCampaignServer(campaign.id).catch(err => console.error('Background send error:', err));
           }

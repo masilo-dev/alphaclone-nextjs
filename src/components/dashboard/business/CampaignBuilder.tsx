@@ -20,7 +20,14 @@ const statusColors: Record<string, string> = {
     cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
-const VARIABLE_TAGS = ['{{name}}', '{{firstName}}', '{{lastName}}', '{{email}}', '{{company}}'];
+const VARIABLE_TAGS = ['{{name}}', '{{firstName}}', '{{lastName}}', '{{email}}', '{{company}}', '{{fromName}}'];
+const DELIVERY_PROVIDER_OPTIONS = [
+    { id: 'sendgrid', label: 'SendGrid' },
+    { id: 'resend', label: 'Resend' },
+    { id: 'brevo', label: 'Brevo' },
+    { id: 'zoho', label: 'Zoho Mail' },
+    { id: 'gmail', label: 'Gmail' },
+] as const;
 
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const router = useRouter();
@@ -45,6 +52,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         scheduledAt: '',
         scheduleEnabled: false,
         skipPreviouslyContacted: true,
+        selectedProviders: ['sendgrid', 'resend'] as string[],
+        balanceByDailyLimit: true,
+        sendImmediately: false,
     });
 
     useEffect(() => {
@@ -77,7 +87,13 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             fromEmail: form.fromEmail || 'notifications@alphaclone.tech',
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
             segmentFilter: {},
-            metadata: { bodyHtml: form.bodyHtml },
+            metadata: {
+                bodyHtml: form.bodyHtml,
+                deliverySettings: {
+                    selectedProviders: form.selectedProviders,
+                    balanceByDailyLimit: form.balanceByDailyLimit,
+                },
+            },
         });
         if (error) { toast.error(error, { id: toastId }); return; }
 
@@ -98,11 +114,32 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             }
         }
 
-        toast.success('Campaign created for selected contacts.', { id: toastId });
+        if (campaign && form.sendImmediately) {
+            const sendResult = await emailCampaignService.sendCampaign(campaign.id);
+            if (!sendResult.success) {
+                toast.error(sendResult.error || 'Campaign was created but sending failed', { id: toastId });
+            } else {
+                toast.success('Campaign created and sent.', { id: toastId });
+            }
+        } else {
+            toast.success('Campaign created for selected contacts.', { id: toastId });
+        }
         showActionNextSteps('campaign_created', (path) => router.push(path));
         setView('list');
         setSelectedContactIds([]);
-        setForm({ name: '', subject: '', bodyHtml: '', fromName: 'AlphaClone Systems', fromEmail: '', scheduledAt: '', scheduleEnabled: false, skipPreviouslyContacted: true });
+        setForm({
+            name: '',
+            subject: '',
+            bodyHtml: '',
+            fromName: 'AlphaClone Systems',
+            fromEmail: '',
+            scheduledAt: '',
+            scheduleEnabled: false,
+            skipPreviouslyContacted: true,
+            selectedProviders: ['sendgrid', 'resend'],
+            balanceByDailyLimit: true,
+            sendImmediately: false,
+        });
         loadData();
     };
 
@@ -120,6 +157,19 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         setSelectedContactIds((prev) =>
             prev.includes(contactId) ? prev.filter((id) => id !== contactId) : [...prev, contactId]
         );
+    };
+
+    const toggleProvider = (providerId: string) => {
+        setForm((prev) => {
+            const exists = prev.selectedProviders.includes(providerId);
+            const selectedProviders = exists
+                ? prev.selectedProviders.filter((id) => id !== providerId)
+                : [...prev.selectedProviders, providerId];
+            return {
+                ...prev,
+                selectedProviders: selectedProviders.length > 0 ? selectedProviders : [providerId],
+            };
+        });
     };
 
     const handleSend = async (campaignId: string) => {
@@ -153,7 +203,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a professional email campaign body for the subject: "${form.subject}". Use {{name}} to personalize. Return only the email body in HTML format with paragraph tags.`,
+                    prompt: `Write a professional email campaign body for the subject: "${form.subject}". Use {{name}} or {{firstName}} to personalize each recipient and include {{fromName}} in the sign-off. Return only the email body in HTML format with paragraph tags.`,
                     systemPrompt: 'You are an expert email marketer. Write compelling, professional campaign emails.',
                 })
             });
@@ -162,12 +212,12 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                 setForm(f => ({ ...f, bodyHtml: data.text }));
                 toast.success('AI generated campaign body!');
             } else {
-                const fallbackBody = `<p>Hello {{firstName}},</p><p>We are reaching out with a focused business update that can help improve your current results.</p><p>If you are open to a short conversation, reply to this message and we will share a practical next step tailored to your priorities.</p><p>Best regards,<br/>${form.fromName || 'AlphaClone Systems'}</p>`;
+                const fallbackBody = `<p>Hello {{firstName}},</p><p>We are reaching out with a focused business update that can help improve your current results.</p><p>If you are open to a short conversation, reply to this message and we will share a practical next step tailored to your priorities.</p><p>Best regards,<br/>{{fromName}}</p>`;
                 setForm((f) => ({ ...f, bodyHtml: fallbackBody }));
                 toast.success('Draft prepared. You can edit and send.');
             }
         } catch {
-            const fallbackBody = `<p>Hello {{firstName}},</p><p>We are reaching out with a focused business update that can help improve your current results.</p><p>If you are open to a short conversation, reply to this message and we will share a practical next step tailored to your priorities.</p><p>Best regards,<br/>${form.fromName || 'AlphaClone Systems'}</p>`;
+            const fallbackBody = `<p>Hello {{firstName}},</p><p>We are reaching out with a focused business update that can help improve your current results.</p><p>If you are open to a short conversation, reply to this message and we will share a practical next step tailored to your priorities.</p><p>Best regards,<br/>{{fromName}}</p>`;
             setForm((f) => ({ ...f, bodyHtml: fallbackBody }));
             toast.success('Draft prepared. You can edit and send.');
         } finally {
@@ -317,6 +367,46 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                 className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
                             />
                             Do not send again to contacts who already received campaign emails
+                        </label>
+                    </div>
+
+                    <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                Delivery Providers
+                            </label>
+                            <span className="text-xs text-slate-500">{form.selectedProviders.length} selected</span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {DELIVERY_PROVIDER_OPTIONS.map((provider) => (
+                                <label key={provider.id} className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.selectedProviders.includes(provider.id)}
+                                        onChange={() => toggleProvider(provider.id)}
+                                        className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                    />
+                                    {provider.label}
+                                </label>
+                            ))}
+                        </div>
+                        <label className="flex items-center gap-2 text-xs text-slate-300">
+                            <input
+                                type="checkbox"
+                                checked={form.balanceByDailyLimit}
+                                onChange={(e) => setForm((f) => ({ ...f, balanceByDailyLimit: e.target.checked }))}
+                                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                            />
+                            Balance sends across providers based on daily limits
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-slate-300">
+                            <input
+                                type="checkbox"
+                                checked={form.sendImmediately}
+                                onChange={(e) => setForm((f) => ({ ...f, sendImmediately: e.target.checked }))}
+                                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                            />
+                            Send immediately after campaign creation
                         </label>
                     </div>
 

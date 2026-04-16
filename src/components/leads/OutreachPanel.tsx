@@ -33,6 +33,14 @@ interface GeneratedEmail {
 }
 
 type SendStatus = 'idle' | 'generating' | 'preview' | 'sending' | 'done';
+type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
+const OUTREACH_PROVIDER_OPTIONS: { id: OutreachProvider; label: string }[] = [
+  { id: 'brevo', label: 'Brevo' },
+  { id: 'resend', label: 'Resend' },
+  { id: 'sendgrid', label: 'SendGrid' },
+  { id: 'zoho', label: 'Zoho Mail' },
+  { id: 'gmail', label: 'Gmail' },
+];
 
 const TONES: { id: string; label: string; Icon: typeof Briefcase }[] = [
   { id: 'professional', label: 'Professional', Icon: Briefcase },
@@ -61,6 +69,8 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [editingIdx,    setEditingIdx   ] = useState<number | null>(null);
   const [sendResults,   setSendResults  ] = useState<Array<{ name: string; status: 'sent' | 'queued' | 'failed'; error?: string }>>([]);
   const [queueOnly,     setQueueOnly    ] = useState(false);
+  const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['brevo']);
+  const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(true);
 
   // Leads that can receive auto-outreach (have email)
   const emailable = leads.filter(l => l?.qualification?.canAutoSend && l?.email);
@@ -139,6 +149,9 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
       if (!lead?.email) continue;
 
       try {
+        const providerForLead = selectedProviders.length === 0
+          ? 'brevo'
+          : selectedProviders[i % selectedProviders.length];
         const res = await fetch('/api/outreach/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -153,6 +166,9 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             score:       lead.qualification?.score || 0,
             fromAddress: fromAddress || undefined,
             queue:       queueOnly,
+            preferredProvider: providerForLead,
+            deliveryProviders: selectedProviders,
+            balanceByDailyLimit,
           }),
         });
         const data = await res.json();
@@ -290,8 +306,43 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
               </button>
               <div>
                 <p className="text-xs font-bold text-white">{queueOnly ? 'Queue only' : 'Send immediately'}</p>
-                <p className="text-[10px] text-slate-500">{queueOnly ? 'Review in CRM before sending' : 'Send via Zoho Mail now'}</p>
+                <p className="text-[10px] text-slate-500">{queueOnly ? 'Review in CRM before sending' : 'Send now using selected providers'}</p>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Outreach Providers</p>
+              <div className="grid grid-cols-2 gap-2">
+                {OUTREACH_PROVIDER_OPTIONS.map((provider) => {
+                  const checked = selectedProviders.includes(provider.id);
+                  return (
+                    <label key={provider.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          setSelectedProviders((prev) => {
+                            if (e.target.checked) return [...prev, provider.id];
+                            const next = prev.filter((p) => p !== provider.id);
+                            return next.length > 0 ? next : [provider.id];
+                          });
+                        }}
+                        className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                      />
+                      <span className="truncate">{provider.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <label className="flex items-center gap-2 text-[10px] text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={balanceByDailyLimit}
+                  onChange={(e) => setBalanceByDailyLimit(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                />
+                Balance by provider daily limits
+              </label>
             </div>
 
             {/* Generate button */}
