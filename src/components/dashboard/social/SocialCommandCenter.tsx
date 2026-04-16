@@ -40,6 +40,16 @@ interface WatchlistItem {
     is_active: boolean;
 }
 
+function isMissingRelationOrCache(error: unknown, relation: string): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const maybeError = error as { code?: string; message?: string };
+    const message = String(maybeError.message || '');
+    return (
+        (maybeError.code === '42P01' && message.includes(relation)) ||
+        (maybeError.code === 'PGRST205' && message.includes(relation))
+    );
+}
+
 export default function SocialCommandCenter() {
     const { currentTenant } = useTenant();
     const [bookmarks, setBookmarks] = useState<BookmarkRow[]>([]);
@@ -65,16 +75,28 @@ export default function SocialCommandCenter() {
     const [isAddingBookmark, setIsAddingBookmark] = useState(false);
     const [isAddingWatchlist, setIsAddingWatchlist] = useState(false);
     const [scrapingId, setScrapingId] = useState<string | null>(null);
+    const [featureWarning, setFeatureWarning] = useState<string | null>(null);
 
     const loadData = async () => {
         if (!currentTenant?.id) return;
         setLoading(true);
+        setFeatureWarning(null);
         try {
             const [bmRes, wlRes] = await Promise.all([
                 supabase.from('social_bookmarks').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
                 supabase.from('social_watchlist').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
             ]);
 
+            if (bmRes.error || wlRes.error) {
+                const bookmarksMissing = isMissingRelationOrCache(bmRes.error, 'social_bookmarks');
+                const watchlistMissing = isMissingRelationOrCache(wlRes.error, 'social_watchlist');
+                if (bookmarksMissing || watchlistMissing) {
+                    setBookmarks([]);
+                    setWatchlist([]);
+                    setFeatureWarning('Social command tables are not available in this database yet. Apply latest social migrations.');
+                    return;
+                }
+            }
             if (bmRes.error) throw bmRes.error;
             if (wlRes.error) throw wlRes.error;
 
@@ -190,6 +212,11 @@ export default function SocialCommandCenter() {
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* BOOKMARKS SECTION */}
             <section className="space-y-4">
+                {featureWarning && (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                        {featureWarning}
+                    </div>
+                )}
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">

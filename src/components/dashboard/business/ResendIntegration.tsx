@@ -12,11 +12,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 
 export default function ResendIntegration() {
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [isSaving, setIsSaving] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
@@ -27,30 +28,25 @@ export default function ResendIntegration() {
     });
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.id && currentTenant?.id) {
             void checkIntegrationStatus();
         }
-    }, [user?.id]);
+    }, [user?.id, currentTenant?.id]);
 
     const checkIntegrationStatus = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setStatus('loading');
         try {
-            const { data, error } = await supabase
-                .from('integrations')
-                .select('config, enabled')
-                .eq('user_id', user.id)
-                .eq('type', 'resend')
-                .maybeSingle();
+            const res = await fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(currentTenant.id)}&provider=resend`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load Resend status');
 
-            if (error) throw error;
-
-            if (data?.enabled) {
+            if (data.connected) {
                 setStatus('connected');
                 setConfig({
                     apiKey: '••••••••••••••••', // Masked for UI
-                    fromEmail: data.config.fromEmail || ''
+                    fromEmail: data.config?.fromEmail || ''
                 });
             } else {
                 setStatus('idle');
@@ -63,7 +59,7 @@ export default function ResendIntegration() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsSaving(true);
         try {
@@ -71,20 +67,21 @@ export default function ResendIntegration() {
                 throw new Error('All fields are required');
             }
 
-            const { error } = await supabase
-                .from('integrations')
-                .upsert({
-                    user_id: user.id,
-                    type: 'resend',
-                    name: 'Resend',
-                    enabled: true,
-                    config: {
-                        apiKey: config.apiKey === '••••••••••••••••' ? undefined : config.apiKey,
-                        fromEmail: config.fromEmail
-                    }
-                }, { onConflict: 'user_id,type' });
-
-            if (error) throw error;
+            const payloadApiKey = config.apiKey === '••••••••••••••••' ? '' : config.apiKey;
+            const res = await fetch('/api/integrations/email-providers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'resend',
+                    apiKey: payloadApiKey,
+                    fromEmail: config.fromEmail
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to save Resend integration');
+            }
 
             toast.success('Resend account connected successfully');
             setStatus('connected');
@@ -97,17 +94,22 @@ export default function ResendIntegration() {
     };
 
     const handleDisconnect = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsDisconnecting(true);
         try {
-            const { error } = await supabase
-                .from('integrations')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('type', 'resend');
-
-            if (error) throw error;
+            const res = await fetch('/api/integrations/email-providers', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'resend'
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to disconnect');
+            }
 
             setStatus('idle');
             setConfig({ apiKey: '', fromEmail: '' });

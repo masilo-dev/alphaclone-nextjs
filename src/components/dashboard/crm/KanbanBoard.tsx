@@ -32,8 +32,10 @@ import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
 const KANBAN_STAGES = [
   { id: 'lead', title: 'Discovered', color: 'bg-slate-100 dark:bg-slate-800' },
   { id: 'qualified', title: 'Qualified', color: 'bg-blue-50 dark:bg-blue-900/20' },
+  { id: 'proposal', title: 'Proposal', color: 'bg-indigo-50 dark:bg-indigo-900/20' },
   { id: 'negotiation', title: 'Negotiation', color: 'bg-amber-50 dark:bg-amber-900/20' },
   { id: 'won', title: 'Closed Won', color: 'bg-emerald-50 dark:bg-emerald-900/20' },
+  { id: 'lost', title: 'Closed Lost', color: 'bg-rose-50 dark:bg-rose-900/20' },
 ];
 
 /** ------------------------------------------------------------------
@@ -240,7 +242,7 @@ export default function KanbanBoard() {
     if (error) {
         toast.error('Failed to load CRM pipeline');
     } else {
-        // Map any legacy stages to our 4 core columns for visual simplicity
+        // Map any unknown/legacy stages to the first column so they remain visible.
         const mappedLeads = dbLeads.map(l => {
             if (!KANBAN_STAGES.find(c => c.id === l.stage)) {
                 return { ...l, stage: 'lead' }; // Default to first column if unknown
@@ -387,7 +389,7 @@ export default function KanbanBoard() {
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
-            <div className="flex md:grid md:grid-cols-4 gap-3 md:gap-4 min-h-[280px] snap-x snap-mandatory md:snap-none pb-4 items-stretch">
+            <div className="flex md:grid md:grid-cols-6 gap-3 md:gap-4 min-h-[280px] snap-x snap-mandatory md:snap-none pb-4 items-stretch">
                 <SortableContext items={columns.map(c => c.id)}>
                     {columns.map((col) => (
                         <KanbanColumn
