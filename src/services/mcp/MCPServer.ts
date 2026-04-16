@@ -20,6 +20,8 @@ function isUuidString(value: unknown): value is string {
 
 const DEAL_STAGES = new Set(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']);
 const TASK_PRIORITIES = new Set(['low', 'medium', 'high', 'urgent']);
+const TASK_STATUSES = new Set(['ideas', 'todo', 'in_progress', 'review', 'completed', 'cancelled']);
+const QUOTE_STATUSES = new Set(['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'converted']);
 const LINKEDIN_REACTIONS = new Set(['LIKE', 'PRAISE', 'MAYBE', 'EMPATHY', 'INTEREST', 'APPRECIATION']);
 
 const MCP_GENERIC_OPERATION_ERROR =
@@ -41,6 +43,20 @@ function supabaseErrorToMcpClientError(toolName: string, message: string): Error
     );
   }
   return new Error(MCP_GENERIC_OPERATION_ERROR);
+}
+
+function scoreDealFromSignals(stage: string, value: number, ageDays: number): number {
+  let score = 3;
+  if (stage === 'qualified') score += 2;
+  if (stage === 'proposal') score += 3;
+  if (stage === 'negotiation') score += 4;
+  if (stage === 'closed_won') score = 10;
+  if (stage === 'closed_lost') score = 1;
+  if (value >= 5000) score += 1;
+  if (value >= 20000) score += 1;
+  if (ageDays > 45) score -= 2;
+  if (ageDays > 90) score -= 1;
+  return Math.max(1, Math.min(10, score));
 }
 
 /**
@@ -142,12 +158,15 @@ class AlphaCloneMCPServer {
               name: { type: 'string' },
               email: { type: 'string' },
               phone: { type: 'string' },
-              company: { type: 'string' },
+              industry: { type: 'string' },
+              website: { type: 'string' },
               location: { type: 'string', description: 'Physical address or location' },
-              status: { type: 'string', description: 'lead | prospect | active | churned' },
+              sales_stage: { type: 'string', description: 'lead | prospect | customer | lost' },
+              value: { type: 'number', description: 'Estimated client value' },
               source: { type: 'string' },
+              notes: { type: 'string' },
             },
-            required: ['tenant_id', 'name'],
+            required: ['name'],
           },
         },
         // ── Leads Pipeline ─────────────────────────────────────────────────
@@ -162,7 +181,7 @@ class AlphaCloneMCPServer {
               stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
               limit: { type: 'number', description: 'Max records (default 20, max 100)' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -181,7 +200,7 @@ class AlphaCloneMCPServer {
               source: { type: 'string', description: 'Where this lead came from (e.g. AI Agent, Referral, LinkedIn)' },
               notes: { type: 'string', description: 'Qualifying notes about this lead' },
             },
-            required: ['tenant_id', 'contact_name'],
+            required: ['contact_name'],
           },
         },
         {
@@ -248,6 +267,19 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'send_invoice',
+          description: 'Mark an invoice as sent and queue email delivery metadata for follow-up tracking.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              invoice_id: { type: 'string', description: 'UUID from create_invoice or invoice list' },
+              recipient_email: { type: 'string', description: 'Optional override email for recipient' },
+            },
+            required: ['invoice_id'],
+          },
+        },
+        {
           name: 'create_bulk_email_campaign',
           description: 'Draft and optionally send a personalized bulk email campaign using an external provider (Resend/Brevo/Sendgrid). Use this to send mass emails to lists.',
           inputSchema: {
@@ -291,11 +323,12 @@ class AlphaCloneMCPServer {
               page_id: { type: 'string', description: 'Connected Facebook Page ID' },
               caption: { type: 'string' },
               link_url: { type: 'string' },
+              media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs' },
               hashtags: { type: 'array', items: { type: 'string' } },
               publish_now: { type: 'boolean' },
               scheduled_at: { type: 'string', description: 'ISO datetime for scheduled publish' },
             },
-            required: ['tenant_id', 'page_id', 'caption'],
+            required: ['page_id', 'caption'],
           },
         },
         {
@@ -308,11 +341,12 @@ class AlphaCloneMCPServer {
               page_id: { type: 'string' },
               caption: { type: 'string' },
               link_url: { type: 'string' },
+              media_urls: { type: 'array', items: { type: 'string' } },
               hashtags: { type: 'array', items: { type: 'string' } },
               publish_now: { type: 'boolean' },
               scheduled_at: { type: 'string' },
             },
-            required: ['tenant_id', 'page_id', 'caption'],
+            required: ['page_id', 'caption'],
           },
         },
         {
@@ -323,9 +357,11 @@ class AlphaCloneMCPServer {
             properties: {
               tenant_id: { type: 'string' },
               text: { type: 'string', description: 'Post text content' },
+              media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs for scheduled publishing' },
               publish_now: { type: 'boolean' },
+              scheduled_at: { type: 'string', description: 'ISO datetime for scheduled publish' },
             },
-            required: ['tenant_id', 'text'],
+            required: ['text'],
           },
         },
         {
@@ -410,7 +446,7 @@ class AlphaCloneMCPServer {
               assigned_to: { type: 'string' },
               completed: { type: 'boolean', description: 'If true, only completed tasks; if false, only open tasks.' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -430,7 +466,25 @@ class AlphaCloneMCPServer {
               due_date: { type: 'string', description: 'ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)' },
               priority: { type: 'string', description: 'low | medium | high | urgent' },
             },
-            required: ['tenant_id', 'title'],
+            required: ['title'],
+          },
+        },
+        {
+          name: 'update_task',
+          description: 'Update task fields such as status, due date, assignee, title, and priority.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              task_id: { type: 'string', description: 'Task UUID from get_tasks' },
+              title: { type: 'string' },
+              description: { type: 'string' },
+              assigned_to: { type: 'string', description: 'Optional assignee user UUID' },
+              due_date: { type: 'string', description: 'ISO 8601 datetime or date string' },
+              priority: { type: 'string', description: 'low | medium | high | urgent' },
+              status: { type: 'string', description: 'ideas | todo | in_progress | review | completed | cancelled' },
+            },
+            required: ['task_id'],
           },
         },
         // ── Finance & Expenses ─────────────────────────────────────────────
@@ -552,6 +606,63 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'create_quote',
+          description: 'Create a quote/proposal for a contact or deal in this workspace.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              name: { type: 'string', description: 'Quote title' },
+              contact_id: { type: 'string', description: 'Optional contact/client UUID' },
+              deal_id: { type: 'string', description: 'Optional deal UUID' },
+              currency: { type: 'string', description: 'Default USD' },
+              valid_for_days: { type: 'number', description: 'Default 30' },
+              notes: { type: 'string' },
+              terms_and_conditions: { type: 'string' },
+              status: { type: 'string', description: 'draft | sent | viewed | accepted | rejected | expired | converted' },
+            },
+            required: ['name'],
+          },
+        },
+        {
+          name: 'auto_create_lead_from_message',
+          description: 'Create a lead from an existing inbound message in one call.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              message_id: { type: 'string', description: 'Message UUID from inbox/history' },
+              business_name: { type: 'string', description: 'Optional override business/contact name' },
+              source: { type: 'string', description: 'Default Inbound Message' },
+            },
+            required: ['message_id'],
+          },
+        },
+        {
+          name: 'score_deal',
+          description: 'Score a deal from 1-10 based on stage, value, and freshness, then save score in metadata.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              deal_id: { type: 'string', description: 'Deal UUID from get_deals' },
+            },
+            required: ['deal_id'],
+          },
+        },
+        {
+          name: 'voice_action_router',
+          description: 'Convert a plain-language voice command into an actionable MCP instruction payload.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              command: { type: 'string', description: 'Natural language command captured from voice' },
+            },
+            required: ['command'],
+          },
+        },
+        {
           name: 'write_audit_log',
           description:
             'Insert a row into audit_logs (tenant-scoped). Use to persist agent notes, integration events, or any structured record the user asked to store.',
@@ -664,10 +775,36 @@ class AlphaCloneMCPServer {
         case 'create_client': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { name, email, phone, company, location, status = 'lead', source = 'MCP Agent' } = a;
+          const owner_id = this.requireProfileUser(a);
+          const {
+            name,
+            email,
+            phone,
+            industry,
+            website,
+            location,
+            sales_stage = 'lead',
+            value = 0,
+            source = 'MCP Agent',
+            notes,
+          } = a;
           const { data, error } = await supabaseAdmin
             .from('business_clients')
-            .insert({ tenant_id, name, email, phone, company, location: location || null, status, source })
+            .insert({
+              tenant_id,
+              name,
+              email: email || null,
+              phone: phone || null,
+              industry: industry || null,
+              website: website || null,
+              location: location || null,
+              sales_stage,
+              value: Number(value) || 0,
+              description: notes || null,
+              custom_fields: { source },
+              is_active: true,
+              owner_id,
+            })
             .select('id, name, email')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_client', error.message);
@@ -707,13 +844,16 @@ class AlphaCloneMCPServer {
         case 'create_lead': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const owner_id = this.requireProfileUser(a);
           const { business_name, contact_name, email, phone, industry, location, source = 'AI Agent', notes } = a;
           const primaryName = (business_name || contact_name || '').trim();
           if (!primaryName) throw new Error('create_lead requires contact_name or business_name');
-          const { data, error } = await supabaseAdmin
+
+          const primaryInsert = await supabaseAdmin
             .from('leads')
             .insert({
               tenant_id,
+              owner_id,
               business_name: primaryName,
               email: email || null,
               phone: phone || null,
@@ -726,6 +866,29 @@ class AlphaCloneMCPServer {
             })
             .select('id, business_name, email, status')
             .single();
+
+          // Fallback for legacy schemas where one of status/stage/owner_id may differ.
+          let data = primaryInsert.data;
+          let error = primaryInsert.error;
+          if (error) {
+            const fallbackInsert = await supabaseAdmin
+              .from('leads')
+              .insert({
+                tenant_id,
+                business_name: primaryName,
+                email: email || null,
+                phone: phone || null,
+                industry: industry || '',
+                location: location || null,
+                source,
+                notes: notes || null,
+              })
+              .select('id, business_name, email, status')
+              .single();
+            data = fallbackInsert.data;
+            error = fallbackInsert.error;
+          }
+
           if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
           result = {
             content: [
@@ -925,6 +1088,55 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        // ── update_task ────────────────────────────────────────────────────
+        case 'update_task': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { task_id, title, description, assigned_to, due_date, priority, status } = a;
+
+          if (!isUuidString(task_id)) {
+            throw new Error('task_id must be a valid task UUID from get_tasks');
+          }
+          if (assigned_to != null && assigned_to !== '' && !isUuidString(assigned_to)) {
+            throw new Error('assigned_to must be a valid user UUID or omitted');
+          }
+          if (priority != null && priority !== '' && !TASK_PRIORITIES.has(String(priority))) {
+            throw new Error('priority must be one of: low, medium, high, urgent');
+          }
+          if (status != null && status !== '' && !TASK_STATUSES.has(String(status))) {
+            throw new Error('status must be one of: ideas, todo, in_progress, review, completed, cancelled');
+          }
+
+          const update: Record<string, any> = {};
+          if (typeof title === 'string') update.title = title.trim();
+          if (description !== undefined) update.description = description ?? null;
+          if (assigned_to !== undefined) update.assigned_to = assigned_to || null;
+          if (due_date !== undefined) update.due_date = due_date || null;
+          if (priority !== undefined) update.priority = priority;
+          if (status !== undefined) {
+            update.status = status;
+            if (status === 'completed') {
+              update.completed_at = new Date().toISOString();
+            }
+          }
+
+          if (Object.keys(update).length === 0) {
+            throw new Error('Provide at least one field to update');
+          }
+
+          const { data, error } = await supabaseAdmin
+            .from('tasks')
+            .update(update)
+            .eq('tenant_id', tenant_id)
+            .eq('id', task_id.trim())
+            .select('id, title, status, priority, due_date, assigned_to, completed_at, updated_at')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('update_task', error.message);
+
+          result = { content: [{ type: 'text', text: `Task updated: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
         // ── create_bulk_email_campaign ─────────────────────────────────────
         case 'create_bulk_email_campaign': {
           const a = args as Record<string, any>;
@@ -1080,9 +1292,10 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { page_id, caption, link_url, hashtags = [], publish_now = false, scheduled_at } = a;
+          const { page_id, caption, link_url, media_urls = [], hashtags = [], publish_now = false, scheduled_at } = a;
           if (typeof page_id !== 'string' || !page_id.trim()) throw new Error('page_id is required');
           if (typeof caption !== 'string' || !caption.trim()) throw new Error('caption is required');
+          const imageUrl = Array.isArray(media_urls) && typeof media_urls[0] === 'string' ? media_urls[0] : null;
 
           const { data: integration, error: integrationError } = await supabaseAdmin
             .from('facebook_integrations')
@@ -1101,11 +1314,16 @@ class AlphaCloneMCPServer {
           let facebookPostId: string | null = null;
 
           if (publish_now) {
-            const graph = new URL(`https://graph.facebook.com/v19.0/${page_id.trim()}/feed`);
+            const graph = new URL(`https://graph.facebook.com/v19.0/${page_id.trim()}/${imageUrl ? 'photos' : 'feed'}`);
             graph.searchParams.set('access_token', integration.page_access_token);
             const body = new URLSearchParams();
-            body.set('message', caption.trim());
-            if (typeof link_url === 'string' && link_url) body.set('link', link_url);
+            if (imageUrl) {
+              body.set('url', imageUrl);
+              body.set('caption', caption.trim());
+            } else {
+              body.set('message', caption.trim());
+              if (typeof link_url === 'string' && link_url) body.set('link', link_url);
+            }
             const resp = await fetch(graph.toString(), {
               method: 'POST',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1129,6 +1347,7 @@ class AlphaCloneMCPServer {
               caption: caption.trim(),
               platforms: ['facebook'],
               link_url: typeof link_url === 'string' && link_url ? link_url : null,
+              media_urls: Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [],
               hashtags: Array.isArray(hashtags) ? hashtags : [],
               status,
               scheduled_at: publish_now ? null : (typeof scheduled_at === 'string' ? scheduled_at : new Date().toISOString()),
@@ -1148,7 +1367,7 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { text, publish_now = true } = a;
+          const { text, media_urls = [], publish_now = true, scheduled_at } = a;
           if (typeof text !== 'string' || !text.trim()) {
             throw new Error('text is required');
           }
@@ -1170,8 +1389,10 @@ class AlphaCloneMCPServer {
             throw new Error('LinkedIn connection is missing w_member_social scope.');
           }
 
+          const normalizedMediaUrls = Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [];
+          const immediatePublish = Boolean(publish_now) && normalizedMediaUrls.length === 0;
           let linkedinPostUrn: string | null = null;
-          if (publish_now) {
+          if (immediatePublish) {
             const payload = {
               author: li.linkedin_person_urn,
               lifecycleState: 'PUBLISHED',
@@ -1207,14 +1428,44 @@ class AlphaCloneMCPServer {
               user_id,
               caption: text.trim(),
               platforms: ['linkedin'],
-              status: publish_now ? 'published' : 'draft',
-              published_at: publish_now ? new Date().toISOString() : null,
+              media_urls: normalizedMediaUrls,
+              status: immediatePublish ? 'published' : 'scheduled',
+              scheduled_at: immediatePublish ? null : (typeof scheduled_at === 'string' && scheduled_at ? scheduled_at : new Date().toISOString()),
+              published_at: immediatePublish ? new Date().toISOString() : null,
               analytics: linkedinPostUrn ? { linkedin_post_urn: linkedinPostUrn } : {},
             })
             .select('id, status, published_at, analytics')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
-          result = { content: [{ type: 'text', text: `LinkedIn post created: ${JSON.stringify(data)}` }] };
+          const publishHint = !immediatePublish && normalizedMediaUrls.length > 0
+            ? ' LinkedIn image posts were scheduled for publisher processing.'
+            : '';
+          result = { content: [{ type: 'text', text: `LinkedIn post created: ${JSON.stringify(data)}.${publishHint}` }] };
+          break;
+        }
+
+        // ── send_invoice ────────────────────────────────────────────────────
+        case 'send_invoice': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { invoice_id } = a;
+          if (!isUuidString(invoice_id)) {
+            throw new Error('invoice_id must be a valid invoice UUID');
+          }
+
+          const { data, error } = await supabaseAdmin
+            .from('business_invoices')
+            .update({
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id.trim())
+            .select('id, invoice_number, status, sent_at')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('send_invoice', error.message);
+          result = { content: [{ type: 'text', text: `Invoice marked as sent: ${JSON.stringify(data)}` }] };
           break;
         }
 
@@ -1582,6 +1833,222 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'create_quote': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const created_by = this.requireProfileUser(a);
+          const {
+            name,
+            contact_id,
+            deal_id,
+            currency = 'USD',
+            valid_for_days = 30,
+            notes,
+            terms_and_conditions,
+            status = 'draft',
+          } = a;
+
+          if (typeof name !== 'string' || !name.trim()) {
+            throw new Error('name is required');
+          }
+          if (contact_id != null && contact_id !== '' && !isUuidString(contact_id)) {
+            throw new Error('contact_id must be a valid UUID or omitted');
+          }
+          if (deal_id != null && deal_id !== '' && !isUuidString(deal_id)) {
+            throw new Error('deal_id must be a valid UUID or omitted');
+          }
+          if (!QUOTE_STATUSES.has(String(status))) {
+            throw new Error('status must be one of: draft, sent, viewed, accepted, rejected, expired, converted');
+          }
+
+          const validUntil = new Date();
+          validUntil.setDate(validUntil.getDate() + Math.max(1, Number(valid_for_days) || 30));
+
+          const { data, error } = await supabaseAdmin
+            .from('quotes')
+            .insert({
+              tenant_id,
+              created_by,
+              name: name.trim(),
+              contact_id: contact_id || null,
+              deal_id: deal_id || null,
+              currency: String(currency || 'USD').toUpperCase(),
+              valid_until: validUntil.toISOString().split('T')[0],
+              notes: notes || null,
+              terms_and_conditions: terms_and_conditions || null,
+              status,
+            })
+            .select('id, quote_number, name, status, valid_until, currency')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('create_quote', error.message);
+          result = { content: [{ type: 'text', text: `Quote created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        case 'auto_create_lead_from_message': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const owner_id = this.requireProfileUser(a);
+          const { message_id, business_name, source = 'Inbound Message' } = a;
+          if (!isUuidString(message_id)) {
+            throw new Error('message_id must be a valid message UUID');
+          }
+
+          const { data: msg, error: msgErr } = await supabaseAdmin
+            .from('messages')
+            .select('id, text, sender_name, sender_id, created_at')
+            .eq('tenant_id', tenant_id)
+            .eq('id', message_id.trim())
+            .single();
+          if (msgErr || !msg) throw supabaseErrorToMcpClientError('auto_create_lead_from_message', msgErr?.message || 'Message not found');
+
+          const inferredName = (String(business_name || msg.sender_name || '').trim() || 'Inbound Lead').slice(0, 200);
+          const leadInsert = await supabaseAdmin
+            .from('leads')
+            .insert({
+              tenant_id,
+              owner_id,
+              business_name: inferredName,
+              stage: 'lead',
+              status: 'new',
+              source,
+              notes: `Auto-created from message ${msg.id}: ${String(msg.text || '').slice(0, 1200)}`,
+            })
+            .select('id, business_name, stage, source, created_at')
+            .single();
+
+          let leadData: any = leadInsert.data;
+          let leadError = leadInsert.error;
+          if (leadError) {
+            const fallback = await supabaseAdmin
+              .from('leads')
+              .insert({
+                tenant_id,
+                business_name: inferredName,
+                source,
+                notes: `Auto-created from message ${msg.id}: ${String(msg.text || '').slice(0, 1200)}`,
+              })
+              .select('id, business_name, created_at')
+              .single();
+            leadData = fallback.data;
+            leadError = fallback.error;
+          }
+          if (leadError) throw supabaseErrorToMcpClientError('auto_create_lead_from_message', leadError.message);
+
+          result = { content: [{ type: 'text', text: `Lead auto-created from message: ${JSON.stringify(leadData)}` }] };
+          break;
+        }
+
+        case 'score_deal': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { deal_id } = a;
+          if (!isUuidString(deal_id)) {
+            throw new Error('deal_id must be a valid deal UUID from get_deals');
+          }
+
+          const { data: deal, error: dealErr } = await supabaseAdmin
+            .from('deals')
+            .select('id, stage, value, created_at, metadata')
+            .eq('tenant_id', tenant_id)
+            .eq('id', deal_id.trim())
+            .single();
+          if (dealErr || !deal) throw supabaseErrorToMcpClientError('score_deal', dealErr?.message || 'Deal not found');
+
+          const createdAtMs = new Date(deal.created_at || Date.now()).getTime();
+          const ageDays = Math.max(0, Math.floor((Date.now() - createdAtMs) / (1000 * 60 * 60 * 24)));
+          const score = scoreDealFromSignals(String(deal.stage || 'lead'), Number(deal.value || 0), ageDays);
+          const reasons = [
+            `stage=${deal.stage || 'lead'}`,
+            `value=${Number(deal.value || 0)}`,
+            `age_days=${ageDays}`,
+          ];
+
+          const nextMetadata = {
+            ...(deal.metadata && typeof deal.metadata === 'object' ? deal.metadata : {}),
+            ai_deal_score: score,
+            ai_deal_score_reasons: reasons,
+            ai_deal_scored_at: new Date().toISOString(),
+          };
+
+          const { data: updated, error: updErr } = await supabaseAdmin
+            .from('deals')
+            .update({ metadata: nextMetadata })
+            .eq('tenant_id', tenant_id)
+            .eq('id', deal.id)
+            .select('id, name, stage, value, metadata')
+            .single();
+          if (updErr) throw supabaseErrorToMcpClientError('score_deal', updErr.message);
+          result = { content: [{ type: 'text', text: `Deal scored ${score}/10: ${JSON.stringify(updated)}` }] };
+          break;
+        }
+
+        case 'voice_action_router': {
+          const a = args as Record<string, any>;
+          this.requireTenant(a);
+          const { command } = a;
+          if (typeof command !== 'string' || !command.trim()) {
+            throw new Error('command is required');
+          }
+
+          const input = command.toLowerCase();
+          let route: Record<string, any> = { tool: 'none', arguments: {}, confidence: 0.35 };
+          if (input.includes('task') || input.includes('todo') || input.includes('to do')) {
+            route = {
+              tool: 'create_task',
+              arguments: { title: command.trim() },
+              confidence: 0.72,
+            };
+          } else if (input.includes('lead')) {
+            route = {
+              tool: 'create_lead',
+              arguments: { contact_name: command.trim() },
+              confidence: 0.68,
+            };
+          } else if (input.includes('quote') || input.includes('proposal')) {
+            route = {
+              tool: 'create_quote',
+              arguments: { name: command.trim() },
+              confidence: 0.67,
+            };
+          } else if (input.includes('invoice') && (input.includes('send') || input.includes('mark sent'))) {
+            route = {
+              tool: 'send_invoice',
+              arguments: {},
+              confidence: 0.62,
+              note: 'Provide invoice_id to execute.',
+            };
+          } else if (input.includes('invoice')) {
+            route = {
+              tool: 'create_invoice',
+              arguments: {},
+              confidence: 0.6,
+              note: 'Provide client_id, due_date, and total to execute.',
+            };
+          } else if (input.includes('facebook') || input.includes('linkedin') || input.includes('post')) {
+            route = {
+              tool: 'create_social_post',
+              arguments: { caption: command.trim() },
+              confidence: 0.58,
+              note: 'Provide page_id (Facebook) or use create_linkedin_post with text.',
+            };
+          }
+
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  command,
+                  normalized_route: route,
+                  instruction: 'Call the suggested MCP tool with completed required arguments.',
+                }, null, 2),
+              },
+            ],
+          };
+          break;
+        }
+
         // ── plan_social_calendar ───────────────────────────────────────────
         case 'plan_social_calendar': {
           const a = args as Record<string, any>;
@@ -1744,7 +2211,7 @@ Each topic should be a specific, professional title for a long-form article.
         }
 
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_leads, create_lead, update_lead_status, get_deals, create_deal, create_task, get_tasks, get_projects, update_project_status, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_invoice, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_task, update_task, get_tasks, get_projects, update_project_status, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────
