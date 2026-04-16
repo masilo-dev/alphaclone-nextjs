@@ -56,13 +56,18 @@ export async function GET(req: NextRequest) {
         });
 
         const data = await response.json();
-        
-        if (!data.access_token || !data.refresh_token) {
-            throw new Error(data.error || 'Failed to exchange tokens');
+
+        if (!response.ok || !data.access_token) {
+            throw new Error(data.error_description || data.error || 'Failed to exchange tokens');
         }
 
-        // Initialize ZohoService to save config
+        // Initialize ZohoService to read/save config
         const zohoService = new ZohoService(userId);
+        const existingConfig = await zohoService.getConfig();
+        const refreshToken = data.refresh_token || existingConfig?.refreshToken;
+        if (!refreshToken) {
+            throw new Error('Missing refresh token from Zoho response');
+        }
         
         // Also fetch Zoho Mail account ID while we have the fresh token
         const mailHost = ZohoService.normalizeHost(hosts.mail) || hosts.mail;
@@ -89,7 +94,7 @@ export async function GET(req: NextRequest) {
 
         await zohoService.saveConfig({
             accessToken: data.access_token,
-            refreshToken: data.refresh_token,
+            refreshToken,
             expiryDate: new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString(),
             mailApiHost: mailHost,
             crmApiHost: ZohoService.normalizeHost(hosts.crm),
@@ -101,6 +106,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&success=zoho_connected`);
     } catch (err: unknown) {
         console.error('Zoho Auth Callback Error:', err);
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&error=zoho_callback_failed`);
+        const reason = err instanceof Error ? err.message : 'zoho_callback_failed';
+        return NextResponse.redirect(
+            `${appUrl}/dashboard/settings?section=booking&error=zoho_callback_failed&reason=${encodeURIComponent(reason)}`
+        );
     }
 }
