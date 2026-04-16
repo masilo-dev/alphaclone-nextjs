@@ -46,6 +46,7 @@ const DealsTab = lazy(() => import('../DealsTab'));
 const CRM_NAV_LINKS: { href: string; label: string }[] = [
     { href: '/dashboard/crm', label: 'Overview' },
     { href: '/dashboard/leads', label: 'Leads pipeline' },
+    { href: '/dashboard/leads?source=mcp', label: 'AI and MCP leads' },
     { href: '/dashboard/deals', label: 'Deals' },
     { href: '/dashboard/contacts', label: 'Contacts' },
 ];

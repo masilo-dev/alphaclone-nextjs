@@ -71,6 +71,20 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <button
                         type="button"
+                        onClick={() => router.push('/dashboard/leads')}
+                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
+                    >
+                        Leads
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/contacts')}
+                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
+                    >
+                        Contacts
+                    </button>
+                    <button
+                        type="button"
                         onClick={handleSync}
                         disabled={syncing}
                         className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-white/10 disabled:opacity-50 text-xs sm:text-sm h-10"

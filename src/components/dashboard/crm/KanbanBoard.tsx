@@ -27,6 +27,7 @@ import { Mail, Phone, MapPin, Sparkles, AlertCircle, ShieldCheck, GripVertical }
 import toast from 'react-hot-toast';
 import { Avatar } from '@/components/ui/Avatar';
 import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
+import { useSearchParams } from 'next/navigation';
 
 // Define the columns/stages based on the database
 const KANBAN_STAGES = [
@@ -230,6 +231,8 @@ export default function KanbanBoard() {
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const dragOriginStageRef = useRef<string | null>(null);
+  const searchParams = useSearchParams();
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'ai_mcp' | 'manual'>('all');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
@@ -259,6 +262,47 @@ export default function KanbanBoard() {
   }, [loadLeads]);
 
   const leadNextSteps = useMemo(() => buildLeadKanbanNextSteps(leads), [leads]);
+  const normalizedSource = useCallback((source: string | undefined) => String(source || '').trim().toLowerCase(), []);
+  const sourceBucket = useCallback((lead: Lead): 'ai_mcp' | 'manual' => {
+    const src = normalizedSource(lead.source);
+    if (src.includes('mcp') || src.includes('claude') || src.includes('ai')) return 'ai_mcp';
+    return 'manual';
+  }, [normalizedSource]);
+
+  useEffect(() => {
+    const sourceParam = String(searchParams?.get('source') || '').trim().toLowerCase();
+    if (sourceParam === 'mcp' || sourceParam === 'claude' || sourceParam === 'ai') {
+      setSourceFilter('ai_mcp');
+      return;
+    }
+    if (sourceParam === 'manual') {
+      setSourceFilter('manual');
+      return;
+    }
+    setSourceFilter('all');
+  }, [searchParams]);
+
+  const visibleLeads = useMemo(() => {
+    if (sourceFilter === 'all') return leads;
+    return leads.filter((lead) => sourceBucket(lead) === sourceFilter);
+  }, [leads, sourceFilter, sourceBucket]);
+
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    KANBAN_STAGES.forEach((stage) => {
+      counts[stage.id] = visibleLeads.filter((lead) => lead.stage === stage.id).length;
+    });
+    return counts;
+  }, [visibleLeads]);
+
+  const sourceCounts = useMemo(
+    () => ({
+      all: leads.length,
+      ai_mcp: leads.filter((lead) => sourceBucket(lead) === 'ai_mcp').length,
+      manual: leads.filter((lead) => sourceBucket(lead) === 'manual').length,
+    }),
+    [leads, sourceBucket]
+  );
 
   const activeId = activeLead?.id;
 
@@ -382,6 +426,37 @@ export default function KanbanBoard() {
             subheading="Each card should move toward a clear decision: qualify, propose, win, or exit with a reason."
             items={leadNextSteps}
         />
+        <div className="mb-4 p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Lead source view</span>
+            <button
+              onClick={() => setSourceFilter('all')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${sourceFilter === 'all' ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-300 border-slate-700'}`}
+            >
+              All ({sourceCounts.all})
+            </button>
+            <button
+              onClick={() => setSourceFilter('ai_mcp')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${sourceFilter === 'ai_mcp' ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-300 border-slate-700'}`}
+            >
+              Claude/MCP ({sourceCounts.ai_mcp})
+            </button>
+            <button
+              onClick={() => setSourceFilter('manual')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${sourceFilter === 'manual' ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-300 border-slate-700'}`}
+            >
+              Manual ({sourceCounts.manual})
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            {KANBAN_STAGES.map((stage) => (
+              <div key={stage.id} className="px-2 py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-xs text-slate-300 flex justify-between">
+                <span>{stage.title}</span>
+                <span className="font-bold text-white">{stageCounts[stage.id] || 0}</span>
+              </div>
+            ))}
+          </div>
+        </div>
         <DndContext 
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -395,7 +470,7 @@ export default function KanbanBoard() {
                         <KanbanColumn
                             key={col.id}
                             column={col}
-                            leads={leads.filter((l) => l.stage === col.id)}
+                            leads={visibleLeads.filter((l) => l.stage === col.id)}
                             onOpenLead={setDetailLead}
                         />
                     ))}
