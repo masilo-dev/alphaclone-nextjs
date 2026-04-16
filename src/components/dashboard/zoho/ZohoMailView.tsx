@@ -63,6 +63,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
     const [showRouteModal, setShowRouteModal] = useState(false);
     const [routeToEmail, setRouteToEmail] = useState('');
+    const reconnectUrl = userIdProp
+        ? `/api/auth/zoho/connect?state=${encodeURIComponent(userIdProp)}`
+        : '/api/auth/zoho/connect';
 
     // Email categorization function
     const categorizeEmail = (message: Message): 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal' => {
@@ -482,7 +485,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                         <AlertCircle size={16} />
                         <span className="font-semibold">Zoho session expired.</span>
                     </div>
-                    <a href="/api/auth/zoho/connect" className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors">Reconnect</a>
+                    <a href={reconnectUrl} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-colors">Reconnect</a>
                 </div>
             )}
             <div className="flex flex-1 overflow-hidden">

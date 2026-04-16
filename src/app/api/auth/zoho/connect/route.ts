@@ -13,7 +13,7 @@ function getAppUrl(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
     const { searchParams } = new URL(req.url);
-    const region = searchParams.get('region') || 'US';
+    const requestedRegion = searchParams.get('region');
     const state = searchParams.get('state') || ''; // user ID or secure nonce
 
     const hosts = ZohoService.getHostsByRegion(region);
@@ -40,6 +40,22 @@ export async function GET(req: NextRequest) {
 
     if (!identityState) {
         return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
+    }
+
+    let region = (requestedRegion || ENV.ZOHO_REGION || 'US').toUpperCase();
+    if (!requestedRegion) {
+        try {
+            const existing = await new ZohoService(identityState).getConfig();
+            const accountsServer = (existing?.accountsServer || '').toLowerCase();
+            if (accountsServer.includes('.zoho.eu')) region = 'EU';
+            else if (accountsServer.includes('.zoho.in')) region = 'IN';
+            else if (accountsServer.includes('.zoho.com.au')) region = 'AU';
+            else if (accountsServer.includes('.zoho.jp')) region = 'JP';
+            else if (accountsServer.includes('.zoho.ca')) region = 'CA';
+            else if (accountsServer.includes('.zoho.com')) region = 'US';
+        } catch {
+            // Fall back to default region if config lookup fails.
+        }
     }
 
     const scopes = [

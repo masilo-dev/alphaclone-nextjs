@@ -74,6 +74,7 @@ const envSchema = z.object({
     ZOHO_CLIENT_ID: z.string().optional(),
     ZOHO_CLIENT_SECRET: z.string().optional(),
     ZOHO_REDIRECT_URI: z.string().url().optional(),
+    ZOHO_REGION: z.enum(['US', 'EU', 'IN', 'AU', 'JP', 'CA']).optional(),
     ZOHO_ENCRYPTION_SECRET: z.string().length(32, 'Zoho encryption secret must be exactly 32 characters').optional(),
 
     // LinkedIn OAuth (integration connector)
@@ -168,6 +169,7 @@ function validateEnv() {
         ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID || process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID,
         ZOHO_CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET,
         ZOHO_REDIRECT_URI: process.env.ZOHO_REDIRECT_URI || process.env.NEXT_PUBLIC_ZOHO_REDIRECT_URI,
+        ZOHO_REGION: process.env.ZOHO_REGION,
         ZOHO_ENCRYPTION_SECRET: process.env.ZOHO_ENCRYPTION_SECRET || process.env.ENCRYPTION_SECRET,
 
         LINKEDIN_CLIENT_ID: process.env.LINKEDIN_CLIENT_ID || process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
