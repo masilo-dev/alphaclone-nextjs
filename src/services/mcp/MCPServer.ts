@@ -45,6 +45,22 @@ function supabaseErrorToMcpClientError(toolName: string, message: string): Error
   return new Error(MCP_GENERIC_OPERATION_ERROR);
 }
 
+function isSchemaOrRelationError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const e = error as { code?: string; message?: string };
+  const m = String(e.message || '').toLowerCase();
+  return (
+    e.code === '42703' ||
+    e.code === '42P01' ||
+    e.code === 'PGRST205' ||
+    m.includes('schema cache') ||
+    m.includes('does not exist') ||
+    m.includes('could not find') ||
+    m.includes('column') ||
+    m.includes('relation')
+  );
+}
+
 function scoreDealFromSignals(stage: string, value: number, ageDays: number): number {
   let score = 3;
   if (stage === 'qualified') score += 2;
@@ -761,12 +777,23 @@ class AlphaCloneMCPServer {
           const { status, limit = 20 } = a;
           let query = supabaseAdmin
             .from('business_clients')
-            .select('id, name, email, phone, company, status, created_at, source')
+            .select('id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at')
             .eq('tenant_id', tenant_id)
-            .limit(Math.min(limit, 100));
-          if (status) query = query.eq('status', status);
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_clients', error.message);
+            .limit(Math.min(Number(limit) || 20, 100));
+          if (status) query = query.eq('sales_stage', status);
+          let data: any;
+          let error: any;
+          ({ data, error } = await query);
+          if (error && isSchemaOrRelationError(error)) {
+            // Legacy fallback
+            let legacyQuery = supabaseAdmin
+              .from('business_clients')
+              .select('id, name, email, phone, created_at')
+              .eq('tenant_id', tenant_id)
+              .limit(Math.min(Number(limit) || 20, 100));
+            ({ data, error } = await legacyQuery);
+          }
+          if (error) throw supabaseErrorToMcpClientError('get_clients', (error as { message?: string }).message || 'Failed to fetch clients');
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -788,7 +815,7 @@ class AlphaCloneMCPServer {
             source = 'MCP Agent',
             notes,
           } = a;
-          const { data, error } = await supabaseAdmin
+          const primary = await supabaseAdmin
             .from('business_clients')
             .insert({
               tenant_id,
@@ -807,7 +834,27 @@ class AlphaCloneMCPServer {
             })
             .select('id, name, email')
             .single();
-          if (error) throw supabaseErrorToMcpClientError('create_client', error.message);
+          let data = primary.data;
+          let error = primary.error;
+          if (error && isSchemaOrRelationError(error)) {
+            const fallback = await supabaseAdmin
+              .from('business_clients')
+              .insert({
+                tenant_id,
+                name,
+                email: email || null,
+                phone: phone || null,
+                industry: industry || null,
+                website: website || null,
+                location: location || null,
+                description: notes || null,
+              })
+              .select('id, name, email')
+              .single();
+            data = fallback.data;
+            error = fallback.error;
+          }
+          if (error) throw supabaseErrorToMcpClientError('create_client', (error as { message?: string }).message || 'Failed to create client');
           result = {
             content: [
               {
@@ -827,15 +874,28 @@ class AlphaCloneMCPServer {
           let query = supabaseAdmin
             .from('leads')
             .select(
-              'id, business_name, email, phone, industry, location, status, stage, source, notes, assigned_to, created_at'
+              'id, business_name, email, phone, industry, location, status, stage, source, notes, created_at'
             )
             .eq('tenant_id', tenant_id)
             .order('created_at', { ascending: false })
             .limit(Math.min(Number(limit) || 20, 100));
           if (status) query = query.eq('status', status);
           if (stage) query = query.eq('stage', stage);
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_leads', error.message);
+          let data: any;
+          let error: any;
+          ({ data, error } = await query);
+          if (error && isSchemaOrRelationError(error)) {
+            // Legacy fallback for reduced schemas
+            let legacy = supabaseAdmin
+              .from('leads')
+              .select('id, business_name, email, phone, stage, notes, created_at')
+              .eq('tenant_id', tenant_id)
+              .order('created_at', { ascending: false })
+              .limit(Math.min(Number(limit) || 20, 100));
+            if (stage) legacy = legacy.eq('stage', stage);
+            ({ data, error } = await legacy);
+          }
+          if (error) throw supabaseErrorToMcpClientError('get_leads', (error as { message?: string }).message || 'Failed to fetch leads');
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -1575,8 +1635,20 @@ class AlphaCloneMCPServer {
           if (status) query = query.eq('status', status);
           if (from_date) query = query.gte('date', from_date);
           if (to_date) query = query.lte('date', to_date);
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_expenses', error.message);
+          let data: any;
+          let error: any;
+          ({ data, error } = await query);
+          if (error && isSchemaOrRelationError(error)) {
+            let fallback = supabase
+              .from('expenses')
+              .select('id, description, amount, category, status, created_at')
+              .eq('tenant_id', tenant_id)
+              .order('created_at', { ascending: false })
+              .limit(50);
+            if (status) fallback = fallback.eq('status', status);
+            ({ data, error } = await fallback);
+          }
+          if (error) throw supabaseErrorToMcpClientError('get_expenses', (error as { message?: string }).message || 'Failed to fetch expenses');
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
           break;
         }
@@ -1586,7 +1658,7 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { description, amount, category, date } = a;
-          const { data, error } = await supabase
+          const primary = await supabase
             .from('expenses')
             .insert({
               tenant_id,
@@ -1598,7 +1670,24 @@ class AlphaCloneMCPServer {
             })
             .select('id, description, amount, category, date')
             .single();
-          if (error) throw new Error(`create_expense failed: ${error.message}`);
+          let data: any = primary.data;
+          let error: any = primary.error;
+          if (error && isSchemaOrRelationError(error)) {
+            const fallback = await supabase
+              .from('expenses')
+              .insert({
+                tenant_id,
+                description,
+                amount,
+                category: category || 'Uncategorized',
+                status: 'pending',
+              })
+              .select('id, description, amount, category, created_at')
+              .single();
+            data = fallback.data;
+            error = fallback.error;
+          }
+          if (error) throw supabaseErrorToMcpClientError('create_expense', (error as { message?: string }).message || 'Failed to create expense');
           result = { content: [{ type: 'text', text: `Expense logged: ${JSON.stringify(data)}` }] };
           break;
         }

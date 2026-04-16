@@ -77,6 +77,15 @@ export interface RecipientData {
     [key: string]: any;
 }
 
+export interface MarketingContact {
+    id: string;
+    name: string;
+    email: string;
+    company?: string;
+    firstName?: string;
+    lastName?: string;
+}
+
 type EmailTemplateRow = {
     id: string;
     name: string;
@@ -120,6 +129,41 @@ function pickTemplateRow(rows: EmailTemplateRow[], tenantId: string | null): Ema
 }
 
 export const emailCampaignService = {
+    async getMarketingContacts(): Promise<{ contacts: MarketingContact[]; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { contacts: [], error: 'No active tenant' };
+
+            const { data, error } = await supabase
+                .from('business_clients')
+                .select('id, name, email, website')
+                .eq('tenant_id', tenantId)
+                .not('email', 'is', null)
+                .order('name', { ascending: true });
+
+            if (error) throw error;
+
+            const contacts: MarketingContact[] = (data || [])
+                .filter((c: any) => typeof c.email === 'string' && c.email.trim().length > 0)
+                .map((c: any) => {
+                    const safeName = String(c.name || '').trim();
+                    const parts = safeName.split(/\s+/).filter(Boolean);
+                    return {
+                        id: c.id,
+                        name: safeName || String(c.email),
+                        email: String(c.email).trim(),
+                        company: c.website || undefined,
+                        firstName: parts[0] || undefined,
+                        lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
+                    };
+                });
+
+            return { contacts, error: null };
+        } catch (err) {
+            return { contacts: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
     /**
      * Get all email templates
      */
@@ -347,6 +391,7 @@ export const emailCampaignService = {
             replyTo?: string;
             scheduledAt?: string;
             segmentFilter?: any;
+            metadata?: any;
         }
     ): Promise<{ campaign: EmailCampaign | null; error: string | null }> {
         try {
@@ -361,6 +406,7 @@ export const emailCampaignService = {
                     reply_to: campaignData.replyTo,
                     scheduled_at: campaignData.scheduledAt,
                     segment_filter: campaignData.segmentFilter || {},
+                    metadata: campaignData.metadata || {},
                     created_by: userId,
                     tenant_id: tenantService.getCurrentTenantId(),
                 })
@@ -398,6 +444,82 @@ export const emailCampaignService = {
             return { campaign, error: null };
         } catch (err) {
             return { campaign: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    async addRecipientsToCampaign(
+        campaignId: string,
+        contactIds: string[],
+        options?: { skipPreviouslyContacted?: boolean }
+    ): Promise<{ added: number; skipped: number; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { added: 0, skipped: 0, error: 'No active tenant' };
+            const uniqueContactIds = Array.from(new Set(contactIds.filter(Boolean)));
+            if (uniqueContactIds.length === 0) return { added: 0, skipped: 0, error: null };
+
+            const { data: contacts, error: contactsError } = await supabase
+                .from('business_clients')
+                .select('id, email')
+                .eq('tenant_id', tenantId)
+                .in('id', uniqueContactIds);
+            if (contactsError) throw contactsError;
+
+            const validContacts = (contacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0);
+            if (validContacts.length === 0) return { added: 0, skipped: uniqueContactIds.length, error: null };
+
+            const emails = validContacts.map((c: any) => String(c.email).trim().toLowerCase());
+
+            const { data: existingCampaignRecipients, error: existingCampaignError } = await supabase
+                .from('campaign_recipients')
+                .select('email')
+                .eq('campaign_id', campaignId)
+                .eq('tenant_id', tenantId);
+            if (existingCampaignError) throw existingCampaignError;
+            const existingCampaignEmails = new Set((existingCampaignRecipients || []).map((r: any) => String(r.email).trim().toLowerCase()));
+
+            let previouslyContactedEmails = new Set<string>();
+            if (options?.skipPreviouslyContacted !== false) {
+                const { data: previous, error: previousError } = await supabase
+                    .from('campaign_recipients')
+                    .select('email')
+                    .eq('tenant_id', tenantId)
+                    .in('email', emails)
+                    .in('status', ['sent', 'delivered', 'opened', 'clicked']);
+                if (previousError) throw previousError;
+                previouslyContactedEmails = new Set((previous || []).map((r: any) => String(r.email).trim().toLowerCase()));
+            }
+
+            const rowsToInsert = validContacts
+                .filter((c: any) => {
+                    const normalizedEmail = String(c.email).trim().toLowerCase();
+                    if (existingCampaignEmails.has(normalizedEmail)) return false;
+                    if (previouslyContactedEmails.has(normalizedEmail)) return false;
+                    return true;
+                })
+                .map((c: any) => ({
+                    tenant_id: tenantId,
+                    campaign_id: campaignId,
+                    contact_id: c.id,
+                    email: String(c.email).trim(),
+                    status: 'pending',
+                }));
+
+            if (rowsToInsert.length > 0) {
+                const { error: insertError } = await supabase.from('campaign_recipients').insert(rowsToInsert);
+                if (insertError) throw insertError;
+            }
+
+            const skipped = validContacts.length - rowsToInsert.length;
+            await supabase
+                .from('email_campaigns')
+                .update({ total_recipients: rowsToInsert.length + (existingCampaignRecipients?.length || 0) })
+                .eq('id', campaignId)
+                .eq('tenant_id', tenantId);
+
+            return { added: rowsToInsert.length, skipped, error: null };
+        } catch (err) {
+            return { added: 0, skipped: 0, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 
@@ -616,18 +738,22 @@ export const emailCampaignService = {
             for (const recipient of recipients) {
                 // 3a. Get contact data for personalization
                 const { data: contact } = await supabase
-                    .from('contacts')
-                    .select('*')
+                    .from('business_clients')
+                    .select('id, name, email, website, custom_fields')
                     .eq('id', recipient.contact_id)
                     .single();
+
+                const contactName = String(contact?.name || '').trim();
+                const nameParts = contactName.split(/\s+/).filter(Boolean);
 
                 const recipientData: RecipientData = {
                     id: recipient.contact_id,
                     email: recipient.email,
-                    firstName: contact?.first_name,
-                    lastName: contact?.last_name,
-                    company: contact?.company_name,
-                    ...(contact?.metadata || {})
+                    firstName: nameParts[0] || undefined,
+                    lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined,
+                    company: contact?.website || undefined,
+                    name: contactName || recipient.email,
+                    ...((contact?.custom_fields as Record<string, unknown>) || {})
                 };
 
                 const personalizedHtml = this.injectVariables(
