@@ -64,18 +64,21 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
 
         for (const recipient of recipients) {
             const { data: contact } = await admin
-                .from('contacts')
-                .select('*')
+                .from('business_clients')
+                .select('id, name, email, website, custom_fields')
                 .eq('id', recipient.contact_id)
                 .single();
+
+            const contactName = String(contact?.name || '').trim();
+            const parts = contactName.split(/\s+/).filter(Boolean);
 
             const recipientData = {
                 id: recipient.contact_id,
                 email: recipient.email,
-                firstName: contact?.first_name,
-                lastName: contact?.last_name,
-                company: contact?.company_name,
-                ...(contact?.metadata || {}),
+                firstName: parts[0] || undefined,
+                lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
+                company: contact?.website || undefined,
+                ...(contact?.custom_fields || {}),
             };
 
             const personalizedHtml = emailCampaignService.injectVariables(bodySource, recipientData);
