@@ -38,7 +38,9 @@ class OverpassRequestError extends Error {
 function hasContactInfo(r: Partial<LeadResult>): boolean {
   const phone = (r.phone || '').trim();
   const email = (r.email || '').trim();
-  return phone.length > 0 || email.length > 0;
+  const website = (r.website || '').trim();
+  const hasWebsite = website.length > 0 && /^https?:\/\//i.test(website);
+  return phone.length > 0 || email.length > 0 || hasWebsite;
 }
 
 function enrichWithContactFlag(leads: Array<Omit<LeadResult, 'hasContact'> & Partial<Pick<LeadResult, 'hasContact'>>>): LeadResult[] {
