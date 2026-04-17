@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { launchFunnelService } from '@/services/launchFunnelService';
 import VideoEditor from '../../video/VideoEditor';
 import { cn, cleanAIJSONResponse } from '../../../lib/utils';
 import toast from 'react-hot-toast';
@@ -120,6 +121,7 @@ export default function SocialMediaComposer() {
     const [aiContentType, setAiContentType] = useState<'caption' | 'facebook_200_words' | 'linkedin_article'>('caption');
     const [aiGenerating, setAiGenerating] = useState(false);
     const [topicDirection, setTopicDirection] = useState<TopicDirection | null>(null);
+    const [retryingPostId, setRetryingPostId] = useState<string | null>(null);
 
     // Upload state
     const [uploading, setUploading] = useState(false);
@@ -200,6 +202,12 @@ export default function SocialMediaComposer() {
             const rows = (linkedinRes.data || []) as LinkedInIntegration[];
             setLinkedinIntegrations(rows);
             if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
+        }
+        const hasIntegration = (pagesRes.data || []).length > 0 || (linkedinRes.data || []).length > 0;
+        if (hasIntegration && user?.id) {
+            void launchFunnelService.completeStep('integration_connected', user.id, tenant?.id, {
+                source: 'social_media_composer_load',
+            });
         }
         setLoading(false);
     }, [tenant?.id, user, selectedLinkedInMemberId]);
@@ -291,6 +299,11 @@ export default function SocialMediaComposer() {
 
         if (data.success) {
             toast.success(publishNow ? 'Post sent!' : 'Post scheduled!', { id: toastId });
+            if (!publishNow) {
+                await launchFunnelService.completeStep('first_post_scheduled', user?.id, tenant?.id, {
+                    source: 'social_composer',
+                });
+            }
             setCaption('');
             setHashtags([]);
             setHashtagInput('');
@@ -718,6 +731,40 @@ Return only the comment text.`;
         }
     };
 
+    const handleRetryPost = async (post: SocialPost) => {
+        if (!tenant?.id) return;
+        setRetryingPostId(post.id);
+        const toastId = toast.loading('Retrying publish...');
+        try {
+            const res = await fetch('/api/social/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    caption: post.caption,
+                    platforms: post.platforms || [],
+                    media_urls: post.media_urls || [],
+                    media_types: post.media_types || [],
+                    hashtags: post.hashtags || [],
+                    scheduled_at: undefined,
+                    facebook_page_id: selectedPageId || undefined,
+                    linkedin_member_id: selectedLinkedInMemberId || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Retry failed', { id: toastId });
+                return;
+            }
+            toast.success('Retry queued successfully', { id: toastId });
+            await loadData();
+        } catch {
+            toast.error('Retry failed', { id: toastId });
+        } finally {
+            setRetryingPostId(null);
+        }
+    };
+
     const charCount = caption.length;
     const fbCharLimit = 63206;
     const charWarning = charCount > 2000;
@@ -756,6 +803,30 @@ Return only the comment text.`;
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main composer */}
                     <div className="lg:col-span-2 space-y-4">
+                        {posts.some((p) => p.status === 'failed') && (
+                            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                                <p className="text-xs font-semibold text-amber-300 mb-2">
+                                    Some posts failed to publish. Review the error and retry.
+                                </p>
+                                <div className="space-y-2">
+                                    {posts.filter((p) => p.status === 'failed').slice(0, 2).map((post) => (
+                                        <div key={post.id} className="flex items-start justify-between gap-3 rounded-lg bg-slate-900/40 p-2">
+                                            <div>
+                                                <p className="text-xs text-slate-200 line-clamp-2">{post.caption}</p>
+                                                <p className="text-[11px] text-rose-300 mt-1">{post.error_message || 'Unknown publish error'}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleRetryPost(post)}
+                                                disabled={retryingPostId === post.id}
+                                                className="shrink-0 rounded-lg border border-amber-500/40 px-2.5 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50"
+                                            >
+                                                {retryingPostId === post.id ? 'Retrying...' : 'Retry'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* Caption */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">

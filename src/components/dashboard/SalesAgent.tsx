@@ -22,6 +22,7 @@ import { LeadAuditReport } from './leads/LeadAuditReport';
 import OmniLeadFinder from '../leads/OmniLeadFinder';
 import KanbanBoard from './crm/KanbanBoard';
 import AutomationBuilder from './workflows/AutomationBuilder';
+import { launchFunnelService } from '@/services/launchFunnelService';
 
 interface ParsedContact {
     name?: string;
@@ -453,6 +454,9 @@ const SalesAgent: React.FC = () => {
             },
             (result) => {
                 toast.success(`🎉 Added ${result.count} leads, created ${result.processed} clients & draft quotes!`, { duration: 5000 });
+                if (result.count > 0) {
+                    void launchFunnelService.completeStep('first_lead_found');
+                }
                 loadLeads();
                 setIsVisualSearchActive(false);
             }
@@ -645,6 +649,7 @@ const SalesAgent: React.FC = () => {
             if (dealError) throw new Error(dealError);
 
             toast.success(`✅ Deal "${name}" created!`, { id: 'create_deal' });
+            void launchFunnelService.completeStep('first_deal_created', user.id);
             loadLeads();
         } catch (error: any) {
             toast.error('Failed to create deal: ' + error.message, { id: 'create_deal' });
@@ -922,6 +927,9 @@ const SalesAgent: React.FC = () => {
             },
             (result) => {
                 toast.success(`🎉 Process complete! Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
+                if (result.count > 0) {
+                    void launchFunnelService.completeStep('first_lead_found');
+                }
                 loadLeads();
 
                 setMessages(prev => [...prev, {
