@@ -3,6 +3,7 @@
 import React from 'react';
 import { User } from '../../../types';
 import EngagingDashboard from './EngagingDashboard';
+import LaunchActivationChecklist from './LaunchActivationChecklist';
 
 interface BusinessHomeProps {
     user: User;
@@ -10,7 +11,12 @@ interface BusinessHomeProps {
 }
 
 const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
-    return <EngagingDashboard user={user} stats={stats} />;
+    return (
+        <div className="space-y-4">
+            <LaunchActivationChecklist />
+            <EngagingDashboard user={user} stats={stats} />
+        </div>
+    );
 };
 
 export default BusinessHome;

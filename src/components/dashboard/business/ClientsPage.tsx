@@ -39,6 +39,7 @@ import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import * as XLSX from 'xlsx';
+import { launchFunnelService } from '@/services/launchFunnelService';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -172,6 +173,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
         const { client, error } = await businessClientService.createClient(currentTenant.id, clientData);
         if (!error && client) {
+            void launchFunnelService.completeStep('first_contact_captured', user.id, currentTenant.id, {
+                source: 'contacts_page',
+                clientId: client.id,
+            });
             setClients([client, ...clients]);
             setShowAddModal(false);
         }
