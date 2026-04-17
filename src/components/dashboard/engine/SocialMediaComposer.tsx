@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
     Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye, Scissors,
@@ -42,6 +42,8 @@ interface SocialPost {
     error_message: string | null;
     created_at: string;
 }
+
+type TopicDirection = 'same' | 'change';
 
 interface FacebookPage {
     page_id: string;
@@ -117,6 +119,7 @@ export default function SocialMediaComposer() {
     const [aiTone, setAiTone] = useState<'professional' | 'casual' | 'engaging' | 'promotional'>('engaging');
     const [aiContentType, setAiContentType] = useState<'caption' | 'facebook_200_words' | 'linkedin_article'>('caption');
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [topicDirection, setTopicDirection] = useState<TopicDirection | null>(null);
 
     // Upload state
     const [uploading, setUploading] = useState(false);
@@ -145,6 +148,33 @@ export default function SocialMediaComposer() {
     const selectedLinkedInScopes = normalizeScopes(selectedLinkedInIntegration?.scopes || []);
     const hasSelectedLinkedInWriteScope = selectedLinkedInScopes.includes('w_member_social');
     const isSelectedLinkedInActive = !!selectedLinkedInIntegration?.is_active;
+    const recentTopicWindowDays = 5;
+
+    const recentPosts = useMemo(() => {
+        const cutoffMs = Date.now() - recentTopicWindowDays * 24 * 60 * 60 * 1000;
+        return posts.filter((post) => {
+            const createdAtMs = new Date(post.created_at).getTime();
+            return Number.isFinite(createdAtMs) && createdAtMs >= cutoffMs;
+        });
+    }, [posts]);
+
+    const recentTopicHints = useMemo(() => {
+        const normalized = new Set<string>();
+        for (const post of recentPosts) {
+            const text = String(post.caption || '').replace(/\s+/g, ' ').trim();
+            if (!text) continue;
+            const hashMatches = Array.from(text.matchAll(/#([a-zA-Z0-9_]+)/g)).map((m) => m[1].toLowerCase());
+            for (const tag of hashMatches) {
+                if (tag.length >= 3) normalized.add(`#${tag}`);
+                if (normalized.size >= 6) break;
+            }
+            if (normalized.size >= 6) break;
+            const sentence = text.split(/[.!?]/)[0]?.trim() || text.slice(0, 90).trim();
+            if (sentence.length >= 15) normalized.add(sentence.slice(0, 70));
+            if (normalized.size >= 6) break;
+        }
+        return Array.from(normalized).slice(0, 6);
+    }, [recentPosts]);
 
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
@@ -623,13 +653,25 @@ Return only the comment text.`;
 
     const generateWithAI = async () => {
         if (!aiTopic.trim()) return toast.error('Describe your post topic first');
+        if (recentPosts.length > 0 && !topicDirection) {
+            return toast.error('Choose whether to keep the same topic or change topic first.');
+        }
         setAiGenerating(true);
         try {
             const businessName = (tenant as any)?.name || 'our business';
+            const recentContext = recentTopicHints.length > 0
+                ? `Recent topics from the last ${recentTopicWindowDays} days: ${recentTopicHints.join(' | ')}.`
+                : `No reliable recent topic hints found.`;
+            const directionInstruction =
+                topicDirection === 'same'
+                    ? 'Continue with a similar topic direction and keep continuity with recent posts while avoiding exact duplicates.'
+                    : topicDirection === 'change'
+                        ? 'Change topic direction from recent posts and propose a fresh angle that is clearly different.'
+                        : 'No topic direction preference provided.';
             const promptByType: Record<typeof aiContentType, string> = {
-                caption: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
-                facebook_200_words: `Write a ${aiTone} Facebook business post for ${businessName} about: "${aiTopic}". The post must be approximately 200 words (between 180 and 220 words). Keep it clear, engaging, and practical. Include a subtle call-to-action at the end. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3"]}.`,
-                linkedin_article: `Write a ${aiTone} LinkedIn article draft for ${businessName} about: "${aiTopic}". Length 500-800 words with: a strong headline, short introduction, 3-5 section headings, actionable insights, and a concise conclusion with CTA. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3","tag4","tag5"]}.`,
+                caption: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". ${recentContext} ${directionInstruction} Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
+                facebook_200_words: `Write a ${aiTone} Facebook business post for ${businessName} about: "${aiTopic}". ${recentContext} ${directionInstruction} The post must be approximately 200 words (between 180 and 220 words). Keep it clear, engaging, and practical. Include a subtle call-to-action at the end. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3"]}.`,
+                linkedin_article: `Write a ${aiTone} LinkedIn article draft for ${businessName} about: "${aiTopic}". ${recentContext} ${directionInstruction} Length 500-800 words with: a strong headline, short introduction, 3-5 section headings, actionable insights, and a concise conclusion with CTA. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3","tag4","tag5"]}.`,
             };
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
@@ -780,9 +822,43 @@ Return only the comment text.`;
                                             </button>
                                         ))}
                                     </div>
+                                    {recentPosts.length > 0 && (
+                                        <div className="space-y-2 rounded-lg border border-violet-500/20 bg-slate-900/40 p-2.5">
+                                            <p className="text-xs text-violet-200">
+                                                Recent posts found in the last {recentTopicWindowDays} days: {recentPosts.length}
+                                            </p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <button
+                                                    onClick={() => setTopicDirection('same')}
+                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                        topicDirection === 'same'
+                                                            ? 'bg-violet-500 text-white'
+                                                            : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white'
+                                                    }`}
+                                                >
+                                                    Keep same topic flow
+                                                </button>
+                                                <button
+                                                    onClick={() => setTopicDirection('change')}
+                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                        topicDirection === 'change'
+                                                            ? 'bg-teal-500 text-slate-950'
+                                                            : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white'
+                                                    }`}
+                                                >
+                                                    Change topic
+                                                </button>
+                                            </div>
+                                            {recentTopicHints.length > 0 && (
+                                                <p className="text-[11px] text-slate-400">
+                                                    Recent topic hints: {recentTopicHints.slice(0, 3).join(' | ')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                     <button
                                         onClick={generateWithAI}
-                                        disabled={aiGenerating || !aiTopic.trim()}
+                                        disabled={aiGenerating || !aiTopic.trim() || (recentPosts.length > 0 && !topicDirection)}
                                         className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
                                     >
                                         {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}

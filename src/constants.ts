@@ -103,10 +103,11 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   {
     label: 'Acquire and nurture', href: '#', icon: Search,
     subItems: [
-      { label: 'AI Lead Finder', href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Step 1: Find leads', href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Step 2: Capture contacts', href: '/dashboard/crm?stage=customer', icon: Users },
+      { label: 'Step 3: Qualify leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
+      { label: 'Step 4: Move to deals', href: '/dashboard/deals', icon: TrendingUp },
       { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
-      { label: 'Active Leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
-      { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
       { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },
@@ -129,7 +130,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   {
     label: 'Revenue and legal', href: '#', icon: DollarSign,
     subItems: [
-      { label: 'Deal Pipeline', href: '/dashboard/deals', icon: TrendingUp },
       { label: 'Proposals and quotes', href: '/dashboard/business/quotes', icon: FileText },
       { label: 'Active Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
       { label: 'Billing Center', href: '/dashboard/business/billing', icon: DollarSign },

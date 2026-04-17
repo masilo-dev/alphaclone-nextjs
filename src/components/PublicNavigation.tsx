@@ -38,7 +38,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
         { label: 'Services', path: '/services' },
         { label: 'Ecosystem', path: '/ecosystem' },
         { label: 'About', path: '/about' },
-        { label: 'Guide', path: '/guide' },
+        { label: 'User Guide', path: '/guide' },
         { label: 'Docs', path: '/docs' },
         { label: 'Pricing', path: '/pricing' },
         { label: 'Contact', path: '/contact' },

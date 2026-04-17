@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CheckCircle2, Shield, Zap, Globe, MessageSquare, Star,
-    ChevronDown, ArrowRight, Users, Brain, FileText, DollarSign,
-    Video, Calendar, Mail, BarChart3, Lock, X, Minus
+    ChevronDown, Users, Brain, FileText, DollarSign,
+    Video, Calendar, Mail, BarChart3, Lock, X
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import PublicNavigation from '@/components/PublicNavigation';
@@ -20,100 +20,28 @@ const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground
 
 const plans = [
     {
-        name: 'Solo Professional',
+        name: 'AlphaClone Platform',
         price: '15',
-        users: '1',
-        desc: 'The complete Unified OS for solo operators and independent professionals.',
-        highlight: false,
-        color: 'slate',
-        features: [
-            '1 Professional Seat',
-            'Unified CRM Pipeline',
-            'Automated Invoicing & P&L',
-            'Contract Engine (3 high-perf templates)',
-            'Unlimited Task & Project Boards',
-            '5GB Secure Evidence Storage',
-            'Unified Gmail Integration',
-            'Solo Video Suite',
-            'Standard Support (48h response)',
-        ],
-        notIncluded: [
-            'AI Growth Agent',
-            'Team Collaboration Suite',
-            'White-label branding',
-            'Dedicated database instance',
-            'Priority engineer support',
-        ],
-        cta: 'Launch Solo OS',
-        ctaLink: '/auth/login?register=true&type=freelancer&plan=starter',
-    },
-    {
-        name: 'Scaling Agency',
-        price: '45',
-        users: '25',
-        desc: 'Everything to scale your agency and growing team to the next level.',
+        users: 'Unlimited',
+        desc: 'One complete platform plan for CRM, projects, social, finance, and operations.',
         highlight: true,
         color: 'teal',
         features: [
-            'Up to 25 team members',
-            'Unlimited CRM pipelines & contacts',
-            'AI Growth Agent (automated outreach)',
-            'Full financial suite (invoices, quotes, expenses, P&L)',
-            'Unlimited contract templates & e-signing',
-            'Full task & project management + Kanban',
-            '25GB secure document storage',
-            'Gmail, Calendly & calendar integration',
-            'HD video meetings (unlimited participants)',
-            'Customer portal access',
-            'Priority support (4h response)',
-        ],
-        notIncluded: [
-            'White-label branding',
-            'Dedicated database instance',
-        ],
-        cta: 'Start Free Trial',
-        ctaLink: '/auth/login?register=true&type=business&plan=pro',
-    },
-    {
-        name: 'Enterprise',
-        price: '80',
-        users: '∞',
-        desc: 'Unlimited scale, custom infrastructure, and a dedicated team.',
-        highlight: false,
-        color: 'blue',
-        features: [
             'Unlimited team members',
-            'Everything in Professional',
-            'White-label branding (your logo, your domain)',
-            'Dedicated database instance (isolated data)',
-            'Custom API access & webhook integrations',
-            '100GB secure document storage',
-            'Custom contract workflows',
-            'Advanced analytics & custom reporting',
-            '24/7 dedicated engineer support',
-            'Onboarding & implementation assistance',
-            'Custom SLA agreement',
+            'Unified CRM Pipeline',
+            'Automated Invoicing & P&L',
+            'Contract Engine',
+            'Unlimited Task & Project Boards',
+            'Secure document storage',
+            'Unified Gmail Integration',
+            'Lead finder and outreach workspace',
+            'Social publishing and scheduling',
+            'Email support',
         ],
         notIncluded: [],
-        cta: 'Contact Sales',
-        ctaLink: '/contact',
+        cta: 'Start 14-Day Free Trial',
+        ctaLink: '/auth/login?register=true&type=freelancer&plan=starter',
     },
-];
-
-const comparisonRows = [
-    { feature: 'Team Members', starter: '5', pro: '25', enterprise: 'Unlimited' },
-    { feature: 'CRM Pipelines', starter: '1', pro: 'Unlimited', enterprise: 'Unlimited' },
-    { feature: 'AI Growth Agent', starter: false, pro: true, enterprise: true },
-    { feature: 'Financial Suite', starter: 'Basic', pro: 'Full', enterprise: 'Full + Custom' },
-    { feature: 'Contract Templates', starter: '3', pro: 'Unlimited', enterprise: 'Unlimited + Custom' },
-    { feature: 'Document Storage', starter: '5 GB', pro: '25 GB', enterprise: '100 GB' },
-    { feature: 'Video Meetings', starter: '10 participants', pro: 'Unlimited', enterprise: 'Unlimited' },
-    { feature: 'Gmail Integration', starter: true, pro: true, enterprise: true },
-    { feature: 'Calendly Integration', starter: false, pro: true, enterprise: true },
-    { feature: 'White-Label Branding', starter: false, pro: false, enterprise: true },
-    { feature: 'Dedicated Database', starter: false, pro: false, enterprise: true },
-    { feature: 'API Access', starter: false, pro: false, enterprise: true },
-    { feature: 'Support Response', starter: '48 hours', pro: '4 hours', enterprise: '24/7 dedicated' },
 ];
 
 const replacedTools = [
@@ -134,8 +62,8 @@ const faqs = [
         a: 'No. You can sign up and access all features of your chosen plan for 14 days without providing any payment information. At the end of the trial, you\'ll be prompted to enter payment details to continue.',
     },
     {
-        q: 'Can I switch plans at any time?',
-        a: 'Yes. You can upgrade or downgrade from Settings → Billing at any time. Upgrades are prorated and take effect immediately. Downgrades take effect at the start of the next billing cycle.',
+        q: 'Is there only one public plan right now?',
+        a: 'Yes. AlphaClone currently offers one public plan at $15/month. All new customers start on the same plan with a 14-day free trial and can activate in under a minute.',
     },
     {
         q: 'What happens to my data if I cancel?',
@@ -159,16 +87,9 @@ const faqs = [
     },
 ];
 
-function Cell({ value }: { value: string | boolean }) {
-    if (value === true) return <CheckCircle2 className="w-5 h-5 text-teal-400 mx-auto" />;
-    if (value === false) return <Minus className="w-4 h-4 text-slate-700 mx-auto" />;
-    return <span className="text-xs text-slate-300 text-center block">{value}</span>;
-}
-
 export default function PricingPageContent() {
     const [, setIsLoginOpen] = useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
-    const [showComparison, setShowComparison] = useState(false);
 
     return (
         <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
@@ -178,11 +99,11 @@ export default function PricingPageContent() {
             </div>
             {/* JSON-LD Schemas */}
             <script type="application/ld+json" dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
+            __html: JSON.stringify({
                     '@context': 'https://schema.org',
                     '@type': 'FAQPage',
                     mainEntity: [
-                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone offers three plans: Starter at $15/month (up to 5 users), Professional at $45/month (up to 25 users, includes AI Growth Agent), and Enterprise at $80/month (unlimited users, white-label, dedicated support). All plans include a 14-day free trial with no credit card required.' } },
+                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone has one public price: $15 per month. It includes a 14-day free trial with no credit card required.' } },
                         { '@type': 'Question', name: 'Is there a free trial for AlphaClone?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. All AlphaClone plans include a 14-day free trial with full access to all features in that plan. No credit card is required to start.' } },
                         { '@type': 'Question', name: 'Can I cancel AlphaClone at any time?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. You can cancel at any time from Settings > Billing. Cancellation takes effect at the end of the current billing period. Your data is retained for 90 days after cancellation.' } },
                         { '@type': 'Question', name: 'Does AlphaClone replace HubSpot, Zoom, DocuSign, and other business software?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone replaces HubSpot (CRM), Zoom (video meetings), DocuSign (contracts), various financial management tools, Mailchimp (email), and several other tools for a fraction of the combined cost.' } },
@@ -220,12 +141,12 @@ export default function PricingPageContent() {
                             <span className="hero-metallic-text">Authority.</span>
                         </h1>
                         <p className="text-slate-400 text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight">
-                            Eliminate the "SaaS Tax". Replace $330+/mo of fragmented <br className="hidden md:block" />
-                            tools with one high-performance Business OS.
+                            One clear plan. One clear price. <br className="hidden md:block" />
+                            Use the full AlphaClone platform for $15/month.
                         </p>
                         <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
                             <span>• Zero Setup Fees</span>
-                            <span>• Unlimited Data</span>
+                            <span>• Single Pricing</span>
                             <span>• Cancel Anytime</span>
                         </div>
                     </div>
@@ -234,7 +155,7 @@ export default function PricingPageContent() {
                 <div className="max-w-7xl mx-auto px-4 pb-24 relative z-20">
 
                 {/* Plan Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+                <div className="grid grid-cols-1 gap-6 mb-16 max-w-2xl mx-auto">
                     {plans.map((plan, i) => (
                         <motion.div
                             key={plan.name}
@@ -341,61 +262,14 @@ export default function PricingPageContent() {
                         </div>
                         <div className="text-slate-600 text-2xl font-bold">vs</div>
                         <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">AlphaClone Professional</p>
-                            <p className="text-3xl font-black text-teal-400">$45<span className="text-lg text-slate-500">/mo</span></p>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">AlphaClone Platform</p>
+                            <p className="text-3xl font-black text-teal-400">$15<span className="text-lg text-slate-500">/mo</span></p>
                         </div>
                         <div className="px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-xl">
-                            <p className="text-xs text-teal-300 font-bold">Save ~$280+/month</p>
-                            <p className="text-xs text-slate-500">$3,360+ per year</p>
+                            <p className="text-xs text-teal-300 font-bold">Save up to ~$360/month</p>
+                            <p className="text-xs text-slate-500">Up to ~$4,320 per year</p>
                         </div>
                     </div>
-                </div>
-
-                {/* Full comparison table */}
-                <div className="mb-20">
-                    <div className="text-center mb-8">
-                        <h2 className="text-3xl font-bold text-white mb-3">Full Feature Comparison</h2>
-                        <button
-                            onClick={() => setShowComparison(!showComparison)}
-                            className="inline-flex items-center gap-2 text-sm text-teal-400 hover:text-teal-300 transition-colors"
-                        >
-                            {showComparison ? 'Collapse' : 'Expand full table'}
-                            <ChevronDown className={`w-4 h-4 transition-transform ${showComparison ? 'rotate-180' : ''}`} />
-                        </button>
-                    </div>
-                    <AnimatePresence>
-                        {showComparison && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
-                                    <table className="w-full min-w-[520px]">
-                                        <thead>
-                                            <tr className="border-b border-slate-800 bg-slate-900/50">
-                                                <th className="text-left py-4 px-6 text-slate-400 text-sm font-semibold">Feature</th>
-                                                <th className="py-4 px-4 text-center text-white font-bold text-sm">Starter<br /><span className="text-teal-400 font-black">$15</span></th>
-                                                <th className="py-4 px-4 text-center text-teal-400 font-bold text-sm bg-teal-500/5">Professional<br /><span className="font-black">$45</span></th>
-                                                <th className="py-4 px-4 text-center text-blue-400 font-bold text-sm">Enterprise<br /><span className="font-black">$80</span></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-800/50">
-                                            {comparisonRows.map((row, i) => (
-                                                <tr key={i} className="hover:bg-slate-900/30 transition-colors">
-                                                    <td className="py-3 px-6 text-sm text-slate-300">{row.feature}</td>
-                                                    <td className="py-3 px-4 text-center"><Cell value={row.starter} /></td>
-                                                    <td className="py-3 px-4 text-center bg-teal-500/3"><Cell value={row.pro} /></td>
-                                                    <td className="py-3 px-4 text-center"><Cell value={row.enterprise} /></td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
 
                 {/* FAQ */}
@@ -439,10 +313,10 @@ export default function PricingPageContent() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <Link
-                            href="/auth/login?register=true&type=business&plan=pro"
+                            href="/auth/login?register=true&type=business&plan=starter"
                             className="cta-primary px-12 py-5 rounded-2xl text-lg w-full sm:w-auto text-center"
                         >
-                            Start Solo OS
+                            Start for $15/month
                         </Link>
                         <Link
                             href="/contact"

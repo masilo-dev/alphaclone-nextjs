@@ -38,24 +38,22 @@ Your account is created with the Pro plan on a 14-day free trial. You won't be c
             icon: CreditCard,
             color: 'from-blue-500 to-indigo-500',
             step: 2,
-            title: 'Choose Your Plan',
-            subtitle: 'Pick the tier that fits your team and growth stage',
-            detail: `After registration, you'll see a plan selection screen. Here's a plain-English breakdown of what each tier means for your business:
+            title: 'Activate Your Plan',
+            subtitle: 'One simple public price: $15 per month',
+            detail: `After registration, you will see one public plan for the full platform.
 
-Every plan includes every feature — CRM, invoicing, contracts, AI assistant, AI Growth Agent, financial suite, task management, and more. The only difference between plans is your usage quotas.
+**AlphaClone Platform: $15/month**
 
-**Starter ($15/month):** 5 users · 5GB storage · 10 projects · 10 contract templates · 50 AI queries/month · 10 AI Growth Agent runs/month · Standard support (48h response).
+This includes CRM, deals, projects, tasks, social publishing, messaging, invoicing, documents, and core automations in one workspace.
 
-**Pro ($45/month):** 25 users · 25GB storage · 100 projects · 100 contract templates · 500 AI queries/month · 200 AI Growth Agent runs/month · Priority support (12h response). Best for most agencies and service businesses.
+You start with a 14-day free trial and no credit card is required to begin. At the end of trial, you can continue on the same plan.
 
-**Enterprise ($80/month):** Unlimited everything — users, storage, projects, contracts, AI queries, and Agent runs. Dedicated support with 4-hour response time. Best for larger teams with scale or compliance requirements.
-
-You can upgrade or downgrade your plan at any time from the Settings page. There's no long-term contract and no penalty for changing tiers.`,
+There is no founder involvement needed to start. Setup is self-serve and guided directly inside the app.`,
             tips: [
-                'All plans include every feature — you only pay more for higher usage quotas',
-                'Start on Starter to try the platform, upgrade when you hit the limits',
-                'Pro is the sweet spot for most agencies — 500 AI queries is enough for heavy daily use',
-                'All plans include a 14-day free trial — you don\'t pay until day 15',
+                'You only need one decision: start the trial and complete onboarding',
+                'The same platform modules are available from day one',
+                'Billing is visible in Settings so owners can review at any time',
+                'No founder call is required to configure the workspace',
             ],
         },
         {
@@ -316,24 +314,51 @@ The invited person receives an email with a secure invitation link. When they cl
                             <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">Platform Guide</span>
                         </div>
                         <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                            Set Up Your Entire Business OS{' '}
+                            User Guide for First-Time Teams{' '}
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
-                                in Under 30 Minutes
+                                No Technical Background Required
                             </span>
                         </h1>
                         <p className="text-xl text-slate-300 leading-relaxed">
-                            This guide walks you through every step of setting up AlphaClone — from creating your account to activating the AI Growth Agent. No technical knowledge required. Each step includes exact navigation instructions, recommended settings, and tips from experienced users.
+                            This guide explains the platform in plain language so any new user can navigate confidently. It is designed for full self-service onboarding without founder involvement, technical training, or engineering support.
                         </p>
                         <div className="mt-8 grid grid-cols-3 gap-6 max-w-xl">
                             {[
                                 { icon: Clock, label: '30 min', sub: 'average setup time' },
-                                { icon: Zap, label: '10 steps', sub: 'from zero to running' },
+                                { icon: Zap, label: '10 steps', sub: 'clear navigation path' },
                                 { icon: Star, label: 'No IT needed', sub: 'plain-language guide' },
                             ].map((item, i) => (
                                 <div key={i} className="text-center">
                                     <item.icon className="w-6 h-6 text-teal-400 mx-auto mb-2" />
                                     <div className="font-bold text-white">{item.label}</div>
                                     <div className="text-slate-500 text-xs">{item.sub}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* First-time navigation map */}
+                <section className="py-16 bg-slate-950">
+                    <div className="max-w-4xl mx-auto px-4">
+                        <h2 className="text-3xl font-bold mb-4">Where to Go in the Platform</h2>
+                        <p className="text-slate-400 leading-relaxed mb-10">
+                            Use this map if you are new and want direct navigation without guessing module names.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                { area: 'Dashboard', purpose: 'See your business summary and today priorities.' },
+                                { area: 'Leads', purpose: 'Find and qualify new prospects.' },
+                                { area: 'Deals', purpose: 'Track active opportunities and pipeline value.' },
+                                { area: 'Projects', purpose: 'Manage delivery work after a deal closes.' },
+                                { area: 'Tasks', purpose: 'Assign and complete day-to-day actions.' },
+                                { area: 'Social', purpose: 'Create, schedule, and publish content.' },
+                                { area: 'Messages', purpose: 'Handle conversations in one place.' },
+                                { area: 'Finance', purpose: 'Create invoices, monitor payments, and reports.' },
+                            ].map((item, i) => (
+                                <div key={i} className="p-5 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
+                                    <h3 className="font-bold text-white mb-1">{item.area}</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed">{item.purpose}</p>
                                 </div>
                             ))}
                         </div>
@@ -492,7 +517,7 @@ The invited person receives an email with a secure invitation link. When they cl
                         <Shield className="w-12 h-12 text-teal-400 mx-auto mb-6" />
                         <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
                         <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                            Create your free account now. The setup wizard inside the platform mirrors this guide step by step — you'll never feel lost. And if you ever get stuck, our support team responds within 4 hours.
+                            Create your free account now. The setup wizard inside the platform mirrors this guide step by step so first-time users can onboard without founder involvement.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Link href="/register">
@@ -507,7 +532,7 @@ The invited person receives an email with a secure invitation link. When they cl
                                 </Button>
                             </Link>
                         </div>
-                        <p className="mt-6 text-slate-500 text-sm">14-day free trial · No credit card required · Cancel anytime</p>
+                        <p className="mt-6 text-slate-500 text-sm">$15/month after trial · No credit card required to start · Cancel anytime</p>
                     </div>
                 </section>
             </div>
