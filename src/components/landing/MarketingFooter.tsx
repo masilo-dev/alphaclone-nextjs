@@ -22,7 +22,7 @@ const MarketingFooter: React.FC = () => {
             links: [
                 { label: 'About', href: '/about' },
                 { label: 'Contact', href: '/contact' },
-                { label: 'Guide', href: '/guide' },
+                { label: 'User Guide', href: '/guide' },
                 { label: 'Docs', href: '/docs' },
                 { label: 'Login', href: '/auth/login' },
             ],
