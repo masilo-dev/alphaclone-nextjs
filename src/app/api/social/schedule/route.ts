@@ -263,7 +263,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       metadata?: Record<string, unknown> | null;
     } | null;
     let postError = postRes.error;
-    if (isMissingColumn(postError, 'linkedin_member_id')) {
+    if (isMissingColumn(postError, 'linkedin_member_id') || isMissingColumn(postError, 'linkedin_organization_id')) {
       const fallbackPostRes = await adminClient
         .from('social_posts')
         .select('id, tenant_id, user_id, caption, link_url, media_urls, metadata')
