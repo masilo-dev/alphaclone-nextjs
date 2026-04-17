@@ -132,6 +132,40 @@ async function createAutomationTask(
   return data || null;
 }
 
+type FacebookIntegrationIdentity = {
+  page_id: string;
+  page_name: string | null;
+  is_active: boolean;
+  page_access_token: string | null;
+  metadata: Record<string, unknown> | null;
+  updated_at?: string | null;
+};
+
+function canPublishFacebookPage(identity: FacebookIntegrationIdentity): boolean {
+  const tasks = Array.isArray(identity?.metadata?.page_tasks)
+    ? (identity.metadata?.page_tasks as unknown[]).map((task) => String(task))
+    : [];
+  const hasTaskPermission =
+    tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
+  return !!identity.page_access_token && identity.is_active && !identity?.metadata?.no_pages && hasTaskPermission;
+}
+
+function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]): FacebookIntegrationIdentity | null {
+  if (!identities.length) return null;
+  const publishable = identities.filter(canPublishFacebookPage);
+  if (!publishable.length) return null;
+
+  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary));
+  if (explicitPrimary) return explicitPrimary;
+
+  const sorted = [...publishable].sort((a, b) => {
+    const aTs = Date.parse(String(a.updated_at || '')) || 0;
+    const bTs = Date.parse(String(b.updated_at || '')) || 0;
+    return bTs - aTs;
+  });
+  return sorted[0] || null;
+}
+
 /**
  * AlphaClone MCP Server
  *
@@ -429,7 +463,7 @@ class AlphaCloneMCPServer {
             type: 'object',
             properties: {
               tenant_id: { type: 'string' },
-              page_id: { type: 'string', description: 'Connected Facebook Page ID' },
+              page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
               caption: { type: 'string' },
               link_url: { type: 'string' },
               media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs' },
@@ -442,7 +476,7 @@ class AlphaCloneMCPServer {
               task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
               mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
             },
-            required: ['page_id', 'caption'],
+            required: ['caption'],
           },
         },
         {
@@ -452,7 +486,7 @@ class AlphaCloneMCPServer {
             type: 'object',
             properties: {
               tenant_id: { type: 'string' },
-              page_id: { type: 'string' },
+              page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
               caption: { type: 'string' },
               link_url: { type: 'string' },
               media_urls: { type: 'array', items: { type: 'string' } },
@@ -461,7 +495,7 @@ class AlphaCloneMCPServer {
               publish_now: { type: 'boolean' },
               scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
             },
-            required: ['page_id', 'caption'],
+            required: ['caption'],
           },
         },
         {
@@ -1668,10 +1702,37 @@ class AlphaCloneMCPServer {
             task_note,
             mark_task_done,
           } = a;
-          if (typeof page_id !== 'string' || !page_id.trim()) throw new Error('page_id is required');
           if (typeof caption !== 'string' || !caption.trim()) throw new Error('caption is required');
           if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
             throw new Error('scheduled_at is required when publish_now is false');
+          }
+
+          let resolvedPageId = typeof page_id === 'string' && page_id.trim() ? page_id.trim() : '';
+          let integration: FacebookIntegrationIdentity | null = null;
+
+          if (resolvedPageId) {
+            const { data: specificIntegration, error: integrationError } = await supabaseAdmin
+              .from('facebook_integrations')
+              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+              .eq('tenant_id', tenant_id)
+              .eq('page_id', resolvedPageId)
+              .eq('is_active', true)
+              .maybeSingle();
+            if (integrationError) throw supabaseErrorToMcpClientError('create_social_post', integrationError.message);
+            integration = (specificIntegration as FacebookIntegrationIdentity | null) || null;
+          } else {
+            const { data: identities, error: identitiesError } = await supabaseAdmin
+              .from('facebook_integrations')
+              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+              .eq('tenant_id', tenant_id)
+              .eq('is_active', true);
+            if (identitiesError) throw supabaseErrorToMcpClientError('create_social_post', identitiesError.message);
+            integration = pickPreferredFacebookIdentity((identities || []) as FacebookIntegrationIdentity[]);
+            if (integration?.page_id) resolvedPageId = integration.page_id;
+          }
+
+          if (!resolvedPageId) {
+            throw new Error('No connected Facebook pages were found for this workspace.');
           }
 
           const normalizedMediaUrls = Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [];
@@ -1693,15 +1754,7 @@ class AlphaCloneMCPServer {
           const firstMediaUrl = mergedMediaUrls.length > 0 ? mergedMediaUrls[0] : null;
           const isVideoMedia = !!firstMediaUrl && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
 
-          const { data: integration, error: integrationError } = await supabaseAdmin
-            .from('facebook_integrations')
-            .select('page_access_token, metadata')
-            .eq('tenant_id', tenant_id)
-            .eq('page_id', page_id.trim())
-            .eq('is_active', true)
-            .maybeSingle();
-          if (integrationError) throw supabaseErrorToMcpClientError('create_social_post', integrationError.message);
-          if (!integration?.page_access_token || integration?.metadata?.no_pages) {
+          if (!integration?.page_access_token || integration?.metadata?.no_pages || !canPublishFacebookPage(integration)) {
             throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
           }
 
@@ -1710,7 +1763,7 @@ class AlphaCloneMCPServer {
           let facebookPostId: string | null = null;
 
           if (publish_now) {
-            const graph = new URL(`https://graph.facebook.com/v19.0/${page_id.trim()}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
+            const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
             graph.searchParams.set('access_token', integration.page_access_token);
             const body = new URLSearchParams();
             if (firstMediaUrl) {
@@ -1753,7 +1806,7 @@ class AlphaCloneMCPServer {
               status,
               scheduled_at: publish_now ? null : String(scheduled_at),
               published_at: publishedAt,
-              facebook_page_id: page_id.trim(),
+              facebook_page_id: resolvedPageId,
               facebook_post_id: facebookPostId,
             })
             .select('id, status, scheduled_at, published_at, facebook_post_id')
@@ -1763,7 +1816,7 @@ class AlphaCloneMCPServer {
           const actionLabel = publish_now ? 'posted to Facebook' : `scheduled for ${String(scheduled_at)}`;
           const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
             ? task_note.trim()
-            : `Facebook content ${actionLabel}. social_post_id=${data?.id || 'unknown'} page_id=${page_id.trim()}`;
+            : `Facebook content ${actionLabel}. social_post_id=${data?.id || 'unknown'} page_id=${resolvedPageId}`;
           const shouldMarkTaskDone = typeof mark_task_done === 'boolean' ? mark_task_done : !!publish_now;
           let taskResult: Record<string, unknown> | null = null;
           if (typeof task_id === 'string' && isUuidString(task_id)) {
@@ -1787,7 +1840,18 @@ class AlphaCloneMCPServer {
             taskResult = createdTask ? { created_task: createdTask } : null;
           }
 
-          result = { content: [{ type: 'text', text: `Social post created: ${JSON.stringify({ post: data, task: taskResult })}` }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: `Social post created: ${JSON.stringify({
+                  post: data,
+                  task: taskResult,
+                  page: { page_id: resolvedPageId, page_name: integration?.page_name || null },
+                })}`,
+              },
+            ],
+          };
           break;
         }
 
