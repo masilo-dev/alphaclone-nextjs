@@ -559,7 +559,7 @@ export async function POST(req: NextRequest) {
 
     const requestedOrganizationId = body.linkedin_organization_id?.trim() || null;
     if (requestedOrganizationId) {
-      const { data: liIntegration, error: liError } = await createSupabaseAdminClient()
+      const { data: liIntegration, error: liError } = await supabase
         .from('linkedin_integrations')
         .select('metadata')
         .eq('tenant_id', tenantId)
