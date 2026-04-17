@@ -350,6 +350,38 @@ export default function OmniLeadFinder() {
 
         if (!createRes.ok) {
           const errData = await createRes.json();
+          if (createRes.status === 503 && errData?.code === 'LEAD_QUEUE_NOT_READY') {
+            setProgress({ percent: 18, message: 'Queue not ready, running direct search...' });
+            const directRes = await fetch('/api/scraper/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                niche,
+                location,
+                sortBy: sortMode,
+                tenantId: currentTenant?.id || '',
+              }),
+            });
+            const directData = await directRes.json().catch(() => ({}));
+            if (!directRes.ok || !directData?.success) {
+              throw new Error(directData?.error || 'Direct lead search failed');
+            }
+
+            const immediateLeads: ScrapedLead[] = Array.isArray(directData?.results)
+              ? directData.results
+              : [];
+            const qualifiedImmediate = immediateLeads.map((lead) => ({
+              ...lead,
+              qualification: qualifyLead(lead, niche),
+            }));
+            setResults(qualifiedImmediate);
+            setSourceStats(directData?.sources || {});
+            setFallbackUsed(Boolean(directData?.fallbackUsed));
+            setSelectedSet(new Set());
+            setProgress({ percent: 100, message: 'Done' });
+            toast.success(`Found ${qualifiedImmediate.length} leads`);
+            return { leads: immediateLeads, sourceStats: directData?.sources || {} };
+          }
           throw new Error(errData.error || 'Failed to create lead search job');
         }
 

@@ -457,7 +457,12 @@ export const projectService = {
                 if (status === 'SUBSCRIBED') {
                     console.log('✅ Subscribed to real-time project updates');
                 } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ Failed to subscribe to projects:', err?.message || 'Unknown channel error');
+                    const msg = String(err?.message || '').toLowerCase();
+                    if (msg.includes('unknown channel error') || msg.includes('channel error')) {
+                        console.warn('[Realtime] Projects channel unavailable. Continuing without live updates.');
+                    } else {
+                        console.error('❌ Failed to subscribe to projects:', err?.message || 'Unknown channel error');
+                    }
                     // Proactive check: if we get a channel error, it's likely RLS or Realtime configuration
                 } else if (status === 'TIMED_OUT') {
                     console.error('❌ Project subscription timed out - retrying in 5s...');

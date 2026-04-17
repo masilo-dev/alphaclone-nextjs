@@ -11,6 +11,12 @@ function isExpectedRealtimeCloseError(error: unknown): boolean {
     return msg.includes('WebSocket is closed before the connection is established');
 }
 
+function isUnknownChannelRealtimeError(error?: Error): boolean {
+    if (!error) return false;
+    const msg = String(error.message || '').toLowerCase();
+    return msg.includes('unknown channel error') || msg.includes('channel error');
+}
+
 async function safeRemoveRealtimeChannel(channel: any): Promise<void> {
     if (!channel) return;
     try {
@@ -396,8 +402,12 @@ export const messageService = {
                 if (status === 'SUBSCRIBED') {
                     console.log(`✅ [Realtime] Subscribed to messages (INSERT + UPDATE) for ${tenantId}`);
                 } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ [Realtime] Failed to subscribe to messages:', err?.message || 'Unknown channel error');
-                    console.error('Subscription details:', { tenantId, channelName, error: err });
+                    if (isUnknownChannelRealtimeError(err)) {
+                        console.warn('[Realtime] Messages channel unavailable. Continuing without live updates.');
+                    } else {
+                        console.error('❌ [Realtime] Failed to subscribe to messages:', err?.message || 'Unknown channel error');
+                        console.error('Subscription details:', { tenantId, channelName, error: err });
+                    }
                     // Potential mismatch between server and client bindings often manifests here
                 } else if (status === 'CLOSED') {
                     console.info('[Realtime] Message subscription closed. Reconnecting logic handled by Supabase SDK.');
