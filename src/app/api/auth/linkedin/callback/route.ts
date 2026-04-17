@@ -21,6 +21,8 @@ const LINKEDIN_REQUIRED_SCOPES = [
   'openid',
   'profile',
   'w_member_social',
+  'r_organization_admin',
+  'w_organization_social',
   'email',
   'r_profile_basicinfo',
 ] as const;
@@ -39,6 +41,45 @@ function normalizeScopes(raw: unknown): string[] {
       .filter(Boolean);
   }
   return [];
+}
+
+type LinkedInCompanyPage = {
+  id: string;
+  name: string | null;
+  vanityName: string | null;
+  logoUrl: string | null;
+};
+
+async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInCompanyPage[]> {
+  const url =
+    'https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&projection=(elements*(organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))))';
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'X-Restli-Protocol-Version': '2.0.0',
+    },
+  });
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const payload = await res.json().catch(() => ({}));
+  const elements = Array.isArray(payload?.elements) ? payload.elements : [];
+  return elements
+    .map((entry: any) => {
+      const target = entry?.['organizationalTarget~'];
+      const streams = target?.logoV2?.['original~']?.elements;
+      const firstStream = Array.isArray(streams) ? streams[0] : null;
+      const firstIdentifier = Array.isArray(firstStream?.identifiers) ? firstStream.identifiers[0] : null;
+      return {
+        id: target?.id ? String(target.id) : '',
+        name: target?.localizedName ? String(target.localizedName) : null,
+        vanityName: target?.vanityName ? String(target.vanityName) : null,
+        logoUrl: firstIdentifier?.identifier ? String(firstIdentifier.identifier) : null,
+      } as LinkedInCompanyPage;
+    })
+    .filter((page) => page.id);
 }
 
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
@@ -136,6 +177,7 @@ export async function GET(req: NextRequest) {
     const tokenExpiresAt = tokenData.expires_in
       ? new Date(Date.now() + Number(tokenData.expires_in) * 1000).toISOString()
       : null;
+    const companyPages = await fetchLinkedInCompanyPages(accessToken);
 
     const admin = createSupabaseAdminClient();
 
@@ -177,6 +219,8 @@ export async function GET(req: NextRequest) {
           name: profileData.name || null,
           email: profileData.email || null,
           picture: profileData.picture || null,
+          company_pages: companyPages,
+          company_pages_count: companyPages.length,
           write_scope_granted: hasWriteScope,
           missing_required_scopes: missingScopes,
         },

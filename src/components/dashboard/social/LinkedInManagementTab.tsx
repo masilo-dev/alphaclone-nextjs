@@ -26,6 +26,14 @@ interface LinkedInIntegrationRow {
   linkedin_person_urn: string;
   scopes: string[] | null;
   is_active: boolean;
+  metadata?: {
+    company_pages?: Array<{
+      id: string;
+      name: string | null;
+      vanityName: string | null;
+      logoUrl: string | null;
+    }>;
+  } | null;
 }
 
 interface LinkedInCommentRow {
@@ -105,6 +113,9 @@ export default function LinkedInManagementTab() {
   const [composeCaption, setComposeCaption] = useState('');
   const [composeLinkUrl, setComposeLinkUrl] = useState('');
   const [composeImageUrl, setComposeImageUrl] = useState('');
+  const [composeMediaType, setComposeMediaType] = useState<'image' | 'video'>('image');
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [selectedLinkedInOrganizationId, setSelectedLinkedInOrganizationId] = useState('');
   const [composeScheduledAt, setComposeScheduledAt] = useState('');
   const [composeSubmitting, setComposeSubmitting] = useState(false);
   const [aiTopic, setAiTopic] = useState('');
@@ -126,7 +137,7 @@ export default function LinkedInManagementTab() {
         .limit(100),
       supabase
         .from('linkedin_integrations')
-        .select('linkedin_member_id,linkedin_person_urn,scopes,is_active')
+        .select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata')
         .eq('tenant_id', currentTenant.id)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
@@ -170,7 +181,7 @@ export default function LinkedInManagementTab() {
       if (isMissingRelationOrColumn(liRes.error, 'linkedin_member_id')) {
         const liFallback = await supabase
           .from('linkedin_integrations')
-          .select('linkedin_person_urn,scopes,is_active')
+          .select('linkedin_person_urn,scopes,is_active,metadata')
           .eq('tenant_id', currentTenant.id)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
@@ -222,6 +233,15 @@ export default function LinkedInManagementTab() {
     [integrations, selectedLinkedInMemberId]
   );
   const canComposeLinkedIn = !!currentTenant?.id && !!selectedLinkedInMemberId && !!selectedIntegration?.is_active && hasWriteScope;
+  const companyPages = useMemo(
+    () => (Array.isArray(selectedIntegration?.metadata?.company_pages) ? selectedIntegration?.metadata?.company_pages || [] : []),
+    [selectedIntegration]
+  );
+  const hasOrganizationWriteScope = useMemo(() => {
+    const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
+    return normalizeScopes(scopes).includes('w_organization_social');
+  }, [integrations, selectedLinkedInMemberId]);
+  const canPostAsSelectedCompany = !selectedLinkedInOrganizationId || hasOrganizationWriteScope;
 
   const handleConnectLinkedIn = async () => {
     try {
@@ -536,9 +556,10 @@ Return only the reply text.`;
           platforms: ['linkedin'],
           link_url: composeLinkUrl.trim() || undefined,
           media_urls: composeImageUrl.trim() ? [composeImageUrl.trim()] : undefined,
-          media_types: composeImageUrl.trim() ? ['image'] : undefined,
+          media_types: composeImageUrl.trim() ? [composeMediaType] : undefined,
           scheduled_at: publishNow ? undefined : composeScheduledAt,
           linkedin_member_id: selectedLinkedInMemberId,
+          linkedin_organization_id: selectedLinkedInOrganizationId || undefined,
         }),
       });
       const data = await res.json();
@@ -550,12 +571,40 @@ Return only the reply text.`;
       setComposeCaption('');
       setComposeLinkUrl('');
       setComposeImageUrl('');
+      setComposeMediaType('image');
       setComposeScheduledAt('');
       await loadData();
     } catch {
       toast.error('Failed to submit LinkedIn post', { id: toastId });
     } finally {
       setComposeSubmitting(false);
+    }
+  };
+
+  const handleUploadLinkedInMedia = async (file: File) => {
+    if (!currentTenant?.id) return;
+    setMediaUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('tenantId', currentTenant.id);
+      fd.append('file', file);
+      const res = await fetch('/api/social/media/upload', {
+        method: 'POST',
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success || !data?.asset?.public_url) {
+        toast.error(data?.error || 'Failed to upload media');
+        return;
+      }
+      const uploadedType = String(data.asset.asset_type || '').toLowerCase();
+      setComposeMediaType(uploadedType === 'video' ? 'video' : 'image');
+      setComposeImageUrl(String(data.asset.public_url));
+      toast.success('Media uploaded');
+    } catch {
+      toast.error('Failed to upload media');
+    } finally {
+      setMediaUploading(false);
     }
   };
 
@@ -777,9 +826,48 @@ Return only the reply text.`;
         <input
           value={composeImageUrl}
           onChange={(e) => setComposeImageUrl(e.target.value)}
-          placeholder="Optional image URL (https://...)"
+          placeholder="Optional media URL (image or video)"
           className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
         />
+        <input
+          type="file"
+          accept="image/*,video/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleUploadLinkedInMedia(file);
+          }}
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white file:mr-3 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:text-slate-200"
+        />
+        {mediaUploading && <p className="text-xs text-slate-400">Uploading media...</p>}
+        <select
+          value={composeMediaType}
+          onChange={(e) => setComposeMediaType(e.target.value as 'image' | 'video')}
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+        >
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+        </select>
+        <select
+          value={selectedLinkedInOrganizationId}
+          onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+        >
+          <option value="">Post as personal profile</option>
+          {companyPages.map((page) => (
+            <option
+              key={page.id}
+              value={page.id}
+              disabled={!hasOrganizationWriteScope}
+            >
+              {page.name || page.vanityName || page.id}{!hasOrganizationWriteScope ? ' (requires w_organization_social)' : ''}
+            </option>
+          ))}
+        </select>
+        {selectedLinkedInOrganizationId && !hasOrganizationWriteScope && (
+          <p className="text-xs text-amber-300">
+            Company page posting requires `w_organization_social`. Reconnect LinkedIn and approve organization posting permissions.
+          </p>
+        )}
         <input
           type="datetime-local"
           value={composeScheduledAt}
@@ -794,14 +882,14 @@ Return only the reply text.`;
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleSubmitLinkedInPost(true)}
-            disabled={composeSubmitting || !canComposeLinkedIn}
+            disabled={composeSubmitting || !canComposeLinkedIn || !canPostAsSelectedCompany}
             className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
           >
             {composeSubmitting ? 'Submitting...' : 'Post Now'}
           </button>
           <button
             onClick={() => handleSubmitLinkedInPost(false)}
-            disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn}
+            disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn || !canPostAsSelectedCompany}
             className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
           >
             Schedule Post

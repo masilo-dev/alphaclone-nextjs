@@ -15,8 +15,27 @@ type SchedulePayload = {
   scheduled_at?: string | null;
   facebook_page_id?: string | null;
   linkedin_member_id?: string | null;
+  linkedin_organization_id?: string | null;
   publish_now?: boolean;
 };
+
+function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name: string | null }> {
+  if (!raw || typeof raw !== 'object') return [];
+  const maybePages = (raw as { company_pages?: unknown }).company_pages;
+  if (!Array.isArray(maybePages)) return [];
+  return maybePages
+    .map((page) => {
+      if (!page || typeof page !== 'object') return null;
+      const obj = page as Record<string, unknown>;
+      const id = typeof obj.id === 'string' ? obj.id : '';
+      if (!id) return null;
+      return {
+        id,
+        name: typeof obj.name === 'string' ? obj.name : null,
+      };
+    })
+    .filter((page): page is { id: string; name: string | null } => !!page);
+}
 
 type PublishResult = {
   ok: boolean;
@@ -153,7 +172,7 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
   try {
     const { data: post, error: postError } = await adminClient
       .from('social_posts')
-      .select('id, tenant_id, facebook_page_id, caption, link_url, media_urls')
+      .select('id, tenant_id, facebook_page_id, caption, link_url, media_urls, media_types')
       .eq('id', postId)
       .single();
 
@@ -175,17 +194,26 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
       return { ok: false, platform: 'facebook', reason: 'integration_missing' };
     }
 
-    const imageUrl = Array.isArray(post.media_urls) ? post.media_urls[0] : undefined;
+    const mediaUrl = Array.isArray(post.media_urls) ? post.media_urls[0] : undefined;
+    const mediaType = Array.isArray(post.media_types) ? String(post.media_types[0] || '').toLowerCase() : '';
+    const isVideo = mediaType === 'video' || (typeof mediaUrl === 'string' && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(mediaUrl));
     const fbBody: Record<string, string> = {
       message: post.caption,
       access_token: integration.page_access_token,
     };
 
     if (post.link_url) fbBody.link = post.link_url;
-    if (imageUrl) fbBody.url = String(imageUrl);
+    if (mediaUrl) {
+      if (isVideo) {
+        fbBody.file_url = String(mediaUrl);
+        fbBody.description = post.caption;
+      } else {
+        fbBody.url = String(mediaUrl);
+      }
+    }
 
-    const endpoint = imageUrl
-      ? `https://graph.facebook.com/v19.0/${post.facebook_page_id}/photos`
+    const endpoint = mediaUrl
+      ? `https://graph.facebook.com/v19.0/${post.facebook_page_id}/${isVideo ? 'videos' : 'photos'}`
       : `https://graph.facebook.com/v19.0/${post.facebook_page_id}/feed`;
 
     const res = await fetchWithTimeout(endpoint, {
@@ -220,7 +248,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
   try {
     const postRes = await adminClient
       .from('social_posts')
-      .select('id, tenant_id, user_id, caption, link_url, media_urls, linkedin_member_id')
+      .select('id, tenant_id, user_id, caption, link_url, media_urls, linkedin_member_id, linkedin_organization_id, metadata')
       .eq('id', postId)
       .single();
     let post = postRes.data as {
@@ -231,16 +259,18 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       link_url: string | null;
       media_urls: string[] | null;
       linkedin_member_id: string | null;
+      linkedin_organization_id: string | null;
+      metadata?: Record<string, unknown> | null;
     } | null;
     let postError = postRes.error;
     if (isMissingColumn(postError, 'linkedin_member_id')) {
       const fallbackPostRes = await adminClient
         .from('social_posts')
-        .select('id, tenant_id, user_id, caption, link_url, media_urls')
+        .select('id, tenant_id, user_id, caption, link_url, media_urls, metadata')
         .eq('id', postId)
         .single();
       post = fallbackPostRes.data
-        ? { ...fallbackPostRes.data, linkedin_member_id: null }
+        ? { ...fallbackPostRes.data, linkedin_member_id: null, linkedin_organization_id: null }
         : null;
       postError = fallbackPostRes.error;
     }
@@ -249,7 +279,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
 
     let liQuery = adminClient
       .from('linkedin_integrations')
-      .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
+      .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
       .eq('tenant_id', post.tenant_id)
       .eq('user_id', post.user_id)
       .eq('is_active', true)
@@ -263,7 +293,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     if (isMissingColumn(liError, 'linkedin_member_id')) {
       const fallbackLiRes = await adminClient
         .from('linkedin_integrations')
-        .select('linkedin_person_urn, access_token, scopes')
+        .select('linkedin_person_urn, access_token, scopes, metadata')
         .eq('tenant_id', post.tenant_id)
         .eq('user_id', post.user_id)
         .eq('is_active', true)
@@ -276,7 +306,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const integration = li?.access_token ? li : await (async () => {
       const fallbackRes = await adminClient
         .from('linkedin_integrations')
-        .select('linkedin_member_id, linkedin_person_urn, access_token, scopes')
+        .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
         .eq('tenant_id', post.tenant_id)
         .eq('user_id', post.user_id)
         .eq('is_active', true)
@@ -285,7 +315,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       if (isMissingColumn(fallbackRes.error, 'linkedin_member_id')) {
         const fallbackWithoutMember = await adminClient
           .from('linkedin_integrations')
-          .select('linkedin_person_urn, access_token, scopes')
+          .select('linkedin_person_urn, access_token, scopes, metadata')
           .eq('tenant_id', post.tenant_id)
           .eq('user_id', post.user_id)
           .eq('is_active', true)
@@ -307,6 +337,23 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
+
+    const requestedOrganizationId =
+      typeof post.linkedin_organization_id === 'string' && post.linkedin_organization_id
+        ? post.linkedin_organization_id
+        : typeof post.metadata?.linkedin_organization_id === 'string'
+          ? String(post.metadata.linkedin_organization_id)
+          : null;
+    const companyPages = Array.isArray((activeIntegration as any)?.metadata?.company_pages)
+      ? ((activeIntegration as any).metadata.company_pages as Array<Record<string, unknown>>)
+      : [];
+    const selectedCompany = requestedOrganizationId
+      ? companyPages.find((page) => String(page?.id || '') === requestedOrganizationId)
+      : null;
+    const canPostAsCompany = !!selectedCompany && scopes.includes('w_organization_social');
+    const authorUrn = canPostAsCompany
+      ? `urn:li:organization:${requestedOrganizationId}`
+      : activeIntegration.linkedin_person_urn;
 
     async function registerAndUploadLinkedInImage(authorUrn: string, imageUrl: string): Promise<string> {
       const imageFetch = await fetchWithTimeout(imageUrl, { method: 'GET' }, 25000);
@@ -371,7 +418,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     let media: Array<Record<string, unknown>> = [];
 
     if (hasImage) {
-      const assetUrn = await registerAndUploadLinkedInImage(activeIntegration.linkedin_person_urn, imageUrl);
+      const assetUrn = await registerAndUploadLinkedInImage(authorUrn, imageUrl);
       shareMediaCategory = 'IMAGE';
       media = [{
         status: 'READY',
@@ -384,7 +431,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     }
 
     const payload = {
-      author: activeIntegration.linkedin_person_urn,
+      author: authorUrn,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
@@ -419,8 +466,9 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const updateRes = await adminClient.from('social_posts').update({
       linkedin_post_urn: postUrn,
       linkedin_member_id: activeIntegration.linkedin_member_id || post.linkedin_member_id || null,
+      linkedin_organization_id: canPostAsCompany ? requestedOrganizationId : null,
     }).eq('id', postId);
-    if (isMissingColumn(updateRes.error, 'linkedin_member_id')) {
+    if (isMissingColumn(updateRes.error, 'linkedin_member_id') || isMissingColumn(updateRes.error, 'linkedin_organization_id')) {
       await adminClient.from('social_posts').update({
         linkedin_post_urn: postUrn,
       }).eq('id', postId);
@@ -509,6 +557,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
     }
 
+    const requestedOrganizationId = body.linkedin_organization_id?.trim() || null;
+    if (requestedOrganizationId) {
+      const { data: liIntegration, error: liError } = await createSupabaseAdminClient()
+        .from('linkedin_integrations')
+        .select('metadata')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      if (liError || !liIntegration) {
+        return NextResponse.json({ error: 'LinkedIn integration is not connected for this workspace.' }, { status: 400 });
+      }
+      const companyPages = extractCompanyPagesFromMetadata(liIntegration.metadata);
+      const hasCompany = companyPages.some((company) => company.id === requestedOrganizationId);
+      if (!hasCompany) {
+        return NextResponse.json({ error: 'Selected LinkedIn company page does not belong to this connected account.' }, { status: 400 });
+      }
+    }
+
     const parsedScheduledAt = body.scheduled_at ? new Date(body.scheduled_at) : null;
     if (parsedScheduledAt && Number.isNaN(parsedScheduledAt.getTime())) {
       return NextResponse.json({ error: 'Invalid scheduled_at date value' }, { status: 400 });
@@ -534,6 +602,7 @@ export async function POST(req: NextRequest) {
       scheduled_at: shouldPublishNow ? null : scheduledAt,
       facebook_page_id: body.facebook_page_id || null,
       linkedin_member_id: body.linkedin_member_id || null,
+      linkedin_organization_id: requestedOrganizationId,
     };
 
     const { data: post, error } = await insertSocialPostWithFallback(supabase, insertPayload);

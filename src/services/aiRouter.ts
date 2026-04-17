@@ -42,6 +42,22 @@ function isAnthropicModelNotFound(error: any): boolean {
   return status === 404 && message.includes('model');
 }
 
+function isXaiModelError(error: any): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  const status = Number(error?.status || 0);
+  return status === 400 || status === 404 || message.includes('model') || message.includes('grok');
+}
+
+function normalizeXaiModel(model?: string): string {
+  const candidate = String(model || 'grok-2-latest').trim();
+  if (!candidate) return 'grok-2-latest';
+  const aliases: Record<string, string> = {
+    'grok-latest': 'grok-2-latest',
+    grok: 'grok-2-latest',
+  };
+  return aliases[candidate] || candidate;
+}
+
 // Initialize clients using validated ENV
 const anthropic = ENV.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY })
@@ -384,19 +400,33 @@ async function completeWithXAI(options: AIRequestOptions): Promise<AIResponse> {
   if (!xai) {
     throw new Error('xAI API key not configured');
   }
-  const model = options.model || 'grok-2-latest';
+  const model = normalizeXaiModel(options.model);
   const messages: any[] = [];
   if (options.systemPrompt) {
     messages.push({ role: 'system', content: options.systemPrompt });
   }
   messages.push({ role: 'user', content: options.prompt });
 
-  const completion = await xai.chat.completions.create({
-    model,
-    messages,
-    max_tokens: options.maxTokens || 4096,
-    temperature: options.temperature || 0.7,
-  });
+  let completion;
+  try {
+    completion = await xai.chat.completions.create({
+      model,
+      messages,
+      max_tokens: options.maxTokens || 4096,
+      temperature: options.temperature || 0.7,
+    });
+  } catch (error: any) {
+    if (model !== 'grok-3-mini' && isXaiModelError(error)) {
+      completion = await xai.chat.completions.create({
+        model: 'grok-3-mini',
+        messages,
+        max_tokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+      });
+    } else {
+      throw error;
+    }
+  }
 
   return {
     content: completion.choices[0]?.message?.content || '',
@@ -663,7 +693,7 @@ async function chatWithXAI(
   if (!xai) {
     throw new Error('xAI API key not configured');
   }
-  const selectedModel = model || 'grok-2-latest';
+  const selectedModel = normalizeXaiModel(model);
 
   const validHistory = history.filter((msg, idx) => {
     if (idx === 0 && msg.role !== 'user') return false;
@@ -682,16 +712,34 @@ async function chatWithXAI(
     });
   }
 
-  const completion = await xai.chat.completions.create({
-    model: selectedModel,
-    messages: [
-      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-      ...chatMessages,
-      { role: 'user', content: message }
-    ],
-    max_tokens: 4096,
-    temperature: 0.7,
-  });
+  let completion;
+  try {
+    completion = await xai.chat.completions.create({
+      model: selectedModel,
+      messages: [
+        ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+        ...chatMessages,
+        { role: 'user', content: message }
+      ],
+      max_tokens: 4096,
+      temperature: 0.7,
+    });
+  } catch (error: any) {
+    if (selectedModel !== 'grok-3-mini' && isXaiModelError(error)) {
+      completion = await xai.chat.completions.create({
+        model: 'grok-3-mini',
+        messages: [
+          ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+          ...chatMessages,
+          { role: 'user', content: message }
+        ],
+        max_tokens: 4096,
+        temperature: 0.7,
+      });
+    } else {
+      throw error;
+    }
+  }
 
   return {
     content: completion.choices[0]?.message?.content || '',
@@ -932,7 +980,7 @@ async function streamWithOpenAI(options: AIRequestOptions): Promise<ReadableStre
 async function streamWithXAI(options: AIRequestOptions): Promise<ReadableStream> {
   if (!xai) throw new Error('xAI not configured');
 
-  const model = options.model || 'grok-2-latest';
+  const model = normalizeXaiModel(options.model);
   const encoder = new TextEncoder();
 
   return new ReadableStream({

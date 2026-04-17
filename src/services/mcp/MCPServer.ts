@@ -339,6 +339,22 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'upload_media_asset',
+          description: 'Upload an image or video binary payload into workspace media storage and return the stored media asset id and URL.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              file_name: { type: 'string', description: 'Original file name with extension' },
+              mime_type: { type: 'string', description: 'MIME type such as image/png or video/mp4' },
+              file_base64: { type: 'string', description: 'Raw base64 string or data URL (data:*;base64,...)' },
+              alt_text: { type: 'string' },
+              tags: { type: 'array', items: { type: 'string' } },
+            },
+            required: ['tenant_id', 'file_name', 'mime_type', 'file_base64'],
+          },
+        },
+        {
           name: 'create_social_post',
           description: 'Create and optionally publish a Facebook social post for a connected Page.',
           inputSchema: {
@@ -349,9 +365,10 @@ class AlphaCloneMCPServer {
               caption: { type: 'string' },
               link_url: { type: 'string' },
               media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs' },
+              media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset UUIDs uploaded to the workspace library' },
               hashtags: { type: 'array', items: { type: 'string' } },
               publish_now: { type: 'boolean' },
-              scheduled_at: { type: 'string', description: 'ISO datetime for scheduled publish' },
+              scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
             },
             required: ['page_id', 'caption'],
           },
@@ -367,11 +384,23 @@ class AlphaCloneMCPServer {
               caption: { type: 'string' },
               link_url: { type: 'string' },
               media_urls: { type: 'array', items: { type: 'string' } },
+              media_asset_ids: { type: 'array', items: { type: 'string' } },
               hashtags: { type: 'array', items: { type: 'string' } },
               publish_now: { type: 'boolean' },
-              scheduled_at: { type: 'string' },
+              scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
             },
             required: ['page_id', 'caption'],
+          },
+        },
+        {
+          name: 'get_linkedin_identities',
+          description: 'List posting identities for LinkedIn: personal profile and any connected company pages.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+            },
+            required: ['tenant_id'],
           },
         },
         {
@@ -383,8 +412,10 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string' },
               text: { type: 'string', description: 'Post text content' },
               media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs for scheduled publishing' },
+              media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset UUIDs uploaded to the workspace library' },
               publish_now: { type: 'boolean' },
-              scheduled_at: { type: 'string', description: 'ISO datetime for scheduled publish' },
+              scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
+              linkedin_organization_id: { type: 'string', description: 'Optional LinkedIn organization ID to post as company page' },
             },
             required: ['text'],
           },
@@ -439,6 +470,22 @@ class AlphaCloneMCPServer {
               status: { type: 'string' },
             },
             required: ['tenant_id'],
+          },
+        },
+        {
+          name: 'create_project',
+          description:
+            'Create a new project in the workspace. Use for new initiatives, client workstreams, or internal execution plans.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              name: { type: 'string', description: 'Project name/title' },
+              description: { type: 'string', description: 'Optional project brief' },
+              status: { type: 'string', description: 'planning | active | on_hold | completed | cancelled' },
+              due_date: { type: 'string', description: 'Optional ISO date or datetime' },
+            },
+            required: ['tenant_id', 'name'],
           },
         },
         {
@@ -510,6 +557,20 @@ class AlphaCloneMCPServer {
               status: { type: 'string', description: 'ideas | todo | in_progress | review | completed | cancelled' },
             },
             required: ['task_id'],
+          },
+        },
+        {
+          name: 'write_task_note',
+          description:
+            'Append a timestamped note to a task. Use for progress logs, blockers, handoff notes, and AI-generated summaries.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              task_id: { type: 'string', description: 'Task UUID from get_tasks' },
+              note: { type: 'string', description: 'Plain text note to append' },
+            },
+            required: ['tenant_id', 'task_id', 'note'],
           },
         },
         // ── Finance & Expenses ─────────────────────────────────────────────
@@ -1069,6 +1130,31 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        // ── create_project ────────────────────────────────────────────────
+        case 'create_project': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { name, description, status = 'planning', due_date } = a;
+          if (typeof name !== 'string' || !name.trim()) {
+            throw new Error('name is required');
+          }
+
+          const { data, error } = await supabaseAdmin
+            .from('business_projects')
+            .insert({
+              tenant_id,
+              name: name.trim(),
+              description: typeof description === 'string' ? description : null,
+              status: typeof status === 'string' && status.trim() ? status.trim() : 'planning',
+              due_date: typeof due_date === 'string' && due_date.trim() ? due_date.trim() : null,
+            })
+            .select('id, name, status, due_date, created_at')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('create_project', error.message);
+          result = { content: [{ type: 'text', text: `Project created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
         // ── update_project_status ──────────────────────────────────────────
         case 'update_project_status': {
           const a = args as Record<string, any>;
@@ -1203,6 +1289,44 @@ class AlphaCloneMCPServer {
           if (error) throw supabaseErrorToMcpClientError('update_task', error.message);
 
           result = { content: [{ type: 'text', text: `Task updated: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        // ── write_task_note ────────────────────────────────────────────────
+        case 'write_task_note': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { task_id, note } = a;
+          if (!isUuidString(task_id)) {
+            throw new Error('task_id must be a valid task UUID from get_tasks');
+          }
+          if (typeof note !== 'string' || !note.trim()) {
+            throw new Error('note is required');
+          }
+
+          const { data: existingTask, error: fetchError } = await supabaseAdmin
+            .from('tasks')
+            .select('id, title, description')
+            .eq('tenant_id', tenant_id)
+            .eq('id', task_id.trim())
+            .single();
+          if (fetchError || !existingTask) {
+            throw supabaseErrorToMcpClientError('write_task_note', fetchError?.message || 'Task not found');
+          }
+
+          const timestamp = new Date().toISOString();
+          const prefix = existingTask.description ? `${existingTask.description}\n\n` : '';
+          const nextDescription = `${prefix}[${timestamp}] NOTE: ${note.trim()}`;
+          const { data: updatedTask, error: updateError } = await supabaseAdmin
+            .from('tasks')
+            .update({ description: nextDescription })
+            .eq('tenant_id', tenant_id)
+            .eq('id', task_id.trim())
+            .select('id, title, description, updated_at')
+            .single();
+          if (updateError) throw supabaseErrorToMcpClientError('write_task_note', updateError.message);
+
+          result = { content: [{ type: 'text', text: `Task note saved: ${JSON.stringify(updatedTask)}` }] };
           break;
         }
 
@@ -1366,15 +1490,89 @@ class AlphaCloneMCPServer {
         }
 
         // ── create_social_post / create_post ───────────────────────────────
+        case 'upload_media_asset': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { file_name, mime_type, file_base64, alt_text = '', tags = [] } = a;
+          if (typeof file_name !== 'string' || !file_name.trim()) throw new Error('file_name is required');
+          if (typeof mime_type !== 'string' || !mime_type.trim()) throw new Error('mime_type is required');
+          if (typeof file_base64 !== 'string' || !file_base64.trim()) throw new Error('file_base64 is required');
+
+          const normalizedBase64 = file_base64.includes('base64,')
+            ? file_base64.split('base64,')[1]
+            : file_base64;
+          const binary = Buffer.from(normalizedBase64, 'base64');
+          if (!binary.length) throw new Error('file_base64 is invalid or empty');
+
+          const isVideo = mime_type.startsWith('video/');
+          const assetType = isVideo ? 'video' : mime_type.includes('gif') ? 'gif' : 'image';
+          const ext = String(file_name).split('.').pop() || (isVideo ? 'mp4' : 'bin');
+          const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from('public-assets')
+            .upload(storagePath, binary, {
+              contentType: mime_type,
+              upsert: false,
+            });
+          if (uploadError) throw supabaseErrorToMcpClientError('upload_media_asset', uploadError.message);
+
+          const { data: urlData } = supabaseAdmin.storage.from('public-assets').getPublicUrl(storagePath);
+          const publicUrl = urlData.publicUrl;
+
+          const { data: asset, error: assetErr } = await supabaseAdmin
+            .from('media_assets')
+            .insert({
+              tenant_id,
+              user_id,
+              file_name: file_name.trim(),
+              file_type: mime_type.trim(),
+              asset_type: assetType,
+              storage_path: storagePath,
+              public_url: publicUrl,
+              file_size_bytes: binary.length,
+              alt_text: typeof alt_text === 'string' ? alt_text : '',
+              tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : [],
+            })
+            .select('id, public_url, asset_type, file_name, file_size_bytes, created_at')
+            .single();
+          if (assetErr) throw supabaseErrorToMcpClientError('upload_media_asset', assetErr.message);
+
+          result = { content: [{ type: 'text', text: `Media uploaded: ${JSON.stringify(asset)}` }] };
+          break;
+        }
+
         case 'create_social_post':
         case 'create_post': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { page_id, caption, link_url, media_urls = [], hashtags = [], publish_now = false, scheduled_at } = a;
+          const { page_id, caption, link_url, media_urls = [], media_asset_ids = [], hashtags = [], publish_now = false, scheduled_at } = a;
           if (typeof page_id !== 'string' || !page_id.trim()) throw new Error('page_id is required');
           if (typeof caption !== 'string' || !caption.trim()) throw new Error('caption is required');
-          const imageUrl = Array.isArray(media_urls) && typeof media_urls[0] === 'string' ? media_urls[0] : null;
+          if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
+            throw new Error('scheduled_at is required when publish_now is false');
+          }
+
+          const normalizedMediaUrls = Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [];
+          let resolvedAssetUrls: string[] = [];
+          if (Array.isArray(media_asset_ids) && media_asset_ids.length > 0) {
+            const ids = media_asset_ids.filter((id) => typeof id === 'string');
+            const { data: assets, error: assetsError } = await supabaseAdmin
+              .from('media_assets')
+              .select('id, public_url')
+              .eq('tenant_id', tenant_id)
+              .in('id', ids);
+            if (assetsError) throw supabaseErrorToMcpClientError('create_social_post', assetsError.message);
+            resolvedAssetUrls = (assets || [])
+              .map((asset) => String(asset.public_url || ''))
+              .filter(Boolean);
+          }
+
+          const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls];
+          const firstMediaUrl = mergedMediaUrls.length > 0 ? mergedMediaUrls[0] : null;
+          const isVideoMedia = !!firstMediaUrl && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
 
           const { data: integration, error: integrationError } = await supabaseAdmin
             .from('facebook_integrations')
@@ -1393,12 +1591,17 @@ class AlphaCloneMCPServer {
           let facebookPostId: string | null = null;
 
           if (publish_now) {
-            const graph = new URL(`https://graph.facebook.com/v19.0/${page_id.trim()}/${imageUrl ? 'photos' : 'feed'}`);
+            const graph = new URL(`https://graph.facebook.com/v19.0/${page_id.trim()}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
             graph.searchParams.set('access_token', integration.page_access_token);
             const body = new URLSearchParams();
-            if (imageUrl) {
-              body.set('url', imageUrl);
-              body.set('caption', caption.trim());
+            if (firstMediaUrl) {
+              if (isVideoMedia) {
+                body.set('file_url', firstMediaUrl);
+                body.set('description', caption.trim());
+              } else {
+                body.set('url', firstMediaUrl);
+                body.set('caption', caption.trim());
+              }
             } else {
               body.set('message', caption.trim());
               if (typeof link_url === 'string' && link_url) body.set('link', link_url);
@@ -1426,10 +1629,10 @@ class AlphaCloneMCPServer {
               caption: caption.trim(),
               platforms: ['facebook'],
               link_url: typeof link_url === 'string' && link_url ? link_url : null,
-              media_urls: Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [],
+              media_urls: mergedMediaUrls,
               hashtags: Array.isArray(hashtags) ? hashtags : [],
               status,
-              scheduled_at: publish_now ? null : (typeof scheduled_at === 'string' ? scheduled_at : new Date().toISOString()),
+              scheduled_at: publish_now ? null : String(scheduled_at),
               published_at: publishedAt,
               facebook_page_id: page_id.trim(),
               facebook_post_id: facebookPostId,
@@ -1442,13 +1645,76 @@ class AlphaCloneMCPServer {
         }
 
         // ── LinkedIn tools ────────────────────────────────────────────────
+        case 'get_linkedin_identities': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('linkedin_member_id, linkedin_person_urn, scopes, metadata, is_active, updated_at')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_identities', liErr.message);
+          if (!li) {
+            result = { content: [{ type: 'text', text: JSON.stringify({ connected: false, identities: [] }, null, 2) }] };
+            break;
+          }
+
+          const scopes = Array.isArray(li.scopes)
+            ? li.scopes.map((scope) => String(scope).toLowerCase())
+            : [];
+          const companyPagesRaw = Array.isArray((li as any)?.metadata?.company_pages)
+            ? ((li as any).metadata.company_pages as Array<Record<string, unknown>>)
+            : [];
+          const companyIdentities = companyPagesRaw
+            .map((company) => {
+              const id = String(company?.id || '').trim();
+              if (!id) return null;
+              return {
+                type: 'company',
+                organization_id: id,
+                author_urn: `urn:li:organization:${id}`,
+                name: typeof company?.name === 'string' ? company.name : null,
+                vanity_name: typeof company?.vanityName === 'string' ? company.vanityName : null,
+                can_post: scopes.includes('w_organization_social'),
+              };
+            })
+            .filter((identity): identity is {
+              type: 'company';
+              organization_id: string;
+              author_urn: string;
+              name: string | null;
+              vanity_name: string | null;
+              can_post: boolean;
+            } => !!identity);
+
+          const identities = [
+            {
+              type: 'person',
+              linkedin_member_id: li.linkedin_member_id || null,
+              author_urn: li.linkedin_person_urn,
+              can_post: scopes.includes('w_member_social'),
+            },
+            ...companyIdentities,
+          ];
+          result = { content: [{ type: 'text', text: JSON.stringify({ connected: true, identities }, null, 2) }] };
+          break;
+        }
+
         case 'create_linkedin_post': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { text, media_urls = [], publish_now = true, scheduled_at } = a;
+          const { text, media_urls = [], media_asset_ids = [], publish_now = false, scheduled_at, linkedin_organization_id } = a;
           if (typeof text !== 'string' || !text.trim()) {
             throw new Error('text is required');
+          }
+          if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
+            throw new Error('scheduled_at is required when publish_now is false');
           }
 
           const { data: li, error: liErr } = await supabaseAdmin
@@ -1467,13 +1733,41 @@ class AlphaCloneMCPServer {
           if (!scopes.includes('w_member_social')) {
             throw new Error('LinkedIn connection is missing w_member_social scope.');
           }
+          const companyPages = Array.isArray((li as any)?.metadata?.company_pages)
+            ? ((li as any).metadata.company_pages as Array<Record<string, unknown>>)
+            : [];
+          const requestedOrganizationId =
+            typeof linkedin_organization_id === 'string' && linkedin_organization_id.trim()
+              ? linkedin_organization_id.trim()
+              : null;
+          const selectedCompany = requestedOrganizationId
+            ? companyPages.find((page) => String(page?.id || '') === requestedOrganizationId)
+            : null;
+          const postAsCompany = !!selectedCompany && scopes.includes('w_organization_social');
+          const authorUrn = postAsCompany
+            ? `urn:li:organization:${requestedOrganizationId}`
+            : li.linkedin_person_urn;
 
           const normalizedMediaUrls = Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [];
-          const immediatePublish = Boolean(publish_now) && normalizedMediaUrls.length === 0;
+          let resolvedAssetUrls: string[] = [];
+          if (Array.isArray(media_asset_ids) && media_asset_ids.length > 0) {
+            const ids = media_asset_ids.filter((id) => typeof id === 'string');
+            const { data: assets, error: assetsError } = await supabaseAdmin
+              .from('media_assets')
+              .select('id, public_url')
+              .eq('tenant_id', tenant_id)
+              .in('id', ids);
+            if (assetsError) throw supabaseErrorToMcpClientError('create_linkedin_post', assetsError.message);
+            resolvedAssetUrls = (assets || [])
+              .map((asset) => String(asset.public_url || ''))
+              .filter(Boolean);
+          }
+          const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls];
+          const immediatePublish = Boolean(publish_now) && mergedMediaUrls.length === 0;
           let linkedinPostUrn: string | null = null;
           if (immediatePublish) {
             const payload = {
-              author: li.linkedin_person_urn,
+              author: authorUrn,
               lifecycleState: 'PUBLISHED',
               specificContent: {
                 'com.linkedin.ugc.ShareContent': {
@@ -1507,16 +1801,21 @@ class AlphaCloneMCPServer {
               user_id,
               caption: text.trim(),
               platforms: ['linkedin'],
-              media_urls: normalizedMediaUrls,
+              media_urls: mergedMediaUrls,
               status: immediatePublish ? 'published' : 'scheduled',
-              scheduled_at: immediatePublish ? null : (typeof scheduled_at === 'string' && scheduled_at ? scheduled_at : new Date().toISOString()),
+              scheduled_at: immediatePublish ? null : String(scheduled_at),
               published_at: immediatePublish ? new Date().toISOString() : null,
+              linkedin_organization_id: postAsCompany ? requestedOrganizationId : null,
+              linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
               analytics: linkedinPostUrn ? { linkedin_post_urn: linkedinPostUrn } : {},
+              metadata: postAsCompany
+                ? { linkedin_organization_id: requestedOrganizationId, linkedin_author_urn: authorUrn }
+                : { linkedin_author_urn: authorUrn },
             })
             .select('id, status, published_at, analytics')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
-          const publishHint = !immediatePublish && normalizedMediaUrls.length > 0
+          const publishHint = !immediatePublish && mergedMediaUrls.length > 0
             ? ' LinkedIn image posts were scheduled for publisher processing.'
             : '';
           result = { content: [{ type: 'text', text: `LinkedIn post created: ${JSON.stringify(data)}.${publishHint}` }] };
@@ -1915,7 +2214,7 @@ class AlphaCloneMCPServer {
           const { limit = 10 } = a;
           const { data, error } = await supabase
             .from('messages')
-            .select('id, content, sender_id, created_at, thread_id')
+            .select('id, text, sender_id, sender_name, recipient_id, group_id, created_at, priority, reply_to')
             .eq('tenant_id', tenant_id)
             .order('created_at', { ascending: false })
             .limit(Math.min(limit, 50));
@@ -2243,7 +2542,9 @@ Each topic should be a specific, professional title for a long-form article.
           );
 
           // 3. Schedule
-          const publishTime = scheduled_at || new Date().toISOString();
+          const publishTime = typeof scheduled_at === 'string' && scheduled_at
+            ? scheduled_at
+            : new Date(Date.now() + 60 * 60 * 1000).toISOString();
           const { data, error } = await supabaseAdmin.from('social_posts').insert({
             tenant_id,
             user_id: userId,
@@ -2319,7 +2620,7 @@ Each topic should be a specific, professional title for a long-form article.
         }
 
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_task, update_task, get_tasks, get_projects, update_project_status, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────
