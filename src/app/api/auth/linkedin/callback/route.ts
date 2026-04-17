@@ -79,7 +79,7 @@ async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInC
         logoUrl: firstIdentifier?.identifier ? String(firstIdentifier.identifier) : null,
       } as LinkedInCompanyPage;
     })
-    .filter((page) => page.id);
+    .filter((page: LinkedInCompanyPage) => Boolean(page.id));
 }
 
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
