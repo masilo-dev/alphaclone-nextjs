@@ -29,7 +29,7 @@
         },
         {
             "path": "/api/cron/social-publish",
-            "schedule": "30 0 * * *"
+            "schedule": "*/5 * * * *"
         }
     ]
 }

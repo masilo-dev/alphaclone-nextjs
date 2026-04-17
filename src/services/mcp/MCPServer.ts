@@ -75,6 +75,63 @@ function scoreDealFromSignals(stage: string, value: number, ageDays: number): nu
   return Math.max(1, Math.min(10, score));
 }
 
+async function appendTaskNoteAndMaybeComplete(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  taskId: string,
+  note: string,
+  markDone: boolean
+) {
+  const { data: existingTask, error: fetchError } = await supabaseAdmin
+    .from('tasks')
+    .select('id, description')
+    .eq('tenant_id', tenantId)
+    .eq('id', taskId)
+    .single();
+  if (fetchError || !existingTask) return;
+
+  const timestamp = new Date().toISOString();
+  const prefix = existingTask.description ? `${existingTask.description}\n\n` : '';
+  const nextDescription = `${prefix}[${timestamp}] NOTE: ${note.trim()}`;
+  const patch: Record<string, unknown> = { description: nextDescription };
+  if (markDone) {
+    patch.status = 'completed';
+    patch.completed_at = new Date().toISOString();
+  }
+  await supabaseAdmin
+    .from('tasks')
+    .update(patch)
+    .eq('tenant_id', tenantId)
+    .eq('id', taskId);
+}
+
+async function createAutomationTask(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  title: string,
+  description: string,
+  dueDate: string | null,
+  markDone: boolean
+) {
+  const nowIso = new Date().toISOString();
+  const status = markDone ? 'completed' : 'todo';
+  const payload: Record<string, unknown> = {
+    tenant_id: tenantId,
+    title,
+    description,
+    due_date: dueDate,
+    priority: 'medium',
+    status,
+  };
+  if (markDone) payload.completed_at = nowIso;
+  const { data } = await supabaseAdmin
+    .from('tasks')
+    .insert(payload)
+    .select('id, title, status, due_date, completed_at')
+    .single();
+  return data || null;
+}
+
 /**
  * AlphaClone MCP Server
  *
@@ -355,6 +412,17 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'get_facebook_identities',
+          description: 'List connected Facebook page identities and whether each page can publish.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+            },
+            required: ['tenant_id'],
+          },
+        },
+        {
           name: 'create_social_post',
           description: 'Create and optionally publish a Facebook social post for a connected Page.',
           inputSchema: {
@@ -369,6 +437,10 @@ class AlphaCloneMCPServer {
               hashtags: { type: 'array', items: { type: 'string' } },
               publish_now: { type: 'boolean' },
               scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
+              task_id: { type: 'string', description: 'Optional task UUID to update with execution notes' },
+              task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
+              task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
+              mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
             },
             required: ['page_id', 'caption'],
           },
@@ -416,6 +488,10 @@ class AlphaCloneMCPServer {
               publish_now: { type: 'boolean' },
               scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
               linkedin_organization_id: { type: 'string', description: 'Optional LinkedIn organization ID to post as company page' },
+              task_id: { type: 'string', description: 'Optional task UUID to update with execution notes' },
+              task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
+              task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
+              mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
             },
             required: ['text'],
           },
@@ -1543,12 +1619,55 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'get_facebook_identities': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { data: pages, error } = await supabaseAdmin
+            .from('facebook_integrations')
+            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .order('updated_at', { ascending: false });
+          if (error) throw supabaseErrorToMcpClientError('get_facebook_identities', error.message);
+
+          const identities = (pages || []).map((page) => {
+            const tasks = Array.isArray((page as any)?.metadata?.page_tasks)
+              ? ((page as any).metadata.page_tasks as string[])
+              : [];
+            const hasTaskPermission = tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
+            const canPost = !!page.page_access_token && page.is_active && !(page as any)?.metadata?.no_pages && hasTaskPermission;
+            return {
+              page_id: page.page_id,
+              page_name: page.page_name,
+              is_active: page.is_active,
+              can_post: canPost,
+              page_tasks: tasks,
+            };
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ connected: identities.length > 0, identities }, null, 2) }] };
+          break;
+        }
+
         case 'create_social_post':
         case 'create_post': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { page_id, caption, link_url, media_urls = [], media_asset_ids = [], hashtags = [], publish_now = false, scheduled_at } = a;
+          const {
+            page_id,
+            caption,
+            link_url,
+            media_urls = [],
+            media_asset_ids = [],
+            hashtags = [],
+            publish_now = false,
+            scheduled_at,
+            task_id,
+            task_title,
+            task_note,
+            mark_task_done,
+          } = a;
           if (typeof page_id !== 'string' || !page_id.trim()) throw new Error('page_id is required');
           if (typeof caption !== 'string' || !caption.trim()) throw new Error('caption is required');
           if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
@@ -1640,7 +1759,35 @@ class AlphaCloneMCPServer {
             .select('id, status, scheduled_at, published_at, facebook_post_id')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_social_post', error.message);
-          result = { content: [{ type: 'text', text: `Social post created: ${JSON.stringify(data)}` }] };
+
+          const actionLabel = publish_now ? 'posted to Facebook' : `scheduled for ${String(scheduled_at)}`;
+          const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
+            ? task_note.trim()
+            : `Facebook content ${actionLabel}. social_post_id=${data?.id || 'unknown'} page_id=${page_id.trim()}`;
+          const shouldMarkTaskDone = typeof mark_task_done === 'boolean' ? mark_task_done : !!publish_now;
+          let taskResult: Record<string, unknown> | null = null;
+          if (typeof task_id === 'string' && isUuidString(task_id)) {
+            await appendTaskNoteAndMaybeComplete(
+              supabaseAdmin,
+              tenant_id,
+              task_id.trim(),
+              resolvedTaskNote,
+              shouldMarkTaskDone
+            );
+            taskResult = { updated_task_id: task_id.trim(), marked_done: shouldMarkTaskDone };
+          } else if (typeof task_title === 'string' && task_title.trim()) {
+            const createdTask = await createAutomationTask(
+              supabaseAdmin,
+              tenant_id,
+              task_title.trim(),
+              resolvedTaskNote,
+              !publish_now && typeof scheduled_at === 'string' ? String(scheduled_at) : null,
+              shouldMarkTaskDone
+            );
+            taskResult = createdTask ? { created_task: createdTask } : null;
+          }
+
+          result = { content: [{ type: 'text', text: `Social post created: ${JSON.stringify({ post: data, task: taskResult })}` }] };
           break;
         }
 
@@ -1709,7 +1856,18 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { text, media_urls = [], media_asset_ids = [], publish_now = false, scheduled_at, linkedin_organization_id } = a;
+          const {
+            text,
+            media_urls = [],
+            media_asset_ids = [],
+            publish_now = false,
+            scheduled_at,
+            linkedin_organization_id,
+            task_id,
+            task_title,
+            task_note,
+            mark_task_done,
+          } = a;
           if (typeof text !== 'string' || !text.trim()) {
             throw new Error('text is required');
           }
@@ -1815,10 +1973,38 @@ class AlphaCloneMCPServer {
             .select('id, status, published_at, analytics')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
+
+          const actionLabel = immediatePublish ? 'posted to LinkedIn' : `scheduled for ${String(scheduled_at)}`;
+          const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
+            ? task_note.trim()
+            : `LinkedIn content ${actionLabel}. social_post_id=${data?.id || 'unknown'}`;
+          const shouldMarkTaskDone = typeof mark_task_done === 'boolean' ? mark_task_done : !!immediatePublish;
+          let taskResult: Record<string, unknown> | null = null;
+          if (typeof task_id === 'string' && isUuidString(task_id)) {
+            await appendTaskNoteAndMaybeComplete(
+              supabaseAdmin,
+              tenant_id,
+              task_id.trim(),
+              resolvedTaskNote,
+              shouldMarkTaskDone
+            );
+            taskResult = { updated_task_id: task_id.trim(), marked_done: shouldMarkTaskDone };
+          } else if (typeof task_title === 'string' && task_title.trim()) {
+            const createdTask = await createAutomationTask(
+              supabaseAdmin,
+              tenant_id,
+              task_title.trim(),
+              resolvedTaskNote,
+              !immediatePublish && typeof scheduled_at === 'string' ? String(scheduled_at) : null,
+              shouldMarkTaskDone
+            );
+            taskResult = createdTask ? { created_task: createdTask } : null;
+          }
+
           const publishHint = !immediatePublish && mergedMediaUrls.length > 0
             ? ' LinkedIn image posts were scheduled for publisher processing.'
             : '';
-          result = { content: [{ type: 'text', text: `LinkedIn post created: ${JSON.stringify(data)}.${publishHint}` }] };
+          result = { content: [{ type: 'text', text: `LinkedIn post created: ${JSON.stringify({ post: data, task: taskResult })}.${publishHint}` }] };
           break;
         }
 
@@ -2620,7 +2806,7 @@ Each topic should be a specific, professional title for a long-form article.
         }
 
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────
