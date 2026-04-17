@@ -1719,7 +1719,7 @@ class AlphaCloneMCPServer {
 
           const { data: li, error: liErr } = await supabaseAdmin
             .from('linkedin_integrations')
-            .select('linkedin_person_urn, access_token, scopes')
+            .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
             .eq('tenant_id', tenant_id)
             .eq('user_id', user_id)
             .eq('is_active', true)
