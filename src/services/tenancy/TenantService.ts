@@ -386,6 +386,30 @@ class TenantService {
         };
 
         try {
+            // Prefer server-side API proxy to avoid browser-side CORS/edge issues on direct RPC.
+            try {
+                const res = await fetch(`/api/dashboard/stats?tenantId=${encodeURIComponent(tenantId)}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (res.ok) {
+                    const payload = await res.json();
+                    const stats = {
+                        ...EMPTY_STATS,
+                        ...(payload?.stats || {}),
+                    };
+                    try {
+                        if (typeof window !== 'undefined') {
+                            localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+                        }
+                    } catch (_) { /* ignore cache write errors */ }
+                    return { stats, error: null };
+                }
+            } catch (_) {
+                // Fall back to direct RPC below.
+            }
+
             // Race the optimized RPC against a 20-second timeout
             const timeout = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('Stats query timeout')), 20000)
