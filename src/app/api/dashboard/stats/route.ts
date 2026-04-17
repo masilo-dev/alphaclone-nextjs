@@ -38,10 +38,19 @@ export async function GET(req: NextRequest) {
     });
     if (error) throw error;
 
+    let totalMessages = 0;
+    const { count: msgCount, error: msgError } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId);
+    if (!msgError && typeof msgCount === 'number') {
+      totalMessages = msgCount;
+    }
+
     return NextResponse.json({
       stats: {
         ...(data || {}),
-        totalMessages: 0,
+        totalMessages,
       },
     });
   } catch (err: unknown) {
