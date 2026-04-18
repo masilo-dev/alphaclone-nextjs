@@ -3,10 +3,8 @@ import Daily, { DailyCall } from '@daily-co/daily-js';
 import { dailyService } from '../../services/dailyService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { MeetingChat } from '../meeting/MeetingChat';
 import { AdminControls } from '../meeting/AdminControls';
 import { HostControls } from '../meeting/HostControls';
-import { MessageSquare, X } from 'lucide-react';
 
 interface DailyVideoRoomProps {
     user: User;
@@ -16,11 +14,8 @@ interface DailyVideoRoomProps {
 }
 
 /**
- * Daily Prebuilt Video Room with Chat and Controls
- * Features:
- * - Real-time chat sidebar
- * - Admin controls (for admins)
- * - Host controls (for tenant admins)
+ * Daily Prebuilt Video Room
+ * Admin and host controls when applicable.
  */
 const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     user,
@@ -30,10 +25,32 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const callObjectRef = useRef<DailyCall | null>(null);
+    const callStartTimeRef = useRef<Date | null>(null);
+    const onLeaveRef = useRef(onLeave);
+    const handleCallEndRef = useRef<() => Promise<void>>(async () => undefined);
     const [isJoining, setIsJoining] = useState(true);
-    const [callStartTime, setCallStartTime] = useState<Date | null>(null);
-    const [showChat, setShowChat] = useState(false);
     const [participantCount, setParticipantCount] = useState(1);
+
+    useEffect(() => {
+        onLeaveRef.current = onLeave;
+    }, [onLeave]);
+
+    useEffect(() => {
+        handleCallEndRef.current = async () => {
+            const started = callStartTimeRef.current;
+            const duration = started
+                ? Math.floor((new Date().getTime() - started.getTime()) / 1000)
+                : undefined;
+
+            if (callId && duration) {
+                await dailyService.endVideoCall(callId, duration).catch(err => {
+                    console.error('Failed to end call in database:', err);
+                });
+            }
+
+            onLeaveRef.current();
+        };
+    }, [callId]);
 
     useEffect(() => {
         let mounted = true;
@@ -88,7 +105,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
 
                         if (mounted) {
                             setIsJoining(false);
-                            setCallStartTime(new Date());
+                            callStartTimeRef.current = new Date();
 
                             if (callId) {
                                 dailyService.startVideoCall(callId).catch(console.error);
@@ -111,7 +128,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     })
                     .on('left-meeting', async () => {
                         if (mounted) {
-                            await handleCallEnd();
+                            await handleCallEndRef.current();
                         }
                     })
                     .on('error', (error) => {
@@ -139,25 +156,9 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 toast.error('Failed to initialize video uplink');
                 if (mounted) {
                     setIsJoining(false);
-                    setTimeout(onLeave, 2000);
+                    setTimeout(() => onLeaveRef.current(), 2000);
                 }
             }
-        };
-
-        const handleCallEnd = async () => {
-            // Calculate duration
-            const duration = callStartTime
-                ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
-                : undefined;
-
-            // End call in database
-            if (callId && duration) {
-                await dailyService.endVideoCall(callId, duration).catch(err => {
-                    console.error('Failed to end call in database:', err);
-                });
-            }
-
-            onLeave();
         };
 
         initializeCall();
@@ -170,7 +171,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 callObjectRef.current = null;
             }
         };
-    }, [roomUrl, user.name, user.role, callId, callStartTime, onLeave]);
+    }, [roomUrl, user.name, user.role, callId]);
 
     return (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
@@ -199,28 +200,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                         </div>
                     )}
 
-                    {/* Chat Toggle Button */}
-
-                    {/* Chat Toggle Button */}
-                    <button
-                        onClick={() => setShowChat(!showChat)}
-                        className="absolute top-4 right-4 p-3 bg-slate-900/80 hover:bg-slate-800 rounded-full transition-colors z-10"
-                        title={showChat ? 'Close chat' : 'Open chat'}
-                    >
-                        {showChat ? <X className="w-5 h-5 text-white" /> : <MessageSquare className="w-5 h-5 text-white" />}
-                    </button>
                 </div>
-
-                {/* Chat Sidebar */}
-                {showChat && (
-                    <div className="w-80 h-full">
-                        <MeetingChat
-                            callObject={callObjectRef.current}
-                            currentUser={{ id: user.id, name: user.name }}
-                            callId={callId}
-                        />
-                    </div>
-                )}
             </div>
 
             {/* Admin/Host Controls */}
@@ -228,7 +208,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 <AdminControls
                     callObject={callObjectRef.current}
                     isAdmin={true}
-                    onEndMeeting={onLeave}
+                    onEndMeeting={() => void handleCallEndRef.current()}
                 />
             )}
 
@@ -236,7 +216,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 <HostControls
                     callObject={callObjectRef.current}
                     isHost={true}
-                    onEndMeeting={onLeave}
+                    onEndMeeting={() => void handleCallEndRef.current()}
                 />
             )}
         </div>

@@ -74,6 +74,8 @@
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "leaflet": "^1.9.4",
+    "livekit-client": "^2.18.3",
+    "livekit-server-sdk": "^2.15.1",
     "lucide-react": "^0.562.0",
     "mammoth": "^1.11.0",
     "moment": "^2.30.1",

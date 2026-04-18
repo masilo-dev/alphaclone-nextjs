@@ -23,6 +23,7 @@ export default function MeetPage() {
     const [guestName, setGuestName] = useState('');
     const [guestEmail, setGuestEmail] = useState('');
     const [pinError, setPinError] = useState('');
+    const [validatedMeetingPin, setValidatedMeetingPin] = useState<string | undefined>(undefined);
 
     // This ID is the database UUID or the business slug
     const meetingIdOrSlug = params?.id as string;
@@ -196,6 +197,11 @@ export default function MeetPage() {
             return;
         }
 
+        if (expectedPin) {
+            setValidatedMeetingPin(inputPin.trim());
+        } else {
+            setValidatedMeetingPin(undefined);
+        }
         setIsPinValidated(true);
     };
 
@@ -311,6 +317,7 @@ export default function MeetPage() {
                     user={user || guestUser}
                     roomUrl={roomUrl}
                     callId={callId!}
+                    meetingAccessPin={validatedMeetingPin}
                     onLeave={() => router.push(user ? '/dashboard' : '/')}
                     showSidebar={false}
                 />
