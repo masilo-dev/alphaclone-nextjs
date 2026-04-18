@@ -16,6 +16,8 @@ export type LiveKitStageProps = {
     onHardStopConsumed: () => void;
     onLeave: () => void;
     onFatalError: (message: string) => void;
+    /** Fired once the session is visually ready (video tiles) so the parent can hide any bridging UI. */
+    onBridgeReady?: () => void;
 };
 
 function VideoTileView({ track, label }: { track: LocalTrack | RemoteTrack; label: string }) {
@@ -50,6 +52,7 @@ export default function LiveKitStage({
     onHardStopConsumed,
     onLeave,
     onFatalError,
+    onBridgeReady,
 }: LiveKitStageProps) {
     const roomRef = useRef<Room | null>(null);
     const audioElementsRef = useRef<HTMLAudioElement[]>([]);
@@ -57,6 +60,8 @@ export default function LiveKitStage({
     const [micEnabled, setMicEnabled] = useState(true);
     const [camEnabled, setCamEnabled] = useState(true);
     const leavingRef = useRef(false);
+    const bridgeOnceRef = useRef(false);
+    const [showConnectionLayer, setShowConnectionLayer] = useState(true);
 
     const rebuildTiles = useCallback(
         (room: Room) => {
@@ -101,6 +106,8 @@ export default function LiveKitStage({
     }, []);
 
     useEffect(() => {
+        bridgeOnceRef.current = false;
+        setShowConnectionLayer(true);
         let cancelled = false;
         const room = new Room({ adaptiveStream: true, dynacast: true });
         roomRef.current = room;
@@ -138,7 +145,7 @@ export default function LiveKitStage({
                 rebuildTiles(room);
             } catch (e) {
                 if (!cancelled) {
-                    onFatalError(e instanceof Error ? e.message : 'Failed to connect to extended session');
+                    onFatalError(e instanceof Error ? e.message : 'connection_failed');
                 }
             }
         })();
@@ -148,6 +155,24 @@ export default function LiveKitStage({
             void disconnect();
         };
     }, [url, token, rebuildTiles, onFatalError, disconnect]);
+
+    const signalBridgeReady = useCallback(() => {
+        if (bridgeOnceRef.current) return;
+        bridgeOnceRef.current = true;
+        setShowConnectionLayer(false);
+        onBridgeReady?.();
+    }, [onBridgeReady]);
+
+    useEffect(() => {
+        if (tiles.length > 0) {
+            signalBridgeReady();
+        }
+    }, [tiles.length, signalBridgeReady]);
+
+    useEffect(() => {
+        const t = window.setTimeout(() => signalBridgeReady(), 12000);
+        return () => window.clearTimeout(t);
+    }, [signalBridgeReady]);
 
     useEffect(() => {
         if (!requestHardStop) return;
@@ -197,17 +222,22 @@ export default function LiveKitStage({
             <header className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
                     <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
-                        <div className="w-2.5 h-2.5 rounded-full bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.5)] animate-pulse" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
-                            EXT • {formatElapsed(secondsElapsed)}
+                            REC • {formatElapsed(secondsElapsed)}
                         </span>
+                    </div>
+                    <div className="flex items-end gap-0.5 h-3">
+                        <div className="w-0.5 h-full bg-teal-500 rounded-full" />
+                        <div className="w-0.5 h-4/5 bg-teal-500 rounded-full" />
+                        <div className="w-0.5 h-3/5 bg-teal-500 rounded-full" />
                     </div>
                 </div>
             </header>
 
             <main className="flex-1 relative mt-16 mb-28 overflow-hidden p-4 sm:p-6">
                 {tiles.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-slate-400 text-sm">Waiting for video…</div>
+                    <div className="flex h-full min-h-[200px] items-center justify-center bg-slate-950" aria-hidden />
                 ) : (
                     <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
                         {tiles.map((t) => (
@@ -216,6 +246,24 @@ export default function LiveKitStage({
                     </div>
                 )}
             </main>
+
+            {showConnectionLayer ? (
+                <div
+                    className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-sm"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent opacity-50" />
+                    <div className="relative text-center px-6">
+                        <div className="relative w-24 h-24 mx-auto mb-8">
+                            <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
+                            <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
+                        </div>
+                        <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
+                        <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
+                    </div>
+                </div>
+            ) : null}
 
             <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-8 pointer-events-none">
                 <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />

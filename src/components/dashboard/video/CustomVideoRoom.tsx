@@ -80,7 +80,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     const liveKitHandoffRef = useRef(false);
     const liveKitConnectedRef = useRef(false);
     const limit60Ref = useRef(false);
-    const warned25Ref = useRef(false);
     const warned55Ref = useRef(false);
 
     useEffect(() => {
@@ -145,7 +144,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         if (liveKitHandoffRef.current) return;
         liveKitHandoffRef.current = true;
         try {
-            toast.success('Continuing in extended session (LiveKit)...');
             await leave();
             const res = await fetch('/api/livekit/token', {
                 method: 'POST',
@@ -158,7 +156,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             });
             const data = (await res.json().catch(() => ({}))) as { error?: string; token?: string; url?: string };
             if (!res.ok || !data.token || !data.url) {
-                toast.error(typeof data.error === 'string' ? data.error : 'Extended session is not available');
+                console.error('[meeting] handoff token failed', data.error);
+                toast.error('The meeting could not be continued. It will end now.');
                 await finalizeMeetingDb();
                 return;
             }
@@ -167,7 +166,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             setMediaPhase('livekit');
         } catch (err) {
             console.error('LiveKit handoff failed:', err);
-            toast.error('Could not start extended session');
+            toast.error('The meeting could not be continued. It will end now.');
             await finalizeMeetingDb();
         }
     }, [callId, meetingAccessPin, leave, finalizeMeetingDb]);
@@ -363,7 +362,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
     const handleLiveKitFatal = useCallback(
         async (msg: string) => {
-            toast.error(msg);
+            console.error('[meeting]', msg);
+            toast.error('The connection could not be restored. The meeting will end.');
             await finalizeMeetingDb();
         },
         [finalizeMeetingDb]
@@ -374,7 +374,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         if (!callId) return;
 
         const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
-            if (status === 'ended' && isJoinedRef.current) {
+            if (status === 'ended' && (isJoinedRef.current || liveKitConnectedRef.current)) {
                 toast.success('The host has ended the meeting');
                 setTimeout(handleLeave, 1500);
             }
@@ -393,10 +393,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             const elapsed = Math.floor((Date.now() - callStartTime.getTime()) / 1000);
             setSecondsElapsed(elapsed);
 
-            if (!warned25Ref.current && elapsed >= 1500 && mediaPhaseRef.current === 'daily') {
-                warned25Ref.current = true;
-                toast.success('Five minutes until the extended session segment.', { duration: 10000 });
-            }
             if (!warned55Ref.current && elapsed >= 3300) {
                 warned55Ref.current = true;
                 toast.success('Five minutes remaining in this meeting.', { duration: 10000 });
@@ -406,7 +402,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             }
             if (!limit60Ref.current && elapsed >= TOTAL_LIMIT_SEC) {
                 limit60Ref.current = true;
-                toast.error('Meeting time limit reached (60 minutes).', { duration: 6000 });
+                toast.error('This meeting has reached its scheduled duration.', { duration: 6000 });
                 if (mediaPhaseRef.current === 'livekit') {
                     setLiveKitHardStop(true);
                 } else {
@@ -521,7 +517,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                         <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
                         <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
                     </div>
-                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting...</h2>
+                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
                     <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
                 </div>
             </div>
@@ -536,7 +532,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
                         <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
-                            DAILY • {formatTime(secondsElapsed)}
+                            REC • {formatTime(secondsElapsed)}
                         </span>
                     </div>
                     {/* Signal Indicator visual */}
