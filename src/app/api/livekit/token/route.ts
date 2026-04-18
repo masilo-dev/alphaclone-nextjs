@@ -55,7 +55,11 @@ async function getAuthUser() {
     };
 }
 
-async function assertCallAccessForUser(
+/**
+ * Dashboard / signed-in access: host or same-tenant only.
+ * Never grant a token on `is_public` alone (that would let tenant B join tenant A's lobby by UUID).
+ */
+async function assertCallAccessStrict(
     supabase: SupabaseClient,
     callId: string,
     userId: string,
@@ -63,7 +67,7 @@ async function assertCallAccessForUser(
 ): Promise<boolean> {
     const { data: call, error } = await supabase
         .from('video_calls')
-        .select('id, host_id, tenant_id, is_public, status, metadata')
+        .select('id, host_id, tenant_id, status')
         .eq('id', callId)
         .single();
 
@@ -71,8 +75,34 @@ async function assertCallAccessForUser(
     if (call.status === 'ended' || call.status === 'cancelled') return false;
     if (call.host_id === userId) return true;
     if (call.tenant_id && tenantId && call.tenant_id === tenantId) return true;
-    if (call.is_public) return true;
     return false;
+}
+
+/** Public meeting link + optional PIN (same rules as guest join). Uses service role. */
+async function verifyPublicMeetingAccess(callId: string, meetingAccessPin: string | undefined): Promise<boolean> {
+    try {
+        const admin = createSupabaseAdminClient();
+        const { data: call, error } = await admin
+            .from('video_calls')
+            .select('id, is_public, status, metadata')
+            .eq('id', callId)
+            .single();
+
+        if (error || !call) return false;
+        if (call.status === 'ended' || call.status === 'cancelled') return false;
+        if (!call.is_public) return false;
+
+        const expectedPin =
+            call.metadata && typeof call.metadata === 'object'
+                ? (call.metadata as { meeting_pin?: string }).meeting_pin
+                : undefined;
+        if (expectedPin && String(expectedPin) !== String(meetingAccessPin || '')) {
+            return false;
+        }
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export async function POST(req: Request) {
@@ -97,35 +127,17 @@ export async function POST(req: Request) {
     const authUser = await getAuthUser();
 
     if (authUser) {
-        const ok = await assertCallAccessForUser(authUser.supabase, callId, authUser.id, authUser.tenantId);
-        if (!ok) {
-            return NextResponse.json({ error: 'Not allowed to join this meeting room' }, { status: 403 });
+        const strictOk = await assertCallAccessStrict(authUser.supabase, callId, authUser.id, authUser.tenantId);
+        if (!strictOk) {
+            const publicOk = await verifyPublicMeetingAccess(callId, pin);
+            if (!publicOk) {
+                return NextResponse.json({ error: 'Not allowed to join this meeting room' }, { status: 403 });
+            }
         }
     } else {
-        try {
-            const admin = createSupabaseAdminClient();
-            const { data: call, error } = await admin
-                .from('video_calls')
-                .select('id, is_public, status, metadata')
-                .eq('id', callId)
-                .single();
-
-            if (error || !call) {
-                return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
-            }
-            if (call.status === 'ended' || call.status === 'cancelled') {
-                return NextResponse.json({ error: 'Meeting has ended' }, { status: 403 });
-            }
-            if (!call.is_public) {
-                return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-            }
-            const expectedPin = call.metadata && typeof call.metadata === 'object' ? (call.metadata as { meeting_pin?: string }).meeting_pin : undefined;
-            if (expectedPin && String(expectedPin) !== String(pin || '')) {
-                return NextResponse.json({ error: 'Invalid meeting code' }, { status: 403 });
-            }
-        } catch (e) {
-            console.error('[livekit/token] guest verification failed', e);
-            return NextResponse.json({ error: 'Meeting verification failed' }, { status: 500 });
+        const publicOk = await verifyPublicMeetingAccess(callId, pin);
+        if (!publicOk) {
+            return NextResponse.json({ error: 'Meeting not found or access denied' }, { status: 403 });
         }
     }
 
