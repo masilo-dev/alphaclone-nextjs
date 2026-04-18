@@ -16,17 +16,19 @@ export class MCPAuthService {
     try {
       const { data, error } = await supabase
         .from('mcp_api_keys')
-        .select('api_key')
+        .select('api_key, updated_at')
         .eq('tenant_id', tenantId)
         .eq('user_id', userId)
-        .maybeSingle();
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         return { token: null, error: error.message };
       }
 
-      if (data?.api_key) {
-        return { token: data.api_key };
+      const existingToken = Array.isArray(data) && data[0]?.api_key ? data[0].api_key : null;
+      if (existingToken) {
+        return { token: existingToken };
       }
 
       return await this.rotateToken(tenantId, userId);

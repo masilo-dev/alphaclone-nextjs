@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { launchFunnelService } from '@/services/launchFunnelService';
+import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
 import VideoEditor from '../../video/VideoEditor';
 import { cn, cleanAIJSONResponse } from '../../../lib/utils';
 import toast from 'react-hot-toast';
@@ -299,6 +300,7 @@ export default function SocialMediaComposer() {
 
         if (data.success) {
             toast.success(publishNow ? 'Post sent!' : 'Post scheduled!', { id: toastId });
+            userLearningPreferencesService.recordSocialPost(finalCaption, aiTone);
             if (!publishNow) {
                 await launchFunnelService.completeStep('first_post_scheduled', user?.id, tenant?.id, {
                     source: 'social_composer',
@@ -672,9 +674,17 @@ Return only the comment text.`;
         setAiGenerating(true);
         try {
             const businessName = (tenant as any)?.name || 'our business';
+            const socialHints = userLearningPreferencesService.getSocialHints();
+            const learnedSnippets =
+                socialHints?.recentCaptions?.length && socialHints.recentCaptions.length > 0
+                    ? ` Prior voice samples from this workspace (paraphrase, do not copy): ${socialHints.recentCaptions
+                          .slice(0, 3)
+                          .map((s) => s.slice(0, 120))
+                          .join(' | ')}.`
+                    : '';
             const recentContext = recentTopicHints.length > 0
-                ? `Recent topics from the last ${recentTopicWindowDays} days: ${recentTopicHints.join(' | ')}.`
-                : `No reliable recent topic hints found.`;
+                ? `Recent topics from the last ${recentTopicWindowDays} days: ${recentTopicHints.join(' | ')}.${learnedSnippets}`
+                : `No reliable recent topic hints found.${learnedSnippets}`;
             const directionInstruction =
                 topicDirection === 'same'
                     ? 'Continue with a similar topic direction and keep continuity with recent posts while avoiding exact duplicates.'

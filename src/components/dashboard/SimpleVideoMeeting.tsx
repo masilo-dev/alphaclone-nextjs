@@ -230,7 +230,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
 
     const handleCreateNew = () => {
-        toast('This is your personal permanent room. No need to create a new one!', { icon: 'ℹ️' });
+        toast.success('This is your personal permanent room. No need to create a new one.');
     };
 
     // --- RENDER STATES ---

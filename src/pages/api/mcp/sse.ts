@@ -8,6 +8,16 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, mcp-session-id, x-tenant-id, x-user-id',
 };
 
+function isDisallowedMcpClient(req: NextApiRequest): boolean {
+  const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
+  const origin = String(req.headers.origin || '').toLowerCase();
+  const referer = String(req.headers.referer || '').toLowerCase();
+  const blockedSignals = ['chatgpt', 'openai.com', 'openai'];
+  return blockedSignals.some((signal) =>
+    userAgent.includes(signal) || origin.includes(signal) || referer.includes(signal)
+  );
+}
+
 export const config = {
   api: {
     bodyParser: true,
@@ -34,6 +44,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+
+  if (isDisallowedMcpClient(req)) {
+    return res.status(403).json({
+      error: 'This MCP endpoint only supports Claude and Manus clients. ChatGPT access is blocked by workspace policy.',
+    });
+  }
 
   const authHeader = req.headers['authorization'];
   let api_key =

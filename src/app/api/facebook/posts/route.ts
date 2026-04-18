@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const pageId = searchParams.get('pageId');
   const limit  = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
+  const after = searchParams.get('after');
 
   if (!pageId) {
     return NextResponse.json({
@@ -79,7 +80,8 @@ export async function GET(req: NextRequest) {
       'shares',
     ].join(',');
 
-    const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/feed?fields=${fields}&limit=${limit}&access_token=${token}`;
+    const cursorParam = after ? `&after=${encodeURIComponent(after)}` : '';
+    const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/feed?fields=${fields}&limit=${limit}${cursorParam}&access_token=${token}`;
     const res = await fetchWithRetry(graphUrl, { next: { revalidate: 0 } });
     const fbData = await res.json();
 

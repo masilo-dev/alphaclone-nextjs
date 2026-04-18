@@ -1,9 +1,9 @@
 /**
- * LiveKit bridge (planned)
+ * LiveKit bridge
  *
- * Product direction: extend sessions beyond Daily.co limits by handing off to LiveKit
- * when a room policy requires it. This module is a placeholder so configuration keys
- * and imports stay centralized until the full handoff flow ships.
+ * Multi-tenant isolation: each `video_calls.id` (UUID) maps to one Daily room and one
+ * LiveKit room name `alphaclone-${callId}`. Businesses never share a room name; capacity
+ * scales with Daily/LiveKit plans and Postgres, not with a single shared room.
  *
  * Required environment:
  * - LIVEKIT_URL (WebSocket URL, e.g. wss://your-project.livekit.cloud)

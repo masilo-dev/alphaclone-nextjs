@@ -266,7 +266,9 @@ out center ${fetchLimit};
       verifiedElements = all.filter((el: any) => {
         const p = el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '';
         const e = el.tags.email || el.tags['contact:email'] || '';
-        return p.trim().length > 0 || e.trim().length > 0;
+        const w = el.tags.website || el.tags.url || el.tags['contact:website'] || '';
+        const hasWebsite = String(w).trim().length > 0;
+        return p.trim().length > 0 || e.trim().length > 0 || hasWebsite;
       });
       if (verifiedElements.length >= targetMin) break;
     } catch (err) {
