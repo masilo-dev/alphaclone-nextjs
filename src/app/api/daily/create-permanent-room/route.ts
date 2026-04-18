@@ -30,15 +30,37 @@ export async function POST(req: Request) {
             .eq('status', 'active')
             .single();
 
-        // 1.5 Fetch user's tenant to check for a slug
-        const { data: tenant } = await supabase
-            .from('tenants')
-            .select('slug')
-            .eq('admin_user_id', userId)
-            .is('deletion_pending_at', null)
-            .single();
+        // 1.5 Resolve tenant slug (body tenantId is authoritative for multi-tenant admins)
+        let slug: string | null = null;
+        if (tenantId) {
+            const { data: byId } = await supabase
+                .from('tenants')
+                .select('slug')
+                .eq('id', tenantId)
+                .is('deletion_pending_at', null)
+                .maybeSingle();
+            slug = byId?.slug ?? null;
+        }
+        if (!slug) {
+            const { data: byAdmin } = await supabase
+                .from('tenants')
+                .select('slug, id')
+                .eq('admin_user_id', userId)
+                .is('deletion_pending_at', null)
+                .maybeSingle();
+            slug = byAdmin?.slug ?? null;
+        }
 
-        const slug = tenant?.slug;
+        let resolvedTenantId = tenantId as string | undefined;
+        if (!resolvedTenantId) {
+            const { data: tenantForHost } = await supabase
+                .from('tenants')
+                .select('id')
+                .eq('admin_user_id', userId)
+                .is('deletion_pending_at', null)
+                .maybeSingle();
+            resolvedTenantId = tenantForHost?.id;
+        }
 
         if (existingRoom) {
             return NextResponse.json({
@@ -89,7 +111,7 @@ export async function POST(req: Request) {
                 daily_room_url: dailyRoom.url,
                 daily_room_name: dailyRoom.name,
                 host_id: userId,
-                tenant_id: tenantId || userId,
+                tenant_id: resolvedTenantId || null,
                 title: `${userName}'s Permanent Office`,
                 status: 'active',
                 is_permanent: true,

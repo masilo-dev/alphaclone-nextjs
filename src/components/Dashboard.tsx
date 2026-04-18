@@ -94,6 +94,7 @@ const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab')
 const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocationTable'));
 const MailTab = React.lazy(() => import('./dashboard/MailTab'));
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
+const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 
@@ -1115,6 +1116,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <GlobalSettingsTab />
+          </React.Suspense>
+        );
+
+      case '/dashboard/admin/operations':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <OperationsConsoleTab />
           </React.Suspense>
         );
 

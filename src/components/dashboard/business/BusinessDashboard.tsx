@@ -125,7 +125,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Sync sidebar on mount to avoid hydration mismatch
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
-            setSidebarOpen(window.innerWidth >= 1024);
+            // Keep sidebar expanded by default on tablet and desktop so navigation labels stay visible.
+            setSidebarOpen(window.innerWidth >= 768);
         }
     }, []);
 
@@ -710,7 +711,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="md:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
+                            className="lg:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
                         >
                             <Menu className="w-6 h-6" />
                         </button>

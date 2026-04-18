@@ -58,6 +58,18 @@ function normalizeXaiModel(model?: string): string {
   return aliases[candidate] || candidate;
 }
 
+const GROK_CONVERSATION_BASE = `You are a concise, expert assistant for business operators.
+- Answer directly; ask at most one clarifying question only when a critical detail is missing.
+- Prefer structured bullets for multi-step answers; avoid filler and repetition.
+- Do not use emojis. Keep a professional, neutral tone unless the user asks otherwise.`;
+
+function mergeXaiSystemPrompt(systemPrompt?: string): string {
+  if (systemPrompt?.trim()) {
+    return `${GROK_CONVERSATION_BASE}\n\n${systemPrompt.trim()}`;
+  }
+  return GROK_CONVERSATION_BASE;
+}
+
 // Initialize clients using validated ENV
 const anthropic = ENV.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY })
@@ -402,9 +414,7 @@ async function completeWithXAI(options: AIRequestOptions): Promise<AIResponse> {
   }
   const model = normalizeXaiModel(options.model);
   const messages: any[] = [];
-  if (options.systemPrompt) {
-    messages.push({ role: 'system', content: options.systemPrompt });
-  }
+  messages.push({ role: 'system', content: mergeXaiSystemPrompt(options.systemPrompt) });
   messages.push({ role: 'user', content: options.prompt });
 
   let completion;
@@ -988,7 +998,7 @@ async function streamWithXAI(options: AIRequestOptions): Promise<ReadableStream>
       const stream = await xai.chat.completions.create({
         model,
         messages: [
-          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+          { role: 'system' as const, content: mergeXaiSystemPrompt(options.systemPrompt) },
           { role: 'user' as const, content: options.prompt },
         ],
         max_tokens: options.maxTokens || 4096,

@@ -334,12 +334,21 @@ async function publishSocialPost(postId: string) {
   await updateSocialPostStatusWithFallback(adminClient, postId, { status: 'publishing', error_message: null });
   const results = await Promise.all(jobs);
   const failed = results.filter((r) => !r.ok);
-  if (failed.length > 0) {
+  const succeeded = results.filter((r) => r.ok);
+  if (failed.length > 0 && succeeded.length === 0) {
     await updateSocialPostStatusWithFallback(adminClient, postId, {
       status: 'failed',
       error_message: failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | '),
     });
     return { ok: false };
+  }
+  if (failed.length > 0 && succeeded.length > 0) {
+    await updateSocialPostStatusWithFallback(adminClient, postId, {
+      status: 'published',
+      published_at: new Date().toISOString(),
+      error_message: `Partial publish: ${failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | ')}`,
+    });
+    return { ok: true };
   }
 
   await updateSocialPostStatusWithFallback(adminClient, postId, {

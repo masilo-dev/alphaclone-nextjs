@@ -27,6 +27,20 @@ const LINKEDIN_REACTIONS = new Set(['LIKE', 'PRAISE', 'MAYBE', 'EMPATHY', 'INTER
 const MCP_GENERIC_OPERATION_ERROR =
   'This action could not be completed right now. Please try again in a few minutes. If the issue continues, contact support.';
 
+function appendContractDisclaimer(body: string, attribution: string): string {
+  const trimmed = body.trim();
+  if (trimmed.includes('AlphaClone does not guarantee')) return trimmed;
+  const footer = `
+
+---
+
+**Document assistance:** ${attribution}
+
+**Important:** AlphaClone does not guarantee profits, revenue, or business performance. Results depend on your execution and market conditions. This content is not legal, tax, or financial advice. Consult qualified professionals before signing or relying on this document.
+`;
+  return `${trimmed}${footer}`;
+}
+
 function supabaseErrorToMcpClientError(toolName: string, message: string): Error {
   const m = message.toLowerCase();
   console.error(`[MCP ${toolName}]`, message);
@@ -751,6 +765,10 @@ class AlphaCloneMCPServer {
               title: { type: 'string', description: 'Document Title' },
               content: { type: 'string', description: 'The full Markdown or HTML content of the contract' },
               type: { type: 'string', description: 'nda | msa | sow | service_agreement | freelance_contract' },
+              source_attribution: {
+                type: 'string',
+                description: 'e.g. Manus AI, Claude, or other assistant name — shown on the saved document',
+              },
             },
             required: ['tenant_id', 'title', 'content'],
           },
@@ -2350,7 +2368,9 @@ class AlphaCloneMCPServer {
             }],
           });
 
-          const contractContent = aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '';
+          let contractContent = aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '';
+          const draftAttribution = 'Claude (via AlphaClone MCP generate_contract_draft)';
+          contractContent = appendContractDisclaimer(contractContent, draftAttribution);
 
           // Attempt to save to contracts table
           const { data, error } = await supabase
@@ -2388,9 +2408,15 @@ class AlphaCloneMCPServer {
         case 'save_contract': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { client_id, title, content, type = 'service_agreement' } = a;
+          const { client_id, title, content, type = 'service_agreement', source_attribution } = a;
 
           if (!title || !content) throw new Error('title and content are required');
+
+          const attribution =
+            typeof source_attribution === 'string' && source_attribution.trim()
+              ? source_attribution.trim()
+              : 'MCP Assistant';
+          const body = appendContractDisclaimer(String(content), attribution);
 
           const { data, error } = await supabase
             .from('contracts')
@@ -2398,7 +2424,7 @@ class AlphaCloneMCPServer {
               tenant_id,
               client_id: client_id || null,
               title,
-              content,
+              content: body,
               status: 'draft',
               type,
             })

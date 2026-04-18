@@ -519,12 +519,25 @@ async function publishSocialPost(postId: string) {
   });
   const results = await Promise.all(jobs);
   const failed = results.filter((r) => !r.ok);
+  const succeeded = results.filter((r) => r.ok);
 
-  if (failed.length > 0) {
+  if (failed.length > 0 && succeeded.length === 0) {
     const message = failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | ');
     await updateSocialPostStatusWithFallback(adminClient, postId, {
       status: 'failed',
       error_message: message,
+    });
+    return;
+  }
+
+  if (failed.length > 0 && succeeded.length > 0) {
+    const partialMessage = `Partial publish: ${failed
+      .map((r) => `${r.platform}: ${r.reason || 'failed'}`)
+      .join(' | ')}`;
+    await updateSocialPostStatusWithFallback(adminClient, postId, {
+      status: 'published',
+      published_at: new Date().toISOString(),
+      error_message: partialMessage,
     });
     return;
   }

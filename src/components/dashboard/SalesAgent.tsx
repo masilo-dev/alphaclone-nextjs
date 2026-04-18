@@ -23,6 +23,7 @@ import OmniLeadFinder from '../leads/OmniLeadFinder';
 import KanbanBoard from './crm/KanbanBoard';
 import AutomationBuilder from './workflows/AutomationBuilder';
 import { launchFunnelService } from '@/services/launchFunnelService';
+import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
 
 interface ParsedContact {
     name?: string;
@@ -453,9 +454,10 @@ const SalesAgent: React.FC = () => {
                 }
             },
             (result) => {
-                toast.success(`🎉 Added ${result.count} leads, created ${result.processed} clients & draft quotes!`, { duration: 5000 });
+                toast.success(`Added ${result.count} leads, created ${result.processed} clients and draft quotes.`, { duration: 5000 });
                 if (result.count > 0) {
                     void launchFunnelService.completeStep('first_lead_found');
+                    userLearningPreferencesService.recordLeadSearch(searchCriteria.industry, searchCriteria.location);
                 }
                 loadLeads();
                 setIsVisualSearchActive(false);
@@ -804,7 +806,7 @@ const SalesAgent: React.FC = () => {
             if (commands.search) {
                 const { industry, location, filters } = commands.search;
                 if (industry && location) {
-                    toast.success(`🤖 Intent detected: Searching for ${industry}...`);
+                    toast.success(`Intent detected: searching for ${industry}...`);
                     handleAutoSearch(industry, location, filters);
                 }
             }
@@ -817,7 +819,7 @@ const SalesAgent: React.FC = () => {
                 );
 
                 if (matchingLead) {
-                    toast.success(`🔬 Researching "${businessName}"...`);
+                    toast.success(`Researching "${businessName}"...`);
                     handleEnrich(matchingLead.id);
                 } else {
                     setMessages(prev => [...prev, {
@@ -926,9 +928,10 @@ const SalesAgent: React.FC = () => {
                 }
             },
             (result) => {
-                toast.success(`🎉 Process complete! Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
+                toast.success(`Process complete. Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
                 if (result.count > 0) {
                     void launchFunnelService.completeStep('first_lead_found');
+                    userLearningPreferencesService.recordLeadSearch(result.industry, result.location);
                 }
                 loadLeads();
 
@@ -947,7 +950,7 @@ const SalesAgent: React.FC = () => {
 
     // New Function: Process Pending Leads
     const handleProcessPendingLeads = async () => {
-        const toastId = toast.loading('🔍 Scanning for pending leads...');
+        const toastId = toast.loading('Scanning for pending leads...');
         try {
             const { leads: allLeads, error } = await leadService.getLeads();
             if (error) throw new Error(error);
@@ -959,7 +962,7 @@ const SalesAgent: React.FC = () => {
                 return;
             }
 
-            toast.loading(`⚡ Found ${pendingLeads.length} pending leads. Processing...`, { id: toastId });
+            toast.loading(`Found ${pendingLeads.length} pending leads. Processing...`, { id: toastId });
 
             const { supabase } = await import('../../lib/supabase');
             const { data: { user } } = await supabase.auth.getUser();

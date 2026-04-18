@@ -103,7 +103,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
             });
             toast.error('Failed to load permanent meeting room');
         }
-    }, [user.id, user.name]); // Only depends on user.id and user.name
+    }, [user.id, user.name, currentTenant?.id]);
 
     // Run initialization ONCE on mount
     useEffect(() => {
