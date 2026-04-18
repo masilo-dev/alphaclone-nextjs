@@ -703,16 +703,22 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                         <HealthIcon className="w-3 h-3" />
                                                         {health.score}
                                                     </div>
-                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                                    <div className="flex gap-1 shrink-0">
                                                         <button
-                                                            onClick={() => handleViewDocuments(deal)}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleViewDocuments(deal);
+                                                            }}
                                                             className="p-1 text-slate-400 hover:text-teal-400"
                                                             title="Documents"
                                                         >
                                                             <FileText className="w-4 h-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => {
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 setDealToDelete(deal);
                                                                 setShowDeleteModal(true);
                                                             }}

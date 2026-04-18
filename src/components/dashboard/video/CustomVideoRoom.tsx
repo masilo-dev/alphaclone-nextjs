@@ -4,11 +4,11 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useVideoPlatform } from '../../../hooks/useVideoPlatform';
 import CustomVideoTile from './CustomVideoTile';
 import VideoControls from './VideoControls';
-import MeetingChat, { ChatMessage } from './MeetingChat';
+import LiveKitStage from './LiveKitStage';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import toast from 'react-hot-toast';
-import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff, Users } from 'lucide-react';
+import { MicOff } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 interface CustomVideoRoomProps {
@@ -16,6 +16,8 @@ interface CustomVideoRoomProps {
     roomUrl?: string;
     callId: string;
     onLeave: () => void;
+    /** When joining a public meeting with a PIN, pass the validated code for the LiveKit handoff token. */
+    meetingAccessPin?: string | null;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
     isMinimized?: boolean;
@@ -38,7 +40,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     user,
     roomUrl: providedRoomUrl,
     callId,
-    onLeave
+    onLeave,
+    meetingAccessPin = null,
 }) => {
     const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
     const {
@@ -56,26 +59,29 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         toggleAudio,
         toggleVideo,
         toggleScreenShare,
-        sendChatMessage,
         muteParticipant,
         removeParticipant,
-        startCamera,
-        config,
     } = useVideoPlatform();
 
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [hasMeetingStarted, setHasMeetingStarted] = useState(false);
-    const isRestricted = !isUserAdmin(user);
     const [showParticipants, setShowParticipants] = useState(false);
-    const [showChat, setShowChat] = useState(false);
-    const [unreadChatCount, setUnreadChatCount] = useState(0);
     const [viewMode, setViewMode] = useState<'grid' | 'speaker'>('speaker');
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [isMobile, setIsMobile] = useState(false);
+    const [mediaPhase, setMediaPhase] = useState<'daily' | 'livekit'>('daily');
+    const [liveKitUrl, setLiveKitUrl] = useState<string | null>(null);
+    const [liveKitToken, setLiveKitToken] = useState<string | null>(null);
+    const [liveKitHardStop, setLiveKitHardStop] = useState(false);
 
     const joinAttemptedRef = useRef(false);
     const isJoinedRef = useRef(isJoined);
+    const finalizedRef = useRef(false);
+    const liveKitHandoffRef = useRef(false);
+    const liveKitConnectedRef = useRef(false);
+    const limit60Ref = useRef(false);
+    const warned25Ref = useRef(false);
+    const warned55Ref = useRef(false);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -101,8 +107,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     });
 
-    // Handle leaving the meeting
-    const handleLeave = useCallback(async () => {
+    const finalizeMeetingDb = useCallback(async () => {
+        if (finalizedRef.current) return;
+        finalizedRef.current = true;
         try {
             const duration = callStartTime
                 ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
@@ -113,14 +120,57 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     console.error('Failed to end call in database:', err);
                 });
             }
-
-            await leave();
             onLeave();
         } catch (err) {
-            console.error('Error leaving meeting:', err);
+            console.error('Error finalizing meeting:', err);
             onLeave();
         }
-    }, [callStartTime, callId, leave, onLeave, user]);
+    }, [callStartTime, callId, onLeave, user]);
+
+    const handleLeave = useCallback(async () => {
+        try {
+            await leave();
+            await finalizeMeetingDb();
+        } catch (err) {
+            console.error('Error leaving meeting:', err);
+            await finalizeMeetingDb();
+        }
+    }, [leave, finalizeMeetingDb]);
+
+    const handleLiveKitEnd = useCallback(async () => {
+        await finalizeMeetingDb();
+    }, [finalizeMeetingDb]);
+
+    const performHandoff = useCallback(async () => {
+        if (liveKitHandoffRef.current) return;
+        liveKitHandoffRef.current = true;
+        try {
+            toast.success('Continuing in extended session (LiveKit)...');
+            await leave();
+            const res = await fetch('/api/livekit/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    callId,
+                    meetingAccessPin: meetingAccessPin || undefined,
+                }),
+            });
+            const data = (await res.json().catch(() => ({}))) as { error?: string; token?: string; url?: string };
+            if (!res.ok || !data.token || !data.url) {
+                toast.error(typeof data.error === 'string' ? data.error : 'Extended session is not available');
+                await finalizeMeetingDb();
+                return;
+            }
+            setLiveKitUrl(data.url);
+            setLiveKitToken(data.token);
+            setMediaPhase('livekit');
+        } catch (err) {
+            console.error('LiveKit handoff failed:', err);
+            toast.error('Could not start extended session');
+            await finalizeMeetingDb();
+        }
+    }, [callId, meetingAccessPin, leave, finalizeMeetingDb]);
 
     // Resolve Room URL if not provided
     useEffect(() => {
@@ -150,9 +200,21 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
         const joinMeeting = async () => {
             try {
+                const roomName = resolvedRoomUrl.split('/').filter(Boolean).pop();
+                let token: string | undefined;
+                if (roomName) {
+                    const { token: fetched } = await dailyService.getMeetingToken(
+                        roomName,
+                        user.name || 'Guest',
+                        isUserAdmin(user)
+                    );
+                    if (fetched) token = fetched;
+                }
+
                 await join({
                     url: resolvedRoomUrl,
                     userName: user.name || 'Guest',
+                    token,
                 });
 
                 setCallStartTime(new Date());
@@ -258,24 +320,54 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }, [isJoined, callId, hasMeetingStarted, user]);
 
 
-    // Keep a fresh reference to handleLeave to avoid stale closures in the unmount listener
+    const mediaPhaseRef = useRef(mediaPhase);
+    useEffect(() => {
+        mediaPhaseRef.current = mediaPhase;
+    }, [mediaPhase]);
+
+    useEffect(() => {
+        liveKitConnectedRef.current = mediaPhase === 'livekit';
+    }, [mediaPhase]);
+
     const handleLeaveRef = useRef(handleLeave);
     useEffect(() => {
         handleLeaveRef.current = handleLeave;
     }, [handleLeave]);
 
-    // Handle component unmount cleanup separately to avoid volatile dependency loops
+    const finalizeMeetingDbRef = useRef(finalizeMeetingDb);
+    useEffect(() => {
+        finalizeMeetingDbRef.current = finalizeMeetingDb;
+    }, [finalizeMeetingDb]);
+
+    const performHandoffRef = useRef(performHandoff);
+    useEffect(() => {
+        performHandoffRef.current = performHandoff;
+    }, [performHandoff]);
+
     useEffect(() => {
         return () => {
-            if (isJoinedRef.current) {
-                handleLeaveRef.current();
-            }
+            void (async () => {
+                if (finalizedRef.current) return;
+                if (liveKitConnectedRef.current) {
+                    await finalizeMeetingDbRef.current();
+                } else if (isJoinedRef.current) {
+                    await handleLeaveRef.current();
+                }
+            })();
         };
     }, []);
 
     useEffect(() => {
         isJoinedRef.current = isJoined;
     }, [isJoined]);
+
+    const handleLiveKitFatal = useCallback(
+        async (msg: string) => {
+            toast.error(msg);
+            await finalizeMeetingDb();
+        },
+        [finalizeMeetingDb]
+    );
 
     // Subscribe to call status changes
     useEffect(() => {
@@ -291,34 +383,40 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return () => unsubscribe();
     }, [callId, handleLeave]);
 
-    // Duration timer & 30-minute limit
+    const DAILY_SEGMENT_SEC = 1800;
+    const TOTAL_LIMIT_SEC = 3600;
+
     useEffect(() => {
-        if (!isJoined || !callStartTime) return;
+        if (!callStartTime) return;
 
         const interval = setInterval(() => {
-            const now = new Date();
-            const elapsed = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
+            const elapsed = Math.floor((Date.now() - callStartTime.getTime()) / 1000);
             setSecondsElapsed(elapsed);
 
-            // 30-minute limit (1800 seconds)
-            if (elapsed >= 1800) {
-                toast.error('Meeting limit reached (30 mins). Ending call...', { duration: 5000 });
-                handleLeave();
+            if (!warned25Ref.current && elapsed >= 1500 && mediaPhaseRef.current === 'daily') {
+                warned25Ref.current = true;
+                toast.success('Five minutes until the extended session segment.', { duration: 10000 });
             }
-
-            // Warning at 25 minutes
-            if (elapsed === 1500) {
-                toast('5 minutes remaining in this meeting.', { icon: '⏰', duration: 10000 });
+            if (!warned55Ref.current && elapsed >= 3300) {
+                warned55Ref.current = true;
+                toast.success('Five minutes remaining in this meeting.', { duration: 10000 });
+            }
+            if (mediaPhaseRef.current === 'daily' && elapsed >= DAILY_SEGMENT_SEC) {
+                void performHandoffRef.current();
+            }
+            if (!limit60Ref.current && elapsed >= TOTAL_LIMIT_SEC) {
+                limit60Ref.current = true;
+                toast.error('Meeting time limit reached (60 minutes).', { duration: 6000 });
+                if (mediaPhaseRef.current === 'livekit') {
+                    setLiveKitHardStop(true);
+                } else {
+                    void handleLeaveRef.current();
+                }
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isJoined, callStartTime, handleLeave]);
-
-    // Reset unread chat count when opened
-    useEffect(() => {
-        if (showChat) setUnreadChatCount(0);
-    }, [showChat]);
+    }, [callStartTime]);
 
     // Error handling
     useEffect(() => {
@@ -377,55 +475,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     })
                     .eq('id', callId);
             }
+            finalizedRef.current = true;
             await leave();
             onLeave();
         } catch (err) { toast.error('Error ending meeting'); }
     }, [user, callId, leave, onLeave]);
-
-    const handleSendChatMessage = useCallback(async (message: string) => {
-        try {
-            await sendChatMessage(message);
-            const newMessage: ChatMessage = {
-                id: Date.now().toString(),
-                userName: user.name || 'You',
-                userId: user.id || 'me',
-                message,
-                timestamp: new Date(),
-                isLocal: true,
-            };
-            setChatMessages(prev => [...prev, newMessage]);
-        } catch (err) { toast.error('Failed to send'); }
-    }, [sendChatMessage, user.name, user.id]);
-
-    useEffect(() => {
-        if (!isJoined) return;
-        const platform = config as any;
-        const engine = platform?.engine;
-        if (!engine) return;
-
-        const handleAppMessage = (event: any) => {
-            const { data, fromId } = event;
-            if (data?.type === 'chat') {
-                if (localParticipant?.sessionId === data.senderSessionId) return;
-                const newMessage: ChatMessage = {
-                    id: `${data.timestamp}-${fromId}`,
-                    userName: data.sender || 'Guest',
-                    userId: data.senderSessionId || fromId,
-                    message: data.message,
-                    timestamp: new Date(data.timestamp),
-                    isLocal: false,
-                };
-                setChatMessages(prev => [...prev, newMessage]);
-                if (!showChat) {
-                    setUnreadChatCount(prev => prev + 1);
-                    toast(`New message from ${data.sender}`, { icon: '💬' });
-                }
-            }
-        };
-
-        engine.on('app-message', handleAppMessage);
-        return () => engine.off('app-message', handleAppMessage);
-    }, [isJoined, localParticipant, showChat, config]);
 
     const gridClass = useMemo(() => {
         const count = participants.length;
@@ -441,6 +495,22 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
+
+    if (mediaPhase === 'livekit' && liveKitUrl && liveKitToken) {
+        return (
+            <LiveKitStage
+                url={liveKitUrl}
+                token={liveKitToken}
+                displayName={user.name || 'Guest'}
+                secondsElapsed={secondsElapsed}
+                formatElapsed={formatTime}
+                requestHardStop={liveKitHardStop}
+                onHardStopConsumed={() => setLiveKitHardStop(false)}
+                onLeave={() => void handleLiveKitEnd()}
+                onFatalError={(msg) => void handleLiveKitFatal(msg)}
+            />
+        );
+    }
 
     if ((isJoining || !isJoined) && !localParticipant) {
         return (
@@ -465,7 +535,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 <div className="flex items-center gap-4 pointer-events-auto">
                     <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
                         <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">REC • {formatTime(secondsElapsed)}</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                            DAILY • {formatTime(secondsElapsed)}
+                        </span>
                     </div>
                     {/* Signal Indicator visual */}
                     <div className="flex items-end gap-0.5 h-3">
@@ -561,21 +633,10 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 onToggleScreenShare={handleToggleScreenShare}
                 onLeave={handleLeave}
                 onToggleParticipants={() => setShowParticipants(!showParticipants)}
-                onToggleChat={() => setShowChat(!showChat)}
                 onEndForAll={isUserAdmin(user) ? handleEndMeetingForAll : undefined}
                 isAdmin={isUserAdmin(user)}
                 roomUrl={resolvedRoomUrl || ''}
                 callId={callId}
-                unreadMessageCount={unreadChatCount}
-            />
-
-            {/* Overlay Panels */}
-            <MeetingChat
-                user={user}
-                isOpen={showChat}
-                onClose={() => setShowChat(false)}
-                onSendMessage={handleSendChatMessage}
-                messages={chatMessages}
             />
         </div>
     );

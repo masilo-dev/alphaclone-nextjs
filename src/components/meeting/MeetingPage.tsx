@@ -7,8 +7,6 @@ import toast from 'react-hot-toast';
 import { Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { VideoLayout } from './VideoLayout';
 import { VideoControls } from './VideoControls';
-import { MeetingChat } from './MeetingChat';
-
 interface MeetingPageProps {
     user: User;
 }
@@ -42,7 +40,6 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
     const [muted, setMuted] = useState(false);
     const [cameraOff, setCameraOff] = useState(false);
     const [screenShareOn, setScreenShareOn] = useState(false);
-    const [chatOpen, setChatOpen] = useState(false);
     const [participantsOpen, setParticipantsOpen] = useState(false);
 
     // Refs
@@ -396,16 +393,6 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                     localParticipant={localParticipant}
                 />
 
-                {/* Chat Sidepanel */}
-                {chatOpen && (
-                    <div className="w-80 bg-slate-900 border-l border-slate-800 z-40 hidden md:block">
-                        <MeetingChat
-                            callObject={callObjectRef.current}
-                            currentUser={{ id: user.id, name: user.name }}
-                            callId={meetingId || undefined}
-                        />
-                    </div>
-                )}
             </div>
 
             {/* Bottom Controls */}
@@ -415,7 +402,6 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                     muted={muted}
                     cameraOff={cameraOff}
                     screenShareOn={screenShareOn}
-                    chatOpen={chatOpen}
                     participantsOpen={participantsOpen}
                     onToggleMute={() => {
                         const newState = !muted;
@@ -443,30 +429,11 @@ const MeetingPage: React.FC<MeetingPageProps> = ({ user }) => {
                             setScreenShareOn(false);
                         }
                     }}
-                    onToggleChat={() => setChatOpen(!chatOpen)}
                     onToggleParticipants={() => setParticipantsOpen(!participantsOpen)}
                     onLeave={handleLeave}
                 />
             )}
 
-            {/* Mobile Chat Drawer (if needed, or simple toggle) */}
-            {chatOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 md:hidden">
-                    <div className="absolute right-0 top-0 bottom-20 w-80 bg-slate-900">
-                        <MeetingChat
-                            callObject={callObjectRef.current}
-                            currentUser={{ id: user.id, name: user.name }}
-                            callId={meetingId || undefined}
-                        />
-                        <button
-                            onClick={() => setChatOpen(false)}
-                            className="absolute top-2 right-2 text-slate-400 p-2"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

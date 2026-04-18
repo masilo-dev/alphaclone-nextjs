@@ -1,7 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import toast from 'react-hot-toast';
+
+const TASKS_STORAGE_KEY = 'alphaclone_background_tasks_v1';
 
 export type BackgroundTaskStatus = 'pending' | 'running' | 'completed' | 'error';
 
@@ -25,6 +27,31 @@ const BackgroundTaskContext = createContext<BackgroundTaskContextType | undefine
 
 export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
     const [tasks, setTasks] = useState<BackgroundTask[]>([]);
+    const [hydrated, setHydrated] = useState(false);
+
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem(TASKS_STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw) as BackgroundTask[];
+                if (Array.isArray(parsed)) {
+                    setTasks(parsed);
+                }
+            }
+        } catch {
+            /* ignore corrupt storage */
+        }
+        setHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!hydrated) return;
+        try {
+            sessionStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+        } catch {
+            /* ignore quota */
+        }
+    }, [tasks, hydrated]);
 
     const startTask = async <T,>(
         id: string,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, Users, MonitorUp, MonitorOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Users, MonitorUp, MonitorOff } from 'lucide-react';
 import { DailyCall } from '@daily-co/daily-js';
 
 interface VideoControlsProps {
@@ -7,12 +7,10 @@ interface VideoControlsProps {
     muted: boolean;
     cameraOff: boolean;
     screenShareOn: boolean;
-    chatOpen: boolean;
     participantsOpen: boolean;
     onToggleMute: () => void;
     onToggleCamera: () => void;
     onToggleScreenShare: () => void;
-    onToggleChat: () => void;
     onToggleParticipants: () => void;
     onLeave: () => void;
 }
@@ -22,12 +20,10 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
     muted,
     cameraOff,
     screenShareOn,
-    chatOpen,
     participantsOpen,
     onToggleMute,
     onToggleCamera,
     onToggleScreenShare,
-    onToggleChat,
     onToggleParticipants,
     onLeave
 }) => {
@@ -72,17 +68,6 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
                     <span className="text-[10px] font-medium hidden md:block">
                         {screenShareOn ? 'Stop Share' : 'Share'}
                     </span>
-                </button>
-
-                {/* Chat */}
-                <button
-                    onClick={onToggleChat}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all flex-1 md:flex-none ${chatOpen ? 'text-teal-400 bg-teal-400/10' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
-                >
-                    <div className="p-2.5 bg-slate-800 md:bg-slate-800 rounded-full">
-                        <MessageSquare className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-medium hidden md:block">Chat</span>
                 </button>
 
                 {/* Participants (Hidden on small mobile to save space, relies on drawer or other UI if strictly needed, but protecting space for End Call) */}

@@ -212,7 +212,7 @@ function KanbanColumn({
           ))}
         </SortableContext>
         {leads.length === 0 && (
-            <div className="absolute inset-0 m-4 border-2 border-dashed border-slate-300/50 dark:border-slate-600/30 rounded-xl flex items-center justify-center text-xs text-slate-400 font-medium text-center px-4">
+            <div className="pointer-events-none absolute inset-0 m-4 border-2 border-dashed border-slate-300/50 dark:border-slate-600/30 rounded-xl flex items-center justify-center text-xs text-slate-400 font-medium text-center px-4">
                 Drag leads here to update pipeline
             </div>
         )}
@@ -464,7 +464,7 @@ export default function KanbanBoard() {
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
-            <div className="flex md:grid md:grid-cols-6 gap-3 md:gap-4 min-h-[280px] snap-x snap-mandatory md:snap-none pb-4 items-stretch">
+            <div className="flex md:grid md:grid-cols-6 gap-3 md:gap-4 min-h-[280px] snap-x snap-proximity md:snap-none pb-4 items-stretch">
                 <SortableContext items={columns.map(c => c.id)}>
                     {columns.map((col) => (
                         <KanbanColumn
