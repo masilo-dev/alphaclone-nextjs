@@ -459,11 +459,11 @@ export async function POST(request: Request) {
     // ── Step 1: OSM runs FIRST (primary, always free) ─────────────────────────
     try {
       const osmResults = await fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH);
-      // Double-check: only keep leads with at least phone OR email
-      const verified = osmResults.filter(r => hasContactInfo(r));
-      results.push(...enrichWithContactFlag(verified));
-      sourceCounts.osm = verified.length;
-      console.log(`[Scraper] OSM returned ${osmResults.length} raw → ${verified.length} verified (with contact)`);
+      const enriched = enrichWithContactFlag(osmResults);
+      results.push(...enriched);
+      sourceCounts.osm = enriched.length;
+      const withContact = enriched.filter((r) => r.hasContact).length;
+      console.log(`[Scraper] OSM returned ${enriched.length} leads (${withContact} with contact info)`);
     } catch (err: unknown) {
       sourceErrors.osm = SOURCE_UNAVAILABLE;
       console.warn('[Scraper] OSM failed:', err);
@@ -475,13 +475,11 @@ export async function POST(request: Request) {
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
         const googleRows = await fetchGooglePlaces(niche, location, want);
-        const verified = googleRows.filter((r) => hasContactInfo(r));
-        results.push(...enrichWithContactFlag(verified));
-        sourceCounts.google = verified.length;
-        const rejected = googleRows.length - verified.length;
-        if (rejected > 0) {
-          console.log(`[Scraper] Google Places: ${rejected} rows rejected (no phone, email, or http website)`);
-        }
+        const enriched = enrichWithContactFlag(googleRows);
+        results.push(...enriched);
+        sourceCounts.google = enriched.length;
+        const withContact = enriched.filter((r) => r.hasContact).length;
+        console.log(`[Scraper] Google Places: ${enriched.length} leads (${withContact} with contact info)`);
       } catch (err: unknown) {
         sourceErrors.google =
           err instanceof Error ? err.message : SOURCE_UNAVAILABLE;
@@ -492,29 +490,29 @@ export async function POST(request: Request) {
     // ── Step 3: Yelp / HERE if still short ─────────────────────────────────────
     const needMore = results.length < LEADS_PER_SEARCH;
     if (needMore && !isBudgetExceeded()) {
-      console.log(`[Scraper] After OSM+Google: ${results.length} verified leads — activating Yelp/HERE…`);
+      console.log(`[Scraper] After OSM+Google: ${results.length} leads — activating Yelp/HERE…`);
       const [yelpRes, hereRes] = await Promise.allSettled([
         fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy),
         fetchHERE(niche, location, LEADS_PER_SEARCH - results.length + 5),
       ]);
 
       if (yelpRes.status === 'fulfilled') {
-        const verified = yelpRes.value.filter(r => hasContactInfo(r));
-        results.push(...enrichWithContactFlag(verified));
-        sourceCounts.yelp = verified.length;
-        const rejected = yelpRes.value.length - verified.length;
-        if (rejected > 0) console.log(`[Scraper] Yelp: ${rejected} leads rejected (no contact info)`);
+        const enriched = enrichWithContactFlag(yelpRes.value);
+        results.push(...enriched);
+        sourceCounts.yelp = enriched.length;
+        const withContact = enriched.filter((r) => r.hasContact).length;
+        console.log(`[Scraper] Yelp: ${enriched.length} leads (${withContact} with contact info)`);
       } else {
         console.warn('[Scraper] Yelp fallback failed:', yelpRes.reason);
         sourceErrors.yelp = SOURCE_UNAVAILABLE;
       }
 
       if (hereRes.status === 'fulfilled') {
-        const verified = hereRes.value.filter(r => hasContactInfo(r));
-        results.push(...enrichWithContactFlag(verified));
-        sourceCounts.here = verified.length;
-        const rejected = hereRes.value.length - verified.length;
-        if (rejected > 0) console.log(`[Scraper] HERE: ${rejected} leads rejected (no contact info)`);
+        const enriched = enrichWithContactFlag(hereRes.value);
+        results.push(...enriched);
+        sourceCounts.here = enriched.length;
+        const withContact = enriched.filter((r) => r.hasContact).length;
+        console.log(`[Scraper] HERE: ${enriched.length} leads (${withContact} with contact info)`);
       } else {
         console.warn('[Scraper] HERE fallback failed:', hereRes.reason);
         sourceErrors.here = SOURCE_UNAVAILABLE;
@@ -527,13 +525,11 @@ export async function POST(request: Request) {
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
         const browserRows = await fetchSerpLeadsViaBrowser(niche, location, want);
-        const verified = browserRows.filter((r) => hasContactInfo(r));
-        results.push(...enrichWithContactFlag(verified));
-        sourceCounts.browser = verified.length;
-        const rejected = browserRows.length - verified.length;
-        if (rejected > 0) {
-          console.log(`[Scraper] Browser SERP: ${rejected} rows rejected (no contact info)`);
-        }
+        const enriched = enrichWithContactFlag(browserRows);
+        results.push(...enriched);
+        sourceCounts.browser = enriched.length;
+        const withContact = enriched.filter((r) => r.hasContact).length;
+        console.log(`[Scraper] Browser SERP: ${enriched.length} leads (${withContact} with contact info)`);
       } catch (err: unknown) {
         sourceErrors.browser = SOURCE_UNAVAILABLE;
         console.warn('[Scraper] Browser SERP supplement failed:', err);
@@ -544,9 +540,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: false, results: [], sourceErrors,
         error:
-          'No verified leads found (each row needs a phone, email, or http(s) website). ' +
-          'Configure GOOGLE_PLACES_API_KEY with Places API (New) + Geocoding enabled, or try a larger city. ' +
-          'See sourceErrors for per-source details.',
+          'No leads found from available sources. Configure GOOGLE_PLACES_API_KEY with Places API (New) + Geocoding enabled, or try a larger city. See sourceErrors for details.',
       });
     }
 
@@ -572,7 +566,8 @@ export async function POST(request: Request) {
         used:      quotaInfo.used,
         remaining: quotaInfo.remaining,
       } : undefined,
-      rejectedCount: unique.length - final.length,
+      leadsWithContact: final.filter((r) => r.hasContact).length,
+      leadsWithoutContact: final.filter((r) => !r.hasContact).length,
     });
 
   } catch (error: unknown) {
