@@ -2,6 +2,12 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
+import {
+  enqueueSocialPostSync,
+  findRecentDuplicateLinkedInCaption,
+  parseLinkedInUgcPostUrn,
+  updateSocialPostLinkedInUrnWithRetry,
+} from '../../lib/social/linkedinPublishHelpers';
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
@@ -217,13 +223,17 @@ class AlphaCloneMCPServer {
       const r = args.tenant_id;
       if (r != null && r !== '' && typeof r === 'string' && r !== this.ctx.tenantId) {
         throw new Error(
-          'tenant_id does not match this MCP connection. Use the tenant_id from your personal MCP URL in the dashboard.'
+          'tenant_id does not match this MCP connection. Omit tenant_id when using your personal MCP URL; the server scopes to your workspace automatically.'
         );
       }
       return this.ctx.tenantId;
     }
     const t = args.tenant_id;
-    if (!t || typeof t !== 'string') throw new Error('tenant_id is required');
+    if (!t || typeof t !== 'string') {
+      throw new Error(
+        'tenant_id is required unless you use the MCP connection URL from the dashboard (OAuth-scoped workspace). Pass your workspace UUID as tenant_id.'
+      );
+    }
     const tid = t.trim();
     if (!isUuidString(tid)) {
       throw new Error(
@@ -262,11 +272,15 @@ class AlphaCloneMCPServer {
           inputSchema: {
             type: 'object',
             properties: {
-              tenant_id: { type: 'string', description: 'Tenant/workspace UUID' },
+              tenant_id: {
+                type: 'string',
+                description:
+                  'Workspace UUID. Omit when your MCP connection URL already includes the workspace (OAuth-scoped).',
+              },
               status: { type: 'string', description: 'lead | prospect | active | churned' },
               limit: { type: 'number', description: 'Max records (default 20, max 100)' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -286,6 +300,11 @@ class AlphaCloneMCPServer {
               value: { type: 'number', description: 'Estimated client value' },
               source: { type: 'string' },
               notes: { type: 'string' },
+              metadata: {
+                type: 'object',
+                description:
+                  'Optional extra fields stored on the client (e.g. rating, review_count, source_url, maps_place_id) for imports from Maps or outreach.',
+              },
             },
             required: ['name'],
           },
@@ -336,7 +355,7 @@ class AlphaCloneMCPServer {
               stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
               notes: { type: 'string', description: 'Reason for the status change or qualifying notes' },
             },
-            required: ['tenant_id', 'lead_id'],
+            required: ['lead_id'],
           },
         },
         // ── Deals ──────────────────────────────────────────────────────────
@@ -350,7 +369,7 @@ class AlphaCloneMCPServer {
               stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost' },
               limit: { type: 'number' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -365,7 +384,7 @@ class AlphaCloneMCPServer {
               stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
               description: { type: 'string' },
             },
-            required: ['tenant_id', 'name'],
+            required: ['name'],
           },
         },
         {
@@ -384,7 +403,7 @@ class AlphaCloneMCPServer {
               notes: { type: 'string' },
               line_items: { type: 'array', items: { type: 'object' } },
             },
-            required: ['tenant_id', 'client_id', 'due_date', 'total'],
+            required: ['client_id', 'due_date', 'total'],
           },
         },
         {
@@ -424,7 +443,7 @@ class AlphaCloneMCPServer {
                 description: 'If true, distribute sends across selected providers based on remaining daily limit.',
               },
             },
-            required: ['tenant_id', 'name', 'subject', 'body_html', 'target_audience', 'from_email', 'from_name'],
+            required: ['name', 'subject', 'body_html', 'target_audience', 'from_email', 'from_name'],
           },
         },
         {
@@ -440,7 +459,7 @@ class AlphaCloneMCPServer {
               priority: { type: 'string', description: 'low | normal | high | urgent' },
               reply_to: { type: 'string', description: 'Optional parent message UUID' },
             },
-            required: ['tenant_id', 'text'],
+            required: ['text'],
           },
         },
         {
@@ -456,7 +475,7 @@ class AlphaCloneMCPServer {
               alt_text: { type: 'string' },
               tags: { type: 'array', items: { type: 'string' } },
             },
-            required: ['tenant_id', 'file_name', 'mime_type', 'file_base64'],
+            required: ['file_name', 'mime_type', 'file_base64'],
           },
         },
         {
@@ -467,7 +486,7 @@ class AlphaCloneMCPServer {
             properties: {
               tenant_id: { type: 'string' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -520,7 +539,7 @@ class AlphaCloneMCPServer {
             properties: {
               tenant_id: { type: 'string' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -553,7 +572,7 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string' },
               limit: { type: 'number' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -566,7 +585,7 @@ class AlphaCloneMCPServer {
               post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
               text: { type: 'string' },
             },
-            required: ['tenant_id', 'post_urn', 'text'],
+            required: ['post_urn', 'text'],
           },
         },
         {
@@ -579,7 +598,7 @@ class AlphaCloneMCPServer {
               post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
               reaction_type: { type: 'string', description: 'LIKE | PRAISE | MAYBE | EMPATHY | INTEREST | APPRECIATION' },
             },
-            required: ['tenant_id', 'post_urn'],
+            required: ['post_urn'],
           },
         },
         // ── Projects ───────────────────────────────────────────────────────
@@ -593,7 +612,7 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string', description: 'Workspace UUID' },
               status: { type: 'string' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -609,7 +628,7 @@ class AlphaCloneMCPServer {
               status: { type: 'string', description: 'planning | active | on_hold | completed | cancelled' },
               due_date: { type: 'string', description: 'Optional ISO date or datetime' },
             },
-            required: ['tenant_id', 'name'],
+            required: ['name'],
           },
         },
         {
@@ -624,7 +643,7 @@ class AlphaCloneMCPServer {
               status: { type: 'string' },
               notes: { type: 'string' },
             },
-            required: ['tenant_id', 'project_id', 'status'],
+            required: ['project_id', 'status'],
           },
         },
         // ── Tasks & Scheduling ─────────────────────────────────────────────
@@ -641,6 +660,14 @@ class AlphaCloneMCPServer {
               },
               assigned_to: { type: 'string' },
               completed: { type: 'boolean', description: 'If true, only completed tasks; if false, only open tasks.' },
+              due_after: {
+                type: 'string',
+                description: 'ISO date or datetime; return tasks with due_date on or after this instant (for "this week" windows).',
+              },
+              due_before: {
+                type: 'string',
+                description: 'ISO date or datetime; return tasks with due_date on or before this instant.',
+              },
             },
             required: [],
           },
@@ -694,7 +721,7 @@ class AlphaCloneMCPServer {
               task_id: { type: 'string', description: 'Task UUID from get_tasks' },
               note: { type: 'string', description: 'Plain text note to append' },
             },
-            required: ['tenant_id', 'task_id', 'note'],
+            required: ['task_id', 'note'],
           },
         },
         // ── Finance & Expenses ─────────────────────────────────────────────
@@ -709,7 +736,7 @@ class AlphaCloneMCPServer {
               from_date: { type: 'string', description: 'YYYY-MM-DD' },
               to_date: { type: 'string', description: 'YYYY-MM-DD' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -724,19 +751,20 @@ class AlphaCloneMCPServer {
               category: { type: 'string', description: 'Office Supplies | Travel | Software | Marketing | Meals | Utilities | Other' },
               date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
             },
-            required: ['tenant_id', 'description', 'amount'],
+            required: ['description', 'amount'],
           },
         },
         {
           name: 'get_revenue_summary',
-          description: 'Read-only: Total revenue, outstanding invoices, and paid amounts for the tenant.',
+          description:
+            'Read-only: Totals plus paid/outstanding split by calendar month and by client_id (from invoices).',
           inputSchema: {
             type: 'object',
             properties: {
               tenant_id: { type: 'string' },
-              period: { type: 'string', description: 'monthly | quarterly | yearly' },
+              period: { type: 'string', description: 'Optional hint: monthly | quarterly | yearly (grouping uses invoice created_at month).' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         // ── Contracts ──────────────────────────────────────────────────────
@@ -751,7 +779,7 @@ class AlphaCloneMCPServer {
               client_name: { type: 'string', description: 'Name of the client or counterparty' },
               key_terms: { type: 'string', description: 'Describe the scope, payment terms, duration, deliverables, and any special conditions' },
             },
-            required: ['tenant_id', 'contract_type', 'client_name'],
+            required: ['contract_type', 'client_name'],
           },
         },
         {
@@ -770,7 +798,7 @@ class AlphaCloneMCPServer {
                 description: 'e.g. Manus AI, Claude, or other assistant name — shown on the saved document',
               },
             },
-            required: ['tenant_id', 'title', 'content'],
+            required: ['title', 'content'],
           },
         },
         // ── Research & Web ─────────────────────────────────────────────────
@@ -804,7 +832,7 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string' },
               limit: { type: 'number' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -816,7 +844,7 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string' },
               status: { type: 'string', description: 'draft | sent | accepted | declined' },
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -893,7 +921,7 @@ class AlphaCloneMCPServer {
                 description: 'Optional JSON object merged into new_values (along with summary and source)',
               },
             },
-            required: ['tenant_id', 'action', 'entity_type'],
+            required: ['action', 'entity_type'],
           },
         },
         {
@@ -908,7 +936,7 @@ class AlphaCloneMCPServer {
               topics: { type: 'array', items: { type: 'string' }, description: 'Optional list of specific topics to cover. If omitted, the AI will decide based on the goal.' },
               platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin (default: both)' }
             },
-            required: ['tenant_id', 'monthly_goal'],
+            required: ['monthly_goal'],
           },
         },
         {
@@ -925,7 +953,7 @@ class AlphaCloneMCPServer {
               platforms: { type: 'array', items: { type: 'string' } },
               scheduled_at: { type: 'string', description: 'Optional ISO datetime. If omitted, AI chooses the next best slot.' }
             },
-            required: ['tenant_id', 'topic'],
+            required: ['topic'],
           },
         },
         {
@@ -937,7 +965,7 @@ class AlphaCloneMCPServer {
               tenant_id: { type: 'string' },
               limit: { type: 'number' }
             },
-            required: ['tenant_id'],
+            required: [],
           },
         },
         {
@@ -951,7 +979,7 @@ class AlphaCloneMCPServer {
               platform: { type: 'string', description: 'email | facebook | linkedin' },
               draft_only: { type: 'boolean', description: 'If true, saves as a draft for your review. If false, sends immediately.' }
             },
-            required: ['tenant_id', 'entity_id', 'platform'],
+            required: ['entity_id', 'platform'],
           },
         },
       ],
@@ -1012,7 +1040,13 @@ class AlphaCloneMCPServer {
             value = 0,
             source = 'MCP Agent',
             notes,
+            metadata,
           } = a;
+          const metaExtra =
+            metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+              ? (metadata as Record<string, unknown>)
+              : {};
+          const custom_fields = { source, ...metaExtra };
           const primary = await supabaseAdmin
             .from('business_clients')
             .insert({
@@ -1026,7 +1060,7 @@ class AlphaCloneMCPServer {
               sales_stage,
               value: Number(value) || 0,
               description: notes || null,
-              custom_fields: { source },
+              custom_fields,
               is_active: true,
               owner_id,
             })
@@ -1046,6 +1080,7 @@ class AlphaCloneMCPServer {
                 website: website || null,
                 location: location || null,
                 description: notes || null,
+                custom_fields,
               })
               .select('id, name, email')
               .single();
@@ -1307,7 +1342,7 @@ class AlphaCloneMCPServer {
         case 'get_tasks': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { project_id, assigned_to, completed } = a;
+          const { project_id, assigned_to, completed, due_after, due_before } = a;
           let query = supabaseAdmin
             .from('tasks')
             .select(
@@ -1329,6 +1364,12 @@ class AlphaCloneMCPServer {
           }
           if (completed === true) query = query.eq('status', 'completed');
           if (completed === false) query = query.neq('status', 'completed');
+          if (due_after && typeof due_after === 'string' && due_after.trim()) {
+            query = query.gte('due_date', due_after.trim());
+          }
+          if (due_before && typeof due_before === 'string' && due_before.trim()) {
+            query = query.lte('due_date', due_before.trim());
+          }
           const { data, error } = await query;
           if (error) throw supabaseErrorToMcpClientError('get_tasks', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -2004,19 +2045,63 @@ class AlphaCloneMCPServer {
           }
           const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls];
           const immediatePublish = Boolean(publish_now) && mergedMediaUrls.length === 0;
-          let linkedinPostUrn: string | null = null;
+
+          const baseMetadata = postAsCompany
+            ? { linkedin_organization_id: requestedOrganizationId, linkedin_author_urn: authorUrn }
+            : { linkedin_author_urn: authorUrn };
+
+          let data: Record<string, unknown> | null = null;
+
           if (immediatePublish) {
+            const duplicate = await findRecentDuplicateLinkedInCaption(
+              supabaseAdmin,
+              tenant_id,
+              user_id,
+              text.trim(),
+              7
+            );
+            if (duplicate) {
+              throw new Error(
+                'Duplicate post: the same caption was published from this workspace in the last 7 days. Edit the text before publishing again.'
+              );
+            }
+
+            const { data: pendingRow, error: pendingErr } = await supabaseAdmin
+              .from('social_posts')
+              .insert({
+                tenant_id,
+                user_id,
+                caption: text.trim(),
+                platforms: ['linkedin'],
+                media_urls: mergedMediaUrls,
+                status: 'publishing',
+                scheduled_at: null,
+                published_at: null,
+                linkedin_organization_id: postAsCompany ? requestedOrganizationId : null,
+                linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
+                analytics: {},
+                metadata: baseMetadata,
+              })
+              .select('id')
+              .single();
+
+            if (pendingErr || !pendingRow?.id) {
+              throw supabaseErrorToMcpClientError('create_linkedin_post', pendingErr?.message || 'Failed to create draft post');
+            }
+
+            const postId = String(pendingRow.id);
             const payload = {
               author: authorUrn,
               lifecycleState: 'PUBLISHED',
               specificContent: {
                 'com.linkedin.ugc.ShareContent': {
                   shareCommentary: { text: text.trim() },
-                  shareMediaCategory: 'NONE',
+                  shareMediaCategory: 'NONE' as const,
                 },
               },
               visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
             };
+
             const resp = await fetch('https://api.linkedin.com/v2/ugcPosts', {
               method: 'POST',
               headers: {
@@ -2028,33 +2113,72 @@ class AlphaCloneMCPServer {
             });
             const raw = await resp.text();
             if (!resp.ok) {
+              await supabaseAdmin
+                .from('social_posts')
+                .update({
+                  status: 'failed',
+                  error_message: raw.slice(0, 2000),
+                })
+                .eq('id', postId);
               throw new Error(`LinkedIn post failed: ${raw}`);
             }
-            const entityUrn = resp.headers.get('x-restli-id');
-            linkedinPostUrn = entityUrn ? `urn:li:ugcPost:${entityUrn}` : null;
-          }
 
-          const { data, error } = await supabaseAdmin
-            .from('social_posts')
-            .insert({
-              tenant_id,
-              user_id,
-              caption: text.trim(),
-              platforms: ['linkedin'],
-              media_urls: mergedMediaUrls,
-              status: immediatePublish ? 'published' : 'scheduled',
-              scheduled_at: immediatePublish ? null : String(scheduled_at),
-              published_at: immediatePublish ? new Date().toISOString() : null,
+            const linkedinPostUrn = parseLinkedInUgcPostUrn(resp, raw);
+            const publishedAt = new Date().toISOString();
+            const updatePatch: Record<string, unknown> = {
+              status: 'published',
+              published_at: publishedAt,
+              linkedin_post_urn: linkedinPostUrn,
               linkedin_organization_id: postAsCompany ? requestedOrganizationId : null,
               linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
               analytics: linkedinPostUrn ? { linkedin_post_urn: linkedinPostUrn } : {},
-              metadata: postAsCompany
-                ? { linkedin_organization_id: requestedOrganizationId, linkedin_author_urn: authorUrn }
-                : { linkedin_author_urn: authorUrn },
-            })
-            .select('id, status, published_at, analytics')
-            .single();
-          if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
+              metadata: baseMetadata,
+            };
+
+            const persisted = await updateSocialPostLinkedInUrnWithRetry(supabaseAdmin, postId, updatePatch);
+            if (!persisted.ok && linkedinPostUrn) {
+              await enqueueSocialPostSync(supabaseAdmin, {
+                socialPostId: postId,
+                tenantId: tenant_id,
+                platform: 'linkedin',
+                externalId: linkedinPostUrn,
+                lastError: persisted.error,
+              });
+            }
+
+            const { data: finalRow, error: finalErr } = await supabaseAdmin
+              .from('social_posts')
+              .select('id, status, published_at, analytics, linkedin_post_urn')
+              .eq('id', postId)
+              .single();
+            if (finalErr) throw supabaseErrorToMcpClientError('create_linkedin_post', finalErr.message);
+            data = finalRow as Record<string, unknown>;
+          } else {
+            const { data: scheduledData, error } = await supabaseAdmin
+              .from('social_posts')
+              .insert({
+                tenant_id,
+                user_id,
+                caption: text.trim(),
+                platforms: ['linkedin'],
+                media_urls: mergedMediaUrls,
+                status: 'scheduled',
+                scheduled_at: String(scheduled_at),
+                published_at: null,
+                linkedin_organization_id: postAsCompany ? requestedOrganizationId : null,
+                linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
+                analytics: {},
+                metadata: baseMetadata,
+              })
+              .select('id, status, published_at, analytics')
+              .single();
+            if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
+            data = scheduledData as Record<string, unknown>;
+          }
+
+          if (!data) {
+            throw new Error('create_linkedin_post did not return a row');
+          }
 
           const actionLabel = immediatePublish ? 'posted to LinkedIn' : `scheduled for ${String(scheduled_at)}`;
           const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
@@ -2310,23 +2434,75 @@ class AlphaCloneMCPServer {
         case 'get_revenue_summary': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('business_invoices')
-            .select('total, status, created_at')
+            .select('total, status, created_at, client_id, invoice_number')
             .eq('tenant_id', tenant_id)
-            .limit(200);
+            .limit(500);
           if (error) throw supabaseErrorToMcpClientError('get_revenue_summary', error.message);
-          const paid = (data ?? [])
+          const rows = data ?? [];
+          const paid = rows
             .filter((i: { status?: string }) => i.status === 'paid')
             .reduce((s: number, i: { total?: number }) => s + (Number(i.total) || 0), 0);
-          const outstanding = (data ?? [])
+          const outstanding = rows
             .filter((i: { status?: string }) => i.status !== 'paid')
             .reduce((s: number, i: { total?: number }) => s + (Number(i.total) || 0), 0);
+
+          const byMonth: Record<string, { paid: number; outstanding: number; invoice_count: number }> = {};
+          const byClient: Record<
+            string,
+            { client_id: string | null; paid: number; outstanding: number; invoice_count: number }
+          > = {};
+
+          for (const inv of rows as Array<{
+            total?: number;
+            status?: string;
+            created_at?: string;
+            client_id?: string | null;
+          }>) {
+            const t = Number(inv.total) || 0;
+            const isPaid = inv.status === 'paid';
+            const created = inv.created_at ? new Date(inv.created_at) : new Date();
+            const monthKey = `${created.getUTCFullYear()}-${String(created.getUTCMonth() + 1).padStart(2, '0')}`;
+            if (!byMonth[monthKey]) {
+              byMonth[monthKey] = { paid: 0, outstanding: 0, invoice_count: 0 };
+            }
+            byMonth[monthKey].invoice_count += 1;
+            if (isPaid) byMonth[monthKey].paid += t;
+            else byMonth[monthKey].outstanding += t;
+
+            const cid = inv.client_id ? String(inv.client_id) : '_none';
+            if (!byClient[cid]) {
+              byClient[cid] = {
+                client_id: inv.client_id ?? null,
+                paid: 0,
+                outstanding: 0,
+                invoice_count: 0,
+              };
+            }
+            byClient[cid].invoice_count += 1;
+            if (isPaid) byClient[cid].paid += t;
+            else byClient[cid].outstanding += t;
+          }
+
           result = {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({ total_invoices: data?.length, total_paid: paid, total_outstanding: outstanding, currency: 'USD' }, null, 2),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    total_invoices: rows.length,
+                    total_paid: paid,
+                    total_outstanding: outstanding,
+                    currency: 'USD',
+                    by_month: byMonth,
+                    by_client: byClient,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
           };
           break;
         }

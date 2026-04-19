@@ -3,6 +3,16 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
+import { googlePlacesService } from '@/services/googlePlacesService';
+
+function resolveGooglePlacesApiKey(): string | null {
+  return (
+    process.env.GOOGLE_PLACES_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    null
+  );
+}
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -252,30 +262,47 @@ async function searchLinkedInLeads(businessType: string, location: string, limit
 
 async function searchGoogleLeads(businessType: string, location: string, radius: number, limit: number, filters: any) {
   try {
-    // Note: Google Places API requires API key
-    // This is a mock implementation
-    const leads = [
-      {
-        id: 'google_1',
-        name: 'Google Found Business',
-        source: 'google',
-        type: 'place',
-        location: location,
-        address: '123 Main St',
-        phone: '+1234567890',
-        rating: 4.5,
-        reviews: 125,
-        website: 'https://example.com',
-        metadata: {
-          placeId: 'ChIJ...',
-          photos: [],
-          openingHours: 'Mo-Fr 09:00-17:00'
-        },
-        foundAt: new Date().toISOString()
-      }
-    ];
+    const apiKey = resolveGooglePlacesApiKey();
+    if (!apiKey) {
+      console.warn('[leads/management] Google Places: set GOOGLE_PLACES_API_KEY or GOOGLE_MAPS_API_KEY');
+      return [];
+    }
 
-    return leads.filter(lead => passesFilters(lead, filters));
+    const result = await googlePlacesService.searchPlacesForLeads(businessType, location, apiKey, {
+      radiusKm: Math.min(Math.max(radius || 15, 2), 50),
+      maxResults: Math.min(Math.max(limit, 5), 20),
+    });
+
+    if (result.error) {
+      console.warn('[leads/management] Google Places:', result.error);
+      return [];
+    }
+
+    const leads = result.places.map((p) => ({
+      id: `google_${p.placeId}`,
+      name: p.businessName,
+      source: 'google',
+      type: 'place',
+      location: p.formattedAddress || location,
+      address: p.formattedAddress,
+      phone: p.phone || null,
+      website: p.website || null,
+      rating: p.rating ?? null,
+      reviews: p.userRatingCount ?? null,
+      metadata: {
+        placeId: p.placeId,
+        googleMapsUri: p.googleMapsUri,
+        industry: p.industry,
+        lat: p.lat,
+        lng: p.lng,
+        location_validated: result.locationValidated,
+        formatted_location: result.formattedLocation,
+        geocode_warning: result.geocodeError,
+      },
+      foundAt: new Date().toISOString(),
+    }));
+
+    return leads.filter((lead) => passesFilters(lead, filters));
   } catch (error) {
     console.error('Google search error:', error);
     return [];

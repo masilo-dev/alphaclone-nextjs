@@ -8,6 +8,7 @@ import {
   fetchSerpLeadsViaBrowser,
   hasRemoteBrowserConfigured,
 } from '@/lib/scraper/browserSerpLeads';
+import { googlePlacesService } from '@/services/googlePlacesService';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -40,7 +41,7 @@ export interface LeadResult {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source:        'yelp' | 'here' | 'osm' | 'browser';
+  source:        'yelp' | 'here' | 'osm' | 'browser' | 'google';
   lat?:          number;
   lng?:          number;
   hasContact:    boolean;   // true = phone OR email present
@@ -133,6 +134,49 @@ async function fetchHERE(niche: string, location: string, limit = 20): Promise<L
       lng:           item.position?.lng,
       hasContact:    false,
     }));
+}
+
+// ─── Strategy: Google Places (New) + Geocoding ────────────────────────────────
+function resolveGooglePlacesApiKey(): string | null {
+  return (
+    process.env.GOOGLE_PLACES_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    null
+  );
+}
+
+async function fetchGooglePlaces(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
+  const apiKey = resolveGooglePlacesApiKey();
+  if (!apiKey) {
+    throw new Error('Google Places API key not configured');
+  }
+
+  const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
+    radiusKm: 40,
+    maxResults: Math.min(limit, 20),
+  });
+
+  if (res.error) {
+    throw new Error(res.error);
+  }
+
+  return res.places.map(
+    (p): LeadResult => ({
+      business_name: p.businessName,
+      website: p.website || '',
+      snippet: p.industry || 'Google Place',
+      phone: p.phone || '',
+      email: '',
+      address: p.formattedAddress || '',
+      rating: p.rating,
+      category: p.industry || '',
+      source: 'google',
+      lat: p.lat,
+      lng: p.lng,
+      hasContact: false,
+    })
+  );
 }
 
 // ─── Overpass API mirrors (rotate on 429 / timeout; public instances are rate-limited) ──
@@ -410,7 +454,7 @@ export async function POST(request: Request) {
 
     const results: LeadResult[] = [];
     const sourceErrors: Record<string, string> = {};
-    const sourceCounts: Record<string, number>  = { osm: 0, yelp: 0, here: 0, browser: 0 };
+    const sourceCounts: Record<string, number>  = { osm: 0, google: 0, yelp: 0, here: 0, browser: 0 };
 
     // ── Step 1: OSM runs FIRST (primary, always free) ─────────────────────────
     try {
@@ -425,10 +469,30 @@ export async function POST(request: Request) {
       console.warn('[Scraper] OSM failed:', err);
     }
 
-    // ── Step 2: Fallbacks only if OSM < LEADS_PER_SEARCH verified leads ───────
+    // ── Step 2: Google Places (validated geocode + Text Search) before paid Yelp/HERE ──
+    const needMoreAfterOsm = results.length < LEADS_PER_SEARCH;
+    if (needMoreAfterOsm && !isBudgetExceeded()) {
+      try {
+        const want = LEADS_PER_SEARCH - results.length + 5;
+        const googleRows = await fetchGooglePlaces(niche, location, want);
+        const verified = googleRows.filter((r) => hasContactInfo(r));
+        results.push(...enrichWithContactFlag(verified));
+        sourceCounts.google = verified.length;
+        const rejected = googleRows.length - verified.length;
+        if (rejected > 0) {
+          console.log(`[Scraper] Google Places: ${rejected} rows rejected (no phone, email, or http website)`);
+        }
+      } catch (err: unknown) {
+        sourceErrors.google =
+          err instanceof Error ? err.message : SOURCE_UNAVAILABLE;
+        console.warn('[Scraper] Google Places fallback failed:', err);
+      }
+    }
+
+    // ── Step 3: Yelp / HERE if still short ─────────────────────────────────────
     const needMore = results.length < LEADS_PER_SEARCH;
     if (needMore && !isBudgetExceeded()) {
-      console.log(`[Scraper] OSM only got ${results.length} verified leads — activating fallbacks…`);
+      console.log(`[Scraper] After OSM+Google: ${results.length} verified leads — activating Yelp/HERE…`);
       const [yelpRes, hereRes] = await Promise.allSettled([
         fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy),
         fetchHERE(niche, location, LEADS_PER_SEARCH - results.length + 5),
@@ -457,7 +521,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Step 3: Browser-based SERP supplement (Browserbase or BROWSER_WS_ENDPOINT)
+    // Step 4: Browser-based SERP supplement (Browserbase or BROWSER_WS_ENDPOINT)
     const stillNeed = results.length < LEADS_PER_SEARCH;
     if (stillNeed && hasRemoteBrowserConfigured() && !isBudgetExceeded()) {
       try {
@@ -479,7 +543,10 @@ export async function POST(request: Request) {
     if (results.length === 0) {
       return NextResponse.json({
         success: false, results: [], sourceErrors,
-        error: 'No verified leads found (all results lacked phone and email). Try a different city or industry.',
+        error:
+          'No verified leads found (each row needs a phone, email, or http(s) website). ' +
+          'Configure GOOGLE_PLACES_API_KEY with Places API (New) + Geocoding enabled, or try a larger city. ' +
+          'See sourceErrors for per-source details.',
       });
     }
 
@@ -499,7 +566,7 @@ export async function POST(request: Request) {
       results: final,
       sourceErrors,
       sources: sourceCounts,
-      fallbackUsed: needMore,
+      fallbackUsed: needMoreAfterOsm,
       quota: tenantId ? {
         limit:     DAILY_LEAD_LIMIT,
         used:      quotaInfo.used,
