@@ -87,6 +87,10 @@ export const taskService = {
         relatedToProject?: string;
         relatedToDeal?: string;
         relatedToLead?: string;
+        /** ISO date or datetime; tasks with due_date >= this */
+        dueAfter?: string;
+        /** ISO date or datetime; tasks with due_date <= this */
+        dueBefore?: string;
         limit?: number;
         page?: number;     // NEW
         offset?: number;   // NEW
@@ -119,6 +123,12 @@ export const taskService = {
             }
             if (filters?.relatedToLead) {
                 query = query.eq('related_to_lead', filters.relatedToLead);
+            }
+            if (filters?.dueAfter?.trim()) {
+                query = query.gte('due_date', filters.dueAfter.trim());
+            }
+            if (filters?.dueBefore?.trim()) {
+                query = query.lte('due_date', filters.dueBefore.trim());
             }
 
             // Apply pagination

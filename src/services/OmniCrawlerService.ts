@@ -58,7 +58,7 @@ export class OmniCrawlerService {
         allLeads.push({
           businessName: item.businessName,
           industry: item.industry,
-          location: item.location,
+          location: item.formattedAddress,
           phone: item.phone,
           website: item.website,
           lat: item.lat,

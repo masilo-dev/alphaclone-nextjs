@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import {
+  enqueueSocialPostSync,
+  findRecentDuplicateLinkedInCaption,
+  parseLinkedInUgcPostUrn,
+  updateSocialPostLinkedInUrnWithRetry,
+} from '@/lib/social/linkedinPublishHelpers';
 
 type SchedulePayload = {
   tenantId?: string;
@@ -430,6 +436,22 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       media = [{ status: 'READY', originalUrl: post.link_url, title: { text: 'AlphaClone Link' } }];
     }
 
+    const dup = await findRecentDuplicateLinkedInCaption(
+      adminClient,
+      post.tenant_id,
+      post.user_id,
+      post.caption,
+      7
+    );
+    if (dup) {
+      return {
+        ok: false,
+        platform: 'linkedin',
+        reason:
+          'Duplicate post: the same caption was published from this workspace in the last 7 days. Change the text or remove the earlier post.',
+      };
+    }
+
     const payload = {
       author: authorUrn,
       lifecycleState: 'PUBLISHED',
@@ -462,16 +484,27 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       };
     }
 
-    const postUrn = res.headers.get('x-restli-id') ?? null;
-    const updateRes = await adminClient.from('social_posts').update({
+    const postUrn = parseLinkedInUgcPostUrn(res, rawBody);
+    const patch: Record<string, unknown> = {
       linkedin_post_urn: postUrn,
       linkedin_member_id: activeIntegration.linkedin_member_id || post.linkedin_member_id || null,
       linkedin_organization_id: canPostAsCompany ? requestedOrganizationId : null,
-    }).eq('id', postId);
-    if (isMissingColumn(updateRes.error, 'linkedin_member_id') || isMissingColumn(updateRes.error, 'linkedin_organization_id')) {
-      await adminClient.from('social_posts').update({
-        linkedin_post_urn: postUrn,
-      }).eq('id', postId);
+    };
+
+    const retry = await updateSocialPostLinkedInUrnWithRetry(adminClient, postId, patch);
+    if (!retry.ok) {
+      const fallbackPatch = { linkedin_post_urn: postUrn };
+      const retry2 = await updateSocialPostLinkedInUrnWithRetry(adminClient, postId, fallbackPatch);
+      if (!retry2.ok && postUrn) {
+        await enqueueSocialPostSync(adminClient, {
+          socialPostId: postId,
+          tenantId: post.tenant_id,
+          platform: 'linkedin',
+          externalId: postUrn,
+          lastError: retry.error || retry2.error,
+        });
+        console.error('[social/schedule] LinkedIn URN persist failed; queued for reconciliation', postId, retry.error);
+      }
     }
 
     return { ok: true, platform: 'linkedin' };
