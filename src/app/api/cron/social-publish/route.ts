@@ -239,8 +239,9 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     if (liError || !integration?.access_token || !integration?.linkedin_person_urn) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
     }
+    const activeIntegration = integration;
 
-    const scopes = normalizeScopes(integration.scopes);
+    const scopes = normalizeScopes(activeIntegration.scopes);
     if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
@@ -251,8 +252,8 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         : typeof post.metadata?.linkedin_organization_id === 'string'
           ? String(post.metadata.linkedin_organization_id)
           : null;
-    const companyPages = Array.isArray((integration as any)?.metadata?.company_pages)
-      ? ((integration as any).metadata.company_pages as Array<Record<string, unknown>>)
+    const companyPages = Array.isArray((activeIntegration as any)?.metadata?.company_pages)
+      ? ((activeIntegration as any).metadata.company_pages as Array<Record<string, unknown>>)
       : [];
     const selectedCompany = requestedOrganizationId
       ? companyPages.find((page) => String(page?.id || '') === requestedOrganizationId)
@@ -260,7 +261,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const canPostAsCompany = !!selectedCompany && scopes.includes('w_organization_social');
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
-      : integration.linkedin_person_urn;
+      : activeIntegration.linkedin_person_urn;
 
     async function registerAndUploadLinkedInImage(authorUrn: string, imageUrl: string): Promise<string> {
       const imageFetch = await fetchWithTimeout(imageUrl, { method: 'GET' }, 25000);
@@ -273,7 +274,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       const registerRes = await fetchWithTimeout('https://api.linkedin.com/v2/assets?action=registerUpload', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${integration.access_token}`,
+          Authorization: `Bearer ${activeIntegration.access_token}`,
           'Content-Type': 'application/json',
           'X-Restli-Protocol-Version': '2.0.0',
         },
@@ -351,7 +352,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const res = await fetchWithTimeout('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${integration.access_token}`,
+        Authorization: `Bearer ${activeIntegration.access_token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
       },
@@ -365,7 +366,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
     const postUrn = res.headers.get('x-restli-id') ?? null;
     const updateRes = await adminClient.from('social_posts').update({
       linkedin_post_urn: postUrn,
-      linkedin_member_id: integration.linkedin_member_id || post.linkedin_member_id || null,
+      linkedin_member_id: activeIntegration.linkedin_member_id || post.linkedin_member_id || null,
       linkedin_organization_id: canPostAsCompany ? requestedOrganizationId : null,
     }).eq('id', postId);
     if (isMissingColumn(updateRes.error, 'linkedin_member_id') || isMissingColumn(updateRes.error, 'linkedin_organization_id')) {
