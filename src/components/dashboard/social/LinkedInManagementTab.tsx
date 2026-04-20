@@ -18,6 +18,8 @@ interface LinkedInPostRow {
   created_at: string;
   linkedin_post_urn: string | null;
   linkedin_member_id: string | null;
+  external_id?: string | null;
+  analytics?: Record<string, unknown> | null;
   error_message: string | null;
 }
 
@@ -51,6 +53,11 @@ interface LinkedInInboxItem {
   commentText: string;
   actor: string;
   createdAt: number | null;
+}
+
+interface LinkedInEngagement {
+  likesCount: number;
+  commentsCount: number;
 }
 
 function normalizeScopes(raw: unknown): string[] {
@@ -104,6 +111,8 @@ export default function LinkedInManagementTab() {
   const [commentsByPost, setCommentsByPost] = useState<Record<string, LinkedInCommentRow[]>>({});
   const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
   const [commentsWarningByPost, setCommentsWarningByPost] = useState<Record<string, string>>({});
+  const [engagementByPost, setEngagementByPost] = useState<Record<string, LinkedInEngagement>>({});
+  const [engagementLoading, setEngagementLoading] = useState<Record<string, boolean>>({});
   const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
   const [inboxItems, setInboxItems] = useState<LinkedInInboxItem[]>([]);
   const [inboxLoading, setInboxLoading] = useState(false);
@@ -131,7 +140,7 @@ export default function LinkedInManagementTab() {
     const [postsRes, liRes] = await Promise.all([
       supabase
         .from('social_posts')
-        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,error_message,platforms')
+        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms')
         .eq('tenant_id', currentTenant.id)
         .filter('platforms', 'cs', '{"linkedin"}')
         .order('created_at', { ascending: false })
@@ -147,7 +156,7 @@ export default function LinkedInManagementTab() {
     if (postsRes.error) {
       let fallback = await supabase
         .from('social_posts')
-        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms')
+        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,external_id,analytics,error_message,platforms')
         .eq('tenant_id', currentTenant.id)
         .filter('platforms', 'cs', '{"linkedin"}')
         .order('created_at', { ascending: false })
@@ -156,7 +165,7 @@ export default function LinkedInManagementTab() {
       if (fallback.error && isMissingRelationOrColumn(fallback.error, 'linkedin_post_urn')) {
         fallback = await supabase
           .from('social_posts')
-          .select('id,caption,status,scheduled_at,published_at,created_at,error_message,platforms')
+          .select('id,caption,status,scheduled_at,published_at,created_at,external_id,analytics,error_message,platforms')
           .eq('tenant_id', currentTenant.id)
           .filter('platforms', 'cs', '{"linkedin"}')
           .order('created_at', { ascending: false })
@@ -254,6 +263,18 @@ export default function LinkedInManagementTab() {
     }
   };
 
+  const resolveLinkedInPostUrn = useCallback((post: LinkedInPostRow): string | null => {
+    const directUrn = String(post.linkedin_post_urn || '').trim();
+    if (directUrn) return directUrn;
+
+    const analyticsUrn = String((post.analytics as Record<string, unknown> | null)?.linkedin_post_urn || '').trim();
+    if (analyticsUrn) return analyticsUrn;
+
+    const externalId = String(post.external_id || '').trim();
+    if (externalId.startsWith('urn:li:')) return externalId;
+    return null;
+  }, []);
+
   const handleDisconnectLinkedIn = async () => {
     if (!currentTenant?.id || !selectedLinkedInMemberId) return;
     if (!window.confirm('Disconnect selected LinkedIn account from this workspace?')) return;
@@ -280,7 +301,12 @@ export default function LinkedInManagementTab() {
   };
 
   const handleComment = async (post: LinkedInPostRow, targetUrn?: string, replyText?: string) => {
-    if (!currentTenant?.id || !post.linkedin_post_urn) return;
+    if (!currentTenant?.id) return;
+    const resolvedPostUrn = resolveLinkedInPostUrn(post);
+    if (!resolvedPostUrn) {
+      toast.error('This post is missing a LinkedIn post reference. Sync published posts and retry.');
+      return;
+    }
     if (!hasWriteScope) {
       toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
       return;
@@ -296,7 +322,7 @@ export default function LinkedInManagementTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: currentTenant.id,
-          postUrn: post.linkedin_post_urn,
+          postUrn: resolvedPostUrn,
           parentCommentUrn: targetUrn || undefined,
           text,
           linkedinMemberId: selectedLinkedInMemberId || undefined,
@@ -320,7 +346,12 @@ export default function LinkedInManagementTab() {
   };
 
   const handleReaction = async (post: LinkedInPostRow) => {
-    if (!currentTenant?.id || !post.linkedin_post_urn) return;
+    if (!currentTenant?.id) return;
+    const resolvedPostUrn = resolveLinkedInPostUrn(post);
+    if (!resolvedPostUrn) {
+      toast.error('This post is missing a LinkedIn post reference. Sync published posts and retry.');
+      return;
+    }
     if (!hasWriteScope) {
       toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
       return;
@@ -333,7 +364,7 @@ export default function LinkedInManagementTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: currentTenant.id,
-          postUrn: post.linkedin_post_urn,
+          postUrn: resolvedPostUrn,
           reactionType,
           linkedinMemberId: selectedLinkedInMemberId || undefined,
         }),
@@ -393,7 +424,9 @@ ${parentContext}Return only the comment text.`;
   };
 
   const loadComments = async (post: LinkedInPostRow) => {
-    if (!currentTenant?.id || !post.linkedin_post_urn) return;
+    if (!currentTenant?.id) return;
+    const resolvedPostUrn = resolveLinkedInPostUrn(post);
+    if (!resolvedPostUrn) return;
     setCommentsLoading((prev) => ({ ...prev, [post.id]: true }));
     setCommentsWarningByPost((prev) => ({ ...prev, [post.id]: '' }));
     try {
@@ -402,7 +435,7 @@ ${parentContext}Return only the comment text.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: currentTenant.id,
-          postUrn: post.linkedin_post_urn,
+          postUrn: resolvedPostUrn,
           linkedinMemberId: selectedLinkedInMemberId || undefined,
         }),
       });
@@ -423,6 +456,37 @@ ${parentContext}Return only the comment text.`;
       toast.error('Failed to load LinkedIn comments');
     } finally {
       setCommentsLoading((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
+  const loadEngagement = async (post: LinkedInPostRow) => {
+    if (!currentTenant?.id) return;
+    const resolvedPostUrn = resolveLinkedInPostUrn(post);
+    if (!resolvedPostUrn) return;
+    setEngagementLoading((prev) => ({ ...prev, [post.id]: true }));
+    try {
+      const res = await fetch('/api/linkedin/engagement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          postUrn: resolvedPostUrn,
+          linkedinMemberId: selectedLinkedInMemberId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) return;
+      setEngagementByPost((prev) => ({
+        ...prev,
+        [post.id]: {
+          likesCount: Number(data.likesCount || 0),
+          commentsCount: Number(data.commentsCount || 0),
+        },
+      }));
+    } catch {
+      // ignore transient engagement fetch errors
+    } finally {
+      setEngagementLoading((prev) => ({ ...prev, [post.id]: false }));
     }
   };
 
@@ -992,14 +1056,14 @@ Return only the reply text.`;
               </div>
               <p className="text-sm text-slate-200 whitespace-pre-line line-clamp-3">{post.caption}</p>
               {post.error_message && <p className="text-xs text-red-300">{post.error_message}</p>}
-              {!post.linkedin_post_urn && (
+              {!resolveLinkedInPostUrn(post) && (
                 <p className="text-xs text-amber-300">
-                  Comments unavailable for this item because no LinkedIn post reference was saved. Only published posts with a LinkedIn post URN can load comments.
+                  Comments unavailable for this item because no LinkedIn post reference was saved yet. Run post reconciliation to backfill LinkedIn URNs for already published posts.
                 </p>
               )}
-              {post.linkedin_post_urn && (
+              {resolveLinkedInPostUrn(post) && (
                 <a
-                  href={`https://www.linkedin.com/feed/update/${encodeURIComponent(post.linkedin_post_urn)}/`}
+                  href={`https://www.linkedin.com/feed/update/${encodeURIComponent(resolveLinkedInPostUrn(post) || '')}/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-sky-300 hover:underline"
@@ -1009,7 +1073,7 @@ Return only the reply text.`;
                 </a>
               )}
 
-              {post.linkedin_post_urn && (
+              {resolveLinkedInPostUrn(post) && (
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 pt-2">
                   <input
                     value={commentByPost[post.id] || ''}
@@ -1053,6 +1117,23 @@ Return only the reply text.`;
                       <ThumbsUp className="w-3 h-3" />
                       {actionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
                     </button>
+                  </div>
+                  <div className="md:col-span-3 flex items-center gap-3 text-xs text-slate-400">
+                    <button
+                      onClick={() => loadEngagement(post)}
+                      disabled={!!engagementLoading[post.id]}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-50"
+                    >
+                      {engagementLoading[post.id] ? 'Refreshing...' : 'Load Engagement'}
+                    </button>
+                    <span className="inline-flex items-center gap-1">
+                      <ThumbsUp className="w-3 h-3" />
+                      Likes: {engagementByPost[post.id]?.likesCount ?? 0}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageCircle className="w-3 h-3" />
+                      Comments: {engagementByPost[post.id]?.commentsCount ?? (commentsByPost[post.id]?.length || 0)}
+                    </span>
                   </div>
                 <div className="md:col-span-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">

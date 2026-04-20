@@ -44,14 +44,14 @@ const SOURCE_ICONS: Record<string, L.Icon> = {
 };
 
 // Auto-fit bounds when leads change
-function FitBounds({ leads }: { leads: LeadMapPin[] }) {
+function FitBounds({ leads, fitKey }: { leads: LeadMapPin[]; fitKey: string }) {
   const map = useMap();
   useEffect(() => {
     const pinned = leads.filter(l => l.lat && l.lng);
     if (pinned.length === 0) return;
     const bounds = L.latLngBounds(pinned.map(l => [l.lat!, l.lng!]));
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
-  }, [leads, map]);
+  }, [fitKey, leads, map]);
   return null;
 }
 
@@ -124,27 +124,51 @@ export default function LeadMapView({
   previewRadiusKm = 25,
 }: LeadMapViewProps) {
   const pinnable = leads.filter(l => l.lat != null && l.lng != null);
-  const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'dark'>('detailed');
+  const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'hybrid' | 'dark'>('detailed');
   const [zoomLevel, setZoomLevel] = useState<number>(zoom);
   const [showRoute, setShowRoute] = useState<boolean>(true);
+  const [showHeat, setShowHeat] = useState<boolean>(false);
+  const [focusedLeadKey, setFocusedLeadKey] = useState<string | null>(null);
+
+  const fitKey = useMemo(
+    () =>
+      pinnable
+        .map((l) => `${l.business_name}:${l.lat ?? ''}:${l.lng ?? ''}`)
+        .sort()
+        .join('|'),
+    [pinnable]
+  );
+
   const tileConfig = useMemo(() => {
-    if (mapStyle === 'satellite') {
+    if (mapStyle === 'satellite' || mapStyle === 'hybrid') {
       return {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attribution:
+        baseUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        labelUrl:
+          mapStyle === 'hybrid'
+            ? 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png'
+            : null,
+        baseAttribution:
           'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+        labelAttribution:
+          mapStyle === 'hybrid'
+            ? '&copy; <a href="https://carto.com/">CARTO</a>'
+            : '',
       };
     }
     if (mapStyle === 'dark') {
       return {
-        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        attribution:
+        baseUrl: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        labelUrl: null,
+        baseAttribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+        labelAttribution: '',
       };
     }
     return {
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      baseUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      labelUrl: null,
+      baseAttribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      labelAttribution: '',
     };
   }, [mapStyle]);
 
@@ -193,6 +217,42 @@ export default function LeadMapView({
     return Array.from(buckets.values());
   }, [pinnable, zoomLevel]);
 
+  const pinKey = (lead: LeadMapPin) => `${lead.business_name}:${lead.lat ?? ''}:${lead.lng ?? ''}`;
+
+  const focusedLead = useMemo(() => {
+    if (!focusedLeadKey) return null;
+    return pinnable.find((lead) => pinKey(lead) === focusedLeadKey) || null;
+  }, [focusedLeadKey, pinnable]);
+
+  const focusedVisiblePins = useMemo(() => {
+    if (!focusedLead) return pinnable;
+    return pinnable.filter((lead) => {
+      const dLat = (lead.lat || 0) - (focusedLead.lat || 0);
+      const dLng = (lead.lng || 0) - (focusedLead.lng || 0);
+      const km = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
+      return km <= 5.2;
+    });
+  }, [focusedLead, pinnable]);
+
+  const heatPoints = useMemo(() => {
+    if (!showHeat) return [];
+    return pinnable.map((lead) => {
+      const nearby = pinnable.reduce((acc, other) => {
+        const dLat = (lead.lat || 0) - (other.lat || 0);
+        const dLng = (lead.lng || 0) - (other.lng || 0);
+        const km = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
+        return km <= 1.2 ? acc + 1 : acc;
+      }, 0);
+      return {
+        lat: lead.lat || 0,
+        lng: lead.lng || 0,
+        nearby,
+        radius: Math.min(1200, 180 + nearby * 65),
+        opacity: Math.min(0.45, 0.08 + nearby * 0.025),
+      };
+    });
+  }, [pinnable, showHeat]);
+
   function getBuildingViewUrl(lat: number, lng: number): string {
     const latText = lat.toFixed(6);
     const lngText = lng.toFixed(6);
@@ -227,11 +287,34 @@ export default function LeadMapView({
           </button>
           <button
             type="button"
+            onClick={() => setMapStyle('hybrid')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'hybrid' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Hybrid
+          </button>
+          <button
+            type="button"
             onClick={() => setShowRoute((prev) => !prev)}
             className={`px-1.5 py-0.5 rounded border ${showRoute ? 'border-cyan-500/60 text-cyan-300' : 'border-slate-700 text-slate-400'}`}
           >
             Route
           </button>
+          <button
+            type="button"
+            onClick={() => setShowHeat((prev) => !prev)}
+            className={`px-1.5 py-0.5 rounded border ${showHeat ? 'border-rose-500/60 text-rose-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Heat
+          </button>
+          {focusedLead && (
+            <button
+              type="button"
+              onClick={() => setFocusedLeadKey(null)}
+              className="px-1.5 py-0.5 rounded border border-amber-500/50 text-amber-300"
+            >
+              Clear focus
+            </button>
+          )}
         </div>
         <p className="text-slate-400 uppercase tracking-wider mb-0.5">Sources</p>
         <span className="text-orange-400">Yelp</span>
@@ -257,11 +340,18 @@ export default function LeadMapView({
       >
         {/* Dark OpenStreetMap tile */}
         <TileLayer
-          attribution={tileConfig.attribution}
-          url={tileConfig.url}
+          attribution={tileConfig.baseAttribution}
+          url={tileConfig.baseUrl}
         />
+        {tileConfig.labelUrl && (
+          <TileLayer
+            attribution={tileConfig.labelAttribution}
+            url={tileConfig.labelUrl}
+            pane="overlayPane"
+          />
+        )}
 
-        <FitBounds leads={pinnable} />
+        <FitBounds leads={focusedLead ? focusedVisiblePins : pinnable} fitKey={focusedLead ? `${fitKey}:focus:${focusedLeadKey}` : fitKey} />
         <ZoomTracker onZoomChange={setZoomLevel} />
         <MapZoomControls />
         {previewCenter && (
@@ -275,7 +365,27 @@ export default function LeadMapView({
         {routePoints.length > 1 && (
           <Polyline positions={routePoints} pathOptions={{ color: '#38bdf8', weight: 3, opacity: 0.7, dashArray: '6 6' }} />
         )}
-        {(clusteredMarkers || pinnable).map((lead: any, idx) => (
+        {focusedLead && (
+          <>
+            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={1000} pathOptions={{ color: '#22d3ee', fillOpacity: 0.04 }} />
+            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={3000} pathOptions={{ color: '#f59e0b', fillOpacity: 0.03 }} />
+            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={5000} pathOptions={{ color: '#ef4444', fillOpacity: 0.02 }} />
+          </>
+        )}
+        {heatPoints.map((point, idx) => (
+          <Circle
+            key={`heat-${idx}`}
+            center={[point.lat, point.lng]}
+            radius={point.radius}
+            pathOptions={{
+              color: '#f43f5e',
+              fillColor: '#fb7185',
+              fillOpacity: point.opacity,
+              opacity: 0,
+            }}
+          />
+        ))}
+        {(clusteredMarkers || (focusedLead ? focusedVisiblePins : pinnable)).map((lead: any, idx) => (
           <Marker
             key={idx}
             position={[lead.lat!, lead.lng!]}
@@ -354,6 +464,13 @@ export default function LeadMapView({
                     Building view
                   </a>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setFocusedLeadKey(pinKey(lead))}
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-700 hover:text-teal-900 underline"
+                >
+                  Focus area (1km / 3km / 5km)
+                </button>
                   </>
                 )}
               </div>
