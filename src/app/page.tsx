@@ -8,8 +8,56 @@ import HomeClient from '@/components/home/HomeClient';
  * and delegates client-side logic (auth, search params) to HomeClient.
  */
 export default async function Home() {
+  const siteUrl = 'https://alphaclone.tech';
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'AlphaClone Systems',
+    url: siteUrl,
+    logo: `${siteUrl}/logo.png`,
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'sales',
+        email: 'sales@alphaclone.tech',
+      },
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'support@alphaclone.tech',
+      },
+      {
+        '@type': 'ContactPoint',
+        contactType: 'security',
+        email: 'security@alphaclone.tech',
+      },
+    ],
+    sameAs: [],
+  };
+
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'AlphaClone Systems',
+    url: siteUrl,
+    inLanguage: 'en',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       <Suspense
         fallback={
           <div className="min-h-screen bg-[#020D1A] text-slate-100 flex items-center justify-center px-6">

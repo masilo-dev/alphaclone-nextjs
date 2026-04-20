@@ -62,6 +62,12 @@ AlphaClone Systems is an AI-powered Business Operating System (Business OS) that
 - Pricing: https://alphaclone.tech/pricing
 - Ecosystem: https://alphaclone.tech/ecosystem
 - Who We Serve: https://alphaclone.tech/who-we-serve
+- CRM: https://alphaclone.tech/crm
+- Lead Management: https://alphaclone.tech/lead-management
+- Project Management: https://alphaclone.tech/project-management
+- AI Agents: https://alphaclone.tech/ai-agents
+- Video Meetings: https://alphaclone.tech/video-meetings
+- Claude and Manus Integrations: https://alphaclone.tech/claude-manus-integrations
 - Compare: https://alphaclone.tech/compare
 - Blog: https://alphaclone.tech/blog
 - Contact: https://alphaclone.tech/contact

@@ -12,6 +12,12 @@ const MarketingFooter: React.FC = () => {
             title: 'Product',
             links: [
                 { label: 'Features', href: '/services' },
+                { label: 'CRM', href: '/crm' },
+                { label: 'Lead Management', href: '/lead-management' },
+                { label: 'Project Management', href: '/project-management' },
+                { label: 'AI Agents', href: '/ai-agents' },
+                { label: 'Video Meetings', href: '/video-meetings' },
+                { label: 'Claude and Manus', href: '/claude-manus-integrations' },
                 { label: 'Ecosystem', href: '/ecosystem' },
                 { label: 'Pricing', href: '/pricing' },
                 { label: 'Who We Serve', href: '/who-we-serve' },
@@ -30,9 +36,14 @@ const MarketingFooter: React.FC = () => {
         {
             title: 'Legal',
             links: [
+                { label: 'Legal Hub', href: '/legal' },
                 { label: 'Privacy Policy', href: '/privacy-policy' },
                 { label: 'Terms of Service', href: '/terms-of-service' },
                 { label: 'Cookie Policy', href: '/cookie-policy' },
+                                { label: 'Data Deletion', href: '/data-deletion' },
+                { label: 'Platform Status', href: '/platform-status' },
+                { label: 'Security Policy', href: '/security-policy' },
+                { label: 'Compliance', href: '/compliance' },
                 { label: 'Security', href: 'mailto:security@alphaclone.tech' },
             ],
         },
@@ -68,7 +79,7 @@ const MarketingFooter: React.FC = () => {
                             </span>
                         </Link>
                         <p className="text-slate-400 text-sm max-w-xs leading-relaxed mb-8">
-                            The all-in-one platform that replaces 10+ tools. Built for agencies, freelancers, and service businesses who need power without complexity.
+                            The all-in-one platform for business operations. Built for agencies and service teams with transparent legal policies and clear data controls.
                         </p>
                         <div className="flex gap-4">
                             <a href="#" className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all">

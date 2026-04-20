@@ -97,6 +97,9 @@ export async function POST(request: Request) {
       score       = 0,
       fromAddress,
       queue       = false,
+      autoSend = false,
+      consentGranted = false,
+      confidenceScore = 0,
       deliveryProviders = [],
       preferredProvider,
       balanceByDailyLimit = false,
@@ -109,6 +112,15 @@ export async function POST(request: Request) {
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
+    const autoSendThreshold = Number(process.env.OUTREACH_AUTO_SEND_CONFIDENCE_THRESHOLD || '80');
+
+    // Default policy: manual approval required unless explicitly auto-send.
+    // Auto-send is allowed only if consent is present and confidence passes threshold.
+    const shouldAutoSend = autoSend === true;
+    const policyQueueOnly =
+      !shouldAutoSend ||
+      consentGranted !== true ||
+      Number(confidenceScore || 0) < autoSendThreshold;
 
     // 1. Generate tracking ID
     const trackingId = crypto.randomUUID();
@@ -141,8 +153,25 @@ export async function POST(request: Request) {
     const logId = logRow?.id;
 
     // 4. If queue-only mode → return now
-    if (queue) {
-      return NextResponse.json({ success: true, status: 'queued', logId, trackingId });
+    if (queue || policyQueueOnly) {
+      const queueReason = !shouldAutoSend
+        ? 'manual_approval_required'
+        : consentGranted !== true
+          ? 'consent_required'
+          : 'confidence_below_threshold';
+      return NextResponse.json({
+        success: true,
+        status: 'queued',
+        queueReason,
+        policy: {
+          autoSendEnabled: shouldAutoSend,
+          consentGranted: consentGranted === true,
+          confidenceScore: Number(confidenceScore || 0),
+          threshold: autoSendThreshold,
+        },
+        logId,
+        trackingId,
+      });
     }
 
     const selectedProviders = Array.isArray(deliveryProviders)

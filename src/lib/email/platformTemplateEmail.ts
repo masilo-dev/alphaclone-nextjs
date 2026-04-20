@@ -15,7 +15,7 @@ export type PlatformTemplateEmailResult = {
     success: boolean;
     skipped?: boolean;
     error?: string;
-    provider?: 'sendgrid' | 'resend';
+    provider?: 'brevo' | 'sendgrid' | 'resend';
 };
 
 type TemplateRow = {
@@ -42,8 +42,24 @@ async function resolveMailCredentials(
 ): Promise<{
     apiKey: string | null;
     fromEmail: string;
-    provider: 'sendgrid' | 'resend';
+    provider: 'brevo' | 'sendgrid' | 'resend';
 }> {
+    const globalBrevoApiKey =
+        process.env.BREVO_PLATFORM_API_KEY ||
+        process.env.BREVO_API_KEY ||
+        null;
+    const globalBrevoFromEmail =
+        process.env.BREVO_PLATFORM_FROM_EMAIL ||
+        process.env.BREVO_FROM_EMAIL ||
+        'notifications@alphaclone.tech';
+    if (globalBrevoApiKey) {
+        return {
+            apiKey: globalBrevoApiKey,
+            fromEmail: globalBrevoFromEmail,
+            provider: 'brevo',
+        };
+    }
+
     let apiKey: string | null = process.env.SENDGRID_API_KEY || null;
     let fromEmail =
         process.env.SENDGRID_FROM_EMAIL || 'notifications@alphaclone.tech';
@@ -78,7 +94,7 @@ async function resolveMailCredentials(
 }
 
 async function deliver(
-    provider: 'sendgrid' | 'resend',
+    provider: 'brevo' | 'sendgrid' | 'resend',
     apiKey: string,
     fromEmail: string,
     to: string,
@@ -87,6 +103,33 @@ async function deliver(
     text: string
 ): Promise<{ ok: boolean; emailId?: string; error?: string }> {
     const fromName = 'AlphaClone Systems';
+
+    if (provider === 'brevo') {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': apiKey,
+            },
+            body: JSON.stringify({
+                sender: { email: fromEmail, name: fromName },
+                to: [{ email: to }],
+                subject,
+                htmlContent: html,
+                textContent: text || undefined,
+            }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+            const messageId =
+                (data as { messageId?: string }).messageId ||
+                (Array.isArray((data as { messageIds?: string[] }).messageIds)
+                    ? (data as { messageIds: string[] }).messageIds[0]
+                    : undefined);
+            return { ok: true, emailId: messageId };
+        }
+        return { ok: false, error: JSON.stringify(data) };
+    }
 
     if (provider === 'sendgrid') {
         const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
@@ -139,7 +182,7 @@ async function logEmailSent(
     supabase: SupabaseClient,
     params: {
         tenantId: string | null;
-        provider: 'sendgrid' | 'resend';
+        provider: 'brevo' | 'sendgrid' | 'resend';
         toEmail: string;
         subject: string;
         emailId?: string;
