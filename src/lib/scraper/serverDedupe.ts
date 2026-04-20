@@ -7,7 +7,7 @@ type LeadLike = {
   lng?: number;
 };
 
-type SupabaseLike = {
+type SupabaseQueryClient = {
   from: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string) => any;
@@ -84,7 +84,7 @@ function parseLeadArray(value: unknown): LeadLike[] {
 }
 
 export async function dedupeLeadsAgainstTenantHistory(
-  supabase: SupabaseLike,
+  supabase: unknown,
   tenantId: string,
   leads: LeadLike[],
   currentJobId?: string
@@ -94,7 +94,8 @@ export async function dedupeLeadsAgainstTenantHistory(
   }
 
   try {
-    const query = supabase
+    const queryClient = supabase as SupabaseQueryClient;
+    const query = queryClient
       .from('lead_search_jobs')
       .select('id, final_results, partial_results, status, created_at')
       .eq('tenant_id', tenantId);
