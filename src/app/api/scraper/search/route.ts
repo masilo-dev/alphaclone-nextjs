@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
 
 const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
@@ -557,7 +558,17 @@ export async function POST(request: Request) {
     const sorted = sortResults(unique, sortBy);
 
     // Slice to LEADS_PER_SEARCH
-    const final = sorted.slice(0, LEADS_PER_SEARCH);
+    let final = sorted.slice(0, LEADS_PER_SEARCH);
+    let dedupedAgainstHistory = 0;
+    const tenantIdForDedupe = tenantId || '';
+    if (tenantIdForDedupe) {
+      const adminForDedupe = getAdminSupabase();
+      if (adminForDedupe) {
+        const dedupeRes = await dedupeLeadsAgainstTenantHistory(adminForDedupe, tenantIdForDedupe, final);
+        final = dedupeRes.deduped as LeadResult[];
+        dedupedAgainstHistory = dedupeRes.removedCount;
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -572,6 +583,7 @@ export async function POST(request: Request) {
       } : undefined,
       leadsWithContact: final.filter((r) => r.hasContact).length,
       leadsWithoutContact: final.filter((r) => !r.hasContact).length,
+      dedupedAgainstHistory,
     });
 
   } catch (error: unknown) {

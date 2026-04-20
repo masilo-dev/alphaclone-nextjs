@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { LeadResult, LeadStep, runLeadStep } from '@/lib/scraper/freeLeadSearch';
+import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
 
 function parseJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -11,6 +12,14 @@ function parseJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
 function parseJsonObject(value: unknown): Record<string, any> {
   if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, any>;
   return {};
+}
+
+function leadIdentityKey(lead: LeadResult): string {
+  return [
+    (lead.business_name || '').trim().toLowerCase(),
+    (lead.website || '').trim().toLowerCase(),
+    (lead.phone || '').replace(/\D/g, ''),
+  ].join('::');
 }
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -58,6 +67,19 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       sourceErrors,
     });
 
+    const dedupeRes = await dedupeLeadsAgainstTenantHistory(
+      supabase,
+      String(job.tenant_id || ''),
+      stepResult.partialResults,
+      String(job.id)
+    );
+    const dedupedPartial = dedupeRes.deduped as LeadResult[];
+    const allowedKeys = new Set(dedupedPartial.map((lead) => leadIdentityKey(lead)));
+    const dedupedFinal =
+      stepResult.nextStep === 'completed'
+        ? (stepResult.finalResults.filter((lead) => allowedKeys.has(leadIdentityKey(lead))) as LeadResult[])
+        : [];
+
     const nextStatus = stepResult.nextStep === 'completed' ? 'completed' : 'running';
     const nextStep = stepResult.nextStep === 'completed' ? 'finalize' : stepResult.nextStep;
 
@@ -69,8 +91,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         progress: stepResult.progress,
         source_stats: stepResult.sourceStats,
         source_errors: stepResult.sourceErrors,
-        partial_results: stepResult.partialResults,
-        final_results: stepResult.finalResults,
+        partial_results: dedupedPartial,
+        final_results: dedupedFinal,
         fallback_used: stepResult.fallbackUsed,
         error_message: null,
         updated_at: new Date().toISOString(),
