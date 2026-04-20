@@ -81,6 +81,31 @@ function isSchemaOrRelationError(error: unknown): boolean {
   );
 }
 
+function extractMissingColumnFromMessage(message: string): string | null {
+  const singleQuoteMatch = message.match(/'([^']+)' column/i);
+  if (singleQuoteMatch?.[1]) return singleQuoteMatch[1];
+  const doubleQuoteMatch = message.match(/column "([^"]+)"/i);
+  if (doubleQuoteMatch?.[1]) return doubleQuoteMatch[1];
+  return null;
+}
+
+async function insertSocialPostWithSchemaFallback(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  payload: Record<string, unknown>,
+  selectFields: string
+) {
+  const mutablePayload: Record<string, unknown> = { ...payload };
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const res = await supabaseAdmin.from('social_posts').insert(mutablePayload).select(selectFields).single();
+    if (!res.error) return res;
+    if (!isSchemaOrRelationError(res.error)) return res;
+    const missing = extractMissingColumnFromMessage(String((res.error as { message?: string }).message || ''));
+    if (!missing || !(missing in mutablePayload)) return res;
+    delete mutablePayload[missing];
+  }
+  return await supabaseAdmin.from('social_posts').insert(mutablePayload).select(selectFields).single();
+}
+
 function scoreDealFromSignals(stage: string, value: number, ageDays: number): number {
   let score = 3;
   if (stage === 'qualified') score += 2;
@@ -2066,9 +2091,9 @@ class AlphaCloneMCPServer {
               );
             }
 
-            const { data: pendingRow, error: pendingErr } = await supabaseAdmin
-              .from('social_posts')
-              .insert({
+            const pendingInsert = await insertSocialPostWithSchemaFallback(
+              supabaseAdmin,
+              {
                 tenant_id,
                 user_id,
                 caption: text.trim(),
@@ -2081,9 +2106,11 @@ class AlphaCloneMCPServer {
                 linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
                 analytics: {},
                 metadata: baseMetadata,
-              })
-              .select('id')
-              .single();
+              },
+              'id'
+            );
+            const pendingRow = pendingInsert.data as { id: string } | null;
+            const pendingErr = pendingInsert.error as { message?: string } | null;
 
             if (pendingErr || !pendingRow?.id) {
               throw supabaseErrorToMcpClientError('create_linkedin_post', pendingErr?.message || 'Failed to create draft post');
@@ -2135,7 +2162,22 @@ class AlphaCloneMCPServer {
               metadata: baseMetadata,
             };
 
-            const persisted = await updateSocialPostLinkedInUrnWithRetry(supabaseAdmin, postId, updatePatch);
+            let persisted = await updateSocialPostLinkedInUrnWithRetry(supabaseAdmin, postId, updatePatch);
+            if (!persisted.ok) {
+              const message = String(persisted.error || '');
+              const missingOrg = message.includes('linkedin_organization_id');
+              const missingMember = message.includes('linkedin_member_id');
+              if (missingOrg || missingMember) {
+                const fallbackPatch: Record<string, unknown> = {
+                  status: 'published',
+                  published_at: publishedAt,
+                  linkedin_post_urn: linkedinPostUrn,
+                  analytics: linkedinPostUrn ? { linkedin_post_urn: linkedinPostUrn } : {},
+                  metadata: baseMetadata,
+                };
+                persisted = await updateSocialPostLinkedInUrnWithRetry(supabaseAdmin, postId, fallbackPatch);
+              }
+            }
             if (!persisted.ok && linkedinPostUrn) {
               await enqueueSocialPostSync(supabaseAdmin, {
                 socialPostId: postId,
@@ -2154,9 +2196,9 @@ class AlphaCloneMCPServer {
             if (finalErr) throw supabaseErrorToMcpClientError('create_linkedin_post', finalErr.message);
             data = finalRow as Record<string, unknown>;
           } else {
-            const { data: scheduledData, error } = await supabaseAdmin
-              .from('social_posts')
-              .insert({
+            const scheduledInsert = await insertSocialPostWithSchemaFallback(
+              supabaseAdmin,
+              {
                 tenant_id,
                 user_id,
                 caption: text.trim(),
@@ -2169,10 +2211,12 @@ class AlphaCloneMCPServer {
                 linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
                 analytics: {},
                 metadata: baseMetadata,
-              })
-              .select('id, status, published_at, analytics')
-              .single();
-            if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message);
+              },
+              'id, status, published_at, analytics'
+            );
+            const scheduledData = scheduledInsert.data as Record<string, unknown> | null;
+            const error = scheduledInsert.error as { message?: string } | null;
+            if (error) throw supabaseErrorToMcpClientError('create_linkedin_post', error.message || 'Failed to schedule LinkedIn post');
             data = scheduledData as Record<string, unknown>;
           }
 
