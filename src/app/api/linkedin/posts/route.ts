@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
         .limit(100);
 
       if (!query.error) {
-        const rows = (query.data || []).map((row) => normalizePostRow(row as Record<string, unknown>));
+        const rows = (query.data || []).map((row: unknown) => normalizePostRow(row as Record<string, unknown>));
         return NextResponse.json({ success: true, posts: rows, selectUsed: select });
       }
       lastError = query.error;
