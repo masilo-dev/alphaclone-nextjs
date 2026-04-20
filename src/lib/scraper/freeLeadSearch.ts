@@ -132,12 +132,12 @@ function resolveGooglePlacesApiKey(): string | null {
   );
 }
 
-async function fetchGooglePlaces(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
+async function fetchGooglePlaces(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
   const apiKey = resolveGooglePlacesApiKey();
   if (!apiKey) throw new Error('Google Places API key not configured');
 
   const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
-    radiusKm: 40,
+    radiusKm: Math.min(Math.max(radiusKm, 1), 100),
     maxResults: Math.min(limit, 20),
   });
 
@@ -183,7 +183,12 @@ async function postOverpassQuery(queryBody: string): Promise<Response> {
   throw lastError || new OverpassRequestError('Overpass request failed');
 }
 
-async function fetchOpenStreetMap(niche: string, location: string, targetMin = LEADS_PER_SEARCH): Promise<LeadResult[]> {
+async function fetchOpenStreetMap(
+  niche: string,
+  location: string,
+  targetMin = LEADS_PER_SEARCH,
+  radiusKm = 25
+): Promise<LeadResult[]> {
   const isGlobal = !location || /global|world|anywhere/i.test(location);
   const geoQuery = isGlobal ? 'London, UK' : location;
   const nomRes = await fetch(
@@ -197,7 +202,12 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = L
   const centerLat = parseFloat(nomData[0].lat);
   const centerLon = parseFloat(nomData[0].lon);
   const isBroad = isGlobal || /state|province|country|usa|uk|canada|europe/i.test(location);
-  const deltas = isBroad ? [2.5, 5.0, 12.5] : (location.includes(',') ? [0.01, 0.05, 0.15, 0.5] : [0.15, 0.3, 0.6, 1.2]);
+  const baseDelta = Math.min(Math.max(radiusKm / 111, 0.01), 1.2);
+  const deltas = isBroad
+    ? [Math.max(baseDelta, 1.0), Math.max(baseDelta * 2, 2.5), Math.max(baseDelta * 5, 6.0)]
+    : (location.includes(',')
+      ? [Math.max(baseDelta * 0.4, 0.01), Math.max(baseDelta, 0.05), Math.max(baseDelta * 2, 0.15), Math.max(baseDelta * 4, 0.5)]
+      : [Math.max(baseDelta, 0.15), Math.max(baseDelta * 2, 0.3), Math.max(baseDelta * 4, 0.6), Math.max(baseDelta * 8, 1.2)]);
 
   let verifiedElements: any[] = [];
   const startedAt = Date.now();
@@ -260,6 +270,7 @@ export async function runLeadStep(input: {
   step: LeadStep;
   niche: string;
   location: string;
+  radiusKm: number;
   sortBy: string;
   usePlaywright: boolean;
   partialResults: LeadResult[];
@@ -280,7 +291,7 @@ export async function runLeadStep(input: {
 
   if (input.step === 'init') {
     try {
-      const osmResults = await fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH);
+      const osmResults = await fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm);
       const verified = osmResults.filter((r) => hasContactInfo(r));
       partial.push(...enrichWithContactFlag(verified));
       sourceStats.osm = verified.length;
@@ -313,7 +324,7 @@ export async function runLeadStep(input: {
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
     const [googleRes, yelpRes, hereRes] = await Promise.allSettled([
-      fetchGooglePlaces(input.niche, input.location, need),
+      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm),
       fetchYelp(input.niche, input.location, need),
       fetchHERE(input.niche, input.location, need),
     ]);

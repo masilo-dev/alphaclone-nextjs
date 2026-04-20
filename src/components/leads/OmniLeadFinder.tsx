@@ -238,7 +238,10 @@ export default function OmniLeadFinder() {
   const [sourceStats, setSourceStats] = useState<Record<string, number>>({});
   const [fallbackUsed, setFallbackUsed] = useState(false);
   const [viewMode,    setViewMode   ] = useState<'grid' | 'map'>('grid');
+  const [mapCollapsed, setMapCollapsed] = useState(false);
   const [savedIds,    setSavedIds   ] = useState<Set<number>>(new Set());
+  const [specificCity, setSpecificCity] = useState('');
+  const [searchRadiusKm, setSearchRadiusKm] = useState<number>(25);
 
   // Selection + outreach panel
   const [selectedSet,    setSelectedSet   ] = useState<Set<number>>(new Set());
@@ -253,6 +256,30 @@ export default function OmniLeadFinder() {
         console.error('startTask function is not available. Background tasks will not work.');
     }
   }, []);
+
+  useEffect(() => {
+    try {
+      const storedViewMode = window.localStorage.getItem('omniLeadFinder:viewMode');
+      const storedMapCollapsed = window.localStorage.getItem('omniLeadFinder:mapCollapsed');
+      if (storedViewMode === 'grid' || storedViewMode === 'map') {
+        setViewMode(storedViewMode);
+      }
+      if (storedMapCollapsed === 'true') {
+        setMapCollapsed(true);
+      }
+    } catch {
+      // Ignore storage read errors
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('omniLeadFinder:viewMode', viewMode);
+      window.localStorage.setItem('omniLeadFinder:mapCollapsed', String(mapCollapsed));
+    } catch {
+      // Ignore storage write errors
+    }
+  }, [viewMode, mapCollapsed]);
 
   // Daily quota state
   const [dailyQuota, setDailyQuota] = useState<{ limit: number; used: number; remaining: number } | null>(null);
@@ -332,9 +359,32 @@ export default function OmniLeadFinder() {
     return `No leads found. Sources with errors: ${failedSources.join(', ')}. Check API keys and browser configuration, then try again.`;
   };
 
+  const isBroadLocation = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return false;
+    if (normalized.includes(',')) return false;
+    return (
+      normalized === 'global' ||
+      normalized === 'world' ||
+      normalized === 'worldwide' ||
+      normalized.length <= 3 ||
+      /country|nation|region/.test(normalized)
+    );
+  };
+
+  const locationNeedsCityRefinement = isBroadLocation(location);
+  const effectiveLocation = locationNeedsCityRefinement && specificCity.trim()
+    ? `${specificCity.trim()}, ${location.trim()}`
+    : location.trim();
+  const effectiveRadiusKm = Math.min(Math.max(Number(searchRadiusKm) || 25, 1), 100);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche) return toast.error('Please select an industry');
+    if (locationNeedsCityRefinement && !specificCity.trim()) {
+      toast.error('Please add an exact city for broad locations and try again.');
+      return;
+    }
 
     // Validate functions are available before proceeding
     if (typeof startTask !== 'function') {
@@ -346,7 +396,7 @@ export default function OmniLeadFinder() {
     setProgress({ percent: 8, message: 'Creating search job...' });
 
     const taskId = `omni_search_${Date.now()}`;
-    const taskName = `Finding ${niche} leads in ${location || 'Global'}`;
+    const taskName = `Finding ${niche} leads in ${effectiveLocation || 'Global'}`;
     startTask(taskId, taskName, async () => {
       try {
         const createRes = await fetch('/api/scraper/jobs/create', {
@@ -354,9 +404,10 @@ export default function OmniLeadFinder() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             niche,
-            location,
+            location: effectiveLocation,
             sortBy: sortMode,
             usePlaywright,
+            radiusKm: effectiveRadiusKm,
             tenantId: currentTenant?.id || '',
           }),
         });
@@ -370,8 +421,9 @@ export default function OmniLeadFinder() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 niche,
-                location,
+                location: effectiveLocation,
                 sortBy: sortMode,
+                radiusKm: effectiveRadiusKm,
                 tenantId: currentTenant?.id || '',
               }),
             });
@@ -394,6 +446,8 @@ export default function OmniLeadFinder() {
             setSourceStats(directData?.sources || {});
             setFallbackUsed(Boolean(directData?.fallbackUsed));
             setSelectedSet(new Set());
+            setViewMode('map');
+            setMapCollapsed(false);
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedImmediate.length} leads`);
             return { leads: immediateLeads, sourceStats: directData?.sources || {} };
@@ -445,6 +499,8 @@ export default function OmniLeadFinder() {
             }
             setResults(qualifiedFinal);
             setSelectedSet(new Set());
+            setViewMode('map');
+            setMapCollapsed(false);
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedFinal.length} leads`);
             done = true;
@@ -557,6 +613,30 @@ export default function OmniLeadFinder() {
             <p className="text-[9px] text-slate-500 italic pl-1 flex items-center gap-1">
               <Zap className="w-2 h-2" /> Supports pinpoint street-level accuracy & worldwide scraping.
             </p>
+            {locationNeedsCityRefinement && (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={specificCity}
+                  onChange={(e) => setSpecificCity(e.target.value)}
+                  placeholder='Exact city (e.g. Harare)'
+                  disabled={scanning}
+                  className="w-full bg-slate-900/80 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={searchRadiusKm}
+                    onChange={(e) => setSearchRadiusKm(Number(e.target.value))}
+                    disabled={scanning}
+                    className="w-24 bg-slate-900/80 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
+                  />
+                  <span className="text-xs text-slate-400">km radius from city center</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -739,12 +819,26 @@ export default function OmniLeadFinder() {
       )}
 
       {viewMode === 'map' && filteredResults.length > 0 && (
-        <div className="space-y-1.5">
-          <LeadMapView leads={filteredResults} />
-          {filteredResults.filter(l => !l.lat).length > 0 && (
-            <p className="text-[10px] text-slate-500 text-center">
-              {filteredResults.filter(l => !l.lat).length} leads without coordinates hidden from map
-            </p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-2">
+            <p className="text-xs text-slate-400">Interactive map results</p>
+            <button
+              type="button"
+              onClick={() => setMapCollapsed((prev) => !prev)}
+              className="text-xs px-2 py-1 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
+            >
+              {mapCollapsed ? 'Expand map' : 'Minimize map'}
+            </button>
+          </div>
+          {!mapCollapsed && (
+            <>
+              <LeadMapView leads={filteredResults} />
+              {filteredResults.filter(l => !l.lat).length > 0 && (
+                <p className="text-[10px] text-slate-500 text-center">
+                  {filteredResults.filter(l => !l.lat).length} leads without coordinates hidden from map
+                </p>
+              )}
+            </>
           )}
         </div>
       )}

@@ -50,6 +50,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       step,
       niche: String(job.niche || ''),
       location: String(job.location || ''),
+      radiusKm: Number(job.radius_km || 25),
       sortBy: String(job.sort_by || 'default'),
       usePlaywright: Boolean(job.use_playwright),
       partialResults,

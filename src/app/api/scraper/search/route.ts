@@ -146,14 +146,14 @@ function resolveGooglePlacesApiKey(): string | null {
   );
 }
 
-async function fetchGooglePlaces(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
+async function fetchGooglePlaces(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
   const apiKey = resolveGooglePlacesApiKey();
   if (!apiKey) {
     throw new Error('Google Places API key not configured');
   }
 
   const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
-    radiusKm: 40,
+    radiusKm: Math.min(Math.max(radiusKm, 1), 100),
     maxResults: Math.min(limit, 20),
   });
 
@@ -232,7 +232,7 @@ async function postOverpassQuery(queryBody: string): Promise<Response> {
 // ─── Strategy 3 (PRIMARY): OpenStreetMap / Overpass ───────────────────────────
 // OSM is always free. Always runs first. Widens bbox until targetMin VERIFIED leads found.
 // "Verified" = has phone OR email in OSM tags.
-async function fetchOpenStreetMap(niche: string, location: string, targetMin = 20): Promise<LeadResult[]> {
+async function fetchOpenStreetMap(niche: string, location: string, targetMin = 20, radiusKm = 25): Promise<LeadResult[]> {
   // 1. Nominatim → lat/lon (Using for free world-wide coverage)
   const isGlobal = !location || /global|world|anywhere/i.test(location);
   const geoQuery = isGlobal ? 'London, UK' : location; // Default to major hub if global
@@ -256,9 +256,12 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
   const isBroad = isGlobal || /state|province|country|usa|uk|canada|europe/i.test(location);
   
   // If location contains a comma (likely specific address/city) or is "Global", use specialized deltas
-  const deltas = isBroad 
-    ? [2.5, 5.0, 12.5] 
-    : (location.includes(',') ? [0.01, 0.05, 0.15, 0.5] : [0.15, 0.3, 0.6, 1.2, 2.5]);
+  const baseDelta = Math.min(Math.max(radiusKm / 111, 0.01), 1.5);
+  const deltas = isBroad
+    ? [Math.max(baseDelta, 1.0), Math.max(baseDelta * 2, 2.5), Math.max(baseDelta * 5, 6.0)]
+    : (location.includes(',')
+      ? [Math.max(baseDelta * 0.4, 0.01), Math.max(baseDelta, 0.05), Math.max(baseDelta * 2, 0.15), Math.max(baseDelta * 4, 0.5)]
+      : [Math.max(baseDelta, 0.15), Math.max(baseDelta * 2, 0.3), Math.max(baseDelta * 4, 0.6), Math.max(baseDelta * 8, 1.2), Math.max(baseDelta * 12, 2.5)]);
   
   let verifiedElements: any[] = [];
 
@@ -431,6 +434,7 @@ export async function POST(request: Request) {
     const niche     = body.niche    || body.query?.split(' in ')[0]?.trim() || '';
     const location  = body.location || body.query?.split(' in ')[1]?.trim() || '';
     const sortBy    = body.sortBy   || 'default';
+    const radiusKm  = Math.min(Math.max(Number(body.radiusKm || 25), 1), 100);
     const tenantId  = (body.tenantId || body.tenant_id || '').trim();
 
     if (!niche) {
@@ -458,7 +462,7 @@ export async function POST(request: Request) {
 
     // ── Step 1: OSM runs FIRST (primary, always free) ─────────────────────────
     try {
-      const osmResults = await fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH);
+      const osmResults = await fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm);
       const enriched = enrichWithContactFlag(osmResults);
       results.push(...enriched);
       sourceCounts.osm = enriched.length;
@@ -474,7 +478,7 @@ export async function POST(request: Request) {
     if (needMoreAfterOsm && !isBudgetExceeded()) {
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
-        const googleRows = await fetchGooglePlaces(niche, location, want);
+        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
         const enriched = enrichWithContactFlag(googleRows);
         results.push(...enriched);
         sourceCounts.google = enriched.length;
