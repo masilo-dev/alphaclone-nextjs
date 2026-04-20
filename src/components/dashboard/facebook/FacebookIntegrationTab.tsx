@@ -147,6 +147,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [commentByPost, setCommentByPost] = useState<Record<string, string>>({});
     const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
     const [commentActionLoading, setCommentActionLoading] = useState<Record<string, boolean>>({});
+    const [commentsByPost, setCommentsByPost] = useState<Record<string, any[]>>({});
+    const [commentsLoadingByPost, setCommentsLoadingByPost] = useState<Record<string, boolean>>({});
+    const [commentsErrorByPost, setCommentsErrorByPost] = useState<Record<string, string>>({});
     const [aiReplyLoading, setAiReplyLoading] = useState<Record<string, boolean>>({});
     const [postsNextCursor, setPostsNextCursor] = useState<string | null>(null);
     const [loadingMorePosts, setLoadingMorePosts] = useState(false);
@@ -242,6 +245,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         } else {
             setPostsLoading(true);
             setPostsNextCursor(null);
+            setCommentsByPost({});
+            setCommentsErrorByPost({});
         }
         try {
             const cursorQs = after ? `&after=${encodeURIComponent(after)}` : '';
@@ -265,6 +270,41 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             setLoadingMorePosts(false);
         }
     }, []);
+
+    const loadPostComments = useCallback(async (postId: string) => {
+        if (!selectedPageId) {
+            toast.error('Select a Facebook Page first');
+            return;
+        }
+
+        setCommentsLoadingByPost((prev) => ({ ...prev, [postId]: true }));
+        setCommentsErrorByPost((prev) => ({ ...prev, [postId]: '' }));
+
+        try {
+            const res = await fetch(
+                `/api/facebook/comments?pageId=${encodeURIComponent(selectedPageId)}&postId=${encodeURIComponent(postId)}&limit=50`
+            );
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                const message = data.error || 'Failed to load comments';
+                setCommentsErrorByPost((prev) => ({ ...prev, [postId]: message }));
+                toast.error(message);
+                return;
+            }
+
+            const comments = Array.isArray(data.comments) ? data.comments : [];
+            setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
+            if (comments.length === 0) {
+                toast('No comments found for this post.');
+            }
+        } catch {
+            const message = 'Failed to load comments';
+            setCommentsErrorByPost((prev) => ({ ...prev, [postId]: message }));
+            toast.error(message);
+        } finally {
+            setCommentsLoadingByPost((prev) => ({ ...prev, [postId]: false }));
+        }
+    }, [selectedPageId]);
 
     const loadPostInsights = useCallback(
         async (postId: string) => {
@@ -1704,9 +1744,23 @@ ${parentContext}Return only the reply text.`;
                                                             </button>
                                                         </div>
 
-                                                        {(post.comments?.data || []).length > 0 ? (
+                                                        <div className="mb-2 flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => void loadPostComments(post.id)}
+                                                                disabled={!!commentsLoadingByPost[post.id]}
+                                                                className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                                                            >
+                                                                {commentsLoadingByPost[post.id] ? 'Loading comments...' : 'Load comments'}
+                                                            </button>
+                                                            {commentsErrorByPost[post.id] && (
+                                                                <span className="text-[11px] text-rose-300">{commentsErrorByPost[post.id]}</span>
+                                                            )}
+                                                        </div>
+
+                                                        {((commentsByPost[post.id] || post.comments?.data || []).length > 0) ? (
                                                             <div className="space-y-2">
-                                                                {(post.comments?.data || []).slice(0, 5).map((comment: any) => (
+                                                                {(commentsByPost[post.id] || post.comments?.data || []).slice(0, 25).map((comment: any) => (
                                                                     <div key={comment.id} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5">
                                                                         <p className="text-xs text-slate-200">
                                                                             <span className="font-semibold text-slate-300">

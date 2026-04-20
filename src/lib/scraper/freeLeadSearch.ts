@@ -2,6 +2,7 @@ import {
   fetchSerpLeadsViaBrowser,
   hasRemoteBrowserConfigured,
 } from '@/lib/scraper/browserSerpLeads';
+import { googlePlacesService } from '@/services/googlePlacesService';
 
 export interface LeadResult {
   business_name: string;
@@ -12,7 +13,7 @@ export interface LeadResult {
   address?: string;
   rating?: number;
   category?: string;
-  source: 'yelp' | 'here' | 'osm' | 'browser';
+  source: 'yelp' | 'here' | 'osm' | 'browser' | 'google';
   lat?: number;
   lng?: number;
   hasContact: boolean;
@@ -120,6 +121,42 @@ async function fetchHERE(niche: string, location: string, limit = 20): Promise<L
       lng: item.position?.lng,
       hasContact: false,
     }));
+}
+
+function resolveGooglePlacesApiKey(): string | null {
+  return (
+    process.env.GOOGLE_PLACES_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    null
+  );
+}
+
+async function fetchGooglePlaces(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
+  const apiKey = resolveGooglePlacesApiKey();
+  if (!apiKey) throw new Error('Google Places API key not configured');
+
+  const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
+    radiusKm: 40,
+    maxResults: Math.min(limit, 20),
+  });
+
+  if (res.error) throw new Error(res.error);
+
+  return res.places.map((p): LeadResult => ({
+    business_name: p.businessName,
+    website: p.website || '',
+    snippet: p.industry || 'Google Place',
+    phone: p.phone || '',
+    email: '',
+    address: p.formattedAddress || '',
+    rating: p.rating,
+    category: p.industry || '',
+    source: 'google',
+    lat: p.lat,
+    lng: p.lng,
+    hasContact: false,
+  }));
 }
 
 async function postOverpassQuery(queryBody: string): Promise<Response> {
@@ -237,7 +274,7 @@ export async function runLeadStep(input: {
   sourceErrors: Record<string, string>;
   fallbackUsed: boolean;
 }> {
-  const sourceStats = { osm: 0, yelp: 0, here: 0, browser: 0, ...input.sourceStats };
+  const sourceStats = { osm: 0, google: 0, yelp: 0, here: 0, browser: 0, ...input.sourceStats };
   const sourceErrors = { ...input.sourceErrors };
   const partial = [...input.partialResults];
 
@@ -275,10 +312,18 @@ export async function runLeadStep(input: {
 
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
-    const [yelpRes, hereRes] = await Promise.allSettled([
+    const [googleRes, yelpRes, hereRes] = await Promise.allSettled([
+      fetchGooglePlaces(input.niche, input.location, need),
       fetchYelp(input.niche, input.location, need),
       fetchHERE(input.niche, input.location, need),
     ]);
+    if (googleRes.status === 'fulfilled') {
+      const verified = googleRes.value.filter((r) => hasContactInfo(r));
+      partial.push(...enrichWithContactFlag(verified));
+      sourceStats.google = verified.length;
+    } else {
+      sourceErrors.google = 'Google Places unavailable';
+    }
     if (yelpRes.status === 'fulfilled') {
       const verified = yelpRes.value.filter((r) => hasContactInfo(r));
       partial.push(...enrichWithContactFlag(verified));
