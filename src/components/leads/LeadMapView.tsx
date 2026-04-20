@@ -123,7 +123,45 @@ export default function LeadMapView({
   previewCenter = null,
   previewRadiusKm = 25,
 }: LeadMapViewProps) {
-  const pinnable = leads.filter(l => l.lat != null && l.lng != null);
+  const mapLeads = useMemo(() => {
+    const normalizeText = (value?: string) => (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const normalizeHost = (value?: string) => {
+      const raw = (value || '').trim();
+      if (!raw) return '';
+      try {
+        const normalized = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+        const host = new URL(normalized).hostname.toLowerCase();
+        return host.startsWith('www.') ? host.slice(4) : host;
+      } catch {
+        return normalizeText(raw);
+      }
+    };
+    const normalizePhone = (value?: string) => (value || '').replace(/\D/g, '');
+    const quantize = (value: number) => Math.round(value * 100000) / 100000;
+
+    const deduped: LeadMapPin[] = [];
+    const seen = new Set<string>();
+
+    for (const lead of leads) {
+      if (lead.lat == null || lead.lng == null) continue;
+
+      const latKey = quantize(lead.lat);
+      const lngKey = quantize(lead.lng);
+      const nameKey = normalizeText(lead.business_name);
+      const hostKey = normalizeHost(lead.website);
+      const phoneKey = normalizePhone(lead.phone);
+
+      const identity = hostKey || phoneKey || nameKey || 'unknown';
+      const dedupeKey = `${identity}:${latKey}:${lngKey}`;
+      if (seen.has(dedupeKey)) continue;
+
+      seen.add(dedupeKey);
+      deduped.push(lead);
+    }
+
+    return deduped;
+  }, [leads]);
+  const pinnable = mapLeads;
   const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'hybrid' | 'dark'>('detailed');
   const [zoomLevel, setZoomLevel] = useState<number>(zoom);
   const [showRoute, setShowRoute] = useState<boolean>(true);
