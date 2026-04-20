@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 import { 
    Check, 
    Zap, 
@@ -114,18 +113,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
    return (
       <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30">
-         {/* Persistent full-page animated network background with Jarvis */}
+         {/* Persistent full-page background */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-            {/* Base Jarvis Image Layer */}
-            <div 
-               className="absolute inset-0 bg-cover bg-center opacity-15 mix-blend-screen scale-110"
-               style={{ backgroundImage: 'url("/images/jarvis-bg.png")' }}
-            />
-            
-            {/* ICT Overlays: Scanlines & Vignette */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.8)_100%)] z-[1]" />
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] z-[1] bg-[length:100%_3px,3px_100%] pointer-events-none opacity-20" />
-            
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.86)_100%)] z-[1]" />
             <HeroBackground />
          </div>
 
@@ -317,7 +307,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      transition={{ duration: 0.5 }}
                   >
                      {/* Brand pill */}
-                     <div className="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
+                     <div className="inline-flex items-center gap-2 bg-slate-900/80 border border-cyan-500/20 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
                         <span className="font-bold">Business Management Platform</span>
                      </div>
 
@@ -325,31 +315,38 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <h1 className="font-black text-white mb-6 tracking-tight">
                         AlphaClone Systems
                         <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500">
                            Complete Business Management
                         </span>
                      </h1>
 
                      {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        Manage your entire business with one unified system. <span className="text-teal-400 font-bold">AlphaClone Systems</span> provides CRM, invoicing, contracts, projects, and communications in a single platform for <span className="text-green-400 font-bold">$45/month</span>.
+                        Manage your entire business with one unified system. <span className="text-cyan-300 font-bold">AlphaClone Systems</span> provides CRM, invoicing, contracts, projects, and communications in a single platform for <span className="text-cyan-200 font-bold">$45/month</span>.
+                     </p>
+                     <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
+                        Built for business teams. Social automation supports LinkedIn pages and Facebook business pages, with no personal account posting flow.
                      </p>
 
                      {/* Platform modules */}
                      <div className="flex flex-wrap justify-center gap-2 mb-10 sm:mb-12 max-w-2xl mx-auto">
                         {[
                            'CRM & Pipeline',
+                           'Lead Management',
                            'Invoicing',
+                           'Quotations',
+                           'Receipts',
                            'Contracts',
                            'Projects',
                            'Bookings',
                            'AI Sales Agent',
+                           'AI Agents',
                            'Video Calls',
                            'Email Campaigns',
                            'Analytics',
                            'Team Chat'
                         ].map(label => (
-                           <div key={label} className="bg-slate-800/50 border border-teal-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
+                           <div key={label} className="bg-slate-900/70 border border-cyan-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
                               {label}
                            </div>
                         ))}
@@ -359,7 +356,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                         <Button
                            onClick={() => window.location.href = '/register'}
-                           className="h-14 px-8 text-lg font-bold bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-xl shadow-teal-500/20"
+                           className="h-14 px-8 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xl shadow-cyan-500/20"
                         >
                            Start Free Trial
                            <ArrowRight className="w-5 h-5 ml-2" />
@@ -381,13 +378,245 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            { value: '0', label: 'overwhelm' },
                         ].map(({ value, label }) => (
                            <div key={label}>
-                              <div className="text-2xl sm:text-3xl font-black text-teal-400">{value}</div>
+                                 <div className="text-2xl sm:text-3xl font-black text-cyan-300">{value}</div>
                               <div className="text-xs text-slate-500 mt-0.5">{label}</div>
                            </div>
                         ))}
                      </div>
                   </motion.div>
                </motion.div>
+            </section>
+
+            {/* Workflow and Product Preview */}
+            <section className="py-16 border-y border-slate-800 bg-[#050B14]/80">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                     <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-5"
+                     >
+                        <h3 className="text-xl font-bold text-white mb-2">Chat-Driven Execution</h3>
+                        <p className="text-sm text-slate-400 mb-4">
+                           Trigger business workflows from chat while staying in your workspace. The platform runs CRM, tasks, invoices, and social operations in sequence.
+                        </p>
+                        <div className="space-y-2 text-sm">
+                           {[
+                              'User: Schedule this week of LinkedIn page posts and add leads to CRM',
+                              'AlphaClone: Creating social queue, validating media, assigning leads',
+                              'AlphaClone: Generated tasks, due-date reminders, and summary digest',
+                           ].map((line, index) => (
+                              <motion.div
+                                 key={line}
+                                 initial={{ opacity: 0.35, x: -8 }}
+                                 whileInView={{ opacity: 1, x: 0 }}
+                                 viewport={{ once: true }}
+                                 transition={{ delay: index * 0.12 }}
+                                 className="rounded-lg border border-cyan-500/15 bg-slate-950/80 px-3 py-2 text-slate-300"
+                              >
+                                 {line}
+                              </motion.div>
+                           ))}
+                        </div>
+                        <div className="mt-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3">
+                           <div className="flex items-center gap-2">
+                              <motion.span
+                                 className="inline-block h-2.5 w-2.5 rounded-full bg-cyan-300"
+                                 animate={{ opacity: [0.35, 1, 0.35] }}
+                                 transition={{ duration: 1.2, repeat: Infinity }}
+                              />
+                              <p className="text-xs text-cyan-200">Automation active: CRM update, deal probability refresh, and follow-up task creation in progress.</p>
+                           </div>
+                        </div>
+                     </motion.div>
+                     <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="grid grid-cols-2 gap-3"
+                     >
+                        {[
+                           { title: 'Project Management', caption: 'Milestones, ownership, and delivery health' },
+                           { title: 'Task Scheduler', caption: 'Due-date visibility and reminders' },
+                           { title: 'CRM Pipeline', caption: 'Lead qualification and outreach stage' },
+                           { title: 'Invoice Workspace', caption: 'Draft, sent, overdue, and paid tracking' },
+                        ].map((item) => (
+                           <div key={item.title} className="rounded-xl border border-cyan-500/15 bg-[#081228]/90 p-3">
+                              <img src="/window.svg" alt={`${item.title} workflow preview`} className="w-full h-20 object-contain opacity-80 mb-2" />
+                              <h4 className="text-sm font-semibold text-white">{item.title}</h4>
+                              <p className="text-xs text-slate-400">{item.caption}</p>
+                           </div>
+                        ))}
+                     </motion.div>
+                  </div>
+               </div>
+            </section>
+
+            {/* Platform Capabilities */}
+            <section className="py-16 bg-slate-950/70">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="mb-10 text-center">
+                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
+                        Platform Workflows In One System
+                     </h3>
+                     <p className="text-slate-400 max-w-3xl mx-auto">
+                        Built for business operators. Manage leads, tasks, projects, social publishing, and billing from a consistent interface with clear execution states.
+                     </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     {[
+                        {
+                           title: 'Lead Operations',
+                           points: ['Capture and qualify leads', 'Track source and trust score', 'Move leads into deals and tasks'],
+                        },
+                        {
+                           title: 'Revenue and Legal',
+                           points: ['Proposal, quote, and contract flow', 'Invoice draft and due-date monitoring', 'Risk and overdue visibility'],
+                        },
+                        {
+                           title: 'Delivery Automation',
+                           points: ['Daily posting workflows', 'Notification and summary routing', 'Agent actions with audit trail'],
+                        },
+                     ].map((card, index) => (
+                        <motion.div
+                           key={card.title}
+                           initial={{ opacity: 0, y: 12 }}
+                           whileInView={{ opacity: 1, y: 0 }}
+                           viewport={{ once: true }}
+                           transition={{ delay: index * 0.1 }}
+                           className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-5"
+                        >
+                           <h4 className="text-lg font-bold text-cyan-200 mb-3">{card.title}</h4>
+                           <ul className="space-y-2">
+                              {card.points.map((point) => (
+                                 <li key={point} className="text-sm text-slate-300 flex items-start gap-2">
+                                    <span className="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                                    {point}
+                                 </li>
+                              ))}
+                           </ul>
+                        </motion.div>
+                     ))}
+                  </div>
+               </div>
+            </section>
+
+            {/* Product Screens */}
+            <section className="py-16 bg-[#040A12]">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="mb-10 text-center">
+                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
+                        Inside AlphaClone Workflows
+                     </h3>
+                     <p className="text-slate-400 max-w-3xl mx-auto">
+                        Real screens from lead management, deal pipeline, social integrations, and mobile operations.
+                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                     {[
+                        {
+                           src: '/screenshots/lead-detail.png',
+                           title: 'Lead Detail Workspace',
+                           caption: 'Execute full lead flow, validation, and conversion steps.',
+                           span: 'lg:col-span-2',
+                           mediaClass: 'h-56 lg:h-64 object-cover',
+                        },
+                        {
+                           src: '/screenshots/deals-dashboard.png',
+                           title: 'Deal Pipeline Board',
+                           caption: 'Forecast, weighted pipeline, and next-action guidance.',
+                           span: 'lg:col-span-1',
+                           mediaClass: 'h-56 lg:h-64 object-cover',
+                        },
+                        {
+                           src: '/screenshots/facebook-integration.png',
+                           title: 'Facebook Business Integration',
+                           caption: 'Business page posting and lead capture controls.',
+                           span: 'lg:col-span-1',
+                           mediaClass: 'h-52 lg:h-56 object-cover',
+                        },
+                        {
+                           src: '/screenshots/mobile-crm.png',
+                           title: 'Mobile CRM Pipeline',
+                           caption: 'Field workflow for stage moves and deal actions.',
+                           span: 'lg:col-span-1',
+                           mediaClass: 'h-52 lg:h-56 object-contain bg-slate-950',
+                        },
+                        {
+                           src: '/screenshots/mobile-marketplace.png',
+                           title: 'Mobile Integrations',
+                           caption: 'Connect AI tools and platform integrations in-app.',
+                           span: 'lg:col-span-1',
+                           mediaClass: 'h-52 lg:h-56 object-contain bg-slate-950',
+                        },
+                     ].map((shot, index) => (
+                        <motion.article
+                           key={shot.title}
+                           initial={{ opacity: 0, y: 12 }}
+                           whileInView={{ opacity: 1, y: 0 }}
+                           viewport={{ once: true }}
+                           transition={{ delay: index * 0.08 }}
+                           className={`group rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-3 ${shot.span}`}
+                        >
+                           <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950/80">
+                              <img
+                                 src={shot.src}
+                                 alt={shot.title}
+                                 className={`w-full ${shot.mediaClass} transition-transform duration-500 group-hover:scale-[1.02]`}
+                              />
+                           </div>
+                           <h4 className="mt-3 text-base font-bold text-cyan-200">{shot.title}</h4>
+                           <p className="mt-1 text-sm text-slate-400 leading-relaxed">{shot.caption}</p>
+                        </motion.article>
+                     ))}
+                  </div>
+               </div>
+            </section>
+
+            {/* Privacy and Compliance */}
+            <section className="py-14 border-y border-slate-800 bg-slate-950/70">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                     <div className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-6">
+                        <h3 className="text-2xl font-black text-white mb-3">Privacy and Compliance</h3>
+                        <p className="text-sm text-slate-300 leading-relaxed mb-4">
+                           AlphaClone is built for operational trust. We provide clear legal policies, data handling disclosures, and account-level controls for businesses and teams.
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                           <Link href="/privacy-policy" className="text-sm font-semibold text-cyan-300 hover:text-cyan-200 transition-colors">
+                              Privacy Policy
+                           </Link>
+                           <Link href="/terms-of-service" className="text-sm font-semibold text-cyan-300 hover:text-cyan-200 transition-colors">
+                              Terms of Service
+                           </Link>
+                           <Link href="/cookie-policy" className="text-sm font-semibold text-cyan-300 hover:text-cyan-200 transition-colors">
+                              Cookie Policy
+                           </Link>
+                           <Link href="/data-deletion" className="text-sm font-semibold text-cyan-300 hover:text-cyan-200 transition-colors">
+                              Data Deletion
+                           </Link>
+                        </div>
+                     </div>
+                     <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
+                        <h4 className="text-lg font-bold text-white mb-3">Verification Signals</h4>
+                        <ul className="space-y-2">
+                           {[
+                              'Dedicated legal pages linked directly from the homepage footer and trust section.',
+                              'Public support and security contact channels for policy and account requests.',
+                              'Clear business-only social posting scope and platform behavior disclosures.',
+                              'Data deletion endpoint and policy references for account lifecycle transparency.',
+                           ].map((item) => (
+                              <li key={item} className="text-sm text-slate-300 flex items-start gap-2 leading-relaxed">
+                                 <span className="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-cyan-300" />
+                                 {item}
+                              </li>
+                           ))}
+                        </ul>
+                     </div>
+                  </div>
+               </div>
             </section>
 
             {/* Stats / Proof Section */}
@@ -423,7 +652,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Features / Services Section */}
-            <section id="services" className="py-20 bg-[#050B14]">
+            <section id="services" className="py-20 bg-[#040A12]">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <motion.div 
                      initial={{ opacity: 0, y: 30 }}
@@ -431,11 +660,11 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      viewport={{ once: true }}
                      className="text-center mb-16"
                   >
-                     <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        The Business OS That <span className="text-teal-400">Actually Works</span>
+                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+                        The Business OS That <span className="text-cyan-300">Actually Works</span>
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-                        Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system.
+                        Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system across CRM, all leads, project management, AI agents, invoices, quotations, receipts, contracts, and video operations.
                      </p>
                   </motion.div>
 
@@ -456,14 +685,26 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         {
                            icon: TrendingUp,
                            title: 'Finance & Billing',
-                           desc: 'Send invoices, track payments, and manage financials with automated reporting.',
+                           desc: 'Create invoices, quotations, and receipts with end-to-end revenue and accounting visibility.',
                            color: 'from-green-500 to-emerald-500'
                         },
                         {
                            icon: Zap,
                            title: 'AI Sales Agent',
-                           desc: 'AI-powered lead generation, email sequences, and meeting booking while you sleep.',
+                           desc: 'AI-powered lead generation, qualification, outreach support, and meeting booking.',
                            color: 'from-yellow-500 to-orange-500'
+                        },
+                        {
+                           icon: Video,
+                           title: 'Business Video System',
+                           desc: 'Integrated video workspaces for client demos, team reviews, and execution updates.',
+                           color: 'from-cyan-500 to-blue-500'
+                        },
+                        {
+                           icon: Layers,
+                           title: 'Social Media Automation',
+                           desc: 'Daily posting and media workflows for LinkedIn pages and Facebook business pages.',
+                           color: 'from-indigo-500 to-violet-500'
                         },
                         {
                            icon: ShieldCheck,
@@ -496,7 +737,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
 
             {/* Pricing Section */}
-            <section id="pricing" className="py-20 bg-slate-950/50">
+            <section id="pricing" className="py-20 bg-slate-950/60">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <motion.div 
                      initial={{ opacity: 0, y: 30 }}
@@ -505,7 +746,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      className="text-center mb-16"
                   >
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        Simple, <span className="text-teal-400">Transparent Pricing</span>
+                        Simple, <span className="text-cyan-300">Transparent Pricing</span>
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
                         No hidden fees. No surprise charges. Just powerful software that grows with your business.
@@ -566,7 +807,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            className={`relative p-8 sm:p-10 rounded-[2rem] border ${plan.popular ? 'bg-slate-900 border-teal-500 shadow-2xl shadow-teal-500/10 md:scale-105 z-10' : 'bg-slate-900/50 border-slate-800'} flex flex-col`}
                         >
                            {plan.popular && (
-                              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
+                              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-400 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
                                  Most Popular
                               </div>
                            )}
@@ -576,9 +817,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               <span className="text-4xl sm:text-5xl font-black text-white">{plan.price}</span>
                               <span className="text-slate-500 font-bold">/mo</span>
                            </div>
-                           <div className="inline-flex items-center gap-1.5 mb-6 px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 w-fit">
-                              <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                              <span className="text-xs text-teal-400 font-semibold">{plan.note}</span>
+                           <div className="inline-flex items-center gap-1.5 mb-6 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 w-fit">
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-300" />
+                              <span className="text-xs text-cyan-300 font-semibold">{plan.note}</span>
                            </div>
                            <ul className="space-y-3 mb-8 flex-grow">
                               {plan.features.map((feat, idx) => (
@@ -590,7 +831,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            </ul>
                            <Button
                               onClick={() => window.location.href = '/register'}
-                              className={`h-12 sm:h-14 w-full text-base sm:text-lg font-bold ${plan.popular ? 'bg-teal-500 hover:bg-teal-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                              className={`h-12 sm:h-14 w-full text-base sm:text-lg font-bold ${plan.popular ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
                            >
                               Start Free Trial
                            </Button>

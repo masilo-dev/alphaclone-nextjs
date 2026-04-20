@@ -16,22 +16,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/ecosystem',
         '/who-we-serve',
         '/blog',
+        '/platform-status',
+        '/legal',
+        '/security-policy',
+        '/compliance',
+        '/crm',
+        '/lead-management',
+        '/project-management',
+        '/ai-agents',
+        '/video-meetings',
+        '/claude-manus-integrations',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as const,
-        priority: 0.7,
+        priority:
+            route === '/legal' ||
+            route === '/platform-status' ||
+            route === '/crm' ||
+            route === '/lead-management' ||
+            route === '/project-management' ||
+            route === '/ai-agents' ||
+            route === '/video-meetings' ||
+            route === '/claude-manus-integrations'
+                ? 0.85
+                : 0.7,
     }));
 
     const legalRoutes = [
         '/privacy-policy',
         '/terms-of-service',
         '/cookie-policy',
+        '/data-deletion',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
-        lastModified: new Date('2026-01-01'),
-        changeFrequency: 'yearly' as const,
-        priority: 0.3,
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
     }));
 
     const staticRoutes = [...highPriorityRoutes, ...standardRoutes, ...legalRoutes];
