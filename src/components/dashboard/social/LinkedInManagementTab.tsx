@@ -96,6 +96,44 @@ function isMissingRelationOrColumn(error: any, name: string) {
   );
 }
 
+async function loadLinkedInPostsWithSchemaFallback(tenantId: string) {
+  const selectVariants = [
+    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms',
+    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,error_message,platforms',
+    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,analytics,error_message,platforms',
+    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,error_message,platforms',
+    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms',
+    'id,caption,status,scheduled_at,published_at,created_at,error_message,platforms',
+  ];
+
+  let lastError: any = null;
+
+  for (const select of selectVariants) {
+    const query = await supabase
+      .from('social_posts')
+      .select(select)
+      .eq('tenant_id', tenantId)
+      .filter('platforms', 'cs', '{"linkedin"}')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!query.error) {
+      const rows = (query.data || []).map((row: any) => ({
+        ...row,
+        linkedin_post_urn: row.linkedin_post_urn || null,
+        linkedin_member_id: row.linkedin_member_id || null,
+        external_id: row.external_id || null,
+        analytics: row.analytics || null,
+      }));
+      return { data: rows as LinkedInPostRow[], error: null, selectUsed: select };
+    }
+
+    lastError = query.error;
+  }
+
+  return { data: [] as LinkedInPostRow[], error: lastError, selectUsed: null as string | null };
+}
+
 export default function LinkedInManagementTab() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -138,13 +176,7 @@ export default function LinkedInManagementTab() {
     setLoading(true);
     setSchemaWarning(null);
     const [postsRes, liRes] = await Promise.all([
-      supabase
-        .from('social_posts')
-        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms')
-        .eq('tenant_id', currentTenant.id)
-        .filter('platforms', 'cs', '{"linkedin"}')
-        .order('created_at', { ascending: false })
-        .limit(100),
+      loadLinkedInPostsWithSchemaFallback(currentTenant.id),
       supabase
         .from('linkedin_integrations')
         .select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata')
@@ -154,37 +186,14 @@ export default function LinkedInManagementTab() {
     ]);
 
     if (postsRes.error) {
-      let fallback = await supabase
-        .from('social_posts')
-        .select('id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,external_id,analytics,error_message,platforms')
-        .eq('tenant_id', currentTenant.id)
-        .filter('platforms', 'cs', '{"linkedin"}')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (fallback.error && isMissingRelationOrColumn(fallback.error, 'linkedin_post_urn')) {
-        fallback = await supabase
-          .from('social_posts')
-          .select('id,caption,status,scheduled_at,published_at,created_at,external_id,analytics,error_message,platforms')
-          .eq('tenant_id', currentTenant.id)
-          .filter('platforms', 'cs', '{"linkedin"}')
-          .order('created_at', { ascending: false })
-          .limit(100);
-      }
-
-      if (fallback.error) {
-        toast.error('Failed to load LinkedIn posts');
-      } else {
-        const mapped = (fallback.data || []).map((row: any) => ({
-          ...row,
-          linkedin_post_urn: row.linkedin_post_urn || null,
-          linkedin_member_id: null,
-        }));
-        setPosts(mapped as LinkedInPostRow[]);
-        setSchemaWarning('LinkedIn post schema is behind. Apply latest LinkedIn migrations to enable full account-level features.');
-      }
+      toast.error('Failed to load LinkedIn posts');
     } else {
-      setPosts((postsRes.data || []) as LinkedInPostRow[]);
+      setPosts(postsRes.data || []);
+      if (postsRes.selectUsed !== 'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms') {
+        setSchemaWarning(
+          'LinkedIn post schema is partially behind. Apply latest social_posts migrations to unlock full LinkedIn tracking fields.'
+        );
+      }
     }
 
     if (liRes.error) {
