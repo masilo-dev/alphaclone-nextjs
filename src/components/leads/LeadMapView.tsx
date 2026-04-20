@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { MapPin } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Circle, MapContainer, Marker, Popup, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -55,6 +55,16 @@ function FitBounds({ leads }: { leads: LeadMapPin[] }) {
   return null;
 }
 
+function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMapEvents({
+    zoomend: () => onZoomChange(map.getZoom()),
+  });
+  useEffect(() => {
+    onZoomChange(map.getZoom());
+  }, [map, onZoomChange]);
+  return null;
+}
+
 function MapZoomControls() {
   const map = useMap();
   return (
@@ -95,6 +105,8 @@ interface LeadMapViewProps {
   leads:    LeadMapPin[];
   center?:  [number, number];
   zoom?:    number;
+  previewCenter?: [number, number] | null;
+  previewRadiusKm?: number;
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -104,9 +116,17 @@ const SOURCE_LABEL: Record<string, string> = {
   google: 'Google Places',
 };
 
-export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom = 11 }: LeadMapViewProps) {
+export default function LeadMapView({
+  leads,
+  center = [40.7128, -74.006],
+  zoom = 11,
+  previewCenter = null,
+  previewRadiusKm = 25,
+}: LeadMapViewProps) {
   const pinnable = leads.filter(l => l.lat != null && l.lng != null);
   const [mapStyle, setMapStyle] = useState<'detailed' | 'dark'>('detailed');
+  const [zoomLevel, setZoomLevel] = useState<number>(zoom);
+  const [showRoute, setShowRoute] = useState<boolean>(true);
   const tileConfig = useMemo(() => {
     if (mapStyle === 'dark') {
       return {
@@ -120,6 +140,51 @@ export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom =
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     };
   }, [mapStyle]);
+
+  const routePoints = useMemo(() => {
+    if (!showRoute || pinnable.length < 2) return [];
+    const remaining = [...pinnable];
+    const ordered: LeadMapPin[] = [remaining.shift()!];
+    while (remaining.length > 0) {
+      const last = ordered[ordered.length - 1];
+      let bestIdx = 0;
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (let i = 0; i < remaining.length; i += 1) {
+        const candidate = remaining[i];
+        const dLat = (candidate.lat || 0) - (last.lat || 0);
+        const dLng = (candidate.lng || 0) - (last.lng || 0);
+        const dist = dLat * dLat + dLng * dLng;
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestIdx = i;
+        }
+      }
+      ordered.push(remaining.splice(bestIdx, 1)[0]);
+    }
+    return ordered.map((item) => [item.lat!, item.lng!] as [number, number]);
+  }, [pinnable, showRoute]);
+
+  const clusteredMarkers = useMemo(() => {
+    const shouldCluster = zoomLevel < 12 && pinnable.length > 30;
+    if (!shouldCluster) return null;
+    const cellSize = Math.max(0.02, (12 - zoomLevel) * 0.02);
+    const buckets = new Map<string, { lat: number; lng: number; count: number; leads: LeadMapPin[] }>();
+    for (const lead of pinnable) {
+      const latBucket = Math.round((lead.lat || 0) / cellSize);
+      const lngBucket = Math.round((lead.lng || 0) / cellSize);
+      const key = `${latBucket}:${lngBucket}`;
+      const existing = buckets.get(key);
+      if (!existing) {
+        buckets.set(key, { lat: lead.lat || 0, lng: lead.lng || 0, count: 1, leads: [lead] });
+      } else {
+        existing.count += 1;
+        existing.lat = (existing.lat * (existing.count - 1) + (lead.lat || 0)) / existing.count;
+        existing.lng = (existing.lng * (existing.count - 1) + (lead.lng || 0)) / existing.count;
+        existing.leads.push(lead);
+      }
+    }
+    return Array.from(buckets.values());
+  }, [pinnable, zoomLevel]);
 
   return (
     <div className="relative w-full min-h-[240px] h-[min(50svh,520px)] sm:h-[min(55svh,480px)] md:h-[480px] max-h-[640px] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
@@ -139,6 +204,13 @@ export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom =
             className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
           >
             Dark
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowRoute((prev) => !prev)}
+            className={`px-1.5 py-0.5 rounded border ${showRoute ? 'border-cyan-500/60 text-cyan-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Route
           </button>
         </div>
         <p className="text-slate-400 uppercase tracking-wider mb-0.5">Sources</p>
@@ -170,16 +242,41 @@ export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom =
         />
 
         <FitBounds leads={pinnable} />
+        <ZoomTracker onZoomChange={setZoomLevel} />
         <MapZoomControls />
-
-        {pinnable.map((lead, idx) => (
+        {previewCenter && (
+          <>
+            <Marker position={previewCenter} icon={DefaultIcon}>
+              <Popup>Search center preview</Popup>
+            </Marker>
+            <Circle center={previewCenter} radius={Math.max(previewRadiusKm, 1) * 1000} pathOptions={{ color: '#14b8a6', fillOpacity: 0.08 }} />
+          </>
+        )}
+        {routePoints.length > 1 && (
+          <Polyline positions={routePoints} pathOptions={{ color: '#38bdf8', weight: 3, opacity: 0.7, dashArray: '6 6' }} />
+        )}
+        {(clusteredMarkers || pinnable).map((lead: any, idx) => (
           <Marker
             key={idx}
             position={[lead.lat!, lead.lng!]}
-            icon={SOURCE_ICONS[lead.source || 'default'] || DefaultIcon}
+            icon={clusteredMarkers ? L.divIcon({
+              html: `<div style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${lead.count}</div>`,
+              className: '',
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+            }) : (SOURCE_ICONS[lead.source || 'default'] || DefaultIcon)}
           >
             <Popup maxWidth={280} className="lead-popup">
               <div className="p-1 space-y-1.5" style={{ fontFamily: 'system-ui, sans-serif' }}>
+                {clusteredMarkers ? (
+                  <>
+                    <p className="font-bold text-sm text-slate-900">{lead.count} leads in this area</p>
+                    <p className="text-[10px] text-slate-600">
+                      Zoom in to split cluster and inspect each business.
+                    </p>
+                  </>
+                ) : (
+                  <>
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-bold text-sm leading-tight text-slate-900">{lead.business_name}</p>
@@ -225,6 +322,8 @@ export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom =
                   >
                     {lead.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                   </a>
+                )}
+                  </>
                 )}
               </div>
             </Popup>

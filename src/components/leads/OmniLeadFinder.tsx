@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Database, Zap, Globe, Mail, Phone, Plus, RefreshCw,
   SlidersHorizontal, Star, MapPin, X, ChevronDown, LayoutGrid, Map,
-  Filter, Building2, ArrowUpDown, CheckCircle2, Save, Sparkles,
+  Filter, Building2, ArrowUpDown, CheckCircle2, Save, Sparkles, History, Target,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Avatar } from '../ui/Avatar';
@@ -44,6 +44,24 @@ interface ScrapedLead {
   lat?:          number;
   lng?:          number;
   qualification?: QualificationResult;  // added by engine post-search
+}
+
+interface MapSearchHistoryEntry {
+  id: string;
+  createdAt: string;
+  niche: string;
+  location: string;
+  radiusKm: number;
+  leadCount: number;
+  mappedLeadCount: number;
+  leads: ScrapedLead[];
+}
+
+interface GeocodePreview {
+  lat: number;
+  lng: number;
+  displayName: string;
+  type: string;
 }
 
 type SourceFilter = 'all' | 'yelp' | 'here' | 'osm' | 'browser' | 'google';
@@ -242,6 +260,11 @@ export default function OmniLeadFinder() {
   const [savedIds,    setSavedIds   ] = useState<Set<number>>(new Set());
   const [specificCity, setSpecificCity] = useState('');
   const [searchRadiusKm, setSearchRadiusKm] = useState<number>(25);
+  const [mapHistory, setMapHistory] = useState<MapSearchHistoryEntry[]>([]);
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [geocodePreview, setGeocodePreview] = useState<GeocodePreview | null>(null);
+  const [geocodeLoading, setGeocodeLoading] = useState(false);
 
   // Selection + outreach panel
   const [selectedSet,    setSelectedSet   ] = useState<Set<number>>(new Set());
@@ -261,25 +284,35 @@ export default function OmniLeadFinder() {
     try {
       const storedViewMode = window.localStorage.getItem('omniLeadFinder:viewMode');
       const storedMapCollapsed = window.localStorage.getItem('omniLeadFinder:mapCollapsed');
+      const historyKey = `omniLeadFinder:mapHistory:${currentTenant?.id || 'global'}`;
+      const rawHistory = window.localStorage.getItem(historyKey);
       if (storedViewMode === 'grid' || storedViewMode === 'map') {
         setViewMode(storedViewMode);
       }
       if (storedMapCollapsed === 'true') {
         setMapCollapsed(true);
       }
+      if (rawHistory) {
+        const parsed = JSON.parse(rawHistory);
+        if (Array.isArray(parsed)) {
+          setMapHistory(parsed);
+        }
+      }
     } catch {
       // Ignore storage read errors
     }
-  }, []);
+  }, [currentTenant?.id]);
 
   useEffect(() => {
     try {
       window.localStorage.setItem('omniLeadFinder:viewMode', viewMode);
       window.localStorage.setItem('omniLeadFinder:mapCollapsed', String(mapCollapsed));
+      const historyKey = `omniLeadFinder:mapHistory:${currentTenant?.id || 'global'}`;
+      window.localStorage.setItem(historyKey, JSON.stringify(mapHistory.slice(0, 25)));
     } catch {
       // Ignore storage write errors
     }
-  }, [viewMode, mapCollapsed]);
+  }, [viewMode, mapCollapsed, mapHistory, currentTenant?.id]);
 
   // Daily quota state
   const [dailyQuota, setDailyQuota] = useState<{ limit: number; used: number; remaining: number } | null>(null);
@@ -359,6 +392,20 @@ export default function OmniLeadFinder() {
     return `No leads found. Sources with errors: ${failedSources.join(', ')}. Check API keys and browser configuration, then try again.`;
   };
 
+  const persistSearchHistory = (searchLeads: ScrapedLead[]) => {
+    const entry: MapSearchHistoryEntry = {
+      id: `${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      niche,
+      location: effectiveLocation || location || 'Global',
+      radiusKm: effectiveRadiusKm,
+      leadCount: searchLeads.length,
+      mappedLeadCount: searchLeads.filter((l) => l.lat != null && l.lng != null).length,
+      leads: searchLeads,
+    };
+    setMapHistory((prev) => [entry, ...prev].slice(0, 25));
+  };
+
   const isBroadLocation = (value: string) => {
     const normalized = value.trim().toLowerCase();
     if (!normalized) return false;
@@ -367,6 +414,7 @@ export default function OmniLeadFinder() {
       normalized === 'global' ||
       normalized === 'world' ||
       normalized === 'worldwide' ||
+      (normalized.split(/\s+/).length <= 2 && !normalized.includes(',')) ||
       normalized.length <= 3 ||
       /country|nation|region/.test(normalized)
     );
@@ -377,13 +425,93 @@ export default function OmniLeadFinder() {
     ? `${specificCity.trim()}, ${location.trim()}`
     : location.trim();
   const effectiveRadiusKm = Math.min(Math.max(Number(searchRadiusKm) || 25, 1), 100);
+  const shouldForceCity = locationNeedsCityRefinement && (geocodePreview?.type === 'country' || geocodePreview?.type === 'administrative');
+
+  const densityEstimate = useMemo(() => {
+    const matches = mapHistory.filter((entry) =>
+      entry.location.toLowerCase().includes((effectiveLocation || location || '').toLowerCase()) ||
+      (effectiveLocation || location || '').toLowerCase().includes(entry.location.toLowerCase())
+    );
+    if (matches.length === 0) return null;
+    const avg = Math.round(matches.reduce((acc, item) => acc + item.leadCount, 0) / matches.length);
+    return { averageLeads: avg, samples: matches.length };
+  }, [mapHistory, effectiveLocation, location]);
+
+  useEffect(() => {
+    const query = (effectiveLocation || location).trim();
+    if (!query) {
+      setGeocodePreview(null);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        setGeocodeLoading(true);
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const data = await response.json();
+        const first = Array.isArray(data) ? data[0] : null;
+        if (!first) {
+          setGeocodePreview(null);
+          return;
+        }
+        setGeocodePreview({
+          lat: Number(first.lat),
+          lng: Number(first.lon),
+          displayName: String(first.display_name || query),
+          type: String(first.type || ''),
+        });
+      } catch {
+        setGeocodePreview(null);
+      } finally {
+        setGeocodeLoading(false);
+      }
+    }, 450);
+    return () => clearTimeout(timeout);
+  }, [effectiveLocation, location]);
+
+  useEffect(() => {
+    if (!locationNeedsCityRefinement || specificCity.trim().length < 2 || !location.trim()) {
+      setCitySuggestions([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        const q = `${specificCity.trim()}, ${location.trim()}`;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=5`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const data = await response.json();
+        const suggestions = (Array.isArray(data) ? data : [])
+          .map((item: any) => String(item.display_name || ''))
+          .filter(Boolean);
+        setCitySuggestions(Array.from(new Set(suggestions)).slice(0, 5));
+      } catch {
+        setCitySuggestions([]);
+      }
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [locationNeedsCityRefinement, specificCity, location]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche) return toast.error('Please select an industry');
-    if (locationNeedsCityRefinement && !specificCity.trim()) {
+    if (shouldForceCity && !specificCity.trim()) {
       toast.error('Please add an exact city for broad locations and try again.');
       return;
+    }
+    const duplicateHistory = mapHistory.find(
+      (entry) =>
+        entry.niche.toLowerCase() === niche.toLowerCase() &&
+        entry.location.toLowerCase() === (effectiveLocation || location || 'global').toLowerCase()
+    );
+    if (duplicateHistory) {
+      const proceed = window.confirm(
+        `You already searched this location on ${new Date(duplicateHistory.createdAt).toLocaleString()} and found ${duplicateHistory.leadCount} leads. Continue anyway?`
+      );
+      if (!proceed) return;
     }
 
     // Validate functions are available before proceeding
@@ -448,6 +576,7 @@ export default function OmniLeadFinder() {
             setSelectedSet(new Set());
             setViewMode('map');
             setMapCollapsed(false);
+            persistSearchHistory(qualifiedImmediate);
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedImmediate.length} leads`);
             return { leads: immediateLeads, sourceStats: directData?.sources || {} };
@@ -501,6 +630,7 @@ export default function OmniLeadFinder() {
             setSelectedSet(new Set());
             setViewMode('map');
             setMapCollapsed(false);
+            persistSearchHistory(qualifiedFinal);
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedFinal.length} leads`);
             done = true;
@@ -614,26 +744,92 @@ export default function OmniLeadFinder() {
               <Zap className="w-2 h-2" /> Supports pinpoint street-level accuracy & worldwide scraping.
             </p>
             {locationNeedsCityRefinement && (
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={specificCity}
-                  onChange={(e) => setSpecificCity(e.target.value)}
-                  placeholder='Exact city (e.g. Harare)'
-                  disabled={scanning}
-                  className="w-full bg-slate-900/80 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
-                />
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={searchRadiusKm}
-                    onChange={(e) => setSearchRadiusKm(Number(e.target.value))}
-                    disabled={scanning}
-                    className="w-24 bg-slate-900/80 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
-                  />
-                  <span className="text-xs text-slate-400">km radius from city center</span>
+              <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold text-amber-300">Precision Wizard</p>
+                  <p className="text-[10px] text-slate-400">Step {wizardStep} / 4</p>
+                </div>
+                <div className="grid grid-cols-4 gap-1">
+                  {[1, 2, 3, 4].map((step) => (
+                    <button
+                      key={step}
+                      type="button"
+                      onClick={() => setWizardStep(step as 1 | 2 | 3 | 4)}
+                      className={`text-[10px] rounded-md px-1 py-1 border ${wizardStep === step ? 'border-amber-400 text-amber-300 bg-amber-500/10' : 'border-slate-700 text-slate-500'}`}
+                    >
+                      {step}
+                    </button>
+                  ))}
+                </div>
+                {wizardStep === 1 && (
+                  <p className="text-[11px] text-slate-300">
+                    Country detected as broad search area. Select an exact city next for precise results.
+                  </p>
+                )}
+                {wizardStep === 2 && (
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      value={specificCity}
+                      onChange={(e) => setSpecificCity(e.target.value)}
+                      placeholder='Exact city (e.g. Harare)'
+                      disabled={scanning}
+                      className="w-full bg-slate-900/80 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
+                    />
+                    {citySuggestions.length > 0 && (
+                      <div className="max-h-24 overflow-y-auto space-y-1">
+                        {citySuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => setSpecificCity(suggestion.split(',')[0])}
+                            className="w-full text-left text-[10px] px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:bg-slate-800"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {wizardStep === 3 && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min={1}
+                      max={100}
+                      step={1}
+                      value={searchRadiusKm}
+                      onChange={(e) => setSearchRadiusKm(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-slate-300 w-14 text-right">{searchRadiusKm} km</span>
+                  </div>
+                )}
+                {wizardStep === 4 && (
+                  <div className="text-[11px] text-slate-300 space-y-1">
+                    <p className="flex items-center gap-1"><Target className="w-3 h-3 text-amber-300" /> Target: {effectiveLocation || 'Not set'}</p>
+                    <p>Radius: {effectiveRadiusKm} km from city center</p>
+                    <p>
+                      Estimated density: {densityEstimate ? `${densityEstimate.averageLeads} leads average (${densityEstimate.samples} previous searches)` : 'No historical sample yet'}
+                    </p>
+                  </div>
+                )}
+                <div className="flex justify-end gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3 | 4) : prev))}
+                    className="text-[10px] px-2 py-1 rounded-md border border-slate-700 text-slate-300"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep((prev) => (prev < 4 ? ((prev + 1) as 1 | 2 | 3 | 4) : prev))}
+                    className="text-[10px] px-2 py-1 rounded-md border border-amber-500/40 text-amber-300"
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             )}
@@ -684,6 +880,17 @@ export default function OmniLeadFinder() {
         {scanning && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="p-3 bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
+            <div className="mb-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2">
+              <div className="relative h-4 overflow-hidden">
+                <motion.div
+                  className="absolute top-0 left-0 w-4 h-4 rounded-full bg-cyan-400/80"
+                  animate={{ x: ['0%', '95%', '0%'] }}
+                  transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
+                />
+                <div className="absolute top-1.5 left-0 right-0 h-1 bg-cyan-500/20 rounded-full" />
+              </div>
+              <p className="mt-1 text-[10px] text-cyan-300">Mission mode active: scanning territory and building lead route.</p>
+            </div>
             <div className="flex justify-between text-[11px] mb-2">
               <span className="text-teal-300 flex items-center gap-1.5"><RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> {progress.message}</span>
               <span className="text-white font-mono font-bold">{progress.percent}%</span>
@@ -815,6 +1022,73 @@ export default function OmniLeadFinder() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {mapHistory.length > 0 && (
+        <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-teal-400" />
+              <p className="text-xs font-bold text-slate-300">Map Search History</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMapHistory([])}
+              className="text-[11px] text-slate-500 hover:text-rose-400"
+            >
+              Clear history
+            </button>
+          </div>
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {mapHistory.map((entry) => (
+              <div key={entry.id} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs text-white font-semibold truncate">
+                    {entry.niche} in {entry.location}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    {new Date(entry.createdAt).toLocaleString()} | Radius {entry.radiusKm}km | Leads {entry.leadCount} ({entry.mappedLeadCount} mapped)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResults(entry.leads);
+                    setViewMode('map');
+                    setMapCollapsed(false);
+                    setFilterText('');
+                    setFilterSource('all');
+                    setFilterRating(0);
+                    setFilterPhone(false);
+                    setFilterEmail(false);
+                    setFilterTier('all');
+                    toast.success('Loaded map history snapshot.');
+                  }}
+                  className="px-2.5 py-1 rounded-lg border border-slate-700 text-[11px] text-slate-200 hover:bg-slate-800"
+                >
+                  Open on map
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {geocodePreview && !scanning && (
+        <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-300">Geocode preview before search</p>
+            <p className="text-[10px] text-slate-500">{geocodeLoading ? 'Resolving...' : geocodePreview.type || 'location'}</p>
+          </div>
+          <p className="text-[11px] text-slate-400">{geocodePreview.displayName}</p>
+          <LeadMapView
+            leads={[]}
+            center={[geocodePreview.lat, geocodePreview.lng]}
+            zoom={11}
+            previewCenter={[geocodePreview.lat, geocodePreview.lng]}
+            previewRadiusKm={effectiveRadiusKm}
+          />
         </div>
       )}
 
