@@ -103,6 +103,7 @@ export default function LinkedInManagementTab() {
   const [aiReplyLoading, setAiReplyLoading] = useState<Record<string, boolean>>({});
   const [commentsByPost, setCommentsByPost] = useState<Record<string, LinkedInCommentRow[]>>({});
   const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
+  const [commentsWarningByPost, setCommentsWarningByPost] = useState<Record<string, string>>({});
   const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
   const [inboxItems, setInboxItems] = useState<LinkedInInboxItem[]>([]);
   const [inboxLoading, setInboxLoading] = useState(false);
@@ -394,6 +395,7 @@ ${parentContext}Return only the comment text.`;
   const loadComments = async (post: LinkedInPostRow) => {
     if (!currentTenant?.id || !post.linkedin_post_urn) return;
     setCommentsLoading((prev) => ({ ...prev, [post.id]: true }));
+    setCommentsWarningByPost((prev) => ({ ...prev, [post.id]: '' }));
     try {
       const res = await fetch('/api/linkedin/comments', {
         method: 'POST',
@@ -408,6 +410,10 @@ ${parentContext}Return only the comment text.`;
       if (!res.ok || !data.success) {
         toast.error(data.error || 'Failed to load LinkedIn comments');
         return;
+      }
+      if (typeof data.warning === 'string' && data.warning.trim()) {
+        setCommentsWarningByPost((prev) => ({ ...prev, [post.id]: data.warning }));
+        toast.error(data.warning);
       }
       setCommentsByPost((prev) => ({
         ...prev,
@@ -986,6 +992,11 @@ Return only the reply text.`;
               </div>
               <p className="text-sm text-slate-200 whitespace-pre-line line-clamp-3">{post.caption}</p>
               {post.error_message && <p className="text-xs text-red-300">{post.error_message}</p>}
+              {!post.linkedin_post_urn && (
+                <p className="text-xs text-amber-300">
+                  Comments unavailable for this item because no LinkedIn post reference was saved. Only published posts with a LinkedIn post URN can load comments.
+                </p>
+              )}
               {post.linkedin_post_urn && (
                 <a
                   href={`https://www.linkedin.com/feed/update/${encodeURIComponent(post.linkedin_post_urn)}/`}
@@ -1054,6 +1065,9 @@ Return only the reply text.`;
                       {commentsLoading[post.id] ? 'Loading...' : 'Load Comments'}
                     </button>
                   </div>
+                  {commentsWarningByPost[post.id] && (
+                    <p className="text-xs text-amber-300">{commentsWarningByPost[post.id]}</p>
+                  )}
                   {(commentsByPost[post.id] || []).length > 0 ? (
                     <div className="space-y-2">
                       {(commentsByPost[post.id] || []).slice(0, 20).map((comment) => (
