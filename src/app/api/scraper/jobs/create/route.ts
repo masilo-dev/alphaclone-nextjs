@@ -20,6 +20,13 @@ function isMissingRelation(error: unknown, relation: string): boolean {
   );
 }
 
+function isPermissionDenied(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const maybeError = error as { code?: string; message?: string };
+  const message = (maybeError.message || '').toLowerCase();
+  return maybeError.code === '42501' || message.includes('permission denied') || message.includes('violates row-level security');
+}
+
 async function insertLeadSearchJobWithFallback(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   payload: Record<string, unknown>
@@ -100,6 +107,15 @@ export async function POST(req: NextRequest) {
           code: 'LEAD_QUEUE_NOT_READY',
         },
         { status: 503 }
+      );
+    }
+    if (error && isPermissionDenied(error)) {
+      return NextResponse.json(
+        {
+          error: 'Lead search job permission denied. Ensure lead_search_jobs RLS policies allow tenant members to insert and read their own jobs.',
+          code: 'LEAD_QUEUE_PERMISSION_DENIED',
+        },
+        { status: 403 }
       );
     }
     if (error) return clientErrorResponse(error, { request: req, scope: 'scraper/jobs/create.POST' });

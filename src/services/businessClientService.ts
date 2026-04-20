@@ -3,6 +3,8 @@ import { quotaService } from './quotaService';
 import { assertContactSalesStageTransition } from '../lib/stageProgression';
 import { tenantService } from './tenancy/TenantService';
 
+let hasLoggedMissingAiProviders = false;
+
 export interface BusinessClient {
     id: string;
     tenantId: string;
@@ -119,11 +121,18 @@ export const businessClientService = {
      */
     async createClient(tenantId: string, client: Partial<BusinessClient>): Promise<{ client: BusinessClient | null; error: string | null }> {
         try {
+            const { data: authData } = await supabase.auth.getUser();
+            const quotaUserId = authData?.user?.id || null;
+
             // Check quota for leads (new clients are considered leads)
             if (client.salesStage === 'lead') {
-                const quotaCheck = await quotaService.checkQuota('leads', tenantId);
-                if (!quotaCheck.allowed) {
-                    return { client: null, error: quotaCheck.message };
+                if (quotaUserId) {
+                    const quotaCheck = await quotaService.checkQuota('leads', quotaUserId);
+                    if (!quotaCheck.allowed) {
+                        return { client: null, error: quotaCheck.message };
+                    }
+                } else {
+                    console.warn('No authenticated user found for lead quota check; proceeding without quota enforcement.');
                 }
             }
 
@@ -168,9 +177,13 @@ export const businessClientService = {
 
             // Increment quota usage for leads
             if (newClient.salesStage === 'lead') {
-                const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('leads', tenantId);
-                if (!quotaSuccess) {
-                    console.warn('Failed to increment lead quota:', quotaError);
+                if (quotaUserId) {
+                    const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('leads', quotaUserId);
+                    if (!quotaSuccess) {
+                        console.warn('Failed to increment lead quota:', quotaError);
+                    }
+                } else {
+                    console.warn('No authenticated user found for lead quota increment; skipping quota update.');
                 }
                 
                 // 900% AUTOMATION: Trigger background outreach drafting
@@ -220,6 +233,14 @@ export const businessClientService = {
 
             console.log(`[900% Automation] Auto-drafted outreach for lead: ${lead.name}`);
         } catch (err) {
+            const message = err instanceof Error ? err.message : String(err || '');
+            if (message.includes('No AI providers are configured')) {
+                if (!hasLoggedMissingAiProviders) {
+                    hasLoggedMissingAiProviders = true;
+                    console.warn('Auto-draft outreach skipped: no AI provider keys configured.');
+                }
+                return;
+            }
             console.error('Auto-draft outreach failed:', err);
         }
     },
