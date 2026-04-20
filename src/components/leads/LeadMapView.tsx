@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { ExternalLink, MapPin } from 'lucide-react';
 import { Circle, MapContainer, Marker, Popup, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -124,10 +124,17 @@ export default function LeadMapView({
   previewRadiusKm = 25,
 }: LeadMapViewProps) {
   const pinnable = leads.filter(l => l.lat != null && l.lng != null);
-  const [mapStyle, setMapStyle] = useState<'detailed' | 'dark'>('detailed');
+  const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'dark'>('detailed');
   const [zoomLevel, setZoomLevel] = useState<number>(zoom);
   const [showRoute, setShowRoute] = useState<boolean>(true);
   const tileConfig = useMemo(() => {
+    if (mapStyle === 'satellite') {
+      return {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution:
+          'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      };
+    }
     if (mapStyle === 'dark') {
       return {
         url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -186,6 +193,12 @@ export default function LeadMapView({
     return Array.from(buckets.values());
   }, [pinnable, zoomLevel]);
 
+  function getBuildingViewUrl(lat: number, lng: number): string {
+    const latText = lat.toFixed(6);
+    const lngText = lng.toFixed(6);
+    return `https://www.google.com/maps/@${latText},${lngText},110a,35y,45h,45t/data=!3m1!1e3`;
+  }
+
   return (
     <div className="relative w-full min-h-[240px] h-[min(50svh,520px)] sm:h-[min(55svh,480px)] md:h-[480px] max-h-[640px] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
       {/* Legend + map style */}
@@ -204,6 +217,13 @@ export default function LeadMapView({
             className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
           >
             Dark
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapStyle('satellite')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'satellite' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Satellite
           </button>
           <button
             type="button"
@@ -321,6 +341,17 @@ export default function LeadMapView({
                     className="block text-[10px] text-blue-600 hover:underline break-all"
                   >
                     {lead.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                  </a>
+                )}
+                {lead.lat != null && lead.lng != null && (
+                  <a
+                    href={getBuildingViewUrl(lead.lat, lead.lng)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700 hover:text-slate-900 underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Building view
                   </a>
                 )}
                   </>
