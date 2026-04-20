@@ -39,14 +39,14 @@ interface ScrapedLead {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source?:       'yelp' | 'here' | 'osm' | 'browser';
+  source?:       'yelp' | 'here' | 'osm' | 'browser' | 'google';
   status:        'pending' | 'saved' | 'failed';
   lat?:          number;
   lng?:          number;
   qualification?: QualificationResult;  // added by engine post-search
 }
 
-type SourceFilter = 'all' | 'yelp' | 'here' | 'osm' | 'browser';
+type SourceFilter = 'all' | 'yelp' | 'here' | 'osm' | 'browser' | 'google';
 type SortMode     = 'default' | 'rating_desc' | 'rating_asc';
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -54,6 +54,7 @@ const SOURCE_COLORS: Record<string, string> = {
   here: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
   browser: 'text-violet-400 border-violet-500/30 bg-violet-500/10',
+  google: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10',
 };
 
 // ── Industry Groups ──────────────────────────────────────
@@ -319,6 +320,18 @@ export default function OmniLeadFinder() {
   };
 
   // ── Search ───────────────────────────────────────────
+  const buildNoLeadsErrorMessage = (sourceErrors?: Record<string, string>) => {
+    const failedSources = Object.entries(sourceErrors || {})
+      .filter(([, message]) => Boolean(message))
+      .map(([source]) => source.toUpperCase());
+
+    if (failedSources.length === 0) {
+      return 'No leads found. Try a broader location or a different industry.';
+    }
+
+    return `No leads found. Sources with errors: ${failedSources.join(', ')}. Check API keys and browser configuration, then try again.`;
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche) return toast.error('Please select an industry');
@@ -374,6 +387,9 @@ export default function OmniLeadFinder() {
               ...lead,
               qualification: qualifyLead(lead, niche),
             }));
+            if (qualifiedImmediate.length === 0) {
+              throw new Error(buildNoLeadsErrorMessage(directData?.sourceErrors));
+            }
             setResults(qualifiedImmediate);
             setSourceStats(directData?.sources || {});
             setFallbackUsed(Boolean(directData?.fallbackUsed));
@@ -424,6 +440,9 @@ export default function OmniLeadFinder() {
               ...lead,
               qualification: qualifyLead(lead, niche),
             }));
+            if (qualifiedFinal.length === 0) {
+              throw new Error(buildNoLeadsErrorMessage(latestJob?.source_errors));
+            }
             setResults(qualifiedFinal);
             setSelectedSet(new Set());
             setProgress({ percent: 100, message: 'Done' });
@@ -645,7 +664,7 @@ export default function OmniLeadFinder() {
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Source</label>
               <div className="flex flex-wrap gap-1">
-                {(['all', 'osm', 'yelp', 'here', 'browser'] as SourceFilter[]).map(src => (
+                {(['all', 'osm', 'google', 'yelp', 'here', 'browser'] as SourceFilter[]).map(src => (
                   <button key={src} onClick={() => setFilterSource(src)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${filterSource === src ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'}`}>
                     {src === 'all'
@@ -654,6 +673,8 @@ export default function OmniLeadFinder() {
                         ? 'OSM'
                         : src === 'yelp'
                           ? 'Yelp'
+                          : src === 'google'
+                            ? 'Google'
                           : src === 'here'
                             ? 'HERE'
                             : 'Browser'}

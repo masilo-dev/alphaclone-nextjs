@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { googlePlacesService } from '@/services/googlePlacesService';
 
 // Affordable Scraping Tools Integration
 // Replaces expensive Apollo/ZoomInfo with cost-effective alternatives
@@ -33,8 +34,8 @@ interface GooglePlaceResult {
   website?: string;
   rating?: number;
   reviews?: number;
-  opening_hours?: string[];
   place_id: string;
+  maps_url?: string;
 }
 
 /**
@@ -165,68 +166,37 @@ async function googlePlacesSearch(
   location: string, 
   radius: number = 5000
 ): Promise<GooglePlaceResult[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey =
+    process.env.GOOGLE_PLACES_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
   if (!apiKey) {
     console.warn('[AffordableScraper] Google Places API key not configured');
     return [];
   }
 
   try {
-    // Step 1: Geocode the location
-    const geoRes = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    
-    const geoData = await geoRes.json();
-    if (!geoData.results?.[0]?.geometry?.location) {
-      console.warn('[AffordableScraper] Could not geocode location:', location);
-      return [];
-    }
-    
-    const { lat, lng } = geoData.results[0].geometry.location;
+    const placesResult = await googlePlacesService.searchPlacesForLeads(query, location, apiKey, {
+      radiusKm: Math.min(Math.max(Math.round(radius / 1000), 1), 50),
+      maxResults: 10,
+    });
 
-    // Step 2: Search places
-    const searchRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}&key=${apiKey}`,
-      { signal: AbortSignal.timeout(10000) }
-    );
-
-    const searchData = await searchRes.json();
-    if (searchData.status !== 'OK') {
-      console.warn('[AffordableScraper] Google Places error:', searchData.status);
+    if (placesResult.error) {
+      console.warn('[AffordableScraper] Google Places error:', placesResult.error);
       return [];
     }
 
-    // Step 3: Get details for each place
-    const results: GooglePlaceResult[] = [];
-    
-    for (const place of searchData.results.slice(0, 10)) {
-      try {
-        const detailsRes = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,opening_hours&key=${apiKey}`,
-          { signal: AbortSignal.timeout(8000) }
-        );
-
-        const details = await detailsRes.json();
-        if (details.status === 'OK' && details.result) {
-          results.push({
-            name: details.result.name,
-            address: details.result.formatted_address,
-            phone: details.result.formatted_phone_number,
-            website: details.result.website,
-            rating: details.result.rating,
-            reviews: details.result.user_ratings_total,
-            opening_hours: details.result.opening_hours?.weekday_text,
-            place_id: place.place_id,
-          });
-        }
-      } catch (e) {
-        console.warn('[AffordableScraper] Failed to get place details:', e);
-      }
-    }
-
-    return results;
+    return placesResult.places.map((place) => ({
+      name: place.businessName,
+      address: place.formattedAddress,
+      phone: place.phone || undefined,
+      website: place.website || undefined,
+      rating: place.rating,
+      reviews: place.userRatingCount,
+      place_id: place.placeId,
+      maps_url: place.googleMapsUri,
+    }));
   } catch (err) {
     console.error('[AffordableScraper] Google Places error:', err);
     return [];
