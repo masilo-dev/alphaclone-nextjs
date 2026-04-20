@@ -1700,6 +1700,14 @@ class AlphaCloneMCPServer {
           if (!binary.length) throw new Error('file_base64 is invalid or empty');
 
           const isVideo = mime_type.startsWith('video/');
+          const isImage = mime_type.startsWith('image/');
+          if (!isVideo && !isImage) {
+            throw new Error('Unsupported media type. Only image/* or video/* is allowed.');
+          }
+          const maxBytes = isVideo ? 200 * 1024 * 1024 : 10 * 1024 * 1024;
+          if (binary.length > maxBytes) {
+            throw new Error(`Media exceeds max size of ${Math.round(maxBytes / 1024 / 1024)}MB.`);
+          }
           const assetType = isVideo ? 'video' : mime_type.includes('gif') ? 'gif' : 'image';
           const ext = String(file_name).split('.').pop() || (isVideo ? 'mp4' : 'bin');
           const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
@@ -2069,7 +2077,7 @@ class AlphaCloneMCPServer {
               .filter(Boolean);
           }
           const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls];
-          const immediatePublish = Boolean(publish_now) && mergedMediaUrls.length === 0;
+          const immediatePublish = Boolean(publish_now);
 
           const baseMetadata = postAsCompany
             ? { linkedin_organization_id: requestedOrganizationId, linkedin_author_urn: authorUrn }
@@ -2117,13 +2125,85 @@ class AlphaCloneMCPServer {
             }
 
             const postId = String(pendingRow.id);
+            const primaryMediaUrl = mergedMediaUrls.find((url) => typeof url === 'string' && url.trim()) || null;
+            let shareMediaCategory: 'NONE' | 'IMAGE' = 'NONE';
+            let media: Array<Record<string, unknown>> = [];
+
+            if (primaryMediaUrl) {
+              const isLikelyVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(primaryMediaUrl);
+              if (isLikelyVideo) {
+                throw new Error(
+                  'LinkedIn MCP immediate publish currently supports image media only. Use image media or schedule video via dashboard publisher.'
+                );
+              }
+
+              const fetchController = new AbortController();
+              const fetchTimer = setTimeout(() => fetchController.abort(), 30000);
+              const imageFetch = await fetch(primaryMediaUrl, {
+                method: 'GET',
+                signal: fetchController.signal,
+              }).finally(() => clearTimeout(fetchTimer));
+              if (!imageFetch.ok) {
+                throw new Error(`Could not download media URL (${imageFetch.status})`);
+              }
+              const contentType = String(imageFetch.headers.get('content-type') || 'image/jpeg');
+              if (!contentType.startsWith('image/')) {
+                throw new Error(`LinkedIn image publish requires image content-type. Received ${contentType}.`);
+              }
+              const imageBuffer = await imageFetch.arrayBuffer();
+
+              const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${li.access_token}`,
+                  'Content-Type': 'application/json',
+                  'X-Restli-Protocol-Version': '2.0.0',
+                },
+                body: JSON.stringify({
+                  registerUploadRequest: {
+                    recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                    owner: authorUrn,
+                    serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+                  },
+                }),
+              });
+              const registerJson = await registerRes.json().catch(() => ({}));
+              if (!registerRes.ok) {
+                throw new Error(registerJson?.message || `LinkedIn media register failed (${registerRes.status})`);
+              }
+              const assetUrn = String(registerJson?.value?.asset || '');
+              const uploadUrl = String(
+                registerJson?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl || ''
+              );
+              if (!assetUrn || !uploadUrl) {
+                throw new Error('LinkedIn media register response missing upload target');
+              }
+
+              const uploadRes = await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': contentType },
+                body: imageBuffer,
+              });
+              if (!uploadRes.ok) {
+                throw new Error(`LinkedIn media upload failed (${uploadRes.status})`);
+              }
+
+              shareMediaCategory = 'IMAGE';
+              media = [{
+                status: 'READY',
+                media: assetUrn,
+                title: { text: 'AlphaClone image' },
+              }];
+            }
+
             const payload = {
               author: authorUrn,
               lifecycleState: 'PUBLISHED',
               specificContent: {
                 'com.linkedin.ugc.ShareContent': {
                   shareCommentary: { text: text.trim() },
-                  shareMediaCategory: 'NONE' as const,
+                  shareMediaCategory,
+                  media,
                 },
               },
               visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
