@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -35,6 +35,11 @@ const SOURCE_ICONS: Record<string, L.Icon> = {
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
   }),
+  google: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+  }),
   default: DefaultIcon,
 };
 
@@ -48,6 +53,30 @@ function FitBounds({ leads }: { leads: LeadMapPin[] }) {
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
   }, [leads, map]);
   return null;
+}
+
+function MapZoomControls() {
+  const map = useMap();
+  return (
+    <div className="absolute bottom-3 right-3 z-[1000] flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        className="w-8 h-8 rounded-md border border-slate-700 bg-slate-900/90 text-white text-base font-bold hover:bg-slate-800"
+        aria-label="Zoom in"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        className="w-8 h-8 rounded-md border border-slate-700 bg-slate-900/90 text-white text-base font-bold hover:bg-slate-800"
+        aria-label="Zoom out"
+      >
+        -
+      </button>
+    </div>
+  );
 }
 
 export interface LeadMapPin {
@@ -72,19 +101,51 @@ const SOURCE_LABEL: Record<string, string> = {
   yelp: 'Yelp',
   here: 'HERE Maps',
   osm:  'OpenStreetMap',
+  google: 'Google Places',
 };
 
 export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom = 11 }: LeadMapViewProps) {
   const pinnable = leads.filter(l => l.lat != null && l.lng != null);
+  const [mapStyle, setMapStyle] = useState<'detailed' | 'dark'>('detailed');
+  const tileConfig = useMemo(() => {
+    if (mapStyle === 'dark') {
+      return {
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+      };
+    }
+    return {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    };
+  }, [mapStyle]);
 
   return (
     <div className="relative w-full min-h-[240px] h-[min(50svh,520px)] sm:h-[min(55svh,480px)] md:h-[480px] max-h-[640px] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
-      {/* Legend */}
+      {/* Legend + map style */}
       <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-[1000] max-w-[calc(100%-1rem)] flex flex-col gap-1 bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border border-slate-700 text-[9px] sm:text-[10px] font-semibold">
+        <div className="flex items-center gap-1 mb-1">
+          <button
+            type="button"
+            onClick={() => setMapStyle('detailed')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Detail
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapStyle('dark')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Dark
+          </button>
+        </div>
         <p className="text-slate-400 uppercase tracking-wider mb-0.5">Sources</p>
         <span className="text-orange-400">Yelp</span>
         <span className="text-blue-400">HERE Maps</span>
         <span className="text-emerald-400">OpenStreetMap</span>
+        <span className="text-slate-300">Google Places</span>
       </div>
 
       {/* Pin count */}
@@ -104,11 +165,12 @@ export default function LeadMapView({ leads, center = [40.7128, -74.006], zoom =
       >
         {/* Dark OpenStreetMap tile */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution={tileConfig.attribution}
+          url={tileConfig.url}
         />
 
         <FitBounds leads={pinnable} />
+        <MapZoomControls />
 
         {pinnable.map((lead, idx) => (
           <Marker

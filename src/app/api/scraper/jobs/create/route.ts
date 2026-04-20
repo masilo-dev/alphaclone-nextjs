@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
     const location = String(body.location || '').trim();
     const sortBy = String(body.sortBy || 'default');
     const usePlaywright = Boolean(body.usePlaywright);
+    const radiusKm = Number(body.radiusKm || 25);
 
     if (!tenantId || !niche) {
       return NextResponse.json({ error: 'tenantId and niche are required' }, { status: 400 });
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
       user_id: user.id,
       niche,
       location,
+      radius_km: Number.isFinite(radiusKm) ? Math.min(Math.max(radiusKm, 1), 100) : 25,
       sort_by: sortBy,
       use_playwright: usePlaywright,
       status: 'pending',
