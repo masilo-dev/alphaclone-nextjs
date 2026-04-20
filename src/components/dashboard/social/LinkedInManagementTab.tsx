@@ -97,41 +97,31 @@ function isMissingRelationOrColumn(error: any, name: string) {
 }
 
 async function loadLinkedInPostsWithSchemaFallback(tenantId: string) {
-  const selectVariants = [
-    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms',
-    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,error_message,platforms',
-    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,analytics,error_message,platforms',
-    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,error_message,platforms',
-    'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms',
-    'id,caption,status,scheduled_at,published_at,created_at,error_message,platforms',
-  ];
-
-  let lastError: any = null;
-
-  for (const select of selectVariants) {
-    const query = await supabase
-      .from('social_posts')
-      .select(select)
-      .eq('tenant_id', tenantId)
-      .filter('platforms', 'cs', '{"linkedin"}')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (!query.error) {
-      const rows = (query.data || []).map((row: any) => ({
-        ...row,
-        linkedin_post_urn: row.linkedin_post_urn || null,
-        linkedin_member_id: row.linkedin_member_id || null,
-        external_id: row.external_id || null,
-        analytics: row.analytics || null,
-      }));
-      return { data: rows as LinkedInPostRow[], error: null, selectUsed: select };
+  try {
+    const res = await fetch(`/api/linkedin/posts?tenantId=${encodeURIComponent(tenantId)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      return {
+        data: [] as LinkedInPostRow[],
+        error: { message: data?.error || 'Failed to load LinkedIn posts' },
+        selectUsed: null as string | null,
+      };
     }
-
-    lastError = query.error;
+    return {
+      data: (Array.isArray(data.posts) ? data.posts : []) as LinkedInPostRow[],
+      error: null,
+      selectUsed: typeof data.selectUsed === 'string' ? data.selectUsed : null,
+    };
+  } catch (error) {
+    return {
+      data: [] as LinkedInPostRow[],
+      error: { message: error instanceof Error ? error.message : 'Failed to load LinkedIn posts' },
+      selectUsed: null as string | null,
+    };
   }
-
-  return { data: [] as LinkedInPostRow[], error: lastError, selectUsed: null as string | null };
 }
 
 export default function LinkedInManagementTab() {
