@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
+import { BrowserManager } from '@/lib/scraper/browserManager';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -209,7 +210,10 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
       success: true,
       data: {
         filename: `${contract.title.replace(/[^a-zA-Z0-9]/g, '_')}.${format}`,
-        buffer: pdfBuffer,
+        bufferBase64: pdfBuffer.toString('base64'),
+        mimeType: format === 'docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf',
         size: pdfBuffer.length,
         pages: contract.pages,
         optimized: optimize
@@ -269,8 +273,8 @@ async function generateAIContractContent(params: any) {
 function generateStandardContract(params: any) {
   const { type, parties, terms, duration, payment, fontSize, lineSpacing } = params;
   
-  return `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; font-size: ${fontSize}px; line-height: ${lineSpacing}; max-width: 800px; margin: 0 auto; padding: 40px;">
+  const content = `
+    <div style="font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif; font-size: ${fontSize}px; line-height: ${lineSpacing}; max-width: 800px; margin: 0 auto; padding: 40px;">
       
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px;">
@@ -337,6 +341,8 @@ function generateStandardContract(params: any) {
       
     </div>
   `;
+
+  return wrapContractHtmlDocument(content, fontSize, lineSpacing);
 }
 
 function generateProfessionalContract(params: any) {
@@ -354,23 +360,53 @@ function generateDetailedContract(params: any) {
   return generateStandardContract(params);
 }
 
+function wrapContractHtmlDocument(content: string, fontSize: number, lineSpacing: number): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #111827;
+      font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
+      font-size: ${fontSize}px;
+      line-height: ${lineSpacing};
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    @media print {
+      html, body {
+        font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
+}
+
 async function generateOptimizedContractPDF(params: any) {
   const { content, fontSize, lineSpacing, targetPages, format, optimize, template } = params;
   
   if (format === 'pdf') {
-    // Generate optimized PDF
     const optimizedContent = optimizeContentForPDF(content, targetPages, fontSize, lineSpacing, optimize);
-    
-    // This would use a PDF library like puppeteer or jsPDF
-    // For now, return a mock buffer
-    const pdfContent = generatePDFFromHTML(optimizedContent, targetPages);
-    
-    return Buffer.from(pdfContent);
+    return renderContractPdfBuffer(optimizedContent);
   } else if (format === 'docx') {
-    // Generate DOCX format
     return generateDOCXFromContent(content, targetPages, fontSize, lineSpacing);
   } else {
-    // Default to PDF
     return generateOptimizedContractPDF({ ...params, format: 'pdf' });
   }
 }
@@ -394,63 +430,29 @@ function optimizeContentForPDF(content: string, targetPages: number, fontSize: n
   return optimizedContent;
 }
 
-function generatePDFFromHTML(content: string, pages: number) {
-  // Mock PDF generation - in production, use puppeteer or similar
-  const pdfHeader = `%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-
-2 0 obj
-<< /Type /Pages /Kids [`;
-  
-  const pageObjects = [];
-  for (let i = 0; i < pages; i++) {
-    pageObjects.push(`${3 + i} 0 R`);
+async function renderContractPdfBuffer(html: string): Promise<Buffer> {
+  const { page } = await BrowserManager.createPage();
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.emulateMedia({ media: 'print' });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm',
+      },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await page.context().close().catch(() => undefined);
   }
-  
-  const pdfMiddle = `] /Count ${pages} >>
-endobj`;
-  
-  let pageContent = '';
-  for (let i = 0; i < pages; i++) {
-    pageContent += `
-${3 + i} 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${4 + i} 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-
-${4 + i} 0 obj
-<< /Length ${content.length} >>
-stream
-${content}
-endstream
-endobj`;
-  }
-  
-  const pdfFooter = `
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-
-xref
-0 ${6 + pages * 2}
-0000000000 65535 f`;
-  
-  let xref = '';
-  let offset = 0;
-  for (let i = 1; i <= 5 + pages * 2; i++) {
-    xref += `\n${offset.toString().padStart(10, '0')} 00000 n`;
-    offset += 100; // Mock offset
-  }
-  
-  const pdfTrailer = `
-trailer
-<< /Size ${6 + pages * 2} /Root 1 0 R >>
-startxref
-${offset}
-%%EOF`;
-  
-  return Buffer.from(pdfHeader + pageObjects.join(' ') + pdfMiddle + pageContent + pdfFooter + xref + pdfTrailer);
 }
 
 function generateDOCXFromContent(content: string, pages: number, fontSize: number, lineSpacing: number) {

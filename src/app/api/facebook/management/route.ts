@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
+import { BrowserManager } from '@/lib/scraper/browserManager';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -289,7 +290,8 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
       success: true,
       data: {
         filename: `${contract.title.replace(/\s+/g, '_')}.${format}`,
-        buffer: pdfBuffer,
+        bufferBase64: pdfBuffer.toString('base64'),
+        mimeType: 'application/pdf',
         size: pdfBuffer.length
       },
       message: 'Contract downloaded successfully'
@@ -376,62 +378,64 @@ async function generateContractContent(params: any) {
 }
 
 async function generateOptimizedPDF(params: any) {
-  // This would use a PDF library like puppeteer or jsPDF
-  // For now, return a mock buffer
   const { content, fontSize, lineSpacing, targetPages, format } = params;
-  
-  // Calculate optimal content distribution
-  const contentLength = content.length;
-  const charactersPerPage = Math.floor(contentLength / targetPages);
-  
-  // Split content into pages with proper spacing
-  const pages = [];
-  for (let i = 0; i < targetPages; i++) {
-    const start = i * charactersPerPage;
-    const end = Math.min(start + charactersPerPage, contentLength);
-    pages.push(content.substring(start, end));
+  const html = wrapFacebookContractHtml(content, fontSize, lineSpacing);
+  const { page } = await BrowserManager.createPage();
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.emulateMedia({ media: 'print' });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm',
+      },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await page.context().close().catch(() => undefined);
   }
-  
-  // Generate PDF with optimized layout
-  const pdfContent = `
-    %PDF-1.4
-    1 0 obj
-    << /Type /Catalog /Pages 2 0 R >>
-    endobj
-    
-    2 0 obj
-    << /Type /Pages /Kids [3 0 R] /Count ${targetPages} >>
-    endobj
-    
-    3 0 obj
-    << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-    endobj
-    
-    4 0 obj
-    << /Length ${pages.join('').length} >>
-    stream
-    ${pages.join('')}
-    endstream
-    endobj
-    
-    5 0 obj
-    << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-    endobj
-    
-    xref
-    0 6
-    0000000000 65535 f 
-    0000000009 00000 n 
-    0000000058 00000 n 
-    0000000115 00000 n 
-    0000000204 00000 n 
-    0000000300 00000 n 
-    trailer
-    << /Size 6 /Root 1 0 R >>
-    startxref
-    400
-    %%EOF
-  `;
-  
-  return Buffer.from(pdfContent);
+}
+
+function wrapFacebookContractHtml(content: string, fontSize: number, lineSpacing: number): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #111827;
+      font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
+      font-size: ${fontSize}px;
+      line-height: ${lineSpacing};
+    }
+    * {
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    @media print {
+      html, body {
+        font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
 }

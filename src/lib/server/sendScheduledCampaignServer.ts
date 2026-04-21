@@ -324,20 +324,21 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             }
 
             const { data: contact } = await admin
-                .from('business_clients')
-                .select('id, name, email, website, custom_fields')
+                .from('contacts')
+                .select('id, full_name, email, custom_fields, company:companies(name, website)')
                 .eq('id', recipient.contact_id)
                 .single();
 
-            const contactName = String(contact?.name || '').trim();
+            const contactName = String(contact?.full_name || '').trim();
             const parts = contactName.split(/\s+/).filter(Boolean);
+            const companyName = String(contact?.company?.name || contact?.company?.website || '').trim();
 
             const recipientData = {
                 id: recipient.contact_id,
                 email: recipient.email,
                 firstName: parts[0] || undefined,
                 lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
-                company: contact?.website || undefined,
+                company: companyName || undefined,
                 ...(contact?.custom_fields || {}),
             };
 
