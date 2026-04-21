@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
 function normalizePostRow(row: Record<string, unknown>) {
@@ -41,6 +42,34 @@ export async function GET(req: NextRequest) {
     const isMember = await ensureTenantMembership(user.id, tenantId);
     if (!isMember) {
       return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
+    }
+
+    // Best-effort backfill for legacy published rows where URN exists in queue but was never persisted.
+    const admin = createSupabaseAdminClient();
+    const { data: pendingSyncRows } = await admin
+      .from('social_post_sync_queue')
+      .select('id, social_post_id, external_id')
+      .eq('tenant_id', tenantId)
+      .eq('platform', 'linkedin')
+      .is('processed_at', null)
+      .limit(30);
+
+    for (const row of pendingSyncRows || []) {
+      const externalUrn = String(row.external_id || '').trim();
+      if (!externalUrn || !row.social_post_id) continue;
+      await admin
+        .from('social_posts')
+        .update({
+          linkedin_post_urn: externalUrn,
+          analytics: { linkedin_post_urn: externalUrn },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', row.social_post_id);
+      await admin
+        .from('social_post_sync_queue')
+        .update({ processed_at: new Date().toISOString(), attempts: 1 })
+        .eq('id', row.id);
     }
 
     const selectVariants = [
