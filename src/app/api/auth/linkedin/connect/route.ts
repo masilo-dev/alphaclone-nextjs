@@ -20,6 +20,9 @@ const LINKEDIN_REQUIRED_SCOPES = [
   'openid',
   'profile',
   'w_member_social',
+  'w_organization_social',
+  'r_organization_admin',
+  'r_organization_social',
   'email',
   'r_profile_basicinfo',
 ] as const;
