@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
 import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield } from 'lucide-react';
@@ -16,7 +16,7 @@ import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import TurnstileVerification from '@/components/ui/TurnstileVerification';
 import Image from 'next/image';
 
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
     loading: () => <div className="absolute inset-0 bg-slate-950" />,
 });
