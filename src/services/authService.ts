@@ -398,6 +398,7 @@ export const authService = {
             const params = new URLSearchParams();
             params.set('return_to', nextPath);
             if (tenantId) params.set('tenant_id', tenantId);
+            params.set('force_reauth', '1');
             window.location.href = `/api/auth/linkedin/connect?${params.toString()}`;
             return { error: null };
         } catch (err) {

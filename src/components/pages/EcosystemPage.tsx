@@ -63,7 +63,7 @@ const EcosystemPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
+        <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
             <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
                 <AnimateIn type="fadeIn">
