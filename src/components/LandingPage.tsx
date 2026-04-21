@@ -25,6 +25,10 @@ import { Button } from './ui/UIComponents';
 import MarketingFooter from './landing/MarketingFooter';
 import { ServiceCard } from './landing/ServiceCard';
 import { AIWorkerGraphic } from './ui/AIWorkerGraphic';
+const HeroBackground = dynamic(() => import('./landing/HeroBackground'), {
+   ssr: false,
+   loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 const VideoExplainer = dynamic(() => import('./dashboard/VideoExplainer'), {
    ssr: false,
@@ -111,22 +115,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30">
          {/* Persistent full-page background */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-            <div
-               className="absolute inset-0 opacity-30 bg-cover bg-center"
-               style={{ backgroundImage: "url('/marketing-bg.jpg')" }}
-            />
-            <iframe
-               src="https://www.loom.com/embed/6bb52c25cc5346e293a5983718cac385?autoplay=1&mute=1&loop=1&hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true"
-               title="AlphaClone Background Video"
-               className="absolute inset-0 h-full w-full scale-125 opacity-35"
-               style={{ border: 0 }}
-               allow="autoplay; fullscreen"
-               tabIndex={-1}
-               aria-hidden="true"
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_55%,rgba(8,20,60,0.22)_0%,rgba(2,6,23,0.90)_100%)] z-[1]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/30 via-[#040A12]/58 to-[#081b37]/96 z-[2]" />
-            <div className="absolute inset-x-0 bottom-0 h-[34vh] bg-gradient-to-t from-[#0b2d5a]/85 via-[#0b2d5a]/35 to-transparent z-[3]" />
+            <HeroBackground />
          </div>
 
          {/* Enhanced Navigation with better transitions */}
