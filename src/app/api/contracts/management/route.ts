@@ -412,10 +412,11 @@ async function generateOptimizedContractPDF(params: any) {
 }
 
 function optimizeContentForPDF(content: string, targetPages: number, fontSize: number, lineSpacing: number, optimize: boolean) {
-  if (!optimize) return content;
+  const printableHtml = ensurePrintableContractHtml(content, fontSize, lineSpacing);
+  if (!optimize) return printableHtml;
   
   // Calculate optimal content distribution
-  const contentLength = content.length;
+  const contentLength = printableHtml.length;
   const charactersPerPage = Math.floor(contentLength / targetPages);
   
   // Adjust spacing and font size for optimal layout
@@ -423,11 +424,86 @@ function optimizeContentForPDF(content: string, targetPages: number, fontSize: n
   const adjustedLineSpacing = lineSpacing * (targetPages <= 2 ? 1.1 : 1);
   
   // Apply optimizations
-  let optimizedContent = content
+  let optimizedContent = printableHtml
     .replace(/font-size:\s*\d+px/g, `font-size: ${adjustedFontSize}px`)
     .replace(/line-height:\s*[\d.]+/g, `line-height: ${adjustedLineSpacing}`);
   
   return optimizedContent;
+}
+
+function ensurePrintableContractHtml(content: string, fontSize: number, lineSpacing: number): string {
+  const raw = String(content || '');
+  const hasHtmlTag = /<\/?(html|head|body|div|section|article|p|h1|h2|h3|table)\b/i.test(raw);
+  if (hasHtmlTag) return raw;
+
+  const normalized = raw
+    .replace(/\r\n/g, '\n')
+    .replace(/\t/g, ' ')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+(?=\d+\.\s*[A-Z][A-Z\s/&'":\-]{3,})/g, '\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  const blocks = normalized
+    .split(/\n{2,}/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const body = blocks
+    .map((line) => {
+      const escaped = escapeHtml(line);
+      if (/^\d+(\.\d+)?\s+[A-Z][A-Z\s/&'":\-]{3,}$/.test(line)) {
+        return `<h2>${escaped}</h2>`;
+      }
+      return `<p>${escaped}</p>`;
+    })
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #0f172a;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: ${fontSize}px;
+      line-height: ${lineSpacing};
+    }
+    body { padding: 24px; }
+    h2 {
+      margin: 18px 0 8px 0;
+      font-size: ${Math.max(fontSize + 2, 14)}px;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    p {
+      margin: 0 0 10px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      text-align: justify;
+    }
+  </style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 async function renderContractPdfBuffer(html: string): Promise<Buffer> {
