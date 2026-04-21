@@ -124,6 +124,30 @@ async function loadLinkedInPostsWithSchemaFallback(tenantId: string) {
   }
 }
 
+function isLinkedInPostSchemaBehind(selectUsed: string | null): boolean {
+  if (!selectUsed) return true;
+  const fields = new Set(
+    selectUsed
+      .split(',')
+      .map((field) => field.trim())
+      .filter(Boolean)
+  );
+  const required = [
+    'id',
+    'caption',
+    'status',
+    'scheduled_at',
+    'published_at',
+    'created_at',
+    'linkedin_post_urn',
+    'linkedin_member_id',
+    'analytics',
+    'error_message',
+    'platforms',
+  ];
+  return required.some((field) => !fields.has(field));
+}
+
 export default function LinkedInManagementTab() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
@@ -179,7 +203,7 @@ export default function LinkedInManagementTab() {
       toast.error('Failed to load LinkedIn posts');
     } else {
       setPosts(postsRes.data || []);
-      if (postsRes.selectUsed !== 'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms') {
+      if (isLinkedInPostSchemaBehind(postsRes.selectUsed)) {
         setSchemaWarning(
           'LinkedIn post schema is partially behind. Apply latest social_posts migrations to unlock full LinkedIn tracking fields.'
         );
@@ -1055,7 +1079,7 @@ Return only the reply text.`;
               </div>
               <p className="text-sm text-slate-200 whitespace-pre-line line-clamp-3">{post.caption}</p>
               {post.error_message && <p className="text-xs text-red-300">{post.error_message}</p>}
-              {!resolveLinkedInPostUrn(post) && (
+              {post.status === 'published' && !resolveLinkedInPostUrn(post) && (
                 <p className="text-xs text-amber-300">
                   Comments unavailable for this item because no LinkedIn post reference was saved yet. Run post reconciliation to backfill LinkedIn URNs for already published posts.
                 </p>

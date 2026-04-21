@@ -38,21 +38,15 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    const { error: updateError } = await admin
+    const { error: removeError } = await admin
       .from('linkedin_integrations')
-      .update({
-        is_active: false,
-        // Column is NOT NULL in schema, so blank out token instead of nulling.
-        access_token: '',
-        token_expires_at: null,
-        updated_at: new Date().toISOString(),
-      })
+      .delete()
       .eq('tenant_id', tenantId)
       .eq('user_id', user.id)
       .eq('linkedin_member_id', linkedinMemberId);
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (removeError) {
+      return NextResponse.json({ error: removeError.message }, { status: 500 });
     }
 
     const { data: remaining } = await admin
@@ -76,6 +70,14 @@ export async function POST(req: NextRequest) {
         { onConflict: 'tenant_id,integration_id' }
       );
     }
+
+    // Remove stale queued sync jobs for tenant-level LinkedIn rows that no longer resolve.
+    await admin
+      .from('social_post_sync_queue')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('platform', 'linkedin')
+      .is('processed_at', null);
 
     return NextResponse.json({ success: true });
   } catch (err) {
