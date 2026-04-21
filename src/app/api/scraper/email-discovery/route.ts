@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import * as cheerio from 'cheerio';
+import { scraperEmailDiscoverySchema } from '@/schemas/validation';
 
 /**
  * CLIENT-SIDE EMAIL DISCOVERY ENGINE
@@ -381,16 +382,11 @@ function processResults(results: EmailResult[]): EmailResult[] {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { 
-      domain,
-      company_name,
-      methods = ['all'],
-      verify = false 
-    } = body;
-
-    if (!domain) {
-      return NextResponse.json({ error: 'Domain required' }, { status: 400 });
+    const parsed = scraperEmailDiscoverySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { domain, company_name, methods = ['all'], verify = false } = parsed.data;
 
     const company = company_name || domain.replace(/\.\w+$/, '');
     const allResults: EmailResult[] = [];

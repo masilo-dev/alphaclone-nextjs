@@ -6,6 +6,8 @@ import {
   requireTenantAccess,
   routeErrorResponse,
 } from '@/lib/apiAuth';
+import { isEmailSuppressed } from '@/lib/email/suppression';
+import { outreachSendSchema } from '@/schemas/validation';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
@@ -86,6 +88,10 @@ function injectTrackingPixel(body: string, trackingId: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const parsed = outreachSendSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+    }
     const {
       tenantId,
       leadEmail,
@@ -103,15 +109,13 @@ export async function POST(request: Request) {
       deliveryProviders = [],
       preferredProvider,
       balanceByDailyLimit = false,
-    } = body;
-
-    if (!tenantId)   return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
-    if (!leadEmail)  return NextResponse.json({ error: 'leadEmail required' }, { status: 400 });
-    if (!subject)    return NextResponse.json({ error: 'subject required'   }, { status: 400 });
-    if (!emailBody)  return NextResponse.json({ error: 'body required'      }, { status: 400 });
+    } = parsed.data;
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
+    if (await isEmailSuppressed(tenantId, leadEmail)) {
+      return NextResponse.json({ success: false, status: 'suppressed', error: 'Recipient is suppressed' }, { status: 409 });
+    }
     const autoSendThreshold = Number(process.env.OUTREACH_AUTO_SEND_CONFIDENCE_THRESHOLD || '80');
 
     // Default policy: manual approval required unless explicitly auto-send.

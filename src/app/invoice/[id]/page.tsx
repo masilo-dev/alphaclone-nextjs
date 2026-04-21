@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation';
 import { businessInvoiceService, BusinessInvoice } from '@/services/businessInvoiceService';
 import { Card, Button, Badge } from '@/components/ui/UIComponents';
 import { FileText, CreditCard, Calendar, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import jsPDF from 'jspdf';
 
 export default function PublicInvoicePage() {
     const params = useParams();
@@ -39,10 +38,23 @@ export default function PublicInvoicePage() {
         }
     };
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async () => {
         if (!invoice) return;
-        const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
-        doc.save(`invoice-${invoice.invoice_number || invoice.invoiceNumber}.pdf`);
+        try {
+            const response = await fetch(`/api/pdf/invoice/${invoice.id}`);
+            if (!response.ok) throw new Error('Failed to generate PDF');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `${invoice.invoice_number || invoice.invoiceNumber}.pdf`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(url);
+        } catch (error: any) {
+            toast.error(error.message || 'Unable to download PDF');
+        }
     };
 
     const handlePayment = async () => {

@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { googlePlacesService } from '@/services/googlePlacesService';
+import { leadsManagementSchema } from '@/schemas/validation';
 
 function resolveGooglePlacesApiKey(): string | null {
   return (
@@ -20,11 +21,12 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { tenantId, action, config } = await req.json();
-
-    if (!tenantId || !action) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    const payload = await req.json();
+    const parsed = leadsManagementSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { tenantId, action, config } = parsed.data;
 
     const supabase = createSupabaseAdminClient();
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });

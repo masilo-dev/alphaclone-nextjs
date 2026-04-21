@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
+import { integrationActionSchema } from '@/schemas/validation';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -10,11 +11,12 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { tenantId, integrationType, action, config } = await req.json();
-
-    if (!tenantId || !integrationType || !action) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    const payload = await req.json();
+    const parsed = integrationActionSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { tenantId, integrationType, action, config } = parsed.data;
 
     const supabase = createSupabaseAdminClient();
 

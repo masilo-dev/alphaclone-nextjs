@@ -4,15 +4,16 @@ import {
   requireTenantAccess,
   routeErrorResponse,
 } from '@/lib/apiAuth';
+import { resendDisconnectSchema } from '@/schemas/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, tenantId: tenantIdInput } = await request.json();
-    const tenantId = tenantIdInput || tenant_id;
-
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Missing tenant_id' }, { status: 400 });
+    const payload = await request.json();
+    const parsed = resendDisconnectSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const tenantId = parsed.data.tenantId || parsed.data.tenant_id!;
 
     await requireTenantAccess(tenantId);
     const supabase = createAdminSupabaseClientOrThrow();
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
       .eq('integration_type', 'resend');
 
     if (error) {
-      throw error;
+      return NextResponse.json({ error: error.message, code: 'INTEGRATION_UPDATE_FAILED' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -35,9 +36,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Resend disconnect error:', error);
-    if ((error as any)?.name === 'RouteAuthError') {
-      return routeErrorResponse(error, 'Internal server error');
-    }
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return routeErrorResponse(error, 'Failed to disconnect Resend provider', request);
   }
 }

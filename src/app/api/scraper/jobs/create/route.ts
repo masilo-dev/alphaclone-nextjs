@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { scraperJobCreateSchema } from '@/schemas/validation';
 
 function getMissingColumnName(error: unknown): string | null {
   if (!error || typeof error !== 'object') return null;
@@ -68,16 +69,11 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const tenantId = String(body.tenantId || '').trim();
-    const niche = String(body.niche || '').trim();
-    const location = String(body.location || '').trim();
-    const sortBy = String(body.sortBy || 'default');
-    const usePlaywright = Boolean(body.usePlaywright);
-    const radiusKm = Number(body.radiusKm || 25);
-
-    if (!tenantId || !niche) {
-      return NextResponse.json({ error: 'tenantId and niche are required' }, { status: 400 });
+    const parsed = scraperJobCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { tenantId, niche, location, sortBy, usePlaywright, radiusKm } = parsed.data;
 
     const { data: membership } = await supabase
       .from('tenant_users')
@@ -85,7 +81,7 @@ export async function POST(req: NextRequest) {
       .eq('tenant_id', tenantId)
       .eq('user_id', user.id)
       .maybeSingle();
-    if (!membership) return NextResponse.json({ error: 'Not a tenant member' }, { status: 403 });
+    if (!membership) return NextResponse.json({ error: 'Not a tenant member', code: 'FORBIDDEN' }, { status: 403 });
 
     const { data: job, error } = await insertLeadSearchJobWithFallback(supabase, {
       tenant_id: tenantId,

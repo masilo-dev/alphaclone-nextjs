@@ -454,6 +454,60 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                </div>
             </section>
 
+            {/* Jarvis Autonomous Worker Grid */}
+            <section className="py-16 bg-[#030913] border-b border-slate-800">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-10">
+                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
+                        Jarvis Autonomous Operations
+                     </h3>
+                     <p className="text-slate-400 max-w-3xl mx-auto">
+                        Visual command center for autonomous AI workers. Each unit executes marketing tasks continuously with audit visibility and handoff checkpoints.
+                     </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                     {[
+                        { name: 'Scout Worker', task: 'Identifying high-intent lead segments', status: 'running', eta: 'live' },
+                        { name: 'Writer Worker', task: 'Drafting platform-specific campaign content', status: 'running', eta: '02:10' },
+                        { name: 'Publisher Worker', task: 'Scheduling LinkedIn and Facebook page posts', status: 'queued', eta: '05:45' },
+                        { name: 'Optimizer Worker', task: 'Rebalancing budget and channel allocation', status: 'running', eta: '01:35' },
+                        { name: 'Responder Worker', task: 'Preparing follow-up responses and sequences', status: 'running', eta: '03:05' },
+                        { name: 'Analyzer Worker', task: 'Calculating campaign quality and risk scores', status: 'running', eta: '00:55' },
+                        { name: 'Compliance Worker', task: 'Validating policy and outbound constraints', status: 'queued', eta: '04:20' },
+                        { name: 'Report Worker', task: 'Compiling executive marketing performance summary', status: 'running', eta: '06:00' },
+                     ].map((worker, index) => (
+                        <motion.div
+                           key={worker.name}
+                           initial={{ opacity: 0, y: 12 }}
+                           whileInView={{ opacity: 1, y: 0 }}
+                           viewport={{ once: true }}
+                           transition={{ delay: index * 0.06 }}
+                           className="rounded-2xl border border-cyan-500/20 bg-[#081228]/85 p-4 relative overflow-hidden"
+                        >
+                           <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl" />
+                           <div className="flex items-center justify-between mb-3">
+                              <p className="text-sm font-bold text-cyan-200">{worker.name}</p>
+                              <div className="flex items-center gap-2">
+                                 <motion.span
+                                    className={`inline-block h-2 w-2 rounded-full ${worker.status === 'running' ? 'bg-cyan-300' : 'bg-slate-400'}`}
+                                    animate={{ opacity: [0.35, 1, 0.35] }}
+                                    transition={{ duration: 1.1, repeat: Infinity }}
+                                 />
+                                 <span className="text-[11px] uppercase tracking-wide text-slate-400">{worker.status}</span>
+                              </div>
+                           </div>
+                           <p className="text-sm text-slate-300 leading-relaxed min-h-[44px]">{worker.task}</p>
+                           <div className="mt-4 flex items-center justify-between text-xs">
+                              <span className="text-slate-500">Execution ETA</span>
+                              <span className="font-semibold text-cyan-300">{worker.eta}</span>
+                           </div>
+                        </motion.div>
+                     ))}
+                  </div>
+               </div>
+            </section>
+
             {/* Platform Capabilities */}
             <section className="py-16 bg-slate-950/70">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

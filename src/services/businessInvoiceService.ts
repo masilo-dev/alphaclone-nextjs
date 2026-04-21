@@ -313,14 +313,9 @@ export const businessInvoiceService = {
                 const oldStatus = currentInvoice.status;
                 const newStatus = updates.status;
 
-                // When invoice is sent: DR Accounts Receivable, CR Revenue
-                if (oldStatus === 'draft' && newStatus === 'sent') {
-                    await this.postInvoiceToGL(invoiceId, currentInvoice);
-                }
-
-                // When invoice is paid: DR Cash, CR Accounts Receivable
-                if ((oldStatus === 'sent' || oldStatus === 'overdue') && newStatus === 'paid') {
-                    await this.postPaymentToGL(invoiceId, currentInvoice);
+                // Revenue recognition policy: recognize on payment receipt, not on send.
+                if (newStatus === 'paid' && oldStatus !== 'paid') {
+                    await this.postRevenueOnPayment(invoiceId, currentInvoice);
                 }
             }
 
@@ -497,8 +492,8 @@ export const businessInvoiceService = {
 
             if (error) throw error;
 
-            // GL INTEGRATION: Post payment to accounting
-            await this.postPaymentToGL(invoiceId, invoice);
+            // GL INTEGRATION: Revenue is recognized on payment receipt
+            await this.postRevenueOnPayment(invoiceId, invoice);
 
             // Log activity
             const { data: { user } } = await supabase.auth.getUser();
@@ -1012,6 +1007,92 @@ export const businessInvoiceService = {
             return { error: null };
         } catch (err: any) {
             console.error('Error posting payment to GL:', err);
+            return { error: err.message };
+        }
+    },
+
+    /**
+     * Recognize revenue when payment is received.
+     * DR Cash (1000)
+     *   CR Service Revenue (4100) for net amount
+     *   CR Sales Tax Payable (2100) for tax amount
+     */
+    async postRevenueOnPayment(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
+        try {
+            let { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
+            let { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
+            let { account: taxPayableAccount } = await chartOfAccountsService.getAccountByCode('2100');
+
+            if (!cashAccount || !revenueAccount) {
+                await chartOfAccountsService.initializeDefaultAccounts();
+                const cashRetry = await chartOfAccountsService.getAccountByCode('1000');
+                const revRetry = await chartOfAccountsService.getAccountByCode('4100');
+                const taxRetry = await chartOfAccountsService.getAccountByCode('2100');
+                cashAccount = cashRetry.account;
+                revenueAccount = revRetry.account;
+                taxPayableAccount = taxRetry.account || taxPayableAccount;
+            }
+
+            if (!cashAccount || !revenueAccount) {
+                return { error: 'Required accounts (1000, 4100) not found' };
+            }
+
+            const total = Number(invoiceData.total || 0);
+            const tax = Number(invoiceData.tax || 0);
+            const netRevenue = Math.max(0, total - tax);
+            const paymentDate = new Date().toISOString().split('T')[0];
+            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber || invoiceId;
+            const lines: Array<{
+                accountId: string;
+                debitAmount: number;
+                creditAmount: number;
+                description: string;
+                entityType: 'invoice';
+                entityId: string;
+            }> = [
+                {
+                    accountId: cashAccount.id,
+                    debitAmount: total,
+                    creditAmount: 0,
+                    description: `Cash received - Invoice ${invoiceNumber}`,
+                    entityType: 'invoice',
+                    entityId: invoiceId,
+                },
+                {
+                    accountId: revenueAccount.id,
+                    debitAmount: 0,
+                    creditAmount: netRevenue,
+                    description: `Revenue recognized - Invoice ${invoiceNumber}`,
+                    entityType: 'invoice',
+                    entityId: invoiceId,
+                },
+            ];
+
+            if (tax > 0 && taxPayableAccount?.id) {
+                lines.push({
+                    accountId: taxPayableAccount.id,
+                    debitAmount: 0,
+                    creditAmount: tax,
+                    description: `Tax payable - Invoice ${invoiceNumber}`,
+                    entityType: 'invoice',
+                    entityId: invoiceId,
+                });
+            }
+
+            const { entry, error } = await journalEntryService.createEntry({
+                entryDate: paymentDate,
+                description: `Payment received for Invoice ${invoiceNumber}`,
+                reference: invoiceNumber,
+                sourceType: 'payment',
+                sourceId: invoiceId,
+                lines,
+            });
+
+            if (error) return { error };
+            if (entry) await journalEntryService.postEntry(entry.id);
+            return { error: null };
+        } catch (err: any) {
+            console.error('Error recognizing revenue on payment:', err);
             return { error: err.message };
         }
     },

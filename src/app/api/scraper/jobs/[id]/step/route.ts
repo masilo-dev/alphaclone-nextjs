@@ -3,6 +3,9 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { LeadResult, LeadStep, runLeadStep } from '@/lib/scraper/freeLeadSearch';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
+import { z } from 'zod';
+
+const jobIdSchema = z.string().uuid('Invalid job id');
 
 function parseJsonArray<T>(value: unknown, fallback: T[] = []): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -25,6 +28,10 @@ function leadIdentityKey(lead: LeadResult): string {
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
+    const parsedId = jobIdSchema.safeParse(id);
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsedId.error.flatten() }, { status: 400 });
+    }
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
@@ -37,7 +44,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       .eq('id', id)
       .maybeSingle();
     if (fetchError) return clientErrorResponse(fetchError, { request: req, scope: 'scraper/jobs/[id]/step.POST' });
-    if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    if (!job) return NextResponse.json({ error: 'Job not found', code: 'NOT_FOUND' }, { status: 404 });
     if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
       return NextResponse.json({ success: true, job });
     }

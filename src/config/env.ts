@@ -216,6 +216,12 @@ function validateEnv() {
             VITE_SUPABASE_ANON_KEY: parsed.NEXT_PUBLIC_SUPABASE_ANON_KEY || parsed.VITE_SUPABASE_ANON_KEY
         };
     } catch (error) {
+        const isServer = typeof window === 'undefined';
+        const isProd = process.env.NODE_ENV === 'production';
+        if (isServer && isProd) {
+            console.error('[env] Invalid environment configuration', error);
+            throw new Error('Invalid environment configuration');
+        }
         return rawEnv as any;
     }
 }

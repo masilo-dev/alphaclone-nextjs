@@ -4,15 +4,18 @@ import {
   requireTenantAccess,
   routeErrorResponse,
 } from '@/lib/apiAuth';
+import { resendConnectSchema } from '@/schemas/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, tenantId: tenantIdInput, api_key, domain } = await request.json();
-    const tenantId = tenantIdInput || tenant_id;
-
-    if (!tenantId || !api_key || !domain) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    const payload = await request.json();
+    const parsed = resendConnectSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const tenantId = parsed.data.tenantId || parsed.data.tenant_id!;
+    const api_key = parsed.data.api_key;
+    const domain = parsed.data.domain;
 
     await requireTenantAccess(tenantId);
     const supabase = createAdminSupabaseClientOrThrow();
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      throw error;
+      return NextResponse.json({ error: error.message, code: 'INTEGRATION_UPSERT_FAILED' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -42,9 +45,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Resend connect error:', error);
-    if ((error as any)?.name === 'RouteAuthError') {
-      return routeErrorResponse(error, 'Internal server error');
-    }
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return routeErrorResponse(error, 'Failed to connect Resend provider', request);
   }
 }

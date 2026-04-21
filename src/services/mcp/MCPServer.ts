@@ -16,6 +16,12 @@ import { routeAutonomousTask } from '../aiRouter';
 import { PROFESSIONAL_GUARDRAILS } from '../ai/autonomousGuardrails';
 import { strategyService } from '../ai/strategyService';
 import { aiGenerationService } from '../aiGenerationService';
+import { socialPostGenerationService } from '../socialPostGenerationService';
+import {
+  businessAdapterService,
+  type AnalyzeDocumentInput,
+  type PortalEventInput,
+} from '../adapters/businessAdapters';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -1005,6 +1011,73 @@ class AlphaCloneMCPServer {
               draft_only: { type: 'boolean', description: 'If true, saves as a draft for your review. If false, sends immediately.' }
             },
             required: ['entity_id', 'platform'],
+          },
+        },
+        {
+          name: 'book_calendar_meeting',
+          description: 'Calendar booking adapter: creates a booking through the production booking pipeline.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              booking_type_id: { type: 'string' },
+              start_time: { type: 'string', description: 'ISO datetime' },
+              end_time: { type: 'string', description: 'ISO datetime' },
+              client_name: { type: 'string' },
+              client_email: { type: 'string' },
+              client_phone: { type: 'string' },
+              client_notes: { type: 'string' },
+              time_zone: { type: 'string' },
+            },
+            required: ['booking_type_id', 'start_time', 'end_time', 'client_name', 'client_email'],
+          },
+        },
+        {
+          name: 'create_subscription_checkout',
+          description: 'Payment/subscription adapter: creates Stripe checkout URL for subscription upgrade.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              plan_id: { type: 'string', description: 'starter | pro | enterprise' },
+              price_id: { type: 'string' },
+              admin_email: { type: 'string' },
+              success_url: { type: 'string' },
+              cancel_url: { type: 'string' },
+            },
+            required: ['plan_id', 'price_id', 'admin_email'],
+          },
+        },
+        {
+          name: 'create_client_portal_event',
+          description: 'Client portal event adapter: records timeline, download, and feedback events.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              event_type: { type: 'string' },
+              project_id: { type: 'string' },
+              client_id: { type: 'string' },
+              deliverable_id: { type: 'string' },
+              feedback_rating: { type: 'number' },
+              feedback_comment: { type: 'string' },
+              metadata: { type: 'object' },
+            },
+            required: ['event_type'],
+          },
+        },
+        {
+          name: 'analyze_document_intelligence',
+          description: 'Document intelligence adapter: extracts clauses/risk flags and stores a scan run.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              document_url: { type: 'string' },
+              document_text: { type: 'string' },
+              document_type: { type: 'string', description: 'contract | proposal | invoice | nda | other' },
+            },
+            required: [],
           },
         },
       ],
@@ -3051,8 +3124,15 @@ Generate a 30-day social media content plan (2 posts per day = 60 posts total).
 STRATEGIC GOAL: ${monthly_goal}
 TOPICS: ${topics.join(', ')}
 
-Return ONLY a JSON array of 60 objects: [{ "day": 1, "post": 1, "topic": "..." }, ...].
-Each topic should be a specific, professional title for a long-form article.
+Rules:
+- Monday thought leadership, Tuesday tactical tip, Wednesday social proof, Thursday personal story, Friday CTA offer, Saturday community, Sunday teaser.
+- Avoid generic motivation. Every post idea must include one of: concrete insight, contrarian angle, real story, or data point.
+- LinkedIn style: professional, insight-led, no fluff, no emoji, max 3 targeted hashtags.
+- Facebook style: conversational and community-first, with practical CTA.
+- Ensure no duplicate topic framing across 30 days.
+
+Return ONLY a JSON array of 60 objects:
+[{ "day": 1, "post": 1, "platform": "linkedin", "topic": "...", "cta": "..." }, ...].
           `;
           const planRes = await routeAutonomousTask('strategy', plannerPrompt);
           let plan: any[] = [];
@@ -3113,9 +3193,13 @@ Each topic should be a specific, professional title for a long-form article.
           }
 
           // 2. Generate Professional Article (Grok)
-          const articleRes = await routeAutonomousTask('social_article', 
-            PROFESSIONAL_GUARDRAILS.SOCIAL_ARTICLE_PROMPT('Autonomous Growth', topic)
-          );
+          const multiPass = await socialPostGenerationService.generateMultiPass({
+            platform: Array.isArray(platforms) && platforms.includes('linkedin') ? 'linkedin' : 'facebook',
+            pillar: 'tactical_how_to',
+            topic: String(topic || 'business operations'),
+            monthlyGoal: 'Authority growth and lead generation',
+            includeCta: true,
+          });
 
           // 3. Schedule
           const publishTime = typeof scheduled_at === 'string' && scheduled_at
@@ -3124,16 +3208,24 @@ Each topic should be a specific, professional title for a long-form article.
           const { data, error } = await supabaseAdmin.from('social_posts').insert({
             tenant_id,
             user_id: userId,
-            caption: articleRes.content,
+            caption: multiPass.content,
             platforms: Array.isArray(platforms) ? platforms : ['facebook', 'linkedin'],
             media_urls: [imageUrl],
             status: 'scheduled',
             scheduled_at: publishTime,
-            metadata: { autonomous: true, ai_image_prompt: image_prompt }
+            metadata: {
+              autonomous: true,
+              ai_image_prompt: image_prompt,
+              generation: {
+                strategistNotes: multiPass.strategistNotes,
+                reviewerNotes: multiPass.reviewerNotes,
+                confidenceScore: multiPass.confidenceScore,
+              },
+            }
           }).select('id').single();
 
           if (error) throw supabaseErrorToMcpClientError('create_post_with_ai_image', error.message);
-          result = { content: [{ type: 'text', text: `Autonomous Creation complete! Post scheduled with AI-generated image: ${imageUrl}. Article length: ${articleRes.content.length} characters.` }] };
+          result = { content: [{ type: 'text', text: `Autonomous Creation complete. Post scheduled with AI-generated image: ${imageUrl}. Content length: ${multiPass.content.length} characters.` }] };
           break;
         }
 
@@ -3192,6 +3284,83 @@ Each topic should be a specific, professional title for a long-form article.
             // Actually send (Simplified for this demo, would call Resend/FB API here)
              result = { content: [{ type: 'text', text: `Autonomous Reply sent via ${platform}: "${replyRes.content}"` }] };
           }
+          break;
+        }
+
+        // ── Future-readiness adapters (live) ───────────────────────────────
+        case 'book_calendar_meeting': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const response = await businessAdapterService.bookCalendarMeeting({
+            tenantId: tenant_id,
+            bookingTypeId: String(a.booking_type_id || '').trim(),
+            startTime: String(a.start_time || '').trim(),
+            endTime: String(a.end_time || '').trim(),
+            clientName: String(a.client_name || '').trim(),
+            clientEmail: String(a.client_email || '').trim(),
+            clientPhone: a.client_phone ? String(a.client_phone).trim() : undefined,
+            clientNotes: a.client_notes ? String(a.client_notes).trim() : undefined,
+            timeZone: a.time_zone ? String(a.time_zone).trim() : undefined,
+          });
+          if (response.status === 'failed') throw new Error(response.error || response.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
+        case 'create_subscription_checkout': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { data: profile } = await supabaseAdmin.from('profiles').select('email').eq('id', user_id).maybeSingle();
+          const response = await businessAdapterService.createPaymentSubscriptionCheckout({
+            tenantId: tenant_id,
+            planId: String(a.plan_id || '').trim() as 'starter' | 'pro' | 'enterprise',
+            priceId: String(a.price_id || '').trim(),
+            adminEmail: String(a.admin_email || profile?.email || '').trim(),
+            successUrl: a.success_url ? String(a.success_url).trim() : undefined,
+            cancelUrl: a.cancel_url ? String(a.cancel_url).trim() : undefined,
+          });
+          if (response.status === 'failed') throw new Error(response.error || response.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
+        case 'create_client_portal_event': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const response = await businessAdapterService.createClientPortalEvent({
+            tenantId: tenant_id,
+            actorUserId: user_id,
+            eventType: String(a.event_type || '').trim() as PortalEventInput['eventType'],
+            projectId: a.project_id ? String(a.project_id).trim() : undefined,
+            clientId: a.client_id ? String(a.client_id).trim() : undefined,
+            deliverableId: a.deliverable_id ? String(a.deliverable_id).trim() : undefined,
+            feedbackRating: a.feedback_rating ? Number(a.feedback_rating) : undefined,
+            feedbackComment: a.feedback_comment ? String(a.feedback_comment).trim() : undefined,
+            metadata: a.metadata && typeof a.metadata === 'object' ? a.metadata : undefined,
+          });
+          if (response.status === 'failed') throw new Error(response.error || response.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
+        case 'analyze_document_intelligence': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          if (!a.document_url && !a.document_text) {
+            throw new Error('document_url or document_text is required');
+          }
+          const response = await businessAdapterService.analyzeDocument({
+            tenantId: tenant_id,
+            actorUserId: user_id,
+            documentUrl: a.document_url ? String(a.document_url).trim() : undefined,
+            documentText: a.document_text ? String(a.document_text) : undefined,
+            documentType: a.document_type ? String(a.document_type).trim() as AnalyzeDocumentInput['documentType'] : undefined,
+          });
+          if (response.status === 'failed') throw new Error(response.error || response.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
           break;
         }
 
