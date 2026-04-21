@@ -160,40 +160,45 @@ html.light .ac-business-scroll .text-slate-300 {
 .marketing-theme {
   font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.55;
   letter-spacing: normal;
+  color: #e6edf7;
 }
 
 .marketing-theme h1 {
   font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-weight: 700;
-  font-size: clamp(1.75rem, 5.2vw, 3.5rem);
-  line-height: 1.1;
+  font-size: clamp(1.5rem, 4.4vw, 2.8rem);
+  line-height: 1.15;
   letter-spacing: -0.025em;
+  color: #f8fbff;
 }
 
 .marketing-theme h2 {
   font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-weight: 650;
-  font-size: clamp(1.4rem, 3.6vw, 2.7rem);
-  line-height: 1.1;
+  font-size: clamp(1.25rem, 3.1vw, 2.2rem);
+  line-height: 1.2;
   letter-spacing: -0.02em;
+  color: #f2f7ff;
 }
 
 .marketing-theme h3,
 .marketing-theme h4 {
   font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-weight: 600;
-  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-size: clamp(1.05rem, 2.3vw, 1.65rem);
   line-height: 1.3;
+  color: #edf3fb;
 }
 
 .marketing-theme p {
   font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(0.95rem, 1.05vw, 1.05rem);
-  line-height: 1.6;
+  font-size: clamp(0.88rem, 0.95vw, 0.98rem);
+  line-height: 1.55;
+  color: #dbe6f4;
 }
 
 /* Improve readability for low-contrast dashboard helper text */
@@ -229,8 +234,9 @@ html.light .ac-business-scroll .text-slate-300 {
 .marketing-theme .nav-link {
   font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
   font-weight: 500;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
+  color: #dbe7f7;
 }
 
 .marketing-theme nav a:hover,
@@ -674,17 +680,22 @@ body {
 /* Small Desktop Adjustments (e.g. Dell Latitude E7240) */
 @media (min-width: 1025px) and (max-width: 1366px) {
   .marketing-theme h1 {
-    font-size: 3.5rem;
+    font-size: 2.9rem;
   }
   
   .marketing-theme h2 {
-    font-size: 2.5rem;
+    font-size: 2.1rem;
   }
 
   .marketing-theme section {
     padding-top: 4rem !important;
     padding-bottom: 4rem !important;
   }
+}
+
+.marketing-theme .text-slate-500,
+.marketing-theme .text-slate-600 {
+  color: #c9d7ea !important;
 }
 
 /* Tablet Responsive Adjustments */

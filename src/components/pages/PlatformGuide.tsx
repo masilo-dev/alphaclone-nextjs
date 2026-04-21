@@ -302,12 +302,12 @@ The invited person receives an email with a secure invitation link. When they cl
     ];
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
+        <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
 
             <div className="pt-20">
                 {/* Hero — BLUF Answer Section */}
-                <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/50 py-20">
+                <section className="bg-gradient-to-b from-slate-900/70 to-slate-950/70 border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-2 mb-4">
                             <BookOpen className="w-5 h-5 text-teal-400" />
@@ -339,7 +339,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* First-time navigation map */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-slate-950/55">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Where to Go in the Platform</h2>
                         <p className="text-slate-400 leading-relaxed mb-10">
@@ -366,7 +366,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* Why AlphaClone — before the how */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-slate-950/55">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Why AlphaClone Changes How You Run Your Business</h2>
                         <p className="text-slate-400 leading-relaxed mb-10">
@@ -454,7 +454,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* Integration Quick Reference */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-slate-950/55">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Integration Quick Reference</h2>
                         <p className="text-slate-400 mb-8">Where to find each integration in the Settings panel:</p>
@@ -483,7 +483,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* FAQ Section with JSON-LD compatible content */}
-                <section className="py-16 bg-slate-900/50 border-t border-slate-800">
+                <section className="py-16 bg-slate-900/55 border-t border-slate-800">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
                         <p className="text-slate-400 mb-8">Answers to the most common questions from new AlphaClone users:</p>

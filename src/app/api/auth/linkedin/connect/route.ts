@@ -75,12 +75,18 @@ export async function GET(req: NextRequest) {
     };
     const state = Buffer.from(JSON.stringify(statePayload)).toString('base64url');
 
+    const forceReauth = req.nextUrl.searchParams.get('force_reauth') === '1';
+
     const authUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('scope', LINKEDIN_REQUIRED_SCOPES.join(' '));
     authUrl.searchParams.set('prompt', 'consent');
+    if (forceReauth) {
+      // Ask LinkedIn to avoid silent reuse where possible.
+      authUrl.searchParams.set('force_login', 'true');
+    }
     authUrl.searchParams.set('state', state);
 
     return NextResponse.redirect(authUrl.toString());
