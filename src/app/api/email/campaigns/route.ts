@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { emailCampaignCreateSchema, emailCampaignDeleteSchema, emailCampaignUpdateSchema } from '@/schemas/validation';
 
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
     if (!error || typeof error !== 'object') return false;
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
         const tenantId = String(searchParams.get('tenantId') || '').trim();
         const mode = String(searchParams.get('mode') || 'campaigns').trim();
         if (!tenantId) {
-            return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+            return NextResponse.json({ error: 'tenantId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
         }
 
         await requireTenantAccess(tenantId);
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
             if (isMissingRelationOrCache(error, 'business_clients') || isWorkspaceSetupError(error)) {
                 return contactsUnavailableResponse();
             }
-            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CONTACTS_FETCH_FAILED' }, { status: 500 });
             return NextResponse.json({ success: true, contacts: data || [] });
         }
 
@@ -79,36 +80,35 @@ export async function GET(request: NextRequest) {
         if (isMissingRelationOrCache(error, 'email_campaigns') || isWorkspaceSetupError(error)) {
             return campaignsUnavailableResponse();
         }
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
         return NextResponse.json({ success: true, campaigns: data || [] });
     } catch (error) {
         if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
             return campaignsUnavailableResponse();
         }
-        return routeErrorResponse(error, 'Failed to load campaigns');
+        return routeErrorResponse(error, 'Failed to load campaigns', request);
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const tenantId = String(body.tenantId || '').trim();
-        const mode = String(body.mode || 'create').trim();
-        if (!tenantId) {
-            return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+        const parsed = emailCampaignCreateSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
         }
+        const tenantId = parsed.data.tenantId;
+        const mode = String(parsed.data.mode || 'create').trim();
 
         const auth = await requireTenantAccess(tenantId);
         const admin = createSupabaseAdminClient();
 
         if (mode === 'add_recipients') {
-            const campaignId = String(body.campaignId || '').trim();
-            const contactIds = Array.isArray(body.contactIds)
-                ? body.contactIds.map((id: unknown) => String(id).trim()).filter(Boolean)
-                : [];
-            const skipPreviouslyContacted = body.skipPreviouslyContacted !== false;
+            const campaignId = String(parsed.data.campaignId || '').trim();
+            const contactIds = parsed.data.contactIds || [];
+            const skipPreviouslyContacted = parsed.data.skipPreviouslyContacted !== false;
             if (!campaignId) {
-                return NextResponse.json({ error: 'campaignId is required' }, { status: 400 });
+                return NextResponse.json({ error: 'campaignId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
             }
 
             const { data: contacts, error: contactsError } = await admin
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
                 .select('id, email')
                 .eq('tenant_id', tenantId)
                 .in('id', contactIds);
-            if (contactsError) return NextResponse.json({ error: contactsError.message }, { status: 500 });
+            if (contactsError) return NextResponse.json({ error: contactsError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
 
             const validContacts = (contacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0);
             const emails = validContacts.map((c: any) => String(c.email).trim().toLowerCase());
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
                 .select('email')
                 .eq('tenant_id', tenantId)
                 .eq('campaign_id', campaignId);
-            if (existingError) return NextResponse.json({ error: existingError.message }, { status: 500 });
+            if (existingError) return NextResponse.json({ error: existingError.message, code: 'CAMPAIGN_RECIPIENTS_FETCH_FAILED' }, { status: 500 });
             const existingCampaignEmails = new Set((existingCampaignRows || []).map((r: any) => String(r.email).trim().toLowerCase()));
 
             let previouslyContactedEmails = new Set<string>();
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
                     .eq('tenant_id', tenantId)
                     .in('email', emails)
                     .in('status', ['sent', 'delivered', 'opened', 'clicked']);
-                if (previousError) return NextResponse.json({ error: previousError.message }, { status: 500 });
+                if (previousError) return NextResponse.json({ error: previousError.message, code: 'PREVIOUS_RECIPIENTS_FETCH_FAILED' }, { status: 500 });
                 previouslyContactedEmails = new Set((previousRows || []).map((r: any) => String(r.email).trim().toLowerCase()));
             }
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
 
             if (rowsToInsert.length > 0) {
                 const { error: insertError } = await admin.from('campaign_recipients').insert(rowsToInsert);
-                if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+                if (insertError) return NextResponse.json({ error: insertError.message, code: 'RECIPIENTS_INSERT_FAILED' }, { status: 500 });
             }
 
             const totalRecipients = (existingCampaignRows?.length || 0) + rowsToInsert.length;
@@ -175,47 +175,48 @@ export async function POST(request: NextRequest) {
 
         const payload = {
             tenant_id: tenantId,
-            name: String(body.name || '').trim(),
-            subject: String(body.subject || '').trim(),
-            template_id: body.templateId || null,
-            from_name: String(body.fromName || 'AlphaClone Systems').trim(),
-            from_email: String(body.fromEmail || '').trim(),
-            reply_to: body.replyTo || null,
-            scheduled_at: body.scheduledAt || null,
-            segment_filter: body.segmentFilter || {},
-            metadata: body.metadata || {},
+            name: String(parsed.data.name || '').trim(),
+            subject: String(parsed.data.subject || '').trim(),
+            template_id: parsed.data.templateId || null,
+            from_name: String(parsed.data.fromName || 'AlphaClone Systems').trim(),
+            from_email: String(parsed.data.fromEmail || '').trim(),
+            reply_to: parsed.data.replyTo || null,
+            scheduled_at: parsed.data.scheduledAt || null,
+            segment_filter: parsed.data.segmentFilter || {},
+            metadata: parsed.data.metadata || {},
             created_by: auth.user.id,
         };
 
         if (!payload.name || !payload.subject || !payload.from_email) {
-            return NextResponse.json({ error: 'name, subject and fromEmail are required' }, { status: 400 });
+            return NextResponse.json({ error: 'name, subject and fromEmail are required', code: 'VALIDATION_ERROR' }, { status: 400 });
         }
 
         const { data, error } = await admin.from('email_campaigns').insert(payload).select('*').single();
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CREATE_FAILED' }, { status: 500 });
         return NextResponse.json({ success: true, campaign: data });
     } catch (error) {
-        return routeErrorResponse(error, 'Failed to create campaign');
+        return routeErrorResponse(error, 'Failed to create campaign', request);
     }
 }
 
 export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
-        const tenantId = String(body.tenantId || '').trim();
-        const campaignId = String(body.campaignId || '').trim();
-        if (!tenantId || !campaignId) {
-            return NextResponse.json({ error: 'tenantId and campaignId are required' }, { status: 400 });
+        const parsed = emailCampaignUpdateSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
         }
+        const tenantId = parsed.data.tenantId;
+        const campaignId = parsed.data.campaignId;
         await requireTenantAccess(tenantId);
         const admin = createSupabaseAdminClient();
 
         const updateData: Record<string, unknown> = {};
-        if (body.name !== undefined) updateData.name = body.name;
-        if (body.subject !== undefined) updateData.subject = body.subject;
-        if (body.status !== undefined) updateData.status = body.status;
-        if (body.scheduledAt !== undefined) updateData.scheduled_at = body.scheduledAt;
-        if (body.metadata !== undefined) updateData.metadata = body.metadata;
+        if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
+        if (parsed.data.subject !== undefined) updateData.subject = parsed.data.subject;
+        if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
+        if (parsed.data.scheduledAt !== undefined) updateData.scheduled_at = parsed.data.scheduledAt;
+        if (parsed.data.metadata !== undefined) updateData.metadata = parsed.data.metadata;
 
         const { data, error } = await admin
             .from('email_campaigns')
@@ -224,21 +225,22 @@ export async function PATCH(request: NextRequest) {
             .eq('tenant_id', tenantId)
             .select('*')
             .single();
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_UPDATE_FAILED' }, { status: 500 });
         return NextResponse.json({ success: true, campaign: data });
     } catch (error) {
-        return routeErrorResponse(error, 'Failed to update campaign');
+        return routeErrorResponse(error, 'Failed to update campaign', request);
     }
 }
 
 export async function DELETE(request: NextRequest) {
     try {
         const body = await request.json();
-        const tenantId = String(body.tenantId || '').trim();
-        const campaignId = String(body.campaignId || '').trim();
-        if (!tenantId || !campaignId) {
-            return NextResponse.json({ error: 'tenantId and campaignId are required' }, { status: 400 });
+        const parsed = emailCampaignDeleteSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
         }
+        const tenantId = parsed.data.tenantId;
+        const campaignId = parsed.data.campaignId;
         await requireTenantAccess(tenantId);
         const admin = createSupabaseAdminClient();
 
@@ -248,9 +250,9 @@ export async function DELETE(request: NextRequest) {
             .eq('id', campaignId)
             .eq('tenant_id', tenantId)
             .in('status', ['draft', 'cancelled']);
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_DELETE_FAILED' }, { status: 500 });
         return NextResponse.json({ success: true });
     } catch (error) {
-        return routeErrorResponse(error, 'Failed to delete campaign');
+        return routeErrorResponse(error, 'Failed to delete campaign', request);
     }
 }

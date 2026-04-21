@@ -4,6 +4,7 @@ import {
   requireTenantAccess,
   routeErrorResponse,
 } from '@/lib/apiAuth';
+import { providerSendSchema } from '@/schemas/validation';
 
 // Client-friendly error messages
 const CLIENT_ERRORS = {
@@ -75,26 +76,19 @@ function translateErrorToClient(error: any): typeof CLIENT_ERRORS[keyof typeof C
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, tenantId: tenantIdInput, to, subject, message } = await request.json();
-    const tenantId = tenantIdInput || tenant_id;
-
-    if (!tenantId || !to || !subject || !message) {
+    const payload = await request.json();
+    const parsed = providerSendSchema.safeParse(payload);
+    if (!parsed.success) {
       const clientError = CLIENT_ERRORS.RECIPIENT_EMAIL_ISSUE;
       return NextResponse.json({
         error: clientError,
+        code: 'VALIDATION_ERROR',
+        details: parsed.error.flatten(),
         clientFriendly: true
       }, { status: 400 });
     }
-
-    // Basic email validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(to)) {
-      const clientError = CLIENT_ERRORS.RECIPIENT_EMAIL_ISSUE;
-      return NextResponse.json({
-        error: clientError,
-        clientFriendly: true
-      }, { status: 400 });
-    }
+    const { to, subject, message } = parsed.data;
+    const tenantId = parsed.data.tenantId || parsed.data.tenant_id!;
 
     await requireTenantAccess(tenantId);
 

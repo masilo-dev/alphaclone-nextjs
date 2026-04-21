@@ -65,6 +65,163 @@ export const contactSchema = z.object({
     message: z.string()
         .min(10, 'Message must be at least 10 characters')
         .max(2000, 'Message must be less than 2000 characters'),
+    subject: z.string().max(200, 'Subject must be less than 200 characters').optional(),
+    company: z.string().max(200, 'Company must be less than 200 characters').optional(),
+});
+
+export const leadsManagementSchema = z.object({
+    tenantId: z.string().uuid('Invalid tenantId'),
+    action: z.enum([
+        'find_leads',
+        'save_lead',
+        'update_lead',
+        'get_leads',
+        'convert_lead',
+        'delete_lead',
+        'bulk_actions',
+    ]),
+    config: z.record(z.string(), z.unknown()).default({}),
+});
+
+export const outreachSendSchema = z.object({
+    tenantId: z.string().uuid('Invalid tenantId'),
+    leadEmail: z.string().email('Invalid leadEmail'),
+    leadName: z.string().max(200).optional(),
+    subject: z.string().min(1).max(250),
+    body: z.string().min(1),
+    fromAddress: z.string().email().optional(),
+    queue: z.boolean().optional(),
+    autoSend: z.boolean().optional(),
+    consentGranted: z.boolean().optional(),
+    confidenceScore: z.number().min(0).max(100).optional(),
+    deliveryProviders: z.array(z.string()).optional(),
+    preferredProvider: z.string().optional(),
+    balanceByDailyLimit: z.boolean().optional(),
+});
+
+const tenantIdSchema = z.string().uuid('Invalid tenantId');
+const emailSchema = z.string().email('Invalid email address');
+
+export const emailCampaignCreateSchema = z.object({
+    tenantId: tenantIdSchema,
+    mode: z.string().optional(),
+    name: z.string().min(1).max(200).optional(),
+    subject: z.string().min(1).max(250).optional(),
+    fromName: z.string().max(200).optional(),
+    fromEmail: emailSchema.optional(),
+    replyTo: emailSchema.optional().nullable(),
+    scheduledAt: z.string().optional().nullable(),
+    templateId: z.string().uuid().optional().nullable(),
+    segmentFilter: z.record(z.string(), z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+    campaignId: z.string().uuid().optional(),
+    contactIds: z.array(z.string().uuid()).optional(),
+    skipPreviouslyContacted: z.boolean().optional(),
+});
+
+export const emailCampaignUpdateSchema = z.object({
+    tenantId: tenantIdSchema,
+    campaignId: z.string().uuid(),
+    name: z.string().max(200).optional(),
+    subject: z.string().max(250).optional(),
+    status: z.string().max(50).optional(),
+    scheduledAt: z.string().optional().nullable(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const emailCampaignDeleteSchema = z.object({
+    tenantId: tenantIdSchema,
+    campaignId: z.string().uuid(),
+});
+
+export const campaignSendSchema = z.object({
+    tenantId: tenantIdSchema,
+    campaignId: z.string().uuid(),
+});
+
+export const providerSendSchema = z.object({
+    tenantId: tenantIdSchema.optional(),
+    tenant_id: tenantIdSchema.optional(),
+    to: emailSchema,
+    subject: z.string().min(1).max(250),
+    message: z.string().min(1).max(10000),
+}).refine((v) => Boolean(v.tenantId || v.tenant_id), { message: 'tenantId is required', path: ['tenantId'] });
+
+export const integrationEmailProviderSchema = z.object({
+    tenantId: tenantIdSchema,
+    provider: z.enum(['resend', 'brevo']),
+    apiKey: z.string().min(10),
+    fromEmail: emailSchema,
+});
+
+export const integrationEmailProviderDeleteSchema = z.object({
+    tenantId: tenantIdSchema,
+    provider: z.enum(['resend', 'brevo']),
+});
+
+export const resendConnectSchema = z.object({
+    tenantId: tenantIdSchema.optional(),
+    tenant_id: tenantIdSchema.optional(),
+    api_key: z.string().min(10),
+    domain: z.string().min(3),
+}).refine((v) => Boolean(v.tenantId || v.tenant_id), { message: 'tenantId is required', path: ['tenantId'] });
+
+export const resendDisconnectSchema = z.object({
+    tenantId: tenantIdSchema.optional(),
+    tenant_id: tenantIdSchema.optional(),
+}).refine((v) => Boolean(v.tenantId || v.tenant_id), { message: 'tenantId is required', path: ['tenantId'] });
+
+export const scraperSearchSchema = z.object({
+    niche: z.string().min(1).max(200),
+    location: z.string().max(200).optional().default(''),
+    sortBy: z.string().optional().default('default'),
+    radiusKm: z.number().min(1).max(100).optional().default(25),
+    tenantId: tenantIdSchema,
+});
+
+export const scraperAffordableSchema = z.object({
+    action: z.enum(['hunter_domain', 'hunter_verify', 'builtwith', 'google_places', 'enrich_lead']),
+    domain: z.string().optional(),
+    email: emailSchema.optional(),
+    query: z.string().optional(),
+    location: z.string().optional(),
+    tenant_id: tenantIdSchema.optional(),
+});
+
+export const scraperEmailDiscoverySchema = z.object({
+    domain: z.string().min(3),
+    company_name: z.string().optional(),
+    methods: z.array(z.string()).optional(),
+    verify: z.boolean().optional(),
+});
+
+export const scraperDeepCrawlSchema = z.object({
+    url: z.string().min(3),
+    usePlaywright: z.boolean().optional(),
+});
+
+export const slackResendSchema = z.object({
+    tenantId: z.string().uuid().optional(),
+    tenant_id: z.string().uuid().optional(),
+    notificationId: z.string().uuid().optional(),
+    notification_id: z.string().uuid().optional(),
+}).refine((v) => Boolean(v.tenantId || v.tenant_id), { message: 'tenantId is required', path: ['tenantId'] })
+  .refine((v) => Boolean(v.notificationId || v.notification_id), { message: 'notificationId is required', path: ['notificationId'] });
+
+export const integrationActionSchema = z.object({
+    tenantId: z.string().uuid(),
+    integrationType: z.enum(['slack', 'facebook', 'twilio', 'google_calendar', 'stripe', 'hubspot', 'sendgrid']),
+    action: z.string().min(1).max(80),
+    config: z.record(z.string(), z.unknown()).default({}),
+});
+
+export const scraperJobCreateSchema = z.object({
+    tenantId: z.string().uuid(),
+    niche: z.string().min(1).max(200),
+    location: z.string().max(200).optional().default(''),
+    sortBy: z.string().optional().default('default'),
+    usePlaywright: z.boolean().optional().default(false),
+    radiusKm: z.number().min(1).max(100).optional().default(25),
 });
 
 /**
@@ -76,3 +233,5 @@ export type ProjectInput = z.infer<typeof projectSchema>;
 export type ProjectUpdateInput = z.infer<typeof projectUpdateSchema>;
 export type MessageInput = z.infer<typeof messageSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
+export type LeadsManagementInput = z.infer<typeof leadsManagementSchema>;
+export type OutreachSendInput = z.infer<typeof outreachSendSchema>;

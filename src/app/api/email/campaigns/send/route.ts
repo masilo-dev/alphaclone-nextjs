@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
+import { campaignSendSchema } from '@/schemas/validation';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const tenantId = String(body.tenantId || '').trim();
-        const campaignId = String(body.campaignId || '').trim();
-        if (!tenantId || !campaignId) {
-            return NextResponse.json({ error: 'tenantId and campaignId are required' }, { status: 400 });
+        const parsed = campaignSendSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
         }
+        const tenantId = parsed.data.tenantId;
+        const campaignId = parsed.data.campaignId;
 
         await requireTenantAccess(tenantId);
         const result = await sendScheduledCampaignServer(campaignId);
         if (!result.success) {
-            return NextResponse.json({ error: result.error || 'Failed to send campaign' }, { status: 500 });
+            return NextResponse.json({ error: result.error || 'Failed to send campaign', code: 'CAMPAIGN_SEND_FAILED' }, { status: 500 });
         }
         return NextResponse.json({ success: true });
     } catch (error) {
-        return routeErrorResponse(error, 'Failed to send campaign');
+        return routeErrorResponse(error, 'Failed to send campaign', request);
     }
 }

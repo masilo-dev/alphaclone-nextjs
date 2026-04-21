@@ -1,28 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
+import { contactSchema } from '@/schemas/validation';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, subject, message, company } = body;
-
-    // Validate required fields
-    if (!name || !email || !message) {
+    const parsed = contactSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
+    const { name, email, subject, message, company } = parsed.data;
 
     const supabase = createAdminSupabaseClientOrThrow();
 

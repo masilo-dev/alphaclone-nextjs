@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
+import { scraperSearchSchema } from '@/schemas/validation';
 
 const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
@@ -432,15 +433,19 @@ export async function POST(request: Request) {
     const isBudgetExceeded = () => Date.now() - requestStartedAt > REQUEST_BUDGET_MS;
 
     const body = await request.json();
-    const niche     = body.niche    || body.query?.split(' in ')[0]?.trim() || '';
-    const location  = body.location || body.query?.split(' in ')[1]?.trim() || '';
-    const sortBy    = body.sortBy   || 'default';
-    const radiusKm  = Math.min(Math.max(Number(body.radiusKm || 25), 1), 100);
-    const tenantId  = (body.tenantId || body.tenant_id || '').trim();
-
-    if (!niche) {
-      return NextResponse.json({ error: 'Industry/niche is required' }, { status: 400 });
+    const fallbackNiche = body.niche || body.query?.split(' in ')[0]?.trim() || '';
+    const fallbackLocation = body.location || body.query?.split(' in ')[1]?.trim() || '';
+    const parsed = scraperSearchSchema.safeParse({
+      niche: fallbackNiche,
+      location: fallbackLocation,
+      sortBy: body.sortBy || 'default',
+      radiusKm: Number(body.radiusKm || 25),
+      tenantId: String(body.tenantId || body.tenant_id || '').trim(),
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { niche, location, sortBy, radiusKm, tenantId } = parsed.data;
 
     await requireTenantAccess(tenantId);
 

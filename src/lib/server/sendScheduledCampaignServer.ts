@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { emailCampaignService } from '@/services/emailCampaignService';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { gmailServerService } from '@/services/server/gmailServerService';
+import { isEmailSuppressed } from '@/lib/email/suppression';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
 type ProviderConfig = {
@@ -311,6 +312,17 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         let sentCount = 0;
 
         for (const recipient of recipients) {
+            if (await isEmailSuppressed(String(c.tenant_id || ''), recipient.email)) {
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'failed',
+                        error_message: 'Recipient is suppressed',
+                    })
+                    .eq('id', recipient.id);
+                continue;
+            }
+
             const { data: contact } = await admin
                 .from('business_clients')
                 .select('id, name, email, website, custom_fields')

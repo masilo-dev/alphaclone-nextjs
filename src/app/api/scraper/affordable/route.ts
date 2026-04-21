@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { googlePlacesService } from '@/services/googlePlacesService';
+import { scraperAffordableSchema } from '@/schemas/validation';
 
 // Affordable Scraping Tools Integration
 // Replaces expensive Apollo/ZoomInfo with cost-effective alternatives
@@ -210,18 +211,11 @@ async function googlePlacesSearch(
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { 
-      action,
-      domain,
-      email,
-      query,
-      location,
-      tenant_id 
-    } = body;
-
-    if (!action) {
-      return NextResponse.json({ error: 'Action required' }, { status: 400 });
+    const parsed = scraperAffordableSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { action, domain, email, query, location, tenant_id } = parsed.data;
 
     let results: any = {};
 

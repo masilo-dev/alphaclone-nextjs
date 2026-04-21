@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { BrowserManager } from '@/lib/scraper/browserManager';
+import { scraperDeepCrawlSchema } from '@/schemas/validation';
 
 // Regex for extracting emails
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
@@ -9,11 +10,12 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 export async function POST(request: Request) {
   let browserInstance = null;
   try {
-    const { url, usePlaywright = false } = await request.json();
-
-    if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    const payload = await request.json();
+    const parsed = scraperDeepCrawlSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { url, usePlaywright = false } = parsed.data;
 
     const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
     let html = '';
@@ -118,12 +120,7 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     console.error(`Deep Crawl Error:`, error);
-    return NextResponse.json({ 
-      success: false, 
-      emails: [],
-      phone: '',
-      social_links: {}
-    }, { status: 200 });
+    return NextResponse.json({ success: false, error: 'Deep crawl failed', code: 'DEEP_CRAWL_FAILED', emails: [], phone: '', social_links: {} }, { status: 500 });
   } finally {
     if (browserInstance) {
       try { await browserInstance.close(); } catch {}

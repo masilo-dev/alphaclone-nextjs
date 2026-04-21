@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { isEmailSuppressed } from '@/lib/email/suppression';
 
 /**
  * POST /api/email/send
@@ -71,6 +72,15 @@ export async function POST(req: NextRequest) {
         if (!apiKey) {
             return NextResponse.json({ success: false, error: 'Email service not configured for this account' }, { status: 503 });
         }
+        if (tenantId && await isEmailSuppressed(tenantId, to)) {
+            return NextResponse.json(
+                { success: false, error: 'Recipient is suppressed and cannot receive emails', code: 'EMAIL_SUPPRESSED' },
+                { status: 409 }
+            );
+        }
+
+        const listUnsubscribeUrl = payload.listUnsubscribeUrl
+            || (process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?email=${encodeURIComponent(to)}` : undefined);
 
         // 2. Execute Send
         if (provider === 'sendgrid') {
@@ -88,7 +98,11 @@ export async function POST(req: NextRequest) {
                         { type: 'text/plain', value: text || '' },
                         { type: 'text/html', value: html || '' }
                     ].filter(c => c.value),
-                    reply_to: replyTo ? { email: replyTo } : undefined
+                    reply_to: replyTo ? { email: replyTo } : undefined,
+                    headers: listUnsubscribeUrl ? {
+                        'List-Unsubscribe': `<${listUnsubscribeUrl}>`,
+                        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+                    } : undefined,
                 }),
             });
 
