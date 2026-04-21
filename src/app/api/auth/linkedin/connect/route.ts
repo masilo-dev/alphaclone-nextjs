@@ -15,16 +15,17 @@ type LinkedInOAuthState = {
   ts: number;
 };
 
-const LINKEDIN_REQUIRED_SCOPES = [
-  'r_verify',
+const LINKEDIN_REQUESTED_SCOPES = [
+  // Core posting scope.
+  'w_member_social',
+  // Optional but commonly available profile scopes.
   'openid',
   'profile',
-  'w_member_social',
+  'email',
+  // Company page posting/admin scopes.
   'w_organization_social',
   'r_organization_admin',
   'r_organization_social',
-  'email',
-  'r_profile_basicinfo',
 ] as const;
 
 export async function GET(req: NextRequest) {
@@ -82,7 +83,7 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('scope', LINKEDIN_REQUIRED_SCOPES.join(' '));
+    authUrl.searchParams.set('scope', LINKEDIN_REQUESTED_SCOPES.join(' '));
     authUrl.searchParams.set('prompt', 'consent');
     if (forceReauth) {
       // Ask LinkedIn to avoid silent reuse where possible.

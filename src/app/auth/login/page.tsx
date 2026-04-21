@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
 import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield } from 'lucide-react';
@@ -15,9 +16,14 @@ import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import TurnstileVerification from '@/components/ui/TurnstileVerification';
 import Image from 'next/image';
 
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
+
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex items-center justify-center"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
             <LoginContent />
         </Suspense>
     );
@@ -292,10 +298,9 @@ function LoginContent() {
 
     if (showPayment && newTenantData) {
         return (
-            <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="fixed inset-0 z-0 opacity-20 pointer-events-none hidden md:block">
-                    <div className="absolute top-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-teal-500 blur-[100px]" />
-                    <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-blue-600 blur-[100px]" />
+            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <HeroBackground />
                 </div>
 
                 <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 my-auto animate-slide-up">
@@ -350,10 +355,9 @@ function LoginContent() {
 
     if (showMfaChallenge) {
         return (
-            <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="fixed inset-0 z-0 opacity-20 pointer-events-none hidden md:block">
-                    <div className="absolute top-[20%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-teal-500 blur-[100px]" />
-                    <div className="absolute bottom-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-blue-600 blur-[100px]" />
+            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <HeroBackground />
                 </div>
 
                 <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
@@ -410,12 +414,10 @@ function LoginContent() {
     }
 
     return (
-        <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-3 py-4 sm:py-6 relative overflow-x-hidden overflow-y-auto">
+        <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-3 py-4 sm:py-6 relative overflow-x-hidden overflow-y-auto">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/5 blur-[80px] animate-blob" />
-                <div className="absolute bottom-[10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/5 blur-[80px] animate-blob" style={{ animationDelay: '2s' }} />
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-5" />
+                <HeroBackground />
             </div>
 
             <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-6 shadow-2xl relative z-10 flex-shrink-0 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>

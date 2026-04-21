@@ -426,6 +426,7 @@ export const authService = {
                 const messages: Record<string, string> = {
                     missing_w_member_social: 'LinkedIn connected, but write scope is missing. Reconnect and approve posting permissions.',
                     missing_required_scopes: 'LinkedIn connected, but required scopes are missing. Reconnect and approve all requested permissions.',
+                    unauthorized_scope_error: 'LinkedIn rejected one or more scopes for this app. Check LinkedIn app products/permissions, then reconnect.',
                     app_not_configured: 'LinkedIn app is not configured on server.',
                     token_exchange_failed: 'LinkedIn OAuth token exchange failed. Please try reconnecting.',
                     profile_failed: 'LinkedIn profile read failed. Please reconnect.',

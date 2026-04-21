@@ -378,7 +378,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         ].map(({ value, label }) => (
                            <div key={label}>
                                  <div className="text-2xl sm:text-3xl font-black text-cyan-300">{value}</div>
-                              <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+                              <div className="text-xs text-slate-300 mt-0.5">{label}</div>
                            </div>
                         ))}
                      </div>
@@ -397,7 +397,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-5"
                      >
                         <h3 className="text-xl font-bold text-white mb-2">Chat-Driven Execution</h3>
-                        <p className="text-sm text-slate-400 mb-4">
+                           <p className="text-sm text-slate-300 mb-4">
                            Trigger business workflows from chat while staying in your workspace. The platform runs CRM, tasks, invoices, and social operations in sequence.
                         </p>
                         <div className="space-y-2 text-sm">
@@ -444,7 +444,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            <div key={item.title} className="rounded-xl border border-cyan-500/15 bg-[#081228]/90 p-3">
                               <img src="/window.svg" alt={`${item.title} workflow preview`} className="w-full h-20 object-contain opacity-80 mb-2" />
                               <h4 className="text-sm font-semibold text-white">{item.title}</h4>
-                              <p className="text-xs text-slate-400">{item.caption}</p>
+                              <p className="text-xs text-slate-300">{item.caption}</p>
                            </div>
                         ))}
                      </motion.div>
@@ -459,7 +459,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
                         Platform Workflows In One System
                      </h3>
-                     <p className="text-slate-400 max-w-3xl mx-auto">
+                     <p className="text-slate-300 max-w-3xl mx-auto">
                         Built for business operators. Manage leads, tasks, projects, social publishing, and billing from a consistent interface with clear execution states.
                      </p>
                   </div>
@@ -508,7 +508,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
                         Inside AlphaClone Workflows
                      </h3>
-                     <p className="text-slate-400 max-w-3xl mx-auto">
+                     <p className="text-slate-300 max-w-3xl mx-auto">
                         Real screens from lead management, deal pipeline, social integrations, and mobile operations.
                      </p>
                   </div>
@@ -567,7 +567,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               />
                            </div>
                            <h4 className="mt-3 text-base font-bold text-cyan-200">{shot.title}</h4>
-                           <p className="mt-1 text-sm text-slate-400 leading-relaxed">{shot.caption}</p>
+                           <p className="mt-1 text-sm text-slate-300 leading-relaxed">{shot.caption}</p>
                         </motion.article>
                      ))}
                   </div>
@@ -643,7 +643,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            className="space-y-2"
                         >
                            <div className="text-2xl sm:text-3xl font-black text-white">{stat.value}</div>
-                           <div className="text-xs text-slate-500 uppercase tracking-wide">{stat.label}</div>
+                           <div className="text-xs text-slate-300 uppercase tracking-wide">{stat.label}</div>
                         </motion.div>
                      ))}
                   </div>

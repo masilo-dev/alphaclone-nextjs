@@ -693,9 +693,32 @@ body {
   }
 }
 
+.marketing-theme .text-slate-300 {
+  color: #e2ebf8 !important;
+}
+
+.marketing-theme .text-slate-400 {
+  color: #d2dff2 !important;
+}
+
 .marketing-theme .text-slate-500,
 .marketing-theme .text-slate-600 {
   color: #c9d7ea !important;
+}
+
+.marketing-theme .bg-slate-900\/50 {
+  background-color: rgb(15 23 42 / 0.86) !important;
+}
+
+.marketing-theme .bg-slate-900\/60,
+.marketing-theme .bg-slate-900\/70 {
+  background-color: rgb(15 23 42 / 0.9) !important;
+}
+
+.marketing-theme .bg-slate-950\/50,
+.marketing-theme .bg-slate-950\/60,
+.marketing-theme .bg-slate-950\/70 {
+  background-color: rgb(2 6 23 / 0.92) !important;
 }
 
 /* Tablet Responsive Adjustments */

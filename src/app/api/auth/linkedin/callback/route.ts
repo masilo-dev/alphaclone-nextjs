@@ -17,15 +17,8 @@ type LinkedInOAuthState = {
 };
 
 const LINKEDIN_REQUIRED_SCOPES = [
-  'r_verify',
-  'openid',
-  'profile',
+  // Keep activation tied to posting capability only.
   'w_member_social',
-  'w_organization_social',
-  'r_organization_admin',
-  'r_organization_social',
-  'email',
-  'r_profile_basicinfo',
 ] as const;
 
 function normalizeScopes(raw: unknown): string[] {
