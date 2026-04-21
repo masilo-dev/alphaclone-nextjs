@@ -26,11 +26,6 @@ import MarketingFooter from './landing/MarketingFooter';
 import { ServiceCard } from './landing/ServiceCard';
 import { AIWorkerGraphic } from './ui/AIWorkerGraphic';
 
-const HeroBackground = dynamic(() => import('./landing/HeroBackground'), {
-   ssr: false,
-   loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
-
 const VideoExplainer = dynamic(() => import('./dashboard/VideoExplainer'), {
    ssr: false,
 });
@@ -117,11 +112,21 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
          {/* Persistent full-page background */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             <div
-               className="absolute inset-0 opacity-35 bg-cover bg-center"
+               className="absolute inset-0 opacity-30 bg-cover bg-center"
                style={{ backgroundImage: "url('/marketing-bg.jpg')" }}
             />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.86)_100%)] z-[1]" />
-            <HeroBackground />
+            <iframe
+               src="https://www.loom.com/embed/6bb52c25cc5346e293a5983718cac385?autoplay=1&mute=1&loop=1&hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true"
+               title="AlphaClone Background Video"
+               className="absolute inset-0 h-full w-full scale-125 opacity-35"
+               style={{ border: 0 }}
+               allow="autoplay; fullscreen"
+               tabIndex={-1}
+               aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_55%,rgba(8,20,60,0.22)_0%,rgba(2,6,23,0.90)_100%)] z-[1]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/30 via-[#040A12]/58 to-[#081b37]/96 z-[2]" />
+            <div className="absolute inset-x-0 bottom-0 h-[34vh] bg-gradient-to-t from-[#0b2d5a]/85 via-[#0b2d5a]/35 to-transparent z-[3]" />
          </div>
 
          {/* Enhanced Navigation with better transitions */}
@@ -390,31 +395,6 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </div>
                   </motion.div>
                </motion.div>
-            </section>
-
-            {/* Loom Demo */}
-            <section className="py-16 bg-[#030913] border-y border-slate-800">
-               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-6">
-                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Platform Walkthrough
-                     </h3>
-                     <p className="text-slate-400">
-                        See AlphaClone workflows in action.
-                     </p>
-                  </div>
-                  <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-3">
-                     <div style={{ position: 'relative', paddingBottom: '102.77777777777777%', height: 0 }}>
-                        <iframe
-                           src="https://www.loom.com/embed/6bb52c25cc5346e293a5983718cac385"
-                           frameBorder="0"
-                           allowFullScreen
-                           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                           title="AlphaClone Loom Demo"
-                        />
-                     </div>
-                  </div>
-               </div>
             </section>
 
             {/* Workflow and Product Preview */}
