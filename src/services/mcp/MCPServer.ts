@@ -2351,10 +2351,14 @@ class AlphaCloneMCPServer {
           let status: 'scheduled' | 'queued' | 'published' = publish_now ? 'queued' : 'scheduled';
           let publishedAt: string | null = null;
           let facebookPostId: string | null = null;
+          const assuredIntegration = hasFacebook ? integration : null;
 
           if (publish_now && hasFacebook) {
+            if (!assuredIntegration?.page_access_token) {
+              throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
+            }
             const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
-            graph.searchParams.set('access_token', integration.page_access_token);
+            graph.searchParams.set('access_token', assuredIntegration.page_access_token);
             const body = new URLSearchParams();
             if (firstMediaUrl) {
               if (isVideoMedia) {
