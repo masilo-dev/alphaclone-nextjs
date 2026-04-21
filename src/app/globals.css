@@ -84,7 +84,7 @@ body {
   background-color: #020D1A;
   background-image:
     linear-gradient(180deg, rgba(2, 6, 23, 0.80) 0%, rgba(2, 6, 23, 0.88) 45%, rgba(2, 6, 23, 0.94) 100%),
-    url("/marketing-bg.jpg");
+    url("/marketing-bg-v2.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
