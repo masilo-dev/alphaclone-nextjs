@@ -29,13 +29,15 @@ const LINKEDIN_REQUIRED_SCOPES = [
 
 export async function GET(req: NextRequest) {
   try {
+    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser();
     if (error || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const next = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
+      return NextResponse.redirect(`${appUrl}/auth/login?next=${next}`);
     }
 
     const tenantIdParam = req.nextUrl.searchParams.get('tenant_id')?.trim() || null;
@@ -51,7 +53,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
     const clientId = ENV.LINKEDIN_CLIENT_ID;
     const redirectUri = ENV.LINKEDIN_REDIRECT_URI || `${appUrl}/api/auth/linkedin/callback`;
     if (!clientId) {
