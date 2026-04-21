@@ -331,7 +331,8 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
 
             const contactName = String(contact?.full_name || '').trim();
             const parts = contactName.split(/\s+/).filter(Boolean);
-            const companyName = String(contact?.company?.name || contact?.company?.website || '').trim();
+            const companyRecord = Array.isArray(contact?.company) ? contact.company[0] : contact?.company;
+            const companyName = String(companyRecord?.name || companyRecord?.website || '').trim();
 
             const recipientData = {
                 id: recipient.contact_id,
