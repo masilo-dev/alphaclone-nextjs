@@ -577,7 +577,9 @@ export const contractService = {
                     const bytes = this.decodeBase64ToBytes(payload.data.bufferBase64);
                     const mimeType = String(payload.data.mimeType || 'application/pdf');
                     const filename = String(payload.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.pdf`);
-                    const blob = new Blob([bytes], { type: mimeType });
+                    const blobBytes = new Uint8Array(bytes.byteLength);
+                    blobBytes.set(bytes);
+                    const blob = new Blob([blobBytes], { type: mimeType });
                     this.triggerBrowserDownload(blob, filename);
                     return;
                 }
