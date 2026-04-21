@@ -116,6 +116,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30">
          {/* Persistent full-page background */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+            <div
+               className="absolute inset-0 opacity-35 bg-cover bg-center"
+               style={{ backgroundImage: "url('/marketing-bg.jpg')" }}
+            />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,6,23,0.86)_100%)] z-[1]" />
             <HeroBackground />
          </div>
@@ -323,7 +327,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
                      {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        Manage your entire business with one unified system. <span className="text-cyan-300 font-bold">AlphaClone Systems</span> provides CRM, invoicing, contracts, projects, and communications in a single platform for <span className="text-cyan-200 font-bold">$45/month</span>.
+                        Manage your entire business with one unified system. <span className="text-cyan-300 font-bold">AlphaClone Systems</span> provides CRM, invoicing, contracts, projects, and communications in one platform starting at <span className="text-cyan-200 font-bold">$15/month</span>.
                      </p>
                      <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
                         Built for business teams. Social automation supports LinkedIn pages and Facebook business pages, with no personal account posting flow.
@@ -388,6 +392,31 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                </motion.div>
             </section>
 
+            {/* Loom Demo */}
+            <section className="py-16 bg-[#030913] border-y border-slate-800">
+               <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-6">
+                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
+                        Platform Walkthrough
+                     </h3>
+                     <p className="text-slate-400">
+                        See AlphaClone workflows in action.
+                     </p>
+                  </div>
+                  <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-3">
+                     <div style={{ position: 'relative', paddingBottom: '102.77777777777777%', height: 0 }}>
+                        <iframe
+                           src="https://www.loom.com/embed/6bb52c25cc5346e293a5983718cac385"
+                           frameBorder="0"
+                           allowFullScreen
+                           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                           title="AlphaClone Loom Demo"
+                        />
+                     </div>
+                  </div>
+               </div>
+            </section>
+
             {/* Workflow and Product Preview */}
             <section className="py-16 border-y border-slate-800 bg-[#050B14]/80">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -450,60 +479,6 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            </div>
                         ))}
                      </motion.div>
-                  </div>
-               </div>
-            </section>
-
-            {/* Jarvis Autonomous Worker Grid */}
-            <section className="py-16 bg-[#030913] border-b border-slate-800">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="text-center mb-10">
-                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Jarvis Autonomous Operations
-                     </h3>
-                     <p className="text-slate-400 max-w-3xl mx-auto">
-                        Visual command center for autonomous AI workers. Each unit executes marketing tasks continuously with audit visibility and handoff checkpoints.
-                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                     {[
-                        { name: 'Scout Worker', task: 'Identifying high-intent lead segments', status: 'running', eta: 'live' },
-                        { name: 'Writer Worker', task: 'Drafting platform-specific campaign content', status: 'running', eta: '02:10' },
-                        { name: 'Publisher Worker', task: 'Scheduling LinkedIn and Facebook page posts', status: 'queued', eta: '05:45' },
-                        { name: 'Optimizer Worker', task: 'Rebalancing budget and channel allocation', status: 'running', eta: '01:35' },
-                        { name: 'Responder Worker', task: 'Preparing follow-up responses and sequences', status: 'running', eta: '03:05' },
-                        { name: 'Analyzer Worker', task: 'Calculating campaign quality and risk scores', status: 'running', eta: '00:55' },
-                        { name: 'Compliance Worker', task: 'Validating policy and outbound constraints', status: 'queued', eta: '04:20' },
-                        { name: 'Report Worker', task: 'Compiling executive marketing performance summary', status: 'running', eta: '06:00' },
-                     ].map((worker, index) => (
-                        <motion.div
-                           key={worker.name}
-                           initial={{ opacity: 0, y: 12 }}
-                           whileInView={{ opacity: 1, y: 0 }}
-                           viewport={{ once: true }}
-                           transition={{ delay: index * 0.06 }}
-                           className="rounded-2xl border border-cyan-500/20 bg-[#081228]/85 p-4 relative overflow-hidden"
-                        >
-                           <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl" />
-                           <div className="flex items-center justify-between mb-3">
-                              <p className="text-sm font-bold text-cyan-200">{worker.name}</p>
-                              <div className="flex items-center gap-2">
-                                 <motion.span
-                                    className={`inline-block h-2 w-2 rounded-full ${worker.status === 'running' ? 'bg-cyan-300' : 'bg-slate-400'}`}
-                                    animate={{ opacity: [0.35, 1, 0.35] }}
-                                    transition={{ duration: 1.1, repeat: Infinity }}
-                                 />
-                                 <span className="text-[11px] uppercase tracking-wide text-slate-400">{worker.status}</span>
-                              </div>
-                           </div>
-                           <p className="text-sm text-slate-300 leading-relaxed min-h-[44px]">{worker.task}</p>
-                           <div className="mt-4 flex items-center justify-between text-xs">
-                              <span className="text-slate-500">Execution ETA</span>
-                              <span className="font-semibold text-cyan-300">{worker.eta}</span>
-                           </div>
-                        </motion.div>
-                     ))}
                   </div>
                </div>
             </section>
@@ -808,49 +783,35 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </p>
                   </motion.div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                      {[
                         {
                            name: 'Starter',
                            price: '$15',
-                           desc: 'Perfect for freelancers and solopreneurs',
+                           desc: 'Full access to all platform modules',
                            features: [
-                              '1 User · 5GB Storage',
-                              '10 Projects · 10 Contracts',
-                              '50 AI queries / mo',
-                              '10 AI Agent runs / mo',
-                              'Standard support (48h)',
+                              'CRM, projects, contracts, invoices, tasks',
+                              'LinkedIn and Facebook workflow support',
+                              'AI workflows and automation tools',
+                              'Team collaboration and analytics',
+                              'Full system access',
                            ],
                            note: 'All features included',
                            popular: false
                         },
                         {
-                           name: 'Pro',
-                           price: '$45',
-                           desc: 'High-growth teams & agencies',
+                           name: 'Pro Video',
+                           price: '$35',
+                           desc: 'Full access plus integrated video meetings',
                            features: [
-                              '25 Users · 25GB Storage',
-                              '100 Projects · 100 Contracts',
-                              '500 AI queries / mo',
-                              '200 AI Agent runs / mo',
-                              'Priority support (12h)',
+                              'Everything in Starter',
+                              'Daily and LiveKit video meeting support',
+                              'Hosted client calls and team meetings',
+                              'Meeting operations and controls',
+                              'Full system access',
                            ],
                            note: 'All features included',
                            popular: true
-                        },
-                        {
-                           name: 'Enterprise',
-                           price: '$80',
-                           desc: 'Large scale operations',
-                           features: [
-                              'Unlimited Users & Storage',
-                              'Unlimited Projects & Contracts',
-                              'Unlimited AI queries',
-                              'Unlimited AI Agent runs',
-                              'Dedicated support (4h)',
-                           ],
-                           note: 'All features included',
-                           popular: false
                         }
                      ].map((plan, i) => (
                         <motion.div
