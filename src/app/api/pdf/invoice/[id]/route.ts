@@ -6,6 +6,18 @@ function sanitizeFilename(input: string): string {
     return input.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
+function resolveRelatedName(value: unknown, fallback: string): string {
+    if (Array.isArray(value)) {
+        const first = value[0] as { name?: unknown } | undefined;
+        return typeof first?.name === 'string' && first.name.trim().length > 0 ? first.name : fallback;
+    }
+    if (value && typeof value === 'object') {
+        const maybe = value as { name?: unknown };
+        return typeof maybe.name === 'string' && maybe.name.trim().length > 0 ? maybe.name : fallback;
+    }
+    return fallback;
+}
+
 export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await context.params;
@@ -42,7 +54,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         doc.text(`Issue Date: ${invoice.issue_date}`, 20, 36);
         doc.text(`Due Date: ${invoice.due_date}`, 20, 42);
         doc.text(`Status: ${invoice.status}`, 20, 48);
-        doc.text(`Client: ${invoice.client?.name || 'Unknown Client'}`, 20, 54);
+        const clientDisplayName = resolveRelatedName(invoice.client, 'Unknown Client');
+        doc.text(`Client: ${clientDisplayName}`, 20, 54);
 
         const items = Array.isArray(invoice.line_items) ? invoice.line_items : [];
         let cursorY = 66;
@@ -78,7 +91,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         doc.text(`Total: ${Number(invoice.total || 0).toFixed(2)}`, 120, cursorY);
 
         const invoiceNumber = sanitizeFilename(invoice.invoice_number || 'INVOICE');
-        const clientName = sanitizeFilename(invoice.client?.name || 'Client');
+        const clientName = sanitizeFilename(resolveRelatedName(invoice.client, 'Client'));
         const filename = `${invoiceNumber}_${clientName}.pdf`;
         const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
