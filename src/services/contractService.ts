@@ -31,6 +31,95 @@ export interface Contract {
 }
 
 export const contractService = {
+    decodeBase64ToBytes(base64: string): Uint8Array {
+        const normalized = String(base64 || '').trim();
+        const binary = window.atob(normalized);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    },
+
+    triggerBrowserDownload(blob: Blob, filename: string): void {
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(url);
+    },
+    hasNonLatinText(text: string): boolean {
+        if (!text) return false;
+        return /[^\u0000-\u00FF]/.test(text);
+    },
+
+    buildUnicodeSafeContractHtml(contract: any, tenant?: any): string {
+        const title = String(contract?.title || 'Contract');
+        const rawContent = typeof contract?.content === 'string' ? contract.content : '';
+        const normalized = this.normalizeContractTextForPdf(this.cleanMarkdown(rawContent));
+        const contentHtml = normalized
+            .split('\n')
+            .map((line) => {
+                const safe = line
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                if (!safe.trim()) return '<p>&nbsp;</p>';
+                if (safe.trim().startsWith('#')) {
+                    const cleanHeader = safe.replace(/^#+\s*/, '');
+                    return `<h2>${cleanHeader}</h2>`;
+                }
+                return `<p>${safe}</p>`;
+            })
+            .join('');
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 28px;
+            color: #0f172a;
+            background: #ffffff;
+            font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
+            line-height: 1.6;
+            font-size: 12px;
+        }
+        h1, h2, h3, h4 {
+            color: #0f172a;
+            font-weight: 700;
+            margin: 20px 0 10px 0;
+        }
+        p {
+            margin: 0 0 10px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>${title}</h1>
+    ${contentHtml}
+    <hr />
+    <p>${tenant?.name || 'AlphaClone Systems'}</p>
+</body>
+</html>`;
+    },
     /**
      * Get tenant ID (required for all operations)
      */
@@ -465,7 +554,53 @@ export const contractService = {
         return doc;
     },
 
-    downloadPDF(contract: any, tenant?: any) {
+    async downloadPDF(contract: any, tenant?: any) {
+        const tenantId = tenant?.id || tenantService.getCurrentTenantId();
+        if (tenantId && contract?.id) {
+            try {
+                const response = await fetch('/api/contracts/management', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenantId,
+                        action: 'download_contract',
+                        config: {
+                            contractId: contract.id,
+                            format: 'pdf',
+                            optimize: true,
+                        },
+                    }),
+                });
+
+                const payload = await response.json().catch(() => ({}));
+                if (response.ok && payload?.success && payload?.data?.bufferBase64) {
+                    const bytes = this.decodeBase64ToBytes(payload.data.bufferBase64);
+                    const mimeType = String(payload.data.mimeType || 'application/pdf');
+                    const filename = String(payload.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.pdf`);
+                    const blob = new Blob([bytes], { type: mimeType });
+                    this.triggerBrowserDownload(blob, filename);
+                    return;
+                }
+            } catch (error) {
+                console.error('Server contract PDF download failed, using local fallback:', error);
+            }
+        }
+
+        const rawContent = typeof contract?.content === 'string' ? contract.content : '';
+        if (typeof window !== 'undefined' && this.hasNonLatinText(rawContent)) {
+            const html = this.buildUnicodeSafeContractHtml(contract, tenant);
+            const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                }, 300);
+                return;
+            }
+        }
         const doc = this.generateProfessionalPDF(contract, tenant);
         doc.save(`${contract.title.replace(/\s+/g, '_')}.pdf`);
     },

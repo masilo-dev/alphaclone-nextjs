@@ -31,6 +31,16 @@ function contactsUnavailableResponse() {
     });
 }
 
+type CampaignContactRow = {
+    id: string;
+    email: string | null;
+    full_name: string | null;
+    company: {
+        name?: string | null;
+        website?: string | null;
+    } | null;
+};
+
 function isWorkspaceSetupError(error: unknown): boolean {
     if (!error || typeof error !== 'object') return false;
     const maybeError = error as { code?: string; message?: string };
@@ -59,16 +69,22 @@ export async function GET(request: NextRequest) {
 
         if (mode === 'contacts') {
             const { data, error } = await admin
-                .from('business_clients')
-                .select('id, name, email, website')
+                .from('contacts')
+                .select('id, full_name, email, company:companies(name, website)')
                 .eq('tenant_id', tenantId)
                 .not('email', 'is', null)
-                .order('name', { ascending: true });
-            if (isMissingRelationOrCache(error, 'business_clients') || isWorkspaceSetupError(error)) {
+                .order('full_name', { ascending: true });
+            if (isMissingRelationOrCache(error, 'contacts') || isWorkspaceSetupError(error)) {
                 return contactsUnavailableResponse();
             }
             if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CONTACTS_FETCH_FAILED' }, { status: 500 });
-            return NextResponse.json({ success: true, contacts: data || [] });
+            const contacts = ((data || []) as CampaignContactRow[]).map((row) => ({
+                id: row.id,
+                name: String(row.full_name || row.email || '').trim(),
+                email: String(row.email || '').trim(),
+                website: row.company?.website || row.company?.name || null,
+            }));
+            return NextResponse.json({ success: true, contacts });
         }
 
         const { data, error } = await admin
@@ -112,14 +128,51 @@ export async function POST(request: NextRequest) {
             }
 
             const { data: contacts, error: contactsError } = await admin
-                .from('business_clients')
+                .from('contacts')
                 .select('id, email')
                 .eq('tenant_id', tenantId)
                 .in('id', contactIds);
             if (contactsError) return NextResponse.json({ error: contactsError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
 
-            const validContacts = (contacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0);
-            const emails = validContacts.map((c: any) => String(c.email).trim().toLowerCase());
+            let validContacts = (contacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0);
+            const unresolvedContactIds = contactIds.filter(
+                (id) => !validContacts.some((contact: any) => String(contact.id) === String(id))
+            );
+            if (unresolvedContactIds.length > 0) {
+                const { data: legacyClients, error: legacyError } = await admin
+                    .from('business_clients')
+                    .select('id, email')
+                    .eq('tenant_id', tenantId)
+                    .in('id', unresolvedContactIds);
+                if (legacyError) return NextResponse.json({ error: legacyError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
+
+                const legacyEmails = Array.from(
+                    new Set(
+                        (legacyClients || [])
+                            .map((client: any) => String(client.email || '').trim().toLowerCase())
+                            .filter(Boolean)
+                    )
+                );
+                if (legacyEmails.length > 0) {
+                    const { data: mappedContacts, error: mappedError } = await admin
+                        .from('contacts')
+                        .select('id, email')
+                        .eq('tenant_id', tenantId)
+                        .in('email', legacyEmails);
+                    if (mappedError) return NextResponse.json({ error: mappedError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
+                    validContacts = [...validContacts, ...((mappedContacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0))];
+                }
+            }
+
+            const uniqueContactsById = new Map<string, { id: string; email: string }>();
+            for (const contact of validContacts) {
+                const id = String(contact.id || '').trim();
+                const email = String(contact.email || '').trim();
+                if (!id || !email) continue;
+                uniqueContactsById.set(id, { id, email });
+            }
+            const normalizedContacts = Array.from(uniqueContactsById.values());
+            const emails = normalizedContacts.map((c) => c.email.toLowerCase());
 
             const { data: existingCampaignRows, error: existingError } = await admin
                 .from('campaign_recipients')
@@ -141,7 +194,7 @@ export async function POST(request: NextRequest) {
                 previouslyContactedEmails = new Set((previousRows || []).map((r: any) => String(r.email).trim().toLowerCase()));
             }
 
-            const rowsToInsert = validContacts
+            const rowsToInsert = normalizedContacts
                 .filter((c: any) => {
                     const normalizedEmail = String(c.email).trim().toLowerCase();
                     return !existingCampaignEmails.has(normalizedEmail) && !previouslyContactedEmails.has(normalizedEmail);
@@ -169,7 +222,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 success: true,
                 added: rowsToInsert.length,
-                skipped: validContacts.length - rowsToInsert.length,
+                skipped: normalizedContacts.length - rowsToInsert.length,
             });
         }
 
