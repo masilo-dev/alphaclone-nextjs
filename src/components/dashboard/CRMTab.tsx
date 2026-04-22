@@ -21,6 +21,8 @@ const STAGES: { id: DealStage; label: string; color: string }[] = [
 
 export default function CRMTab({ userId, userRole }: { userId: string; userRole?: string }) {
     const router = useRouter();
+    const canManagePipeline =
+        userRole === 'admin' || userRole === 'tenant_admin' || userRole === 'business_dashboard';
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
@@ -102,30 +104,34 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                     >
                         Contacts
                     </button>
-                    <button
-                        type="button"
-                        onClick={handleSync}
-                        disabled={syncing}
-                        className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-white/10 disabled:opacity-50 text-xs sm:text-sm h-10"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                        {syncing ? 'Syncing...' : 'Sync CRM'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/dashboard/deals')}
-                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Deal
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/dashboard/deals?createFromLead=1')}
-                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-teal-500/30 text-teal-300 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                    >
-                        From Lead
-                    </button>
+                    {canManagePipeline && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleSync}
+                                disabled={syncing}
+                                className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-white/10 disabled:opacity-50 text-xs sm:text-sm h-10"
+                            >
+                                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                                {syncing ? 'Syncing...' : 'Sync CRM'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => router.push('/dashboard/deals')}
+                                className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
+                            >
+                                <Plus className="w-4 h-4" />
+                                New Deal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => router.push('/dashboard/deals?createFromLead=1')}
+                                className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-teal-500/30 text-teal-300 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
+                            >
+                                From Lead
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 

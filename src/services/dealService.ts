@@ -194,7 +194,7 @@ export const dealService: DealService = {
 
             const { data, error } = await query
                 .order('created_at', { ascending: false })
-                .limit(filters?.limit || 100);
+                .limit(filters?.limit || 1000);
 
             if (error) throw error;
 
