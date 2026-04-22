@@ -5,23 +5,58 @@ import { useSearchParams } from 'next/navigation';
 import { authorizeClient } from './actions';
 import { validateScopes } from '@/services/mcp/MCPOAuthScopes';
 
+type OAuthRequestParams = {
+  clientId: string | null;
+  redirectUri: string | null;
+  state: string | null;
+  scope: string | null;
+};
+
 function AuthorizeForm() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const client_id = searchParams?.get('client_id');
-  const redirect_uri = searchParams?.get('redirect_uri');
-  const state = searchParams?.get('state');
-  const scope = searchParams?.get('scope');
+  const [oauthParams, setOauthParams] = useState<OAuthRequestParams>({
+    clientId: null,
+    redirectUri: null,
+    state: null,
+    scope: null,
+  });
 
   useEffect(() => {
-    if (!client_id || !redirect_uri) {
-      setError('Missing required parameters: client_id and redirect_uri are required.');
-    }
-  }, [client_id, redirect_uri]);
+    const fromQueryClientId = searchParams?.get('client_id') || searchParams?.get('clientId') || null;
+    const fromQueryRedirectUri = searchParams?.get('redirect_uri') || searchParams?.get('redirectUri') || null;
+    const fromQueryState = searchParams?.get('state') || null;
+    const fromQueryScope = searchParams?.get('scope') || null;
 
-  const requestedScopes = validateScopes(scope || '');
+    const nextParams: OAuthRequestParams = {
+      clientId: fromQueryClientId,
+      redirectUri: fromQueryRedirectUri,
+      state: fromQueryState,
+      scope: fromQueryScope,
+    };
+
+    // Some OAuth clients may send parameters in the URL hash fragment.
+    if (typeof window !== 'undefined' && window.location.hash.length > 1) {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      nextParams.clientId =
+        nextParams.clientId || hashParams.get('client_id') || hashParams.get('clientId');
+      nextParams.redirectUri =
+        nextParams.redirectUri || hashParams.get('redirect_uri') || hashParams.get('redirectUri');
+      nextParams.state = nextParams.state || hashParams.get('state');
+      nextParams.scope = nextParams.scope || hashParams.get('scope');
+    }
+
+    setOauthParams(nextParams);
+
+    if (!nextParams.clientId || !nextParams.redirectUri) {
+      setError('Missing required parameters: client_id and redirect_uri are required.');
+    } else {
+      setError(null);
+    }
+  }, [searchParams]);
+
+  const requestedScopes = validateScopes(oauthParams.scope || '');
 
   const handleApprove = async () => {
     setLoading(true);
@@ -29,10 +64,10 @@ function AuthorizeForm() {
     
     try {
       const formData = new FormData();
-      if (client_id) formData.append('client_id', client_id);
-      if (redirect_uri) formData.append('redirect_uri', redirect_uri);
-      if (state) formData.append('state', state);
-      if (scope) formData.append('scope', scope);
+      if (oauthParams.clientId) formData.append('client_id', oauthParams.clientId);
+      if (oauthParams.redirectUri) formData.append('redirect_uri', oauthParams.redirectUri);
+      if (oauthParams.state) formData.append('state', oauthParams.state);
+      if (oauthParams.scope) formData.append('scope', oauthParams.scope);
 
       const result = await authorizeClient(formData);
       
@@ -50,9 +85,9 @@ function AuthorizeForm() {
   };
 
   const handleDeny = () => {
-    if (redirect_uri) {
-      let url = `${redirect_uri}?error=access_denied`;
-      if (state) url += `&state=${encodeURIComponent(state)}`;
+    if (oauthParams.redirectUri) {
+      let url = `${oauthParams.redirectUri}?error=access_denied`;
+      if (oauthParams.state) url += `&state=${encodeURIComponent(oauthParams.state)}`;
       // eslint-disable-next-line react-hooks/immutability
       window.location.href = url;
     }
@@ -69,7 +104,7 @@ function AuthorizeForm() {
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Authorization Error</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{error}</p>
-          {redirect_uri && (
+          {oauthParams.redirectUri && (
             <button
               onClick={handleDeny}
               className="w-full flex justify-center py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
