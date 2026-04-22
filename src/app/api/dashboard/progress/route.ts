@@ -15,6 +15,14 @@ export async function GET(request: NextRequest) {
     await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
+    const { data: tenantUsersData } = await supabase
+      .from('tenant_users')
+      .select('user_id')
+      .eq('tenant_id', tenantId);
+    const tenantUserIds = (tenantUsersData || [])
+      .map((row) => String((row as { user_id?: string }).user_id || '').trim())
+      .filter((value) => value.length > 0);
+    const fallbackUserId = '00000000-0000-0000-0000-000000000000';
 
     const [
       clientsResult,
@@ -49,7 +57,7 @@ export async function GET(request: NextRequest) {
       supabase
         .from('meetings')
         .select('id, status, created_at')
-        .eq('tenant_id', tenantId),
+        .in('host_id', tenantUserIds.length > 0 ? tenantUserIds : [fallbackUserId]),
       supabase
         .from('integrations')
         .select('id, provider, status, created_at')
