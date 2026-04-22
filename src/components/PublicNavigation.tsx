@@ -47,17 +47,14 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     const isActive = (path: string) => pathname === path;
 
     return (
-        <nav className={`fixed w-full z-50 pt-safe transition-all duration-300 ${isScrolled && !mobileMenuOpen
-                ? 'max-lg:bg-transparent max-lg:border-transparent max-lg:backdrop-blur-none max-lg:pointer-events-none lg:bg-slate-950/95 lg:backdrop-blur-md lg:border-b lg:border-slate-800/50'
+        <nav className={`fixed w-full z-[120] pt-safe transition-all duration-300 ${isScrolled && !mobileMenuOpen
+                ? 'max-lg:bg-transparent max-lg:border-transparent max-lg:backdrop-blur-none lg:bg-slate-950/95 lg:backdrop-blur-md lg:border-b lg:border-slate-800/50'
                 : 'bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50'
             }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className={`flex items-center justify-between transition-all duration-300 ${isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'}`}>
                     {/* Logo */}
-                    <Link href="/" className={`flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto ${isScrolled && !mobileMenuOpen
-                            ? 'max-lg:opacity-0 max-lg:-translate-y-4 max-lg:pointer-events-none'
-                            : 'opacity-100 translate-y-0'
-                        }`}>
+                    <Link href="/" className="flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0">
                         <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
                             <img
                                 src="/logo.png"
@@ -109,7 +106,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
 
                     {/* Mobile Menu Button and Early CTAs */}
-                    <div className="lg:hidden relative z-[10000] pointer-events-auto flex items-center gap-3 h-full">
+                    <div className="lg:hidden relative z-[140] pointer-events-auto flex items-center gap-3 h-full">
                         <Link
                             href="/auth/login"
                             className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
@@ -137,7 +134,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                 {/* Mobile Nav Overlay */}
                 {mobileMenuOpen && (
                     <div
-                        className="lg:hidden fixed inset-0 z-[9999] bg-slate-950/98 backdrop-blur-2xl animate-fade-in p-6 pt-24 flex flex-col"
+                        className="lg:hidden fixed inset-0 z-[130] bg-slate-950/98 backdrop-blur-2xl animate-fade-in p-6 pt-24 flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex-1 overflow-y-auto">

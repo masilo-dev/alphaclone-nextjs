@@ -21,8 +21,10 @@ const inter = Inter({
   adjustFontFallback: true,
 });
 
+const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://alphaclone.tech"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "AlphaClone | The Unified Business OS & Operations Platform",
     template: "%s | AlphaClone Systems",
@@ -51,17 +53,17 @@ export const metadata: Metadata = {
     "Business Workflow Architecture",
     "Performance Engineering Platform",
   ],
-  authors: [{ name: "AlphaClone Systems", url: "https://alphaclone.tech" }],
+  authors: [{ name: "AlphaClone Systems", url: SITE_URL }],
   creator: "AlphaClone Systems",
   publisher: "AlphaClone Systems",
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  alternates: { canonical: "https://alphaclone.tech" },
+  alternates: { canonical: SITE_URL },
   openGraph: {
     title: "AlphaClone Systems | Unified Business Operating Platform",
     description:
       "AlphaClone unifies CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations in one platform for service businesses.",
     type: "website",
-    url: "https://alphaclone.tech",
+    url: SITE_URL,
     siteName: "AlphaClone Systems",
     locale: "en_US",
   },
@@ -101,8 +103,8 @@ const organizationSchema = {
   name: "AlphaClone Systems",
   operatingSystem: "Web-based",
   applicationCategory: "BusinessApplication",
-  url: "https://alphaclone.tech",
-  logo: "https://alphaclone.tech/favicon.ico",
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.ico`,
   description:
     "Unified business operating platform for service businesses with CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations.",
   offers: {
@@ -120,8 +122,8 @@ const organizationSchema = {
   publisher: {
     "@type": "Organization",
     name: "AlphaClone Systems",
-    url: "https://alphaclone.tech",
-    logo: "https://alphaclone.tech/favicon.ico",
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.ico`,
   },
 };
 
@@ -129,11 +131,11 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "AlphaClone Systems",
-  url: "https://alphaclone.tech",
+  url: SITE_URL,
   description: "Unified business operating platform for service businesses.",
   potentialAction: {
     "@type": "SearchAction",
-    target: "https://alphaclone.tech/docs?query={search_term_string}",
+    target: `${SITE_URL}/docs?query={search_term_string}`,
     "query-input": "required name=search_term_string",
   },
 };
@@ -143,11 +145,12 @@ const navigationSchema = {
   "@type": "ItemList",
   name: "Primary Site Navigation",
   itemListElement: [
-    { "@type": "SiteNavigationElement", position: 1, name: "About", url: "https://alphaclone.tech/about" },
-    { "@type": "SiteNavigationElement", position: 2, name: "Documentation", url: "https://alphaclone.tech/docs" },
-    { "@type": "SiteNavigationElement", position: 3, name: "Pricing", url: "https://alphaclone.tech/pricing" },
-    { "@type": "SiteNavigationElement", position: 4, name: "Contact", url: "https://alphaclone.tech/contact" },
-    { "@type": "SiteNavigationElement", position: 5, name: "Login", url: "https://alphaclone.tech/auth/login" },
+    { "@type": "SiteNavigationElement", position: 1, name: "About", url: `${SITE_URL}/about` },
+    { "@type": "SiteNavigationElement", position: 2, name: "Documentation", url: `${SITE_URL}/docs` },
+    { "@type": "SiteNavigationElement", position: 3, name: "Pricing", url: `${SITE_URL}/pricing` },
+    { "@type": "SiteNavigationElement", position: 4, name: "Contact", url: `${SITE_URL}/contact` },
+    { "@type": "SiteNavigationElement", position: 5, name: "Login", url: `${SITE_URL}/login` },
+    { "@type": "SiteNavigationElement", position: 6, name: "Start Free Trial", url: `${SITE_URL}/register` },
   ],
 };
 

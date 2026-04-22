@@ -7,6 +7,7 @@ import { taskService, Task } from '../../../services/taskService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
 interface DealDetailModalProps {
     isOpen: boolean;
@@ -178,6 +179,9 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                 <div className="flex-1 overflow-y-auto p-6 bg-slate-950">
                     {activeTab === 'overview' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="md:col-span-2">
+                                <ModuleIntelligenceCard moduleKey="aiProposals" title="Proposal and Deal Intelligence" />
+                            </div>
                             <Card className="p-6">
                                 <h3 className="text-lg font-semibold text-white mb-4">Deal Details</h3>
                                 <div className="space-y-4">

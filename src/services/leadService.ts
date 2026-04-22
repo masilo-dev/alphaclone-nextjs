@@ -3,6 +3,7 @@ import { tenantService } from './tenancy/TenantService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
 import { assertLeadStageTransition } from '../lib/stageProgression';
+import { intelligenceScoringService } from './intelligence/intelligenceScoringService';
 
 export interface Lead {
     id: string;
@@ -35,6 +36,11 @@ export interface Lead {
     lng?: number;
     isAddressValid?: boolean;
     sdrInsight?: string;
+    intelligenceScore?: number;
+    intelligenceConfidence?: number;
+    intelligenceState?: Record<string, number>;
+    intelligenceRecommendations?: string[];
+    psychologyProfile?: string[];
 }
 
 export interface GrowthAgentTarget {
@@ -133,7 +139,12 @@ export const leadService = {
                 lng: l.longitude,
                 status: l.stage === 'lead' ? 'New' : l.stage,
                 fb: l.website,
-                sdrInsight: l.sdr_insight
+                sdrInsight: l.sdr_insight,
+                intelligenceScore: l.intelligence_score,
+                intelligenceConfidence: l.intelligence_confidence,
+                intelligenceState: l.intelligence_state || undefined,
+                intelligenceRecommendations: l.intelligence_recommendations || [],
+                psychologyProfile: l.psychology_profile || []
             }));
 
             return { leads, error: null };
@@ -157,6 +168,14 @@ export const leadService = {
                     return { lead: null, error: 'Authentication session expired. Please refresh the page.' };
                 }
             }
+
+            const intelligence = intelligenceScoringService.scoreLead({
+                industry: lead.industry,
+                email: lead.email,
+                phone: lead.phone,
+                website: lead.website || lead.fb,
+                role: lead.notes
+            });
 
             const dbPayload = {
                 tenant_id: tenantId,
@@ -183,7 +202,12 @@ export const leadService = {
                 value_proposition: lead.valueProposition,
                 latitude: lead.lat,
                 longitude: lead.lng,
-                sdr_insight: lead.sdrInsight
+                sdr_insight: lead.sdrInsight,
+                intelligence_score: intelligence.qualifiedProbability,
+                intelligence_confidence: intelligence.confidence,
+                intelligence_state: intelligence.stateDistribution,
+                intelligence_recommendations: intelligence.recommendations,
+                psychology_profile: intelligence.psychologyProfile
             };
 
             const { data, error } = await supabase
@@ -220,7 +244,12 @@ export const leadService = {
                 techStack: data.tech_stack || [],
                 painPoints: data.pain_points || [],
                 valueProposition: data.value_proposition,
-                sdrInsight: data.sdr_insight
+                sdrInsight: data.sdr_insight,
+                intelligenceScore: data.intelligence_score,
+                intelligenceConfidence: data.intelligence_confidence,
+                intelligenceState: data.intelligence_state || undefined,
+                intelligenceRecommendations: data.intelligence_recommendations || [],
+                psychologyProfile: data.psychology_profile || []
             };
 
             // SYNC TO EXTERNAL CRM
@@ -249,32 +278,47 @@ export const leadService = {
 
             const ownerId = userData.user?.id || (await supabase.auth.getUser()).data.user?.id;
 
-            const dbPayloads = leads.map((l: any) => ({
-                tenant_id: tenantId,
-                owner_id: ownerId,
-                business_name: l.businessName,
-                industry: l.industry,
-                location: l.location,
-                phone: l.phone,
-                email: l.email,
-                website: l.website,
-                source: l.source || 'Bulk Upload',
-                stage: 'lead',
-                value: l.value || 0,
-                notes: l.notes,
-                outreach_message: l.outreachMessage,
-                outreach_status: l.outreachStatus || 'pending',
-                is_verified: l.isVerified || false,
-                trust_score: l.trustScore || 0,
-                outreach_hook: l.outreachHook,
-                strategy: l.strategy,
-                tech_stack: l.techStack || [],
-                pain_points: l.painPoints || [],
-                value_proposition: l.valueProposition,
-                latitude: l.lat,
-                longitude: l.lng,
-                sdr_insight: l.sdrInsight
-            }));
+            const dbPayloads = leads.map((l: any) => {
+                const intelligence = intelligenceScoringService.scoreLead({
+                    industry: l.industry,
+                    email: l.email,
+                    phone: l.phone,
+                    website: l.website,
+                    role: l.notes
+                });
+
+                return {
+                    tenant_id: tenantId,
+                    owner_id: ownerId,
+                    business_name: l.businessName,
+                    industry: l.industry,
+                    location: l.location,
+                    phone: l.phone,
+                    email: l.email,
+                    website: l.website,
+                    source: l.source || 'Bulk Upload',
+                    stage: 'lead',
+                    value: l.value || 0,
+                    notes: l.notes,
+                    outreach_message: l.outreachMessage,
+                    outreach_status: l.outreachStatus || 'pending',
+                    is_verified: l.isVerified || false,
+                    trust_score: l.trustScore || 0,
+                    outreach_hook: l.outreachHook,
+                    strategy: l.strategy,
+                    tech_stack: l.techStack || [],
+                    pain_points: l.painPoints || [],
+                    value_proposition: l.valueProposition,
+                    latitude: l.lat,
+                    longitude: l.lng,
+                    sdr_insight: l.sdrInsight,
+                    intelligence_score: intelligence.qualifiedProbability,
+                    intelligence_confidence: intelligence.confidence,
+                    intelligence_state: intelligence.stateDistribution,
+                    intelligence_recommendations: intelligence.recommendations,
+                    psychology_profile: intelligence.psychologyProfile
+                };
+            });
 
             const { data, error } = await supabase
                 .from('leads')
@@ -342,6 +386,30 @@ export const leadService = {
         if (updates.lng !== undefined) dbPayload.longitude = updates.lng;
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
 
+        const shouldRecomputeIntelligence = [
+            updates.industry,
+            updates.email,
+            updates.phone,
+            updates.website,
+            updates.notes
+        ].some((value) => value !== undefined);
+
+        if (shouldRecomputeIntelligence) {
+            const intelligence = intelligenceScoringService.scoreLead({
+                industry: updates.industry,
+                email: updates.email,
+                phone: updates.phone,
+                website: updates.website,
+                role: updates.notes
+            });
+
+            dbPayload.intelligence_score = intelligence.qualifiedProbability;
+            dbPayload.intelligence_confidence = intelligence.confidence;
+            dbPayload.intelligence_state = intelligence.stateDistribution;
+            dbPayload.intelligence_recommendations = intelligence.recommendations;
+            dbPayload.psychology_profile = intelligence.psychologyProfile;
+        }
+
         const { error } = await supabase
             .from('leads')
             .update(dbPayload)
@@ -399,7 +467,12 @@ export const leadService = {
                 techStack: data.tech_stack || [],
                 painPoints: data.pain_points || [],
                 valueProposition: data.value_proposition,
-                sdrInsight: data.sdr_insight
+                sdrInsight: data.sdr_insight,
+                intelligenceScore: data.intelligence_score,
+                intelligenceConfidence: data.intelligence_confidence,
+                intelligenceState: data.intelligence_state || undefined,
+                intelligenceRecommendations: data.intelligence_recommendations || [],
+                psychologyProfile: data.psychology_profile || []
             };
 
             // SYNC TO EXTERNAL CRM

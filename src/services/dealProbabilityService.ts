@@ -30,6 +30,14 @@ export interface ForecastData {
     byStage: Record<string, { count: number; value: number; probability: number }>;
 }
 
+export interface DealIntelligenceProfile {
+    intelligenceScore: number;
+    intelligenceConfidence: number;
+    intelligenceState: Record<string, number>;
+    intelligenceRecommendations: string[];
+    psychologyProfile: string[];
+}
+
 const STAGE_PROBABILITIES: Record<string, number> = {
     lead: 10,
     qualified: 25,
@@ -40,6 +48,55 @@ const STAGE_PROBABILITIES: Record<string, number> = {
 };
 
 class DealProbabilityService {
+    private buildDealIntelligence(
+        probability: number,
+        factors: Partial<ProbabilityFactors>
+    ): DealIntelligenceProfile {
+        const normalized = Math.max(0, Math.min(100, probability));
+        const probability01 = normalized / 100;
+        const confidence = Math.max(
+            0.25,
+            Math.min(
+                0.95,
+                0.45 +
+                    (factors.engagementScore !== undefined ? factors.engagementScore / 250 : 0) +
+                    (factors.decisionMakerEngaged ? 0.15 : 0) -
+                    (factors.competitorPresent ? 0.1 : 0)
+            )
+        );
+
+        const recommendations: string[] = [];
+        if (factors.decisionMakerEngaged) {
+            recommendations.push('Prioritize decision-maker follow-up in the next business day.');
+        } else {
+            recommendations.push('Increase decision-maker coverage before advancing stage.');
+        }
+        if (factors.competitorPresent) {
+            recommendations.push('Send competitive proof and differentiation evidence this week.');
+        }
+        if ((factors.timeInStage || 0) > 14) {
+            recommendations.push('Deal has slowed in stage; run a stall-recovery conversation.');
+        }
+
+        const psychologyProfile: string[] = [];
+        if (factors.budgetConfirmed) psychologyProfile.push('budget_aligned_buyer');
+        if (factors.decisionMakerEngaged) psychologyProfile.push('executive_engagement_confirmed');
+        if (factors.competitorPresent) psychologyProfile.push('status_quo_bias_risk');
+        if (!psychologyProfile.length) psychologyProfile.push('limited_behavioral_signals');
+
+        return {
+            intelligenceScore: Number(normalized.toFixed(2)),
+            intelligenceConfidence: Number(confidence.toFixed(2)),
+            intelligenceState: {
+                close: Number(probability01.toFixed(2)),
+                delay: Number((Math.max(0, 0.7 - probability01)).toFixed(2)),
+                lost: Number((Math.max(0, 1 - probability01 - 0.15)).toFixed(2))
+            },
+            intelligenceRecommendations: recommendations,
+            psychologyProfile
+        };
+    }
+
     /**
      * Calculate deal probability based on multiple factors
      */
@@ -101,11 +158,17 @@ class DealProbabilityService {
             }
 
             const newProbability = this.calculateProbability(deal, factors);
+            const intelligence = this.buildDealIntelligence(newProbability, factors);
 
             const { error } = await supabase
                 .from('deals')
                 .update({
                     probability: newProbability,
+                    intelligence_score: intelligence.intelligenceScore,
+                    intelligence_confidence: intelligence.intelligenceConfidence,
+                    intelligence_state: intelligence.intelligenceState,
+                    intelligence_recommendations: intelligence.intelligenceRecommendations,
+                    psychology_profile: intelligence.psychologyProfile,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', dealId);

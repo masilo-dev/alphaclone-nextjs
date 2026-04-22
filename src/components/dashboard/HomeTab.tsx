@@ -7,10 +7,11 @@ import { Project, User, DashboardStat } from '../../types';
 import { useRouter } from 'next/navigation';
 import { AIPredictiveWidget } from './AIPredictiveWidget';
 import { MomentumHUD } from './MomentumHUD';
+import { IntegratedIntelligencePanel } from './IntegratedIntelligencePanel';
 import { motion } from 'framer-motion';
 import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
 
-const DEFAULT_WIDGET_IDS = ['momentum', 'agenda', 'ai-widget', 'stats'] as const;
+const DEFAULT_WIDGET_IDS = ['momentum', 'intelligence', 'agenda', 'ai-widget', 'stats'] as const;
 
 function normalizeWidgetOrder(saved: string[] | undefined): string[] {
   if (!saved?.length) return [...DEFAULT_WIDGET_IDS];
@@ -265,6 +266,10 @@ const HomeTab: React.FC<HomeTabProps> = ({
 
                         {widgetId === 'agenda' && (
                             <TodayAgendaCard projects={filteredProjects} user={user} />
+                        )}
+
+                        {widgetId === 'intelligence' && (
+                            <IntegratedIntelligencePanel />
                         )}
 
                         {widgetId === 'ai-widget' && (

@@ -11,6 +11,7 @@ import { tenantService } from '../../../services/tenancy/TenantService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { showActionNextSteps } from '@/components/common/showActionNextSteps';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
@@ -278,6 +279,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                     {view === 'create' ? 'Back to List' : <><Plus className="w-4 h-4" /> New Campaign</>}
                 </button>
             </div>
+            <ModuleIntelligenceCard moduleKey="emailInbox" title="Email Intelligence" />
 
             {/* Create Form */}
             {view === 'create' && (

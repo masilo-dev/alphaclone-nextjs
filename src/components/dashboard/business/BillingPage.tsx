@@ -22,6 +22,7 @@ import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import CreateInvoiceModal from '../EnhancedCreateInvoiceModal';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
 interface BillingPageProps {
     user: User;
@@ -152,6 +153,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                     <span className="hidden sm:inline">Create Invoice</span>
                 </button>
             </div>
+            <ModuleIntelligenceCard moduleKey="invoicingRevenue" title="Invoicing Intelligence" />
 
             {/* Stats & Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -136,13 +136,7 @@ function isLinkedInPostSchemaBehind(selectUsed: string | null): boolean {
     'id',
     'caption',
     'status',
-    'scheduled_at',
-    'published_at',
     'created_at',
-    'linkedin_post_urn',
-    'linkedin_member_id',
-    'analytics',
-    'error_message',
     'platforms',
   ];
   return required.some((field) => !fields.has(field));
@@ -225,7 +219,6 @@ export default function LinkedInManagementTab() {
           })) as LinkedInIntegrationRow[];
           setIntegrations(rows);
           if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
-          setSchemaWarning((prev) => prev || 'LinkedIn integration schema is behind. Apply latest LinkedIn migrations for multi-account selection.');
         } else {
           setIntegrations([]);
           setSchemaWarning((prev) => prev || 'LinkedIn integration table is missing in database. Apply latest LinkedIn migration.');
