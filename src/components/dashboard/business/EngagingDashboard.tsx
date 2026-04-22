@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
+import { useTenantLoadingSafe } from '@/hooks/useTenantSafe';
 import { businessClientService } from '../../../services/businessClientService';
 import { dailyService } from '../../../services/dailyService';
 import { supabase } from '../../../lib/supabase';
@@ -98,6 +99,7 @@ interface QuickAction {
 
 const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats }) => {
     const currentTenant = useCurrentTenantSafe();
+    const tenantLoading = useTenantLoadingSafe();
     const [metrics, setMetrics] = useState({
         totalRevenue: stats?.totalRevenue || 0,
         totalClients: stats?.clientCount || 0,
@@ -127,9 +129,10 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     }, [greeting]);
 
     useEffect(() => {
+        if (tenantLoading) return;
         loadDashboardData();
         generateWelcomeMessage();
-    }, [currentTenant]);
+    }, [currentTenant?.id, tenantLoading]);
 
     const generateWelcomeMessage = () => {
         const messages = [
@@ -145,17 +148,25 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     const loadDashboardData = async () => {
         try {
             setLoading(true);
-            
+
+            if (tenantLoading) {
+                return;
+            }
+
             if (!currentTenant?.id) {
-                loadDemoData();
+                setUsingPlaceholderData(false);
+                setOnboardingSteps([]);
+                setAchievements([]);
+                setProgressPercentage(0);
+                setStreak(0);
                 return;
             }
 
             setUsingPlaceholderData(false);
             const response = await fetch(`/api/dashboard/progress?tenantId=${currentTenant.id}`);
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
 
-            if (data.success) {
+            if (response.ok && data.success) {
                 const progressData = data.data;
                 setUsingPlaceholderData(false);
                 
@@ -220,14 +231,15 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
                 setOnboardingSteps(steps);
             } else {
-                toast.error('Could not load live dashboard metrics. Showing placeholders until data is available.');
-                loadDemoData();
+                const details = String(data?.error || data?.message || 'unknown error');
+                setUsingPlaceholderData(false);
+                toast.error(`Could not load live dashboard metrics: ${details}`);
             }
 
         } catch (error) {
             console.error('Error loading dashboard data:', error);
-            toast.error('Could not load live dashboard metrics. Showing placeholders.');
-            loadDemoData();
+            setUsingPlaceholderData(false);
+            toast.error('Could not load live dashboard metrics. Please refresh and verify workspace access.');
         } finally {
             setLoading(false);
         }
