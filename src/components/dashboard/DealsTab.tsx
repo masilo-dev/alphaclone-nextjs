@@ -660,12 +660,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
             ) : (
                 <div
                     id="deal-execution-board"
-                    className="flex gap-4 overflow-x-auto pb-8 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4 pb-8"
                 >
                     {stages.map((stage) => {
                         const stageDeals = getDealsByStage(stage);
                         return (
-                            <div key={stage} className="flex-shrink-0 w-72">
+                            <div key={stage} className="min-w-0">
                                 <div className="glass-panel p-3 rounded-xl border border-white/5 mb-3">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-bold text-white">{stageLabels[stage]}</h3>
@@ -715,18 +715,20 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                         >
                                                             <FileText className="w-4 h-4" />
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setDealToDelete(deal);
-                                                                setShowDeleteModal(true);
-                                                            }}
-                                                            className="p-1 text-slate-400 hover:text-red-400"
-                                                            title="Delete Deal"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        {canManagePipeline && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setDealToDelete(deal);
+                                                                    setShowDeleteModal(true);
+                                                                }}
+                                                                className="p-1 text-slate-400 hover:text-red-400"
+                                                                title="Delete Deal"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
