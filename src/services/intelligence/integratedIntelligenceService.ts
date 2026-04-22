@@ -39,7 +39,7 @@ const round2 = (value: number): number => Math.round(value * 100) / 100;
 class IntegratedIntelligenceService {
   private isMissingTableError(error: unknown): boolean {
     const code = (error as { code?: string })?.code;
-    return code === '42P01' || code === 'PGRST205';
+    return code === '42P01' || code === 'PGRST205' || code === '42703';
   }
 
   private async safeCount(supabase: SupabaseClient, table: string, tenantId: string): Promise<number> {
