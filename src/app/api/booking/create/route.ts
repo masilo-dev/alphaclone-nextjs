@@ -204,7 +204,7 @@ export async function POST(req: Request) {
                         business_name: client_name,
                         email: client_email,
                         phone: client_phone,
-                        stage: 'Discovered', // Native Kanban starting point
+                        stage: 'lead',
                         source: 'Inbound Booking',
                         notes: client_notes
                     })

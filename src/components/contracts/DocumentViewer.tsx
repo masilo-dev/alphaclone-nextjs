@@ -80,18 +80,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 // @ts-ignore - Dynamic import of PDF.js
                 const pdfjsModule = await import('pdfjs-dist/build/pdf.mjs');
                 const pdfjsLib = pdfjsModule.default || pdfjsModule;
-                const version = '5.4.624';
 
                 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-                    // Use jsDelivr for more reliable versioned access with correct build path
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
                 }
 
                 if (!isMounted) return;
 
                 const loadingTask = pdfjsLib.getDocument({
                     url,
-                    cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/cmaps/`,
+                    cMapUrl: '/pdfjs/cmaps/',
                     cMapPacked: true,
                 });
 

@@ -126,12 +126,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
         
         // Factor 4: Value consideration (0-15 points)
         // Higher value deals get slightly better scores (engagement incentive)
-        if (deal.value && deal.value > 10000) {
-            score += 5;
+        if (deal.value && deal.value > 100000) {
+            score += 15;
         } else if (deal.value && deal.value > 50000) {
             score += 10;
-        } else if (deal.value && deal.value > 100000) {
-            score += 15;
+        } else if (deal.value && deal.value > 10000) {
+            score += 5;
         }
         
         // Factor 5: Stage progression (0-10 points)

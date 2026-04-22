@@ -38,7 +38,6 @@ import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '../../com
 import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
-import * as XLSX from 'xlsx';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
@@ -246,7 +245,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     };
 
     // ── Export all contacts to Excel ──────────────────────────────────
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
         if (filteredClients.length === 0) {
             toast.error('No contacts to export');
             return;
@@ -263,10 +262,24 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             Description: c.description || '',
             Created: new Date(c.createdAt).toLocaleDateString(),
         }));
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
-        XLSX.writeFile(wb, `alphaclone-contacts-${Date.now()}.xlsx`);
+        const ExcelJS = (await import('exceljs')).default;
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Contacts');
+        const headers = Object.keys(rows[0] || {});
+        sheet.columns = headers.map((key) => ({ header: key, key }));
+        for (const row of rows) sheet.addRow(row);
+        sheet.getRow(1).font = { bold: true };
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alphaclone-contacts-${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         toast.success(`Exported ${filteredClients.length} contacts to Excel`);
 
         // Audit Trail
