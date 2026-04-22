@@ -1,4 +1,4 @@
-export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
+export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
 
 export function absoluteUrl(pathname: string): string {
   if (!pathname) return SITE_URL;

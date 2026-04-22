@@ -149,6 +149,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <button onClick={() => scrollToSection('services')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Platform</button>
                      <button onClick={() => scrollToSection('pricing')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing</button>
                      <Link href="/docs" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Docs</Link>
+                     <Link href="/faq" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">FAQ</Link>
                      <Link href="/ecosystem" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Ecosystem</Link>
                      <button onClick={() => scrollToSection('contact')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Contact</button>
 
@@ -254,6 +255,13 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               Docs
                            </Link>
                            <Link
+                              href="/faq"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                           >
+                              FAQ
+                           </Link>
+                           <Link
                               href="/ecosystem"
                               onClick={() => setMobileMenuOpen(false)}
                               className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
@@ -315,16 +323,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
                      {/* Headline */}
                      <h1 className="font-black text-white mb-6 tracking-tight">
-                        AlphaClone Systems
-                        <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500">
-                           Complete Business Management
-                        </span>
+                        Your entire business. One AI. $15 a month.
                      </h1>
 
                      {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        Manage your entire business with one unified system. <span className="text-cyan-300 font-bold">AlphaClone Systems</span> provides CRM, invoicing, contracts, projects, and communications in one platform starting at <span className="text-cyan-200 font-bold">$15/month</span>.
+                        Most business software was built for companies with departments. You do not have departments. You are the department: the CEO, the marketer, the accountant, the closer, and the admin, all before lunch. Alphaclone is the AI business operating system built for founders, consultants, and small teams that need to move fast, spend less, and stop managing a dozen tools just to run one business.
                      </p>
                      <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
                         Built for business teams. Social automation supports LinkedIn pages and Facebook business pages, with no personal account posting flow.
@@ -459,9 +463,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             <section className="py-16 bg-slate-950/70">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="mb-10 text-center">
-                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Platform Workflows In One System
-                     </h3>
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
+                        Everything your business needs. Nothing it does not.
+                     </h2>
                      <p className="text-slate-300 max-w-3xl mx-auto">
                         Built for business operators. Manage leads, tasks, projects, social publishing, and billing from a consistent interface with clear execution states.
                      </p>
@@ -508,9 +512,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             <section className="py-16 bg-[#040A12]">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="mb-10 text-center">
-                     <h3 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Inside AlphaClone Workflows
-                     </h3>
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
+                        Other platforms give you features. Alphaclone gives you outcomes.
+                     </h2>
                      <p className="text-slate-300 max-w-3xl mx-auto">
                         Real screens from lead management, deal pipeline, social integrations, and mobile operations.
                      </p>
@@ -662,8 +666,8 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      viewport={{ once: true }}
                      className="text-center mb-16"
                   >
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        The Business OS That <span className="text-cyan-300">Actually Works</span>
+                     <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+                        You are not running a business. You are managing software.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
                         Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system across CRM, all leads, project management, AI agents, invoices, quotations, receipts, contracts, and video operations.
@@ -748,7 +752,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      className="text-center mb-16"
                   >
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        Simple, <span className="text-cyan-300">Transparent Pricing</span>
+                        One price. Every feature. No games.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
                         No hidden fees. No surprise charges. Just powerful software that grows with your business.
@@ -835,10 +839,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-10">
                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
-                        Get in Touch
+                        Built for founders who run lean and move fast.
                      </h2>
                      <p className="text-base text-slate-300 max-w-xl mx-auto mb-8">
-                        Have questions? Reach out to our team directly.
+                        From signup to running your business in under ten minutes. Reach out to our team for onboarding support.
                      </p>
                      
                      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
