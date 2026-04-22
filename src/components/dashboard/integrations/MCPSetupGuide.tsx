@@ -123,10 +123,10 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const mcpOrigin =
     typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com';
 
-  const buildConnectionUrl = (token: string | null, workspaceId: string) => {
+  /** Single-query URL: tenant and user are resolved from the key server-side (see /api/mcp/sse). */
+  const buildConnectionUrl = (token: string | null) => {
     const params = new URLSearchParams({
       api_key: token || 'YOUR_KEY_HERE',
-      tenant_id: workspaceId,
     });
     return `${mcpOrigin}/api/mcp/sse?${params.toString()}`;
   };
@@ -197,7 +197,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     }
   };
 
-  const connectionUrl = buildConnectionUrl(connectionToken, tenantId);
+  const connectionUrl = buildConnectionUrl(connectionToken);
 
   const configJson = `{
   "mcpServers": {
@@ -294,7 +294,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20 mb-8">
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe 🔒</p>
+            <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe</p>
             <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : 'Manus'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
           </div>
         </div>
@@ -409,7 +409,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             
                             <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
                               <p className="text-xs text-slate-500 leading-relaxed">
-                                <span className="text-amber-400 font-medium italic">🚨 Security Warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
+                                <span className="text-amber-400 font-medium">Security warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
                               </p>
                               <button
                                 onClick={handleRotateToken}

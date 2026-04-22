@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 export class MCPAuthService {
   /**
    * Get or create an MCP connection token for the signed-in user in this workspace.
-   * Each user has their own key and MCP URL (includes tenant_id + user_id).
+   * Each user has their own key; `/api/mcp/sse?api_key=...` resolves tenant and user from the key.
    */
   static async getOrCreateToken(
     tenantId: string,
