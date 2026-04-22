@@ -8,7 +8,7 @@ import HomeClient from '@/components/home/HomeClient';
  * and delegates client-side logic (auth, search params) to HomeClient.
  */
 export default async function Home() {
-  const siteUrl = 'https://alphaclone.tech';
+  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
   const organizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',

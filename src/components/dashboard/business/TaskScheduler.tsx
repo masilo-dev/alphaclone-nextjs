@@ -11,6 +11,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { generateText } from '../../../services/unifiedAIService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
 // ─────────────────────────────────────────────
 // Types
@@ -516,6 +517,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
           <Plus size={16} /> New Task
         </button>
       </div>
+      <ModuleIntelligenceCard moduleKey="taskManagement" title="Task Intelligence" />
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">

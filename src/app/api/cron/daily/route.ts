@@ -4,6 +4,8 @@ import { paymentService } from '@/services/paymentService';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { runUserDigestEmails } from '@/lib/email/runUserDigestEmails';
 import { runMorningBriefingEmails } from '@/lib/email/runMorningBriefingEmails';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +37,18 @@ export async function GET(req: NextRequest) {
             console.error('Morning briefing emails:', morningErr);
         }
 
+        let intelligence: { tenantId: string; score: number } | null = null;
+        const intelligenceTenantId = req.nextUrl.searchParams.get('intelligenceTenantId');
+        if (intelligenceTenantId) {
+            try {
+                const supabase = createSupabaseAdminClient();
+                const snapshot = await integratedIntelligenceService.generateSnapshot(supabase, intelligenceTenantId, { persist: true });
+                intelligence = { tenantId: intelligenceTenantId, score: snapshot.overallScore };
+            } catch (intelligenceErr) {
+                console.error('Daily intelligence snapshot:', intelligenceErr);
+            }
+        }
+
         return NextResponse.json({
             success: true,
             timestamp: new Date().toISOString(),
@@ -42,6 +56,7 @@ export async function GET(req: NextRequest) {
             billing: billingResults,
             digest,
             morning,
+            intelligence,
         });
 
     } catch (error) {

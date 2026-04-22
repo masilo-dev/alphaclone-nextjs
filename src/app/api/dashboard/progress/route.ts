@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +23,8 @@ export async function GET(request: NextRequest) {
       businessInvoicesResult,
       leadsResult,
       meetingsResult,
-      integrationsResult
+      integrationsResult,
+      intelligenceSnapshot
     ] = await Promise.all([
       supabase
         .from('business_clients')
@@ -51,7 +53,8 @@ export async function GET(request: NextRequest) {
       supabase
         .from('integrations')
         .select('id, provider, status, created_at')
-        .eq('tenant_id', tenantId)
+        .eq('tenant_id', tenantId),
+      integratedIntelligenceService.generateSnapshot(supabase, tenantId, { persist: false })
     ]);
 
     const normalizedInvoices = normalizeInvoiceRows(
@@ -172,7 +175,8 @@ export async function GET(request: NextRequest) {
         // Quick stats
         recentActivity,
         totalConnections: clientCount + leadCount,
-        productivityScore: Math.min(Math.round((clientCount * 10 + activeProjects * 15 + totalRevenue / 100) / 10), 100)
+        productivityScore: Math.min(Math.round((clientCount * 10 + activeProjects * 15 + totalRevenue / 100) / 10), 100),
+        intelligence: intelligenceSnapshot
       }
     });
 

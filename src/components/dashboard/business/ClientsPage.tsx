@@ -40,6 +40,7 @@ import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import * as XLSX from 'xlsx';
 import { launchFunnelService } from '@/services/launchFunnelService';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -421,6 +422,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     return (
         <div className="space-y-4 sm:space-y-6 w-full min-w-0">
             <CRMNav pathname={pathname} />
+            <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">

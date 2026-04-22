@@ -74,10 +74,13 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
    // Smooth scroll function
    const scrollToSection = useCallback((sectionId: string) => {
+      setMobileMenuOpen(false);
       const element = document.getElementById(sectionId);
       if (element) {
          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+         return;
       }
+      window.location.href = `/#${sectionId}`;
    }, []);
 
    // Handle contact form submission

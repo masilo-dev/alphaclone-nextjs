@@ -185,7 +185,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
             return [
                 {
                     id: 'no-deals-yet',
-                    tone: 'normal' as 'normal',
+                    tone: 'normal' as const,
                     title: 'No revenue opportunities in the system',
                     detail: 'Create deals with value and expected close. Outcomes require explicit opportunities, not only contact lists.',
                     actionLabel: 'Create deal',
@@ -196,7 +196,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
         return [
             {
                 id: 'healthy-pipeline',
-                tone: 'success' as 'success',
+                tone: 'success' as const,
                 title: 'No deals flagged as off-track',
                 detail: 'Push the highest weighted opportunities: decision criteria, paperwork, and a committed timeline.',
                 actionLabel: 'Go to board',

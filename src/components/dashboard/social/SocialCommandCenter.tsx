@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 
 interface BookmarkRow {
     id: string;
@@ -217,6 +218,7 @@ export default function SocialCommandCenter() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            <ModuleIntelligenceCard moduleKey="socialMedia" title="Social Intelligence" />
             {/* BOOKMARKS SECTION */}
             <section className="space-y-4">
                 {featureWarning && (
