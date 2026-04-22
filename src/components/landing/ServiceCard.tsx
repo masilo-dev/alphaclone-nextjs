@@ -35,7 +35,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
+            transition={{ delay: index * 0.2, duration: 0.9, ease: 'easeOut' }}
             className="bg-slate-950/40 rounded-[2.5rem] border border-slate-800/50 hover:border-teal-500/30 transition-all backdrop-blur-md relative overflow-hidden group flex flex-col h-full"
         >
             {/* Top Gradient Container — no external image needed */}

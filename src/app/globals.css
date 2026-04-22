@@ -28,7 +28,7 @@
 }
 
 .font-marketing-body {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
 }
 
@@ -158,7 +158,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 /* Typography Overrides - Scoped to Marketing Theme */
 .marketing-theme {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 1.55;
@@ -194,7 +194,7 @@ html.light .ac-business-scroll .text-slate-300 {
 }
 
 .marketing-theme p {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
   font-size: clamp(0.88rem, 0.95vw, 0.98rem);
   line-height: 1.55;
@@ -217,7 +217,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .marketing-theme button,
 .marketing-theme .cta {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 600;
   font-size: 16px;
   line-height: 1;
@@ -673,7 +673,7 @@ body {
   .font-marketing-brand,
   .font-marketing-heading,
   .font-marketing-body {
-    font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+    font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
   }
 }
 

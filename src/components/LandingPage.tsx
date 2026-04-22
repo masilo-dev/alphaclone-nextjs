@@ -418,7 +418,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                                  initial={{ opacity: 0.35, x: -8 }}
                                  whileInView={{ opacity: 1, x: 0 }}
                                  viewport={{ once: true }}
-                                 transition={{ delay: index * 0.12 }}
+                                 transition={{ delay: index * 0.2, duration: 0.9, ease: 'easeOut' }}
                                  className="rounded-lg border border-cyan-500/15 bg-slate-950/80 px-3 py-2 text-slate-300"
                               >
                                  {line}
@@ -430,7 +430,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               <motion.span
                                  className="inline-block h-2.5 w-2.5 rounded-full bg-cyan-300"
                                  animate={{ opacity: [0.35, 1, 0.35] }}
-                                 transition={{ duration: 1.2, repeat: Infinity }}
+                                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                               />
                               <p className="text-xs text-cyan-200">Automation active: CRM update, deal probability refresh, and follow-up task creation in progress.</p>
                            </div>
@@ -490,7 +490,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            initial={{ opacity: 0, y: 12 }}
                            whileInView={{ opacity: 1, y: 0 }}
                            viewport={{ once: true }}
-                           transition={{ delay: index * 0.1 }}
+                           transition={{ delay: index * 0.18, duration: 0.85, ease: 'easeOut' }}
                            className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-5"
                         >
                            <h4 className="text-lg font-bold text-cyan-200 mb-3">{card.title}</h4>
@@ -563,7 +563,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            initial={{ opacity: 0, y: 12 }}
                            whileInView={{ opacity: 1, y: 0 }}
                            viewport={{ once: true }}
-                           transition={{ delay: index * 0.08 }}
+                           transition={{ delay: index * 0.16, duration: 0.85, ease: 'easeOut' }}
                            className={`group rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-3 ${shot.span}`}
                         >
                            <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950/80">
@@ -646,7 +646,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            initial={{ opacity: 0, y: 20 }}
                            whileInView={{ opacity: 1, y: 0 }}
                            viewport={{ once: true }}
-                           transition={{ delay: idx * 0.1 }}
+                           transition={{ delay: idx * 0.2, duration: 0.9, ease: 'easeOut' }}
                            className="space-y-2"
                         >
                            <div className="text-2xl sm:text-3xl font-black text-white">{stat.value}</div>
