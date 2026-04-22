@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'Manus MCP integration',
     'AI integrations for CRM',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/claude-manus-integrations' },
+  alternates: { canonical: 'https://alphaclonesystems.com/claude-manus-integrations' },
   openGraph: {
     title: 'AlphaClone Claude and Manus Integrations',
     description: 'Connect Claude and Manus workflows to AlphaClone business operations.',
-    url: 'https://alphaclone.tech/claude-manus-integrations',
+    url: 'https://alphaclonesystems.com/claude-manus-integrations',
     type: 'website',
   },
   robots: { index: true, follow: true },

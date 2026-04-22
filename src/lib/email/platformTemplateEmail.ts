@@ -51,7 +51,7 @@ async function resolveMailCredentials(
     const globalBrevoFromEmail =
         process.env.BREVO_PLATFORM_FROM_EMAIL ||
         process.env.BREVO_FROM_EMAIL ||
-        'notifications@alphaclone.tech';
+        'notifications@alphaclonesystems.com';
     if (globalBrevoApiKey) {
         return {
             apiKey: globalBrevoApiKey,
@@ -62,7 +62,7 @@ async function resolveMailCredentials(
 
     let apiKey: string | null = process.env.SENDGRID_API_KEY || null;
     let fromEmail =
-        process.env.SENDGRID_FROM_EMAIL || 'notifications@alphaclone.tech';
+        process.env.SENDGRID_FROM_EMAIL || 'notifications@alphaclonesystems.com';
     let provider: 'sendgrid' | 'resend' = 'sendgrid';
 
     if (userId) {
@@ -295,5 +295,5 @@ export async function sendPlatformTemplateEmail(
 }
 
 export function defaultDashboardUrl(): string {
-    return ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+    return ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
 }

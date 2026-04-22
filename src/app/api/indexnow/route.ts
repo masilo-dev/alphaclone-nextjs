@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY;
-const BASE_URL = 'https://alphaclone.tech';
+const BASE_URL = 'https://alphaclonesystems.com';
 
 // IndexNow protocol — real-time notification to Bing and AI search partners
 // POST with JSON body: { urls: string[] }
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         }
 
         const payload = {
-            host: 'alphaclone.tech',
+            host: 'alphaclonesystems.com',
             key: INDEXNOW_KEY,
             keyLocation: `${BASE_URL}/${INDEXNOW_KEY}.txt`,
             urlList: urls,
@@ -74,7 +74,7 @@ export async function GET() {
     ];
 
     const payload = {
-        host: 'alphaclone.tech',
+        host: 'alphaclonesystems.com',
         key: INDEXNOW_KEY,
         keyLocation: `${BASE_URL}/${INDEXNOW_KEY}.txt`,
         urlList: coreUrls,

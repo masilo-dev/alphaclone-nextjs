@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'deal pipeline CRM',
     'AlphaClone leads and CRM',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/crm' },
+  alternates: { canonical: 'https://alphaclonesystems.com/crm' },
   openGraph: {
     title: 'AlphaClone CRM | Business CRM Platform',
     description: 'Manage pipeline, contacts, and deal execution in AlphaClone CRM.',
-    url: 'https://alphaclone.tech/crm',
+    url: 'https://alphaclonesystems.com/crm',
     type: 'website',
   },
   robots: { index: true, follow: true },

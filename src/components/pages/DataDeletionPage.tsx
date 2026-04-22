@@ -254,8 +254,8 @@ function DataDeletionContent() {
                 <div className="text-center py-4 border-t border-slate-800">
                     <p className="text-sm text-slate-500">
                         Questions? Contact us at{' '}
-                        <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
-                            privacy@alphaclone.tech
+                        <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
+                            privacy@alphaclonesystems.com
                         </a>
                     </p>
                 </div>

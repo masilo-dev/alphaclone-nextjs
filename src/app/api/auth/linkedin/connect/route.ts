@@ -30,7 +30,7 @@ const LINKEDIN_REQUESTED_SCOPES = [
 
 export async function GET(req: NextRequest) {
   try {
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
+    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },

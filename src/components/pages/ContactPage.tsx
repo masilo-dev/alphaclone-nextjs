@@ -144,14 +144,14 @@ const ContactPage: React.FC = () => {
                                     <div>
                                         <div className="font-semibold mb-1">Email</div>
                                         <div className="flex flex-col gap-1">
-                                            <a href="mailto:info@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
-                                                General: info@alphaclone.tech
+                                            <a href="mailto:info@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
+                                                General: info@alphaclonesystems.com
                                             </a>
-                                            <a href="mailto:sales@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
-                                                Sales: sales@alphaclone.tech
+                                            <a href="mailto:sales@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
+                                                Sales: sales@alphaclonesystems.com
                                             </a>
-                                            <a href="mailto:admin@alphaclone.tech" className="text-teal-400 hover:text-teal-300">
-                                                Administration: admin@alphaclone.tech
+                                            <a href="mailto:admin@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
+                                                Administration: admin@alphaclonesystems.com
                                             </a>
                                         </div>
                                     </div>

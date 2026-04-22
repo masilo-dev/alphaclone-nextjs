@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
 
     const appId = process.env.FACEBOOK_APP_ID;
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
     if (!appId) {
         return NextResponse.redirect(
             `${appUrl}/dashboard/business/facebook?fb_error=app_not_configured`

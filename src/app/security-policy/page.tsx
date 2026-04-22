@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     'AlphaClone vulnerability disclosure',
     'AlphaClone data security',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/security-policy' },
+  alternates: { canonical: 'https://alphaclonesystems.com/security-policy' },
   openGraph: {
     title: 'Security Policy | AlphaClone Systems',
     description: 'Security and vulnerability reporting information for AlphaClone.',
-    url: 'https://alphaclone.tech/security-policy',
+    url: 'https://alphaclonesystems.com/security-policy',
     type: 'article',
   },
   robots: { index: true, follow: true },
@@ -53,8 +53,8 @@ export default function SecurityPolicyPage() {
             <h2 className="text-lg font-bold text-cyan-200 mb-2">Report a Security Issue</h2>
             <p>
               Send vulnerability reports to{' '}
-              <a href="mailto:security@alphaclone.tech" className="text-cyan-300 hover:text-cyan-200">
-                security@alphaclone.tech
+              <a href="mailto:security@alphaclonesystems.com" className="text-cyan-300 hover:text-cyan-200">
+                security@alphaclonesystems.com
               </a>
               .
             </p>

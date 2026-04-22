@@ -15,11 +15,11 @@ export const metadata: Metadata = {
         'business workflow automation platform',
         'small business operations software',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/about' },
+    alternates: { canonical: 'https://alphaclonesystems.com/about' },
     openGraph: {
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
-        url: 'https://alphaclone.tech/about',
+        url: 'https://alphaclonesystems.com/about',
         type: 'website',
     },
     twitter: {
@@ -33,8 +33,8 @@ const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
-        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://alphaclone.tech/about' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
+        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://alphaclonesystems.com/about' },
     ],
 };
 

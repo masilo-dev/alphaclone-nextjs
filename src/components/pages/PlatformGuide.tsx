@@ -22,7 +22,7 @@ const PlatformGuide: React.FC = () => {
             step: 1,
             title: 'Create Your Account',
             subtitle: 'Takes 2 minutes — no credit card required for trial',
-            detail: `Visit alphaclone.tech/register and click "Create Account." You'll need to provide your email address and create a password. That's it — there's no form with 20 fields, no company size questions, no department dropdowns. We believe in letting you experience the platform before we ask for anything.
+            detail: `Visit alphaclonesystems.com/register and click "Create Account." You'll need to provide your email address and create a password. That's it — there's no form with 20 fields, no company size questions, no department dropdowns. We believe in letting you experience the platform before we ask for anything.
 
 After confirming your email via the link we send, you'll be taken directly into the onboarding wizard. If you have an existing Google account and prefer, you can sign up with Google in a single click, which also pre-fills your name and profile photo automatically.
 

@@ -7,7 +7,7 @@ function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
     const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
     const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    return host ? `${proto}://${host}` : 'https://alphaclone.tech';
+    return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
 }
 
 export async function GET(req: NextRequest) {

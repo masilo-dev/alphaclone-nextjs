@@ -596,7 +596,7 @@ export default function DocsPageContent() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Button
-                                    onClick={() => window.location.href = 'mailto:support@alphaclone.tech'}
+                                    onClick={() => window.location.href = 'mailto:support@alphaclonesystems.com'}
                                     className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-bold px-10 py-4 h-auto text-base rounded-2xl shadow-xl shadow-teal-500/20"
                                 >
                                     Contact Engineering Team
@@ -620,7 +620,7 @@ export default function DocsPageContent() {
                 <span className="mx-4">·</span>
                 <Link href="/services" className="hover:text-slate-400 transition-colors">All Services</Link>
                 <span className="mx-4">·</span>
-                <a href="mailto:support@alphaclone.tech" className="hover:text-slate-400 transition-colors">support@alphaclone.tech</a>
+                <a href="mailto:support@alphaclonesystems.com" className="hover:text-slate-400 transition-colors">support@alphaclonesystems.com</a>
             </footer>
         </div>
     );

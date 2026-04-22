@@ -193,7 +193,7 @@ async function fetchOpenStreetMap(
   const geoQuery = isGlobal ? 'London, UK' : location;
   const nomRes = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`,
-    { headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclone.tech)' }, signal: AbortSignal.timeout(7000) }
+    { headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' }, signal: AbortSignal.timeout(7000) }
   );
   if (!nomRes.ok) throw new Error('Nominatim geocoding failed');
   const nomData = await nomRes.json();

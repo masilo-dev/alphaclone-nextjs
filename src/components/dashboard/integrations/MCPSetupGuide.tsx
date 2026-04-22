@@ -121,7 +121,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const tenantId = currentTenant?.id ?? 'your-workspace-id';
 
   const mcpOrigin =
-    typeof window !== 'undefined' ? window.location.origin : 'https://alphaclone.tech';
+    typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com';
 
   const buildConnectionUrl = (token: string | null, workspaceId: string) => {
     const params = new URLSearchParams({
@@ -536,7 +536,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         </div>
         <p className="text-slate-400 text-sm leading-relaxed">
           If something isn't working, just email us at{' '}
-          <a href="mailto:support@alphaclone.tech" className="text-teal-400 hover:underline">support@alphaclone.tech</a>{' '}
+          <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a>{' '}
           and tell us which step you're stuck on. We'll sort it out for you — usually within a few hours.
         </p>
       </div>

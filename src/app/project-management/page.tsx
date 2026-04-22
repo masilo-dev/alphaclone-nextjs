@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'team delivery software',
     'business task management',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/project-management' },
+  alternates: { canonical: 'https://alphaclonesystems.com/project-management' },
   openGraph: {
     title: 'AlphaClone Project Management',
     description: 'Manage tasks, milestones, and delivery workflows in AlphaClone.',
-    url: 'https://alphaclone.tech/project-management',
+    url: 'https://alphaclonesystems.com/project-management',
     type: 'website',
   },
   robots: { index: true, follow: true },

@@ -10,11 +10,11 @@ export const metadata: Metadata = {
         'how to use AlphaClone', 'business software tutorial', 'onboarding guide', 'getting started with AlphaClone',
         'small business software setup', 'AI business platform tutorial',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/guide' },
+    alternates: { canonical: 'https://alphaclonesystems.com/guide' },
     openGraph: {
         title: 'Platform Guide & Onboarding | AlphaClone Systems',
         description: 'Set up your entire business OS in under 30 minutes. Step-by-step guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
-        url: 'https://alphaclone.tech/guide',
+        url: 'https://alphaclonesystems.com/guide',
         type: 'article',
     },
     twitter: {
@@ -28,8 +28,8 @@ const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
-        { '@type': 'ListItem', position: 2, name: 'Guide', item: 'https://alphaclone.tech/guide' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
+        { '@type': 'ListItem', position: 2, name: 'Guide', item: 'https://alphaclonesystems.com/guide' },
     ],
 };
 

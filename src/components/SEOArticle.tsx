@@ -87,7 +87,7 @@ const SEOArticle: React.FC = () => {
                 <meta property="og:title" content={article.title} />
                 <meta property="og:description" content={article.meta_description} />
                 <meta property="og:type" content="article" />
-                <meta property="og:url" content={`https://alphaclone.tech/blog/${article.slug}`} />
+                <meta property="og:url" content={`https://alphaclonesystems.com/blog/${article.slug}`} />
 
                 {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />

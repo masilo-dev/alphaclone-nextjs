@@ -42,8 +42,8 @@ function LegalLayout({
                <span className="text-xs text-slate-500">•</span>
                <span className="text-xs text-slate-500">AlphaClone Systems (Pty) Ltd</span>
                <span className="text-xs text-slate-500">•</span>
-               <a href="mailto:legal@alphaclone.tech" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> legal@alphaclone.tech
+               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
+                  <Mail className="w-3 h-3" /> legal@alphaclonesystems.com
                </a>
             </div>
             <div className="prose-legal space-y-12">
@@ -53,7 +53,7 @@ function LegalLayout({
                <Link href="/privacy-policy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
                <Link href="/terms-of-service" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
                <Link href="/cookie-policy" className="hover:text-teal-400 transition-colors">Cookie Policy</Link>
-               <a href="mailto:legal@alphaclone.tech" className="hover:text-teal-400 transition-colors">Contact Legal</a>
+               <a href="mailto:legal@alphaclonesystems.com" className="hover:text-teal-400 transition-colors">Contact Legal</a>
             </div>
          </div>
       </div>
@@ -131,9 +131,9 @@ export function PrivacyPolicy() {
             </p>
             <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
                <p><strong className="text-white">AlphaClone Systems (Pty) Ltd</strong></p>
-               <p>Email: <a href="mailto:legal@alphaclone.tech" className="text-teal-400 hover:underline">legal@alphaclone.tech</a></p>
-               <p>Data Protection Contact: <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a></p>
-               <p>Website: <a href="https://alphaclone.tech" className="text-teal-400 hover:underline">https://alphaclone.tech</a></p>
+               <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
+               <p>Data Protection Contact: <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
+               <p>Website: <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">https://alphaclonesystems.com</a></p>
             </div>
          </Section>
 
@@ -263,7 +263,7 @@ export function PrivacyPolicy() {
          </Section>
 
          <Section id="your-rights" title="7. Your Rights (GDPR & POPIA)">
-            <p>Depending on your jurisdiction, you have the following rights regarding your personal data. To exercise any of these rights, email <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a>. We will respond within 30 days.</p>
+            <p>Depending on your jurisdiction, you have the following rights regarding your personal data. To exercise any of these rights, email <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>. We will respond within 30 days.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
                {[
                   { right: 'Right of Access', desc: 'Request a copy of all personal data we hold about you.' },
@@ -304,7 +304,7 @@ export function PrivacyPolicy() {
          </Section>
 
          <Section id="children" title="10. Children's Privacy">
-            <p>The AlphaClone Business OS is intended for use by businesses and professionals aged 18 and over. We do not knowingly collect personal data from anyone under 18. If you believe a minor has provided us with personal data, contact us at <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a> and we will delete the data immediately.</p>
+            <p>The AlphaClone Business OS is intended for use by businesses and professionals aged 18 and over. We do not knowingly collect personal data from anyone under 18. If you believe a minor has provided us with personal data, contact us at <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a> and we will delete the data immediately.</p>
          </Section>
 
          <Section id="changes" title="11. Changes to This Policy">
@@ -314,9 +314,9 @@ export function PrivacyPolicy() {
          <Section id="contact" title="12. Contact Us">
             <p>For privacy-related enquiries, data subject rights requests, or complaints:</p>
             <div className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm mt-3">
-               <p><strong className="text-white">Privacy & Data Protection:</strong> <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a></p>
-               <p><strong className="text-white">Legal Department:</strong> <a href="mailto:legal@alphaclone.tech" className="text-teal-400 hover:underline">legal@alphaclone.tech</a></p>
-               <p><strong className="text-white">General Support:</strong> <a href="mailto:support@alphaclone.tech" className="text-teal-400 hover:underline">support@alphaclone.tech</a></p>
+               <p><strong className="text-white">Privacy & Data Protection:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
+               <p><strong className="text-white">Legal Department:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
+               <p><strong className="text-white">General Support:</strong> <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a></p>
             </div>
          </Section>
       </LegalLayout>
@@ -340,7 +340,7 @@ export function TermsOfService() {
          </InfoBox>
 
          <Section id="acceptance" title="1. Acceptance of Terms">
-            <p>By accessing or using the AlphaClone Business OS platform at <a href="https://alphaclone.tech" className="text-teal-400 hover:underline">alphaclone.tech</a> or any associated mobile or desktop applications ("Platform"), you agree to be bound by these Terms of Service ("Terms"), our Privacy Policy, and Cookie Policy. If you are using the Platform on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.</p>
+            <p>By accessing or using the AlphaClone Business OS platform at <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">alphaclonesystems.com</a> or any associated mobile or desktop applications ("Platform"), you agree to be bound by these Terms of Service ("Terms"), our Privacy Policy, and Cookie Policy. If you are using the Platform on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.</p>
             <p>If you do not agree to these Terms, you must not use the Platform. Continued use of the Platform after any modification to these Terms constitutes your acceptance of the revised Terms.</p>
          </Section>
 
@@ -357,7 +357,7 @@ export function TermsOfService() {
 
          <Section id="account" title="3. Account Registration & Security">
             <Sub title="3.1 Account Responsibility">
-               <p>You are solely responsible for all activity that occurs under your account. You must: choose a strong password, keep your credentials confidential, notify us immediately at <a href="mailto:security@alphaclone.tech" className="text-teal-400 hover:underline">security@alphaclone.tech</a> of any unauthorized access or security breach, and not share your account with unauthorized third parties.</p>
+               <p>You are solely responsible for all activity that occurs under your account. You must: choose a strong password, keep your credentials confidential, notify us immediately at <a href="mailto:security@alphaclonesystems.com" className="text-teal-400 hover:underline">security@alphaclonesystems.com</a> of any unauthorized access or security breach, and not share your account with unauthorized third parties.</p>
             </Sub>
             <Sub title="3.2 Team Members">
                <p>Subscription plans allow you to invite team members. You are responsible for all actions taken by your team members within your workspace. Each team member must individually agree to these Terms. You may revoke team member access at any time from Settings → Team Management.</p>
@@ -491,7 +491,7 @@ export function TermsOfService() {
 
          <Section id="contact-legal" title="15. Contact">
             <p>For legal enquiries, contract disputes, or formal notices:</p>
-            <p><strong className="text-white">Email:</strong> <a href="mailto:legal@alphaclone.tech" className="text-teal-400 hover:underline">legal@alphaclone.tech</a></p>
+            <p><strong className="text-white">Email:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
          </Section>
       </LegalLayout>
    );
@@ -688,7 +688,7 @@ export function CookiePolicy() {
          </Section>
 
          <Section id="contact-cookie" title="7. Contact">
-            <p>Cookie-related enquiries: <a href="mailto:privacy@alphaclone.tech" className="text-teal-400 hover:underline">privacy@alphaclone.tech</a></p>
+            <p>Cookie-related enquiries: <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
          </Section>
       </LegalLayout>
    );

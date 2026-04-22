@@ -12,12 +12,12 @@ export const metadata: Metadata = {
     'AlphaClone reliability',
     'AlphaClone incident status',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/platform-status' },
+  alternates: { canonical: 'https://alphaclonesystems.com/platform-status' },
   openGraph: {
     title: 'Platform Status | AlphaClone Systems',
     description:
       'Service health and reliability information for AlphaClone Systems.',
-    url: 'https://alphaclone.tech/platform-status',
+    url: 'https://alphaclonesystems.com/platform-status',
     type: 'website',
   },
   robots: { index: true, follow: true },

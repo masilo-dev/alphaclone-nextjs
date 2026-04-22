@@ -23,7 +23,7 @@ const JoinMeeting: React.FC = () => {
     // Get room URL from room ID
     useEffect(() => {
         if (roomId) {
-            // Internal mapping - users stay on alphaclone.tech
+            // Internal mapping - users stay on alphaclonesystems.com
             const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
             setRoomUrl(`https://${domain}.daily.co/${roomId}`);
         }

@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Step 5: Return AlphaClone URL (not Daily.co URL)
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         const meetingUrl = `${baseUrl}/meet/${linkToken}`;
 
         return NextResponse.json({

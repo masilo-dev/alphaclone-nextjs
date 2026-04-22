@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
 
     console.log('Gmail Callback Received:', { stateNonce, hasCode: !!code });
 

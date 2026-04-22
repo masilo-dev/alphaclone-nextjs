@@ -3,7 +3,7 @@ import { ENV } from '@/config/env';
 import { VALID_SCOPES } from '@/services/mcp/MCPOAuthScopes';
 
 export async function GET() {
-  const baseUrl = ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+  const baseUrl = ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
   
   return NextResponse.json({
     "issuer": baseUrl,

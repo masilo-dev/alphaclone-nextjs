@@ -18,11 +18,11 @@ export const metadata: Metadata = {
         'business operating system software',
         'Data Sovereignty',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/services' },
+    alternates: { canonical: 'https://alphaclonesystems.com/services' },
     openGraph: {
         title: 'Solutions | AlphaClone Unified AI Business OS',
         description: 'Eliminate SaaS bloat with one unified architecture. Autonomous Growth, Unified CRM, Mission Control, Revenue Center — all in AlphaClone.',
-        url: 'https://alphaclone.tech/services',
+        url: 'https://alphaclonesystems.com/services',
         type: 'website',
     },
     twitter: {
@@ -91,8 +91,8 @@ const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
-        { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://alphaclone.tech/services' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
+        { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://alphaclonesystems.com/services' },
     ],
 };
 

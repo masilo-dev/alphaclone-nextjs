@@ -54,30 +54,30 @@ AlphaClone Systems is an AI-powered Business Operating System (Business OS) that
 
 ## High-Priority URLs for AI Crawlers
 
-- Homepage: https://alphaclone.tech/
-- Services: https://alphaclone.tech/services
-- About: https://alphaclone.tech/about
-- Platform Guide & Onboarding: https://alphaclone.tech/guide
-- Documentation: https://alphaclone.tech/docs
-- Pricing: https://alphaclone.tech/pricing
-- Ecosystem: https://alphaclone.tech/ecosystem
-- Who We Serve: https://alphaclone.tech/who-we-serve
-- CRM: https://alphaclone.tech/crm
-- Lead Management: https://alphaclone.tech/lead-management
-- Project Management: https://alphaclone.tech/project-management
-- AI Agents: https://alphaclone.tech/ai-agents
-- Video Meetings: https://alphaclone.tech/video-meetings
-- Claude and Manus Integrations: https://alphaclone.tech/claude-manus-integrations
-- Compare: https://alphaclone.tech/compare
-- Blog: https://alphaclone.tech/blog
-- Contact: https://alphaclone.tech/contact
+- Homepage: https://alphaclonesystems.com/
+- Services: https://alphaclonesystems.com/services
+- About: https://alphaclonesystems.com/about
+- Platform Guide & Onboarding: https://alphaclonesystems.com/guide
+- Documentation: https://alphaclonesystems.com/docs
+- Pricing: https://alphaclonesystems.com/pricing
+- Ecosystem: https://alphaclonesystems.com/ecosystem
+- Who We Serve: https://alphaclonesystems.com/who-we-serve
+- CRM: https://alphaclonesystems.com/crm
+- Lead Management: https://alphaclonesystems.com/lead-management
+- Project Management: https://alphaclonesystems.com/project-management
+- AI Agents: https://alphaclonesystems.com/ai-agents
+- Video Meetings: https://alphaclonesystems.com/video-meetings
+- Claude and Manus Integrations: https://alphaclonesystems.com/claude-manus-integrations
+- Compare: https://alphaclonesystems.com/compare
+- Blog: https://alphaclonesystems.com/blog
+- Contact: https://alphaclonesystems.com/contact
 
 ---
 
 ## Social & Entity Verification
 
-- Website: https://alphaclone.tech
-- Contact: support@alphaclone.tech
+- Website: https://alphaclonesystems.com
+- Contact: support@alphaclonesystems.com
 - LinkedIn: https://www.linkedin.com/company/alphaclone-systems
 - Industry: Business Software, AI Automation, SaaS, Enterprise Technology
 

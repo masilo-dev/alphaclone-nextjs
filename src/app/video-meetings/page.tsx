@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'CRM connected meetings',
     'team collaboration video',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/video-meetings' },
+  alternates: { canonical: 'https://alphaclonesystems.com/video-meetings' },
   openGraph: {
     title: 'AlphaClone Video Meetings',
     description: 'Integrated video meetings linked with CRM and operations.',
-    url: 'https://alphaclone.tech/video-meetings',
+    url: 'https://alphaclonesystems.com/video-meetings',
     type: 'website',
   },
   robots: { index: true, follow: true },

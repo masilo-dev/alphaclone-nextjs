@@ -53,7 +53,7 @@ export const contactService = {
             // Email notification to admin (Direct delivery via server API)
             try {
                 await emailProviderService.sendEmail({
-                    to: 'info@alphaclone.tech',
+                    to: 'info@alphaclonesystems.com',
                     subject: `New Lead: ${name} via Contact Form`,
                     html: `
                         <div style="font-family: sans-serif; color: #333;">

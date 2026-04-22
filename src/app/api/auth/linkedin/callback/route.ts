@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const oauthError = searchParams.get('error');
-  const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(/\/$/, '');
+  const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
 
   if (oauthError) {
     return buildRedirect(appUrl, null, { ok: false, errorCode: oauthError });

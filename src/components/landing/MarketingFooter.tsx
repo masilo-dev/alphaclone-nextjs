@@ -44,7 +44,7 @@ const MarketingFooter: React.FC = () => {
                 { label: 'Platform Status', href: '/platform-status' },
                 { label: 'Security Policy', href: '/security-policy' },
                 { label: 'Compliance', href: '/compliance' },
-                { label: 'Security', href: 'mailto:security@alphaclone.tech' },
+                { label: 'Security', href: 'mailto:security@alphaclonesystems.com' },
             ],
         },
     ];
