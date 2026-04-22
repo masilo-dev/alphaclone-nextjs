@@ -11,7 +11,6 @@ import { fileImportService } from '../../services/fileImportService';
 import LeadDetailModal from './leads/LeadDetailModal';
 import { Button, Input, Card, Modal } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
-import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 

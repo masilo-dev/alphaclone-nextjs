@@ -11,6 +11,7 @@ import PageTransition from "@/components/PageTransition";
 // import GlobalAlpha from "@/components/alpha/GlobalAlpha";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
+import { SITE_URL } from "@/lib/siteUrl";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -20,8 +21,6 @@ const inter = Inter({
   preload: true,
   adjustFontFallback: true,
 });
-
-const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -66,6 +65,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: "AlphaClone Systems",
     locale: "en_US",
+    images: [{ url: "/opengraph-image" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -73,6 +73,7 @@ export const metadata: Metadata = {
     description:
       "CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations in one platform.",
     creator: "@AlphaCloneSys",
+    images: ["/twitter-image"],
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -113,11 +114,6 @@ const organizationSchema = {
     lowPrice: "15",
     highPrice: "80",
     offerCount: "3",
-  },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    ratingCount: "125",
   },
   publisher: {
     "@type": "Organization",

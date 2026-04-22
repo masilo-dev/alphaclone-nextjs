@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable'; // Note: This might need a separate import if not bundled
 
@@ -60,13 +60,20 @@ export async function GET(req: NextRequest) {
 
         // 2. Generate Export
         if (type === 'xlsx') {
-            const worksheet = XLSX.utils.json_to_sheet(data);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, category.charAt(0).toUpperCase() + category.slice(1));
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet(category.charAt(0).toUpperCase() + category.slice(1));
 
-            const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+            const headers = Object.keys(data[0] || {});
+            sheet.columns = headers.map((key) => ({ header: key, key }));
+            for (const row of data) {
+                sheet.addRow(row);
+            }
 
-            return new NextResponse(buffer, {
+            sheet.getRow(1).font = { bold: true };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+
+            return new NextResponse(Buffer.from(buffer), {
                 headers: {
                     'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     'Content-Disposition': `attachment; filename=${fileName}.xlsx`,

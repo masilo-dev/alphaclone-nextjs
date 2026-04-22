@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Calendar, Tag } from 'lucide-react';
 import { getPublishedSeoArticleBySlug } from '@/services/seoServerService';
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer';
+import { SITE_URL } from '@/lib/siteUrl';
 
 type PageProps = {
     params: Promise<{ slug: string }>;
@@ -24,12 +25,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title: article.title,
         description: article.meta_description,
         keywords: article.meta_keywords,
-        alternates: { canonical: `https://alphaclone.tech/blog/${article.slug}` },
+        alternates: { canonical: `${SITE_URL}/blog/${article.slug}` },
         openGraph: {
             title: article.title,
             description: article.meta_description,
             type: 'article',
-            url: `https://alphaclone.tech/blog/${article.slug}`,
+            url: `${SITE_URL}/blog/${article.slug}`,
             publishedTime: article.created_at,
             modifiedTime: article.updated_at,
         },
@@ -63,10 +64,10 @@ export default async function BlogPost({ params }: PageProps) {
             name: 'AlphaClone Systems',
             logo: {
                 '@type': 'ImageObject',
-                url: 'https://alphaclone.tech/favicon.ico',
+                url: `${SITE_URL}/favicon.ico`,
             },
         },
-        mainEntityOfPage: `https://alphaclone.tech/blog/${article.slug}`,
+        mainEntityOfPage: `${SITE_URL}/blog/${article.slug}`,
     };
 
     return (

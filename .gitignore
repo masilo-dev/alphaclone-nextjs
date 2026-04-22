@@ -48,6 +48,7 @@ public/sw.js
 public/sw.js.map
 public/workbox-*.js
 public/workbox-*.js.map
+public/pdfjs/
 
 # Credentials and secrets
 creds-output.txt

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
     title: 'Knowledge Hub | Business OS Insights & AI Automation Guides',
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
         'operational excellence content',
         'AlphaClone blog',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/blog' },
+    alternates: { canonical: `${SITE_URL}/blog` },
     openGraph: {
         title: 'Knowledge Hub | AlphaClone Business OS Insights',
         description: 'Expert insights on AI automation, unified operations, and eliminating SaaS bloat for high-performance teams.',
-        url: 'https://alphaclone.tech/blog',
+        url: `${SITE_URL}/blog`,
         type: 'website',
     },
     twitter: {
