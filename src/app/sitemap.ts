@@ -6,11 +6,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = SITE_URL;
 
     // 1. Static Marketing Routes
-    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/pricing', '/contact', '/tools/ai-architect', '/auth/login'].map((route) => ({
+    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/faq', '/pricing', '/contact', '/tools/ai-architect', '/auth/login', '/login', '/register'].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1.0 : (route === '/auth/login' || route === '/tools/ai-architect') ? 0.8 : 0.9,
+        priority: route === '' ? 1.0 : (route === '/auth/login' || route === '/login' || route === '/register' || route === '/tools/ai-architect') ? 0.8 : 0.9,
     }));
 
     const standardRoutes = [

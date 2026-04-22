@@ -47,6 +47,52 @@ export default async function Home() {
       'query-input': 'required name=search_term_string',
     },
   };
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What tools does Alphaclone replace?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Alphaclone replaces your CRM, invoicing software, contract and e-signature tool, social media scheduler, AI writing assistant, and video meeting platform in one place for 15 USD per month.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is Alphaclone good for solopreneurs and one-person businesses?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. Alphaclone is designed for solo founders and small teams that need enterprise capabilities without enterprise pricing or complexity.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How is Alphaclone different from HubSpot or QuickBooks?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'HubSpot and QuickBooks focus on single functions. Alphaclone combines CRM, finance, contracts, social media, meetings, and AI in one platform controlled through natural language.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Do I need to know how to use AI to use Alphaclone?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'No. You describe what you need in plain language and Alphaclone executes it.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What is the best affordable alternative to HubSpot for small businesses?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Alphaclone provides CRM, pipeline management, contact tracking, and AI-powered follow-ups starting at 15 USD per month with broader built-in functionality.',
+        },
+      },
+    ],
+  };
 
   return (
     <main>
@@ -57,6 +103,10 @@ export default async function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <Suspense
         fallback={
