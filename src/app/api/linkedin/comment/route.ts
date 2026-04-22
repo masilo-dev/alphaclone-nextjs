@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 function normalizeScopes(raw: unknown): string[] {
   if (Array.isArray(raw)) {
@@ -100,6 +101,27 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json({ error: raw || `LinkedIn API error (${res.status})` }, { status: 400 });
     }
+
+    const commentUrn = res.headers.get('x-restli-id') || res.headers.get('location') || undefined;
+    await captureUnifiedMessageFromWebhook({
+      supabase: admin as any,
+      tenantId,
+      source: 'linkedin',
+      channel: 'chat',
+      direction: 'outbound',
+      externalId: commentUrn ?? null,
+      threadId: postUrn,
+      from: li.linkedin_person_urn,
+      to: postUrn,
+      subject: null,
+      text,
+      html: null,
+      sentAt: new Date().toISOString(),
+      metadata: {
+        postUrn,
+        parentCommentUrn,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

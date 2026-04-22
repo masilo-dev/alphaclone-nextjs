@@ -33,8 +33,22 @@ export interface Deal {
     lostReason?: string;
     wonDetails?: string;
     metadata?: any;
+    intelligenceScore?: number;
+    intelligenceConfidence?: number;
+    intelligenceState?: any;
+    intelligenceRecommendations?: string[];
+    psychologyProfile?: string[];
     createdAt: string;
     updatedAt: string;
+}
+
+function triggerDealIntelligenceRecompute(tenantId: string, dealId: string) {
+    if (typeof window === 'undefined') return;
+    void fetch('/api/intelligence/deals/recompute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, dealId }),
+    });
 }
 
 export interface DealActivity {
@@ -206,6 +220,11 @@ export const dealService: DealService = {
                 lostReason: d.lost_reason,
                 wonDetails: d.won_details,
                 metadata: d.metadata || {},
+                intelligenceScore: d.intelligence_score ?? undefined,
+                intelligenceConfidence: d.intelligence_confidence ?? undefined,
+                intelligenceState: d.intelligence_state ?? undefined,
+                intelligenceRecommendations: d.intelligence_recommendations ?? undefined,
+                psychologyProfile: d.psychology_profile ?? undefined,
                 createdAt: d.created_at,
                 updatedAt: d.updated_at,
             }));
@@ -255,6 +274,11 @@ export const dealService: DealService = {
                 lostReason: data.lost_reason,
                 wonDetails: data.won_details,
                 metadata: data.metadata || {},
+                intelligenceScore: data.intelligence_score ?? undefined,
+                intelligenceConfidence: data.intelligence_confidence ?? undefined,
+                intelligenceState: data.intelligence_state ?? undefined,
+                intelligenceRecommendations: data.intelligence_recommendations ?? undefined,
+                psychologyProfile: data.psychology_profile ?? undefined,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at,
             };
@@ -327,6 +351,11 @@ export const dealService: DealService = {
                 lostReason: data.lost_reason,
                 wonDetails: data.won_details,
                 metadata: data.metadata || {},
+                intelligenceScore: data.intelligence_score ?? undefined,
+                intelligenceConfidence: data.intelligence_confidence ?? undefined,
+                intelligenceState: data.intelligence_state ?? undefined,
+                intelligenceRecommendations: data.intelligence_recommendations ?? undefined,
+                psychologyProfile: data.psychology_profile ?? undefined,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at,
             };
@@ -334,6 +363,7 @@ export const dealService: DealService = {
             // SYNC TO EXTERNAL CRM
             // Non-blocking sync to avoid UI delay
             UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
+            triggerDealIntelligenceRecompute(tenantId, deal.id);
 
             return { deal, error: null };
         } catch (err) {
@@ -473,12 +503,18 @@ export const dealService: DealService = {
                 lostReason: data.lost_reason,
                 wonDetails: data.won_details,
                 metadata: data.metadata || {},
+                intelligenceScore: data.intelligence_score ?? undefined,
+                intelligenceConfidence: data.intelligence_confidence ?? undefined,
+                intelligenceState: data.intelligence_state ?? undefined,
+                intelligenceRecommendations: data.intelligence_recommendations ?? undefined,
+                psychologyProfile: data.psychology_profile ?? undefined,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at,
             };
 
             // SYNC TO EXTERNAL CRM
             UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
+            triggerDealIntelligenceRecompute(tenantId, deal.id);
 
             return { deal, error: null };
         } catch (err) {
@@ -568,6 +604,7 @@ export const dealService: DealService = {
         }
     ): Promise<{ activity: DealActivity | null; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
             const { data, error } = await supabase
                 .from('deal_activities')
                 .insert({
@@ -600,6 +637,7 @@ export const dealService: DealService = {
                 createdAt: data.created_at,
             };
 
+            triggerDealIntelligenceRecompute(tenantId, dealId);
             return { activity, error: null };
         } catch (err) {
             return { activity: null, error: err instanceof Error ? err.message : 'Unknown error' };

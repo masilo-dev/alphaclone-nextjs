@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { verifyFacebookSignature } from '@/lib/webhookUtils';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
@@ -115,6 +116,26 @@ export async function POST(req: NextRequest) {
                             if (msgError) {
                                 console.error('[Messenger Webhook] DB Error:', msgError);
                             }
+
+                            await captureUnifiedMessageFromWebhook({
+                                supabase: supabaseAdmin as any,
+                                tenantId: integration.tenant_id,
+                                source: 'facebook',
+                                channel: 'chat',
+                                direction: 'inbound',
+                                externalId: event.message.mid || null,
+                                threadId: conversation.id,
+                                from: senderId,
+                                to: recipientId,
+                                subject: null,
+                                text: messageText,
+                                html: null,
+                                receivedAt: new Date().toISOString(),
+                                metadata: {
+                                    pageId,
+                                    conversationId: conversation.id,
+                                },
+                            });
                         }
                     }
                 }

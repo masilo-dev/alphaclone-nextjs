@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 type InboundProvider = 'brevo' | 'resend' | 'sendgrid';
 type InboundMessage = {
@@ -134,6 +135,25 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                     messageId: message.messageId,
                     integrationId: integration.id,
                     receivedAt: new Date().toISOString(),
+                },
+            });
+            await captureUnifiedMessageFromWebhook({
+                supabase: admin as any,
+                tenantId: integration.tenant_id,
+                source: provider,
+                channel: 'email',
+                direction: 'inbound',
+                externalId: message.messageId || null,
+                threadId: null,
+                from: message.from,
+                to: message.to,
+                subject: message.subject,
+                text: message.text,
+                html: message.html,
+                receivedAt: new Date().toISOString(),
+                metadata: {
+                    provider,
+                    integrationId: integration.id,
                 },
             });
             await admin.from('notifications').insert({

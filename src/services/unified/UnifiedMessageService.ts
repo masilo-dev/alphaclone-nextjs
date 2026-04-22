@@ -1,7 +1,20 @@
 import { supabase } from '@/lib/supabase';
 import { tenantService } from '../tenancy/TenantService';
 
-export type MessageSource = 'internal' | 'gmail' | 'zoho' | 'sms' | 'slack' | 'teams';
+export type MessageSource =
+  | 'internal'
+  | 'gmail'
+  | 'zoho'
+  | 'sms'
+  | 'slack'
+  | 'teams'
+  | 'brevo'
+  | 'resend'
+  | 'sendgrid'
+  | 'facebook'
+  | 'whatsapp'
+  | 'linkedin'
+  | 'mcp';
 export type MessageDirection = 'inbound' | 'outbound';
 export type MessageChannel = 'email' | 'chat' | 'sms' | 'call';
 

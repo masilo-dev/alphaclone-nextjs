@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { tenantService } from './tenancy/TenantService';
 
 export interface SalesForecast {
     id: string;
@@ -57,6 +58,11 @@ export interface ForecastSummary {
 }
 
 export const forecastingService = {
+    getTenantId(): string {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) throw new Error('No active tenant. Please select an organization.');
+        return tenantId;
+    },
     /**
      * Get all sales forecasts
      */
@@ -66,7 +72,8 @@ export const forecastingService = {
         endDate?: string;
     }): Promise<{ forecasts: SalesForecast[]; error: string | null }> {
         try {
-            let query = supabase.from('sales_forecasts').select('*');
+            const tenantId = this.getTenantId();
+            let query = supabase.from('sales_forecasts').select('*').eq('tenant_id', tenantId);
 
             if (filters?.ownerId) {
                 query = query.eq('owner_id', filters.ownerId);
@@ -124,9 +131,11 @@ export const forecastingService = {
         }
     ): Promise<{ forecast: SalesForecast | null; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
             const { data, error } = await supabase
                 .from('sales_forecasts')
                 .insert({
+                    tenant_id: tenantId,
                     forecast_period: forecastData.forecastPeriod,
                     start_date: forecastData.startDate,
                     end_date: forecastData.endDate,
@@ -175,6 +184,7 @@ export const forecastingService = {
         updates: Partial<SalesForecast>
     ): Promise<{ forecast: SalesForecast | null; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
             const updateData: any = {};
 
             if (updates.forecastedRevenue !== undefined) updateData.forecasted_revenue = updates.forecastedRevenue;
@@ -189,6 +199,7 @@ export const forecastingService = {
                 .from('sales_forecasts')
                 .update(updateData)
                 .eq('id', forecastId)
+                .eq('tenant_id', tenantId)
                 .select()
                 .single();
 
@@ -223,7 +234,8 @@ export const forecastingService = {
      */
     async deleteForecast(forecastId: string): Promise<{ success: boolean; error: string | null }> {
         try {
-            const { error } = await supabase.from('sales_forecasts').delete().eq('id', forecastId);
+            const tenantId = this.getTenantId();
+            const { error } = await supabase.from('sales_forecasts').delete().eq('id', forecastId).eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -238,7 +250,9 @@ export const forecastingService = {
      */
     async getForecastSummary(startDate?: string, endDate?: string): Promise<{ summary: ForecastSummary; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
             let query = supabase.from('sales_forecasts').select('*');
+            query = query.eq('tenant_id', tenantId);
 
             if (startDate) {
                 query = query.gte('start_date', startDate);

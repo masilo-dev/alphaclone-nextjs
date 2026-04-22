@@ -6,6 +6,7 @@ import {
     routeErrorResponse,
 } from '@/lib/apiAuth';
 import { facebookService } from '@/services/facebookService';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 export async function POST(req: NextRequest) {
     try {
@@ -55,6 +56,25 @@ export async function POST(req: NextRequest) {
         if (msgError) {
             console.error('Error recording sent message in DB:', msgError);
         }
+
+        await captureUnifiedMessageFromWebhook({
+            supabase: supabase as any,
+            tenantId: conversation.tenant_id,
+            source: 'facebook',
+            channel: 'chat',
+            direction: 'outbound',
+            externalId: result.message_id || null,
+            threadId: conversationId,
+            from: conversation.page_id,
+            to: conversation.sender_id,
+            subject: null,
+            text,
+            html: null,
+            sentAt: new Date().toISOString(),
+            metadata: {
+                conversationId,
+            },
+        });
 
         return NextResponse.json({ success: true, messageId: result.message_id });
     } catch (err: unknown) {

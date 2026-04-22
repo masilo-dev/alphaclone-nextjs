@@ -249,6 +249,25 @@ export class ContactService {
   }
 
   /**
+   * Find contact by phone
+   */
+  async findByPhone(phone: string): Promise<Contact | null> {
+    const tenantId = await tenantService.getCurrentTenantId();
+    const normalized = String(phone || '').replace(/[^\d+]/g, '');
+    if (!normalized) return null;
+
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('phone', normalized)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
    * Get contacts for company
    */
   async getForCompany(companyId: string): Promise<Contact[]> {
