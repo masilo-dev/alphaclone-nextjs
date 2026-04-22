@@ -18,7 +18,7 @@ export function getDailyAiLeadLimit(plan: string | null | undefined): number {
     return AI_LEADS_PER_DAY_BY_PLAN.free;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
 
 export function pricingUpgradeUrl(): string {
     return `${APP_URL}/pricing`;

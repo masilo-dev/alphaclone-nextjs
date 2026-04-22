@@ -13,11 +13,11 @@ export const metadata: Metadata = {
         'SaaS alternative for small business',
         'unified platform for consultants',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/who-we-serve' },
+    alternates: { canonical: 'https://alphaclonesystems.com/who-we-serve' },
     openGraph: {
         title: 'Who AlphaClone Serves | Unified Business OS for High-Performance Teams',
         description: 'Agencies, startups, consultants, remote teams — AlphaClone eliminates your operational friction with one unified architecture.',
-        url: 'https://alphaclone.tech/who-we-serve',
+        url: 'https://alphaclonesystems.com/who-we-serve',
         type: 'website',
     },
     twitter: {

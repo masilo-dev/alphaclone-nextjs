@@ -141,7 +141,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         <div className="flex flex-col md:flex-row gap-2">
                                             <div className="flex-1 bg-slate-950 border border-slate-700 rounded-xl flex items-center px-4 py-3 gap-2 overflow-hidden">
                                                 <Globe className="w-4 h-4 text-slate-500 shrink-0" />
-                                                <span className="text-sm text-slate-500 truncate inline-block max-w-[120px] sm:max-w-none">alphaclone.tech/book/</span>
+                                                <span className="text-sm text-slate-500 truncate inline-block max-w-[120px] sm:max-w-none">alphaclonesystems.com/book/</span>
                                                 <input
                                                     value={settings.slug}
                                                     onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}

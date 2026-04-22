@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'autonomous business agents',
     'AlphaClone AI automation',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/ai-agents' },
+  alternates: { canonical: 'https://alphaclonesystems.com/ai-agents' },
   openGraph: {
     title: 'AlphaClone AI Agents',
     description: 'Automate business workflows with AlphaClone AI agents.',
-    url: 'https://alphaclone.tech/ai-agents',
+    url: 'https://alphaclonesystems.com/ai-agents',
     type: 'website',
   },
   robots: { index: true, follow: true },

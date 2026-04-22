@@ -241,7 +241,7 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
   
   const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`;
   const nomRes = await fetch(nomUrl, { 
-    headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclone.tech)' },
+    headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' },
     signal: AbortSignal.timeout(10000),
   });
   

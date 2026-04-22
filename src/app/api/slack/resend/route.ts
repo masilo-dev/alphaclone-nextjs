@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         channel: notification.channel,
         text: notification.message,
         username: 'AlphaClone Bot',
-        icon_url: 'https://alphaclone.tech/logo.png'
+        icon_url: 'https://alphaclonesystems.com/logo.png'
       })
     });
 

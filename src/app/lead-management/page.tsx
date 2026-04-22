@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'lead pipeline automation',
     'AlphaClone CRM leads',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/lead-management' },
+  alternates: { canonical: 'https://alphaclonesystems.com/lead-management' },
   openGraph: {
     title: 'AlphaClone Lead Management',
     description: 'Capture, qualify, and convert leads using AlphaClone.',
-    url: 'https://alphaclone.tech/lead-management',
+    url: 'https://alphaclonesystems.com/lead-management',
     type: 'website',
   },
   robots: { index: true, follow: true },

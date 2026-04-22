@@ -221,7 +221,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
                     <div className="text-xs text-gray-300 space-y-1">
                         <p><strong className="text-white">Zero Friction:</strong> No tokens, no login, just click and join</p>
                         <p><strong className="text-white">Always Ready:</strong> Link never expires - perfect for booking automation</p>
-                        <p><strong className="text-white">Your Domain:</strong> Professional [alphaclone.tech/meet/...] branding</p>
+                        <p><strong className="text-white">Your Domain:</strong> Professional [alphaclonesystems.com/meet/...] branding</p>
                     </div>
                 </div>
             </div>

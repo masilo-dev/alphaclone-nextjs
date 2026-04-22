@@ -14,11 +14,11 @@ export const metadata: Metadata = {
         'Unified CRM Intelligence',
         'revenue operations platform',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/ecosystem' },
+    alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
     openGraph: {
         title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
         description: 'Nine integrated modules. One unified Business OS. No SaaS bloat. Explore the full AlphaClone architecture.',
-        url: 'https://alphaclone.tech/ecosystem',
+        url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },
     twitter: {

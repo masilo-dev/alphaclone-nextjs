@@ -65,13 +65,13 @@ async function handleBlockActions(payload: any, integration: any) {
     switch (action.action_id) {
       case 'get_started':
         await slackService.sendMessage(integration, channel, {
-          text: `🚀 <@${user}> is getting started with AlphaClone! Check out the dashboard: https://alphaclone.tech/dashboard`,
+          text: `🚀 <@${user}> is getting started with AlphaClone! Check out the dashboard: https://alphaclonesystems.com/dashboard`,
           blocks: [
             {
               type: 'section',
               text: {
                 type: 'mrkdwn',
-                text: `🚀 <@${user}> clicked "Get Started"!\n\nVisit the dashboard to explore all features: https://alphaclone.tech/dashboard`
+                text: `🚀 <@${user}> clicked "Get Started"!\n\nVisit the dashboard to explore all features: https://alphaclonesystems.com/dashboard`
               }
             }
           ]
@@ -86,7 +86,7 @@ async function handleBlockActions(payload: any, integration: any) {
               type: 'section',
               text: {
                 type: 'mrkdwn',
-                text: `📖 *AlphaClone Help for <@${user}>*\n\n**Available Commands:**\n• \`/alphaclone help\` - Show all commands\n• \`/lead create <name>\` - Create new lead\n• \`/lead list\` - List recent leads\n• \`/meeting schedule <title>\` - Schedule meeting\n\n**Features:**\n• 📊 Lead management\n• 📅 Meeting scheduling\n• 🤖 Workflow automation\n• 📈 Real-time notifications\n\nNeed more help? Visit: https://alphaclone.tech/support`
+                text: `📖 *AlphaClone Help for <@${user}>*\n\n**Available Commands:**\n• \`/alphaclone help\` - Show all commands\n• \`/lead create <name>\` - Create new lead\n• \`/lead list\` - List recent leads\n• \`/meeting schedule <title>\` - Schedule meeting\n\n**Features:**\n• 📊 Lead management\n• 📅 Meeting scheduling\n• 🤖 Workflow automation\n• 📈 Real-time notifications\n\nNeed more help? Visit: https://alphaclonesystems.com/support`
               }
             }
           ]
@@ -189,7 +189,7 @@ async function handleViewSubmission(payload: any, integration: any) {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `✅ *Lead Created by <@${user}>*\n\n📝 **Name:** ${nameInput}\n📧 **Email:** ${emailInput}\n🏢 **Company:** ${companyInput}\n\nView all leads in the dashboard: https://alphaclone.tech/dashboard/crm`
+              text: `✅ *Lead Created by <@${user}>*\n\n📝 **Name:** ${nameInput}\n📧 **Email:** ${emailInput}\n🏢 **Company:** ${companyInput}\n\nView all leads in the dashboard: https://alphaclonesystems.com/dashboard/crm`
             }
           }
         ]

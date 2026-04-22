@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     'AlphaClone compliance',
     'AlphaClone trust center',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/legal' },
+  alternates: { canonical: 'https://alphaclonesystems.com/legal' },
   openGraph: {
     title: 'Legal Documents | AlphaClone Systems',
     description: 'Central legal and trust document hub for AlphaClone Systems.',
-    url: 'https://alphaclone.tech/legal',
+    url: 'https://alphaclonesystems.com/legal',
     type: 'website',
   },
   robots: { index: true, follow: true },

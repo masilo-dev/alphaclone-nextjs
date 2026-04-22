@@ -60,8 +60,8 @@ class DailyService {
      * Get a masked meeting URL for the application
      */
     getWrappedMeetingUrl(id: string): string {
-        // Return exactly alphaclone.tech as requested by the user
-        return `https://alphaclone.tech/meet/${id}`;
+        // Return exactly alphaclonesystems.com as requested by the user
+        return `https://alphaclonesystems.com/meet/${id}`;
     }
 
     /**
@@ -77,7 +77,7 @@ class DailyService {
             // We can't easily look up the DB ID synchronously here, 
             // so we'll point to a general redirector or a "Coming Soon" placeholder if requested
             // For now, let's use the branding requested.
-            const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
             return `${baseUrl}/meet/active`; // Placeholder redirector or just the domain
         });
     }

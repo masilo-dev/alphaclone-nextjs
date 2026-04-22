@@ -98,7 +98,7 @@ const envSchema = z.object({
     BROWSERBASE_PROJECT_ID: z.string().optional(),
 
     // App URL for OAuth redirects
-    NEXT_PUBLIC_APP_URL: z.string().url().optional().default('https://alphaclone.tech'),
+    NEXT_PUBLIC_APP_URL: z.string().url().optional().default('https://alphaclonesystems.com'),
 
     // Zoom OAuth (user-managed app)
     ZOOM_CLIENT_ID: z.string().optional(),
@@ -143,7 +143,7 @@ function validateEnv() {
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
         VITE_CALENDLY_CLIENT_ID: process.env.NEXT_PUBLIC_CALENDLY_CLIENT_ID || process.env.VITE_CALENDLY_CLIENT_ID || process.env.CALENDLY_CLIENT_ID,
         CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
-        VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech'}/api/auth/calendly/callback`,
+        VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/calendly/callback`,
         CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY || process.env.VITE_CALENDLY_WEBHOOK_SIGNING_KEY || process.env.NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY,
 
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
@@ -151,7 +151,7 @@ function validateEnv() {
 
         HUBSPOT_CLIENT_ID: process.env.HUBSPOT_CLIENT_ID || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID,
         HUBSPOT_CLIENT_SECRET: process.env.HUBSPOT_CLIENT_SECRET,
-        HUBSPOT_REDIRECT_URI: process.env.HUBSPOT_REDIRECT_URI || process.env.NEXT_PUBLIC_HUBSPOT_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech'}/api/auth/hubspot/callback`,
+        HUBSPOT_REDIRECT_URI: process.env.HUBSPOT_REDIRECT_URI || process.env.NEXT_PUBLIC_HUBSPOT_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/hubspot/callback`,
 
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
@@ -187,7 +187,7 @@ function validateEnv() {
         BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
         BROWSERBASE_PROJECT_ID: process.env.BROWSERBASE_PROJECT_ID,
 
-        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'https://alphaclone.tech',
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'https://alphaclonesystems.com',
 
         ZOOM_CLIENT_ID: process.env.ZOOM_CLIENT_ID || process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID,
         ZOOM_CLIENT_SECRET: process.env.ZOOM_CLIENT_SECRET,

@@ -115,8 +115,8 @@ export default function PricingPageContent() {
                     '@context': 'https://schema.org',
                     '@type': 'BreadcrumbList',
                     itemListElement: [
-                        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
-                        { '@type': 'ListItem', position: 2, name: 'Pricing', item: 'https://alphaclone.tech/pricing' },
+                        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
+                        { '@type': 'ListItem', position: 2, name: 'Pricing', item: 'https://alphaclonesystems.com/pricing' },
                     ]
                 })
             }} />

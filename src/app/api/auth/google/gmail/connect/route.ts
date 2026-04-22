@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
         console.log('State nonce generated:', stateNonce);
 
         const clientId = ENV.GOOGLE_CLIENT_ID;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         const redirectUri = `${appUrl}/api/auth/google/gmail/callback`;
 
         const scopes = [

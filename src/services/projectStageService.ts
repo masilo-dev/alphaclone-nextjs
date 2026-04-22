@@ -275,7 +275,7 @@ class ProjectStageService {
                     emailCampaignService.sendTransactionalEmail(profile.email, 'Project Review Ready', {
                         name: profile.name,
                         projectName: project.name,
-                        deploymentUrl: project.deployment_url || 'https://alphaclone.tech'
+                        deploymentUrl: project.deployment_url || 'https://alphaclonesystems.com'
                     }).catch(err => console.error('Failed to trigger review email:', err));
                 }
             } else if (newStage === 'Closure') {

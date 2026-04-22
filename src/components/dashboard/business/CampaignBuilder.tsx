@@ -116,7 +116,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             name: form.name,
             subject: form.subject,
             fromName: form.fromName,
-            fromEmail: form.fromEmail || 'notifications@alphaclone.tech',
+            fromEmail: form.fromEmail || 'notifications@alphaclonesystems.com',
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
             segmentFilter: {},
             metadata: {

@@ -91,7 +91,7 @@ const openRouterClient = ENV.OPENROUTER_API_KEY
       apiKey: ENV.OPENROUTER_API_KEY,
       baseURL: 'https://openrouter.ai/api/v1',
       defaultHeaders: {
-        'HTTP-Referer': 'https://alphaclone.tech',
+        'HTTP-Referer': 'https://alphaclonesystems.com',
         'X-Title': 'AlphaClone Systems',
       },
     })

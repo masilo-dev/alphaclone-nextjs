@@ -257,7 +257,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             (c.html_content as string) ||
             (c.content as string) ||
             'Empty email body';
-        const campaignFromEmail = String(c.from_email || 'notifications@alphaclone.tech');
+        const campaignFromEmail = String(c.from_email || 'notifications@alphaclonesystems.com');
         const campaignFromName = String(c.from_name || 'AlphaClone Systems');
         const replyTo = (c.reply_to as string) || undefined;
 

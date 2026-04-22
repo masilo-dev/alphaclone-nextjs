@@ -13,11 +13,11 @@ export const metadata: Metadata = {
         'replace HubSpot QuickBooks Zoom cost',
         'AI growth agent pricing',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/pricing' },
+    alternates: { canonical: 'https://alphaclonesystems.com/pricing' },
     openGraph: {
         title: 'Pricing | AlphaClone Business OS — From $15/month',
         description: 'End SaaS bloat. One unified AI Business OS starting at $15/month. 14-day free trial, no credit card required.',
-        url: 'https://alphaclone.tech/pricing',
+        url: 'https://alphaclonesystems.com/pricing',
         type: 'website',
     },
     twitter: {

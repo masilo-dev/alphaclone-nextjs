@@ -11,11 +11,11 @@ export const metadata: Metadata = {
         'business operations platform login',
         'AlphaClone sign in',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/auth/login' },
+    alternates: { canonical: 'https://alphaclonesystems.com/auth/login' },
     openGraph: {
         title: 'Login | AlphaClone',
         description: 'Sign in to AlphaClone to access your connected CRM, billing, scheduling, contracts, and operations workspace.',
-        url: 'https://alphaclone.tech/auth/login',
+        url: 'https://alphaclonesystems.com/auth/login',
         type: 'website',
     },
     twitter: {

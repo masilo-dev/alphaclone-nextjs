@@ -70,7 +70,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
                         type="text"
                         value={meetingUrl}
                         onChange={(e) => setMeetingUrl(e.target.value)}
-                        placeholder="https://alphaclone.tech/meet/room-name"
+                        placeholder="https://alphaclonesystems.com/meet/room-name"
                         className="w-full bg-gray-900/50 border border-blue-500/30 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-400 transition-all shadow-inner"
                     />
                 </div>
@@ -99,7 +99,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
             <div className="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Protocol Instructions</p>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                    Enter the full URL provided by your business host. Ensure the meeting link follows the <strong className="text-white">alphaclone.tech/meet/</strong> format for optimal security and video performance.
+                    Enter the full URL provided by your business host. Ensure the meeting link follows the <strong className="text-white">alphaclonesystems.com/meet/</strong> format for optimal security and video performance.
                 </p>
             </div>
         </div>

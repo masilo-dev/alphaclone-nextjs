@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Zoom OAuth is not configured' }, { status: 500 });
     }
 
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(
+    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(
       /\/$/,
       ''
     );

@@ -13,7 +13,7 @@ import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signal
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
   ? SITE_URL 
-  : 'https://alphaclone.tech';
+  : 'https://alphaclonesystems.com';
 type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
 const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'];
 const DEFAULT_PROVIDER_LIMITS: Record<OutreachProvider, number> = {
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
             to: leadEmail,
             subject,
             html: htmlBody,
-            fromEmail: selectedProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclone.tech',
+            fromEmail: selectedProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclonesystems.com',
             fromName: selectedProvider.fromName || 'AlphaClone Systems',
           });
           const sendResult = await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {

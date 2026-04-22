@@ -151,7 +151,7 @@ async function handleTeamJoinEvent(event: any) {
               type: 'plain_text',
               text: '📖 Get Started'
             },
-            url: 'https://alphaclone.tech/dashboard',
+            url: 'https://alphaclonesystems.com/dashboard',
             action_id: 'get_started'
           },
           {

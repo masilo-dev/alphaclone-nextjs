@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     'AlphaClone legal',
     'AlphaClone enterprise trust',
   ],
-  alternates: { canonical: 'https://alphaclone.tech/compliance' },
+  alternates: { canonical: 'https://alphaclonesystems.com/compliance' },
   openGraph: {
     title: 'Compliance Overview | AlphaClone Systems',
     description: 'Compliance and governance overview for AlphaClone.',
-    url: 'https://alphaclone.tech/compliance',
+    url: 'https://alphaclonesystems.com/compliance',
     type: 'article',
   },
   robots: { index: true, follow: true },

@@ -846,18 +846,18 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      </p>
                      
                      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
-                        <a href="mailto:sales@alphaclone.tech" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
+                        <a href="mailto:sales@alphaclonesystems.com" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
                            <Mail className="w-5 h-5 text-teal-400" />
                            <div className="text-left">
                               <div className="text-xs text-slate-500 font-medium">Sales</div>
-                              <div className="text-white font-semibold">sales@alphaclone.tech</div>
+                              <div className="text-white font-semibold">sales@alphaclonesystems.com</div>
                            </div>
                         </a>
-                        <a href="mailto:support@alphaclone.tech" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
+                        <a href="mailto:support@alphaclonesystems.com" className="group flex items-center gap-3 px-6 py-4 bg-slate-900/50 border border-slate-800 hover:border-teal-500/50 rounded-xl transition-all">
                            <Mail className="w-5 h-5 text-teal-400" />
                            <div className="text-left">
                               <div className="text-xs text-slate-500 font-medium">Support</div>
-                              <div className="text-white font-semibold">support@alphaclone.tech</div>
+                              <div className="text-white font-semibold">support@alphaclonesystems.com</div>
                            </div>
                         </a>
                      </div>

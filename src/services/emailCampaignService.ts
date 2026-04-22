@@ -739,7 +739,7 @@ export const emailCampaignService = {
                 html,
                 text: text || undefined,
                 fromName: 'AlphaClone Systems',
-                from: 'notifications@alphaclone.tech'
+                from: 'notifications@alphaclonesystems.com'
             });
 
             // 5. Log the email

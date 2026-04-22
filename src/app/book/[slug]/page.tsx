@@ -146,7 +146,7 @@ export default function BookingLandingPage() {
 
                 {/* Footer brand */}
                 <div className="mt-16 text-center">
-                    <a href="https://alphaclone.tech" target="_blank" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all">
+                    <a href="https://alphaclonesystems.com" target="_blank" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all">
                         <span>Powered by AlphaClone</span>
                     </a>
                 </div>

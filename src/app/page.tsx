@@ -19,17 +19,17 @@ export default async function Home() {
       {
         '@type': 'ContactPoint',
         contactType: 'sales',
-        email: 'sales@alphaclone.tech',
+        email: 'sales@alphaclonesystems.com',
       },
       {
         '@type': 'ContactPoint',
         contactType: 'customer support',
-        email: 'support@alphaclone.tech',
+        email: 'support@alphaclonesystems.com',
       },
       {
         '@type': 'ContactPoint',
         contactType: 'security',
-        email: 'security@alphaclone.tech',
+        email: 'security@alphaclonesystems.com',
       },
     ],
     sameAs: [],
