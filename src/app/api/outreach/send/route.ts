@@ -8,6 +8,7 @@ import {
 } from '@/lib/apiAuth';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
@@ -289,6 +290,8 @@ export async function POST(request: Request) {
     const providerFailures: Array<{ provider: OutreachProvider; error: string }> = [];
     let sentProvider: OutreachProvider | null = null;
     let providerMessageId: string | null = null;
+    let sentFromEmail = '';
+    let sentFromName = '';
 
     for (const selectedProvider of providerQueue) {
       try {
@@ -365,6 +368,8 @@ export async function POST(request: Request) {
         }
 
         sentProvider = selectedProvider.provider;
+        sentFromEmail = selectedProvider.fromEmail || fromAddress || '';
+        sentFromName = selectedProvider.fromName || 'AlphaClone Systems';
         break;
       } catch (err) {
         providerFailures.push({
@@ -389,6 +394,31 @@ export async function POST(request: Request) {
           })
           .eq('id', logId);
       }
+
+      await captureUnifiedMessageFromWebhook({
+        supabase: admin as any,
+        tenantId,
+        source: sentProvider as any,
+        channel: 'email',
+        direction: 'outbound',
+        externalId: providerMessageId || trackingId || null,
+        threadId: String(logId || trackingId || '') || null,
+        from: sentFromEmail,
+        to: leadEmail,
+        subject,
+        text: null,
+        html: htmlBody,
+        sentAt: new Date().toISOString(),
+        metadata: {
+          outreach: true,
+          pitchAngle,
+          score,
+          trackingId,
+          logId,
+          provider: sentProvider,
+          fromName: sentFromName,
+        },
+      });
 
       return NextResponse.json({
         success:    true,

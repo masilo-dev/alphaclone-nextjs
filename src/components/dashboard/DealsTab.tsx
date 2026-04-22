@@ -743,6 +743,35 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                                 <span>Probability: {deal.probability}%</span>
                                             </div>
 
+                                            {deal.intelligenceState?.superposition && (
+                                                <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 mb-3">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span>Close this quarter</span>
+                                                        <span className="text-white/80">
+                                                            {Math.round(Number(deal.intelligenceState.superposition.close_this_quarter || 0) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span>Close next quarter</span>
+                                                        <span className="text-white/80">
+                                                            {Math.round(Number(deal.intelligenceState.superposition.close_next_quarter || 0) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span>Lost</span>
+                                                        <span className="text-white/80">
+                                                            {Math.round(Number(deal.intelligenceState.superposition.lost_forever || 0) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span>Stalled</span>
+                                                        <span className="text-white/80">
+                                                            {Math.round(Number(deal.intelligenceState.superposition.stalled_indefinitely || 0) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {deal.expectedCloseDate && (
                                                 <div className="flex items-center gap-2 text-slate-400 text-xs mb-2">
                                                     <Calendar className="w-4 h-4" />

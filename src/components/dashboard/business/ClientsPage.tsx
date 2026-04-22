@@ -250,16 +250,28 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             toast.error('No contacts to export');
             return;
         }
+        const cleanExportText = (value: string) => {
+            let t = String(value || '');
+            t = t.replace(/\r\n/g, '\n');
+            t = t.replace(/```[\s\S]*?```/g, '');
+            t = t.replace(/`([^`]+)`/g, '$1');
+            t = t.replace(/^#{1,6}\s+/gm, '');
+            t = t.replace(/^\s*[-*+]\s+/gm, '• ');
+            t = t.replace(/^\s*\d+\.\s+/gm, '• ');
+            t = t.replace(/[*_~#]+/g, '');
+            t = t.replace(/[^\S\n]+/g, ' ');
+            return t.trim();
+        };
         const rows = filteredClients.map(c => ({
-            Name: c.name,
-            Email: c.email || '',
-            Phone: c.phone || '',
-            Industry: c.industry || '',
+            Name: cleanExportText(c.name),
+            Email: cleanExportText(c.email || ''),
+            Phone: cleanExportText(c.phone || ''),
+            Industry: cleanExportText(c.industry || ''),
             Stage: c.salesStage,
             Value: c.value,
-            Location: c.location || '',
-            Website: c.website || '',
-            Description: c.description || '',
+            Location: cleanExportText(c.location || ''),
+            Website: cleanExportText(c.website || ''),
+            Description: cleanExportText(c.description || ''),
             Created: new Date(c.createdAt).toLocaleDateString(),
         }));
         const ExcelJS = (await import('exceljs')).default;
@@ -269,6 +281,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         sheet.columns = headers.map((key) => ({ header: key, key }));
         for (const row of rows) sheet.addRow(row);
         sheet.getRow(1).font = { bold: true };
+        sheet.views = [{ state: 'frozen', ySplit: 1 }];
+        sheet.autoFilter = {
+            from: { row: 1, column: 1 },
+            to: { row: 1, column: headers.length },
+        };
+        sheet.getColumn('Description').alignment = { wrapText: true, vertical: 'top' };
+        sheet.columns?.forEach((col) => {
+            if (!col) return;
+            const header = String(col.header || '');
+            if (header === 'Description') col.width = 55;
+            else if (header === 'Name') col.width = 22;
+            else if (header === 'Email') col.width = 28;
+            else if (header === 'Website') col.width = 26;
+            else if (header === 'Location') col.width = 18;
+            else col.width = 14;
+        });
 
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

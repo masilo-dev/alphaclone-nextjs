@@ -253,6 +253,43 @@ export class ZohoMailService extends ZohoService {
 
             if (!content) return { status: 'ignored' };
 
+            try {
+                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                const { captureUnifiedMessageFromWebhook } = await import('@/services/intelligence/signalCaptureAdminService');
+                const admin = createSupabaseAdminClient();
+                const { data: zohoIntegration } = await admin
+                    .from('integrations')
+                    .select('tenant_id, id')
+                    .eq('user_id', this.userId)
+                    .eq('type', 'zoho')
+                    .eq('enabled', true)
+                    .order('updated_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (zohoIntegration?.tenant_id) {
+                    await captureUnifiedMessageFromWebhook({
+                        supabase: admin as any,
+                        tenantId: zohoIntegration.tenant_id,
+                        source: 'zoho',
+                        channel: 'email',
+                        direction: 'inbound',
+                        externalId: messageId,
+                        threadId: messageId,
+                        from: sender,
+                        to: `zoho:${this.userId}`,
+                        subject,
+                        text: content,
+                        html: null,
+                        receivedAt: new Date().toISOString(),
+                        metadata: {
+                            folderId,
+                            integrationId: zohoIntegration.id,
+                        },
+                    });
+                }
+            } catch {
+            }
+
             const triagePrompt = `
 Analyze for AlphaClone Systems:
 Subject: ${subject}

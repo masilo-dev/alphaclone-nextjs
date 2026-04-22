@@ -3,6 +3,8 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { Receiver } from '@upstash/qstash';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 const receiver = new Receiver({
     currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || '',
@@ -49,6 +51,40 @@ export async function POST(req: NextRequest) {
             subject: `Re: ${msgContent.content ? 'Inquiry' : 'Message'}`, // Ideally pass subject in data
             content: replyText,
         });
+
+        const admin = createSupabaseAdminClient();
+        const { data: zohoIntegration } = await admin
+            .from('integrations')
+            .select('tenant_id')
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .eq('enabled', true)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (zohoIntegration?.tenant_id) {
+            await captureUnifiedMessageFromWebhook({
+                supabase: admin as any,
+                tenantId: zohoIntegration.tenant_id,
+                source: 'zoho',
+                channel: 'email',
+                direction: 'outbound',
+                externalId: messageId || null,
+                threadId: messageId || null,
+                from: `zoho:${userId}`,
+                to: senderEmail || '',
+                subject: `Re: ${msgContent.content ? 'Inquiry' : 'Message'}`,
+                text: replyText,
+                html: null,
+                sentAt: new Date().toISOString(),
+                metadata: {
+                    logId,
+                    folderId,
+                    originalMessageId: messageId,
+                },
+            });
+        }
 
         // 3. Update log
         if (logId) {

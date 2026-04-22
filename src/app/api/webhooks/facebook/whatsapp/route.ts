@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
@@ -112,9 +113,18 @@ export async function POST(req: NextRequest) {
             const supabaseAdmin = createSupabaseAdminClient();
 
             for (const entry of body.entry || []) {
+                const wabaId = String(entry.id || '').trim();
+                const { data: waIntegration } = await supabaseAdmin
+                    .from('whatsapp_integrations')
+                    .select('tenant_id')
+                    .eq('waba_id', wabaId)
+                    .eq('is_active', true)
+                    .maybeSingle();
+
                 for (const change of entry.changes || []) {
                     if (change.field === 'messages') {
                         const messages = change.value?.messages || [];
+                        const phoneNumberId = String(change.value?.metadata?.phone_number_id || '').trim();
                         
                         for (const message of messages) {
                             console.log('[WhatsApp] Message received:', {
@@ -135,6 +145,29 @@ export async function POST(req: NextRequest) {
                                 status: 'received',
                                 received_at: new Date().toISOString()
                             });
+
+                            if (waIntegration?.tenant_id) {
+                                await captureUnifiedMessageFromWebhook({
+                                    supabase: supabaseAdmin as any,
+                                    tenantId: waIntegration.tenant_id,
+                                    source: 'whatsapp',
+                                    channel: 'chat',
+                                    direction: 'inbound',
+                                    externalId: message.id || null,
+                                    threadId: phoneNumberId || wabaId || null,
+                                    from: String(message.from || ''),
+                                    to: phoneNumberId || wabaId || 'whatsapp',
+                                    subject: null,
+                                    text: message.text?.body || null,
+                                    html: null,
+                                    receivedAt: new Date().toISOString(),
+                                    metadata: {
+                                        wabaId,
+                                        phoneNumberId,
+                                        type: message.type,
+                                    },
+                                });
+                            }
 
                             // TODO: Add your business logic here
                             // - Auto-reply to messages
