@@ -24,6 +24,13 @@ export async function GET(request: NextRequest) {
       .filter((value) => value.length > 0);
     const fallbackUserId = '00000000-0000-0000-0000-000000000000';
 
+    const intelligenceSnapshotPromise = integratedIntelligenceService
+      .generateSnapshot(supabase, tenantId, { persist: false })
+      .catch((error) => {
+        console.error('[dashboard/progress] intelligence snapshot failed:', error);
+        return null;
+      });
+
     const [
       clientsResult,
       projectsResult,
@@ -62,7 +69,7 @@ export async function GET(request: NextRequest) {
         .from('integrations')
         .select('id, provider, status, created_at')
         .eq('tenant_id', tenantId),
-      integratedIntelligenceService.generateSnapshot(supabase, tenantId, { persist: false })
+      intelligenceSnapshotPromise
     ]);
 
     const normalizedInvoices = normalizeInvoiceRows(
