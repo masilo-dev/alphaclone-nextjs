@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 
+function isTrustedPublicRedirectUri(uri: string): boolean {
+  try {
+    const parsed = new URL(uri);
+    const host = parsed.hostname.toLowerCase();
+    return (
+      parsed.protocol === 'https:' &&
+      (host === 'claude.ai' ||
+        host.endsWith('.claude.ai') ||
+        host === 'manus.im' ||
+        host.endsWith('.manus.im'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get('content-type') || '';
@@ -20,22 +36,20 @@ export async function POST(req: NextRequest) {
 
     const { grant_type, client_id, client_secret, code, redirect_uri, refresh_token } = body;
 
-    if (!client_id || !client_secret) {
+    if (!client_id) {
       return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
     }
 
     const supabaseAdmin = createSupabaseAdminClient();
-    
-    // Verify Client
-    const { data: client, error: clientError } = await supabaseAdmin
-      .from('mcp_oauth_clients')
-      .select('client_id')
-      .eq('client_id', client_id)
-      .eq('client_secret', client_secret)
-      .single();
-
-    if (clientError || !client) {
-      return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
+    let validRegisteredClient = false;
+    if (client_secret) {
+      const { data: client, error: clientError } = await supabaseAdmin
+        .from('mcp_oauth_clients')
+        .select('client_id')
+        .eq('client_id', client_id)
+        .eq('client_secret', client_secret)
+        .single();
+      validRegisteredClient = !clientError && Boolean(client);
     }
 
     if (grant_type === 'authorization_code') {
@@ -54,6 +68,12 @@ export async function POST(req: NextRequest) {
 
       if (codeError || !authCode || new Date(authCode.expires_at) < new Date()) {
         return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+      }
+
+      const allowTrustedPublicClient =
+        !client_secret && isTrustedPublicRedirectUri(redirect_uri);
+      if (!validRegisteredClient && !allowTrustedPublicClient) {
+        return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
       }
 
       // Delete used code
@@ -91,6 +111,9 @@ export async function POST(req: NextRequest) {
     } else if (grant_type === 'refresh_token') {
       if (!refresh_token) {
         return NextResponse.json({ error: 'invalid_request', error_description: 'Missing refresh_token' }, { status: 400 });
+      }
+      if (!validRegisteredClient) {
+        return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
       }
 
       const { data: currentToken, error: tokenError } = await supabaseAdmin

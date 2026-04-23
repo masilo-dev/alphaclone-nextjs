@@ -5,6 +5,25 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import crypto from 'crypto';
 import { validateScopes } from '@/services/mcp/MCPOAuthScopes';
 
+const UUID_V4_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isTrustedPublicRedirectUri(uri: string): boolean {
+  try {
+    const parsed = new URL(uri);
+    const host = parsed.hostname.toLowerCase();
+    return (
+      parsed.protocol === 'https:' &&
+      (host === 'claude.ai' ||
+        host.endsWith('.claude.ai') ||
+        host === 'manus.im' ||
+        host.endsWith('.manus.im'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function authorizeClient(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,7 +62,10 @@ export async function authorizeClient(formData: FormData) {
     .single();
 
   if (!client || !client.redirect_uris.includes(redirect_uri)) {
-    return { error: 'Invalid client_id or redirect_uri mismatch' };
+    const clientLooksLikeTenantId = UUID_V4_REGEX.test(client_id) && client_id === tenantUser.tenant_id;
+    if (!(clientLooksLikeTenantId && isTrustedPublicRedirectUri(redirect_uri))) {
+      return { error: 'Invalid client_id or redirect_uri mismatch' };
+    }
   }
 
   // Parse and validate scopes
