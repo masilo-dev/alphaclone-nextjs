@@ -38,7 +38,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!user) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/auth/zoho/status?userId=${user.id}`);
+            const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
             const data = await res.json();
             setIsConnected(!!data.isConnected);
         } catch (err) {
@@ -61,7 +61,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!user || !window.confirm('Are you sure you want to disconnect Zoho? This will remove access to Zoho Mail and CRM features.')) return;
 
         try {
-            const res = await fetch(`/api/auth/zoho/disconnect?userId=${user.id}`, { method: 'POST' });
+            const res = await fetch('/api/auth/zoho/disconnect', { method: 'POST', credentials: 'include' });
             if (res.ok) {
                 setIsConnected(false);
                 toast.success('Zoho disconnected successfully.');

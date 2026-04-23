@@ -72,7 +72,7 @@ const DailySummarySystem: React.FC = () => {
         supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
         supabase.from('emails').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
         supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
-        supabase.from('invoices').select('total_amount').eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
+        supabase.from('invoices').select('*').eq('tenant_id', currentTenant.id).gte('created_at', startOfDay),
         supabase
           .from('tasks')
           .select('*', { count: 'exact', head: true })
@@ -86,7 +86,8 @@ const DailySummarySystem: React.FC = () => {
           .gte('start_time', startOfDay),
       ]);
 
-      const todayRevenue = invoiceData?.reduce((sum: number, inv: any) => sum + (inv.total_amount || 0), 0) || 0;
+      const todayRevenue =
+        invoiceData?.reduce((sum: number, inv: any) => sum + Number(inv.total_amount ?? inv.amount ?? 0), 0) || 0;
 
       const todaySummary: DailySummary = {
         id: `today-${now.getTime()}`,

@@ -5,6 +5,20 @@ import { ENV } from '@/config/env';
 
 const DAILY_API_URL = 'https://api.daily.co/v1';
 
+const normalizeOrigin = (value: string | null | undefined): string | null => {
+    if (!value) return null;
+    return value.replace(/\/+$/, '');
+};
+
+const resolveAppOrigin = (req: Request): string => {
+    const fromOrigin = normalizeOrigin(req.headers.get('origin'));
+    if (fromOrigin) return fromOrigin;
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || 'https';
+    if (host) return `${proto}://${host}`;
+    return normalizeOrigin(ENV.NEXT_PUBLIC_APP_URL) || 'https://alphaclonesystems.com';
+};
+
 export async function POST(req: Request) {
     const DAILY_API_KEY = ENV.DAILY_API_KEY;
 
@@ -14,6 +28,7 @@ export async function POST(req: Request) {
 
     try {
         const { userId, userName, tenantId } = await req.json();
+        const appOrigin = resolveAppOrigin(req);
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -63,6 +78,20 @@ export async function POST(req: Request) {
         }
 
         if (existingRoom) {
+            if (existingRoom.daily_room_name) {
+                await fetch(`${DAILY_API_URL}/rooms/${existingRoom.daily_room_name}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DAILY_API_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        properties: {
+                            meeting_join_hook: `${appOrigin}/api/meetings/hooks/join`,
+                        },
+                    }),
+                }).catch(() => undefined);
+            }
             return NextResponse.json({
                 id: existingRoom.id,
                 name: existingRoom.daily_room_name,
@@ -90,6 +119,7 @@ export async function POST(req: Request) {
                     enable_screenshare: true,
                     max_participants: 10,
                     privacy: 'public',
+                    meeting_join_hook: `${appOrigin}/api/meetings/hooks/join`,
                     // Permanent rooms shouldn't expire soon - 10 years
                     exp: Math.floor(Date.now() / 1000) + (10 * 365 * 24 * 60 * 60)
                 }

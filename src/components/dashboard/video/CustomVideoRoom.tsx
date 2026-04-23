@@ -100,6 +100,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
     // Circuit breaker: Detect rapid re-renders
     const renderTimestampsRef = useRef<number[]>([]);
+    const circuitBreakerWarnedRef = useRef(false);
     const RENDER_LIMIT = 50;
     const RENDER_WINDOW_MS = 1000;
 
@@ -110,8 +111,13 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             timestamp => now - timestamp < RENDER_WINDOW_MS
         );
 
-        if (renderTimestampsRef.current.length > RENDER_LIMIT) {
-            console.error('⚠️ CIRCUIT BREAKER: Too many re-renders detected!');
+        if (
+            process.env.NODE_ENV !== 'production' &&
+            renderTimestampsRef.current.length > RENDER_LIMIT &&
+            !circuitBreakerWarnedRef.current
+        ) {
+            circuitBreakerWarnedRef.current = true;
+            console.error('CIRCUIT_BREAKER: too many re-renders detected');
         }
     });
 
@@ -460,16 +466,19 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }, [error]);
 
     const handleToggleAudio = useCallback(async () => {
+        if (!isJoined) return;
         try { await toggleAudio(); } catch (err: any) { toast.error('Failed to toggle audio'); }
-    }, [toggleAudio]);
+    }, [toggleAudio, isJoined]);
 
     const handleToggleVideo = useCallback(async () => {
+        if (!isJoined) return;
         try { await toggleVideo(); } catch (err: any) { toast.error('Failed to toggle video'); }
-    }, [toggleVideo]);
+    }, [toggleVideo, isJoined]);
 
     const handleToggleScreenShare = useCallback(async () => {
+        if (!isJoined) return;
         try { await toggleScreenShare(); } catch (err: any) { toast.error('Failed to toggle screen share'); }
-    }, [toggleScreenShare]);
+    }, [toggleScreenShare, isJoined]);
 
     const handleMuteParticipant = useCallback(async (sessionId: string) => {
         if (!isUserAdmin(user)) return;
@@ -546,7 +555,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         );
     }
 
-    if ((isJoining || !isJoined) && !localParticipant) {
+    if (!isJoined) {
         if (!preJoinAccepted) {
             return (
                 <div className="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 overflow-hidden p-4">
@@ -593,7 +602,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                         <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
                         <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
                     </div>
-                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
+                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting...</h2>
                     <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
                 </div>
             </div>
