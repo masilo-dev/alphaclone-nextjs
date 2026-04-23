@@ -8,7 +8,7 @@ import LiveKitStage from './LiveKitStage';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import toast from 'react-hot-toast';
-import { MicOff, Maximize2, PhoneOff } from 'lucide-react';
+import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 interface CustomVideoRoomProps {
@@ -56,8 +56,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         localParticipant,
         remoteParticipants,
         error,
+        platformState,
+        networkQuality,
         join,
         leave,
+        reconnect,
         toggleAudio,
         toggleVideo,
         toggleScreenShare,
@@ -75,6 +78,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     const [liveKitUrl, setLiveKitUrl] = useState<string | null>(null);
     const [liveKitToken, setLiveKitToken] = useState<string | null>(null);
     const [liveKitHardStop, setLiveKitHardStop] = useState(false);
+    const [preJoinAccepted, setPreJoinAccepted] = useState(false);
+    const [isCheckingDevices, setIsCheckingDevices] = useState(false);
+    const [preJoinError, setPreJoinError] = useState<string | null>(null);
 
     const joinAttemptedRef = useRef(false);
     const isJoinedRef = useRef(isJoined);
@@ -121,12 +127,23 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     console.error('Failed to end call in database:', err);
                 });
             }
+            import('@/services/activityService').then(({ activityService }) => {
+                activityService.logActivity(user.id, 'VIDEO_MEETING_ENDED', {
+                    callId,
+                    durationSeconds: duration || 0,
+                    participantCount: participants.length,
+                }).catch(() => undefined);
+            }).catch(() => undefined);
+            if (duration && duration > 0) {
+                const minutes = Math.max(1, Math.round(duration / 60));
+                toast.success(`Meeting completed. Duration: ${minutes} min.`);
+            }
             onLeave();
         } catch (err) {
             console.error('Error finalizing meeting:', err);
             onLeave();
         }
-    }, [callStartTime, callId, onLeave, user]);
+    }, [callStartTime, callId, onLeave, user, participants.length]);
 
     const handleLeave = useCallback(async () => {
         try {
@@ -137,6 +154,18 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             await finalizeMeetingDb();
         }
     }, [leave, finalizeMeetingDb]);
+
+    const handlePreflightCheck = useCallback(async () => {
+        setIsCheckingDevices(true);
+        setPreJoinError(null);
+        try {
+            await startCamera();
+        } catch (err) {
+            setPreJoinError('Camera or microphone access is blocked. Please allow permissions and retry.');
+        } finally {
+            setIsCheckingDevices(false);
+        }
+    }, [startCamera]);
 
     const handleLiveKitEnd = useCallback(async () => {
         await finalizeMeetingDb();
@@ -196,7 +225,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
     // Join meeting on mount or when URL is resolved
     useEffect(() => {
-        if (joinAttemptedRef.current || isJoining || isJoined || !resolvedRoomUrl) return;
+        if (!preJoinAccepted || joinAttemptedRef.current || isJoining || isJoined || !resolvedRoomUrl) return;
         joinAttemptedRef.current = true;
 
         const joinMeeting = async () => {
@@ -227,6 +256,12 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 }
 
                 toast.success('Joined meeting successfully!');
+                import('@/services/activityService').then(({ activityService }) => {
+                    activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
+                        callId,
+                        mediaPhase: 'daily',
+                    }).catch(() => undefined);
+                }).catch(() => undefined);
             } catch (err: any) {
                 console.error('Failed to join meeting:', err);
                 toast.error(err?.userMessage || 'Failed to join meeting');
@@ -236,7 +271,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         };
 
         setTimeout(joinMeeting, 100);
-    }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, user]);
+    }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, user, preJoinAccepted]);
 
     // Meeting Start Logic (2 people trigger)
     useEffect(() => {
@@ -511,6 +546,44 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }
 
     if ((isJoining || !isJoined) && !localParticipant) {
+        if (!preJoinAccepted) {
+            return (
+                <div className="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 overflow-hidden p-4">
+                    <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl">
+                        <h2 className="text-white text-2xl font-bold mb-2">Ready to join meeting</h2>
+                        <p className="text-slate-400 text-sm mb-5">
+                            Complete a quick device check, then join. You can minimize and continue working in the dashboard.
+                        </p>
+                        {preJoinError && (
+                            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+                                {preJoinError}
+                            </div>
+                        )}
+                        <div className="flex flex-wrap gap-3">
+                            <button
+                                onClick={() => void handlePreflightCheck()}
+                                disabled={isCheckingDevices}
+                                className="px-4 py-2 rounded-xl border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-colors text-sm font-semibold disabled:opacity-60"
+                            >
+                                {isCheckingDevices ? 'Checking devices...' : 'Check camera and mic'}
+                            </button>
+                            <button
+                                onClick={() => setPreJoinAccepted(true)}
+                                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition-colors text-sm font-semibold"
+                            >
+                                Join now
+                            </button>
+                            <button
+                                onClick={() => void handleLeave()}
+                                className="px-4 py-2 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors text-sm font-semibold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         return (
             <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent opacity-50" />
@@ -592,6 +665,26 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
+                    <div className={`px-3 py-1 rounded-xl border text-[10px] font-bold uppercase tracking-widest ${
+                        networkQuality === 'good'
+                            ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
+                            : networkQuality === 'poor'
+                                ? 'bg-amber-500/10 border-amber-400/30 text-amber-300'
+                                : 'bg-slate-500/10 border-white/10 text-slate-300'
+                    }`}>
+                        {networkQuality === 'good' ? <Wifi className="inline w-3 h-3 mr-1" /> : <WifiOff className="inline w-3 h-3 mr-1" />}
+                        {networkQuality === 'good' ? 'Connection Good' : networkQuality === 'poor' ? 'Connection Poor' : 'Checking Network'}
+                    </div>
+                    {(platformState === 'error' || networkQuality === 'poor') && (
+                        <button
+                            onClick={() => void reconnect()}
+                            className="px-3 py-1 rounded-xl border border-white/10 text-xs text-slate-200 hover:bg-white/10 transition-colors"
+                            title="Reconnect"
+                        >
+                            <RefreshCw className="inline w-3 h-3 mr-1" />
+                            Reconnect
+                        </button>
+                    )}
                     <div className="flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-1">
                         <button
                             onClick={() => setViewMode('grid')}

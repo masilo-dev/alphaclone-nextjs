@@ -33,10 +33,13 @@ export interface UseVideoPlatformResult {
     localParticipant: ParticipantMediaState | null;
     remoteParticipants: ParticipantMediaState[];
     error: NormalizedError | null;
+    platformState: 'idle' | 'joining' | 'joined' | 'leaving' | 'error';
+    networkQuality: 'unknown' | 'good' | 'poor';
 
     // Actions
     join: (config: VideoPlatformConfig) => Promise<void>;
     leave: () => Promise<void>;
+    reconnect: () => Promise<void>;
     toggleAudio: () => Promise<void>;
     toggleVideo: () => Promise<void>;
     toggleScreenShare: () => Promise<void>;
@@ -66,6 +69,9 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         localSessionId: null,
     });
     const [error, setError] = useState<NormalizedError | null>(null);
+    const [platformState, setPlatformState] = useState<'idle' | 'joining' | 'joined' | 'leaving' | 'error'>('idle');
+    const [networkQuality, setNetworkQuality] = useState<'unknown' | 'good' | 'poor'>('unknown');
+    const lastJoinConfigRef = useRef<VideoPlatformConfig | null>(null);
 
     // Throttle media state updates to prevent Error 310
     const pendingStateUpdateRef = useRef<MediaState | null>(null);
@@ -127,6 +133,27 @@ export function useVideoPlatform(): UseVideoPlatformResult {
             throttledSetMediaState(state);
         });
 
+        const engine = globalPlatformInstance.getEngine();
+        const onNetworkQuality = (event: any) => {
+            const quality = typeof event?.quality === 'number'
+                ? event.quality
+                : typeof event === 'number'
+                    ? event
+                    : null;
+            if (quality === null) {
+                setNetworkQuality('unknown');
+                return;
+            }
+            if (quality >= 2) {
+                setNetworkQuality('good');
+                return;
+            }
+            setNetworkQuality('poor');
+        };
+        const onLeft = () => setNetworkQuality('unknown');
+        engine.on('network-quality-change', onNetworkQuality);
+        engine.on('left-meeting', onLeft);
+
         // Cleanup on unmount - unsubscribe but keep singleton alive
         return () => {
             console.log('useVideoPlatform: Cleanup running (unsubscribing only)');
@@ -140,6 +167,8 @@ export function useVideoPlatform(): UseVideoPlatformResult {
 
             // Note: We don't destroy or null the globalPlatformInstance
             // It persists across React Strict Mode remounts
+            engine.off('network-quality-change', onNetworkQuality);
+            engine.off('left-meeting', onLeft);
         };
     }, [throttledSetMediaState]);
 
@@ -155,10 +184,14 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         try {
             setIsJoining(true);
             setError(null);
+            setPlatformState('joining');
+            lastJoinConfigRef.current = config;
             await platform.join(config);
             setIsJoined(true);
+            setPlatformState('joined');
         } catch (err: any) {
             setError(err);
+            setPlatformState('error');
             throw err;
         } finally {
             setIsJoining(false);
@@ -173,11 +206,33 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         if (!platform) return;
 
         try {
+            setPlatformState('leaving');
             await platform.leave();
             setIsJoined(false);
+            setPlatformState('idle');
         } catch (err: any) {
             setError(err);
+            setPlatformState('error');
             console.error('Error leaving call:', err);
+        }
+    }, []);
+
+    const reconnect = useCallback(async () => {
+        const platform = platformRef.current;
+        if (!platform || !lastJoinConfigRef.current) {
+            return;
+        }
+        try {
+            setPlatformState('joining');
+            setError(null);
+            await platform.leave();
+            await platform.join(lastJoinConfigRef.current);
+            setIsJoined(true);
+            setPlatformState('joined');
+        } catch (err: any) {
+            setError(err);
+            setPlatformState('error');
+            throw err;
         }
     }, []);
 
@@ -310,10 +365,13 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         localParticipant,
         remoteParticipants,
         error,
+        platformState,
+        networkQuality,
 
         // Actions
         join,
         leave,
+        reconnect,
         startCamera,
         toggleAudio,
         toggleVideo,

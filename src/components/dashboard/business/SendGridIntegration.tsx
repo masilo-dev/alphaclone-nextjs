@@ -130,7 +130,7 @@ export default function SendGridIntegration() {
             if (error) throw error;
 
             setStatus('idle');
-            setConfig({ apiKey: '', fromEmail: '' });
+            setConfig({ apiKey: '', fromEmail: '', fromName: 'AlphaClone Systems' });
             toast.success('SendGrid disconnected');
         } catch (err: any) {
             console.error('Error disconnecting SendGrid:', err);
