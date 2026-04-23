@@ -10,7 +10,22 @@ type OAuthRequestParams = {
   redirectUri: string | null;
   state: string | null;
   scope: string | null;
+  responseType: string | null;
+  codeChallenge: string | null;
+  codeChallengeMethod: string | null;
 };
+
+function sanitizeRedirectUri(input: string | null): string | null {
+  if (!input) return null;
+  const trimmed = input.trim().replace(/^['"]|['"]$/g, '');
+  if (!trimmed) return null;
+  try {
+    const once = decodeURIComponent(trimmed);
+    return once;
+  } catch {
+    return trimmed;
+  }
+}
 
 function parseMalformedRedirectUri(rawSearch: string): string | null {
   const marker = 'redirect_uri:';
@@ -39,21 +54,32 @@ function AuthorizeForm() {
     redirectUri: null,
     state: null,
     scope: null,
+    responseType: null,
+    codeChallenge: null,
+    codeChallengeMethod: null,
   });
 
   useEffect(() => {
     const fromQueryClientId = searchParams?.get('client_id') || searchParams?.get('clientId') || null;
-    const fromQueryRedirectUri = searchParams?.get('redirect_uri') || searchParams?.get('redirectUri') || null;
+    const fromQueryRedirectUri = sanitizeRedirectUri(
+      searchParams?.get('redirect_uri') || searchParams?.get('redirectUri') || null
+    );
     const fromQueryState = searchParams?.get('state') || null;
     const fromQueryScope = searchParams?.get('scope') || null;
+    const fromQueryResponseType = searchParams?.get('response_type') || null;
+    const fromQueryCodeChallenge = searchParams?.get('code_challenge') || null;
+    const fromQueryCodeChallengeMethod = searchParams?.get('code_challenge_method') || null;
     const malformedRedirectUri =
-      typeof window !== 'undefined' ? parseMalformedRedirectUri(window.location.search) : null;
+      sanitizeRedirectUri(typeof window !== 'undefined' ? parseMalformedRedirectUri(window.location.search) : null);
 
     const nextParams: OAuthRequestParams = {
       clientId: fromQueryClientId,
       redirectUri: fromQueryRedirectUri || malformedRedirectUri,
       state: fromQueryState,
       scope: fromQueryScope,
+      responseType: fromQueryResponseType,
+      codeChallenge: fromQueryCodeChallenge,
+      codeChallengeMethod: fromQueryCodeChallengeMethod,
     };
 
     // Some OAuth clients may send parameters in the URL hash fragment.
@@ -62,9 +88,14 @@ function AuthorizeForm() {
       nextParams.clientId =
         nextParams.clientId || hashParams.get('client_id') || hashParams.get('clientId');
       nextParams.redirectUri =
-        nextParams.redirectUri || hashParams.get('redirect_uri') || hashParams.get('redirectUri');
+        nextParams.redirectUri ||
+        sanitizeRedirectUri(hashParams.get('redirect_uri') || hashParams.get('redirectUri'));
       nextParams.state = nextParams.state || hashParams.get('state');
       nextParams.scope = nextParams.scope || hashParams.get('scope');
+      nextParams.responseType = nextParams.responseType || hashParams.get('response_type');
+      nextParams.codeChallenge = nextParams.codeChallenge || hashParams.get('code_challenge');
+      nextParams.codeChallengeMethod =
+        nextParams.codeChallengeMethod || hashParams.get('code_challenge_method');
     }
 
     setOauthParams(nextParams);
@@ -88,6 +119,11 @@ function AuthorizeForm() {
       if (oauthParams.redirectUri) formData.append('redirect_uri', oauthParams.redirectUri);
       if (oauthParams.state) formData.append('state', oauthParams.state);
       if (oauthParams.scope) formData.append('scope', oauthParams.scope);
+      if (oauthParams.responseType) formData.append('response_type', oauthParams.responseType);
+      if (oauthParams.codeChallenge) formData.append('code_challenge', oauthParams.codeChallenge);
+      if (oauthParams.codeChallengeMethod) {
+        formData.append('code_challenge_method', oauthParams.codeChallengeMethod);
+      }
 
       const result = await authorizeClient(formData);
       

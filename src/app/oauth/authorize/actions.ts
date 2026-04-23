@@ -8,6 +8,25 @@ import { validateScopes } from '@/services/mcp/MCPOAuthScopes';
 const UUID_V4_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function normalizeRedirectUri(uri: string): string | null {
+  try {
+    const parsed = new URL(uri.trim());
+    parsed.hash = '';
+    if (parsed.pathname !== '/') {
+      parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedRedirectUri(allowedUris: string[], redirectUri: string): boolean {
+  const normalizedIncoming = normalizeRedirectUri(redirectUri);
+  if (!normalizedIncoming) return false;
+  return allowedUris.some((uri) => normalizeRedirectUri(uri) === normalizedIncoming);
+}
+
 function isTrustedPublicRedirectUri(uri: string): boolean {
   try {
     const parsed = new URL(uri);
@@ -36,9 +55,18 @@ export async function authorizeClient(formData: FormData) {
   const redirect_uri = formData.get('redirect_uri')?.toString();
   const state = formData.get('state')?.toString();
   const scope = formData.get('scope')?.toString();
+  const response_type = formData.get('response_type')?.toString() || 'code';
 
   if (!client_id || !redirect_uri) {
     return { error: 'Missing client_id or redirect_uri' };
+  }
+  if (response_type !== 'code') {
+    return { error: 'Unsupported response_type. Expected code.' };
+  }
+
+  const normalizedRedirectUri = normalizeRedirectUri(redirect_uri);
+  if (!normalizedRedirectUri) {
+    return { error: 'Invalid redirect_uri format' };
   }
 
   // Find user's active tenant
@@ -61,9 +89,9 @@ export async function authorizeClient(formData: FormData) {
     .eq('client_id', client_id)
     .single();
 
-  if (!client || !client.redirect_uris.includes(redirect_uri)) {
+  if (!client || !isAllowedRedirectUri(client.redirect_uris || [], normalizedRedirectUri)) {
     const clientLooksLikeTenantId = UUID_V4_REGEX.test(client_id) && client_id === tenantUser.tenant_id;
-    if (!(clientLooksLikeTenantId && isTrustedPublicRedirectUri(redirect_uri))) {
+    if (!(clientLooksLikeTenantId && isTrustedPublicRedirectUri(normalizedRedirectUri))) {
       return { error: 'Invalid client_id or redirect_uri mismatch' };
     }
   }
@@ -82,7 +110,7 @@ export async function authorizeClient(formData: FormData) {
       client_id,
       user_id: user.id,
       tenant_id: tenantUser.tenant_id,
-      redirect_uri,
+      redirect_uri: normalizedRedirectUri,
       scopes: approvedScopes,
       expires_at: expiresAt.toISOString()
     });
@@ -92,7 +120,7 @@ export async function authorizeClient(formData: FormData) {
     return { error: 'Failed to generate authorization code' };
   }
 
-  let finalRedirect = `${redirect_uri}?code=${code}`;
+  let finalRedirect = `${normalizedRedirectUri}?code=${code}`;
   if (state) {
     finalRedirect += `&state=${encodeURIComponent(state)}`;
   }
