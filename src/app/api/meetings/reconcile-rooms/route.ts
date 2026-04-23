@@ -8,6 +8,20 @@ const LIVEKIT_URL = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_U
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
 
+const normalizeOrigin = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  return value.replace(/\/+$/, '');
+};
+
+const resolveAppOrigin = (req: NextRequest): string => {
+  const fromOrigin = normalizeOrigin(req.headers.get('origin'));
+  if (fromOrigin) return fromOrigin;
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+  const proto = req.headers.get('x-forwarded-proto') || 'https';
+  if (host) return `${proto}://${host}`;
+  return normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL) || 'https://alphaclonesystems.com';
+};
+
 type VideoCallRow = {
   id: string;
   tenant_id: string | null;
@@ -44,7 +58,7 @@ async function checkDailyRoom(name: string): Promise<{ exists: boolean; url?: st
   return { exists: false, error: payload?.info || payload?.error || `Daily API ${response.status}` };
 }
 
-async function createDailyRoom(name: string): Promise<{ ok: boolean; url?: string; error?: string }> {
+async function createDailyRoom(name: string, meetingJoinHook: string): Promise<{ ok: boolean; url?: string; error?: string }> {
   if (!DAILY_API_KEY) return { ok: false, error: 'DAILY_API_KEY not configured' };
   const response = await fetch(`${DAILY_API_URL}/rooms`, {
     method: 'POST',
@@ -59,6 +73,7 @@ async function createDailyRoom(name: string): Promise<{ ok: boolean; url?: strin
         enable_screenshare: true,
         start_video_off: false,
         start_audio_off: false,
+        meeting_join_hook: meetingJoinHook,
       },
     }),
   });
@@ -97,6 +112,9 @@ export async function POST(req: NextRequest) {
       .limit(limit);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    const appOrigin = resolveAppOrigin(req);
+    const joinHookUrl = `${appOrigin}/api/meetings/hooks/join`;
+
     const result = {
       scanned: 0,
       dailyRecreated: 0,
@@ -115,6 +133,18 @@ export async function POST(req: NextRequest) {
         result.issues.push({ callId: row.id, provider: 'daily', detail: dailyCheck.error });
       } else if (dailyCheck.exists) {
         result.dailyHealthy += 1;
+        await fetch(`${DAILY_API_URL}/rooms/${encodeURIComponent(roomName)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${DAILY_API_KEY}`,
+          },
+          body: JSON.stringify({
+            properties: {
+              meeting_join_hook: joinHookUrl,
+            },
+          }),
+        }).catch(() => undefined);
         if (!row.daily_room_url && dailyCheck.url) {
           await admin
             .from('video_calls')
@@ -122,7 +152,7 @@ export async function POST(req: NextRequest) {
             .eq('id', row.id);
         }
       } else {
-        const created = await createDailyRoom(roomName);
+        const created = await createDailyRoom(roomName, joinHookUrl);
         if (!created.ok) {
           result.issues.push({ callId: row.id, provider: 'daily', detail: created.error || 'Room recreation failed' });
         } else {

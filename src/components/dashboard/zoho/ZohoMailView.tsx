@@ -67,6 +67,23 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         ? `/api/auth/zoho/connect?state=${encodeURIComponent(userIdProp)}`
         : '/api/auth/zoho/connect';
 
+    useEffect(() => {
+        const verifyZohoMailReady = async () => {
+            try {
+                const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) return;
+                if (data?.isConnected !== true) {
+                    setNeedsReconnect(true);
+                    setError('Zoho Mail is not fully connected for this account. Reconnect Zoho in Settings.');
+                }
+            } catch {
+                // keep existing UI behavior
+            }
+        };
+        verifyZohoMailReady();
+    }, []);
+
     // Email categorization function
     const categorizeEmail = (message: Message): 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal' => {
         const subject = (message.subject || '').toLowerCase();

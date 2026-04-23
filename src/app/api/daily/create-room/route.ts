@@ -4,6 +4,20 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_URL = 'https://api.daily.co/v1';
 
+const normalizeOrigin = (value: string | null | undefined): string | null => {
+    if (!value) return null;
+    return value.replace(/\/+$/, '');
+};
+
+const resolveAppOrigin = (req: Request): string => {
+    const fromOrigin = normalizeOrigin(req.headers.get('origin'));
+    if (fromOrigin) return fromOrigin;
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || 'https';
+    if (host) return `${proto}://${host}`;
+    return normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL) || 'https://alphaclonesystems.com';
+};
+
 export async function POST(req: Request) {
     if (!DAILY_API_KEY) {
         console.error('[Daily] DAILY_API_KEY is not set; room creation disabled');
@@ -19,6 +33,7 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { name, properties } = body;
+        const appOrigin = resolveAppOrigin(req);
 
         const response = await fetch(`${DAILY_API_URL}/rooms`, {
             method: 'POST',
@@ -32,7 +47,8 @@ export async function POST(req: Request) {
                     ...properties,
                     enable_chat: true,
                     start_video_off: false,
-                    start_audio_off: false
+                    start_audio_off: false,
+                    meeting_join_hook: `${appOrigin}/api/meetings/hooks/join`,
                 }
             })
         });
