@@ -3,6 +3,7 @@ import { emailCampaignService } from '@/services/emailCampaignService';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { gmailServerService } from '@/services/server/gmailServerService';
 import { isEmailSuppressed } from '@/lib/email/suppression';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
 type ProviderConfig = {
@@ -391,6 +392,32 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                         metadata: { provider: provider.id, provider_from: fromEmail },
                     })
                     .eq('id', recipient.id);
+                try {
+                    await captureUnifiedMessageFromWebhook({
+                        supabase: admin as any,
+                        tenantId: String(c.tenant_id || ''),
+                        source: provider.id,
+                        channel: 'email',
+                        direction: 'outbound',
+                        externalId: String(recipient.id),
+                        threadId: String(campaignId),
+                        from: fromEmail,
+                        to: recipient.email,
+                        subject: personalizedSubject,
+                        text: null,
+                        html: personalizedHtml,
+                        sentAt: new Date().toISOString(),
+                        metadata: {
+                            campaignId,
+                            campaignName: String(c.name || ''),
+                            contactId: recipient.contact_id,
+                            provider: provider.id,
+                            providerFrom: fromEmail,
+                        },
+                    });
+                } catch {
+                    // Non-blocking: campaign delivery should not fail due to analytics capture issues.
+                }
             } else {
                 await admin
                     .from('campaign_recipients')

@@ -155,6 +155,7 @@ export const integrationEmailProviderSchema = z.object({
     provider: z.enum(['resend', 'brevo']),
     apiKey: z.string().min(10),
     fromEmail: emailSchema,
+    fromName: z.string().min(1).max(200).optional(),
 });
 
 export const integrationEmailProviderDeleteSchema = z.object({

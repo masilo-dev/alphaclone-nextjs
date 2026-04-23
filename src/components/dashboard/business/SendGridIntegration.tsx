@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { tenantService } from '@/services/tenancy/TenantService';
 import toast from 'react-hot-toast';
 
 export default function SendGridIntegration() {
@@ -22,10 +23,14 @@ export default function SendGridIntegration() {
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [isSaving, setIsSaving] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
+    const [testRecipient, setTestRecipient] = useState('');
+    const [savedApiKey, setSavedApiKey] = useState('');
     
     const [config, setConfig] = useState({
         apiKey: '',
-        fromEmail: ''
+        fromEmail: '',
+        fromName: 'AlphaClone Systems',
     });
 
     useEffect(() => {
@@ -39,20 +44,27 @@ export default function SendGridIntegration() {
 
         setStatus('loading');
         try {
-            const { data, error } = await supabase
+            const tenantId = tenantService.getCurrentTenantId();
+            const query = supabase
                 .from('integrations')
                 .select('config, enabled')
                 .eq('user_id', user.id)
-                .eq('type', 'sendgrid')
-                .maybeSingle();
+                .eq('type', 'sendgrid');
+            const scopedQuery = tenantId ? query.eq('tenant_id', tenantId) : query;
+            const { data, error } = await scopedQuery.maybeSingle();
 
             if (error) throw error;
 
             if (data?.enabled) {
+                const storedApiKey = data.config?.api_key || data.config?.apiKey || '';
+                const storedFromEmail = data.config?.from_email || data.config?.fromEmail || '';
+                const storedFromName = data.config?.from_name || data.config?.fromName || 'AlphaClone Systems';
+                setSavedApiKey(storedApiKey);
                 setStatus('connected');
                 setConfig({
                     apiKey: '••••••••••••••••', // Masked for UI
-                    fromEmail: data.config.fromEmail || ''
+                    fromEmail: storedFromEmail,
+                    fromName: storedFromName,
                 });
             } else {
                 setStatus('idle');
@@ -69,24 +81,30 @@ export default function SendGridIntegration() {
 
         setIsSaving(true);
         try {
-            if (!config.apiKey || !config.fromEmail) {
+            if (!config.fromEmail) {
                 throw new Error('All fields are required');
             }
+            const tenantId = tenantService.getCurrentTenantId();
+            const resolvedApiKey = config.apiKey === '••••••••••••••••' ? savedApiKey : config.apiKey.trim();
+            if (!resolvedApiKey) throw new Error('API key is required');
 
             const { error } = await supabase
                 .from('integrations')
                 .upsert({
                     user_id: user.id,
+                    tenant_id: tenantId || null,
                     type: 'sendgrid',
                     name: 'SendGrid',
                     enabled: true,
                     config: {
-                        apiKey: config.apiKey === '••••••••••••••••' ? undefined : config.apiKey,
-                        fromEmail: config.fromEmail
+                        api_key: resolvedApiKey,
+                        from_email: config.fromEmail,
+                        from_name: config.fromName || 'AlphaClone Systems',
                     }
                 }, { onConflict: 'user_id,type' });
 
             if (error) throw error;
+            setSavedApiKey(resolvedApiKey);
 
             toast.success('SendGrid account connected successfully');
             setStatus('connected');
@@ -119,6 +137,41 @@ export default function SendGridIntegration() {
             toast.error(err.message || 'Failed to disconnect');
         } finally {
             setIsDisconnecting(false);
+        }
+    };
+
+    const handleSendTest = async () => {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            toast.error('Select a workspace first');
+            return;
+        }
+        if (!testRecipient.trim()) {
+            toast.error('Enter a test recipient email');
+            return;
+        }
+        setIsTesting(true);
+        try {
+            const res = await fetch('/api/email/providers/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    provider: 'sendgrid',
+                    to: testRecipient.trim(),
+                    subject: 'SendGrid connection test',
+                    message: 'Your SendGrid integration is ready for campaigns and outreach.',
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'SendGrid test failed');
+            }
+            toast.success('SendGrid test email sent successfully');
+        } catch (err: any) {
+            toast.error(err.message || 'SendGrid test failed');
+        } finally {
+            setIsTesting(false);
         }
     };
 
@@ -193,6 +246,16 @@ export default function SendGridIntegration() {
                             className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
                         />
                     </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Sender Name</label>
+                        <input
+                            type="text"
+                            value={config.fromName}
+                            onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
+                            placeholder="Your Company Name"
+                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 pt-4 border-t border-white/5">
@@ -209,6 +272,29 @@ export default function SendGridIntegration() {
                         Encrypted storage ensures your API keys are private.
                     </p>
                 </div>
+                {status === 'connected' && (
+                    <div className="pt-2 border-t border-white/5">
+                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Send Test Email</p>
+                        <div className="flex flex-col md:flex-row gap-3">
+                            <input
+                                type="email"
+                                value={testRecipient}
+                                onChange={(e) => setTestRecipient(e.target.value)}
+                                placeholder="recipient@domain.com"
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
+                            />
+                            <Button
+                                type="button"
+                                onClick={handleSendTest}
+                                disabled={isTesting}
+                                className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6"
+                            >
+                                {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                                Send Test
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </form>
         </motion.div>
     );

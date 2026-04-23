@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     // Set tenant context for RLS
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
-    const integrationStatus = await checkAllIntegrations(tenantId, supabase);
+    const integrationStatus = await checkAllIntegrations(tenantId, user.id, supabase);
     
     // Map integrations by type so UI components like data.sendgrid and data.resend work
     const mappedIntegrations = integrationStatus.reduce((acc, int) => ({
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-async function checkAllIntegrations(tenantId: string, supabase: any) {
+async function checkAllIntegrations(tenantId: string, userId: string, supabase: any) {
   const integrations = [
     {
       name: 'Slack',
@@ -85,6 +85,16 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
       name: 'Resend',
       type: 'resend',
       checkFunction: checkResendIntegration
+    },
+    {
+      name: 'Brevo',
+      type: 'brevo',
+      checkFunction: checkBrevoIntegration
+    },
+    {
+      name: 'Zoho',
+      type: 'zoho',
+      checkFunction: checkZohoIntegration
     }
   ];
 
@@ -92,7 +102,7 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
 
   for (const integration of integrations) {
     try {
-      const status = await integration.checkFunction(tenantId, supabase);
+      const status = await integration.checkFunction(tenantId, supabase, userId);
       results.push({
         name: integration.name,
         type: integration.type,
@@ -614,16 +624,26 @@ async function checkSendGridIntegration(tenantId: string, supabase: any) {
 }
 
 async function checkResendIntegration(tenantId: string, supabase: any) {
-  // Use tenant_integrations for Resend (as per send/route.ts)
-  const { data: integration, error } = await supabase
+  // Support both storage models used across the app.
+  const { data: tenantIntegration } = await supabase
     .from('tenant_integrations')
     .select('*')
     .eq('tenant_id', tenantId)
     .eq('integration_type', 'resend')
     .eq('status', 'active')
-    .single();
+    .maybeSingle();
 
-  if (error || !integration) {
+  const { data: userIntegration } = await supabase
+    .from('integrations')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('type', 'resend')
+    .eq('enabled', true)
+    .maybeSingle();
+
+  const integration = tenantIntegration || userIntegration;
+
+  if (!integration) {
     return {
       status: 'not_connected',
       percentage: 0,
@@ -638,14 +658,18 @@ async function checkResendIntegration(tenantId: string, supabase: any) {
   let percentage = 0;
 
   // Check required fields
-  if (!integration.access_token) {
+  const config = integration.config || {};
+  const apiKey = integration.access_token || config.api_key || config.apiKey;
+  const domain = integration.domain || config.domain;
+
+  if (!apiKey) {
     issues.push('API key missing');
     actions.push('Reconnect Resend to get API key');
   } else {
     percentage += 50;
   }
 
-  if (!integration.domain) {
+  if (!domain) {
     issues.push('Domain missing');
     actions.push('Set domain');
   } else {
@@ -657,8 +681,111 @@ async function checkResendIntegration(tenantId: string, supabase: any) {
     percentage,
     issues,
     actions,
-    domain: integration.domain,
+    domain: domain || undefined,
     updated_at: integration.updated_at,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkBrevoIntegration(tenantId: string, supabase: any) {
+  const { data: integration } = await supabase
+    .from('integrations')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('type', 'brevo')
+    .eq('enabled', true)
+    .maybeSingle();
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Brevo integration not connected'],
+      actions: ['Connect Brevo account'],
+      connected: false
+    };
+  }
+
+  const issues = [];
+  const actions = [];
+  let percentage = 0;
+  const config = integration.config || {};
+
+  if (!config.api_key && !config.apiKey) {
+    issues.push('API key missing');
+    actions.push('Reconnect Brevo to get API key');
+  } else {
+    percentage += 50;
+  }
+
+  if (!config.from_email && !config.fromEmail) {
+    issues.push('From email missing');
+    actions.push('Set default from email');
+  } else {
+    percentage += 50;
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkZohoIntegration(_tenantId: string, supabase: any, userId: string) {
+  const { data: integration } = await supabase
+    .from('integrations')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('type', 'zoho')
+    .eq('enabled', true)
+    .maybeSingle();
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Zoho integration not connected'],
+      actions: ['Connect Zoho account'],
+      connected: false
+    };
+  }
+
+  const config = integration.config || {};
+  const hasRefreshToken = Boolean(config.refreshToken);
+  const hasMailHost = Boolean(config.mailApiHost);
+  const hasAccountsServer = Boolean(config.accountsServer);
+  const issues = [];
+  const actions = [];
+  let percentage = 0;
+
+  if (hasRefreshToken) percentage += 40;
+  else {
+    issues.push('Refresh token missing');
+    actions.push('Reconnect Zoho account');
+  }
+
+  if (hasMailHost) percentage += 30;
+  else {
+    issues.push('Mail API host missing');
+    actions.push('Reconnect Zoho account');
+  }
+
+  if (hasAccountsServer) percentage += 30;
+  else {
+    issues.push('Accounts server missing');
+    actions.push('Reconnect Zoho account');
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
     connected: true,
     lastChecked: new Date().toISOString()
   };

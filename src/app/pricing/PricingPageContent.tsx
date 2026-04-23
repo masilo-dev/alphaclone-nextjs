@@ -36,6 +36,7 @@ const plans = [
             'Unified Gmail Integration',
             'Lead finder and outreach workspace',
             'Social publishing and scheduling',
+            'Native 1-hour video meetings built into AlphaClone',
             'Email support',
         ],
         notIncluded: [],
@@ -46,7 +47,7 @@ const plans = [
 
 const replacedTools = [
     { icon: Brain, name: 'HubSpot CRM', cost: '$50/mo', replaced: 'CRM & Deals module' },
-    { icon: Video, name: 'Zoom Pro', cost: '$15/mo', replaced: 'Video Meetings module' },
+    { icon: Video, name: 'Zoom Pro', cost: '$15/mo', replaced: 'Native 1-hour video meetings' },
     { icon: FileText, name: 'DocuSign', cost: '$25/mo', replaced: 'Contract Engine' },
     { icon: DollarSign, name: 'Financial Software', cost: '$30/mo', replaced: 'Financial Suite' },
     { icon: Mail, name: 'Mailchimp', cost: '$20/mo', replaced: 'Comms & Email module' },
@@ -58,32 +59,36 @@ const replacedTools = [
 
 const faqs = [
     {
-        q: 'Do I need a credit card to start the free trial?',
-        a: 'No. You can sign up and access all features of your chosen plan for 14 days without providing any payment information. At the end of the trial, you\'ll be prompted to enter payment details to continue.',
+        q: 'Why did we build AlphaClone instead of another separate tool?',
+        a: 'We built AlphaClone because small businesses were forced to run core operations across disconnected tools for CRM, email, contracts, billing, meetings, and reporting. That creates daily friction, duplicated work, and missed follow-ups. AlphaClone is designed as one native system so your team can operate from a single workspace.',
     },
     {
-        q: 'Is there only one public plan right now?',
-        a: 'Yes. AlphaClone currently offers one public plan at $15/month. All new customers start on the same plan with a 14-day free trial and can activate in under a minute.',
+        q: 'How much money does software sprawl usually cost per year?',
+        a: 'Most teams replace 7 to 9 subscriptions after moving to AlphaClone. Typical combined spend for those tools ranges from about $300 to $380 per month, which is roughly $3,600 to $4,560 per year. At $15 per month, AlphaClone is often a significant annual cost reduction.',
+    },
+    {
+        q: 'What is included in the $15 plan?',
+        a: 'The plan includes your full operating stack: CRM pipeline, outreach workflows, contracts, invoicing and finance views, native 1-hour video meetings, projects, documents, and core automations. You do not need separate plans to activate these core workflows.',
+    },
+    {
+        q: 'Do I need a credit card to start?',
+        a: 'No. You can start your 14-day trial without entering card details. You can test your full workflow first, then decide whether to activate paid billing.',
+    },
+    {
+        q: 'Will my team struggle to switch from multiple tools?',
+        a: 'The transition is designed to be practical. You can import contacts and client data, run outreach, and handle meetings and operations from one dashboard. Most teams are productive quickly because the system reduces handoffs rather than adding new complexity.',
+    },
+    {
+        q: 'Is this really one connected system, or just bundled features?',
+        a: 'It is one connected system. CRM records, communications, meetings, tasks, and financial operations share the same data layer, which removes duplicate entry and keeps your business context consistent across the platform.',
     },
     {
         q: 'What happens to my data if I cancel?',
-        a: 'Your data is securely retained for 90 days after cancellation. During that window, you can export everything (CSV, JSON, PDF) or reactivate your subscription to regain full access. After 90 days, data is permanently deleted per our Privacy Policy.',
-    },
-    {
-        q: 'Can I add more users than my plan allows?',
-        a: 'Starter and Professional plans have user caps. If you need more, you can upgrade to the next tier at any time. Enterprise has no user limit.',
-    },
-    {
-        q: 'Does AlphaClone really replace all those tools?',
-        a: 'Yes. AlphaClone is an integrated Business OS — not a collection of loosely connected features. Every module (CRM, Finance, Contracts, Video, Tasks) shares the same data layer, so information flows across the platform without copy-pasting or re-entering data. Most customers retire 7–9 separate subscriptions within 30 days of switching.',
+        a: 'Your data is retained for 90 days after cancellation so you can export records or reactivate. After that retention window, data is permanently removed according to policy.',
     },
     {
         q: 'Is my business data secure?',
-        a: 'Enterprise-grade security is standard across all plans: AES-256 encryption at rest, TLS 1.3 in transit, row-level security (multi-tenant data isolation), bcrypt password hashing, RBAC permissions, and continuous audit logging.',
-    },
-    {
-        q: 'How does the AI Growth Agent work?',
-        a: 'The AI Growth Agent (available on Professional and Enterprise plans) automatically identifies prospective leads from public business directories, drafts personalized outreach messages, and manages multi-step follow-up sequences on your behalf — all while you focus on closing deals. You review and approve outreach templates before activation.',
+        a: 'Yes. AlphaClone uses enterprise-grade controls including encryption in transit and at rest, tenant isolation, role-based access, and audit logging to protect business data.',
     },
 ];
 
@@ -103,10 +108,10 @@ export default function PricingPageContent() {
                     '@context': 'https://schema.org',
                     '@type': 'FAQPage',
                     mainEntity: [
-                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone has one public price: $15 per month. It includes a 14-day free trial with no credit card required.' } },
-                        { '@type': 'Question', name: 'Is there a free trial for AlphaClone?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. All AlphaClone plans include a 14-day free trial with full access to all features in that plan. No credit card is required to start.' } },
-                        { '@type': 'Question', name: 'Can I cancel AlphaClone at any time?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. You can cancel at any time from Settings > Billing. Cancellation takes effect at the end of the current billing period. Your data is retained for 90 days after cancellation.' } },
-                        { '@type': 'Question', name: 'Does AlphaClone replace HubSpot, Zoom, DocuSign, and other business software?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone replaces HubSpot (CRM), Zoom (video meetings), DocuSign (contracts), various financial management tools, Mailchimp (email), and several other tools for a fraction of the combined cost.' } },
+                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone has one public price of $15 per month and includes a 14-day free trial without a credit card.' } },
+                        { '@type': 'Question', name: 'How much can software sprawl cost per year?', acceptedAnswer: { '@type': 'Answer', text: 'Many businesses spend about $300 to $380 per month across multiple tools, which can equal $3,600 to $4,560 per year.' } },
+                        { '@type': 'Question', name: 'Does AlphaClone include built-in video meetings?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone includes native built-in 1-hour video meetings as part of the platform.' } },
+                        { '@type': 'Question', name: 'Why was AlphaClone built?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone was built to replace fragmented business software with one connected operating system for CRM, communication, finance, contracts, and operations.' } },
                     ]
                 })
             }} />

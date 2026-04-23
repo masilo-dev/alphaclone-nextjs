@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     const provider = parsed.data.provider;
     const apiKey = parsed.data.apiKey;
     const fromEmail = parsed.data.fromEmail;
+    const fromName = parsed.data.fromName || 'AlphaClone Systems';
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
@@ -93,7 +94,11 @@ export async function POST(request: NextRequest) {
       config: {
         ...existingConfig,
         apiKey,
+        api_key: apiKey,
         fromEmail,
+        from_email: fromEmail,
+        fromName,
+        from_name: fromName,
         webhookToken,
       },
     };

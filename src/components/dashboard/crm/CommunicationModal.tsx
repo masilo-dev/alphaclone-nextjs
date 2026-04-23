@@ -15,7 +15,8 @@ interface CommunicationModalProps {
     onSent: () => void;
 }
 
-type EmailProvider = 'gmail' | 'zoho' | null;
+type EmailProvider = 'gmail' | 'zoho' | 'sendgrid' | 'resend' | 'brevo' | null;
+type ProviderStatusMap = Record<Exclude<EmailProvider, null>, boolean>;
  
 export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, user, onClose, onSent }) => {
     const { currentTenant } = useTenant();
@@ -25,6 +26,13 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [isSending, setIsSending] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<EmailProvider>(null);
     const [loadingProvider, setLoadingProvider] = useState(false);
+    const [providerStatus, setProviderStatus] = useState<ProviderStatusMap>({
+        gmail: false,
+        zoho: false,
+        sendgrid: false,
+        resend: false,
+        brevo: false,
+    });
     const [searchTerm, setSearchTerm] = useState('');
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -35,7 +43,15 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
-    const availableProviders: EmailProvider[] = ['gmail', 'zoho'];
+    const availableProviders: EmailProvider[] = ['sendgrid', 'resend', 'brevo', 'gmail', 'zoho'];
+
+    const providerLabels: Record<Exclude<EmailProvider, null>, string> = {
+        sendgrid: 'SendGrid',
+        resend: 'Resend',
+        brevo: 'Brevo',
+        gmail: 'Gmail',
+        zoho: 'Zoho Mail',
+    };
 
     // Load signature
     useEffect(() => {
@@ -60,6 +76,51 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
         };
 
         loadClients();
+    }, [currentTenant?.id]);
+
+    useEffect(() => {
+        const loadProviderStatus = async () => {
+            if (!currentTenant?.id) return;
+            setLoadingProvider(true);
+            try {
+                const response = await fetch(`/api/integrations/status?tenantId=${encodeURIComponent(currentTenant.id)}`);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.error || 'Failed to load provider status');
+                const integrations = Array.isArray(data.integrations) ? data.integrations : [];
+                const next: ProviderStatusMap = {
+                    gmail: false,
+                    zoho: false,
+                    sendgrid: false,
+                    resend: false,
+                    brevo: false,
+                };
+                integrations.forEach((integration: any) => {
+                    const type = String(integration.type || '').toLowerCase() as keyof ProviderStatusMap;
+                    if (type in next) {
+                        next[type] = Boolean(integration.connected);
+                    }
+                });
+                setProviderStatus(next);
+                setSelectedProvider((prev) => {
+                    if (prev && next[prev as keyof ProviderStatusMap]) return prev;
+                    const firstConnected = (availableProviders.find((provider) => provider && next[provider as keyof ProviderStatusMap]) || null) as EmailProvider;
+                    return firstConnected;
+                });
+            } catch {
+                setProviderStatus({
+                    gmail: false,
+                    zoho: false,
+                    sendgrid: false,
+                    resend: false,
+                    brevo: false,
+                });
+                setSelectedProvider(null);
+            } finally {
+                setLoadingProvider(false);
+            }
+        };
+
+        loadProviderStatus();
     }, [currentTenant?.id]);
 
     useEffect(() => {
@@ -111,40 +172,52 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
             return;
         }
         if (!selectedProvider) {
-            toast.error("No email provider connected. Please connect Zoho or Gmail in settings.");
+            toast.error("Choose a sending service first.");
+            return;
+        }
+        if (!currentTenant?.id) {
+            toast.error("No active workspace selected.");
             return;
         }
 
         setIsSending(true);
         try {
-            if (selectedProvider === 'zoho') {
-                const response = await fetch('/api/zoho/mail', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        toAddress: selectedClient.email,
-                        subject: subject,
-                        content: body // Body already contains signature from useEffect
-                    })
-                });
+            const response = await fetch('/api/outreach/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    leadEmail: selectedClient.email,
+                    leadName: selectedClient.name,
+                    subject,
+                    body,
+                    pitchAngle: 'direct_message',
+                    industry: selectedClient.industry || '',
+                    score: 100,
+                    autoSend: true,
+                    consentGranted: true,
+                    confidenceScore: 100,
+                    deliveryProviders: [selectedProvider],
+                    preferredProvider: selectedProvider,
+                    balanceByDailyLimit: false,
+                }),
+            });
 
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error || 'Failed to send via Zoho');
-                
-                // Audit log for outreach
-                await supabase.from('activity_logs').insert({
-                    user_id: user.id,
-                    type: 'EXECUTE',
-                    action: 'Email Sent',
-                    details: { to: selectedClient.email, subject, provider: 'zoho' }
-                });
-
-                toast.success("Email sent successfully via Zoho Mail!");
-                onSent();
-            } else if (selectedProvider === 'gmail') {
-                toast.success("Message drafting enabled. Active Gmail sending arriving in next sync.");
-                onSent();
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Failed to send email');
             }
+
+            await supabase.from('activity_logs').insert({
+                user_id: user.id,
+                type: 'EXECUTE',
+                action: 'Email Sent',
+                details: { to: selectedClient.email, subject, provider: result.provider || selectedProvider }
+            });
+
+            const sentVia = String(result.provider || selectedProvider).toUpperCase();
+            toast.success(`Email sent successfully via ${sentVia}`);
+            onSent();
         } catch (err: any) {
             console.error("Send error:", err);
             toast.error(err.message || "Network error while sending email.");
@@ -162,15 +235,23 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                         {availableProviders.map(p => (
                             <button
                                 key={p}
-                                onClick={() => setSelectedProvider(p)}
+                                onClick={() => {
+                                    if (!p || !providerStatus[p]) return;
+                                    setSelectedProvider(p);
+                                }}
+                                disabled={!p || !providerStatus[p]}
+                                title={!p || !providerStatus[p] ? 'Connect this provider in Settings' : `Send with ${providerLabels[p]}`}
                                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
                                     selectedProvider === p 
                                     ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20' 
-                                    : 'text-slate-500 hover:text-slate-300'
+                                    : !p || !providerStatus[p]
+                                        ? 'text-slate-600 bg-slate-900/30 cursor-not-allowed'
+                                        : 'text-slate-500 hover:text-slate-300'
                                 }`}
                             >
                                 <MailCheck className="w-3.5 h-3.5" />
-                                {p === 'zoho' ? 'Zoho Mail' : 'Gmail'}
+                                {p ? providerLabels[p] : ''}
+                                {!p || !providerStatus[p] ? ' (Connect)' : ''}
                             </button>
                         ))}
                     </div>
@@ -281,7 +362,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
                         ) : selectedProvider ? (
-                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'zoho' ? 'Zoho Mail' : 'Gmail'} to send securely</>
+                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : selectedProvider === 'brevo' ? 'Brevo' : 'Gmail'} to send securely</>
                         ) : (
                             <><span className="text-amber-500">⚠ No provider connected. Emails cannot be sent.</span></>
                         )}
