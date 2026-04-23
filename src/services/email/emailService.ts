@@ -3,10 +3,11 @@
  * Handles all transactional and marketing emails
  *
  * Supports:
- * - Resend (recommended)
+ * - Brevo
  * - SendGrid
- * - AWS SES
+ * - Resend
  */
+import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 
 export interface EmailOptions {
     to: string | string[];
@@ -70,19 +71,19 @@ export const EMAIL_TEMPLATES = {
 };
 
 class EmailService {
-    private provider: 'resend' | 'sendgrid' | 'ses';
+    private provider: EmailProvider;
     private defaultFrom: string;
 
     constructor() {
         // Determine provider based on environment variables
-        if (process.env.RESEND_API_KEY) {
-            this.provider = 'resend';
+        if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
+            this.provider = 'brevo';
         } else if (process.env.SENDGRID_API_KEY) {
             this.provider = 'sendgrid';
-        } else if (process.env.AWS_SES_REGION) {
-            this.provider = 'ses';
+        } else if (process.env.RESEND_API_KEY) {
+            this.provider = 'resend';
         } else {
-            this.provider = 'resend'; // default
+            this.provider = 'resend';
         }
 
         this.defaultFrom = process.env.EMAIL_FROM || 'noreply@alphaclone.com';
@@ -94,12 +95,12 @@ class EmailService {
     async send(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
         try {
             switch (this.provider) {
+                case 'brevo':
+                    return await this.sendWithBrevo(options);
                 case 'resend':
                     return await this.sendWithResend(options);
                 case 'sendgrid':
                     return await this.sendWithSendGrid(options);
-                case 'ses':
-                    return await this.sendWithSES(options);
                 default:
                     throw new Error('No email provider configured');
             }
@@ -112,35 +113,56 @@ class EmailService {
         }
     }
 
+    private async sendWithBrevo(options: EmailOptions) {
+        const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY;
+        if (!apiKey) {
+            throw new Error('BREVO_API_KEY not configured');
+        }
+
+        const result = await sendWithProviderSdk('brevo', {
+            apiKey,
+            fromEmail: options.from || process.env.BREVO_FROM_EMAIL || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+        });
+
+        if (!result.ok) {
+            throw new Error(`Brevo SDK error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
     /**
      * Send email using Resend (recommended)
      */
     private async sendWithResend(options: EmailOptions) {
-        if (!process.env.RESEND_API_KEY) {
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
             throw new Error('RESEND_API_KEY not configured');
         }
 
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-            },
-            body: JSON.stringify({
-                from: options.from || this.defaultFrom,
-                to: Array.isArray(options.to) ? options.to : [options.to],
-                subject: options.subject,
-                html: options.html,
-                text: options.text,
-                reply_to: options.replyTo,
-                cc: options.cc,
-                bcc: options.bcc,
-            }),
+        const result = await sendWithProviderSdk('resend', {
+            apiKey,
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
         });
 
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`Resend API error: ${error}`);
+        if (!result.ok) {
+            throw new Error(`Resend SDK error: ${result.error || 'unknown error'}`);
         }
 
         return { success: true };
@@ -150,52 +172,29 @@ class EmailService {
      * Send email using SendGrid
      */
     private async sendWithSendGrid(options: EmailOptions) {
-        if (!process.env.SENDGRID_API_KEY) {
+        const apiKey = process.env.SENDGRID_API_KEY;
+        if (!apiKey) {
             throw new Error('SENDGRID_API_KEY not configured');
         }
 
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
-            },
-            body: JSON.stringify({
-                personalizations: [
-                    {
-                        to: Array.isArray(options.to)
-                            ? options.to.map(email => ({ email }))
-                            : [{ email: options.to }],
-                        subject: options.subject,
-                    },
-                ],
-                from: { email: options.from || this.defaultFrom },
-                content: [
-                    {
-                        type: 'text/html',
-                        value: options.html || '',
-                    },
-                ],
-            }),
+        const result = await sendWithProviderSdk('sendgrid', {
+            apiKey,
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
         });
 
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`SendGrid API error: ${error}`);
+        if (!result.ok) {
+            throw new Error(`SendGrid SDK error: ${result.error || 'unknown error'}`);
         }
 
         return { success: true };
-    }
-
-    /**
-     * Send email using AWS SES
-     */
-    private async sendWithSES(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
-        // Would use AWS SDK here
-        return {
-            success: false,
-            error: 'AWS SES implementation pending',
-        };
     }
 
     /**

@@ -3,7 +3,7 @@
 // Force Next.js to not statically cache this page in production
 export const dynamic = 'force-dynamic';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
@@ -57,8 +57,30 @@ function LoginContent() {
     const [mfaCode, setMfaCode] = useState('');
     const [humanVerified, setHumanVerified] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [registrationOpen, setRegistrationOpen] = useState(true);
+    const [policyLoaded, setPolicyLoaded] = useState(false);
 
     const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
+
+    useEffect(() => {
+        const loadPolicy = async () => {
+            try {
+                const response = await fetch('/api/platform/policy', { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                const open = payload?.policy?.openRegistration !== false;
+                setRegistrationOpen(open);
+                if (!open && isRegistering) {
+                    setIsRegistering(false);
+                    setError('New registrations are currently closed by platform policy.');
+                }
+            } catch {
+                setRegistrationOpen(true);
+            } finally {
+                setPolicyLoaded(true);
+            }
+        };
+        loadPolicy();
+    }, []);
 
     const planDisplayNames: Record<string, string> = {
         starter: 'Starter',
@@ -105,6 +127,11 @@ function LoginContent() {
 
             // 1. REGISTRATION FLOW
             if (isRegistering) {
+                if (!registrationOpen) {
+                    setError('New registrations are currently closed by platform policy.');
+                    setIsLoading(false);
+                    return;
+                }
                 if (!name || !email || !password) {
                     setError('All fields are required to create an account.');
                     setIsLoading(false);
@@ -756,6 +783,10 @@ function LoginContent() {
                 <div className="mt-6 pt-4 border-t border-slate-800 text-center space-y-3">
                     <button
                         onClick={() => {
+                            if (!registrationOpen && !isRegistering) {
+                                setError('New registrations are currently closed by platform policy.');
+                                return;
+                            }
                             setIsRegistering(!isRegistering);
                             setError('');
                         }}
@@ -771,6 +802,9 @@ function LoginContent() {
                             </>
                         )}
                     </button>
+                    {!registrationOpen && policyLoaded && (
+                        <p className="text-[11px] text-amber-400">Account registration is temporarily closed.</p>
+                    )}
                     <p className="text-[10px] text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>

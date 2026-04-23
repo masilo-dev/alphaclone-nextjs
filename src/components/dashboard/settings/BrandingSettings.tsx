@@ -13,33 +13,33 @@ import Image from 'next/image';
 const BrandingSettings = () => {
     const { currentTenant, refreshTenants } = useTenant();
     const [loading, setLoading] = useState(false);
+    const settingsBranding = (currentTenant?.settings?.branding || {}) as Record<string, unknown>;
 
     // Form State
-    const [branding, setBranding] = useState<any>(currentTenant?.settings?.branding || {
-        primaryColor: currentTenant?.brand_color_primary || '#0d9488',
-        secondaryColor: currentTenant?.brand_color_secondary || '#0f172a',
-        logo_url: currentTenant?.logo_url || '',
-        legal_name: currentTenant?.legal_name || '',
-        tax_id: currentTenant?.tax_id || '',
-        address: currentTenant?.business_address || ''
+    const [branding, setBranding] = useState<any>({
+        brand_color_primary: currentTenant?.brand_color_primary || String(settingsBranding.brand_color_primary || settingsBranding.primaryColor || '#0d9488'),
+        brand_color_secondary: currentTenant?.brand_color_secondary || String(settingsBranding.brand_color_secondary || settingsBranding.secondaryColor || '#0f172a'),
+        logo_url: currentTenant?.logo_url || String(settingsBranding.logo_url || settingsBranding.logo || ''),
+        legal_name: currentTenant?.legal_name || String(settingsBranding.legal_name || ''),
+        tax_id: currentTenant?.tax_id || String(settingsBranding.tax_id || ''),
+        business_address: currentTenant?.business_address || String(settingsBranding.business_address || settingsBranding.address || '')
     });
 
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    // Load initial data - This useEffect is now redundant due to direct useState initialization
-    // useEffect(() => {
-    //     if (currentTenant) {
-    //         setBranding({
-    //             legal_name: currentTenant.legal_name || currentTenant.name || '',
-    //             tax_id: currentTenant.tax_id || '',
-    //             business_address: currentTenant.business_address || '',
-    //             brand_color_primary: currentTenant.brand_color_primary || '#0f172a',
-    //             brand_color_secondary: currentTenant.brand_color_secondary || '#14b8a6',
-    //             logo_url: currentTenant.logo_url || ''
-    //         });
-    //     }
-    // }, [currentTenant]);
+    useEffect(() => {
+        if (!currentTenant) return;
+        const nextBranding = (currentTenant.settings?.branding || {}) as Record<string, unknown>;
+        setBranding({
+            brand_color_primary: currentTenant.brand_color_primary || String(nextBranding.brand_color_primary || nextBranding.primaryColor || '#0d9488'),
+            brand_color_secondary: currentTenant.brand_color_secondary || String(nextBranding.brand_color_secondary || nextBranding.secondaryColor || '#0f172a'),
+            logo_url: currentTenant.logo_url || String(nextBranding.logo_url || nextBranding.logo || ''),
+            legal_name: currentTenant.legal_name || String(nextBranding.legal_name || ''),
+            tax_id: currentTenant.tax_id || String(nextBranding.tax_id || ''),
+            business_address: currentTenant.business_address || String(nextBranding.business_address || nextBranding.address || ''),
+        });
+    }, [currentTenant]);
 
     // Handle Logo Upload
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,9 +68,9 @@ const BrandingSettings = () => {
             await tenantService.updateTenant(currentTenant.id, {
                 legal_name: branding.legal_name,
                 tax_id: branding.tax_id,
-                business_address: branding.address, // Changed to branding.address
-                brand_color_primary: branding.primaryColor, // Changed to branding.primaryColor
-                brand_color_secondary: branding.secondaryColor, // Changed to branding.secondaryColor
+                business_address: branding.business_address,
+                brand_color_primary: branding.brand_color_primary,
+                brand_color_secondary: branding.brand_color_secondary,
                 logo_url: branding.logo_url
             });
             await refreshTenants();

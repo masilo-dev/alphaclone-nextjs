@@ -130,7 +130,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         endMeeting,
         setIsMeetingMinimized,
         toggleMeetingMinimized,
-    } = useMeetingSession();
+    } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
 
     // Sync sidebar on mount to avoid hydration mismatch
     React.useEffect(() => {

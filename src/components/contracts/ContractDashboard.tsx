@@ -16,6 +16,7 @@ import {
     getContractProjectTypeOptions,
     getPreferredContractProjectTypes,
 } from '../../services/universalServiceCatalog';
+import { generateEmailDraft } from '../../services/unifiedAIService';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -133,6 +134,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [signatureDate] = useState(format(new Date(), 'MMMM d, yyyy'));
     const [isSigned, setIsSigned] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [sendingContract, setSendingContract] = useState(false);
+    const [aiDraftingSend, setAiDraftingSend] = useState(false);
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
 
     const today = format(new Date(), 'MMMM d, yyyy');
     const ninetyDays = format(new Date(Date.now() + 90 * 86400000), 'MMMM d, yyyy');
@@ -294,6 +299,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             });
             if (error) throw new Error(error);
             toast.success('Contract saved successfully!');
+            if (contract?.id) setContractId(contract.id);
             showActionNextSteps('contract_saved', (path) => router.push(path));
             setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
@@ -318,6 +324,75 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             contractService.downloadPDF(mockContract, currentTenant || undefined);
         } catch (e) {
             toast.error("Failed to generate PDF");
+        }
+    };
+
+    const openSendContractModal = () => {
+        const targetEmail = form.clientEmail || '';
+        setSendForm({
+            recipientEmail: targetEmail,
+            subject: `Contract: ${form.projectName || 'Service Agreement'}`,
+            message: `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
+        });
+        setShowSendModal(true);
+    };
+
+    const handleAiDraftSendMessage = async () => {
+        setAiDraftingSend(true);
+        try {
+            const draft = await generateEmailDraft(
+                `Write a professional contract delivery email for project ${form.projectName} and client ${form.clientName}.`,
+                sendForm.recipientEmail,
+                sendForm.subject
+            );
+            if (draft) setSendForm(prev => ({ ...prev, message: draft }));
+            else toast.error('Failed to generate AI draft');
+        } catch {
+            toast.error('Failed to generate AI draft');
+        } finally {
+            setAiDraftingSend(false);
+        }
+    };
+
+    const handleSendContract = async () => {
+        if (!currentTenant?.id) return;
+        if (!sendForm.recipientEmail.trim()) {
+            toast.error('Recipient email is required');
+            return;
+        }
+        if (!contractId) {
+            toast.error('Save the contract first before sending');
+            return;
+        }
+
+        setSendingContract(true);
+        try {
+            const res = await fetch('/api/contracts/management', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    action: 'send_contract',
+                    config: {
+                        contractId,
+                        recipients: [sendForm.recipientEmail.trim()],
+                        subject: sendForm.subject,
+                        message: sendForm.message,
+                        format: 'pdf',
+                        userId: user.id,
+                    },
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok || !payload?.success) {
+                throw new Error(payload?.error || 'Failed to send contract');
+            }
+            toast.success('Contract sent successfully');
+            setShowSendModal(false);
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to send contract');
+        } finally {
+            setSendingContract(false);
         }
     };
 
@@ -650,6 +725,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
                                                 <Printer className="w-4 h-4" /> Print / PDF
                                             </button>
+                                            <button onClick={openSendContractModal} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
+                                                <FileText className="w-4 h-4" /> Send Contract
+                                            </button>
                                             {step !== 'saved' && (
                                                 <button onClick={saveContract} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60">
                                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -719,6 +797,58 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         </div>
                     )}
                 </>
+            )}
+
+            {showSendModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
+                    <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <h3 className="text-lg font-semibold text-white">Send Contract by Email</h3>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
+                            <input
+                                className={inputCls}
+                                value={sendForm.recipientEmail}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                                placeholder="client@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
+                            <input
+                                className={inputCls}
+                                value={sendForm.subject}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                            <textarea
+                                className={`${inputCls} min-h-[140px]`}
+                                value={sendForm.message}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <button
+                                type="button"
+                                onClick={handleAiDraftSendMessage}
+                                disabled={aiDraftingSend}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm"
+                            >
+                                {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <button type="button" onClick={() => setShowSendModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm">
+                                    Cancel
+                                </button>
+                                <button type="button" onClick={handleSendContract} disabled={sendingContract} className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold">
+                                    {sendingContract ? 'Sending...' : 'Send Contract'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

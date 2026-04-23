@@ -1,42 +1,77 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-const MINIMIZED_STORAGE_KEY = 'ac_meeting_minimized';
+function minimizedStorageKey(scopeKey: string): string {
+    return `ac_meeting_minimized:${scopeKey}`;
+}
 
-function readMinimizedPreference(): boolean {
+function activeCallStorageKey(scopeKey: string): string {
+    return `ac_active_meeting_call_id:${scopeKey}`;
+}
+
+function readMinimizedPreference(scopeKey: string): boolean {
     if (typeof window === 'undefined') {
         return false;
     }
-    return window.localStorage.getItem(MINIMIZED_STORAGE_KEY) === '1';
+    return window.localStorage.getItem(minimizedStorageKey(scopeKey)) === '1';
 }
 
-function writeMinimizedPreference(value: boolean): void {
+function writeMinimizedPreference(scopeKey: string, value: boolean): void {
     if (typeof window === 'undefined') {
         return;
     }
-    window.localStorage.setItem(MINIMIZED_STORAGE_KEY, value ? '1' : '0');
+    window.localStorage.setItem(minimizedStorageKey(scopeKey), value ? '1' : '0');
 }
 
-export function useMeetingSession() {
-    const [activeMeetingCallId, setActiveMeetingCallId] = useState<string | null>(null);
-    const [isMeetingMinimized, setIsMeetingMinimizedState] = useState<boolean>(() => readMinimizedPreference());
+function readActiveMeetingCallId(scopeKey: string): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    const callId = window.localStorage.getItem(activeCallStorageKey(scopeKey));
+    return callId && callId.trim().length > 0 ? callId : null;
+}
+
+function writeActiveMeetingCallId(scopeKey: string, callId: string | null): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    if (callId) {
+        window.localStorage.setItem(activeCallStorageKey(scopeKey), callId);
+        return;
+    }
+    window.localStorage.removeItem(activeCallStorageKey(scopeKey));
+}
+
+export function useMeetingSession(scopeKey = 'global') {
+    const [activeMeetingCallId, setActiveMeetingCallIdState] = useState<string | null>(() => readActiveMeetingCallId(scopeKey));
+    const [isMeetingMinimized, setIsMeetingMinimizedState] = useState<boolean>(() => readMinimizedPreference(scopeKey));
+
+    const setActiveMeetingCallId = useCallback((callId: string | null) => {
+        setActiveMeetingCallIdState(callId);
+        writeActiveMeetingCallId(scopeKey, callId);
+    }, [scopeKey]);
 
     const setIsMeetingMinimized = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
         setIsMeetingMinimizedState((prev) => {
             const next = typeof value === 'function' ? value(prev) : value;
-            writeMinimizedPreference(next);
+            writeMinimizedPreference(scopeKey, next);
             return next;
         });
-    }, []);
+    }, [scopeKey]);
+
+    useEffect(() => {
+        setActiveMeetingCallIdState(readActiveMeetingCallId(scopeKey));
+        setIsMeetingMinimizedState(readMinimizedPreference(scopeKey));
+    }, [scopeKey]);
 
     const startMeeting = useCallback((callId: string) => {
         setActiveMeetingCallId(callId);
         setIsMeetingMinimized(false);
-    }, [setIsMeetingMinimized]);
+    }, [setActiveMeetingCallId, setIsMeetingMinimized]);
 
     const endMeeting = useCallback(() => {
         setActiveMeetingCallId(null);
         setIsMeetingMinimized(false);
-    }, [setIsMeetingMinimized]);
+    }, [setActiveMeetingCallId, setIsMeetingMinimized]);
 
     const toggleMeetingMinimized = useCallback(() => {
         setIsMeetingMinimized((prev) => !prev);

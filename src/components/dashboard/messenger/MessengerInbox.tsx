@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { generateMessengerReply } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Conversation {
     id: string;
@@ -40,6 +41,18 @@ function isExpectedRealtimeCloseError(error: unknown): boolean {
     return msg.includes('WebSocket is closed before the connection is established');
 }
 
+function cleanupChannelsByTopic(topic: string) {
+    const existing = supabase.getChannels().filter((channel: RealtimeChannel) => channel.topic === topic);
+    existing.forEach((channel: RealtimeChannel) => {
+        channel.unsubscribe();
+        void supabase.removeChannel(channel).catch((error: unknown) => {
+            if (!isExpectedRealtimeCloseError(error)) {
+                console.warn('[Messenger] stale channel cleanup failed:', error);
+            }
+        });
+    });
+}
+
 export default function MessengerInbox() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -60,10 +73,14 @@ export default function MessengerInbox() {
 
     useEffect(() => {
         fetchConversations();
+        const channelName = 'messenger_updates';
+
+        // Prevent duplicate subscriptions during fast remounts or HMR.
+        cleanupChannelsByTopic(channelName);
         
         // Subscribe to real-time updates
         const channel = supabase
-            .channel('messenger_updates')
+            .channel(channelName)
             .on(
                 'postgres_changes' as any, 
                 { event: '*', schema: 'public', table: 'messenger_conversations' }, 
@@ -86,6 +103,7 @@ export default function MessengerInbox() {
             });
 
         return () => {
+            channel.unsubscribe();
             supabase.removeChannel(channel).catch((error: unknown) => {
                 if (!isExpectedRealtimeCloseError(error)) {
                     console.warn('[Messenger] realtime cleanup failed:', error);

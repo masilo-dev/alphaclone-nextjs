@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
 import { Button } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { generateEmailDraft } from '../../../services/unifiedAIService';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -57,6 +58,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         paidCount: 0
     });
     const [statusMenuId, setStatusMenuId] = useState<string | null>(null);
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [invoiceToSend, setInvoiceToSend] = useState<BusinessInvoice | null>(null);
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
+    const [sendingInvoice, setSendingInvoice] = useState(false);
+    const [aiDraftingSend, setAiDraftingSend] = useState(false);
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -307,9 +313,113 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     };
 
     const handleSendReminder = async (invoice: BusinessInvoice) => {
-        // For now, show a message since we don't have client email in the BusinessInvoice interface
-        toast.success('Payment reminder functionality will be available soon');
-        // You would need to implement client email lookup based on clientId
+        if (!currentTenant?.id) {
+            toast.error('Organization details are missing');
+            return;
+        }
+        try {
+            const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+            const paymentMethod = String(metadata?.paymentMethod || 'bank').toLowerCase();
+            const reminderMessage = [
+                'Hello,',
+                '',
+                `This is a reminder that invoice ${invoice.invoiceNumber} is pending payment.`,
+                `Amount due: ${formatCurrency(invoice.total)}`,
+                `Due date: ${formatDate(invoice.dueDate)}`,
+                '',
+                getPaymentInstructions(paymentMethod),
+                '',
+                `Please contact us if you need a copy of invoice ${invoice.invoiceNumber} or updated payment details.`,
+                '',
+                `Regards,`,
+                `${user?.name || 'Billing Team'}`,
+            ].join('\n');
+
+            const response = await fetch('/api/invoices/reminder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    invoiceId: invoice.id,
+                    recipientEmail: metadata?.clientEmail || '',
+                    subject: `Payment reminder: Invoice ${invoice.invoiceNumber}`,
+                    message: reminderMessage,
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload?.success) {
+                throw new Error(payload?.error || 'Failed to send reminder');
+            }
+            toast.success('Reminder sent successfully');
+            loadInvoices();
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to send reminder');
+        }
+    };
+
+    const openSendInvoiceModal = (invoice: BusinessInvoice) => {
+        const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+        setInvoiceToSend(invoice);
+        setSendForm({
+            recipientEmail: metadata?.clientEmail || '',
+            subject: `Invoice ${invoice.invoiceNumber}`,
+            message: `Hello,\n\nPlease find attached invoice ${invoice.invoiceNumber}.\n\nBest regards,\n${user?.name || 'Team'}`,
+        });
+        setShowSendModal(true);
+    };
+
+    const handleAiDraftSendMessage = async () => {
+        if (!invoiceToSend) return;
+        setAiDraftingSend(true);
+        try {
+            const draft = await generateEmailDraft(
+                `Write a professional invoice delivery email for invoice ${invoiceToSend.invoiceNumber} total ${formatCurrency(invoiceToSend.total)}.`,
+                sendForm.recipientEmail,
+                sendForm.subject
+            );
+            if (draft) setSendForm(prev => ({ ...prev, message: draft }));
+            else toast.error('Failed to generate AI draft');
+        } catch {
+            toast.error('Failed to generate AI draft');
+        } finally {
+            setAiDraftingSend(false);
+        }
+    };
+
+    const handleSendInvoice = async () => {
+        if (!invoiceToSend || !currentTenant?.id) return;
+        if (!sendForm.recipientEmail.trim()) {
+            toast.error('Recipient email is required');
+            return;
+        }
+
+        setSendingInvoice(true);
+        try {
+            const res = await fetch('/api/invoices/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    invoiceId: invoiceToSend.id,
+                    recipients: [sendForm.recipientEmail.trim()],
+                    subject: sendForm.subject,
+                    message: sendForm.message,
+                    userId: user?.id,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok || !payload?.success) {
+                throw new Error(payload?.error || 'Failed to send invoice');
+            }
+            toast.success('Invoice sent successfully');
+            setShowSendModal(false);
+            setInvoiceToSend(null);
+            loadInvoices();
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to send invoice');
+        } finally {
+            setSendingInvoice(false);
+        }
     };
 
     const formatCurrency = (amount: number) => {
@@ -680,6 +790,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                     <Send className="w-4 h-4" />
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openSendInvoiceModal(invoice);
+                                                }}
+                                                className="p-2 text-slate-400 hover:text-teal-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                                title="Send Invoice Email"
+                                            >
+                                                <Mail className="w-4 h-4" />
+                                            </button>
                                             
                                             {invoice.status === 'sent' && (
                                                 <button
@@ -820,6 +940,51 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 mode={selectedInvoice ? 'edit' : 'create'}
                 invoice={selectedInvoice}
             />
+
+            {showSendModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
+                    <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <h3 className="text-lg font-semibold text-white">Send Invoice by Email</h3>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
+                            <input
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200"
+                                value={sendForm.recipientEmail}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                                placeholder="client@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
+                            <input
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200"
+                                value={sendForm.subject}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                            <textarea
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 min-h-[140px]"
+                                value={sendForm.message}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <Button variant="outline" onClick={handleAiDraftSendMessage} disabled={aiDraftingSend}>
+                                {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
+                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" onClick={() => setShowSendModal(false)}>Cancel</Button>
+                                <Button onClick={handleSendInvoice} disabled={sendingInvoice}>
+                                    {sendingInvoice ? 'Sending...' : 'Send Invoice'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

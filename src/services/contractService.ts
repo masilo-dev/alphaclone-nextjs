@@ -325,7 +325,7 @@ export const contractService = {
      * ESIGN COMPLIANT: Records full audit trail, consent, and tamper seals
      */
     async signContract(
-        contractId: string,
+        contractIdOrToken: string,
         role: 'client' | 'admin',
         signatureDataUrl: string,
         signerInfo?: {
@@ -337,12 +337,14 @@ export const contractService = {
         }
     ) {
         try {
+            const isPublicTokenFlow = signerInfo?.id === 'public';
             const response = await fetch('/api/contracts/sign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contractId,
-                    role,
+                    contractId: isPublicTokenFlow ? undefined : contractIdOrToken,
+                    role: isPublicTokenFlow ? undefined : role,
+                    signingToken: isPublicTokenFlow ? contractIdOrToken : undefined,
                     signatureDataUrl,
                     signerName: signerInfo?.name || (role === 'admin' ? 'Administrator' : 'Client'),
                     signerEmail: signerInfo?.email || '',

@@ -1010,66 +1010,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                 {/* Email & Integrations Tab */}
                 {activeTab === 'integrations' && (
-                    <div className="space-y-6">
-                        <div className="max-w-5xl">
-                            <h3 className="text-xl font-bold mb-1">Email Integrations</h3>
-                            <p className="text-slate-400 mb-6">Connect your email and CRM tools without oversized setup cards or duplicate admin panels.</p>
-                        </div>
-
-                        <div className="space-y-4">
-                            <GmailIntegration user={user} />
-
-                            <ZohoIntegration user={user} />
-
-                            <HubspotIntegration />
-
-                            <TwilioIntegration />
-
-                            <SendGridIntegration />
-
-                            <ResendIntegration />
-
-                            <BrevoIntegration />
-                        </div>
-
-                        {/* AI Autonomous Response Card */}
-                        <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700 max-w-5xl">
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
-                                    <span className="text-2xl">🤖</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="text-base font-bold text-white mb-1">AI Email Responses</h4>
-                                    <p className="text-sm text-slate-400 leading-relaxed">
-                                        Use AI to draft replies for client inquiries, sales prospects, and support follow-up.
-                                    </p>
-                                    <div className="mt-3 p-3 bg-slate-900/50 rounded-xl border border-slate-700 text-xs text-slate-400 space-y-1">
-                                        <p className="text-teal-400 font-semibold">✅ Will respond to:</p>
-                                        <p>Client inquiries, sales prospects, support requests</p>
-                                        <p className="text-red-400 font-semibold mt-2">🚫 Will skip:</p>
-                                        <p>No-reply emails, Google/Microsoft notifications, billing confirmations, newsletters</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Campaign info card */}
-                        <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700 max-w-5xl">
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                                    <span className="text-2xl">📧</span>
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-white mb-1">Bulk Email Campaigns</h4>
-                                    <p className="text-sm text-slate-400 leading-relaxed">
-                                        Plan, schedule, and send personalized bulk email campaigns to your clients and prospects.
-                                        Use variables like <code className="text-teal-400 bg-teal-500/10 px-1 rounded">{'{{name}}'}</code>, <code className="text-teal-400 bg-teal-500/10 px-1 rounded">{'{{company}}'}</code> for personalization.
-                                    </p>
-                                    <p className="text-xs text-slate-500 mt-3">Access from: Dashboard → Messages → Campaigns</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <IntegrationSettings />
                 )}
 
                 {/* Billing & Subscription Tab */}

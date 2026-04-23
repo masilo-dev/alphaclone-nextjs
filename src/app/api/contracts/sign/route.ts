@@ -4,35 +4,101 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
     try {
-        const supabase = await createSupabaseServerClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const token = req.nextUrl.searchParams.get('token');
+        if (!token) {
+            return NextResponse.json({ error: 'Signing token is required' }, { status: 400 });
         }
 
-        const body = await req.json();
-        const { contractId, role, signatureDataUrl, signerName, signerEmail } = body;
+        const admin = createSupabaseAdminClient();
+        const { data: signingToken, error: tokenError } = await admin
+            .from('contract_signing_tokens')
+            .select('tenant_id, contract_id, signer_email, signer_role, expires_at, used_at, revoked_at')
+            .eq('token', token)
+            .is('revoked_at', null)
+            .single();
 
-        if (!contractId || !role || !signatureDataUrl) {
+        if (tokenError || !signingToken) {
+            return NextResponse.json({ error: 'Invalid signing link' }, { status: 404 });
+        }
+        if (signingToken.used_at) {
+            return NextResponse.json({ error: 'This signing link has already been used' }, { status: 410 });
+        }
+        if (new Date(signingToken.expires_at).getTime() < Date.now()) {
+            return NextResponse.json({ error: 'This signing link has expired' }, { status: 410 });
+        }
+
+        const { data: contract, error: contractError } = await admin
+            .from('contracts')
+            .select('id, title, content, status, client_signed_at, tenant:tenants(name)')
+            .eq('id', signingToken.contract_id)
+            .eq('tenant_id', signingToken.tenant_id)
+            .single();
+
+        if (contractError || !contract) {
+            return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            token,
+            signer: { email: signingToken.signer_email, role: signingToken.signer_role },
+            tokenStatus: { expiresAt: signingToken.expires_at, serverTime: new Date().toISOString() },
+            contract,
+        });
+    } catch (error: any) {
+        console.error('Contract public fetch error:', error);
+        return clientErrorResponse(error, { request: req, scope: 'contracts/sign.GET' });
+    }
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { contractId, role, signatureDataUrl, signerName, signerEmail, signingToken } = body;
+
+        if ((!contractId || !role) && !signingToken) {
+            return NextResponse.json({ error: 'Missing signer context' }, { status: 400 });
+        }
+        if (!signatureDataUrl) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         const ipAddress = req.headers.get('x-forwarded-for') || '127.0.0.1';
         const userAgent = req.headers.get('user-agent') || 'unknown';
+        let updatedContract;
 
-        const updatedContract = await contractServerService.signContract({
-            contractId,
-            userId: user.id,
-            role,
-            signatureDataUrl,
-            signerName,
-            signerEmail,
-            ipAddress,
-            userAgent
-        });
+        if (signingToken) {
+            updatedContract = await contractServerService.signContractWithToken({
+                signingToken,
+                signatureDataUrl,
+                signerName,
+                signerEmail,
+                ipAddress,
+                userAgent,
+            });
+        } else {
+            const supabase = await createSupabaseServerClient();
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            if (authError || !user) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            if (signerEmail && user.email && String(signerEmail).trim().toLowerCase() !== user.email.toLowerCase()) {
+                return NextResponse.json({ error: 'Signer email does not match authenticated user' }, { status: 403 });
+            }
+
+            updatedContract = await contractServerService.signContract({
+                contractId,
+                userId: user.id,
+                role,
+                signatureDataUrl,
+                signerName,
+                signerEmail,
+                ipAddress,
+                userAgent
+            });
+        }
 
         return NextResponse.json({ success: true, contract: updatedContract });
 

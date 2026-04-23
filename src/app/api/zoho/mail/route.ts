@@ -4,15 +4,16 @@ import { ZohoAuthExpiredError, ZohoAPIError } from '../../../../services/zoho/Zo
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 async function getUserId(req: NextRequest): Promise<string | null> {
-    const { searchParams } = new URL(req.url);
-    const userIdFromQuery = searchParams.get('userId');
-    if (userIdFromQuery) return userIdFromQuery;
-
     try {
         const supabase = await createSupabaseServerClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) return user.id;
     } catch {}
+
+    const { searchParams } = new URL(req.url);
+    const userIdFromQuery = searchParams.get('userId');
+    if (userIdFromQuery) return userIdFromQuery;
+
     return req.headers.get('x-user-id');
 }
 

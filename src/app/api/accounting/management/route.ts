@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
+import { BrowserManager } from '@/lib/scraper/browserManager';
+import { requireTenantAccess } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
     const { tenantId, action, config } = await req.json();
 
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
+    const { user } = await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
@@ -31,7 +29,7 @@ export async function POST(req: NextRequest) {
       case 'download_invoice':
         return NextResponse.json(await downloadInvoice(tenantId, config, supabase));
       case 'send_invoice':
-        return NextResponse.json(await sendInvoice(tenantId, config, supabase));
+        return NextResponse.json(await sendInvoice(tenantId, config, supabase, req.nextUrl.origin, user.id));
       case 'record_payment':
         return NextResponse.json(await recordPayment(tenantId, config, supabase));
       case 'create_expense':
@@ -310,7 +308,8 @@ async function downloadInvoice(tenantId: string, config: any, supabase: any) {
         download_count: (invoice.download_count || 0) + 1,
         last_downloaded: new Date().toISOString()
       })
-      .eq('id', invoiceId);
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId);
 
     return {
       success: true,
@@ -326,7 +325,7 @@ async function downloadInvoice(tenantId: string, config: any, supabase: any) {
   }
 }
 
-async function sendInvoice(tenantId: string, config: any, supabase: any) {
+async function sendInvoice(tenantId: string, config: any, supabase: any, origin: string, actorUserId: string) {
   try {
     const { invoiceId, recipients, subject, message, attachPDF = true } = config;
 
@@ -356,18 +355,23 @@ async function sendInvoice(tenantId: string, config: any, supabase: any) {
     }
 
     // Send email using tenant's email integration
-    const emailResponse = await fetch('/api/email/send', {
+    const emailResponse = await fetch(`${origin}/api/email/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-api-key': process.env.INTERNAL_API_KEY || '',
+      },
       body: JSON.stringify({
         tenantId: tenantId,
+        userId: actorUserId,
         to: recipients,
         subject: subject || `Invoice ${invoice.invoice_number}`,
-        message: message || `Please find attached invoice ${invoice.invoice_number} for ${invoice.total} ${invoice.currency}.`,
-        attachment: attachPDF ? {
+        text: message || `Please find attached invoice ${invoice.invoice_number} for ${invoice.total} ${invoice.currency}.`,
+        attachments: attachPDF ? [{
           filename: `Invoice_${invoice.invoice_number}.pdf`,
-          content: pdfBuffer?.toString('base64')
-        } : undefined
+          content: pdfBuffer?.toString('base64'),
+          contentType: 'application/pdf',
+        }] : undefined
       })
     });
 
@@ -382,7 +386,8 @@ async function sendInvoice(tenantId: string, config: any, supabase: any) {
         status: 'sent',
         sent_at: new Date().toISOString()
       })
-      .eq('id', invoiceId);
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId);
 
     return {
       success: true,
@@ -421,6 +426,7 @@ async function recordPayment(tenantId: string, config: any, supabase: any) {
       .from('invoices')
       .select('total, paid_amount')
       .eq('id', invoiceId)
+      .eq('tenant_id', tenantId)
       .single();
 
     const newPaidAmount = (invoice?.paid_amount || 0) + amount;
@@ -433,7 +439,8 @@ async function recordPayment(tenantId: string, config: any, supabase: any) {
         status: newStatus,
         updated_at: new Date().toISOString()
       })
-      .eq('id', invoiceId);
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId);
 
     // Update accounting system
     await updateAccountingSystem(tenantId, {
@@ -691,20 +698,82 @@ async function updateAccountingSystem(tenantId: string, transaction: any, supaba
 
 async function generateInvoicePDF(params: any) {
   const { invoice, format, template } = params;
+  if (format !== 'pdf') {
+    return Buffer.from(`Invoice ${invoice.invoice_number}`);
+  }
   
-  // Generate invoice HTML
   const htmlContent = generateInvoiceHTML(invoice, template);
-  
-  // Convert to PDF (mock implementation)
-  return Buffer.from(`PDF INVOICE CONTENT FOR ${invoice.invoice_number}`);
+  const { page } = await BrowserManager.createPage();
+  try {
+    await page.setContent(htmlContent, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.emulateMedia({ media: 'print' });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    const pdf = await page.pdf({
+      format: 'Letter',
+      printBackground: true,
+      margin: {
+        top: '25.4mm',
+        right: '25.4mm',
+        bottom: '25.4mm',
+        left: '25.4mm',
+      },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await page.context().close().catch(() => undefined);
+  }
 }
 
 function generateInvoiceHTML(invoice: any, template: string) {
+  const items = Array.isArray(invoice.items) ? invoice.items : [];
+  const rows = items.map((item: any) => {
+    const qty = Number(item.quantity || 0);
+    const unit = Number(item.unitPrice || 0);
+    const total = qty * unit;
+    return `<tr>
+      <td>${item.description || item.name || 'Line Item'}</td>
+      <td style="text-align:right;">${qty}</td>
+      <td style="text-align:right;">${unit.toFixed(2)}</td>
+      <td style="text-align:right;">${total.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
   return `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
-      <h1>Invoice ${invoice.invoice_number}</h1>
-      <p>Client: ${invoice.clients?.name}</p>
-      <p>Total: ${invoice.total} ${invoice.currency}</p>
-    </div>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          body { font-family: Arial, sans-serif; color: #0f172a; }
+          .header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+          th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; }
+          th { background: #f8fafc; text-align: left; }
+          .total { margin-top: 16px; text-align: right; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Invoice ${invoice.invoice_number}</h1>
+          <p>Client: ${invoice.clients?.name || 'Client'}</p>
+          <p>Due Date: ${invoice.due_date || '-'}</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="text-align:right;">Qty</th>
+              <th style="text-align:right;">Unit</th>
+              <th style="text-align:right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+        <p class="total">Total: ${Number(invoice.total || 0).toFixed(2)} ${invoice.currency || 'USD'}</p>
+      </body>
+    </html>
   `;
 }

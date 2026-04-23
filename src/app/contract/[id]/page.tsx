@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
 import { jsPDF } from 'jspdf';
 import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2 } from 'lucide-react';
 import { googleDriveService } from '../../../services/googleDriveService';
@@ -13,7 +12,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export default function PublicContractPage() {
     const params = useParams();
-    const id = params?.id as string;
+    const signingToken = params?.id as string;
     const { user } = useAuth();
 
     const [contract, setContract] = useState<any>(null);
@@ -22,26 +21,27 @@ export default function PublicContractPage() {
     const [signed, setSigned] = useState(false);
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [legalName, setLegalName] = useState<string>('');
+    const [signerEmail, setSignerEmail] = useState<string>('');
 
     useEffect(() => {
-        if (id) {
+        if (signingToken) {
             loadContract();
         }
-    }, [id]);
+    }, [signingToken]);
 
     const loadContract = async () => {
         try {
-            // Public fetch - RLS must allow reading by ID or this needs an Edge Function
-            // For now, assuming table has public read policy OR we use an API route.
-            const { data, error } = await supabase
-                .from('contracts')
-                .select('*, tenant:tenants(name)')
-                .eq('id', id)
-                .single();
-
-            if (error) throw error;
-            setContract(data);
-            if (data.status === 'fully_signed' || data.status === 'client_signed') {
+            const response = await fetch(`/api/contracts/sign?token=${encodeURIComponent(signingToken)}`, {
+                method: 'GET',
+                cache: 'no-store',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload?.contract) {
+                throw new Error(payload?.error || 'Contract not found');
+            }
+            setContract(payload.contract);
+            setSignerEmail(payload?.signer?.email || '');
+            if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
                 setSigned(true);
             }
         } catch (error) {
@@ -57,13 +57,21 @@ export default function PublicContractPage() {
             toast.error('Please sign the contract');
             return;
         }
+        if (!legalName.trim()) {
+            toast.error('Legal name is required');
+            return;
+        }
+        if (!signerEmail.trim() || !signerEmail.includes('@')) {
+            toast.error('Valid signer email is required');
+            return;
+        }
 
         setSigning(true);
         try {
-            const { contract: updated, error } = await contractService.signContract(id, 'client', signatureData, {
+            const { contract: updated, error } = await contractService.signContract(signingToken, 'client', signatureData, {
                 id: 'public',
-                name: legalName,
-                email: 'public@client.com',
+                name: legalName.trim(),
+                email: signerEmail.trim().toLowerCase(),
             });
 
             if (error) throw error;
@@ -77,7 +85,7 @@ export default function PublicContractPage() {
 
         } catch (error) {
             console.error('Signing error:', error);
-            toast.error('Failed to save signature');
+            toast.error(error instanceof Error ? error.message : 'Failed to save signature');
         } finally {
             setSigning(false);
         }
@@ -227,6 +235,17 @@ export default function PublicContractPage() {
                                     setLegalName('');
                                 }}
                             />
+                        </div>
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Signer Email</label>
+                            <input
+                                type="email"
+                                value={signerEmail}
+                                onChange={(e) => setSignerEmail(e.target.value)}
+                                placeholder="name@company.com"
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                            />
+                            <p className="text-[11px] text-slate-500 mt-2">Use the same email that received this signing link.</p>
                         </div>
                         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 text-xs">
                             <span className="text-slate-500 flex items-center gap-1">
