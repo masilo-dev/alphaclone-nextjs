@@ -61,6 +61,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         join,
         leave,
         reconnect,
+        startCamera,
         toggleAudio,
         toggleVideo,
         toggleScreenShare,
