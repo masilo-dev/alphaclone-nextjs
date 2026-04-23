@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createSupabaseAdminClient, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 
 const testProviderSchema = z.object({
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       'This is a test email to confirm your provider connection is working end-to-end.';
 
     const tenantCtx = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminSupabaseClientOrThrow();
 
     if (provider === 'zoho') {
       const zoho = new ZohoMailService(tenantCtx.user.id);

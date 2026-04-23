@@ -25,6 +25,7 @@ import {
     RefreshCw,
     MessageCircle,
     X,
+    Minimize2,
 } from 'lucide-react';
 import { SlackIntegration } from '../integrations/SlackIntegration';
 import { Project, User } from '../../../types';
@@ -121,6 +122,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
     const [isSocialChatOpen, setIsSocialChatOpen] = useState(false);
+    const [activeMeetingCallId, setActiveMeetingCallId] = useState<string | null>(null);
+    const [isMeetingMinimized, setIsMeetingMinimized] = useState(false);
 
     // Sync sidebar on mount to avoid hydration mismatch
     React.useEffect(() => {
@@ -137,7 +140,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
-        router.push(`/meet/${callId}`);
+        setActiveMeetingCallId(callId);
+        setIsMeetingMinimized(false);
     };
 
 
@@ -803,6 +807,31 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     project={selectedProjectForContract}
                     user={user}
                 />
+            )}
+
+            {activeMeetingCallId && (
+                <React.Suspense fallback={null}>
+                    {!isMeetingMinimized && (
+                        <button
+                            onClick={() => setIsMeetingMinimized(true)}
+                            className="fixed top-20 right-4 z-[130] inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-xs font-semibold text-slate-100 hover:bg-slate-800 transition-colors"
+                            title="Run meeting in background"
+                        >
+                            <Minimize2 className="w-3.5 h-3.5" />
+                            Background mode
+                        </button>
+                    )}
+                    <CustomVideoRoom
+                        user={user}
+                        callId={activeMeetingCallId}
+                        onLeave={() => {
+                            setActiveMeetingCallId(null);
+                            setIsMeetingMinimized(false);
+                        }}
+                        isMinimized={isMeetingMinimized}
+                        onToggleMinimize={() => setIsMeetingMinimized((prev) => !prev)}
+                    />
+                </React.Suspense>
             )}
 
             {/* Omnipresent Social Messaging Widget */}

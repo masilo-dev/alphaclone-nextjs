@@ -8,7 +8,7 @@ import LiveKitStage from './LiveKitStage';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import toast from 'react-hot-toast';
-import { MicOff } from 'lucide-react';
+import { MicOff, Maximize2, PhoneOff } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 interface CustomVideoRoomProps {
@@ -42,6 +42,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     callId,
     onLeave,
     meetingAccessPin = null,
+    isMinimized = false,
+    onToggleMinimize,
 }) => {
     const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
     const {
@@ -519,6 +521,52 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     </div>
                     <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
                     <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isMinimized) {
+        const primaryParticipant = remoteParticipants[0] || localParticipant || participants[0];
+        return (
+            <div className="fixed bottom-24 right-4 z-[120] w-[360px] max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl overflow-hidden backdrop-blur-md">
+                <div className="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-white/10">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        Meeting in background
+                    </div>
+                    <div className="flex items-center gap-1">
+                        {onToggleMinimize && (
+                            <button
+                                onClick={onToggleMinimize}
+                                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                                title="Restore meeting"
+                            >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => void handleLeave()}
+                            className="p-1.5 rounded-lg text-red-300 hover:text-red-200 hover:bg-red-500/20 transition-colors"
+                            title="Leave meeting"
+                        >
+                            <PhoneOff className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+                <div className="h-[200px] bg-slate-900">
+                    {primaryParticipant ? (
+                        <CustomVideoTile
+                            participant={primaryParticipant}
+                            isLocal={primaryParticipant.isLocal}
+                            isAdmin={isUserAdmin(user)}
+                            variant="stage"
+                        />
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-slate-400">
+                            Waiting for participants...
+                        </div>
+                    )}
                 </div>
             </div>
         );
