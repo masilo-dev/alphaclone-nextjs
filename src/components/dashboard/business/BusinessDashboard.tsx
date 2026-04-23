@@ -36,6 +36,7 @@ import { callSignalingService } from '../../../services/video/CallSignalingServi
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
+import { useMeetingSession } from '@/hooks/useMeetingSession';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -122,8 +123,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
     const [isSocialChatOpen, setIsSocialChatOpen] = useState(false);
-    const [activeMeetingCallId, setActiveMeetingCallId] = useState<string | null>(null);
-    const [isMeetingMinimized, setIsMeetingMinimized] = useState(false);
+    const {
+        activeMeetingCallId,
+        isMeetingMinimized,
+        startMeeting,
+        endMeeting,
+        setIsMeetingMinimized,
+        toggleMeetingMinimized,
+    } = useMeetingSession();
 
     // Sync sidebar on mount to avoid hydration mismatch
     React.useEffect(() => {
@@ -140,8 +147,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
-        setActiveMeetingCallId(callId);
-        setIsMeetingMinimized(false);
+        startMeeting(callId);
     };
 
 
@@ -752,6 +758,16 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
                             </div>
                         )}
+                        {activeMeetingCallId && (
+                            <button
+                                onClick={() => setIsMeetingMinimized(false)}
+                                className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
+                                title="Return to active meeting"
+                            >
+                                <Video className="w-3.5 h-3.5" />
+                                {isMeetingMinimized ? 'Return to Meeting' : 'Meeting Active'}
+                            </button>
+                        )}
 
                         <div className="hidden sm:block w-px h-6 bg-slate-800 mx-1" />
 
@@ -824,12 +840,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     <CustomVideoRoom
                         user={user}
                         callId={activeMeetingCallId}
-                        onLeave={() => {
-                            setActiveMeetingCallId(null);
-                            setIsMeetingMinimized(false);
-                        }}
+                        onLeave={endMeeting}
                         isMinimized={isMeetingMinimized}
-                        onToggleMinimize={() => setIsMeetingMinimized((prev) => !prev)}
+                        onToggleMinimize={toggleMeetingMinimized}
                     />
                 </React.Suspense>
             )}

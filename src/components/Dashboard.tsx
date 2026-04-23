@@ -73,6 +73,7 @@ import CreateInvoiceModal from './dashboard/CreateInvoiceModal';
 import ProductTour from './onboarding/ProductTour';
 import { WidgetErrorBoundary } from './dashboard/WidgetErrorBoundary';
 import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
+import { useMeetingSession } from '../hooks/useMeetingSession';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
 
@@ -160,8 +161,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, []);
   const [activeTab, setActiveTab] = useState(location || '/dashboard');
-  const [activeMeetingCallId, setActiveMeetingCallId] = useState<string | null>(null);
-  const [isMeetingMinimized, setIsMeetingMinimized] = useState(false);
+  const {
+    activeMeetingCallId,
+    isMeetingMinimized,
+    startMeeting,
+    endMeeting,
+    setIsMeetingMinimized,
+    toggleMeetingMinimized,
+  } = useMeetingSession();
 
   // -- PERSISTENT VIDEO CALL STATE --
   // Note: Video calls now use dedicated pages (/meet/[id])
@@ -176,8 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [activeTab]);
 
   const handleJoinCall = (callId: string) => {
-    setActiveMeetingCallId(callId);
-    setIsMeetingMinimized(false);
+    startMeeting(callId);
   };
 
 
@@ -1918,6 +1924,16 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
+                {activeMeetingCallId && (
+                  <button
+                    onClick={() => setIsMeetingMinimized(false)}
+                    className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
+                    title="Return to active meeting"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    {isMeetingMinimized ? 'Return to Meeting' : 'Meeting Active'}
+                  </button>
+                )}
                 {activeBgTasksCount > 0 && (
                   <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -2057,12 +2073,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           <CustomVideoRoom
             user={user}
             callId={activeMeetingCallId}
-            onLeave={() => {
-              setActiveMeetingCallId(null);
-              setIsMeetingMinimized(false);
-            }}
+            onLeave={endMeeting}
             isMinimized={isMeetingMinimized}
-            onToggleMinimize={() => setIsMeetingMinimized((prev) => !prev)}
+            onToggleMinimize={toggleMeetingMinimized}
           />
         </React.Suspense>
       )}

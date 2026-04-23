@@ -505,6 +505,8 @@ export class VideoEngine {
             'recording-started',
             'recording-stopped',
             'app-message',
+            'network-quality-change',
+            'network-connection',
         ];
 
         events.forEach(event => {
