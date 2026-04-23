@@ -16,6 +16,52 @@ function getZohoRedirectUri(req: NextRequest) {
     return `${appUrl}/api/auth/zoho/callback`;
 }
 
+type ZohoTokenResponse = {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    error?: string;
+    error_description?: string;
+};
+
+function resolveZohoCredentials(region: string): { clientId: string; clientSecret: string } {
+    const normalizedRegion = (region || 'US').toUpperCase();
+    const regionClientId = (ENV as Record<string, unknown>)[`ZOHO_CLIENT_ID_${normalizedRegion}`];
+    const regionClientSecret = (ENV as Record<string, unknown>)[`ZOHO_CLIENT_SECRET_${normalizedRegion}`];
+    const clientId = String(regionClientId || ENV.ZOHO_CLIENT_ID || '').trim();
+    const clientSecret = String(regionClientSecret || ENV.ZOHO_CLIENT_SECRET || '').trim();
+    return { clientId, clientSecret };
+}
+
+async function exchangeZohoToken(params: {
+    code: string;
+    redirectUri: string;
+    region: string;
+}): Promise<{ ok: true; data: ZohoTokenResponse; region: string } | { ok: false; error: string; region: string }> {
+    const hosts = ZohoService.getHostsByRegion(params.region);
+    const { clientId, clientSecret } = resolveZohoCredentials(params.region);
+    if (!clientId || !clientSecret) {
+        return { ok: false, error: `Missing Zoho credentials for region ${params.region}`, region: params.region };
+    }
+    const response = await fetch(`${hosts.accounts}/oauth/v2/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            code: params.code,
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'authorization_code',
+            redirect_uri: params.redirectUri,
+        }),
+    });
+    const data = (await response.json().catch(() => ({}))) as ZohoTokenResponse;
+    if (!response.ok || !data.access_token) {
+        const reason = data.error_description || data.error || `token_exchange_failed_${response.status}`;
+        return { ok: false, error: String(reason), region: params.region };
+    }
+    return { ok: true, data, region: params.region };
+}
+
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
@@ -46,27 +92,38 @@ export async function GET(req: NextRequest) {
             throw new Error('Invalid OAuth state payload');
         }
 
-        const hosts = ZohoService.getHostsByRegion(region);
         const redirectUri = getZohoRedirectUri(req);
+        const candidateRegions = [
+            region,
+            String(ENV.ZOHO_REGION || '').toUpperCase(),
+            'US',
+            'EU',
+            'IN',
+            'AU',
+            'JP',
+            'CA',
+        ].filter((value, index, self) => Boolean(value) && self.indexOf(value) === index);
 
-        // Exchange code for tokens
-        const response = await fetch(`${hosts.accounts}/oauth/v2/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
+        let tokenResult: Awaited<ReturnType<typeof exchangeZohoToken>> | null = null;
+        let lastError = 'Failed to exchange tokens';
+        for (const candidateRegion of candidateRegions) {
+            const attempt = await exchangeZohoToken({
                 code,
-                client_id: ENV.ZOHO_CLIENT_ID || '',
-                client_secret: ENV.ZOHO_CLIENT_SECRET || '',
-                grant_type: 'authorization_code',
-                redirect_uri: redirectUri,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.access_token) {
-            throw new Error(data.error_description || data.error || 'Failed to exchange tokens');
+                redirectUri,
+                region: candidateRegion,
+            });
+            if (attempt.ok) {
+                tokenResult = attempt;
+                break;
+            }
+            lastError = attempt.error;
         }
+        if (!tokenResult || !tokenResult.ok) {
+            throw new Error(lastError);
+        }
+        const data = tokenResult.data;
+        const resolvedRegion = tokenResult.region;
+        const hosts = ZohoService.getHostsByRegion(resolvedRegion);
 
         // Initialize ZohoService to read/save config
         const zohoService = new ZohoService(userId);

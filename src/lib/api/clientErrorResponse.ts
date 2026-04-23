@@ -14,7 +14,8 @@ export function getRequestIdFromRequest(req: Pick<Request, 'headers'>): string |
 
 function logServerError(scope: string, err: unknown, requestId?: string) {
     if (err instanceof Error) {
-        console.error(`[api:${scope}]`, requestId ?? '', err.message, err.stack);
+        const message = err.message?.trim() || err.name || 'Unknown error';
+        console.error(`[api:${scope}]`, requestId ?? '', message, err.stack);
     } else {
         console.error(`[api:${scope}]`, requestId ?? '', err);
     }

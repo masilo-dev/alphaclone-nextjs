@@ -17,20 +17,22 @@ function getZohoRedirectUri(req: NextRequest) {
     return `${appUrl}/api/auth/zoho/callback`;
 }
 
+function resolveZohoCredentials(region: string): { clientId: string; clientSecret: string } {
+    const normalizedRegion = (region || 'US').toUpperCase();
+    const regionClientId = (ENV as Record<string, unknown>)[`ZOHO_CLIENT_ID_${normalizedRegion}`];
+    const regionClientSecret = (ENV as Record<string, unknown>)[`ZOHO_CLIENT_SECRET_${normalizedRegion}`];
+    const clientId = String(regionClientId || ENV.ZOHO_CLIENT_ID || '').trim();
+    const clientSecret = String(regionClientSecret || ENV.ZOHO_CLIENT_SECRET || '').trim();
+    return { clientId, clientSecret };
+}
+
 export async function GET(req: NextRequest) {
     try {
     const { searchParams } = new URL(req.url);
     const requestedRegion = searchParams.get('region');
     const state = searchParams.get('state') || ''; // user ID or secure nonce
 
-    const clientId = ENV.ZOHO_CLIENT_ID;
-    const clientSecret = ENV.ZOHO_CLIENT_SECRET;
-    
     const redirectUri = getZohoRedirectUri(req);
-
-    if (!clientId || !clientSecret) {
-        return NextResponse.json({ error: 'Zoho OAuth is not fully configured' }, { status: 500 });
-    }
 
     let identityState = state;
     if (!identityState) {
@@ -47,20 +49,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
     }
 
-    let region = (requestedRegion || ENV.ZOHO_REGION || 'US').toUpperCase();
-    if (!requestedRegion) {
-        try {
-            const existing = await new ZohoService(identityState).getConfig();
-            const accountsServer = (existing?.accountsServer || '').toLowerCase();
-            if (accountsServer.includes('.zoho.eu')) region = 'EU';
-            else if (accountsServer.includes('.zoho.in')) region = 'IN';
-            else if (accountsServer.includes('.zoho.com.au')) region = 'AU';
-            else if (accountsServer.includes('.zoho.jp')) region = 'JP';
-            else if (accountsServer.includes('.zoho.ca')) region = 'CA';
-            else if (accountsServer.includes('.zoho.com')) region = 'US';
-        } catch {
-            // Fall back to default region if config lookup fails.
-        }
+    const region = (requestedRegion || ENV.ZOHO_REGION || 'US').toUpperCase();
+    const { clientId, clientSecret } = resolveZohoCredentials(region);
+    if (!clientId || !clientSecret) {
+        return NextResponse.json(
+            { error: `Zoho OAuth credentials are missing for region ${region}` },
+            { status: 500 }
+        );
     }
     const hosts = ZohoService.getHostsByRegion(region);
 

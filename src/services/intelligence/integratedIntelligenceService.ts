@@ -63,6 +63,7 @@ class IntegratedIntelligenceService {
 
     if (error) {
       if (this.isMissingTableError(error)) return 0;
+      if (this.isMissingColumnError(error)) return 0;
       throw error;
     }
     return count || 0;
@@ -91,6 +92,7 @@ class IntegratedIntelligenceService {
           .limit(limit);
         if (fallback.error) {
           if (this.isMissingTableError(fallback.error)) return [];
+          if (this.isMissingColumnError(fallback.error)) return [];
           throw fallback.error;
         }
         if (!Array.isArray(fallback.data)) return [];
@@ -100,6 +102,32 @@ class IntegratedIntelligenceService {
     }
     if (!Array.isArray(data)) return [];
     return data as unknown as Record<string, unknown>[];
+  }
+
+  private buildFailedModuleAssessment(module: ModuleName): ModuleAssessment {
+    return {
+      module,
+      score: 0,
+      confidence: 0.25,
+      probabilityState: this.buildProbabilityState(0, 0.25),
+      risks: [`${module} intelligence is temporarily unavailable due to a source data error.`],
+      recommendations: [`Review ${module} data mappings and schema compatibility for this workspace.`],
+      signals: {
+        unavailable: 1
+      }
+    };
+  }
+
+  private async safeAssessModule(
+    module: ModuleName,
+    evaluator: () => Promise<ModuleAssessment>
+  ): Promise<ModuleAssessment> {
+    try {
+      return await evaluator();
+    } catch (error) {
+      console.error(`[integratedIntelligence] module evaluation failed (${module}):`, error);
+      return this.buildFailedModuleAssessment(module);
+    }
   }
 
   private summarizeTopActions(modules: ModuleAssessment[]): string[] {
@@ -594,16 +622,16 @@ class IntegratedIntelligenceService {
     options?: { persist?: boolean }
   ): Promise<IntegratedIntelligenceSnapshot> {
     const modules = await Promise.all([
-      this.assessCrm(supabase, tenantId),
-      this.assessInvoicingRevenue(supabase, tenantId),
-      this.assessEmailInbox(supabase, tenantId),
-      this.assessTaskManagement(supabase, tenantId),
-      this.assessSocialMedia(supabase, tenantId),
-      this.assessAiProposals(supabase, tenantId),
-      this.assessAnalyticsDashboard(supabase, tenantId),
-      this.assessTeamCollaboration(supabase, tenantId),
-      this.assessAutomationWorkflows(supabase, tenantId),
-      this.assessCustomerSuccess(supabase, tenantId)
+      this.safeAssessModule('crm', () => this.assessCrm(supabase, tenantId)),
+      this.safeAssessModule('invoicingRevenue', () => this.assessInvoicingRevenue(supabase, tenantId)),
+      this.safeAssessModule('emailInbox', () => this.assessEmailInbox(supabase, tenantId)),
+      this.safeAssessModule('taskManagement', () => this.assessTaskManagement(supabase, tenantId)),
+      this.safeAssessModule('socialMedia', () => this.assessSocialMedia(supabase, tenantId)),
+      this.safeAssessModule('aiProposals', () => this.assessAiProposals(supabase, tenantId)),
+      this.safeAssessModule('analyticsDashboard', () => this.assessAnalyticsDashboard(supabase, tenantId)),
+      this.safeAssessModule('teamCollaboration', () => this.assessTeamCollaboration(supabase, tenantId)),
+      this.safeAssessModule('automationWorkflows', () => this.assessAutomationWorkflows(supabase, tenantId)),
+      this.safeAssessModule('customerSuccess', () => this.assessCustomerSuccess(supabase, tenantId))
     ]);
 
     const overallScore = round2(modules.reduce((sum, moduleRow) => sum + moduleRow.score, 0) / modules.length);

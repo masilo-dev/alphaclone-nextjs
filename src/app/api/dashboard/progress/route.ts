@@ -26,7 +26,11 @@ export async function GET(request: NextRequest) {
     const intelligenceSnapshotPromise = integratedIntelligenceService
       .generateSnapshot(supabase, tenantId, { persist: false })
       .catch((error) => {
-        console.error('[dashboard/progress] intelligence snapshot failed:', error);
+        const details =
+          error instanceof Error
+            ? error.message || error.name || 'Unknown error'
+            : JSON.stringify(error ?? 'Unknown error');
+        console.error('[dashboard/progress] intelligence snapshot failed:', details, error);
         return null;
       });
 
