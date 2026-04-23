@@ -18,8 +18,9 @@ import {
     BrainCircuit,
     AlertTriangle
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { WrapChart } from '@/lib/chartWrapper';
 
 interface ReportsPageProps {
     user: User;
@@ -332,7 +333,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
                         <h4 className="text-sm font-semibold text-slate-200 mb-3">Score Trend</h4>
-                        <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
+                        <WrapChart height={220}>
                             <LineChart
                                 data={intelligencePoints.map((point) => ({
                                     ...point,
@@ -348,7 +349,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                                 />
                                 <Line type="monotone" dataKey="score" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                             </LineChart>
-                        </ResponsiveContainer>
+                        </WrapChart>
                     </div>
                     <div className="space-y-3">
                         <ModuleIntelligenceCard
@@ -387,7 +388,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Revenue Chart */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Revenue & Expenses</h3>
-                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300}>
+                    <WrapChart height={300}>
                         <BarChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />
@@ -400,13 +401,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             <Bar dataKey="revenue" fill="#2dd4bf" name="Revenue" radius={[4, 4, 0, 0]} />
                             <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
                         </BarChart>
-                    </ResponsiveContainer>
+                    </WrapChart>
                 </div>
 
                 {/* Client Distribution */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Client Distribution</h3>
-                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300}>
+                    <WrapChart height={300}>
                         <PieChart>
                             <Pie
                                 data={clientData}
@@ -424,13 +425,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             </Pie>
                             <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }} />
                         </PieChart>
-                    </ResponsiveContainer>
+                    </WrapChart>
                 </div>
 
                 {/* Project Status */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Project Status</h3>
-                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300}>
+                    <WrapChart height={300}>
                         <BarChart data={projectData} layout="vertical">
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis type="number" stroke="#94a3b8" />
@@ -441,13 +442,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             />
                             <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                         </BarChart>
-                    </ResponsiveContainer>
+                    </WrapChart>
                 </div>
 
                 {/* Revenue Trend */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Revenue Trend</h3>
-                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300}>
+                    <WrapChart height={300}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                             <XAxis dataKey="month" stroke="#94a3b8" />
@@ -458,7 +459,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             />
                             <Line type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                         </LineChart>
-                    </ResponsiveContainer>
+                    </WrapChart>
                 </div>
             </div>
         </div>

@@ -188,9 +188,8 @@ export async function POST(request: Request) {
 
     const { data: integrations, error: integrationsError } = await admin
       .from('integrations')
-      .select('type, config, enabled')
+      .select('type, config, enabled, user_id, updated_at')
       .eq('tenant_id', tenantId)
-      .eq('user_id', tenantCtx.user.id)
       .eq('enabled', true)
       .in('type', ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail']);
     if (integrationsError) {
@@ -209,7 +208,15 @@ export async function POST(request: Request) {
     const profileFromName = String(profileConfig.fromName || profileConfig.from_name || '').trim();
     const profileFromEmail = String(profileConfig.fromEmail || profileConfig.from_email || '').trim();
 
-    const providerConfigs = (integrations || [])
+    const integrationRows = Array.isArray(integrations) ? integrations : [];
+    integrationRows.sort((a: any, b: any) => {
+      const aIsCurrentUser = String(a?.user_id || '') === tenantCtx.user.id;
+      const bIsCurrentUser = String(b?.user_id || '') === tenantCtx.user.id;
+      if (aIsCurrentUser !== bIsCurrentUser) return aIsCurrentUser ? -1 : 1;
+      return new Date(String(b?.updated_at || 0)).getTime() - new Date(String(a?.updated_at || 0)).getTime();
+    });
+
+    const providerConfigs = integrationRows
       .map((integration: any) => {
         const provider = normalizeProvider(integration.type);
         if (!provider) return null;
@@ -222,7 +229,12 @@ export async function POST(request: Request) {
           dailyLimit: Number(cfg.dailyLimit || cfg.daily_limit || DEFAULT_PROVIDER_LIMITS[provider]) || DEFAULT_PROVIDER_LIMITS[provider],
         };
       })
-      .filter(Boolean) as Array<{ provider: OutreachProvider; apiKey: string; fromEmail: string; fromName: string; dailyLimit: number }>;
+      .filter(Boolean)
+      .reduce((acc, row) => {
+        const existing = acc.find((item) => item.provider === row.provider);
+        if (!existing) acc.push(row);
+        return acc;
+      }, [] as Array<{ provider: OutreachProvider; apiKey: string; fromEmail: string; fromName: string; dailyLimit: number }>);
 
     const activeProviders = providerConfigs.filter((p) =>
       selectedProviders.length > 0 ? selectedProviders.includes(p.provider) : true
@@ -318,6 +330,7 @@ export async function POST(request: Request) {
           });
           providerMessageId = sendResult?.id || null;
         } else if (selectedProvider.provider === 'brevo') {
+          if (!selectedProvider.fromEmail) throw new Error('Brevo sender email missing. Set a verified From Email in Brevo integration.');
           const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
@@ -331,8 +344,12 @@ export async function POST(request: Request) {
               htmlContent: htmlBody,
             }),
           });
-          if (!response.ok) throw new Error(`Brevo send failed (${response.status})`);
+          if (!response.ok) {
+            const errorBody = await response.text().catch(() => '');
+            throw new Error(`Brevo send failed (${response.status}): ${errorBody.slice(0, 220)}`);
+          }
         } else if (selectedProvider.provider === 'resend') {
+          if (!selectedProvider.fromEmail) throw new Error('Resend sender email missing. Set a verified From Email in Resend integration.');
           const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -346,8 +363,12 @@ export async function POST(request: Request) {
               html: htmlBody,
             }),
           });
-          if (!response.ok) throw new Error(`Resend send failed (${response.status})`);
+          if (!response.ok) {
+            const errorBody = await response.text().catch(() => '');
+            throw new Error(`Resend send failed (${response.status}): ${errorBody.slice(0, 220)}`);
+          }
         } else if (selectedProvider.provider === 'sendgrid') {
+          if (!selectedProvider.fromEmail) throw new Error('SendGrid sender email missing. Set a verified From Email in SendGrid integration.');
           const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
             headers: {
@@ -364,7 +385,10 @@ export async function POST(request: Request) {
               content: [{ type: 'text/html', value: htmlBody }],
             }),
           });
-          if (!response.ok) throw new Error(`SendGrid send failed (${response.status})`);
+          if (!response.ok) {
+            const errorBody = await response.text().catch(() => '');
+            throw new Error(`SendGrid send failed (${response.status}): ${errorBody.slice(0, 220)}`);
+          }
         }
 
         sentProvider = selectedProvider.provider;
