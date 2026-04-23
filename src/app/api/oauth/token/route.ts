@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 
+function normalizeRedirectUri(uri: string): string | null {
+  try {
+    const parsed = new URL(uri.trim());
+    parsed.hash = '';
+    if (parsed.pathname !== '/') {
+      parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function isTrustedPublicRedirectUri(uri: string): boolean {
   try {
     const parsed = new URL(uri);
@@ -56,6 +69,10 @@ export async function POST(req: NextRequest) {
       if (!code || !redirect_uri) {
         return NextResponse.json({ error: 'invalid_request', error_description: 'Missing code or redirect_uri' }, { status: 400 });
       }
+      const normalizedRedirectUri = normalizeRedirectUri(redirect_uri);
+      if (!normalizedRedirectUri) {
+        return NextResponse.json({ error: 'invalid_request', error_description: 'Invalid redirect_uri format' }, { status: 400 });
+      }
 
       // Verify Code
       const { data: authCode, error: codeError } = await supabaseAdmin
@@ -63,7 +80,7 @@ export async function POST(req: NextRequest) {
         .select('*')
         .eq('code', code)
         .eq('client_id', client_id)
-        .eq('redirect_uri', redirect_uri)
+        .eq('redirect_uri', normalizedRedirectUri)
         .single();
 
       if (codeError || !authCode || new Date(authCode.expires_at) < new Date()) {
@@ -71,7 +88,7 @@ export async function POST(req: NextRequest) {
       }
 
       const allowTrustedPublicClient =
-        !client_secret && isTrustedPublicRedirectUri(redirect_uri);
+        !client_secret && isTrustedPublicRedirectUri(normalizedRedirectUri);
       if (!validRegisteredClient && !allowTrustedPublicClient) {
         return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
       }
