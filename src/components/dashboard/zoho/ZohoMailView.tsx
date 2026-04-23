@@ -124,8 +124,17 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     }, [messages, categoryFilter]);
 
     // Central fetch helper — session cookies + clear errors for Zoho vs login
+    const withUserContext = (url: string): string => {
+        if (!userIdProp) return url;
+        const hasQuery = url.includes('?');
+        const hasUserId = /(?:\?|&)userId=/.test(url);
+        if (hasUserId) return url;
+        return `${url}${hasQuery ? '&' : '?'}userId=${encodeURIComponent(userIdProp)}`;
+    };
+
     const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
-        const res = await fetch(url, { credentials: 'include', ...options });
+        const targetUrl = withUserContext(url);
+        const res = await fetch(targetUrl, { credentials: 'include', ...options });
         const raw = await res.text();
         let data: Record<string, unknown> = {};
         try {
