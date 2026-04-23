@@ -60,7 +60,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     api_key = authHeader.substring(7);
   }
 
+  const isReachabilityProbe = req.method === 'GET' || req.method === 'HEAD';
   if (!api_key) {
+    if (isReachabilityProbe) {
+      return res.status(200).json({
+        ok: true,
+        auth_required: true,
+        endpoint: '/api/mcp/sse',
+        message: 'MCP endpoint reachable. Provide x-api-key or Authorization Bearer token for authenticated sessions.',
+      });
+    }
     return res.status(401).json({
       error:
         'Connection could not be verified. Open your workspace MCP settings, copy a fresh connection key, and try again.',
@@ -127,6 +136,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (authError || !tenantId || !userId) {
+    if (isReachabilityProbe) {
+      return res.status(200).json({
+        ok: true,
+        auth_required: true,
+        endpoint: '/api/mcp/sse',
+        message: 'MCP endpoint reachable. Authentication required for active sessions.',
+      });
+    }
     const msg =
       authError === 'SERVICE_UNAVAILABLE'
         ? 'The service is temporarily unavailable. Please try again in a few minutes.'
