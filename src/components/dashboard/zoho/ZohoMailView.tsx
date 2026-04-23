@@ -63,9 +63,14 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
     const [showRouteModal, setShowRouteModal] = useState(false);
     const [routeToEmail, setRouteToEmail] = useState('');
-    const reconnectUrl = userIdProp
-        ? `/api/auth/zoho/connect?state=${encodeURIComponent(userIdProp)}`
-        : '/api/auth/zoho/connect';
+    const [configuredRegion, setConfiguredRegion] = useState<string | null>(null);
+    const reconnectUrl = (() => {
+        const params = new URLSearchParams();
+        if (userIdProp) params.set('state', userIdProp);
+        if (configuredRegion) params.set('region', configuredRegion);
+        const query = params.toString();
+        return query ? `/api/auth/zoho/connect?${query}` : '/api/auth/zoho/connect';
+    })();
 
     useEffect(() => {
         const verifyZohoMailReady = async () => {
@@ -73,6 +78,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) return;
+                if (typeof data?.configuredRegion === 'string' && data.configuredRegion) {
+                    setConfiguredRegion(data.configuredRegion);
+                }
                 if (data?.isConnected !== true) {
                     setNeedsReconnect(true);
                     setError('Zoho Mail is not fully connected for this account. Reconnect Zoho in Settings.');
