@@ -116,7 +116,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             <HeroBackground />
          </div>
-         <div className="fixed inset-0 z-[1] pointer-events-none bg-slate-950/60" />
+         <div className="fixed inset-0 z-[1] pointer-events-none bg-slate-950/25" />
 
          {/* Enhanced Navigation with better transitions */}
          <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
@@ -306,7 +306,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-6 sm:py-12 lg:py-16"
+                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-6 sm:py-12 lg:py-16 rounded-2xl bg-slate-950/35 border border-slate-800/60"
                >
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
