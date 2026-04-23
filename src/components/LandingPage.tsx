@@ -45,8 +45,6 @@ const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
 const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: () => void }) => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [scrolled, setScrolled] = useState(false);
-   const [visible, setVisible] = useState(true);
-   const [lastScrollY, setLastScrollY] = useState(0);
    const [activeService, setActiveService] = useState('');
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
    const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -59,18 +57,16 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       message: ''
    });
 
-   // Enhanced scroll handling with smooth transitions
+   // Scroll handling for navbar styling only.
    useEffect(() => {
       const handleScroll = () => {
          const currentScrollY = window.scrollY;
-         setVisible(currentScrollY < lastScrollY || currentScrollY < 10);
          setScrolled(currentScrollY > 20);
-         setLastScrollY(currentScrollY);
       };
 
       window.addEventListener('scroll', handleScroll, { passive: true });
       return () => window.removeEventListener('scroll', handleScroll);
-   }, [lastScrollY]);
+   }, []);
 
    // Smooth scroll function
    const scrollToSection = useCallback((sectionId: string) => {
@@ -120,11 +116,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             <HeroBackground />
          </div>
+         <div className="fixed inset-0 z-[1] pointer-events-none bg-slate-950/60" />
 
          {/* Enhanced Navigation with better transitions */}
          <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
             scrolled ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-lg' : 'bg-slate-950/80 backdrop-blur-lg'
-         } ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
+         } translate-y-0`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                <div className="flex justify-between items-center h-16 sm:h-[4.5rem]">
                   {/* Logo */}
@@ -298,7 +295,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             )}
          </AnimatePresence>
 
-         <main>
+         <main className="relative z-10">
             {/* Hero Section */}
             <section id="home" className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-16 sm:pt-20">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[600px] opacity-40 z-0">
@@ -328,7 +325,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
 
                      {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        Most business software was built for companies with departments. You do not have departments. You are the department: the CEO, the marketer, the accountant, the closer, and the admin, all before lunch. Alphaclone is the AI business operating system built for founders, consultants, and small teams that need to move fast, spend less, and stop managing a dozen tools just to run one business.
+                        AlphaClone gives founders and small teams one system for CRM, projects, finance, and automation. Replace tool sprawl, reduce admin work, and run daily operations from a single workspace.
                      </p>
                      <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
                         Built for business teams. Social automation supports LinkedIn pages and Facebook business pages, with no personal account posting flow.
@@ -338,19 +335,17 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <div className="flex flex-wrap justify-center gap-2 mb-10 sm:mb-12 max-w-2xl mx-auto">
                         {[
                            'CRM & Pipeline',
-                           'Lead Management',
+                           'Lead Operations',
                            'Invoicing',
-                           'Quotations',
-                           'Receipts',
+                           'Proposals',
                            'Contracts',
                            'Projects',
-                           'Bookings',
                            'AI Sales Agent',
                            'AI Agents',
-                           'Video Calls',
+                           'Meetings',
                            'Email Campaigns',
                            'Analytics',
-                           'Team Chat'
+                           'Team Chat',
                         ].map(label => (
                            <div key={label} className="bg-slate-900/70 border border-cyan-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
                               {label}
@@ -948,7 +943,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             </section>
          </main>
 
-         <MarketingFooter />
+         <div className="relative z-10">
+            <MarketingFooter />
+         </div>
       </div>
    );
 };
