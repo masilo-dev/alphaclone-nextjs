@@ -18,14 +18,13 @@ type LinkedInOAuthState = {
 const LINKEDIN_REQUESTED_SCOPES = [
   // Core posting scope.
   'w_member_social',
-  // Optional but commonly available profile scopes.
+  // OpenID identity scopes used by /v2/userinfo.
   'openid',
   'profile',
   'email',
-  // Company page posting/admin scopes.
-  'w_organization_social',
-  'r_organization_admin',
-  'r_organization_social',
+  // Additional approved member profile scopes.
+  'r_profile_basicinfo',
+  'r_verify',
 ] as const;
 
 export async function GET(req: NextRequest) {
