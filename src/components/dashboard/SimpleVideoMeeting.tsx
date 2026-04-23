@@ -218,10 +218,8 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            // Open in our own secure independent route for multitasking
-            const meetingUrl = `${window.location.origin}/meet/${room.id}`;
-            window.open(meetingUrl, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-            toast.success('Opening secure meeting page...');
+            onJoinRoom(room.id);
+            toast.success('Joining your meeting room...');
         } catch (err) {
             console.error('Join error:', err);
             toast.error('Failed to open meeting room');
