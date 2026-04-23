@@ -33,11 +33,12 @@ const pageVariants: Variants = {
 
 export default function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
+  const transitionKey = pathname?.startsWith('/dashboard') ? '/dashboard' : pathname;
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={pathname}
+        key={transitionKey}
         initial={false}
         animate="animate"
         exit="exit"

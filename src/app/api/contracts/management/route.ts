@@ -1,21 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
+import { requireTenantAccess } from '@/lib/apiAuth';
+import { randomBytes } from 'crypto';
+import {
+  AlignmentType,
+  Document,
+  Footer,
+  HeadingLevel,
+  Packer,
+  PageNumber,
+  Paragraph,
+  TextRun,
+} from 'docx';
 
 export async function POST(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
     const { tenantId, action, config } = await req.json();
 
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
+    const { user } = await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
@@ -29,6 +37,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(await getContracts(tenantId, config, supabase));
       case 'download_contract':
         return NextResponse.json(await downloadContract(tenantId, config, supabase));
+      case 'send_contract':
+        return NextResponse.json(await sendContract(tenantId, config, supabase, req.nextUrl.origin, user.id));
       case 'delete_contract':
         return NextResponse.json(await deleteContract(tenantId, config, supabase));
       default:
@@ -247,6 +257,103 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
   }
 }
 
+async function sendContract(tenantId: string, config: any, supabase: any, origin: string, actorUserId: string) {
+  try {
+    const { contractId, recipients, subject, message, format = 'pdf' } = config;
+    if (!contractId || !recipients) {
+      return { success: false, error: 'contractId and recipients are required' };
+    }
+
+    const { data: contract, error } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('id', contractId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (error || !contract) {
+      return { success: false, error: 'Contract not found' };
+    }
+
+    const recipientEmail = Array.isArray(recipients)
+      ? String(recipients[0] || '').trim().toLowerCase()
+      : String(recipients || '').trim().toLowerCase();
+    if (!recipientEmail) {
+      return { success: false, error: 'At least one recipient email is required' };
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { error: tokenError } = await supabase
+      .from('contract_signing_tokens')
+      .insert({
+        tenant_id: tenantId,
+        contract_id: contractId,
+        token,
+        signer_email: recipientEmail,
+        signer_role: 'client',
+        expires_at: expiresAt,
+        created_by: actorUserId,
+        metadata: {
+          source: 'contracts_management_send',
+          createdAt: new Date().toISOString(),
+        },
+      });
+
+    if (tokenError) {
+      return { success: false, error: 'Failed to create signing link' };
+    }
+
+    const signingUrl = `${origin}/contract/${token}`;
+
+    const generated = await downloadContract(tenantId, { contractId, format, optimize: true }, supabase);
+    if (!generated?.success || !generated?.data?.bufferBase64) {
+      return { success: false, error: 'Failed to generate contract document' };
+    }
+
+    const emailResponse = await fetch(`${origin}/api/email/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-api-key': process.env.INTERNAL_API_KEY || '',
+      },
+      body: JSON.stringify({
+        tenantId,
+        userId: actorUserId,
+        to: recipients,
+        subject: subject || `Contract: ${contract.title}`,
+        text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
+        attachments: [{
+          filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
+          content: generated.data.bufferBase64,
+          contentType: generated.data.mimeType || (format === 'docx'
+            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : 'application/pdf'),
+        }],
+      }),
+    });
+
+    if (!emailResponse.ok) {
+      const payload = await emailResponse.json().catch(() => ({}));
+      return { success: false, error: payload?.error || 'Failed to send contract email' };
+    }
+
+    await supabase
+      .from('contracts')
+      .update({ status: contract.status === 'draft' ? 'sent' : contract.status, updated_at: new Date().toISOString() })
+      .eq('id', contractId)
+      .eq('tenant_id', tenantId);
+
+    return {
+      success: true,
+      message: 'Contract sent successfully',
+      signingUrl,
+    };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
 async function generateAIContractContent(params: any) {
   const { type, parties, terms, duration, payment, pages, fontSize, lineSpacing, template } = params;
   
@@ -412,7 +519,8 @@ async function generateOptimizedContractPDF(params: any) {
 }
 
 function optimizeContentForPDF(content: string, targetPages: number, fontSize: number, lineSpacing: number, optimize: boolean) {
-  const printableHtml = ensurePrintableContractHtml(content, fontSize, lineSpacing);
+  const normalizedContent = normalizeLegalContractText(content);
+  const printableHtml = ensurePrintableContractHtml(normalizedContent, fontSize, lineSpacing);
   if (!optimize) return printableHtml;
   
   // Calculate optimal content distribution
@@ -497,6 +605,49 @@ ${body}
 </html>`;
 }
 
+function normalizeLegalContractText(content: string): string {
+  const raw = String(content || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (!raw) return '';
+
+  const lines = raw.split('\n').map((line) => line.trim()).filter(Boolean);
+  const output: string[] = [];
+  let sectionCounter = 0;
+  let clauseCounter = 0;
+
+  const headingPattern = /^((section|article)\s+)?(\d+(\.\d+)*)?[\)\.\-:]?\s*([A-Z][A-Z0-9\s/&'":,\-()]{3,})$/i;
+
+  for (const line of lines) {
+    const isHeading = headingPattern.test(line) || /^#{1,3}\s+/.test(line);
+    if (isHeading) {
+      const headingText = line
+        .replace(/^#{1,3}\s+/, '')
+        .replace(/^(section|article)\s+/i, '')
+        .replace(/^\d+(\.\d+)*[\)\.\-:]?\s*/, '')
+        .trim()
+        .toUpperCase();
+      sectionCounter += 1;
+      clauseCounter = 0;
+      output.push(`${sectionCounter}.0 ${headingText}`);
+      continue;
+    }
+
+    if (sectionCounter === 0) {
+      sectionCounter = 1;
+      output.push('1.0 GENERAL TERMS');
+      clauseCounter = 0;
+    }
+    clauseCounter += 1;
+    output.push(`${sectionCounter}.${clauseCounter} ${line}`);
+  }
+
+  return output.join('\n\n');
+}
+
 function escapeHtml(input: string): string {
   return input
     .replace(/&/g, '&amp;')
@@ -515,14 +666,22 @@ async function renderContractPdfBuffer(html: string): Promise<Buffer> {
       await document.fonts.ready;
     });
     const pdf = await page.pdf({
-      format: 'A4',
+      format: 'Letter',
       printBackground: true,
       preferCSSPageSize: true,
+      displayHeaderFooter: true,
+      headerTemplate: '<div></div>',
+      footerTemplate: `
+        <div style="width:100%;font-size:9px;color:#64748b;padding:0 20px;">
+          <span style="float:left;">AlphaClone Systems Contract</span>
+          <span style="float:right;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+        </div>
+      `,
       margin: {
-        top: '20mm',
-        right: '15mm',
-        bottom: '20mm',
-        left: '15mm',
+        top: '25.4mm',
+        right: '25.4mm',
+        bottom: '25.4mm',
+        left: '25.4mm',
       },
     });
     return Buffer.from(pdf);
@@ -531,7 +690,69 @@ async function renderContractPdfBuffer(html: string): Promise<Buffer> {
   }
 }
 
-function generateDOCXFromContent(content: string, pages: number, fontSize: number, lineSpacing: number) {
-  // Mock DOCX generation
-  return Buffer.from(`PK[MOCK DOCX CONTENT FOR ${pages} PAGES]`);
+function normalizeTextBlocks(content: string): string[] {
+  const plain = String(content || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return plain.split('\n').map((line) => line.trim()).filter(Boolean);
+}
+
+async function generateDOCXFromContent(content: string, _pages: number, fontSize: number, lineSpacing: number) {
+  const normalizedContent = normalizeLegalContractText(content);
+  const blocks = normalizeTextBlocks(normalizedContent);
+  const paragraphSpacing = Math.round((lineSpacing - 1) * 240);
+  const baseSize = Math.max(20, Math.round((fontSize / 12) * 24));
+
+  const children = blocks.map((line) => {
+    const isPrimaryHeading = /^(\d+(\.\d+)*)\s+[A-Z][A-Z0-9\s/&'":,\-()]{3,}$/.test(line);
+    const isHashHeading = /^#{1,3}\s+/.test(line);
+    if (isPrimaryHeading || isHashHeading) {
+      const headingText = line.replace(/^#{1,3}\s+/, '');
+      return new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 240, after: 120 },
+        children: [new TextRun({ text: headingText, bold: true })],
+      });
+    }
+
+    return new Paragraph({
+      spacing: { before: 0, after: Math.max(80, paragraphSpacing) },
+      alignment: AlignmentType.JUSTIFIED,
+      children: [new TextRun({ text: line, size: baseSize })],
+    });
+  });
+
+  const doc = new Document({
+    styles: {
+      default: { document: { run: { font: 'Arial', size: baseSize } } },
+    },
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 12240, height: 15840 },
+          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+        },
+      },
+      footers: {
+        default: new Footer({
+          children: [
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [
+                new TextRun('Page '),
+                new TextRun({ children: [PageNumber.CURRENT] }),
+              ],
+            }),
+          ],
+        }),
+      },
+      children: children.length > 0 ? children : [new Paragraph('Contract content unavailable.')],
+    }],
+  });
+
+  return Buffer.from(await Packer.toBuffer(doc));
 }

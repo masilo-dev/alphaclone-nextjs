@@ -2,7 +2,7 @@
 // Deployment trigger: 2026-03-10 - Authentication fixes deployed
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ConnectionStatus } from './ConnectionStatus';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomContextMenu from './common/CustomContextMenu';
@@ -142,6 +142,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const location = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentTenant, getDashboardStats, error: tenantError } = useTenant();
   const { t } = useLanguage();
   const [dashboardStats, setDashboardStats] = useState<any>(null);
@@ -168,7 +169,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     endMeeting,
     setIsMeetingMinimized,
     toggleMeetingMinimized,
-  } = useMeetingSession();
+  } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
 
   // -- PERSISTENT VIDEO CALL STATE --
   // Note: Video calls now use dedicated pages (/meet/[id])
@@ -1073,6 +1074,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               newMessage={newMessage}
               setNewMessage={setNewMessage}
               handleSendMessage={handleSendMessage}
+              initialSelectedClientId={searchParams?.get('selectedClientId')}
             />
           </React.Suspense>
         );

@@ -15,6 +15,8 @@ import { useClients } from '../../hooks/useClients';
 import { useTenant } from '../../contexts/TenantContext';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import { useSearchParams } from 'next/navigation';
 
 interface MessagesTabProps {
     user: User;
@@ -22,6 +24,7 @@ interface MessagesTabProps {
     newMessage: string;
     setNewMessage: (msg: string) => void;
     handleSendMessage: (text: string, recipientId?: string, attachments?: any[], priority?: 'normal' | 'high' | 'urgent') => void;
+    initialSelectedClientId?: string | null;
 }
 
 function isExpectedRealtimeCloseError(error: unknown): boolean {
@@ -30,12 +33,25 @@ function isExpectedRealtimeCloseError(error: unknown): boolean {
     return msg.includes('WebSocket is closed before the connection is established');
 }
 
+function cleanupChannelsByTopic(topic: string) {
+    const existing = supabase.getChannels().filter((channel: RealtimeChannel) => channel.topic === topic);
+    existing.forEach((channel: RealtimeChannel) => {
+        channel.unsubscribe();
+        void supabase.removeChannel(channel).catch((error: unknown) => {
+            if (!isExpectedRealtimeCloseError(error)) {
+                console.warn('[Messages] stale channel cleanup failed:', error);
+            }
+        });
+    });
+}
+
 const MessagesTab: React.FC<MessagesTabProps> = ({
     user,
     filteredMessages,
     newMessage,
     setNewMessage,
     handleSendMessage,
+    initialSelectedClientId = null,
 }) => {
     const [clients, setClients] = useState<User[]>([]);
     const [selectedClient, setSelectedClient] = useState<User | null>(null);
@@ -66,6 +82,10 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
     const [presenceChannel, setPresenceChannel] = useState<any>(null);
+    const searchParams = useSearchParams();
+    const selectedClientIdFromQuery = searchParams?.get('selectedClientId') || null;
+    const deepLinkClientId = initialSelectedClientId || selectedClientIdFromQuery;
+    const deepLinkAppliedRef = useRef<string | null>(null);
 
     // Feature States
     const [priority, setPriority] = useState<'normal' | 'high' | 'urgent'>('normal');
@@ -143,6 +163,22 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         }
     }, [adminUser, user.role, selectedClient]);
 
+    // Deep-link selection: ensure target conversation opens when selectedClientId is present.
+    useEffect(() => {
+        if (!deepLinkClientId || !isAdmin) return;
+        if (deepLinkAppliedRef.current === deepLinkClientId) return;
+
+        const candidate = clients.find((client) => client.id === deepLinkClientId);
+        if (!candidate) return;
+
+        setSelectedClient(candidate);
+        setConversationSummary(null);
+        if (isMobile) {
+            setDesktopSidebarOpen(false);
+        }
+        deepLinkAppliedRef.current = deepLinkClientId;
+    }, [deepLinkClientId, isAdmin, clients, isMobile]);
+
     // Track online users properly
     const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
     const [adminPresence, setAdminPresence] = useState<PresenceStatus>('offline');
@@ -170,7 +206,14 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
     // Presence & Typing Subscription
     useEffect(() => {
-        const channel = supabase.channel('chat_presence');
+        const tenantId = currentTenant?.id;
+        if (!tenantId) return;
+        const channelName = `chat_presence:${tenantId}`;
+
+        // Prevent duplicate subscriptions during fast remounts or HMR.
+        cleanupChannelsByTopic(channelName);
+
+        const channel = supabase.channel(channelName);
 
         channel
             .on('presence', { event: 'sync' }, () => {
@@ -179,7 +222,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 const online = new Set<string>();
                 Object.values(presenceState).forEach((presences: any) => {
                     presences.forEach((presence: any) => {
-                        if (presence.user_id) {
+                        if (presence.user_id && presence.tenant_id === tenantId) {
                             online.add(presence.user_id);
                         }
                     });
@@ -188,14 +231,14 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             })
             .on('presence', { event: 'join' }, ({ newPresences }: any) => {
                 newPresences.forEach((presence: any) => {
-                    if (presence.user_id) {
+                    if (presence.user_id && presence.tenant_id === tenantId) {
                         setOnlineUsers(prev => new Set([...prev, presence.user_id]));
                     }
                 });
             })
             .on('presence', { event: 'leave' }, ({ leftPresences }: any) => {
                 leftPresences.forEach((presence: any) => {
-                    if (presence.user_id) {
+                    if (presence.user_id && presence.tenant_id === tenantId) {
                         setOnlineUsers(prev => {
                             const next = new Set(prev);
                             next.delete(presence.user_id);
@@ -205,7 +248,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 });
             })
             .on('broadcast', { event: 'typing' }, (payload: any) => {
-                const { user_id, is_typing } = payload.payload;
+                const { user_id, is_typing, tenant_id } = payload.payload || {};
+                if (!user_id || tenant_id !== tenantId) return;
                 setTypingUsers(prev => {
                     const next = new Set(prev);
                     if (is_typing) {
@@ -218,20 +262,21 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             })
             .subscribe(async (status: string) => {
                 if (status === 'SUBSCRIBED') {
-                    await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
+                    await channel.track({ user_id: user.id, tenant_id: tenantId, online_at: new Date().toISOString() });
                 }
             });
 
         setPresenceChannel(channel);
 
         return () => {
+            channel.unsubscribe();
             supabase.removeChannel(channel).catch((error: unknown) => {
                 if (!isExpectedRealtimeCloseError(error)) {
                     console.warn('[Messages] presence cleanup failed:', error);
                 }
             });
         };
-    }, [user.id]);
+    }, [user.id, currentTenant?.id]);
 
     // Scroll to bottom
     useEffect(() => {
@@ -316,7 +361,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         presenceChannel.send({
                             type: 'broadcast',
                             event: 'typing',
-                            payload: { user_id: user.id, is_typing: true }
+                            payload: { user_id: user.id, tenant_id: currentTenant?.id, is_typing: true }
                         });
                     }
 
@@ -345,7 +390,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         presenceChannel.send({
                             type: 'broadcast',
                             event: 'typing',
-                            payload: { user_id: user.id, is_typing: false }
+                            payload: { user_id: user.id, tenant_id: currentTenant?.id, is_typing: false }
                         });
                     }
                 }
@@ -393,7 +438,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             presenceChannel.send({
                 type: 'broadcast',
                 event: 'typing',
-                payload: { user_id: user.id, is_typing: false }
+                payload: { user_id: user.id, tenant_id: currentTenant?.id, is_typing: false }
             });
         }
     };
@@ -405,7 +450,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             presenceChannel.send({
                 type: 'broadcast',
                 event: 'typing',
-                payload: { user_id: user.id, is_typing: true }
+                payload: { user_id: user.id, tenant_id: currentTenant?.id, is_typing: true }
             });
 
             // Debounce stop typing
@@ -414,7 +459,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 presenceChannel.send({
                     type: 'broadcast',
                     event: 'typing',
-                    payload: { user_id: user.id, is_typing: false }
+                    payload: { user_id: user.id, tenant_id: currentTenant?.id, is_typing: false }
                 });
             }, 2000);
         }
@@ -504,7 +549,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
     const isRecipientTyping = isAdmin
         ? (selectedClient ? typingUsers.has(selectedClient.id) : false)
-        : typingUsers.has('admin'); // Assuming single admin or we need admin ID
+        : (adminUser ? typingUsers.has(adminUser.id) : false);
 
     return (
         <div

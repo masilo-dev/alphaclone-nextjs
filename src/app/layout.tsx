@@ -148,7 +148,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script src="/lockdown-install.js?v=4" strategy="lazyOnload" />
+        <Script src="/lockdown-install.js?v=4" strategy="beforeInteractive" />
       </head>
       <body
         className={`${inter.variable} antialiased text-base subpixel-antialiased font-sans`}

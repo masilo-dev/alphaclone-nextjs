@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search, Edit, PenLine } from 'lucide-react';
+import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search, Edit, PenLine, Mail } from 'lucide-react';
 import { quoteService, Quote, QuoteItem } from '../../services/quoteService';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { businessClientService } from '../../services/businessClientService';
@@ -20,6 +20,8 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { exportToCSV } from '../../utils/exportUtils';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
 import { Sparkles, ChevronDown, Copy, FilePlus } from 'lucide-react';
+import { generateEmailDraft } from '../../services/unifiedAIService';
+import { pricingCatalogService } from '../../services/pricingCatalogService';
 
 interface QuoteTemplate {
     id: string;
@@ -137,8 +139,14 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [contactSearch, setContactSearch] = useState('');
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [quoteToSend, setQuoteToSend] = useState<Quote | null>(null);
+    const [sendingQuote, setSendingQuote] = useState(false);
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
+    const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const serviceDropdownRef = useRef<HTMLDivElement>(null);
     const contactDropdownRef = useRef<HTMLDivElement>(null);
+    const [tenantCatalogServices, setTenantCatalogServices] = useState<ServiceItem[]>([]);
 
     const handleServiceSelect = (index: number, service: ServiceItem) => {
         const newItems = [...lineItems];
@@ -151,6 +159,10 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         setLineItems(newItems);
         setShowServiceDropdown({ index: -1, open: false });
     };
+
+    const catalogServices: ServiceItem[] = tenantCatalogServices.length > 0
+        ? tenantCatalogServices
+        : UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services);
 
     const handleTemplateSelect = (templateId: string) => {
         const template = quoteTemplates.find(t => t.id === templateId);
@@ -189,6 +201,27 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             loadAvailableResources();
         }
     }, [filter, userId, userRole]);
+
+    useEffect(() => {
+        const loadTenantCatalogServices = async () => {
+            if (!currentTenant?.id) return;
+            try {
+                const items = await pricingCatalogService.getCatalog(currentTenant.id, false);
+                const mapped: ServiceItem[] = items.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    description: item.description || item.name,
+                    defaultPrice: Number(item.default_price || 0),
+                    unit: item.unit,
+                    stages: [],
+                }));
+                setTenantCatalogServices(mapped);
+            } catch {
+                setTenantCatalogServices([]);
+            }
+        };
+        loadTenantCatalogServices();
+    }, [currentTenant?.id]);
 
     const loadAvailableResources = async () => {
         try {
@@ -620,6 +653,71 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         }
     };
 
+    const openSendQuoteModal = (quote: Quote) => {
+        const linked = availableContacts.find(c => c.id === quote.contactId);
+        setQuoteToSend(quote);
+        setSendForm({
+            recipientEmail: linked?.email || '',
+            subject: `Quote ${quote.quoteNumber} - ${quote.name}`,
+            message: `Hello,\n\nPlease find attached quote ${quote.quoteNumber} for ${quote.name}.\n\nBest regards,\n${userId}`,
+        });
+        setShowSendModal(true);
+    };
+
+    const handleAiDraftSendMessage = async () => {
+        if (!quoteToSend) return;
+        setAiDraftingSend(true);
+        try {
+            const draft = await generateEmailDraft(
+                `Write a professional quote delivery email for quote ${quoteToSend.quoteNumber} (${quoteToSend.name}) with total ${formatCurrency(quoteToSend.totalAmount, quoteToSend.currency)}.`,
+                sendForm.recipientEmail,
+                sendForm.subject
+            );
+            if (draft) setSendForm(prev => ({ ...prev, message: draft }));
+            else toast.error('Failed to generate AI draft');
+        } catch {
+            toast.error('Failed to generate AI draft');
+        } finally {
+            setAiDraftingSend(false);
+        }
+    };
+
+    const handleSendQuote = async () => {
+        if (!quoteToSend || !currentTenant?.id) return;
+        if (!sendForm.recipientEmail.trim()) {
+            toast.error('Recipient email is required');
+            return;
+        }
+
+        setSendingQuote(true);
+        try {
+            const res = await fetch('/api/quotes/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    quoteId: quoteToSend.id,
+                    recipients: [sendForm.recipientEmail.trim()],
+                    subject: sendForm.subject,
+                    message: sendForm.message,
+                    userId,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok || !payload?.success) {
+                throw new Error(payload?.error || 'Failed to send quote');
+            }
+            toast.success('Quote sent successfully');
+            setShowSendModal(false);
+            setQuoteToSend(null);
+            loadQuotes();
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to send quote');
+        } finally {
+            setSendingQuote(false);
+        }
+    };
+
     const handleConfirmAndSign = async () => {
         if (!quoteToSign) return;
         if (!signatureData) {
@@ -872,6 +970,14 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                     >
                                         <Edit className="w-4 h-4 text-slate-300 group-hover:text-white" />
                                     </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="p-2 border-white/10 hover:bg-teal-500/10 hover:border-teal-500/30"
+                                        onClick={() => openSendQuoteModal(quote)}
+                                        title="Send Quote"
+                                    >
+                                        <Mail className="w-4 h-4 text-teal-400" />
+                                    </Button>
                                     {quote.status === 'accepted' && (userRole === 'admin' || userRole === 'tenant_admin') && (
                                         <Button
                                             variant="outline"
@@ -1056,7 +1162,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                         {/* Quick Select Services */}
                         <div className="flex flex-wrap gap-2 py-2">
-                            {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).slice(0, 5).map((service) => (
+                            {catalogServices.slice(0, 5).map((service) => (
                                 <button
                                     key={service.id}
                                     onClick={() => {
@@ -1098,7 +1204,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                                         {showServiceDropdown.index === index && showServiceDropdown.open && (
                                             <div className="absolute z-[100] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                                {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).map((service) => (
+                                                {catalogServices.map((service) => (
                                                     <button
                                                         key={service.id}
                                                         className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
@@ -1312,7 +1418,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                         {/* Quick Select Services */}
                         <div className="flex flex-wrap gap-2 py-2">
-                            {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).slice(0, 5).map((service) => (
+                            {catalogServices.slice(0, 5).map((service) => (
                                 <button
                                     key={service.id}
                                     type="button"
@@ -1355,7 +1461,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                                         {showServiceDropdown.index === index && showServiceDropdown.open && (
                                             <div className="absolute z-[100] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                                {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).map((service) => (
+                                                {catalogServices.map((service) => (
                                                     <button
                                                         key={service.id}
                                                         className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
@@ -1674,6 +1780,38 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                     </Modal>
                 )
             }
+
+            <Modal isOpen={showSendModal} onClose={() => setShowSendModal(false)} title="Send Quote by Email">
+                <div className="space-y-4">
+                    <Input
+                        label="Recipient Email"
+                        value={sendForm.recipientEmail}
+                        onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                        placeholder="client@example.com"
+                    />
+                    <Input
+                        label="Subject"
+                        value={sendForm.subject}
+                        onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                    />
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                        <textarea
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-sm min-h-[140px]"
+                            value={sendForm.message}
+                            onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
+                        />
+                    </div>
+                    <div className="flex justify-between items-center pt-2">
+                        <Button variant="outline" onClick={handleAiDraftSendMessage} disabled={aiDraftingSend}>
+                            {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
+                        </Button>
+                        <Button onClick={handleSendQuote} disabled={sendingQuote}>
+                            {sendingQuote ? 'Sending...' : 'Send Quote'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

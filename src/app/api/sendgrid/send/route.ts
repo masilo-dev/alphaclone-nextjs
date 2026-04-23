@@ -5,6 +5,8 @@ import {
   routeErrorResponse,
 } from '@/lib/apiAuth';
 import { providerSendSchema } from '@/schemas/validation';
+import { sendWithProviderSdk } from '@/lib/email/providerSdk';
+import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
 
 // Client-friendly error messages
 const CLIENT_ERRORS = {
@@ -92,50 +94,31 @@ export async function POST(request: NextRequest) {
 
     await requireTenantAccess(tenantId);
 
-    // Get SendGrid integration for this tenant
-    const supabase = createAdminSupabaseClientOrThrow();
-    const { data: integration, error } = await supabase
-      .from('tenant_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('integration_type', 'sendgrid')
-      .eq('status', 'active')
-      .single();
-
-    if (error || !integration) {
+    const resolved = await resolveEmailProviderConfig({
+      tenantId,
+      fallbackToEnv: false,
+    });
+    if (!resolved || resolved.provider !== 'sendgrid') {
       const clientError = CLIENT_ERRORS.API_KEY_ISSUE;
       return NextResponse.json({
         error: clientError,
         clientFriendly: true
       }, { status: 404 });
     }
+    const supabase = createAdminSupabaseClientOrThrow();
 
-    // Send email using SendGrid API
-    const sendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${integration.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: to }],
-          subject: subject
-        }],
-        from: {
-          email: integration.from_email || 'noreply@yourdomain.com',
-          name: integration.from_name || 'AlphaClone'
-        },
-        content: [{
-          type: 'text/plain',
-          value: message
-        }]
-      })
+    const sendResult = await sendWithProviderSdk('sendgrid', {
+      apiKey: resolved.apiKey,
+      fromEmail: resolved.fromEmail || 'noreply@yourdomain.com',
+      fromName: resolved.fromName || 'AlphaClone',
+      to,
+      subject,
+      text: message,
     });
 
-    if (!sendgridResponse.ok) {
-      const errorData = await sendgridResponse.text();
-      console.error('SendGrid API error:', errorData);
+    if (!sendResult.ok) {
+      const errorData = sendResult.error || '';
+      console.error('SendGrid SDK error:', errorData);
       
       // Parse SendGrid error and translate to client-friendly message
       let clientError = CLIENT_ERRORS.EMAIL_SENDING_FAILED;
@@ -151,7 +134,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: clientError,
         clientFriendly: true
-      }, { status: sendgridResponse.status });
+      }, { status: 502 });
     }
 
     // Log the email sent

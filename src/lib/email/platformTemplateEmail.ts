@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { sendWithProviderSdk } from '@/lib/email/providerSdk';
 
 export const USER_INITIATED_PLATFORM_TEMPLATES = new Set(['Welcome Email']);
 
@@ -102,80 +103,17 @@ async function deliver(
     html: string,
     text: string
 ): Promise<{ ok: boolean; emailId?: string; error?: string }> {
-    const fromName = 'AlphaClone Systems';
-
-    if (provider === 'brevo') {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'api-key': apiKey,
-            },
-            body: JSON.stringify({
-                sender: { email: fromEmail, name: fromName },
-                to: [{ email: to }],
-                subject,
-                htmlContent: html,
-                textContent: text || undefined,
-            }),
-        });
-        const data = await response.json().catch(() => ({}));
-        if (response.ok) {
-            const messageId =
-                (data as { messageId?: string }).messageId ||
-                (Array.isArray((data as { messageIds?: string[] }).messageIds)
-                    ? (data as { messageIds: string[] }).messageIds[0]
-                    : undefined);
-            return { ok: true, emailId: messageId };
-        }
-        return { ok: false, error: JSON.stringify(data) };
-    }
-
-    if (provider === 'sendgrid') {
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                personalizations: [{ to: [{ email: to }] }],
-                from: { email: fromEmail, name: fromName },
-                subject,
-                content: [
-                    { type: 'text/plain', value: text || '' },
-                    { type: 'text/html', value: html || '' },
-                ].filter((c) => c.value),
-            }),
-        });
-
-        if (response.ok) {
-            return { ok: true, emailId: response.headers.get('x-message-id') || undefined };
-        }
-        const errData = await response.json().catch(() => ({}));
-        return { ok: false, error: JSON.stringify(errData) };
-    }
-
-    const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            from: fromEmail,
-            to,
-            subject,
-            html,
-            text: text || undefined,
-        }),
+    const result = await sendWithProviderSdk(provider, {
+        apiKey,
+        fromEmail,
+        fromName: 'AlphaClone Systems',
+        to,
+        subject,
+        html,
+        text,
     });
 
-    const data = await response.json().catch(() => ({}));
-    if (response.ok) {
-        return { ok: true, emailId: (data as { id?: string }).id };
-    }
-    return { ok: false, error: JSON.stringify(data) };
+    return { ok: result.ok, emailId: result.emailId, error: result.error };
 }
 
 async function logEmailSent(
