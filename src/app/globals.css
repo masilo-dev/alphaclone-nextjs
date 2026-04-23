@@ -706,6 +706,63 @@ body {
   color: #c9d7ea !important;
 }
 
+.marketing-theme .text-white {
+  color: #f8fbff !important;
+}
+
+/* Unified marketing typography scale across all public pages */
+.marketing-theme .text-xs {
+  font-size: 0.8rem !important;
+  line-height: 1.45 !important;
+}
+
+.marketing-theme .text-sm {
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+}
+
+.marketing-theme .text-base {
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+}
+
+.marketing-theme .text-lg {
+  font-size: 1.1rem !important;
+  line-height: 1.6 !important;
+}
+
+.marketing-theme .text-xl {
+  font-size: 1.25rem !important;
+  line-height: 1.45 !important;
+}
+
+.marketing-theme .text-2xl {
+  font-size: 1.5rem !important;
+  line-height: 1.35 !important;
+}
+
+.marketing-theme .text-3xl {
+  font-size: clamp(1.75rem, 3vw, 2.1rem) !important;
+  line-height: 1.25 !important;
+}
+
+.marketing-theme .text-4xl {
+  font-size: clamp(2rem, 4.2vw, 2.8rem) !important;
+  line-height: 1.15 !important;
+}
+
+.marketing-theme .text-5xl,
+.marketing-theme .text-6xl {
+  font-size: clamp(2.2rem, 5vw, 3.3rem) !important;
+  line-height: 1.08 !important;
+}
+
+.marketing-theme .font-black,
+.marketing-theme .font-extrabold,
+.marketing-theme .font-bold {
+  letter-spacing: -0.015em;
+}
+
 .marketing-theme .bg-slate-900\/50 {
   background-color: rgb(15 23 42 / 0.86) !important;
 }

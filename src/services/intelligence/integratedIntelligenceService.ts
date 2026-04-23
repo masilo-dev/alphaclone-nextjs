@@ -42,6 +42,19 @@ class IntegratedIntelligenceService {
     return code === '42P01' || code === 'PGRST205';
   }
 
+  private isMissingColumnError(error: unknown): boolean {
+    const code = (error as { code?: string })?.code;
+    return code === '42703';
+  }
+
+  private getNumericSignal(row: Record<string, unknown>, keys: string[]): number {
+    for (const key of keys) {
+      const value = Number(row[key] || 0);
+      if (Number.isFinite(value) && value !== 0) return value;
+    }
+    return Number(row[keys[0]] || 0);
+  }
+
   private async safeCount(supabase: SupabaseClient, table: string, tenantId: string): Promise<number> {
     const { count, error } = await supabase
       .from(table)
@@ -70,6 +83,19 @@ class IntegratedIntelligenceService {
 
     if (error) {
       if (this.isMissingTableError(error)) return [];
+      if (this.isMissingColumnError(error)) {
+        const fallback = await supabase
+          .from(table)
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .limit(limit);
+        if (fallback.error) {
+          if (this.isMissingTableError(fallback.error)) return [];
+          throw fallback.error;
+        }
+        if (!Array.isArray(fallback.data)) return [];
+        return fallback.data as unknown as Record<string, unknown>[];
+      }
       throw error;
     }
     if (!Array.isArray(data)) return [];
@@ -322,13 +348,13 @@ class IntegratedIntelligenceService {
     );
     const published = posts.filter((row) => String(row.status || '').toLowerCase() === 'published');
     const avgLikes = published.length
-      ? published.reduce((sum, row) => sum + Number(row.likes_count || 0), 0) / published.length
+      ? published.reduce((sum, row) => sum + this.getNumericSignal(row, ['likes_count', 'like_count', 'likes']), 0) / published.length
       : 0;
     const avgComments = published.length
-      ? published.reduce((sum, row) => sum + Number(row.comments_count || 0), 0) / published.length
+      ? published.reduce((sum, row) => sum + this.getNumericSignal(row, ['comments_count', 'comment_count', 'comments']), 0) / published.length
       : 0;
     const avgShares = published.length
-      ? published.reduce((sum, row) => sum + Number(row.shares_count || 0), 0) / published.length
+      ? published.reduce((sum, row) => sum + this.getNumericSignal(row, ['shares_count', 'share_count', 'shares']), 0) / published.length
       : 0;
 
     const engagementScore = clamp(avgLikes * 0.7 + avgComments * 4 + avgShares * 6, 0, 100);

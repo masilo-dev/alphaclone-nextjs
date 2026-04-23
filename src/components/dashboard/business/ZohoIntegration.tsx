@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Database, CheckCircle2, AlertCircle, RefreshCw, XCircle, Globe, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 interface ZohoIntegrationProps {
     user: any;
@@ -22,6 +23,8 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState('US');
+    const [isTesting, setIsTesting] = useState(false);
+    const [testRecipient, setTestRecipient] = useState('');
 
     useEffect(() => {
         if (user) {
@@ -68,6 +71,39 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         } catch (err: any) {
             console.error('Disconnect error:', err);
             toast.error('Failed to disconnect Zoho');
+        }
+    };
+
+    const handleSendTest = async () => {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            toast.error('Select a workspace first');
+            return;
+        }
+        if (!testRecipient.trim()) {
+            toast.error('Enter a test recipient email');
+            return;
+        }
+        setIsTesting(true);
+        try {
+            const res = await fetch('/api/email/providers/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    provider: 'zoho',
+                    to: testRecipient.trim(),
+                    subject: 'Zoho connection test',
+                    message: 'Your Zoho integration is ready for campaigns and outreach.',
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) throw new Error(data.error || 'Zoho test failed');
+            toast.success('Zoho test email sent successfully');
+        } catch (err: any) {
+            toast.error(err.message || 'Zoho test failed');
+        } finally {
+            setIsTesting(false);
         }
     };
 
@@ -185,6 +221,27 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                     </p>
                 </div>
             </div>
+            {isConnected && (
+                <div className="p-5 bg-slate-900/40 border border-white/5 rounded-2xl">
+                    <h4 className="text-sm font-semibold text-teal-400 mb-3">Send Test Email</h4>
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <input
+                            type="email"
+                            value={testRecipient}
+                            onChange={(e) => setTestRecipient(e.target.value)}
+                            placeholder="recipient@domain.com"
+                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500"
+                        />
+                        <button
+                            onClick={handleSendTest}
+                            disabled={isTesting}
+                            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-white font-semibold text-sm rounded-xl border border-slate-700 transition-all"
+                        >
+                            {isTesting ? 'Sending test...' : 'Send Test'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -9,6 +9,13 @@ function getAppUrl(req: NextRequest) {
     return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
 }
 
+function getZohoRedirectUri(req: NextRequest) {
+    const appUrl = getAppUrl(req).replace(/\/$/, '');
+    const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
+    if (configured) return configured.replace(/\/$/, '');
+    return `${appUrl}/api/auth/zoho/callback`;
+}
+
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
@@ -40,7 +47,7 @@ export async function GET(req: NextRequest) {
         }
 
         const hosts = ZohoService.getHostsByRegion(region);
-        const redirectUri = ENV.ZOHO_REDIRECT_URI || `${appUrl}/api/auth/zoho/callback`;
+        const redirectUri = getZohoRedirectUri(req);
 
         // Exchange code for tokens
         const response = await fetch(`${hosts.accounts}/oauth/v2/token`, {

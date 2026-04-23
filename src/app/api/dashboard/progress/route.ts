@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         .eq('tenant_id', tenantId),
       supabase
         .from('invoices')
-        .select('id, amount, total_amount, status, created_at')
+        .select('id, amount, status, created_at')
         .eq('tenant_id', tenantId),
       supabase
         .from('business_invoices')

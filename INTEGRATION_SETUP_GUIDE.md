@@ -255,14 +255,14 @@ Zoho uses **OAuth 2.0** for both Zoho Mail and Zoho CRM. The platform already ha
 3. Fill in:
    - **Client Name**: "AlphaClone"
    - **Homepage URL**: `https://yourdomain.com`
-   - **Authorized Redirect URIs**: `https://yourdomain.com/api/zoho/callback`
+  - **Authorized Redirect URIs**: `https://yourdomain.com/api/auth/zoho/callback`
 4. Copy your **Client ID** and **Client Secret**
 
 ### Step 2: Add to Environment Variables
 ```env
 ZOHO_CLIENT_ID=your_zoho_client_id
 ZOHO_CLIENT_SECRET=your_zoho_client_secret
-ZOHO_REDIRECT_URI=https://yourdomain.com/api/zoho/callback
+ZOHO_REDIRECT_URI=https://yourdomain.com/api/auth/zoho/callback
 ```
 
 ### Step 3: Business Dashboard — How Users Connect Zoho

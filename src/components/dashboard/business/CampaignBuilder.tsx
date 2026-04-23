@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
-    ChevronDown, ChevronUp, Sparkles, Tag, FileText, CheckCircle2, Loader2
+    ChevronDown, ChevronUp, Sparkles, Tag, FileText, CheckCircle2, Loader2, Upload
 } from 'lucide-react';
 import { emailCampaignService, EmailCampaign, EmailTemplate, MarketingContact } from '../../../services/emailCampaignService';
 import { tenantService } from '../../../services/tenancy/TenantService';
@@ -31,6 +31,12 @@ const DELIVERY_PROVIDER_OPTIONS = [
     { id: 'gmail', label: 'Gmail' },
 ] as const;
 
+type ProviderHealth = {
+    connected: boolean;
+    status: string;
+    issues: string[];
+};
+
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const router = useRouter();
     const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
@@ -43,6 +49,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const [view, setView] = useState<'list' | 'create'>('list');
     const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+    const [providerHealth, setProviderHealth] = useState<Record<string, ProviderHealth>>({});
+    const [isImportingRecipients, setIsImportingRecipients] = useState(false);
 
     // New Campaign Form
     const [form, setForm] = useState({
@@ -61,6 +70,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        loadProviderHealth();
     }, []);
 
     const loadSenderProfile = async () => {
@@ -94,9 +107,40 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         setLoading(false);
     };
 
+    const loadProviderHealth = async () => {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return;
+        try {
+            const response = await fetch(`/api/integrations/status?tenantId=${encodeURIComponent(tenantId)}`);
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) return;
+            const next: Record<string, ProviderHealth> = {};
+            (data.integrations || []).forEach((integration: any) => {
+                const key = String(integration.type || '').toLowerCase();
+                if (!key) return;
+                next[key] = {
+                    connected: Boolean(integration.connected),
+                    status: String(integration.status || ''),
+                    issues: Array.isArray(integration.issues) ? integration.issues.map(String) : [],
+                };
+            });
+            setProviderHealth(next);
+        } catch {
+            // Non-fatal.
+        }
+    };
+
     const handleCreate = async () => {
         if (!form.name || !form.subject || !form.bodyHtml) {
             toast.error('Campaign name, subject, and body are required');
+            return;
+        }
+        const unavailableProviders = form.selectedProviders.filter((providerId) => {
+            const health = providerHealth[providerId];
+            return health ? !health.connected : false;
+        });
+        if (unavailableProviders.length > 0) {
+            toast.error(`These sending services are not connected: ${unavailableProviders.join(', ')}`);
             return;
         }
         const toastId = toast.loading('Creating campaign...');
@@ -192,6 +236,11 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     };
 
     const toggleProvider = (providerId: string) => {
+        const health = providerHealth[providerId];
+        if (health && !health.connected) {
+            toast.error(`${providerId.toUpperCase()} is not connected. Please connect it in Integrations first.`);
+            return;
+        }
         setForm((prev) => {
             const exists = prev.selectedProviders.includes(providerId);
             const selectedProviders = exists
@@ -221,6 +270,58 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         if (!confirm('Delete this campaign?')) return;
         await emailCampaignService.deleteCampaign(campaignId);
         loadData();
+    };
+
+    const handleImportRecipients = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            toast.error('No active workspace selected');
+            return;
+        }
+        const isSupported = file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.xlsx');
+        if (!isSupported) {
+            toast.error('Upload a CSV or XLSX file');
+            return;
+        }
+        setIsImportingRecipients(true);
+        try {
+            const formData = new FormData();
+            formData.append('tenantId', tenantId);
+            formData.append('file', file);
+            const response = await fetch('/api/email/campaigns/import-recipients', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Failed to import recipients');
+            }
+            const importedContacts = Array.isArray(data.contacts) ? data.contacts : [];
+            if (importedContacts.length === 0) {
+                toast.error('No valid recipients were imported');
+                return;
+            }
+            setContacts((prev) => {
+                const byId = new Map(prev.map((contact) => [contact.id, contact]));
+                importedContacts.forEach((contact: MarketingContact) => {
+                    byId.set(contact.id, contact);
+                });
+                return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+            });
+            setSelectedContactIds((prev) => {
+                const next = new Set(prev);
+                importedContacts.forEach((contact: MarketingContact) => next.add(contact.id));
+                return Array.from(next);
+            });
+            toast.success(`${importedContacts.length} recipients imported and selected`);
+        } catch (err: any) {
+            toast.error(err.message || 'Import failed');
+        } finally {
+            setIsImportingRecipients(false);
+        }
     };
 
     const insertVariable = (tag: string) => {
@@ -285,7 +386,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             {view === 'create' && (
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 space-y-5">
                     <h4 className="font-bold text-white flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-teal-400" /> Campaign Details
+                        <Mail className="w-5 h-5 text-teal-400" /> Compose Email
                     </h4>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -299,7 +400,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">From Name</label>
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">From</label>
                             <input
                                 value={form.fromName}
                                 onChange={e => setForm(f => ({ ...f, fromName: e.target.value }))}
@@ -309,20 +410,20 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Email Subject</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Subject</label>
                         <input
                             value={form.subject}
                             onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-                            placeholder="e.g. Hey {{firstName}}, we have something for you!"
+                            placeholder="Write a clear email subject"
                             className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Tip: Use <code className="text-teal-400">{'{{firstName}}'}</code> to personalize for each recipient</p>
+                        <p className="text-xs text-slate-500 mt-1">Use personal fields like <code className="text-teal-400">{'{{firstName}}'}</code> to make each email feel direct.</p>
                     </div>
 
                     {/* Personalization Tags */}
                     <div>
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block flex items-center gap-1.5">
-                            <Tag className="w-3 h-3" /> Insert Variable
+                            <Tag className="w-3 h-3" /> Personalize
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {VARIABLE_TAGS.map(tag => (
@@ -354,7 +455,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             value={form.bodyHtml}
                             onChange={e => setForm(f => ({ ...f, bodyHtml: e.target.value }))}
                             rows={10}
-                            placeholder="Write your campaign message here. Personalization variables can be inserted above."
+                            placeholder="Write your email here"
                             className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
                         />
                     </div>
@@ -363,14 +464,27 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                     <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-3">
                         <div className="flex items-center justify-between gap-2">
                             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                <Users className="w-3 h-3" /> Bulk Recipients
+                                <Users className="w-3 h-3" /> Recipients
                             </label>
-                            <span className="text-xs text-slate-500">{selectedContactIds.length} selected</span>
+                            <div className="flex items-center gap-2">
+                                <label className="text-xs text-teal-400 hover:text-teal-300 cursor-pointer flex items-center gap-1">
+                                    <Upload className="w-3 h-3" />
+                                    {isImportingRecipients ? 'Importing...' : 'Import CSV/XLSX'}
+                                    <input
+                                        type="file"
+                                        accept=".csv,.xlsx"
+                                        onChange={handleImportRecipients}
+                                        disabled={isImportingRecipients}
+                                        className="hidden"
+                                    />
+                                </label>
+                                <span className="text-xs text-slate-500">{selectedContactIds.length} selected</span>
+                            </div>
                         </div>
                         <input
                             value={contactSearch}
                             onChange={(e) => setContactSearch(e.target.value)}
-                            placeholder="Search by name or email"
+                            placeholder="Search recipients by name or email"
                             className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
                         />
                         <div className="max-h-52 overflow-y-auto border border-slate-700 rounded-lg divide-y divide-slate-800">
@@ -399,39 +513,59 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                 onChange={(e) => setForm((f) => ({ ...f, skipPreviouslyContacted: e.target.checked }))}
                                 className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
                             />
-                            Do not send again to contacts who already received campaign emails
+                            Avoid sending again to contacts who already received this campaign
                         </label>
                     </div>
 
                     <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-xl space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                Delivery Providers
-                            </label>
-                            <span className="text-xs text-slate-500">{form.selectedProviders.length} selected</span>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {DELIVERY_PROVIDER_OPTIONS.map((provider) => (
-                                <label key={provider.id} className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                        <button
+                            type="button"
+                            onClick={() => setShowAdvancedSettings((prev) => !prev)}
+                            className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-300 uppercase tracking-wider"
+                        >
+                            <span>Advanced Sending Settings</span>
+                            {showAdvancedSettings ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                        {showAdvancedSettings && (
+                            <div className="space-y-3">
+                                <p className="text-xs text-slate-500">
+                                    Your email can be sent through multiple connected services. Most teams can keep these defaults.
+                                </p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        Sending Services
+                                    </label>
+                                    <span className="text-xs text-slate-500">{form.selectedProviders.length} selected</span>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    {DELIVERY_PROVIDER_OPTIONS.map((provider) => (
+                                        <label key={provider.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                                            <span className="flex items-center gap-2 min-w-0">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.selectedProviders.includes(provider.id)}
+                                                    onChange={() => toggleProvider(provider.id)}
+                                                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                                />
+                                                {provider.label}
+                                            </span>
+                                            <span className={`text-[10px] uppercase tracking-wide ${providerHealth[provider.id]?.connected ? 'text-teal-400' : 'text-amber-400'}`}>
+                                                {providerHealth[provider.id]?.connected ? 'Connected' : 'Not connected'}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <label className="flex items-center gap-2 text-xs text-slate-300">
                                     <input
                                         type="checkbox"
-                                        checked={form.selectedProviders.includes(provider.id)}
-                                        onChange={() => toggleProvider(provider.id)}
+                                        checked={form.balanceByDailyLimit}
+                                        onChange={(e) => setForm((f) => ({ ...f, balanceByDailyLimit: e.target.checked }))}
                                         className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
                                     />
-                                    {provider.label}
+                                    Automatically spread sending across services based on daily limits
                                 </label>
-                            ))}
-                        </div>
-                        <label className="flex items-center gap-2 text-xs text-slate-300">
-                            <input
-                                type="checkbox"
-                                checked={form.balanceByDailyLimit}
-                                onChange={(e) => setForm((f) => ({ ...f, balanceByDailyLimit: e.target.checked }))}
-                                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
-                            />
-                            Balance sends across providers based on daily limits
-                        </label>
+                            </div>
+                        )}
                         <label className="flex items-center gap-2 text-xs text-slate-300">
                             <input
                                 type="checkbox"
@@ -439,7 +573,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                 onChange={(e) => setForm((f) => ({ ...f, sendImmediately: e.target.checked }))}
                                 className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
                             />
-                            Send immediately after campaign creation
+                            Send immediately after saving
                         </label>
                     </div>
 
@@ -448,7 +582,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-blue-400" />
-                                <span className="font-semibold text-sm text-white">Schedule Send</span>
+                                <span className="font-semibold text-sm text-white">Send Later</span>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -469,7 +603,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             />
                         )}
                         {!form.scheduleEnabled && (
-                            <p className="text-xs text-slate-500">Campaign will be saved as draft and can be sent manually.</p>
+                            <p className="text-xs text-slate-500">Leave this off to save as a draft and review before sending.</p>
                         )}
                     </div>
 

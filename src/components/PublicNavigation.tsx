@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from './ui/UIComponents';
 
 interface PublicNavigationProps {
@@ -14,6 +14,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         if (mobileMenuOpen) {
@@ -45,6 +46,15 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     ];
 
     const isActive = (path: string) => pathname === path;
+    const showMobileBack = pathname !== '/';
+
+    const handleMobileBack = () => {
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+            return;
+        }
+        router.push('/');
+    };
 
     return (
         <nav className={`fixed w-full z-[120] pt-safe transition-all duration-300 ${isScrolled && !mobileMenuOpen
@@ -107,14 +117,23 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
 
                     {/* Mobile Menu Button and Early CTAs */}
                     <div className="lg:hidden relative z-[140] pointer-events-auto flex items-center gap-3 h-full">
+                        {showMobileBack && (
+                            <button
+                                onClick={handleMobileBack}
+                                className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-300 hover:text-white transition-colors"
+                                aria-label="Go back"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                            </button>
+                        )}
                         <Link
                             href="/auth/login"
-                            className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                            className="inline-flex items-center h-9 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                         >
                             Login
                         </Link>
                         <Link href="/register">
-                            <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-3 py-1.5 h-auto text-xs shadow-lg shadow-teal-500/20">
+                            <Button size="sm" className="inline-flex items-center h-9 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-3 py-1.5 text-xs shadow-lg shadow-teal-500/20">
                                 Start Free
                             </Button>
                         </Link>
