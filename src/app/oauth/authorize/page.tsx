@@ -12,6 +12,24 @@ type OAuthRequestParams = {
   scope: string | null;
 };
 
+function parseMalformedRedirectUri(rawSearch: string): string | null {
+  const marker = 'redirect_uri:';
+  const idx = rawSearch.indexOf(marker);
+  if (idx < 0) return null;
+
+  const valueStart = idx + marker.length;
+  const remainder = rawSearch.slice(valueStart);
+  const end = remainder.search(/&(?:state|scope|client_id|clientId|response_type)=/);
+  const encoded = end >= 0 ? remainder.slice(0, end) : remainder;
+  if (!encoded) return null;
+
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return encoded;
+  }
+}
+
 function AuthorizeForm() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -28,10 +46,12 @@ function AuthorizeForm() {
     const fromQueryRedirectUri = searchParams?.get('redirect_uri') || searchParams?.get('redirectUri') || null;
     const fromQueryState = searchParams?.get('state') || null;
     const fromQueryScope = searchParams?.get('scope') || null;
+    const malformedRedirectUri =
+      typeof window !== 'undefined' ? parseMalformedRedirectUri(window.location.search) : null;
 
     const nextParams: OAuthRequestParams = {
       clientId: fromQueryClientId,
-      redirectUri: fromQueryRedirectUri,
+      redirectUri: fromQueryRedirectUri || malformedRedirectUri,
       state: fromQueryState,
       scope: fromQueryScope,
     };
