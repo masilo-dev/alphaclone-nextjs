@@ -15,6 +15,13 @@ const BASE_URL = SITE_URL && !SITE_URL.includes('localhost')
   ? SITE_URL 
   : 'https://alphaclonesystems.com';
 type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
+type ProviderConfig = {
+  provider: OutreachProvider;
+  apiKey: string;
+  fromEmail: string;
+  fromName: string;
+  dailyLimit: number;
+};
 const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'];
 const DEFAULT_PROVIDER_LIMITS: Record<OutreachProvider, number> = {
   brevo: 300,
@@ -30,6 +37,10 @@ function normalizeProvider(value: unknown): OutreachProvider | null {
     return provider;
   }
   return null;
+}
+
+function isProviderConfig(value: ProviderConfig | null): value is ProviderConfig {
+  return value !== null;
 }
 
 function encodeGmailRawMessage(params: {
@@ -229,12 +240,12 @@ export async function POST(request: Request) {
           dailyLimit: Number(cfg.dailyLimit || cfg.daily_limit || DEFAULT_PROVIDER_LIMITS[provider]) || DEFAULT_PROVIDER_LIMITS[provider],
         };
       })
-      .filter(Boolean)
+      .filter(isProviderConfig)
       .reduce((acc, row) => {
         const existing = acc.find((item) => item.provider === row.provider);
         if (!existing) acc.push(row);
         return acc;
-      }, [] as Array<{ provider: OutreachProvider; apiKey: string; fromEmail: string; fromName: string; dailyLimit: number }>);
+      }, [] as ProviderConfig[]);
 
     const activeProviders = providerConfigs.filter((p) =>
       selectedProviders.length > 0 ? selectedProviders.includes(p.provider) : true
