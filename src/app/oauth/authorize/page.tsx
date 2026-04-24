@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { authorizeClient } from './actions';
+import { supabase } from '@/lib/supabase';
 import { MCP_OAUTH_SCOPES, MCP_SCOPE_LABELS, type MCPOAuthScope, validateScopes } from '@/services/mcp/MCPOAuthScopes';
 
 type OAuthRequestParams = {
@@ -47,8 +48,10 @@ function parseMalformedRedirectUri(rawSearch: string): string | null {
 
 function AuthorizeForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [oauthParams, setOauthParams] = useState<OAuthRequestParams>({
     clientId: null,
     redirectUri: null,
@@ -60,6 +63,20 @@ function AuthorizeForm() {
   });
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        const next = typeof window !== 'undefined'
+          ? encodeURIComponent(window.location.pathname + window.location.search)
+          : '';
+        router.replace(`/auth/login?next=${next}`);
+      } else {
+        setAuthChecked(true);
+      }
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (!authChecked) return;
     const fromQueryClientId = searchParams?.get('client_id') || searchParams?.get('clientId') || null;
     const fromQueryRedirectUri = sanitizeRedirectUri(
       searchParams?.get('redirect_uri') || searchParams?.get('redirectUri') || null
@@ -105,7 +122,7 @@ function AuthorizeForm() {
     } else {
       setError(null);
     }
-  }, [searchParams]);
+  }, [searchParams, authChecked]);
 
   const requestedScopes = validateScopes(oauthParams.scope || '');
   const displayScopes: MCPOAuthScope[] =
@@ -154,6 +171,19 @@ function AuthorizeForm() {
       window.location.href = url;
     }
   };
+
+  if (!authChecked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin h-8 w-8">
+          <svg fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
