@@ -63,8 +63,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'message is required' }, { status: 400 });
         }
 
+        const normalizedHistory = (history || []).map((m) => ({
+            role: m.role,
+            content: m.text,
+        }));
+
         const response = await routeAIChat(
-            history || [],
+            normalizedHistory,
             message,
             SUPPORT_SYSTEM_PROMPT,
             undefined,
