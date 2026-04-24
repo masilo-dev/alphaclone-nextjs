@@ -68,9 +68,10 @@ export async function GET(req: NextRequest) {
     const stateStr = searchParams.get('state');
     const error = searchParams.get('error');
     const appUrl = getAppUrl(req);
+    const zohoMailReturnUrl = `${appUrl}/dashboard/zoho/mail`;
 
     if (error) {
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&error=${error}`);
+        return NextResponse.redirect(`${zohoMailReturnUrl}?error=${encodeURIComponent(error)}`);
     }
 
     if (!code || !stateStr) {
@@ -167,12 +168,12 @@ export async function GET(req: NextRequest) {
             ...(booksOrgId ? { booksOrgId } : {}),
         });
 
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?section=booking&success=zoho_connected`);
+        return NextResponse.redirect(`${zohoMailReturnUrl}?success=zoho_connected`);
     } catch (err: unknown) {
         console.error('Zoho Auth Callback Error:', err);
         const reason = err instanceof Error ? err.message : 'zoho_callback_failed';
         return NextResponse.redirect(
-            `${appUrl}/dashboard/settings?section=booking&error=zoho_callback_failed&reason=${encodeURIComponent(reason)}`
+            `${zohoMailReturnUrl}?error=zoho_callback_failed&reason=${encodeURIComponent(reason)}`
         );
     }
 }
