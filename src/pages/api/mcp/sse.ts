@@ -8,14 +8,27 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, mcp-session-id, x-tenant-id, x-user-id',
 };
 
-function isDisallowedMcpClient(req: NextApiRequest): boolean {
-  const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
-  const origin = String(req.headers.origin || '').toLowerCase();
-  const referer = String(req.headers.referer || '').toLowerCase();
-  const blockedSignals = ['chatgpt', 'openai.com', 'openai'];
-  return blockedSignals.some((signal) =>
-    userAgent.includes(signal) || origin.includes(signal) || referer.includes(signal)
-  );
+function redactApiKey(value: string | undefined): string {
+  if (!value) return 'none';
+  if (value.length <= 8) return `${value.slice(0, 2)}***`;
+  return `${value.slice(0, 4)}***${value.slice(-4)}`;
+}
+
+function logAuthDiagnostic(
+  phase: 'missing_key' | 'invalid_key' | 'service_unavailable',
+  req: NextApiRequest,
+  apiKey: string | undefined
+) {
+  const headerKeys = Object.keys(req.headers);
+  console.warn('[MCP SSE] auth diagnostic', {
+    phase,
+    method: req.method,
+    path: req.url,
+    api_key_hint: redactApiKey(apiKey),
+    has_authorization: Boolean(req.headers['authorization']),
+    has_x_api_key: Boolean(req.headers['x-api-key']),
+    header_keys: headerKeys,
+  });
 }
 
 export const config = {
@@ -45,12 +58,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
-  if (isDisallowedMcpClient(req)) {
-    return res.status(403).json({
-      error: 'This MCP endpoint only supports Claude and Manus clients. ChatGPT access is blocked by workspace policy.',
-    });
-  }
-
   const authHeader = req.headers['authorization'];
   let api_key =
     (req.query.api_key as string | undefined) ||
@@ -62,6 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const isReachabilityProbe = req.method === 'GET' || req.method === 'HEAD';
   if (!api_key) {
+    logAuthDiagnostic('missing_key', req, undefined);
     if (isReachabilityProbe) {
       return res.status(200).json({
         ok: true,
@@ -136,6 +144,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (authError || !tenantId || !userId) {
+    logAuthDiagnostic(
+      authError === 'SERVICE_UNAVAILABLE' ? 'service_unavailable' : 'invalid_key',
+      req,
+      api_key
+    );
     if (isReachabilityProbe) {
       return res.status(200).json({
         ok: true,
@@ -169,6 +182,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     sessionIdGenerator: undefined,
   });
 
-  await mcpServer.server.connect(transport);
-  await transport.handleRequest(req as any, res as any, req.body);
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  const isGetTransport = req.method === 'GET';
+  const heartbeatMs = 15000;
+  let heartbeat: NodeJS.Timeout | null = null;
+
+  if (isGetTransport) {
+    heartbeat = setInterval(() => {
+      if (!res.writableEnded) {
+        try {
+          res.write(': heartbeat\n\n');
+        } catch {
+          // Ignore write errors; cleanup happens on close/finish.
+        }
+      }
+    }, heartbeatMs);
+  }
+
+  const stopHeartbeat = () => {
+    if (heartbeat) {
+      clearInterval(heartbeat);
+      heartbeat = null;
+    }
+  };
+  res.once('close', stopHeartbeat);
+  res.once('finish', stopHeartbeat);
+
+  try {
+    await mcpServer.server.connect(transport);
+    await transport.handleRequest(req as any, res as any, req.body);
+  } finally {
+    stopHeartbeat();
+  }
 }
