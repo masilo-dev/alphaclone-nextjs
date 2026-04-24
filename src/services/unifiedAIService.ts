@@ -173,7 +173,8 @@ export const chatWithAI = async (
     history: { role: string; text: string }[],
     message: string,
     image?: string,
-    model?: string
+    model?: string,
+    systemPrompt?: string
 ): Promise<{ text: string; grounding: any }> => {
     try {
         console.log('[unifiedAIService] Calling /api/ai/chat');
@@ -189,6 +190,7 @@ export const chatWithAI = async (
                 message,
                 image,
                 model,
+                ...(systemPrompt ? { systemPrompt } : {}),
                 ...(tenantId ? { tenantId } : {}),
             })
         });
