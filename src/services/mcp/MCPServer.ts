@@ -22,6 +22,16 @@ import {
   type AnalyzeDocumentInput,
   type PortalEventInput,
 } from '../adapters/businessAdapters';
+import {
+  cancelRun,
+  executeRun,
+  getRunStatus,
+  retryRunStep,
+  runVerification,
+  startPlaybookRun,
+} from '../automation/runtimeService';
+import { getAutomationFailureReport, getAutomationHealth, getAutomationThroughputReport, reconcileOutreachVsLogs } from '../automation/observabilityService';
+import { listBuiltInPlaybooks } from '../automation/playbookService';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -243,7 +253,40 @@ function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]
 export type MCPConnectionContext = {
   tenantId: string;
   userId: string;
+  clientLabel?: string;
 };
+
+function inferMcpLeadSource(
+  providedSource: unknown,
+  ctx?: MCPConnectionContext
+): string {
+  if (typeof providedSource === 'string' && providedSource.trim()) {
+    return providedSource.trim();
+  }
+  const client = (ctx?.clientLabel || 'unknown').trim();
+  return `MCP:${client.toLowerCase()}`;
+}
+
+function normalizePhoneForStorage(phone: unknown, defaultCountryCode = '1'): string | null {
+  if (phone == null) return null;
+  const raw = String(phone).trim();
+  if (!raw) return null;
+  const plusPrefixed = raw.startsWith('+');
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  if (plusPrefixed && /^[1-9]\d{6,14}$/.test(digits)) return `+${digits}`;
+  if (digits.startsWith('00') && /^[1-9]\d{6,14}$/.test(digits.slice(2))) return `+${digits.slice(2)}`;
+  if (digits.length === 10) return `+${defaultCountryCode}${digits}`;
+  if (digits.length === 11 && digits.startsWith(defaultCountryCode)) return `+${digits}`;
+  if (digits.length >= 8 && digits.length <= 15) return `+${digits}`;
+  return raw;
+}
+
+function hasCountryCode(phone: unknown): boolean {
+  if (phone == null) return false;
+  const normalized = String(phone).trim();
+  return /^\+[1-9]\d{6,14}$/.test(normalized);
+}
 
 class AlphaCloneMCPServer {
   public server: Server;
@@ -411,6 +454,175 @@ class AlphaCloneMCPServer {
               stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
               limit: { type: 'number', description: 'Max records (default 20, max 100)' },
               offset: { type: 'number', description: 'Pagination offset (default 0)' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'backfill_contact_phone_country_codes',
+          description:
+            'Normalize existing lead and client phone numbers to include country code (E.164-style). Supports dry-run mode.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              dry_run: { type: 'boolean', description: 'If true, only report changes without writing updates (default true).' },
+              default_country_code: { type: 'string', description: 'Default country code used for local 10-digit numbers (default 1).' },
+              limit: { type: 'number', description: 'Max rows scanned per table (default 5000, max 20000).' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'list_playbooks',
+          description: 'List built-in backend automation playbooks available to MCP clients.',
+          inputSchema: { type: 'object', properties: {}, required: [] },
+        },
+        {
+          name: 'run_playbook',
+          description: 'Run a backend automation playbook. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              playbook_id: { type: 'string' },
+              inputs: { type: 'object' },
+              auto_high_risk: { type: 'boolean', description: 'If true, high-risk steps execute automatically.' },
+              idempotency_key: { type: 'string', description: 'Optional de-duplication key.' },
+            },
+            required: ['playbook_id'],
+          },
+        },
+        {
+          name: 'get_run_status',
+          description: 'Get run and step-level status for an automation playbook execution.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              run_id: { type: 'string' },
+            },
+            required: ['run_id'],
+          },
+        },
+        {
+          name: 'retry_run_step',
+          description: 'Retry a failed or pending step in an automation run.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              run_id: { type: 'string' },
+              step_id: { type: 'string' },
+              auto_high_risk: { type: 'boolean' },
+            },
+            required: ['run_id', 'step_id'],
+          },
+        },
+        {
+          name: 'cancel_run',
+          description: 'Cancel an in-progress automation run.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              run_id: { type: 'string' },
+            },
+            required: ['run_id'],
+          },
+        },
+        {
+          name: 'verify_lead_created',
+          description: 'Verify that a lead exists in CRM with evidence metadata.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              lead_id: { type: 'string' },
+            },
+            required: ['lead_id'],
+          },
+        },
+        {
+          name: 'verify_outreach_delivery',
+          description: 'Verify outreach delivery/open state using outreach log evidence.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              log_id: { type: 'string' },
+              tracking_id: { type: 'string' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'verify_social_post_published',
+          description: 'Verify social post publish state and return evidence.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              social_post_id: { type: 'string' },
+            },
+            required: ['social_post_id'],
+          },
+        },
+        {
+          name: 'verify_invoice_sent',
+          description: 'Verify invoice send state and evidence.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              invoice_id: { type: 'string' },
+            },
+            required: ['invoice_id'],
+          },
+        },
+        {
+          name: 'get_automation_health',
+          description: 'Automation run health summary for the last 24 hours.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'get_failure_report',
+          description: 'Recent automation step failures with error details.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              limit: { type: 'number' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'get_throughput_report',
+          description: 'Automation throughput summary for a selected hour window.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              hours: { type: 'number' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'reconcile_outreach_vs_logs',
+          description: 'Check outreach logs for stale queued/failed patterns.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              limit: { type: 'number' },
             },
             required: [],
           },
@@ -1335,7 +1547,16 @@ class AlphaCloneMCPServer {
             ({ data, error } = await legacyQuery);
           }
           if (error) throw supabaseErrorToMcpClientError('get_clients', (error as { message?: string }).message || 'Failed to fetch clients');
-          const rows = Array.isArray(data) ? data : [];
+          const rows = (Array.isArray(data) ? data : []).map((row: Record<string, unknown>) => {
+            const phone = row.phone;
+            const normalizedPhone = normalizePhoneForStorage(phone);
+            return {
+              ...row,
+              phone: normalizedPhone || phone || null,
+              phone_has_country_code: hasCountryCode(normalizedPhone || phone),
+            };
+          });
+          const missingCountryCode = rows.filter((row) => !row.phone_has_country_code && row.phone).length;
           result = {
             content: [
               {
@@ -1350,6 +1571,7 @@ class AlphaCloneMCPServer {
                       has_more: rows.length === pageSize,
                       next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
                     },
+                    contacts_missing_country_code_count: missingCountryCode,
                   },
                   null,
                   2
@@ -1412,29 +1634,29 @@ class AlphaCloneMCPServer {
             location,
             sales_stage = 'lead',
             value = 0,
-            source = 'MCP Agent',
+            source,
             notes,
             metadata,
           } = a;
+          const resolvedSource = inferMcpLeadSource(source, this.ctx);
           const metaExtra =
             metadata && typeof metadata === 'object' && !Array.isArray(metadata)
               ? (metadata as Record<string, unknown>)
               : {};
-          const custom_fields = { source, ...metaExtra };
           const primary = await supabaseAdmin
             .from('business_clients')
             .insert({
               tenant_id,
               name,
               email: email || null,
-              phone: phone || null,
+              phone: normalizePhoneForStorage(phone),
               industry: industry || null,
               website: website || null,
               location: location || null,
               sales_stage,
               value: Number(value) || 0,
               description: notes || null,
-              custom_fields,
+              custom_fields: { source: resolvedSource, ...metaExtra },
               is_active: true,
               owner_id,
             })
@@ -1449,12 +1671,12 @@ class AlphaCloneMCPServer {
                 tenant_id,
                 name,
                 email: email || null,
-                phone: phone || null,
+                phone: normalizePhoneForStorage(phone),
                 industry: industry || null,
                 website: website || null,
                 location: location || null,
                 description: notes || null,
-                custom_fields,
+                custom_fields: { source: resolvedSource, ...metaExtra },
               })
               .select('id, name, email')
               .single();
@@ -1496,7 +1718,7 @@ class AlphaCloneMCPServer {
           const update: Record<string, unknown> = {};
           if (name !== undefined) update.name = typeof name === 'string' ? name.trim() : name;
           if (email !== undefined) update.email = email || null;
-          if (phone !== undefined) update.phone = phone || null;
+          if (phone !== undefined) update.phone = normalizePhoneForStorage(phone);
           if (industry !== undefined) update.industry = industry || null;
           if (website !== undefined) update.website = website || null;
           if (location !== undefined) update.location = location || null;
@@ -1554,7 +1776,16 @@ class AlphaCloneMCPServer {
             ({ data, error } = await legacy);
           }
           if (error) throw supabaseErrorToMcpClientError('get_leads', (error as { message?: string }).message || 'Failed to fetch leads');
-          const rows = Array.isArray(data) ? data : [];
+          const rows = (Array.isArray(data) ? data : []).map((row: Record<string, unknown>) => {
+            const phone = row.phone;
+            const normalizedPhone = normalizePhoneForStorage(phone);
+            return {
+              ...row,
+              phone: normalizedPhone || phone || null,
+              phone_has_country_code: hasCountryCode(normalizedPhone || phone),
+            };
+          });
+          const missingCountryCode = rows.filter((row) => !row.phone_has_country_code && row.phone).length;
           result = {
             content: [
               {
@@ -1569,6 +1800,7 @@ class AlphaCloneMCPServer {
                       has_more: rows.length === pageSize,
                       next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
                     },
+                    contacts_missing_country_code_count: missingCountryCode,
                   },
                   null,
                   2
@@ -1579,12 +1811,231 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'backfill_contact_phone_country_codes': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const dryRun = a.dry_run !== false;
+          const defaultCountryCode = typeof a.default_country_code === 'string' && a.default_country_code.trim()
+            ? a.default_country_code.trim()
+            : '1';
+          const limit = Math.min(Math.max(Number(a.limit) || 5000, 1), 20000);
+
+          const collectCandidates = (rows: Array<Record<string, unknown>>) =>
+            rows
+              .map((row) => {
+                const id = String(row.id || '').trim();
+                const currentPhone = row.phone == null ? null : String(row.phone);
+                const normalizedPhone = normalizePhoneForStorage(currentPhone, defaultCountryCode);
+                if (!id || !currentPhone || !normalizedPhone) return null;
+                if (normalizedPhone === currentPhone) return null;
+                return { id, old_phone: currentPhone, new_phone: normalizedPhone };
+              })
+              .filter((entry): entry is { id: string; old_phone: string; new_phone: string } => !!entry);
+
+          const { data: clientRows, error: clientErr } = await supabaseAdmin
+            .from('business_clients')
+            .select('id, phone')
+            .eq('tenant_id', tenant_id)
+            .not('phone', 'is', null)
+            .limit(limit);
+          if (clientErr) throw supabaseErrorToMcpClientError('backfill_contact_phone_country_codes', clientErr.message);
+
+          const { data: leadRows, error: leadErr } = await supabaseAdmin
+            .from('leads')
+            .select('id, phone')
+            .eq('tenant_id', tenant_id)
+            .not('phone', 'is', null)
+            .limit(limit);
+          if (leadErr) throw supabaseErrorToMcpClientError('backfill_contact_phone_country_codes', leadErr.message);
+
+          const clientCandidates = collectCandidates((clientRows || []) as Array<Record<string, unknown>>);
+          const leadCandidates = collectCandidates((leadRows || []) as Array<Record<string, unknown>>);
+
+          if (!dryRun) {
+            for (const row of clientCandidates) {
+              const { error } = await supabaseAdmin
+                .from('business_clients')
+                .update({ phone: row.new_phone })
+                .eq('tenant_id', tenant_id)
+                .eq('id', row.id);
+              if (error) throw supabaseErrorToMcpClientError('backfill_contact_phone_country_codes', error.message);
+            }
+            for (const row of leadCandidates) {
+              const { error } = await supabaseAdmin
+                .from('leads')
+                .update({ phone: row.new_phone })
+                .eq('tenant_id', tenant_id)
+                .eq('id', row.id);
+              if (error) throw supabaseErrorToMcpClientError('backfill_contact_phone_country_codes', error.message);
+            }
+          }
+
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    dry_run: dryRun,
+                    default_country_code: defaultCountryCode,
+                    scanned: {
+                      clients: (clientRows || []).length,
+                      leads: (leadRows || []).length,
+                    },
+                    changes: {
+                      clients: clientCandidates.length,
+                      leads: leadCandidates.length,
+                      total: clientCandidates.length + leadCandidates.length,
+                    },
+                    sample: {
+                      clients: clientCandidates.slice(0, 10),
+                      leads: leadCandidates.slice(0, 10),
+                    },
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+          break;
+        }
+
+        case 'list_playbooks': {
+          const playbooks = listBuiltInPlaybooks();
+          result = { content: [{ type: 'text', text: JSON.stringify({ playbooks }, null, 2) }] };
+          break;
+        }
+
+        case 'run_playbook': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const playbook_id = String(a.playbook_id || '').trim();
+          if (!playbook_id) throw new Error('playbook_id is required');
+          const inputs = a.inputs && typeof a.inputs === 'object' ? { ...(a.inputs as Record<string, unknown>) } : {};
+          if (a.idempotency_key && typeof a.idempotency_key === 'string') {
+            inputs.idempotency_key = a.idempotency_key.trim();
+          }
+          const autoHighRisk = a.auto_high_risk === true;
+          const started = await startPlaybookRun({
+            tenantId: tenant_id,
+            userId: user_id,
+            playbookId: playbook_id,
+            inputs,
+            autoHighRisk,
+          });
+          if (!started.success) throw new Error(started.error || 'Failed to start playbook run');
+          const runId = String((started as { run?: { id?: string } }).run?.id || '');
+          if (!runId) throw new Error('Playbook run id missing');
+          const executed = await executeRun(runId, tenant_id, autoHighRisk);
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    started,
+                    executed,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+          break;
+        }
+
+        case 'get_run_status': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const run_id = String(a.run_id || '').trim();
+          if (!run_id) throw new Error('run_id is required');
+          const status = await getRunStatus(run_id, tenant_id);
+          if (!status.success) throw new Error(status.error || 'Failed to load run status');
+          result = { content: [{ type: 'text', text: JSON.stringify(status, null, 2) }] };
+          break;
+        }
+
+        case 'retry_run_step': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const run_id = String(a.run_id || '').trim();
+          const step_id = String(a.step_id || '').trim();
+          if (!run_id) throw new Error('run_id is required');
+          if (!step_id) throw new Error('step_id is required');
+          const retried = await retryRunStep(run_id, tenant_id, step_id, a.auto_high_risk === true);
+          if (!retried.success) throw new Error(retried.error || 'Failed to retry run step');
+          result = { content: [{ type: 'text', text: JSON.stringify(retried, null, 2) }] };
+          break;
+        }
+
+        case 'cancel_run': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const run_id = String(a.run_id || '').trim();
+          if (!run_id) throw new Error('run_id is required');
+          const cancelled = await cancelRun(run_id, tenant_id);
+          if (!cancelled.success) throw new Error(cancelled.error || 'Failed to cancel run');
+          result = { content: [{ type: 'text', text: JSON.stringify(cancelled, null, 2) }] };
+          break;
+        }
+
+        case 'verify_lead_created':
+        case 'verify_outreach_delivery':
+        case 'verify_social_post_published':
+        case 'verify_invoice_sent': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const verification = await runVerification(name, tenant_id, a);
+          result = { content: [{ type: 'text', text: JSON.stringify(verification, null, 2) }] };
+          break;
+        }
+
+        case 'get_automation_health': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const health = await getAutomationHealth(tenant_id);
+          result = { content: [{ type: 'text', text: JSON.stringify(health, null, 2) }] };
+          break;
+        }
+
+        case 'get_failure_report': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const limit = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
+          const report = await getAutomationFailureReport(tenant_id, limit);
+          result = { content: [{ type: 'text', text: JSON.stringify(report, null, 2) }] };
+          break;
+        }
+
+        case 'get_throughput_report': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const hours = Math.min(Math.max(Number(a.hours) || 24, 1), 720);
+          const report = await getAutomationThroughputReport(tenant_id, hours);
+          result = { content: [{ type: 'text', text: JSON.stringify(report, null, 2) }] };
+          break;
+        }
+
+        case 'reconcile_outreach_vs_logs': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const limit = Math.min(Math.max(Number(a.limit) || 100, 1), 500);
+          const report = await reconcileOutreachVsLogs(tenant_id, limit);
+          result = { content: [{ type: 'text', text: JSON.stringify(report, null, 2) }] };
+          break;
+        }
+
         // ── create_lead ────────────────────────────────────────────────────
         case 'create_lead': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const owner_id = this.requireProfileUser(a);
-          const { business_name, contact_name, email, phone, industry, location, source = 'AI Agent', notes } = a;
+          const { business_name, contact_name, email, phone, industry, location, source, notes } = a;
+          const resolvedSource = inferMcpLeadSource(source, this.ctx);
           const primaryName = (business_name || contact_name || '').trim();
           if (!primaryName) throw new Error('create_lead requires contact_name or business_name');
 
@@ -1595,12 +2046,12 @@ class AlphaCloneMCPServer {
               owner_id,
               business_name: primaryName,
               email: email || null,
-              phone: phone || null,
+              phone: normalizePhoneForStorage(phone),
               industry: industry || '',
               location: location || null,
               status: 'new',
               stage: 'lead',
-              source,
+              source: resolvedSource,
               notes: notes || null,
             })
             .select('id, business_name, email, status')
@@ -1616,10 +2067,10 @@ class AlphaCloneMCPServer {
                 tenant_id,
                 business_name: primaryName,
                 email: email || null,
-                phone: phone || null,
+                phone: normalizePhoneForStorage(phone),
                 industry: industry || '',
                 location: location || null,
-                source,
+                source: resolvedSource,
                 notes: notes || null,
               })
               .select('id, business_name, email, status')
@@ -1673,7 +2124,7 @@ class AlphaCloneMCPServer {
           const update: Record<string, any> = {};
           if (business_name !== undefined) update.business_name = business_name;
           if (email !== undefined) update.email = email || null;
-          if (phone !== undefined) update.phone = phone || null;
+          if (phone !== undefined) update.phone = normalizePhoneForStorage(phone);
           if (industry !== undefined) update.industry = industry || '';
           if (location !== undefined) update.location = location || null;
           if (source !== undefined) update.source = source || null;
@@ -4248,7 +4699,7 @@ Return ONLY a JSON array of 60 objects:
         }
 
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────

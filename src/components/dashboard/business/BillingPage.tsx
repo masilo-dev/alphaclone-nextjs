@@ -193,7 +193,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                     </h3>
                     <div className="h-[300px] w-full min-h-[300px]">
                         <ChartContainer className="w-full h-full" minHeight={300}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
+                        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={300}>
                             <AreaChart data={[
                                 { name: 'Jan', revenue: stats.paid * 0.1, expenses: stats.paid * 0.05 },
                                 { name: 'Feb', revenue: stats.paid * 0.2, expenses: stats.paid * 0.08 },

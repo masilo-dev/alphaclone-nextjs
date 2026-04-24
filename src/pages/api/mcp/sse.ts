@@ -14,6 +14,17 @@ function redactApiKey(value: string | undefined): string {
   return `${value.slice(0, 4)}***${value.slice(-4)}`;
 }
 
+function detectMcpClientLabel(req: NextApiRequest): string {
+  const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
+  const origin = String(req.headers.origin || '').toLowerCase();
+  const referer = String(req.headers.referer || '').toLowerCase();
+  const signals = `${userAgent} ${origin} ${referer}`;
+  if (signals.includes('manus')) return 'manus';
+  if (signals.includes('claude')) return 'claude';
+  if (signals.includes('chatgpt') || signals.includes('openai')) return 'chatgpt';
+  return 'unknown';
+}
+
 function logAuthDiagnostic(
   phase: 'missing_key' | 'invalid_key' | 'service_unavailable',
   req: NextApiRequest,
@@ -177,7 +188,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   void authorizedScopes;
 
-  const mcpServer = createMCPServer({ tenantId, userId });
+  const mcpServer = createMCPServer({ tenantId, userId, clientLabel: detectMcpClientLabel(req) });
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });
