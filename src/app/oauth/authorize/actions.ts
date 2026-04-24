@@ -107,8 +107,8 @@ export async function authorizeClient(formData: FormData) {
     .eq('client_id', client_id)
     .single();
 
-  const clientAllowsRedirect =
-    Boolean(client) && isAllowedRedirectUri(client.redirect_uris || [], normalizedRedirectUri);
+  const clientRedirectUris = Array.isArray(client?.redirect_uris) ? client.redirect_uris : [];
+  const clientAllowsRedirect = Boolean(client) && isAllowedRedirectUri(clientRedirectUris, normalizedRedirectUri);
   const clientLooksLikeTenantId = UUID_V4_REGEX.test(client_id) && client_id === tenantUser.tenant_id;
   const allowTrustedPublicClient = clientLooksLikeTenantId && isTrustedPublicRedirectUri(normalizedRedirectUri);
 
