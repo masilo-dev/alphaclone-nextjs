@@ -37,6 +37,19 @@ function LoginContent() {
     const typeParam = searchParams?.get('type');
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     const businessNameParam = searchParams?.get('businessName');
+    const nextParam = searchParams?.get('next') || null;
+
+    const postLoginRedirect = (() => {
+      if (nextParam) {
+        try {
+          const decoded = decodeURIComponent(nextParam);
+          if (decoded.startsWith('/oauth/')) return decoded;
+        } catch {
+          // ignore malformed next param
+        }
+      }
+      return '/dashboard/business';
+    })();
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
@@ -240,7 +253,7 @@ function LoginContent() {
             }
 
             if (user) {
-                router.push('/dashboard/business');
+                router.push(postLoginRedirect);
             }
             setIsLoading(false);
         } catch (err) {
@@ -315,7 +328,7 @@ function LoginContent() {
 
             if (verifyResponse.error) throw verifyResponse.error;
 
-            router.push('/dashboard/business');
+            router.push(postLoginRedirect);
         } catch (err: any) {
             setError(err.message || 'Invalid verification code');
         } finally {
