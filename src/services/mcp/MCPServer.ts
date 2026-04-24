@@ -90,6 +90,59 @@ function safeJsonParse(text: string): unknown {
   }
 }
 
+function formatBusinessValue(value: unknown, indent = 0): string {
+  const space = '  '.repeat(indent);
+  if (value == null) return `${space}not available`;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return `${space}${String(value)}`;
+  }
+  if (Array.isArray(value)) {
+    if (!value.length) return `${space}none`;
+    return value
+      .map((item) => {
+        if (item != null && typeof item === 'object') {
+          return `${space}-\n${formatBusinessValue(item, indent + 1)}`;
+        }
+        return `${space}- ${String(item)}`;
+      })
+      .join('\n');
+  }
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (!entries.length) return `${space}none`;
+  return entries
+    .map(([key, entry]) => {
+      if (entry != null && typeof entry === 'object') {
+        return `${space}${key}:\n${formatBusinessValue(entry, indent + 1)}`;
+      }
+      return `${space}${key}: ${entry == null ? 'not available' : String(entry)}`;
+    })
+    .join('\n');
+}
+
+function renderBusinessSuccess(tool: string, traceId: string, message: string, data: unknown): string {
+  return [
+    'Status: success',
+    'Code: OK',
+    `Tool: ${tool}`,
+    `Trace ID: ${traceId}`,
+    `Message: ${message}`,
+    'Result:',
+    formatBusinessValue(data),
+  ].join('\n');
+}
+
+function renderBusinessError(tool: string, traceId: string, code: string, message: string, meta: Record<string, unknown>): string {
+  return [
+    'Status: failed',
+    `Code: ${code}`,
+    `Tool: ${tool}`,
+    `Trace ID: ${traceId}`,
+    `Message: ${message}`,
+    'Guidance:',
+    formatBusinessValue(meta),
+  ].join('\n');
+}
+
 function inferErrorCode(error: unknown): string {
   const msg = String(error instanceof Error ? error.message : error || '').toLowerCase();
   if (msg.includes('required') || msg.includes('must be') || msg.includes('invalid')) return 'VALIDATION_ERROR';
@@ -106,17 +159,7 @@ function wrapMcpSuccess(tool: string, traceId: string, result: any, message = 'T
     content: [
       {
         type: 'text',
-        text: JSON.stringify(
-          {
-            success: true,
-            code: 'OK',
-            message,
-            data,
-            meta: { trace_id: traceId, tool },
-          },
-          null,
-          2
-        ),
+        text: renderBusinessSuccess(tool, traceId, message, data),
       },
     ],
   };
@@ -126,19 +169,12 @@ function toMcpErrorPayload(tool: string, traceId: string, error: unknown) {
   const errorCode = inferErrorCode(error);
   const defaults = MCP_ERROR_SUGGESTIONS[errorCode] || MCP_ERROR_SUGGESTIONS.INTERNAL_ERROR;
   const message = error instanceof Error ? error.message : MCP_GENERIC_OPERATION_ERROR;
-  return {
-    success: false,
-    code: errorCode,
-    message,
-    data: null,
-    meta: {
-      trace_id: traceId,
-      tool,
-      retryable: defaults.retryable,
-      suggested_fix: defaults.suggested_fix,
-      docs_slug: defaults.docs_slug,
-    },
+  const meta = {
+    retryable: defaults.retryable,
+    suggested_fix: defaults.suggested_fix,
+    docs_slug: defaults.docs_slug,
   };
+  return renderBusinessError(tool, traceId, errorCode, message, meta);
 }
 
 function mcpStructuredError(code: string, message: string, details?: Record<string, unknown>): Error {
@@ -5640,7 +5676,7 @@ Return ONLY a JSON array of 60 objects:
       } catch (error: unknown) {
         console.error(`MCP Tool Execution Error [${name}]:`, error);
         const payload = toMcpErrorPayload(name, traceId, error);
-        throw new Error(JSON.stringify(payload));
+        throw new Error(payload);
       }
     });
   }
