@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { authorizeClient } from './actions';
-import { validateScopes } from '@/services/mcp/MCPOAuthScopes';
+import { MCP_OAUTH_SCOPES, MCP_SCOPE_LABELS, type MCPOAuthScope, validateScopes } from '@/services/mcp/MCPOAuthScopes';
 
 type OAuthRequestParams = {
   clientId: string | null;
@@ -108,6 +108,12 @@ function AuthorizeForm() {
   }, [searchParams]);
 
   const requestedScopes = validateScopes(oauthParams.scope || '');
+  const displayScopes: MCPOAuthScope[] =
+    requestedScopes.includes(MCP_OAUTH_SCOPES.WRITE_ALL)
+      ? [MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL]
+      : requestedScopes.includes(MCP_OAUTH_SCOPES.READ_ALL)
+        ? [MCP_OAUTH_SCOPES.READ_ALL]
+        : requestedScopes;
 
   const handleApprove = async () => {
     setLoading(true);
@@ -197,14 +203,14 @@ function AuthorizeForm() {
               This application will be able to:
             </h3>
             <ul className="space-y-3">
-              {requestedScopes.length > 0 ? (
-                requestedScopes.map((s) => (
+              {displayScopes.length > 0 ? (
+                displayScopes.map((s) => (
                   <li key={s} className="flex items-start">
                     <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-sm text-gray-600 dark:text-gray-300">
-                      {s.replace(':', ' ')}
+                      {MCP_SCOPE_LABELS[s] || s.replace(':', ' ')}
                     </span>
                   </li>
                 ))
