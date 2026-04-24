@@ -63,7 +63,7 @@ function AuthorizeForm() {
   });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
       if (!data.user) {
         const next = typeof window !== 'undefined'
           ? encodeURIComponent(window.location.pathname + window.location.search)
