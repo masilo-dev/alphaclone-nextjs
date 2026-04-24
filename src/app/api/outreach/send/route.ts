@@ -149,6 +149,7 @@ export async function POST(request: Request) {
       .from('lead_outreach_log')
       .insert({
         tenant_id:    tenantId,
+        user_id:      tenantCtx.user.id,
         lead_name:    leadName,
         lead_email:   leadEmail,
         subject,
@@ -201,6 +202,7 @@ export async function POST(request: Request) {
       .from('integrations')
       .select('type, config, enabled, user_id, updated_at')
       .eq('tenant_id', tenantId)
+      .eq('user_id', tenantCtx.user.id)
       .eq('enabled', true)
       .in('type', ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail']);
     if (integrationsError) {
@@ -220,12 +222,6 @@ export async function POST(request: Request) {
     const profileFromEmail = String(profileConfig.fromEmail || profileConfig.from_email || '').trim();
 
     const integrationRows = Array.isArray(integrations) ? integrations : [];
-    integrationRows.sort((a: any, b: any) => {
-      const aIsCurrentUser = String(a?.user_id || '') === tenantCtx.user.id;
-      const bIsCurrentUser = String(b?.user_id || '') === tenantCtx.user.id;
-      if (aIsCurrentUser !== bIsCurrentUser) return aIsCurrentUser ? -1 : 1;
-      return new Date(String(b?.updated_at || 0)).getTime() - new Date(String(a?.updated_at || 0)).getTime();
-    });
 
     const providerConfigs = integrationRows
       .map((integration: any) => {
@@ -252,7 +248,12 @@ export async function POST(request: Request) {
     );
     if (activeProviders.length === 0) {
       return NextResponse.json(
-        { success: false, status: 'failed', error: 'No active email provider available. Connect Brevo, Resend, SendGrid, Zoho, or Gmail.' },
+        {
+          success: false,
+          status: 'failed',
+          code: 'PROVIDER_NOT_CONFIGURED_FOR_USER',
+          error: 'No active email provider is connected for your account. Connect Brevo, Resend, SendGrid, Zoho, or Gmail in Settings.',
+        },
         { status: 400 }
       );
     }
@@ -390,6 +391,8 @@ export async function POST(request: Request) {
             const errorBody = await response.text().catch(() => '');
             throw new Error(`Brevo send failed (${response.status}): ${errorBody.slice(0, 220)}`);
           }
+          const responseJson = await response.json().catch(() => ({}));
+          providerMessageId = typeof responseJson?.messageId === 'string' ? responseJson.messageId : providerMessageId;
         } else if (selectedProvider.provider === 'resend') {
           if (!selectedProvider.fromEmail) throw new Error('Resend sender email missing. Set a verified From Email in Resend integration.');
           const response = await fetch('https://api.resend.com/emails', {
@@ -409,6 +412,10 @@ export async function POST(request: Request) {
             const errorBody = await response.text().catch(() => '');
             throw new Error(`Resend send failed (${response.status}): ${errorBody.slice(0, 220)}`);
           }
+          const responseJson = await response.json().catch(() => ({}));
+          providerMessageId =
+            (responseJson?.data && typeof responseJson.data.id === 'string' ? responseJson.data.id : null) ||
+            (typeof responseJson?.id === 'string' ? responseJson.id : providerMessageId);
         } else if (selectedProvider.provider === 'sendgrid') {
           if (!selectedProvider.fromEmail) throw new Error('SendGrid sender email missing. Set a verified From Email in SendGrid integration.');
           const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
@@ -431,6 +438,8 @@ export async function POST(request: Request) {
             const errorBody = await response.text().catch(() => '');
             throw new Error(`SendGrid send failed (${response.status}): ${errorBody.slice(0, 220)}`);
           }
+          const sendgridMessageId = response.headers.get('x-message-id');
+          if (sendgridMessageId) providerMessageId = sendgridMessageId;
         }
 
         sentProvider = selectedProvider.provider;
@@ -454,6 +463,9 @@ export async function POST(request: Request) {
             sent_at: new Date().toISOString(),
             provider: sentProvider,
             zoho_message_id: providerMessageId,
+            provider_message_id: providerMessageId,
+            provider_event_status: 'sent',
+            provider_last_event_at: new Date().toISOString(),
             error_message: providerFailures.length > 0
               ? `Failover recovered. Previous providers failed: ${providerFailures.map((f) => `${f.provider}: ${f.error}`).join(' | ')}`
               : null,
