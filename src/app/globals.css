@@ -1,17 +1,16 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 .ios-scroll {
   -webkit-overflow-scrolling: touch;
 }
 
 @theme {
-  --font-sans: var(--font-inter);
+  --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-  --font-inter: var(--font-inter);
-  --font-heading: var(--font-inter);
-  --font-body: var(--font-inter);
+  --font-inter: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-heading: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-body: "Inter Variable", "Inter", system-ui, sans-serif;
 }
 
 /* Marketing Theme Definitions */

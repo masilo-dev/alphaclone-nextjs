@@ -29,14 +29,12 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: true
 
       - name: Type check with TypeScript
         run: npx tsc --noEmit
 
       - name: Check code formatting
         run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css}"
-        continue-on-error: true
 
   # ============================================================================
   # Security Scanning
@@ -175,10 +173,11 @@ jobs:
 
       - name: Run unit tests
         run: npm test --if-present
-        continue-on-error: true
 
       - name: Run E2E tests
         run: npm run test:e2e --if-present
+        env:
+          BASE_URL: http://localhost:3000
         continue-on-error: true
 
   # ============================================================================
@@ -193,15 +192,30 @@ jobs:
     steps:
       - name: Check all jobs status
         run: |
-          echo "Quality: ${{ needs.quality.result }}"
-          echo "Security: ${{ needs.security.result }}"
-          echo "Build: ${{ needs.build.result }}"
+          echo "Quality:    ${{ needs.quality.result }}"
+          echo "Security:   ${{ needs.security.result }}"
+          echo "Build:      ${{ needs.build.result }}"
           echo "Migrations: ${{ needs.migrations.result }}"
-          echo "Tests: ${{ needs.test.result }}"
+          echo "Tests:      ${{ needs.test.result }}"
 
-          if [[ "${{ needs.quality.result }}" == "failure" ]] || [[ "${{ needs.build.result }}" == "failure" ]] || [[ "${{ needs.migrations.result }}" == "failure" ]]; then
-            echo "CI pipeline failed"
+          failed=0
+          if [[ "${{ needs.quality.result }}" == "failure" ]]; then
+            echo "FAILED: quality (lint / typecheck / format)"
+            failed=1
+          fi
+          if [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "FAILED: build"
+            failed=1
+          fi
+          if [[ "${{ needs.migrations.result }}" == "failure" ]]; then
+            echo "FAILED: migrations"
+            failed=1
+          fi
+          if [[ "${{ needs.test.result }}" == "failure" ]]; then
+            echo "FAILED: tests"
+            failed=1
+          fi
+          if [[ "$failed" == "1" ]]; then
             exit 1
           fi
-
           echo "CI pipeline passed"

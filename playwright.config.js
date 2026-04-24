@@ -1,33 +1,46 @@
 const { defineConfig, devices } = require('@playwright/test');
 require('dotenv').config();
 
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+// In CI, spin up the production build before running tests.
+// Locally, developers are expected to have the dev server already running.
+const webServer = process.env.CI
+    ? {
+          command: 'npm run start',
+          url: BASE_URL,
+          reuseExistingServer: false,
+          timeout: 120000,
+          env: {
+              PORT: '3000',
+              NODE_ENV: 'production',
+          },
+      }
+    : {
+          command: 'npm run dev',
+          url: BASE_URL,
+          reuseExistingServer: true,
+          timeout: 60000,
+      };
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 module.exports = defineConfig({
     testDir: './tests',
-    /* Run tests in files in parallel */
     fullyParallel: false,
-    /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    /* Retry to handle intermittent session/loading flakiness. */
     retries: 2,
-    /* Opt out of parallel tests for local audit reliability. */
     workers: 1,
-    /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: 'list',
-    /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+    reporter: process.env.CI ? 'github' : 'list',
+    webServer,
     use: {
-        /* Base URL to use in actions like `await page.goto('/')`. */
-        baseURL: process.env.BASE_URL || 'http://localhost:3000',
-
-        /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+        baseURL: BASE_URL,
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
     },
 
-    /* Configure projects for major browsers */
     projects: [
         {
             name: 'chromium',
