@@ -2,6 +2,7 @@ import { ZohoService } from './ZohoService';
 import { routeAIRequest } from '@/services/aiRouter';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cleanAIJSONResponse } from '@/lib/utils';
+import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 
 export interface ZohoMessage {
     messageId: string;
@@ -26,6 +27,19 @@ export interface ZohoAccount {
     mailAddress: string;
     isPrimary: boolean;
     status: string;
+}
+
+function extractEmailAddress(input: string): string {
+    const value = String(input || '').trim();
+    const match = value.match(/<([^>]+)>/);
+    if (match?.[1]) return match[1].trim();
+    return value;
+}
+
+function normalizeReplySubject(subject: string): string {
+    const cleaned = normalizeEmailSubject(subject);
+    if (!cleaned) return 'Re: Conversation';
+    return /^re:/i.test(cleaned) ? cleaned : `Re: ${cleaned}`;
 }
 
 export class ZohoMailService extends ZohoService {
@@ -176,6 +190,8 @@ export class ZohoMailService extends ZohoService {
         content: string;
         ccAddress?: string;
         bccAddress?: string;
+        inReplyTo?: string;
+        references?: string;
     }) {
         const { base } = await this.getMailBase();
         const validAddresses = await this.getSenderAddresses();
@@ -185,9 +201,23 @@ export class ZohoMailService extends ZohoService {
             if (primary) params.fromAddress = primary;
         }
 
+        const subject = normalizeEmailSubject(params.subject);
+        if (!subject) {
+            throw new Error('Email subject is required.');
+        }
+        const toAddress = extractEmailAddress(params.toAddress);
+        if (!toAddress.includes('@')) {
+            throw new Error('Recipient email address is invalid.');
+        }
+
         return await this.callZohoAPI(`${base}/messages`, {
             method: 'POST',
-            body: JSON.stringify(params),
+            body: JSON.stringify({
+                ...params,
+                toAddress,
+                subject,
+                content: ensureFooter(String(params.content || '')),
+            }),
         });
     }
 
@@ -337,7 +367,15 @@ Rules:
                     const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
                     await qstash.publishJSON({
                         url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
-                        body: { userId: this.userId, messageId, folderId, senderEmail: sender, replyText: data.draft_reply, logId: log.id },
+                        body: {
+                            userId: this.userId,
+                            messageId,
+                            folderId,
+                            senderEmail: extractEmailAddress(sender),
+                            originalSubject: normalizeReplySubject(subject),
+                            replyText: ensureFooter(String(data.draft_reply || '').trim()),
+                            logId: log.id,
+                        },
                         delay: 600 // 10 minute delay
                     });
                 }

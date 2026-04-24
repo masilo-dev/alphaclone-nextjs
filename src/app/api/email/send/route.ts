@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
+import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 
 /**
  * POST /api/email/send
@@ -32,9 +33,14 @@ export async function POST(req: NextRequest) {
 
     try {
         const { to, subject, html, text, message, from, fromName, tenantId, userId, replyTo, attachments } = payload;
+        const normalizedSubject = normalizeEmailSubject(subject);
         const bodyText = text || message;
+        const normalizedText = ensureFooter(bodyText || '');
+        const normalizedHtml = html
+            ? ensureFooter(String(html))
+            : undefined;
 
-        if (!to || !subject || (!html && !bodyText)) {
+        if (!to || !normalizedSubject || (!normalizedHtml && !bodyText)) {
             return NextResponse.json({ error: 'to, subject, and content are required' }, { status: 400 });
         }
 
@@ -88,9 +94,9 @@ export async function POST(req: NextRequest) {
             fromEmail,
             fromName: fromName || 'AlphaClone Systems',
             to,
-            subject,
-            html,
-            text: bodyText,
+            subject: normalizedSubject,
+            html: normalizedHtml,
+            text: normalizedText,
             replyTo,
             listUnsubscribeUrl,
             attachments: Array.isArray(attachments) ? attachments : undefined,

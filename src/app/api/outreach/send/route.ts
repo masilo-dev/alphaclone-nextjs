@@ -9,6 +9,7 @@ import {
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
@@ -183,6 +184,11 @@ export async function POST(request: Request) {
       preferredProvider,
       balanceByDailyLimit = false,
     } = parsed.data;
+    const normalizedSubject = normalizeEmailSubject(subject);
+    if (!normalizedSubject) {
+      return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
+    }
+    const bodyWithFooter = ensureFooter(emailBody);
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
@@ -203,7 +209,7 @@ export async function POST(request: Request) {
     const trackingId = crypto.randomUUID();
 
     // 2. Inject tracking pixel
-    const htmlBody = injectTrackingPixel(emailBody, trackingId);
+    const htmlBody = injectTrackingPixel(bodyWithFooter, trackingId);
 
     // 3. Pre-insert log row as 'queued'
     const { data: logRow, error: logErr } = await admin
@@ -213,7 +219,7 @@ export async function POST(request: Request) {
         user_id:      tenantCtx.user.id,
         lead_name:    leadName,
         lead_email:   leadEmail,
-        subject,
+        subject: normalizedSubject,
         body_html:    htmlBody,
         tracking_id:  trackingId,
         pitch_angle:  pitchAngle,
@@ -416,14 +422,14 @@ export async function POST(request: Request) {
           const sendResult = await zohoService.sendEmail({
             toAddress: leadEmail,
             fromAddress: selectedProvider.fromEmail || fromAddress,
-            subject,
+            subject: normalizedSubject,
             content: htmlBody,
           });
           providerMessageId = sendResult?.data?.messageId || null;
         } else if (selectedProvider.provider === 'gmail') {
           const raw = encodeGmailRawMessage({
             to: leadEmail,
-            subject,
+            subject: normalizedSubject,
             html: htmlBody,
             fromEmail: selectedProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclonesystems.com',
             fromName: selectedProvider.fromName || 'AlphaClone Systems',
@@ -444,7 +450,7 @@ export async function POST(request: Request) {
             body: JSON.stringify({
               sender: { email: selectedProvider.fromEmail || fromAddress, name: selectedProvider.fromName || 'AlphaClone Systems' },
               to: [{ email: leadEmail }],
-              subject,
+              subject: normalizedSubject,
               htmlContent: htmlBody,
             }),
           });
@@ -465,7 +471,7 @@ export async function POST(request: Request) {
             body: JSON.stringify({
               from: `${selectedProvider.fromName || 'AlphaClone Systems'} <${selectedProvider.fromEmail || fromAddress}>`,
               to: leadEmail,
-              subject,
+              subject: normalizedSubject,
               html: htmlBody,
             }),
           });
@@ -491,7 +497,7 @@ export async function POST(request: Request) {
                 email: selectedProvider.fromEmail || fromAddress,
                 name: selectedProvider.fromName || 'AlphaClone Systems',
               },
-              subject,
+              subject: normalizedSubject,
               content: [{ type: 'text/html', value: htmlBody }],
             }),
           });
@@ -544,7 +550,7 @@ export async function POST(request: Request) {
         threadId: String(logId || trackingId || '') || null,
         from: sentFromEmail,
         to: leadEmail,
-        subject,
+        subject: normalizedSubject,
         text: null,
         html: htmlBody,
         sentAt: new Date().toISOString(),

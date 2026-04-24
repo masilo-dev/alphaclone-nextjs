@@ -7,6 +7,7 @@ import {
 import { providerSendSchema } from '@/schemas/validation';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
 import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
+import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 
 const CLIENT_ERRORS = {
   API_KEY_ISSUE: {
@@ -83,6 +84,15 @@ export async function POST(request: NextRequest) {
     }
 
     const { to, subject, message } = parsed.data;
+    const normalizedSubject = normalizeEmailSubject(subject);
+    if (!normalizedSubject) {
+      return NextResponse.json({
+        error: { ...CLIENT_ERRORS.RECIPIENT_EMAIL_ISSUE, message: 'Email subject is required.' },
+        code: 'VALIDATION_ERROR',
+        clientFriendly: true
+      }, { status: 400 });
+    }
+    const normalizedMessage = ensureFooter(message);
     const tenantId = parsed.data.tenantId || parsed.data.tenant_id!;
     await requireTenantAccess(tenantId);
 
@@ -103,8 +113,8 @@ export async function POST(request: NextRequest) {
       fromEmail: resolved.fromEmail || 'noreply@yourdomain.com',
       fromName: resolved.fromName || 'AlphaClone',
       to,
-      subject,
-      text: message,
+      subject: normalizedSubject,
+      text: normalizedMessage,
     });
 
     if (!sendResult.ok) {
@@ -120,7 +130,7 @@ export async function POST(request: NextRequest) {
         tenant_id: tenantId,
         provider: 'brevo',
         to_email: to,
-        subject,
+        subject: normalizedSubject,
         status: 'sent',
         email_id: sendResult.emailId || null,
         created_at: new Date().toISOString()
