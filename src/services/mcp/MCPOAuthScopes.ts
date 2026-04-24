@@ -15,17 +15,6 @@ export type MCPOAuthScope = typeof MCP_OAUTH_SCOPES[keyof typeof MCP_OAUTH_SCOPE
 
 export const VALID_SCOPES: MCPOAuthScope[] = Object.values(MCP_OAUTH_SCOPES);
 
-const FULL_ACCESS_SCOPE_SET: ReadonlySet<MCPOAuthScope> = new Set([
-  MCP_OAUTH_SCOPES.READ_DEALS,
-  MCP_OAUTH_SCOPES.WRITE_DEALS,
-  MCP_OAUTH_SCOPES.WRITE_LEADS,
-  MCP_OAUTH_SCOPES.UPDATE_TASKS,
-  MCP_OAUTH_SCOPES.READ_PROJECTS,
-  MCP_OAUTH_SCOPES.WRITE_PROJECTS,
-  MCP_OAUTH_SCOPES.UPDATE_STAGES,
-  MCP_OAUTH_SCOPES.CHECK_CALENDAR,
-]);
-
 export const MCP_SCOPE_LABELS: Record<MCPOAuthScope, string> = {
   [MCP_OAUTH_SCOPES.READ_ALL]: 'Read all business workspace data',
   [MCP_OAUTH_SCOPES.WRITE_ALL]: 'Write and update all business workspace data',
@@ -56,7 +45,6 @@ export function validateScopes(scopesString: string): MCPOAuthScope[] {
     return dedupeScopes([
       ...(hasReadAll ? [MCP_OAUTH_SCOPES.READ_ALL] : []),
       ...(hasWriteAll ? [MCP_OAUTH_SCOPES.WRITE_ALL] : []),
-      ...Array.from(FULL_ACCESS_SCOPE_SET),
     ]);
   }
   return dedupeScopes(valid);
