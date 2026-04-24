@@ -2,20 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { dealService, Deal, DealStage } from '../../services/dealService';
+import { dealService, Deal } from '../../services/dealService';
 import { UnifiedCRMService } from '../../services/crm/UnifiedCRMService';
-import { RefreshCw, Plus, Bell } from 'lucide-react';
+import { RefreshCw, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tenantService } from '../../services/tenancy/TenantService';
-
-const STAGES: { id: DealStage; label: string; color: string }[] = [
-    { id: 'lead', label: 'Lead', color: 'bg-slate-500' },
-    { id: 'qualified', label: 'Qualified', color: 'bg-blue-500' },
-    { id: 'proposal', label: 'Proposal', color: 'bg-yellow-500' },
-    { id: 'negotiation', label: 'Negotiation', color: 'bg-orange-500' },
-    { id: 'closed_won', label: 'Closed Won', color: 'bg-green-500' },
-    { id: 'closed_lost', label: 'Closed Lost', color: 'bg-red-500' },
-];
 
 export default function CRMTab({ userId, userRole }: { userId: string; userRole?: string }) {
     const router = useRouter();
@@ -73,20 +64,6 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
         }
     };
 
-    const stageCounts = useMemo(() => {
-        return STAGES.reduce<Record<DealStage, number>>((acc, stage) => {
-            acc[stage.id] = deals.filter((d) => d.stage === stage.id).length;
-            return acc;
-        }, {
-            lead: 0,
-            qualified: 0,
-            proposal: 0,
-            negotiation: 0,
-            closed_won: 0,
-            closed_lost: 0,
-        });
-    }, [deals]);
-
     const compactNotification = useMemo(() => {
         const overdueOpenDeals = deals.filter((deal) => {
             if (!deal.expectedCloseDate) return false;
@@ -113,25 +90,25 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-white">CRM Pipeline</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white">CRM</h1>
                     <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                        Turn pipeline data into the next customer action: dates, stages, and revenue outcomes.
+                        Focus on one next action.
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/deals')}
+                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
+                    >
+                        Open Deals
+                    </button>
                     <button
                         type="button"
                         onClick={() => router.push('/dashboard/leads?source=mcp')}
                         className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
                     >
                         MCP Leads
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/dashboard/contacts')}
-                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                    >
-                        Contacts
                     </button>
                     {canManagePipeline && (
                         <>
@@ -143,21 +120,6 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                             >
                                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                                 {syncing ? 'Syncing...' : 'Sync CRM'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => router.push('/dashboard/deals')}
-                                className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                            >
-                                <Plus className="w-4 h-4" />
-                                New Deal
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => router.push('/dashboard/deals?createFromLead=1')}
-                                className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-teal-500/30 text-teal-300 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                            >
-                                From Lead
                             </button>
                         </>
                     )}
