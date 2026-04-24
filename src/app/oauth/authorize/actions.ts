@@ -43,6 +43,14 @@ function isTrustedPublicRedirectUri(uri: string): boolean {
   }
 }
 
+function normalizeCodeChallengeMethod(method: string | undefined): 'S256' | 'plain' | null {
+  if (!method) return null;
+  const normalized = method.trim().toLowerCase();
+  if (normalized === 's256') return 'S256';
+  if (normalized === 'plain') return 'plain';
+  return null;
+}
+
 export async function authorizeClient(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -56,12 +64,22 @@ export async function authorizeClient(formData: FormData) {
   const state = formData.get('state')?.toString();
   const scope = formData.get('scope')?.toString();
   const response_type = formData.get('response_type')?.toString() || 'code';
+  const codeChallenge = formData.get('code_challenge')?.toString();
+  const codeChallengeMethod = normalizeCodeChallengeMethod(
+    formData.get('code_challenge_method')?.toString() || 'S256'
+  );
 
   if (!client_id || !redirect_uri) {
     return { error: 'Missing client_id or redirect_uri' };
   }
   if (response_type !== 'code') {
     return { error: 'Unsupported response_type. Expected code.' };
+  }
+  if (!codeChallenge) {
+    return { error: 'Missing code_challenge' };
+  }
+  if (!codeChallengeMethod) {
+    return { error: 'Unsupported code_challenge_method. Use S256 or plain.' };
   }
 
   const normalizedRedirectUri = normalizeRedirectUri(redirect_uri);
@@ -112,6 +130,8 @@ export async function authorizeClient(formData: FormData) {
       tenant_id: tenantUser.tenant_id,
       redirect_uri: normalizedRedirectUri,
       scopes: approvedScopes,
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod,
       expires_at: expiresAt.toISOString()
     });
 
