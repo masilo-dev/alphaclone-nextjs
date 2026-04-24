@@ -1,5 +1,5 @@
 import { supabase as defaultSupabase } from '../../lib/supabase';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { encrypt, decrypt } from '../../lib/encryption';
 
@@ -45,8 +45,8 @@ export class ZohoService {
     }
 
     protected getSupabaseClient() {
-        if (typeof window === 'undefined' && ENV.SUPABASE_SERVICE_ROLE_KEY && ENV.VITE_SUPABASE_URL) {
-            return createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+        if (typeof window === 'undefined') {
+            return createSupabaseAdminClient();
         }
         return defaultSupabase;
     }
@@ -72,6 +72,7 @@ export class ZohoService {
             .select('config')
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
+            .eq('enabled', true)
             .order('updated_at', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -98,6 +99,35 @@ export class ZohoService {
         return config as ZohoConfig;
     }
 
+    private async resolveTenantIdForIntegration(): Promise<string | null> {
+        const supabase = this.getSupabaseClient();
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('tenant_id')
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (existing?.tenant_id) return existing.tenant_id as string;
+
+        const { data: tenantMembership } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', this.userId)
+            .order('joined_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+        if (tenantMembership?.tenant_id) return tenantMembership.tenant_id as string;
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', this.userId)
+            .maybeSingle();
+        return (profile?.tenant_id as string) || null;
+    }
+
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
         const currentConfig = await this.getConfig() || {};
         const newConfig = { ...currentConfig, ...config };
@@ -116,18 +146,43 @@ export class ZohoService {
         }
 
         const supabase = this.getSupabaseClient();
-        await supabase
+        const tenantId = await this.resolveTenantIdForIntegration();
+        const payload = {
+            user_id: this.userId,
+            type: 'zoho',
+            name: 'Zoho Workspace',
+            enabled: true,
+            config: newConfig,
+            updated_at: new Date().toISOString(),
+            tenant_id: tenantId,
+        };
+
+        const { data: existing } = await supabase
             .from('integrations')
-            .upsert({
-                user_id: this.userId,
-                type: 'zoho',
-                name: 'Zoho Workspace',
-                enabled: true,
-                config: newConfig,
-                updated_at: new Date().toISOString()
-            }, {
-                onConflict: 'user_id,type'
-            });
+            .select('id')
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (existing?.id) {
+            const { error: updateError } = await supabase
+                .from('integrations')
+                .update(payload)
+                .eq('id', existing.id);
+            if (updateError) {
+                throw new Error(`Failed to update Zoho integration config: ${updateError.message}`);
+            }
+            return;
+        }
+
+        const { error: insertError } = await supabase
+            .from('integrations')
+            .insert(payload);
+        if (insertError) {
+            throw new Error(`Failed to save Zoho integration config: ${insertError.message}`);
+        }
     }
 
     async refreshAccessToken(): Promise<string | null> {

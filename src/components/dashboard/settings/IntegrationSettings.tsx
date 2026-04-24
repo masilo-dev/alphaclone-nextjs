@@ -5,30 +5,23 @@ import { motion } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
 import {
   Settings,
-  Globe,
   TrendingUp,
-  CheckCircle,
-  ArrowRight,
   Loader2,
-  XCircle,
   Clock,
   AlertTriangle,
   RefreshCw,
 } from 'lucide-react';
-import { SlackIntegration } from '../integrations/SlackIntegration';
-import { SendGridIntegration } from '../integrations/SendGridIntegration';
-import { ResendIntegration } from '../integrations/ResendIntegration';
-import { PlaywrightIntegration } from '../integrations/PlaywrightIntegration';
-import { IntegrationMarketplaceDashboard } from '../integrations/IntegrationMarketplaceDashboard';
-import { VideoMeetingsAndMcpSetup } from './VideoMeetingsAndMcpSetup';
+import BusinessSendGridIntegration from '../business/SendGridIntegration';
+import BusinessResendIntegration from '../business/ResendIntegration';
+import BusinessBrevoIntegration from '../business/BrevoIntegration';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 
 export function IntegrationSettings() {
   const { currentTenant } = useTenant();
-  const { integrations, loading, connected, disconnect, refresh } = useIntegrations();
-  const [activeTab, setActiveTab] = useState('marketplace');
+  const { integrations, loading, connected, refresh } = useIntegrations();
+  const [activeTab, setActiveTab] = useState('providers');
   const [syncStatus, setSyncStatus] = useState<Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }>>({});
   const [errorLogs, setErrorLogs] = useState<Array<{ id: string; integration: string; error: string; timestamp: string }>>([]);
   const [errorLogsLoading, setErrorLogsLoading] = useState(false);
@@ -82,8 +75,7 @@ export function IntegrationSettings() {
   }, [activeTab, currentTenant?.id]);
 
   const tabs = [
-    { id: 'marketplace', label: 'Marketplace',  icon: Globe        },
-    { id: 'connected',   label: 'Connected',    icon: CheckCircle  },
+    { id: 'providers',   label: 'Email Providers', icon: Settings  },
     { id: 'preferences', label: 'Preferences',  icon: Settings     },
     { id: 'activity',    label: 'Activity',     icon: TrendingUp   },
   ];
@@ -94,11 +86,9 @@ export function IntegrationSettings() {
       <div>
         <h1 className="text-2xl font-bold text-white mb-1">Integrations</h1>
         <p className="text-slate-400 text-sm">
-          Connect tools that power your workflow. All connections are stored securely per workspace.
+          Configure provider API keys and sender identities for this workspace.
         </p>
       </div>
-
-      <VideoMeetingsAndMcpSetup />
 
       {/* Tab bar */}
       <div className="flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
@@ -115,7 +105,7 @@ export function IntegrationSettings() {
             >
               <Icon className="w-4 h-4" />
               {tab.label}
-              {tab.id === 'connected' && connected.length > 0 && (
+              {tab.id === 'providers' && connected.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-teal-500/20 text-teal-400 rounded-full">
                   {connected.length}
                 </span>
@@ -128,77 +118,19 @@ export function IntegrationSettings() {
       {/* Tab content */}
       <div className="min-h-[400px]">
 
-        {/* ── Marketplace ── */}
-        {activeTab === 'marketplace' && <IntegrationMarketplaceDashboard />}
-
-        {/* ── Connected ── */}
-        {activeTab === 'connected' && (
+        {/* ── Providers ── */}
+        {activeTab === 'providers' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Connected Integrations</h2>
-              <span className="text-sm text-slate-400">
-                {loading ? '…' : `${connected.length} of ${integrations.length} connected`}
-              </span>
+            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-4">
+              <h2 className="text-lg font-semibold text-white">Email Provider Credentials</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Use any verified sender email from your provider account. It does not need to match your login email.
+              </p>
             </div>
 
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 text-teal-400 animate-spin" />
-              </div>
-            ) : connected.length > 0 ? (
-              <div className="space-y-4">
-                {/* Config panels for integrations that have dedicated UI */}
-                {connected.some(i => i.id === 'slack')    && <SlackIntegration />}
-                {connected.some(i => i.id === 'sendgrid') && <SendGridIntegration />}
-                {connected.some(i => i.id === 'resend')   && <ResendIntegration />}
-                {connected.some(i => i.id === 'playwright') && <PlaywrightIntegration />}
-
-                {/* Generic disconnect cards for everything else */}
-                {connected
-                  .filter(i => !['slack','sendgrid','resend','playwright'].includes(i.id))
-                  .map(int => (
-                    <motion.div
-                      key={int.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
-                          <Globe className="w-5 h-5 text-teal-400" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white text-sm">{int.name}</p>
-                          <p className="text-xs text-slate-400">{int.description}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs text-teal-400">
-                          <CheckCircle className="w-3.5 h-3.5" /> Connected
-                        </span>
-                        <button
-                          onClick={() => disconnect(int.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
-                          title="Disconnect"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-              </div>
-            ) : (
-              <div className="text-center py-14">
-                <Globe className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                <h3 className="text-base font-semibold text-white mb-2">No integrations connected yet</h3>
-                <p className="text-slate-400 text-sm mb-5">
-                  Head to the Marketplace tab to connect your first integration.
-                </p>
-                <Button onClick={() => setActiveTab('marketplace')}>
-                  <ArrowRight className="w-4 h-4 mr-2" /> Browse Marketplace
-                </Button>
-              </div>
-            )}
+            <BusinessSendGridIntegration />
+            <BusinessResendIntegration />
+            <BusinessBrevoIntegration />
           </div>
         )}
 
