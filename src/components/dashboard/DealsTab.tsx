@@ -568,7 +568,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         </div>
                         <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
                             <ChartContainer className="h-64">
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+                                <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={250}>
                                     <BarChart data={forecastData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                                     <XAxis
@@ -606,7 +606,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         </div>
                         <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
                             <ChartContainer className="h-64">
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+                                <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={250}>
                                     <AreaChart data={trendData}>
                                     <defs>
                                         <linearGradient id="colorWon" x1="0" y1="0" x2="0" y2="1">

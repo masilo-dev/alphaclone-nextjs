@@ -306,6 +306,37 @@ export async function POST(request: Request) {
         return (providerCounts.get(provider.provider) || 0) < provider.dailyLimit;
       });
 
+    const invalidProviderConfigs = providerQueue
+      .filter((provider) => {
+        if (provider.provider === 'gmail' || provider.provider === 'zoho') {
+          return !provider.fromEmail;
+        }
+        return !provider.apiKey || !provider.fromEmail;
+      })
+      .map((provider) => ({
+        provider: provider.provider,
+        missing: {
+          apiKey:
+            provider.provider === 'gmail' || provider.provider === 'zoho'
+              ? false
+              : !provider.apiKey,
+          fromEmail: !provider.fromEmail,
+        },
+      }));
+
+    if (invalidProviderConfigs.length > 0 && invalidProviderConfigs.length === providerQueue.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: 'failed',
+          error: 'Email provider configuration is incomplete. Update API key and sender email in Integrations.',
+          code: 'OUTREACH_PROVIDER_CONFIG_INVALID',
+          invalidProviders: invalidProviderConfigs,
+        },
+        { status: 400 }
+      );
+    }
+
     if (!providerQueue.length) {
       return NextResponse.json({ success: false, status: 'failed', error: 'No provider selected' }, { status: 500 });
     }

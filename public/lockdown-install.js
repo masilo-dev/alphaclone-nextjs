@@ -7,6 +7,9 @@
       s.includes('SES Removing unpermitted intrinsics') ||
       s.includes('Removing unpermitted intrinsics') ||
       s.includes('unpermitted intrinsics') ||
+      s.includes('IndexedDB init error') ||
+      s.includes('wrappedSendMessageCallback') ||
+      s.includes('polyfill.js') ||
       s.includes('lockdown-install.js') ||
       (s.includes('SES') && s.includes('intrinsic')) ||
       s.includes('AlphaClone SES Surface Hardened')
