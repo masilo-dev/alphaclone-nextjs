@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
 
     const resolved = await resolveEmailProviderConfig({
       tenantId,
+      preferredProvider: 'brevo',
       fallbackToEnv: false,
     });
     if (!resolved || resolved.provider !== 'brevo') {

@@ -14,12 +14,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { tenantService } from '@/services/tenancy/TenantService';
+import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 
 export default function SendGridIntegration() {
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [isSaving, setIsSaving] = useState(false);
     const [isDisconnecting, setIsDisconnecting] = useState(false);
@@ -34,28 +34,21 @@ export default function SendGridIntegration() {
     });
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.id && currentTenant?.id) {
             void checkIntegrationStatus();
         }
-    }, [user?.id]);
+    }, [user?.id, currentTenant?.id]);
 
     const checkIntegrationStatus = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setStatus('loading');
         try {
-            const tenantId = tenantService.getCurrentTenantId();
-            const query = supabase
-                .from('integrations')
-                .select('config, enabled')
-                .eq('user_id', user.id)
-                .eq('type', 'sendgrid');
-            const scopedQuery = tenantId ? query.eq('tenant_id', tenantId) : query;
-            const { data, error } = await scopedQuery.maybeSingle();
+            const res = await fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(currentTenant.id)}&provider=sendgrid`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load SendGrid status');
 
-            if (error) throw error;
-
-            if (data?.enabled) {
+            if (data.connected) {
                 const storedApiKey = data.config?.api_key || data.config?.apiKey || '';
                 const storedFromEmail = data.config?.from_email || data.config?.fromEmail || '';
                 const storedFromName = data.config?.from_name || data.config?.fromName || 'AlphaClone Systems';
@@ -77,33 +70,30 @@ export default function SendGridIntegration() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsSaving(true);
         try {
             if (!config.fromEmail) {
                 throw new Error('All fields are required');
             }
-            const tenantId = tenantService.getCurrentTenantId();
             const resolvedApiKey = config.apiKey === '••••••••••••••••' ? savedApiKey : config.apiKey.trim();
             if (!resolvedApiKey) throw new Error('API key is required');
-
-            const { error } = await supabase
-                .from('integrations')
-                .upsert({
-                    user_id: user.id,
-                    tenant_id: tenantId || null,
-                    type: 'sendgrid',
-                    name: 'SendGrid',
-                    enabled: true,
-                    config: {
-                        api_key: resolvedApiKey,
-                        from_email: config.fromEmail,
-                        from_name: config.fromName || 'AlphaClone Systems',
-                    }
-                }, { onConflict: 'user_id,type' });
-
-            if (error) throw error;
+            const res = await fetch('/api/integrations/email-providers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'sendgrid',
+                    apiKey: resolvedApiKey,
+                    fromEmail: config.fromEmail,
+                    fromName: config.fromName || 'AlphaClone Systems',
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to save SendGrid integration');
+            }
             setSavedApiKey(resolvedApiKey);
 
             toast.success('SendGrid account connected successfully');
@@ -117,17 +107,22 @@ export default function SendGridIntegration() {
     };
 
     const handleDisconnect = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsDisconnecting(true);
         try {
-            const { error } = await supabase
-                .from('integrations')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('type', 'sendgrid');
-
-            if (error) throw error;
+            const res = await fetch('/api/integrations/email-providers', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'sendgrid'
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to disconnect');
+            }
 
             setStatus('idle');
             setConfig({ apiKey: '', fromEmail: '', fromName: 'AlphaClone Systems' });
@@ -141,8 +136,7 @@ export default function SendGridIntegration() {
     };
 
     const handleSendTest = async () => {
-        const tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) {
+        if (!currentTenant?.id) {
             toast.error('Select a workspace first');
             return;
         }
@@ -156,7 +150,7 @@ export default function SendGridIntegration() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    tenantId,
+                    tenantId: currentTenant.id,
                     provider: 'sendgrid',
                     to: testRecipient.trim(),
                     subject: 'SendGrid connection test',

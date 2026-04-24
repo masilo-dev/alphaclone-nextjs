@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
 
     const resolved = await resolveEmailProviderConfig({
       tenantId,
+      preferredProvider: 'sendgrid',
       fallbackToEnv: false,
     });
     if (!resolved || resolved.provider !== 'sendgrid') {

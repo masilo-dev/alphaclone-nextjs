@@ -107,10 +107,32 @@ export async function authorizeClient(formData: FormData) {
     .eq('client_id', client_id)
     .single();
 
-  if (!client || !isAllowedRedirectUri(client.redirect_uris || [], normalizedRedirectUri)) {
-    const clientLooksLikeTenantId = UUID_V4_REGEX.test(client_id) && client_id === tenantUser.tenant_id;
-    if (!(clientLooksLikeTenantId && isTrustedPublicRedirectUri(normalizedRedirectUri))) {
+  const clientAllowsRedirect =
+    Boolean(client) && isAllowedRedirectUri(client.redirect_uris || [], normalizedRedirectUri);
+  const clientLooksLikeTenantId = UUID_V4_REGEX.test(client_id) && client_id === tenantUser.tenant_id;
+  const allowTrustedPublicClient = clientLooksLikeTenantId && isTrustedPublicRedirectUri(normalizedRedirectUri);
+
+  if (!clientAllowsRedirect && !allowTrustedPublicClient) {
       return { error: 'Invalid client_id or redirect_uri mismatch' };
+  }
+
+  if (allowTrustedPublicClient && !client) {
+    const generatedSecret = `public_${crypto.randomBytes(16).toString('hex')}`;
+    const { error: trustedClientError } = await supabaseAdmin
+      .from('mcp_oauth_clients')
+      .upsert(
+        {
+          client_id,
+          client_secret: generatedSecret,
+          client_name: 'Trusted Public OAuth Client',
+          redirect_uris: [normalizedRedirectUri],
+        },
+        { onConflict: 'client_id' }
+      );
+
+    if (trustedClientError) {
+      console.error('Error provisioning trusted public client:', trustedClientError);
+      return { error: 'Failed to provision OAuth client' };
     }
   }
 
