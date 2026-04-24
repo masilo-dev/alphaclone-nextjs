@@ -31,6 +31,26 @@ function isTrustedPublicRedirectUri(uri: string): boolean {
   }
 }
 
+function toBase64Url(input: Buffer): string {
+  return input.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function verifyPkce(
+  codeVerifier: string,
+  codeChallenge: string,
+  codeChallengeMethod: string | null | undefined
+): boolean {
+  const method = (codeChallengeMethod || 'S256').toLowerCase();
+  if (method === 'plain') {
+    return codeVerifier === codeChallenge;
+  }
+  if (method === 's256') {
+    const digest = crypto.createHash('sha256').update(codeVerifier).digest();
+    return toBase64Url(digest) === codeChallenge;
+  }
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get('content-type') || '';
@@ -47,7 +67,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'invalid_request', error_description: 'Unsupported content type' }, { status: 400 });
     }
 
-    const { grant_type, client_id, client_secret, code, redirect_uri, refresh_token } = body;
+    const { grant_type, client_id, client_secret, code, redirect_uri, refresh_token, code_verifier } = body;
 
     if (!client_id) {
       return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
@@ -85,6 +105,25 @@ export async function POST(req: NextRequest) {
 
       if (codeError || !authCode || new Date(authCode.expires_at) < new Date()) {
         return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+      }
+
+      if (!code_verifier || typeof code_verifier !== 'string') {
+        return NextResponse.json(
+          { error: 'invalid_request', error_description: 'Missing code_verifier' },
+          { status: 400 }
+        );
+      }
+      if (!authCode.code_challenge || typeof authCode.code_challenge !== 'string') {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'Authorization code missing PKCE challenge' },
+          { status: 400 }
+        );
+      }
+      if (!verifyPkce(code_verifier, authCode.code_challenge, authCode.code_challenge_method)) {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'Invalid code_verifier' },
+          { status: 400 }
+        );
       }
 
       const allowTrustedPublicClient =

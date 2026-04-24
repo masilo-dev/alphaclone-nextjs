@@ -13,7 +13,8 @@ export async function GET() {
     "scopes_supported": [MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL],
     "response_types_supported": ["code"],
     "grant_types_supported": ["authorization_code", "refresh_token"],
-    "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"]
+    "token_endpoint_auth_methods_supported": ["none", "client_secret_basic", "client_secret_post"],
+    "code_challenge_methods_supported": ["S256", "plain"]
   }, {
     headers: {
       'Access-Control-Allow-Origin': '*',
