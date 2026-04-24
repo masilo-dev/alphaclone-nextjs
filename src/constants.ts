@@ -104,8 +104,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     label: 'Acquire and nurture', href: '#', icon: Search,
     subItems: [
       { label: 'Step 1: Find leads', href: '/dashboard/sales-agent?tab=finder', icon: Search },
-      { label: 'Step 2: Capture contacts', href: '/dashboard/crm?stage=customer', icon: Users },
-      { label: 'Step 3: Qualify leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
+      { label: 'Step 2: Capture contacts', href: '/dashboard/contacts', icon: Users },
+      { label: 'Step 3: Qualify leads', href: '/dashboard/leads?source=mcp', icon: TrendingUp },
       { label: 'Step 4: Move to deals', href: '/dashboard/deals', icon: TrendingUp },
       { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
       { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
