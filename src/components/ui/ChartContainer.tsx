@@ -44,12 +44,23 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
 
         // Also check after a short delay (for lazy-loaded tabs)
         const timer = setTimeout(checkSize, 100);
+        const timer2 = setTimeout(checkSize, 350);
+        const timer3 = setTimeout(checkSize, 800);
+
+        let observer: ResizeObserver | null = null;
+        if (typeof window !== 'undefined' && 'ResizeObserver' in window && containerRef.current) {
+            observer = new ResizeObserver(() => checkSize());
+            observer.observe(containerRef.current);
+        }
 
         // Listen for resize events
         window.addEventListener('resize', checkSize);
 
         return () => {
             clearTimeout(timer);
+            clearTimeout(timer2);
+            clearTimeout(timer3);
+            if (observer) observer.disconnect();
             window.removeEventListener('resize', checkSize);
         };
     }, []);

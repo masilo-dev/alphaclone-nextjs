@@ -72,6 +72,8 @@ export class ZohoService {
             .select('config')
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
 
         if (error || !data) return null;
