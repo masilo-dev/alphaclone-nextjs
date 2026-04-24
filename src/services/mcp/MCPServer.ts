@@ -1,5 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { randomUUID } from 'crypto';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
 import {
@@ -22,6 +23,9 @@ import {
   type AnalyzeDocumentInput,
   type PortalEventInput,
 } from '../adapters/businessAdapters';
+import { ZohoMailService } from '../zoho/ZohoMailService';
+import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
+import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import {
   cancelRun,
   executeRun,
@@ -49,6 +53,93 @@ const LINKEDIN_REACTIONS = new Set(['LIKE', 'PRAISE', 'MAYBE', 'EMPATHY', 'INTER
 
 const MCP_GENERIC_OPERATION_ERROR =
   'This action could not be completed right now. Please try again in a few minutes. If the issue continues, contact support.';
+
+const MCP_ERROR_SUGGESTIONS: Record<string, { retryable: boolean; suggested_fix: string; docs_slug: string }> = {
+  VALIDATION_ERROR: {
+    retryable: false,
+    suggested_fix: 'Check required input fields and formats, then retry.',
+    docs_slug: 'mcp-validation-errors',
+  },
+  AUTHORIZATION_ERROR: {
+    retryable: false,
+    suggested_fix: 'Reconnect MCP using the workspace URL and verify tenant/user access.',
+    docs_slug: 'mcp-auth-errors',
+  },
+  NOT_FOUND: {
+    retryable: false,
+    suggested_fix: 'Fetch the latest IDs with list/search tools and retry using a valid ID.',
+    docs_slug: 'mcp-not-found',
+  },
+  EXTERNAL_PROVIDER_ERROR: {
+    retryable: true,
+    suggested_fix: 'Check provider configuration and API key, then retry.',
+    docs_slug: 'mcp-provider-errors',
+  },
+  INTERNAL_ERROR: {
+    retryable: true,
+    suggested_fix: 'Retry in a few minutes. If it persists, contact support with trace_id.',
+    docs_slug: 'mcp-internal-errors',
+  },
+};
+
+function safeJsonParse(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+function inferErrorCode(error: unknown): string {
+  const msg = String(error instanceof Error ? error.message : error || '').toLowerCase();
+  if (msg.includes('required') || msg.includes('must be') || msg.includes('invalid')) return 'VALIDATION_ERROR';
+  if (msg.includes('does not match this mcp connection') || msg.includes('unauthorized') || msg.includes('forbidden')) return 'AUTHORIZATION_ERROR';
+  if (msg.includes('not found') || msg.includes('unknown tool')) return 'NOT_FOUND';
+  if (msg.includes('sendgrid') || msg.includes('resend') || msg.includes('brevo') || msg.includes('zoho')) return 'EXTERNAL_PROVIDER_ERROR';
+  return 'INTERNAL_ERROR';
+}
+
+function wrapMcpSuccess(tool: string, traceId: string, result: any, message = 'Tool executed successfully.') {
+  const rawText = result?.content?.[0]?.text;
+  const data = typeof rawText === 'string' ? safeJsonParse(rawText) : result;
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(
+          {
+            success: true,
+            code: 'OK',
+            message,
+            data,
+            meta: { trace_id: traceId, tool },
+          },
+          null,
+          2
+        ),
+      },
+    ],
+  };
+}
+
+function toMcpErrorPayload(tool: string, traceId: string, error: unknown) {
+  const errorCode = inferErrorCode(error);
+  const defaults = MCP_ERROR_SUGGESTIONS[errorCode] || MCP_ERROR_SUGGESTIONS.INTERNAL_ERROR;
+  const message = error instanceof Error ? error.message : MCP_GENERIC_OPERATION_ERROR;
+  return {
+    success: false,
+    code: errorCode,
+    message,
+    data: null,
+    meta: {
+      trace_id: traceId,
+      tool,
+      retryable: defaults.retryable,
+      suggested_fix: defaults.suggested_fix,
+      docs_slug: defaults.docs_slug,
+    },
+  };
+}
 
 function mcpStructuredError(code: string, message: string, details?: Record<string, unknown>): Error {
   const payload = details ? { code, message, details } : { code, message };
@@ -286,6 +377,26 @@ function hasCountryCode(phone: unknown): boolean {
   if (phone == null) return false;
   const normalized = String(phone).trim();
   return /^\+[1-9]\d{6,14}$/.test(normalized);
+}
+
+async function enqueueMcpEvent(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  userId: string | null,
+  eventName: string,
+  payload: Record<string, unknown>
+) {
+  await supabaseAdmin
+    .from('mcp_event_queue')
+    .insert({
+      tenant_id: tenantId,
+      user_id: userId,
+      event_name: eventName,
+      payload,
+      status: 'pending',
+      attempts: 0,
+      available_at: new Date().toISOString(),
+    });
 }
 
 class AlphaCloneMCPServer {
@@ -1242,6 +1353,269 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'get_client_email_history',
+          description: 'Get outbound/inbound email history for a specific client, including Zoho-synced unified messages and outreach logs.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              client_id: { type: 'string', description: 'Client UUID from get_clients.' },
+              client_email: { type: 'string', description: 'Optional email fallback when client_id is unknown.' },
+              limit: { type: 'number', description: 'Max records (default 50, max 200).' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'get_zoho_mail_messages',
+          description: 'Read Zoho Mail messages for the connected user. Supports folder listing, folder message fetch, and search.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              user_id: { type: 'string', description: 'Optional user UUID. Defaults to MCP connection user.' },
+              folder_id: { type: 'string', description: 'Zoho folderId. Omit to return folders.' },
+              search_query: { type: 'string', description: 'If provided, perform Zoho mailbox search.' },
+              limit: { type: 'number', description: 'Max records (default 20, max 100).' },
+              start: { type: 'number', description: 'Zoho pagination start index (default 1).' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'send_transactional_email',
+          description: 'Send a transactional email using the caller user scoped provider configuration.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              user_id: { type: 'string' },
+              to: { type: 'string' },
+              subject: { type: 'string' },
+              html: { type: 'string' },
+              text: { type: 'string' },
+              from_name: { type: 'string' },
+            },
+            required: ['to', 'subject'],
+          },
+        },
+        {
+          name: 'get_email_campaign_stats',
+          description: 'Get outreach delivery stats by provider and status for a date range.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              user_id: { type: 'string' },
+              from_date: { type: 'string', description: 'ISO date/datetime lower bound.' },
+              to_date: { type: 'string', description: 'ISO date/datetime upper bound.' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'get_client_history',
+          description: 'Fetch a full client history: profile, related leads, outreach logs, and recent unified messages.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              client_id: { type: 'string' },
+              limit: { type: 'number' },
+            },
+            required: ['client_id'],
+          },
+        },
+        {
+          name: 'segment_clients_by_criteria',
+          description: 'Filter clients by advanced criteria for targeted automations.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              industry: { type: 'string' },
+              location: { type: 'string' },
+              sales_stage: { type: 'string' },
+              min_value: { type: 'number' },
+              max_value: { type: 'number' },
+              has_email: { type: 'boolean' },
+              has_phone: { type: 'boolean' },
+              limit: { type: 'number' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'update_client_metadata',
+          description: 'Merge metadata fields into a client custom_fields object.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              client_id: { type: 'string' },
+              metadata: { type: 'object' },
+            },
+            required: ['client_id', 'metadata'],
+          },
+        },
+        {
+          name: 'add_task_dependency',
+          description: 'Declare that one task depends on completion of another task.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              task_id: { type: 'string' },
+              depends_on_task_id: { type: 'string' },
+            },
+            required: ['task_id', 'depends_on_task_id'],
+          },
+        },
+        {
+          name: 'set_task_recurrence',
+          description: 'Set recurrence schedule for a task.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              task_id: { type: 'string' },
+              frequency: { type: 'string', description: 'Daily | Weekly | Monthly | Yearly' },
+              interval: { type: 'number' },
+              days_of_week: { type: 'array', items: { type: 'number' } },
+              day_of_month: { type: 'number' },
+              end_date: { type: 'string' },
+            },
+            required: ['task_id', 'frequency'],
+          },
+        },
+        {
+          name: 'get_project_milestones',
+          description: 'Get milestones linked to a project.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              project_id: { type: 'string' },
+            },
+            required: ['project_id'],
+          },
+        },
+        {
+          name: 'get_invoice_line_items',
+          description: 'Get line items from an invoice for detailed billing analysis.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              invoice_id: { type: 'string' },
+            },
+            required: ['invoice_id'],
+          },
+        },
+        {
+          name: 'reconcile_payment',
+          description: 'Mark an invoice as paid and attach reconciliation metadata.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              invoice_id: { type: 'string' },
+              amount: { type: 'number' },
+              paid_at: { type: 'string' },
+              payment_ref: { type: 'string' },
+            },
+            required: ['invoice_id'],
+          },
+        },
+        {
+          name: 'generate_expense_report',
+          description: 'Generate an expense summary report grouped by category and status.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              from_date: { type: 'string' },
+              to_date: { type: 'string' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'subscribe_events',
+          description: 'Subscribe MCP automations to business events.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              event_name: { type: 'string' },
+              target: { type: 'string', description: 'playbook or webhook target identifier.' },
+              config: { type: 'object' },
+            },
+            required: ['event_name', 'target'],
+          },
+        },
+        {
+          name: 'list_event_subscriptions',
+          description: 'List active MCP event subscriptions.',
+          inputSchema: {
+            type: 'object',
+            properties: { tenant_id: { type: 'string' } },
+            required: [],
+          },
+        },
+        {
+          name: 'unsubscribe_event',
+          description: 'Disable an event subscription.',
+          inputSchema: {
+            type: 'object',
+            properties: { tenant_id: { type: 'string' }, subscription_id: { type: 'string' } },
+            required: ['subscription_id'],
+          },
+        },
+        {
+          name: 'update_client_status_batch',
+          description: 'Batch update client sales_stage with dry_run safety.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              client_ids: { type: 'array', items: { type: 'string' } },
+              sales_stage: { type: 'string' },
+              dry_run: { type: 'boolean' },
+            },
+            required: ['client_ids', 'sales_stage'],
+          },
+        },
+        {
+          name: 'create_tasks_batch',
+          description: 'Batch create tasks with per-item results and dry_run option.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              tasks: { type: 'array', items: { type: 'object' } },
+              dry_run: { type: 'boolean' },
+            },
+            required: ['tasks'],
+          },
+        },
+        {
+          name: 'send_bulk_email_campaign',
+          description: 'Batch send transactional emails to client list with dry_run support.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              client_ids: { type: 'array', items: { type: 'string' } },
+              subject: { type: 'string' },
+              html: { type: 'string' },
+              text: { type: 'string' },
+              dry_run: { type: 'boolean' },
+            },
+            required: ['client_ids', 'subject'],
+          },
+        },
+        {
           name: 'get_quotes',
           description: 'Read-only: List quotes and proposals with their statuses.',
           inputSchema: {
@@ -1513,6 +1887,7 @@ class AlphaCloneMCPServer {
       const { name, arguments: args } = (request as {
         params: { name: string; arguments?: Record<string, unknown> };
       }).params;
+      const traceId = randomUUID();
       const supabaseAdmin = createSupabaseAdminClient();
       const supabase = supabaseAdmin;
       let result: any;
@@ -1523,16 +1898,29 @@ class AlphaCloneMCPServer {
         case 'get_clients': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, limit = 20, offset = 0 } = a;
+          const { status, industry, location, min_value, max_value, limit = 20, offset = 0, cursor, sort_by, sort_order, fields } = a;
+          const cursorOffset =
+            typeof cursor === 'string' && cursor.trim()
+              ? Number(Buffer.from(cursor, 'base64').toString('utf8')) || 0
+              : 0;
           const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
-          const pageOffset = Math.max(Number(offset) || 0, 0);
+          const pageOffset = Math.max(Number(offset) || cursorOffset || 0, 0);
+          const selectable = typeof fields === 'string' && fields.trim()
+            ? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')
+            : 'id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at';
+          const orderBy = ['created_at', 'value', 'sales_stage', 'name'].includes(String(sort_by || '')) ? String(sort_by) : 'created_at';
+          const asc = String(sort_order || 'desc').toLowerCase() === 'asc';
           let query = supabaseAdmin
             .from('business_clients')
-            .select('id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at')
+            .select(selectable)
             .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
+            .order(orderBy, { ascending: asc })
             .range(pageOffset, pageOffset + pageSize - 1);
           if (status) query = query.eq('sales_stage', status);
+          if (industry) query = query.ilike('industry', `%${String(industry).trim()}%`);
+          if (location) query = query.ilike('location', `%${String(location).trim()}%`);
+          if (min_value != null) query = query.gte('value', Number(min_value) || 0);
+          if (max_value != null) query = query.lte('value', Number(max_value) || 0);
           let data: any;
           let error: any;
           ({ data, error } = await query);
@@ -1567,9 +1955,11 @@ class AlphaCloneMCPServer {
                     pagination: {
                       limit: pageSize,
                       offset: pageOffset,
+                      cursor: Buffer.from(String(pageOffset)).toString('base64'),
                       returned: rows.length,
                       has_more: rows.length === pageSize,
                       next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
+                      next_cursor: rows.length === pageSize ? Buffer.from(String(pageOffset + pageSize)).toString('base64') : null,
                     },
                     contacts_missing_country_code_count: missingCountryCode,
                   },
@@ -1748,19 +2138,28 @@ class AlphaCloneMCPServer {
         case 'get_leads': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, stage, limit = 20, offset = 0 } = a;
+          const { status, stage, source, assigned_to, limit = 20, offset = 0, cursor, sort_by, sort_order, fields } = a;
+          const cursorOffset =
+            typeof cursor === 'string' && cursor.trim()
+              ? Number(Buffer.from(cursor, 'base64').toString('utf8')) || 0
+              : 0;
           const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
-          const pageOffset = Math.max(Number(offset) || 0, 0);
+          const pageOffset = Math.max(Number(offset) || cursorOffset || 0, 0);
+          const selectable = typeof fields === 'string' && fields.trim()
+            ? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')
+            : 'id, business_name, email, phone, industry, location, status, stage, source, owner_id, notes, created_at';
+          const orderBy = ['created_at', 'status', 'stage', 'business_name'].includes(String(sort_by || '')) ? String(sort_by) : 'created_at';
+          const asc = String(sort_order || 'desc').toLowerCase() === 'asc';
           let query = supabaseAdmin
             .from('leads')
-            .select(
-              'id, business_name, email, phone, industry, location, status, stage, source, notes, created_at'
-            )
+            .select(selectable)
             .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
+            .order(orderBy, { ascending: asc })
             .range(pageOffset, pageOffset + pageSize - 1);
           if (status) query = query.eq('status', status);
           if (stage) query = query.eq('stage', stage);
+          if (source) query = query.ilike('source', `%${String(source).trim()}%`);
+          if (assigned_to) query = query.eq('owner_id', String(assigned_to).trim());
           let data: any;
           let error: any;
           ({ data, error } = await query);
@@ -1796,9 +2195,11 @@ class AlphaCloneMCPServer {
                     pagination: {
                       limit: pageSize,
                       offset: pageOffset,
+                      cursor: Buffer.from(String(pageOffset)).toString('base64'),
                       returned: rows.length,
                       has_more: rows.length === pageSize,
                       next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
+                      next_cursor: rows.length === pageSize ? Buffer.from(String(pageOffset + pageSize)).toString('base64') : null,
                     },
                     contacts_missing_country_code_count: missingCountryCode,
                   },
@@ -2080,6 +2481,13 @@ class AlphaCloneMCPServer {
           }
 
           if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
+          await enqueueMcpEvent(
+            supabaseAdmin,
+            tenant_id,
+            owner_id,
+            'on_new_lead_created',
+            { lead_id: data?.id || null, business_name: data?.business_name || primaryName, source: resolvedSource }
+          );
           result = {
             content: [
               {
@@ -2237,6 +2645,13 @@ class AlphaCloneMCPServer {
             .select('id, name, value, stage, description, updated_at')
             .single();
           if (error) throw supabaseErrorToMcpClientError('update_deal', error.message);
+          await enqueueMcpEvent(
+            supabaseAdmin,
+            tenant_id,
+            this.ctx?.userId || null,
+            'on_deal_stage_changed',
+            { deal_id: data?.id || deal_id, stage: data?.stage || update.stage || null }
+          );
           result = { content: [{ type: 'text', text: `Deal updated: ${JSON.stringify(data)}` }] };
           break;
         }
@@ -2586,18 +3001,69 @@ class AlphaCloneMCPServer {
         case 'get_invoices': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, client_id, limit = 20 } = a;
+          const {
+            status,
+            client_id,
+            from_due_date,
+            to_due_date,
+            min_total,
+            max_total,
+            limit = 20,
+            offset = 0,
+            cursor,
+            sort_by,
+            sort_order,
+            fields,
+          } = a;
+          const cursorOffset =
+            typeof cursor === 'string' && cursor.trim()
+              ? Number(Buffer.from(cursor, 'base64').toString('utf8')) || 0
+              : 0;
+          const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
+          const pageOffset = Math.max(Number(offset) || cursorOffset || 0, 0);
+          const selectable = typeof fields === 'string' && fields.trim()
+            ? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')
+            : 'id, invoice_number, client_id, status, subtotal, tax, total, issue_date, due_date, sent_at, paid_at, created_at, updated_at';
+          const orderBy = ['created_at', 'due_date', 'total', 'status'].includes(String(sort_by || '')) ? String(sort_by) : 'created_at';
+          const asc = String(sort_order || 'desc').toLowerCase() === 'asc';
           let query = supabaseAdmin
             .from('business_invoices')
-            .select('id, invoice_number, client_id, status, subtotal, tax, total, issue_date, due_date, sent_at, paid_at, created_at, updated_at')
+            .select(selectable)
             .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
-            .limit(Math.min(Number(limit) || 20, 100));
+            .order(orderBy, { ascending: asc })
+            .range(pageOffset, pageOffset + pageSize - 1);
           if (status) query = query.eq('status', status);
           if (client_id) query = query.eq('client_id', client_id);
+          if (from_due_date) query = query.gte('due_date', String(from_due_date));
+          if (to_due_date) query = query.lte('due_date', String(to_due_date));
+          if (min_total != null) query = query.gte('total', Number(min_total) || 0);
+          if (max_total != null) query = query.lte('total', Number(max_total) || 0);
           const { data, error } = await query;
           if (error) throw supabaseErrorToMcpClientError('get_invoices', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          const rows = Array.isArray(data) ? data : [];
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    items: rows,
+                    pagination: {
+                      limit: pageSize,
+                      offset: pageOffset,
+                      cursor: Buffer.from(String(pageOffset)).toString('base64'),
+                      returned: rows.length,
+                      has_more: rows.length === pageSize,
+                      next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
+                      next_cursor: rows.length === pageSize ? Buffer.from(String(pageOffset + pageSize)).toString('base64') : null,
+                    },
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
           break;
         }
 
@@ -2634,6 +3100,15 @@ class AlphaCloneMCPServer {
             .select('id, invoice_number, status, total, due_date, sent_at, paid_at, updated_at')
             .single();
           if (error) throw supabaseErrorToMcpClientError('update_invoice', error.message);
+          if (String(data?.status || '').toLowerCase() === 'paid') {
+            await enqueueMcpEvent(
+              supabaseAdmin,
+              tenant_id,
+              this.ctx?.userId || null,
+              'on_invoice_paid',
+              { invoice_id: data?.id || invoice_id, status: data?.status || null }
+            );
+          }
           result = { content: [{ type: 'text', text: `Invoice updated: ${JSON.stringify(data)}` }] };
           break;
         }
@@ -4127,6 +4602,453 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'send_transactional_email': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const to = String(a.to || '').trim();
+          const subject = String(a.subject || '').trim();
+          if (!to || !subject) throw new Error('to and subject are required');
+          const resolved = await resolveEmailProviderConfig({ tenantId: tenant_id, preferredUserId: user_id, fallbackToEnv: false });
+          if (!resolved?.provider || !resolved?.apiKey) {
+            throw new Error('No provider configured for this user. Connect Resend/SendGrid/Brevo first.');
+          }
+          const sendResult = await sendWithProviderSdk(resolved.provider as EmailProvider, {
+            apiKey: resolved.apiKey,
+            fromEmail: resolved.fromEmail || String(a.from_email || ''),
+            fromName: String(a.from_name || 'AlphaClone Systems'),
+            to,
+            subject,
+            html: a.html ? String(a.html) : undefined,
+            text: a.text ? String(a.text) : undefined,
+          });
+          if (!sendResult.ok) throw new Error(sendResult.error || 'Transactional email failed');
+          result = { content: [{ type: 'text', text: JSON.stringify({ provider: sendResult.provider, id: sendResult.emailId }, null, 2) }] };
+          break;
+        }
+
+        case 'get_email_campaign_stats': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = a.user_id ? this.requireProfileUser(a) : null;
+          const fromDate = typeof a.from_date === 'string' ? a.from_date : null;
+          const toDate = typeof a.to_date === 'string' ? a.to_date : null;
+          let query = supabaseAdmin
+            .from('lead_outreach_log')
+            .select('provider,status,created_at')
+            .eq('tenant_id', tenant_id)
+            .limit(5000);
+          if (user_id) query = query.eq('user_id', user_id);
+          if (fromDate) query = query.gte('created_at', fromDate);
+          if (toDate) query = query.lte('created_at', toDate);
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_email_campaign_stats', error.message);
+          const rows = (data || []) as Array<Record<string, unknown>>;
+          const byProvider: Record<string, number> = {};
+          const byStatus: Record<string, number> = {};
+          rows.forEach((r) => {
+            const p = String(r.provider || 'unknown');
+            const s = String(r.status || 'unknown');
+            byProvider[p] = (byProvider[p] || 0) + 1;
+            byStatus[s] = (byStatus[s] || 0) + 1;
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ total: rows.length, by_provider: byProvider, by_status: byStatus }, null, 2) }] };
+          break;
+        }
+
+        case 'get_client_history': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const client_id = String(a.client_id || '').trim();
+          const limit = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
+          if (!isUuidString(client_id)) throw new Error('client_id must be a valid UUID');
+          const { data: client, error: clientError } = await supabaseAdmin
+            .from('business_clients')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .eq('id', client_id)
+            .maybeSingle();
+          if (clientError) throw supabaseErrorToMcpClientError('get_client_history', clientError.message);
+          const email = String(client?.email || '').trim().toLowerCase();
+          const likeEmail = `%${email}%`;
+          const [leadsRes, outreachRes, unifiedRes] = await Promise.all([
+            supabaseAdmin.from('leads').select('id,business_name,status,stage,source,created_at').eq('tenant_id', tenant_id).or(`email.ilike.${likeEmail},business_name.ilike.%${String(client?.name || '')}%`).limit(limit),
+            supabaseAdmin.from('lead_outreach_log').select('id,subject,provider,status,sent_at,opened_at,clicked_at,created_at').eq('tenant_id', tenant_id).ilike('lead_email', likeEmail).limit(limit),
+            supabaseAdmin.from('unified_messages').select('id,direction,subject,from_address,to_address,sent_at,received_at,created_at').eq('tenant_id', tenant_id).eq('channel','email').or(`from_address.ilike.${likeEmail},to_address.ilike.${likeEmail}`).limit(limit),
+          ]);
+          if (leadsRes.error) throw supabaseErrorToMcpClientError('get_client_history', leadsRes.error.message);
+          if (outreachRes.error) throw supabaseErrorToMcpClientError('get_client_history', outreachRes.error.message);
+          if (unifiedRes.error) throw supabaseErrorToMcpClientError('get_client_history', unifiedRes.error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ client, leads: leadsRes.data || [], outreach: outreachRes.data || [], email_messages: unifiedRes.data || [] }, null, 2) }] };
+          break;
+        }
+
+        case 'segment_clients_by_criteria': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const limit = Math.min(Math.max(Number(a.limit) || 200, 1), 1000);
+          let query = supabaseAdmin.from('business_clients').select('id,name,email,phone,industry,location,sales_stage,value,created_at').eq('tenant_id', tenant_id).limit(limit);
+          if (a.industry) query = query.ilike('industry', `%${String(a.industry).trim()}%`);
+          if (a.location) query = query.ilike('location', `%${String(a.location).trim()}%`);
+          if (a.sales_stage) query = query.eq('sales_stage', String(a.sales_stage).trim());
+          if (a.min_value != null) query = query.gte('value', Number(a.min_value) || 0);
+          if (a.max_value != null) query = query.lte('value', Number(a.max_value) || 0);
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('segment_clients_by_criteria', error.message);
+          const rows = (data || []).filter((r: any) => (a.has_email === undefined || !!r.email === Boolean(a.has_email)) && (a.has_phone === undefined || !!r.phone === Boolean(a.has_phone)));
+          result = { content: [{ type: 'text', text: JSON.stringify({ count: rows.length, items: rows }, null, 2) }] };
+          break;
+        }
+
+        case 'update_client_metadata': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const client_id = String(a.client_id || '').trim();
+          const metadata = a.metadata && typeof a.metadata === 'object' ? (a.metadata as Record<string, unknown>) : null;
+          if (!isUuidString(client_id)) throw new Error('client_id must be a valid UUID');
+          if (!metadata) throw new Error('metadata must be an object');
+          const { data: existing, error: e1 } = await supabaseAdmin.from('business_clients').select('custom_fields').eq('tenant_id', tenant_id).eq('id', client_id).maybeSingle();
+          if (e1) throw supabaseErrorToMcpClientError('update_client_metadata', e1.message);
+          const merged = { ...(existing?.custom_fields || {}), ...metadata };
+          const { data, error } = await supabaseAdmin.from('business_clients').update({ custom_fields: merged }).eq('tenant_id', tenant_id).eq('id', client_id).select('id,custom_fields,updated_at').single();
+          if (error) throw supabaseErrorToMcpClientError('update_client_metadata', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'add_task_dependency': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const task_id = String(a.task_id || '').trim();
+          const depends_on_task_id = String(a.depends_on_task_id || '').trim();
+          if (!isUuidString(task_id) || !isUuidString(depends_on_task_id)) throw new Error('task_id and depends_on_task_id must be UUIDs');
+          const { data, error } = await supabaseAdmin.from('task_dependencies').insert({ tenant_id, task_id, depends_on_task_id }).select('*').single();
+          if (error) throw supabaseErrorToMcpClientError('add_task_dependency', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'set_task_recurrence': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const task_id = String(a.task_id || '').trim();
+          if (!isUuidString(task_id)) throw new Error('task_id must be a valid UUID');
+          const payload = {
+            frequency: String(a.frequency || ''),
+            interval: Math.max(Number(a.interval) || 1, 1),
+            days_of_week: Array.isArray(a.days_of_week) ? a.days_of_week : null,
+            day_of_month: a.day_of_month != null ? Number(a.day_of_month) : null,
+            end_date: a.end_date ? String(a.end_date) : null,
+          };
+          const { data, error } = await supabaseAdmin
+            .from('task_recurrence')
+            .upsert({ tenant_id, task_id, ...payload }, { onConflict: 'task_id' })
+            .select('*')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('set_task_recurrence', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'get_project_milestones': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const project_id = String(a.project_id || '').trim();
+          if (!isUuidString(project_id)) throw new Error('project_id must be a valid UUID');
+          const { data, error } = await supabaseAdmin.from('project_milestones').select('*').eq('tenant_id', tenant_id).eq('project_id', project_id).order('due_date', { ascending: true });
+          if (error) throw supabaseErrorToMcpClientError('get_project_milestones', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          break;
+        }
+
+        case 'get_invoice_line_items': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const invoice_id = String(a.invoice_id || '').trim();
+          if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
+          const { data, error } = await supabaseAdmin.from('invoice_line_items').select('*').eq('tenant_id', tenant_id).eq('invoice_id', invoice_id).order('position', { ascending: true });
+          if (error) throw supabaseErrorToMcpClientError('get_invoice_line_items', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          break;
+        }
+
+        case 'reconcile_payment': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const invoice_id = String(a.invoice_id || '').trim();
+          if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
+          const patch: Record<string, unknown> = { status: 'paid', paid_at: a.paid_at ? String(a.paid_at) : new Date().toISOString() };
+          if (a.amount != null) patch.paid_amount = Number(a.amount) || 0;
+          if (a.payment_ref) patch.payment_reference = String(a.payment_ref);
+          const { data, error } = await supabaseAdmin.from('invoices').update(patch).eq('tenant_id', tenant_id).eq('id', invoice_id).select('id,status,paid_at,updated_at').single();
+          if (error) throw supabaseErrorToMcpClientError('reconcile_payment', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'generate_expense_report': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          let query = supabaseAdmin.from('expenses').select('id,category,status,amount,date,created_at').eq('tenant_id', tenant_id).limit(5000);
+          if (a.from_date) query = query.gte('date', String(a.from_date));
+          if (a.to_date) query = query.lte('date', String(a.to_date));
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('generate_expense_report', error.message);
+          const rows = (data || []) as Array<Record<string, any>>;
+          const byCategory: Record<string, number> = {};
+          const byStatus: Record<string, number> = {};
+          let total = 0;
+          rows.forEach((r) => {
+            const cat = String(r.category || 'uncategorized');
+            const st = String(r.status || 'unknown');
+            const amount = Number(r.amount || 0);
+            byCategory[cat] = (byCategory[cat] || 0) + amount;
+            byStatus[st] = (byStatus[st] || 0) + amount;
+            total += amount;
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ total, count: rows.length, by_category: byCategory, by_status: byStatus }, null, 2) }] };
+          break;
+        }
+
+        case 'subscribe_events': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const event_name = String(a.event_name || '').trim();
+          const target = String(a.target || '').trim();
+          if (!event_name || !target) throw new Error('event_name and target are required');
+          const { data, error } = await supabaseAdmin
+            .from('mcp_event_subscriptions')
+            .insert({ tenant_id, user_id, event_name, target, config: a.config && typeof a.config === 'object' ? a.config : {}, is_active: true })
+            .select('*')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('subscribe_events', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'list_event_subscriptions': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { data, error } = await supabaseAdmin
+            .from('mcp_event_subscriptions')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .order('created_at', { ascending: false })
+            .limit(500);
+          if (error) throw supabaseErrorToMcpClientError('list_event_subscriptions', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          break;
+        }
+
+        case 'unsubscribe_event': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const subscription_id = String(a.subscription_id || '').trim();
+          if (!isUuidString(subscription_id)) throw new Error('subscription_id must be a valid UUID');
+          const { data, error } = await supabaseAdmin
+            .from('mcp_event_subscriptions')
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('id', subscription_id)
+            .select('*')
+            .single();
+          if (error) throw supabaseErrorToMcpClientError('unsubscribe_event', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'update_client_status_batch': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const dryRun = a.dry_run !== false;
+          const sales_stage = String(a.sales_stage || '').trim();
+          const ids = Array.isArray(a.client_ids) ? a.client_ids.map((id) => String(id || '').trim()).filter((id) => isUuidString(id)) : [];
+          if (!sales_stage || ids.length === 0) throw new Error('client_ids and sales_stage are required');
+          const { data: rows, error: fetchErr } = await supabaseAdmin
+            .from('business_clients')
+            .select('id,name,sales_stage')
+            .eq('tenant_id', tenant_id)
+            .in('id', ids);
+          if (fetchErr) throw supabaseErrorToMcpClientError('update_client_status_batch', fetchErr.message);
+          const items = (rows || []).map((row: any) => ({ id: row.id, name: row.name, from: row.sales_stage, to: sales_stage, will_update: row.sales_stage !== sales_stage }));
+          if (!dryRun) {
+            const { error } = await supabaseAdmin.from('business_clients').update({ sales_stage }).eq('tenant_id', tenant_id).in('id', ids);
+            if (error) throw supabaseErrorToMcpClientError('update_client_status_batch', error.message);
+          }
+          result = { content: [{ type: 'text', text: JSON.stringify({ dry_run: dryRun, total: ids.length, items }, null, 2) }] };
+          break;
+        }
+
+        case 'create_tasks_batch': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const dryRun = a.dry_run !== false;
+          const tasks = Array.isArray(a.tasks) ? a.tasks : [];
+          if (!tasks.length) throw new Error('tasks array is required');
+          const normalized = tasks.map((t: any, idx: number) => ({
+            index: idx,
+            title: String(t?.title || '').trim(),
+            description: t?.description ? String(t.description) : null,
+            priority: String(t?.priority || 'medium'),
+            due_date: t?.due_date ? String(t.due_date) : null,
+            assigned_to: t?.assigned_to ? String(t.assigned_to) : null,
+          }));
+          const invalid = normalized.filter((t) => !t.title);
+          if (invalid.length) throw new Error('Every task must include title');
+          let created: any[] = [];
+          if (!dryRun) {
+            const { data, error } = await supabaseAdmin.from('tasks').insert(normalized.map((t) => ({
+              tenant_id,
+              title: t.title,
+              description: t.description,
+              priority: t.priority,
+              due_date: t.due_date,
+              assigned_to: t.assigned_to,
+              status: 'todo',
+            }))).select('id,title,status,priority,due_date,assigned_to');
+            if (error) throw supabaseErrorToMcpClientError('create_tasks_batch', error.message);
+            created = data || [];
+          }
+          result = { content: [{ type: 'text', text: JSON.stringify({ dry_run: dryRun, requested: normalized.length, created_count: created.length, created, items: normalized }, null, 2) }] };
+          break;
+        }
+
+        case 'send_bulk_email_campaign': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const dryRun = a.dry_run !== false;
+          const clientIds = Array.isArray(a.client_ids) ? a.client_ids.map((id) => String(id || '').trim()).filter((id) => isUuidString(id)) : [];
+          const subject = String(a.subject || '').trim();
+          if (!clientIds.length || !subject) throw new Error('client_ids and subject are required');
+          const { data: clients, error: clientsErr } = await supabaseAdmin
+            .from('business_clients')
+            .select('id,name,email')
+            .eq('tenant_id', tenant_id)
+            .in('id', clientIds);
+          if (clientsErr) throw supabaseErrorToMcpClientError('send_bulk_email_campaign', clientsErr.message);
+          const targets = (clients || []).filter((c: any) => !!c.email);
+          const itemResults: Array<Record<string, unknown>> = targets.map((t: any) => ({ client_id: t.id, email: t.email, status: dryRun ? 'dry_run' : 'queued' }));
+          if (!dryRun) {
+            const resolved = await resolveEmailProviderConfig({ tenantId: tenant_id, preferredUserId: user_id, fallbackToEnv: false });
+            if (!resolved?.provider || !resolved?.apiKey) throw new Error('No provider configured for this user. Connect provider first.');
+            for (const target of targets) {
+              const sendResult = await sendWithProviderSdk(resolved.provider as EmailProvider, {
+                apiKey: resolved.apiKey,
+                fromEmail: resolved.fromEmail || '',
+                fromName: 'AlphaClone Systems',
+                to: String(target.email),
+                subject,
+                html: a.html ? String(a.html) : undefined,
+                text: a.text ? String(a.text) : undefined,
+              });
+              if (!sendResult.ok) {
+                itemResults.push({ client_id: target.id, email: target.email, status: 'failed', error: sendResult.error || 'send_failed' });
+              }
+            }
+          }
+          result = { content: [{ type: 'text', text: JSON.stringify({ dry_run: dryRun, requested: clientIds.length, processed: itemResults.length, items: itemResults }, null, 2) }] };
+          break;
+        }
+
+        case 'get_client_email_history': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const limit = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
+          const clientId = typeof a.client_id === 'string' ? a.client_id.trim() : '';
+          const directEmail = typeof a.client_email === 'string' ? a.client_email.trim().toLowerCase() : '';
+
+          let resolvedEmail = directEmail;
+          if (!resolvedEmail && clientId) {
+            if (!isUuidString(clientId)) {
+              throw new Error('client_id must be a valid UUID from get_clients');
+            }
+            const { data: clientRow, error: clientError } = await supabaseAdmin
+              .from('business_clients')
+              .select('id, name, email')
+              .eq('tenant_id', tenant_id)
+              .eq('id', clientId)
+              .maybeSingle();
+            if (clientError) throw supabaseErrorToMcpClientError('get_client_email_history', clientError.message);
+            resolvedEmail = String(clientRow?.email || '').trim().toLowerCase();
+          }
+
+          if (!resolvedEmail) {
+            throw new Error('Provide client_id with an email on record, or pass client_email.');
+          }
+
+          const likeEmail = `%${resolvedEmail}%`;
+          const [unifiedRes, outreachRes] = await Promise.all([
+            supabaseAdmin
+              .from('unified_messages')
+              .select('id, source, channel, direction, subject, body, html_body, from_address, to_address, sent_at, received_at, created_at, metadata')
+              .eq('tenant_id', tenant_id)
+              .eq('channel', 'email')
+              .or(`from_address.ilike.${likeEmail},to_address.ilike.${likeEmail}`)
+              .order('created_at', { ascending: false })
+              .limit(limit),
+            supabaseAdmin
+              .from('lead_outreach_log')
+              .select('id, user_id, lead_name, lead_email, subject, body_html, provider, provider_message_id, tracking_id, status, sent_at, opened_at, clicked_at, error_message, created_at')
+              .eq('tenant_id', tenant_id)
+              .ilike('lead_email', likeEmail)
+              .order('created_at', { ascending: false })
+              .limit(limit),
+          ]);
+
+          if (unifiedRes.error) throw supabaseErrorToMcpClientError('get_client_email_history', unifiedRes.error.message);
+          if (outreachRes.error) throw supabaseErrorToMcpClientError('get_client_email_history', outreachRes.error.message);
+
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    client_email: resolvedEmail,
+                    unified_email_messages: unifiedRes.data || [],
+                    outreach_log_messages: outreachRes.data || [],
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+          break;
+        }
+
+        case 'get_zoho_mail_messages': {
+          const a = args as Record<string, any>;
+          this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const folderId = typeof a.folder_id === 'string' ? a.folder_id.trim() : '';
+          const searchQuery = typeof a.search_query === 'string' ? a.search_query.trim() : '';
+          const limit = Math.min(Math.max(Number(a.limit) || 20, 1), 100);
+          const start = Math.max(Number(a.start) || 1, 1);
+
+          const zoho = new ZohoMailService(user_id);
+          let payload: Record<string, unknown>;
+          if (searchQuery) {
+            const messages = await zoho.searchMessages(searchQuery);
+            payload = { mode: 'search', query: searchQuery, messages: messages.slice(0, limit) };
+          } else if (folderId) {
+            const messages = await zoho.getMessages(folderId, limit, start);
+            payload = { mode: 'folder_messages', folder_id: folderId, start, limit, messages };
+          } else {
+            const folders = await zoho.getFolders();
+            payload = { mode: 'folders', folders };
+          }
+
+          result = { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
+          break;
+        }
+
         // ── get_quotes ─────────────────────────────────────────────────────
         case 'get_quotes': {
           const a = args as Record<string, any>;
@@ -4710,17 +5632,15 @@ Return ONLY a JSON array of 60 objects:
             'mcp_integration',
             auditTenant as string,
             args,
-            result
+            { trace_id: traceId, raw_result: result }
           ).catch(err => console.error('Failed to log MCP audit:', err));
         }
 
-        return result;
+        return wrapMcpSuccess(name, traceId, result);
       } catch (error: unknown) {
         console.error(`MCP Tool Execution Error [${name}]:`, error);
-        if (error instanceof Error) {
-          throw error;
-        }
-        throw new Error(MCP_GENERIC_OPERATION_ERROR);
+        const payload = toMcpErrorPayload(name, traceId, error);
+        throw new Error(JSON.stringify(payload));
       }
     });
   }
