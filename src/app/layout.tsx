@@ -9,10 +9,15 @@ import CookieConsent from "@/components/common/CookieConsent";
 import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
-// import GlobalAlpha from "@/components/alpha/GlobalAlpha";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
 import { SITE_URL } from "@/lib/siteUrl";
+import dynamic from "next/dynamic";
+
+const SupportChatWidget = dynamic(
+  () => import("@/components/common/SupportChatWidget"),
+  { ssr: false }
+);
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -172,6 +177,7 @@ export default function RootLayout({
           <CookieConsent />
         </Providers>
         <ConsentAwareAnalytics />
+        <SupportChatWidget />
       </body>
     </html>
   );
