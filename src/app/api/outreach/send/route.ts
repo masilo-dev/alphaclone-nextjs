@@ -522,8 +522,9 @@ export async function POST(request: Request) {
     }
 
     if (sentProvider) {
+      const postSendWarnings: string[] = [];
       if (logId) {
-        await admin
+        const { error: logUpdateError } = await admin
           .from('lead_outreach_log')
           .update({
             status: 'sent',
@@ -538,32 +539,41 @@ export async function POST(request: Request) {
               : null,
           })
           .eq('id', logId);
+        if (logUpdateError) {
+          console.error('[Outreach/Send] Failed to update outreach log after provider send:', logUpdateError);
+          postSendWarnings.push('outreach_log_update_failed');
+        }
       }
 
-      await captureUnifiedMessageFromWebhook({
-        supabase: admin as any,
-        tenantId,
-        source: sentProvider as any,
-        channel: 'email',
-        direction: 'outbound',
-        externalId: providerMessageId || trackingId || null,
-        threadId: String(logId || trackingId || '') || null,
-        from: sentFromEmail,
-        to: leadEmail,
-        subject: normalizedSubject,
-        text: null,
-        html: htmlBody,
-        sentAt: new Date().toISOString(),
-        metadata: {
-          outreach: true,
-          pitchAngle,
-          score,
-          trackingId,
-          logId,
-          provider: sentProvider,
-          fromName: sentFromName,
-        },
-      });
+      try {
+        await captureUnifiedMessageFromWebhook({
+          supabase: admin as any,
+          tenantId,
+          source: sentProvider as any,
+          channel: 'email',
+          direction: 'outbound',
+          externalId: providerMessageId || trackingId || null,
+          threadId: String(logId || trackingId || '') || null,
+          from: sentFromEmail,
+          to: leadEmail,
+          subject: normalizedSubject,
+          text: null,
+          html: htmlBody,
+          sentAt: new Date().toISOString(),
+          metadata: {
+            outreach: true,
+            pitchAngle,
+            score,
+            trackingId,
+            logId,
+            provider: sentProvider,
+            fromName: sentFromName,
+          },
+        });
+      } catch (captureError) {
+        console.error('[Outreach/Send] Failed to capture outbound message after provider send:', captureError);
+        postSendWarnings.push('message_capture_failed');
+      }
 
       return NextResponse.json({
         success:    true,
@@ -573,6 +583,7 @@ export async function POST(request: Request) {
         provider: sentProvider,
         failoverAttempts: providerFailures,
         messageId: providerMessageId,
+        warnings: postSendWarnings,
       });
     }
 

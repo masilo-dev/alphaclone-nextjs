@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
 
     const resolved = await resolveEmailProviderConfig({
       tenantId,
+      preferredProvider: 'resend',
       fallbackToEnv: false,
     });
     if (!resolved || resolved.provider !== 'resend') {

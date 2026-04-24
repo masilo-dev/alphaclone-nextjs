@@ -10,9 +10,12 @@ export type ResolvedEmailProviderConfig = {
 };
 
 function pickProvider(
-  rows: Array<{ type: string; config: Record<string, unknown> }>
+  rows: Array<{ type: string; config: Record<string, unknown> }>,
+  preferredProvider?: EmailProvider
 ): ResolvedEmailProviderConfig | null {
-  const order: EmailProvider[] = ['brevo', 'sendgrid', 'resend'];
+  const order: EmailProvider[] = preferredProvider
+    ? [preferredProvider]
+    : ['brevo', 'sendgrid', 'resend'];
   for (const provider of order) {
     const hit = rows.find((row) => row.type === provider);
     const cfg = (hit?.config || {}) as Record<string, unknown>;
@@ -31,6 +34,7 @@ function pickProvider(
 export async function resolveEmailProviderConfig(params: {
   tenantId?: string | null;
   preferredUserId?: string | null;
+  preferredProvider?: EmailProvider;
   fallbackToEnv?: boolean;
 }): Promise<ResolvedEmailProviderConfig | null> {
   const supabase = createSupabaseAdminClient();
@@ -56,7 +60,10 @@ export async function resolveEmailProviderConfig(params: {
       .eq('user_id', lookupUserId)
       .eq('enabled', true)
       .in('type', ['brevo', 'sendgrid', 'resend']);
-    const resolved = pickProvider((data || []) as Array<{ type: string; config: Record<string, unknown> }>);
+    const resolved = pickProvider(
+      (data || []) as Array<{ type: string; config: Record<string, unknown> }>,
+      params.preferredProvider
+    );
     if (resolved) return { ...resolved, ownerUserId: lookupUserId };
   }
 
@@ -70,7 +77,7 @@ export async function resolveEmailProviderConfig(params: {
       .order('updated_at', { ascending: false });
 
     const grouped = (data || []) as Array<{ type: string; config: Record<string, unknown>; user_id?: string }>;
-    const resolved = pickProvider(grouped);
+    const resolved = pickProvider(grouped, params.preferredProvider);
     if (resolved) {
       const source = grouped.find((row) => row.type === resolved.provider);
       return { ...resolved, ownerUserId: source?.user_id || null };
@@ -78,21 +85,21 @@ export async function resolveEmailProviderConfig(params: {
   }
 
   if (params.fallbackToEnv) {
-    if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
+    if ((!params.preferredProvider || params.preferredProvider === 'brevo') && (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY)) {
       return {
         provider: 'brevo',
         apiKey: String(process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY || ''),
         fromEmail: process.env.BREVO_FROM_EMAIL || undefined,
       };
     }
-    if (process.env.SENDGRID_API_KEY) {
+    if ((!params.preferredProvider || params.preferredProvider === 'sendgrid') && process.env.SENDGRID_API_KEY) {
       return {
         provider: 'sendgrid',
         apiKey: process.env.SENDGRID_API_KEY,
         fromEmail: process.env.SENDGRID_FROM_EMAIL || undefined,
       };
     }
-    if (process.env.RESEND_API_KEY) {
+    if ((!params.preferredProvider || params.preferredProvider === 'resend') && process.env.RESEND_API_KEY) {
       return {
         provider: 'resend',
         apiKey: process.env.RESEND_API_KEY,

@@ -3,10 +3,12 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { integrationEmailProviderDeleteSchema, integrationEmailProviderSchema } from '@/schemas/validation';
 
-type ProviderType = 'resend' | 'brevo';
+type ProviderType = 'sendgrid' | 'resend' | 'brevo';
 
 function getProviderName(provider: ProviderType) {
-  return provider === 'resend' ? 'Resend' : 'Brevo';
+  if (provider === 'sendgrid') return 'SendGrid';
+  if (provider === 'resend') return 'Resend';
+  return 'Brevo';
 }
 
 function createWebhookToken(): string {
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenantId') || '';
     const provider = (searchParams.get('provider') || '') as ProviderType;
 
-    if (!tenantId || (provider !== 'resend' && provider !== 'brevo')) {
+    if (!tenantId || !['sendgrid', 'resend', 'brevo'].includes(provider)) {
       return NextResponse.json({ error: 'tenantId and valid provider are required', code: 'VALIDATION_ERROR' }, { status: 400 });
     }
 
