@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         data = await req.json();
     }
 
-    const { userId, messageId, folderId, replyText, senderEmail, logId } = data;
+    const { userId, messageId, folderId, replyText, senderEmail, originalSubject, logId } = data;
 
     if (!userId || !messageId || !replyText) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -41,15 +41,17 @@ export async function POST(req: NextRequest) {
     const supabase = await createSupabaseServerClient();
 
     try {
-        // Fetch message content to get subject etc. correctly if needed, 
-        // but we usually have it from the previous step.
-        const msgContent = await zohoMail.getMessageContent(messageId, folderId);
+        const normalizedSubject = String(originalSubject || '').trim() || 'Re: Conversation';
+        const normalizedReply = String(replyText || '').trim();
+        if (!normalizedReply) {
+            return NextResponse.json({ error: 'Reply text is empty' }, { status: 400 });
+        }
         
         // 2. Send the reply
         await zohoMail.sendEmail({
             toAddress: senderEmail,
-            subject: `Re: ${msgContent.content ? 'Inquiry' : 'Message'}`, // Ideally pass subject in data
-            content: replyText,
+            subject: normalizedSubject,
+            content: normalizedReply,
         });
 
         const admin = createSupabaseAdminClient();
@@ -74,8 +76,8 @@ export async function POST(req: NextRequest) {
                 threadId: messageId || null,
                 from: `zoho:${userId}`,
                 to: senderEmail || '',
-                subject: `Re: ${msgContent.content ? 'Inquiry' : 'Message'}`,
-                text: replyText,
+                subject: normalizedSubject,
+                text: normalizedReply,
                 html: null,
                 sentAt: new Date().toISOString(),
                 metadata: {

@@ -7,6 +7,7 @@ import {
 import { providerSendSchema } from '@/schemas/validation';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
 import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
+import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 
 // Client-friendly error messages
 const CLIENT_ERRORS = {
@@ -90,6 +91,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     const { to, subject, message } = parsed.data;
+    const normalizedSubject = normalizeEmailSubject(subject);
+    if (!normalizedSubject) {
+      const clientError = CLIENT_ERRORS.RECIPIENT_EMAIL_ISSUE;
+      return NextResponse.json({
+        error: { ...clientError, message: 'Email subject is required.' },
+        code: 'VALIDATION_ERROR',
+        clientFriendly: true,
+      }, { status: 400 });
+    }
+    const normalizedMessage = ensureFooter(message);
     const tenantId = parsed.data.tenantId || parsed.data.tenant_id!;
 
     await requireTenantAccess(tenantId);
@@ -112,8 +123,8 @@ export async function POST(request: NextRequest) {
       fromEmail: resolved.fromEmail || 'noreply@yourdomain.com',
       fromName: resolved.fromName || 'AlphaClone',
       to,
-      subject,
-      text: message,
+      subject: normalizedSubject,
+      text: normalizedMessage,
     });
 
     if (!sendResult.ok) {
@@ -144,7 +155,7 @@ export async function POST(request: NextRequest) {
         tenant_id: tenantId,
         provider: 'sendgrid',
         to_email: to,
-        subject,
+        subject: normalizedSubject,
         status: 'sent',
         created_at: new Date().toISOString()
       });

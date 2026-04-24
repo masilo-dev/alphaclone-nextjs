@@ -19,6 +19,7 @@ interface Message {
     snippet: string;
     status?: string; // read/unread
     category?: 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal';
+    fromAddress?: string;
 }
 
 interface Folder {
@@ -64,6 +65,10 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const [showRouteModal, setShowRouteModal] = useState(false);
     const [routeToEmail, setRouteToEmail] = useState('');
     const [configuredRegion, setConfiguredRegion] = useState<string | null>(null);
+    const selectedMessageMeta = useMemo(
+        () => messages.find((m) => m.messageId === selectedMessage) || null,
+        [messages, selectedMessage]
+    );
     const reconnectUrl = (() => {
         const params = new URLSearchParams();
         if (userIdProp) params.set('state', userIdProp);
@@ -317,6 +322,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
+        const normalizedSubject = emailData.subject.trim();
+        if (!normalizedSubject) {
+            toast.error('Subject is required.');
+            return;
+        }
         setSending(true);
         try {
             const data = await zohoFetch('/api/zoho/mail', {
@@ -324,7 +334,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     toAddress: emailData.to,
-                    subject: emailData.subject,
+                    subject: normalizedSubject,
                     content: emailData.body,
                 }),
             });
@@ -350,9 +360,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             const context = customPrompt || 'Be helpful, professional and try to move the discussion forward.';
             const reply = await generateEmailReply(emailText, context);
             if (!reply) throw new Error('AI returned an empty response.');
+            const recipient = selectedMessageMeta?.sender || messageContent?.sender || '';
+            const subjectBase = selectedMessageMeta?.subject || messageContent?.subject || '';
             setEmailData({
-                to: messageContent.sender || messageContent.fromAddress || '',
-                subject: `Re: ${messageContent.subject || ''}`,
+                to: recipient,
+                subject: /^re:/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`,
                 body: reply,
             });
             setComposing(true);
@@ -461,7 +473,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         try {
             const content = messageContent.content || messageContent.snippet || '';
             const suggestions = await generateEmailDraft(
-                `Generate 3 different reply suggestions for this email. Return them as a numbered list:\n\nSubject: ${messageContent.subject}\nFrom: ${messageContent.sender}\n\n${content}`,
+                `Generate exactly 3 concise professional reply suggestions for this email. Do not prefix with labels like Option 1 or numbers.\n\nSubject: ${selectedMessageMeta?.subject || messageContent.subject}\nFrom: ${selectedMessageMeta?.sender || messageContent.sender}\n\n${content}`,
                 '',
                 ''
             );
@@ -470,8 +482,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 // Parse the numbered list into an array
                 const parsedSuggestions = suggestions
                     .split('\n')
-                    .filter(line => line.match(/^\d+\./))
-                    .map(line => line.replace(/^\d+\.\s*/, ''));
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0)
+                    .map((line) => line.replace(/^(option\s*\d+[:.)-]?\s*|\d+[.)-]\s*)/i, ''));
                 
                 setReplySuggestions(parsedSuggestions.length > 0 ? parsedSuggestions : [suggestions]);
                 toast.success('Reply suggestions generated!');
@@ -754,7 +767,12 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                             <button
                                                                 key={index}
                                                                 onClick={() => {
-                                                                    setEmailData({ to: messageContent?.sender ?? '', subject: `Re: ${messageContent?.subject ?? ''}`, body: suggestion });
+                                                                    const subjectBase = selectedMessageMeta?.subject || messageContent?.subject || '';
+                                                                    setEmailData({
+                                                                        to: selectedMessageMeta?.sender ?? messageContent?.sender ?? '',
+                                                                        subject: /^re:/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`,
+                                                                        body: suggestion,
+                                                                    });
                                                                     setComposing(true);
                                                                     setReplySuggestions([]);
                                                                 }}
@@ -768,7 +786,20 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                             )}
                                             
                                             <div className="pt-10 flex gap-4">
-                                                <button onClick={() => { setEmailData({ to: messageContent?.sender ?? '', subject: `Re: ${messageContent?.subject ?? ''}`, body: "" }); setComposing(true); }} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg">Reply</button>
+                                                <button
+                                                    onClick={() => {
+                                                        const subjectBase = selectedMessageMeta?.subject || messageContent?.subject || '';
+                                                        setEmailData({
+                                                            to: selectedMessageMeta?.sender ?? messageContent?.sender ?? '',
+                                                            subject: /^re:/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`,
+                                                            body: '',
+                                                        });
+                                                        setComposing(true);
+                                                    }}
+                                                    className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
+                                                >
+                                                    Reply
+                                                </button>
                                             </div>
                                         </div>
                                     )}
