@@ -43,6 +43,67 @@ function isProviderConfig(value: ProviderConfig | null): value is ProviderConfig
   return value !== null;
 }
 
+function resolveSenderEmail(config: Record<string, unknown>, fallbacks: string[]): string {
+  const candidates = [
+    config.fromEmail,
+    config.from_email,
+    config.senderEmail,
+    config.sender_email,
+    config.sender,
+    config.email,
+    config.defaultFrom,
+    config.default_from,
+    config.fromAddress,
+    config.from_address,
+    ...fallbacks,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate || '').trim();
+    if (value.includes('@')) return value;
+  }
+  return '';
+}
+
+function resolveSenderName(config: Record<string, unknown>, fallbacks: string[]): string {
+  const candidates = [
+    config.fromName,
+    config.from_name,
+    config.senderName,
+    config.sender_name,
+    config.name,
+    ...fallbacks,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate || '').trim();
+    if (value.length > 0) return value;
+  }
+  return 'AlphaClone Systems';
+}
+
+function classifyProviderFailure(failureMessage: string): 'auth' | 'rate_limit' | 'network_or_unknown' {
+  const msg = failureMessage.toLowerCase();
+  if (
+    msg.includes('401') ||
+    msg.includes('403') ||
+    msg.includes('unauthorized') ||
+    msg.includes('invalid api key') ||
+    msg.includes('api key') ||
+    msg.includes('forbidden') ||
+    msg.includes('key not found')
+  ) {
+    return 'auth';
+  }
+  if (
+    msg.includes('429') ||
+    msg.includes('rate limit') ||
+    msg.includes('too many requests') ||
+    msg.includes('quota')
+  ) {
+    return 'rate_limit';
+  }
+  return 'network_or_unknown';
+}
+
 function encodeGmailRawMessage(params: {
   to: string;
   subject: string;
@@ -227,12 +288,12 @@ export async function POST(request: Request) {
       .map((integration: any) => {
         const provider = normalizeProvider(integration.type);
         if (!provider) return null;
-        const cfg = integration.config || {};
+        const cfg = (integration.config || {}) as Record<string, unknown>;
         return {
           provider,
           apiKey: String(cfg.apiKey || cfg.api_key || '').trim(),
-          fromEmail: String(cfg.fromEmail || cfg.from_email || fromAddress || profileFromEmail || '').trim(),
-          fromName: String(cfg.fromName || cfg.from_name || profileFromName || 'AlphaClone Systems').trim(),
+          fromEmail: resolveSenderEmail(cfg, [fromAddress || '', profileFromEmail, tenantCtx.user.email || '']),
+          fromName: resolveSenderName(cfg, [profileFromName, tenantCtx.user.user_metadata?.full_name as string || '']),
           dailyLimit: Number(cfg.dailyLimit || cfg.daily_limit || DEFAULT_PROVIDER_LIMITS[provider]) || DEFAULT_PROVIDER_LIMITS[provider],
         };
       })
@@ -519,15 +580,56 @@ export async function POST(request: Request) {
         .eq('id', logId);
     }
 
+    const classifiedFailures = providerFailures.map((entry) => ({
+      ...entry,
+      category: classifyProviderFailure(entry.error),
+    }));
+    const authFailures = classifiedFailures.filter((f) => f.category === 'auth');
+    const rateLimitFailures = classifiedFailures.filter((f) => f.category === 'rate_limit');
+
+    if (authFailures.length === classifiedFailures.length && classifiedFailures.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: 'failed',
+          code: 'OUTREACH_PROVIDER_AUTH_FAILED',
+          error: 'Provider authentication failed. Reconnect the provider API key for your user account and verify sender email.',
+          guidance:
+            'Open Settings > Integrations, reconnect Resend/SendGrid/Brevo/Zoho/Gmail with your own user credentials, then retry.',
+          logId,
+          trackingId,
+          failoverAttempts: classifiedFailures,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (rateLimitFailures.length === classifiedFailures.length && classifiedFailures.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          status: 'failed',
+          code: 'OUTREACH_PROVIDER_RATE_LIMITED',
+          error: 'All selected providers are currently rate-limited. Retry shortly or enable additional provider failover.',
+          logId,
+          trackingId,
+          failoverAttempts: classifiedFailures,
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,
         status: 'failed',
         error: 'Email could not be sent. All configured providers failed in fallback order.',
         code: 'OUTREACH_SEND_FAILED',
+        guidance:
+          'Check provider API keys, sender verification, and provider account status in Integrations before retrying.',
         logId,
         trackingId,
-        failoverAttempts: providerFailures,
+        failoverAttempts: classifiedFailures,
       },
       { status: 502 }
     );
