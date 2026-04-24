@@ -395,7 +395,18 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
 
         const { tenantService } = await import('../../../services/tenancy/TenantService');
-        const tenantId = tenantService.getCurrentTenantId();
+        let tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            const { data: memberships } = await supabase
+                .from('tenant_users')
+                .select('tenant_id')
+                .eq('user_id', authUser.id)
+                .limit(1);
+            tenantId = memberships?.[0]?.tenant_id || null;
+            if (tenantId) {
+                tenantService.setCurrentTenant(tenantId);
+            }
+        }
 
         if (!tenantId) {
             toast.error("No active organization found");
@@ -491,6 +502,73 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             toast.error(`Execution failed: ${message}`, { id: toastId });
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleSendProviderEmail = async () => {
+        if (!lead.email) {
+            toast.error('Lead does not have an email address');
+            return;
+        }
+        const { supabase } = await import('../../../lib/supabase');
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) {
+            toast.error('You must be logged in to send email');
+            return;
+        }
+
+        const { tenantService } = await import('../../../services/tenancy/TenantService');
+        let tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            const { data: memberships } = await supabase
+                .from('tenant_users')
+                .select('tenant_id')
+                .eq('user_id', authUser.id)
+                .limit(1);
+            tenantId = memberships?.[0]?.tenant_id || null;
+            if (tenantId) {
+                tenantService.setCurrentTenant(tenantId);
+            }
+        }
+        if (!tenantId) {
+            toast.error('No active organization found');
+            return;
+        }
+
+        const subject = `Strategic proposal for ${lead.businessName}`;
+        const body =
+            (lead.outreachMessage && lead.outreachMessage.trim().length > 0
+                ? lead.outreachMessage
+                : `Hello ${lead.businessName},\n\nI am reaching out to discuss how we can support your goals in ${lead.industry || 'your industry'}.\n\nPlease let me know if you are available for a short call this week.\n\nRegards,\n${authUser.email || 'Sales Team'}`);
+
+        const loadingId = toast.loading('Sending email via connected providers...');
+        try {
+            const response = await fetch('/api/outreach/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    leadEmail: lead.email,
+                    leadName: lead.businessName,
+                    subject,
+                    body,
+                    pitchAngle: 'direct_message',
+                    industry: lead.industry || '',
+                    score: 100,
+                    autoSend: true,
+                    consentGranted: true,
+                    confidenceScore: 100,
+                    deliveryProviders: ['zoho', 'resend', 'brevo', 'sendgrid', 'gmail'],
+                    balanceByDailyLimit: true,
+                }),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result?.success) {
+                throw new Error(result?.error || 'Failed to send email');
+            }
+            toast.success(`Email sent via ${String(result?.provider || 'provider').toUpperCase()}`, { id: loadingId });
+        } catch (error: unknown) {
+            toast.error(`Email send failed: ${getErrorMessage(error)}`, { id: loadingId });
         }
     };
 
@@ -642,7 +720,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             Execute Full Flow
                         </Button>
                         {lead.email && (
-                            <Button variant="outline" size="sm" onClick={() => window.open(`mailto:${lead.email}`)} className="flex-1 sm:flex-none">
+                            <Button variant="outline" size="sm" onClick={handleSendProviderEmail} className="flex-1 sm:flex-none">
                                 <Mail className="w-4 h-4 sm:mr-2" />
                                 <span className="hidden sm:inline">Email</span>
                             </Button>
