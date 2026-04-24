@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
 import { Button } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { ChartContainer } from '@/components/ui/ChartContainer';
 import { generateEmailDraft } from '../../../services/unifiedAIService';
 
 interface EnhancedBillingPageProps {
@@ -565,7 +566,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                         ))}
                     </div>
                 </div>
-                <div className="h-64">
+                <div className="h-64 min-h-[250px]">
+                    <ChartContainer className="w-full h-full" minHeight={250}>
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -582,6 +584,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             <Line type="monotone" dataKey="revenue" stroke="#14B8A6" strokeWidth={2} />
                         </LineChart>
                     </ResponsiveContainer>
+                    </ChartContainer>
                 </div>
             </div>
 

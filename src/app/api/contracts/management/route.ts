@@ -4,6 +4,8 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess } from '@/lib/apiAuth';
+import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
+import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
 import { randomBytes } from 'crypto';
 import {
   AlignmentType,
@@ -311,31 +313,33 @@ async function sendContract(tenantId: string, config: any, supabase: any, origin
       return { success: false, error: 'Failed to generate contract document' };
     }
 
-    const emailResponse = await fetch(`${origin}/api/email/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-api-key': process.env.INTERNAL_API_KEY || '',
-      },
-      body: JSON.stringify({
-        tenantId,
-        userId: actorUserId,
-        to: recipients,
-        subject: subject || `Contract: ${contract.title}`,
-        text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
-        attachments: [{
-          filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
-          content: generated.data.bufferBase64,
-          contentType: generated.data.mimeType || (format === 'docx'
-            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            : 'application/pdf'),
-        }],
-      }),
+    const resolvedProvider = await resolveEmailProviderConfig({
+      tenantId,
+      preferredUserId: actorUserId,
+      fallbackToEnv: true,
+    });
+    if (!resolvedProvider?.apiKey) {
+      return { success: false, error: 'Email service not configured for this account' };
+    }
+
+    const emailResult = await sendWithProviderSdk(resolvedProvider.provider as EmailProvider, {
+      apiKey: resolvedProvider.apiKey,
+      fromEmail: resolvedProvider.fromEmail || process.env.SENDGRID_FROM_EMAIL || process.env.BREVO_FROM_EMAIL || 'onboarding@alphacone.io',
+      fromName: resolvedProvider.fromName || 'AlphaClone Systems',
+      to: recipients,
+      subject: subject || `Contract: ${contract.title}`,
+      text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
+      attachments: [{
+        filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
+        content: generated.data.bufferBase64,
+        contentType: generated.data.mimeType || (format === 'docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf'),
+      }],
     });
 
-    if (!emailResponse.ok) {
-      const payload = await emailResponse.json().catch(() => ({}));
-      return { success: false, error: payload?.error || 'Failed to send contract email' };
+    if (!emailResult.ok) {
+      return { success: false, error: emailResult.error || 'Failed to send contract email' };
     }
 
     await supabase

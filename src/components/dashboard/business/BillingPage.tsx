@@ -20,6 +20,7 @@ import {
 import { DocumentViewer } from '../../contracts/DocumentViewer';
 import jsPDF from 'jspdf';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer } from '@/components/ui/ChartContainer';
 import toast from 'react-hot-toast';
 import CreateInvoiceModal from '../EnhancedCreateInvoiceModal';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
@@ -190,7 +191,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                         <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue Performance
                     </h3>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[300px] w-full min-h-[300px]">
+                        <ChartContainer className="w-full h-full" minHeight={300}>
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                             <AreaChart data={[
                                 { name: 'Jan', revenue: stats.paid * 0.1, expenses: stats.paid * 0.05 },
@@ -221,6 +223,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
                                 <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
                             </AreaChart>
                         </ResponsiveContainer>
+                        </ChartContainer>
                     </div>
                 </div>
             </div>
