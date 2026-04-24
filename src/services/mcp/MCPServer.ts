@@ -40,6 +40,15 @@ const LINKEDIN_REACTIONS = new Set(['LIKE', 'PRAISE', 'MAYBE', 'EMPATHY', 'INTER
 const MCP_GENERIC_OPERATION_ERROR =
   'This action could not be completed right now. Please try again in a few minutes. If the issue continues, contact support.';
 
+function mcpStructuredError(code: string, message: string, details?: Record<string, unknown>): Error {
+  const payload = details ? { code, message, details } : { code, message };
+  return new Error(JSON.stringify(payload));
+}
+
+function throwLinkedInError(code: string, message: string, details?: Record<string, unknown>): never {
+  throw mcpStructuredError(code, message, details);
+}
+
 function appendContractDisclaimer(body: string, attribution: string): string {
   const trimmed = body.trim();
   if (trimmed.includes('AlphaClone does not guarantee')) return trimmed;
@@ -311,6 +320,7 @@ class AlphaCloneMCPServer {
               },
               status: { type: 'string', description: 'lead | prospect | active | churned' },
               limit: { type: 'number', description: 'Max records (default 20, max 100)' },
+              offset: { type: 'number', description: 'Pagination offset (default 0)' },
             },
             required: [],
           },
@@ -400,6 +410,7 @@ class AlphaCloneMCPServer {
               status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
               stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
               limit: { type: 'number', description: 'Max records (default 20, max 100)' },
+              offset: { type: 'number', description: 'Pagination offset (default 0)' },
             },
             required: [],
           },
@@ -1300,12 +1311,15 @@ class AlphaCloneMCPServer {
         case 'get_clients': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, limit = 20 } = a;
+          const { status, limit = 20, offset = 0 } = a;
+          const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
+          const pageOffset = Math.max(Number(offset) || 0, 0);
           let query = supabaseAdmin
             .from('business_clients')
             .select('id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at')
             .eq('tenant_id', tenant_id)
-            .limit(Math.min(Number(limit) || 20, 100));
+            .order('created_at', { ascending: false })
+            .range(pageOffset, pageOffset + pageSize - 1);
           if (status) query = query.eq('sales_stage', status);
           let data: any;
           let error: any;
@@ -1316,11 +1330,33 @@ class AlphaCloneMCPServer {
               .from('business_clients')
               .select('id, name, email, phone, created_at')
               .eq('tenant_id', tenant_id)
-              .limit(Math.min(Number(limit) || 20, 100));
+              .order('created_at', { ascending: false })
+              .range(pageOffset, pageOffset + pageSize - 1);
             ({ data, error } = await legacyQuery);
           }
           if (error) throw supabaseErrorToMcpClientError('get_clients', (error as { message?: string }).message || 'Failed to fetch clients');
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          const rows = Array.isArray(data) ? data : [];
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    items: rows,
+                    pagination: {
+                      limit: pageSize,
+                      offset: pageOffset,
+                      returned: rows.length,
+                      has_more: rows.length === pageSize,
+                      next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
+                    },
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
           break;
         }
 
@@ -1490,7 +1526,9 @@ class AlphaCloneMCPServer {
         case 'get_leads': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, stage, limit = 20 } = a;
+          const { status, stage, limit = 20, offset = 0 } = a;
+          const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
+          const pageOffset = Math.max(Number(offset) || 0, 0);
           let query = supabaseAdmin
             .from('leads')
             .select(
@@ -1498,7 +1536,7 @@ class AlphaCloneMCPServer {
             )
             .eq('tenant_id', tenant_id)
             .order('created_at', { ascending: false })
-            .limit(Math.min(Number(limit) || 20, 100));
+            .range(pageOffset, pageOffset + pageSize - 1);
           if (status) query = query.eq('status', status);
           if (stage) query = query.eq('stage', stage);
           let data: any;
@@ -1511,12 +1549,33 @@ class AlphaCloneMCPServer {
               .select('id, business_name, email, phone, stage, notes, created_at')
               .eq('tenant_id', tenant_id)
               .order('created_at', { ascending: false })
-              .limit(Math.min(Number(limit) || 20, 100));
+              .range(pageOffset, pageOffset + pageSize - 1);
             if (stage) legacy = legacy.eq('stage', stage);
             ({ data, error } = await legacy);
           }
           if (error) throw supabaseErrorToMcpClientError('get_leads', (error as { message?: string }).message || 'Failed to fetch leads');
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          const rows = Array.isArray(data) ? data : [];
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    items: rows,
+                    pagination: {
+                      limit: pageSize,
+                      offset: pageOffset,
+                      returned: rows.length,
+                      has_more: rows.length === pageSize,
+                      next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
+                    },
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
           break;
         }
 
@@ -2465,7 +2524,23 @@ class AlphaCloneMCPServer {
             .maybeSingle();
           if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_identities', liErr.message);
           if (!li) {
-            result = { content: [{ type: 'text', text: JSON.stringify({ connected: false, identities: [] }, null, 2) }] };
+            result = {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      connected: false,
+                      code: 'LINKEDIN_NOT_CONNECTED',
+                      message: 'LinkedIn is not connected for this workspace/user.',
+                      identities: [],
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+            };
             break;
           }
 
@@ -2543,12 +2618,12 @@ class AlphaCloneMCPServer {
             .maybeSingle();
           if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_post', liErr.message);
           if (!li?.access_token || !li?.linkedin_person_urn) {
-            throw new Error('LinkedIn is not connected for this workspace/user.');
+            throwLinkedInError('LINKEDIN_NOT_CONNECTED', 'LinkedIn is not connected for this workspace/user.');
           }
 
           const scopes = Array.isArray(li.scopes) ? li.scopes : [];
           if (!scopes.includes('w_member_social')) {
-            throw new Error('LinkedIn connection is missing w_member_social scope.');
+            throwLinkedInError('LINKEDIN_MISSING_MEMBER_SCOPE', 'LinkedIn connection is missing w_member_social scope.');
           }
           const postAsMode = String(post_as || 'personal').trim().toLowerCase();
           if (postAsMode !== 'personal' && postAsMode !== 'company' && postAsMode !== 'all_pages') {
@@ -2568,12 +2643,17 @@ class AlphaCloneMCPServer {
           let postAsCompany = false;
           if (postAsMode === 'company') {
             if (!scopes.includes('w_organization_social')) {
-              throw new Error('LinkedIn connection is missing w_organization_social scope. Reconnect LinkedIn and approve company page permissions.');
+              throwLinkedInError(
+                'LINKEDIN_MISSING_ORGANIZATION_SCOPE',
+                'LinkedIn connection is missing w_organization_social scope. Reconnect LinkedIn and approve company page permissions.'
+              );
             }
             if (!requestedOrganizationId || !selectedCompany) {
               const availableIds = companyPages.map((page) => String(page?.id || '').trim()).filter(Boolean);
-              throw new Error(
-                `post_as=company requires linkedin_organization_id from get_linkedin_identities. Available IDs: ${availableIds.join(', ') || 'none'}`
+              throwLinkedInError(
+                'LINKEDIN_ORGANIZATION_ID_REQUIRED',
+                'post_as=company requires linkedin_organization_id from get_linkedin_identities.',
+                { available_organization_ids: availableIds }
               );
             }
             postAsCompany = true;
@@ -2584,10 +2664,16 @@ class AlphaCloneMCPServer {
           const postToAllPages = postAsMode === 'all_pages';
           if (postToAllPages) {
             if (!scopes.includes('w_organization_social')) {
-              throw new Error('LinkedIn connection is missing w_organization_social scope. Reconnect LinkedIn and approve company page permissions.');
+              throwLinkedInError(
+                'LINKEDIN_MISSING_ORGANIZATION_SCOPE',
+                'LinkedIn connection is missing w_organization_social scope. Reconnect LinkedIn and approve company page permissions.'
+              );
             }
             if (allCompanyPageIds.length === 0) {
-              throw new Error('No connected LinkedIn company pages found. Reconnect LinkedIn and ensure your account is an admin for at least one page.');
+              throwLinkedInError(
+                'LINKEDIN_NO_COMPANY_PAGES',
+                'No connected LinkedIn company pages found. Reconnect LinkedIn and ensure your account is an admin for at least one page.'
+              );
             }
           }
           const authorUrn = postAsCompany
