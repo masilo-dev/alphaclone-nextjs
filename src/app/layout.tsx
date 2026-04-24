@@ -12,12 +12,7 @@ import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
 import { SITE_URL } from "@/lib/siteUrl";
-import dynamic from "next/dynamic";
-
-const SupportChatWidget = dynamic(
-  () => import("@/components/common/SupportChatWidget"),
-  { ssr: false }
-);
+import SupportChatWidget from "@/components/common/SupportChatWidget";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
