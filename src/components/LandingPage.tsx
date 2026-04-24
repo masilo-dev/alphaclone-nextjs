@@ -306,7 +306,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-6 sm:py-12 lg:py-16 rounded-2xl bg-slate-950/35 border border-slate-800/60"
+                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-6 sm:py-12 lg:py-16 rounded-2xl bg-slate-950/40 border border-cyan-500/15 shadow-[0_0_80px_-20px_rgba(0,255,255,0.12)]"
                >
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
@@ -314,13 +314,15 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      transition={{ duration: 0.5 }}
                   >
                      {/* Brand pill */}
-                     <div className="inline-flex items-center gap-2 bg-slate-900/80 border border-cyan-500/20 rounded-lg px-4 py-2 mb-8 text-sm text-slate-300">
-                        <span className="font-bold">Business Management Platform</span>
+                     <div className="inline-flex items-center gap-2.5 bg-cyan-500/10 border border-cyan-500/40 rounded-full px-5 py-2 mb-8">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-sm font-semibold text-cyan-300 tracking-wide uppercase">AlphaClone — AI Business OS</span>
                      </div>
 
                      {/* Headline */}
-                     <h1 className="font-black text-white mb-6 tracking-tight">
-                        Your entire business. One AI. $15 a month.
+                     <h1 className="font-marketing-heading font-black text-white mb-6 tracking-tight">
+                        Your entire business.{' '}
+                        <span className="text-cyan-400">One AI.</span>
                      </h1>
 
                      {/* Solution subheadline */}
@@ -328,10 +330,10 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         AlphaClone gives founders and small teams one system for CRM, projects, finance, and automation. Replace tool sprawl, reduce admin work, and run daily operations from a single workspace.
                      </p>
                      <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
-                        Built for business teams. Social automation supports LinkedIn pages and Facebook business pages, with no personal account posting flow.
+                        Built for service businesses. Social automation supports LinkedIn pages and Facebook business pages — no personal account required.
                      </p>
 
-                     {/* Platform modules */}
+                     {/* Platform modules — branded keyword pills */}
                      <div className="flex flex-wrap justify-center gap-2 mb-10 sm:mb-12 max-w-2xl mx-auto">
                         {[
                            'CRM & Pipeline',
@@ -347,7 +349,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            'Analytics',
                            'Team Chat',
                         ].map(label => (
-                           <div key={label} className="bg-slate-900/70 border border-cyan-500/20 rounded-full px-3 py-1 text-xs text-slate-300">
+                           <div key={label} className="bg-cyan-500/10 border border-cyan-500/30 rounded-full px-3.5 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-colors">
                               {label}
                            </div>
                         ))}
@@ -376,11 +378,11 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            { value: '12+', label: 'tools replaced' },
                            { value: '67%', label: 'time saved' },
                            { value: '3x', label: 'faster deals' },
-                           { value: '0', label: 'overwhelm' },
+                           { value: '$0', label: 'setup cost' },
                         ].map(({ value, label }) => (
-                           <div key={label}>
-                                 <div className="text-2xl sm:text-3xl font-black text-cyan-300">{value}</div>
-                              <div className="text-xs text-slate-300 mt-0.5">{label}</div>
+                           <div key={label} className="px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/15">
+                              <div className="text-2xl sm:text-3xl font-black text-cyan-400 font-marketing-data">{value}</div>
+                              <div className="text-xs text-slate-400 mt-0.5 font-medium uppercase tracking-wide">{label}</div>
                            </div>
                         ))}
                      </div>
