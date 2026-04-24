@@ -392,92 +392,34 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
                         {/* Copy key step */}
                         {step.isCopyStep && (
-                          <>
-                            <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 mb-4">
-                              <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">Your Connection URL</p>
-                              <div className="flex items-center gap-3">
-                                <code className="flex-1 text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
-                                  {connectionToken ? connectionUrl : 'Loading your key...'}
-                                </code>
-                                <button
-                                  onClick={() => copyText(connectionToken ? connectionUrl : '', 'Connection URL')}
-                                  disabled={!connectionToken}
-                                  className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </button>
-                              </div>
-                              
-                              <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
-                                <p className="text-xs text-slate-500 leading-relaxed">
-                                  <span className="text-amber-400 font-medium">Security warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
-                                </p>
-                                <button
-                                  onClick={handleRotateToken}
-                                  className="text-[10px] uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
-                                >
-                                  <Lock className="w-3 h-3" />
-                                  Regenerate Key
-                                </button>
-                              </div>
+                          <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 mb-4">
+                            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">Your Connection URL</p>
+                            <div className="flex items-center gap-3">
+                              <code className="flex-1 text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
+                                {connectionToken ? connectionUrl : 'Loading your key...'}
+                              </code>
+                              <button
+                                onClick={() => copyText(connectionToken ? connectionUrl : '', 'Connection URL')}
+                                disabled={!connectionToken}
+                                className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
                             </div>
-
-                            {setupType === 'claude' && (
-                              <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 mb-4">
-                              <p className="text-xs text-slate-400 mb-3 font-medium uppercase tracking-wider">
-                                Claude web connector fields (copy each value separately)
+                            
+                            <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
+                              <p className="text-xs text-slate-500 leading-relaxed">
+                                <span className="text-amber-400 font-medium">Security warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
                               </p>
-                              <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] text-slate-500 mb-1">SSE URL</p>
-                                    <code className="block text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
-                                      {`${mcpOrigin}/api/mcp/sse`}
-                                    </code>
-                                  </div>
-                                  <button
-                                    onClick={() => copyText(`${mcpOrigin}/api/mcp/sse`, 'SSE URL')}
-                                    className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
-                                  >
-                                    <Copy className="w-4 h-4" />
-                                  </button>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] text-slate-500 mb-1">Tenant ID</p>
-                                    <code className="block text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
-                                      {tenantId}
-                                    </code>
-                                  </div>
-                                  <button
-                                    onClick={() => copyText(tenantId, 'Tenant ID')}
-                                    className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
-                                  >
-                                    <Copy className="w-4 h-4" />
-                                  </button>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] text-slate-500 mb-1">API Key</p>
-                                    <code className="block text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
-                                      {connectionToken || 'Loading API key...'}
-                                    </code>
-                                  </div>
-                                  <button
-                                    onClick={() => copyText(connectionToken || '', 'API Key')}
-                                    disabled={!connectionToken}
-                                    className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50"
-                                  >
-                                    <Copy className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                              <p className="text-[11px] text-slate-500 mt-3">
-                                Keep Tenant ID and API Key as separate fields. Do not combine them into one string.
-                              </p>
-                              </div>
-                            )}
-                          </>
+                              <button
+                                onClick={handleRotateToken}
+                                className="text-[10px] uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                              >
+                                <Lock className="w-3 h-3" />
+                                Regenerate Key
+                              </button>
+                            </div>
+                          </div>
                         )}
 
                         {/* File paths */}
