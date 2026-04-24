@@ -78,7 +78,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     api_key = authHeader.substring(7);
   }
 
-  const isReachabilityProbe = req.method === 'GET' || req.method === 'HEAD';
+  // A reachability probe is a GET/HEAD with no credentials at all.
+  // A GET that carries a key is an authenticated SSE stream request and must
+  // receive a real auth response, not a silent 200.
+  const hasCredentials = Boolean(api_key);
+  const isReachabilityProbe = !hasCredentials && (req.method === 'GET' || req.method === 'HEAD');
+
   if (!api_key) {
     logAuthDiagnostic('missing_key', req, undefined);
     if (isReachabilityProbe) {

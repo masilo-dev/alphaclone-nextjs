@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import "@fontsource-variable/inter";
+import "@fontsource/space-grotesk";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
@@ -12,15 +13,6 @@ import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
 import { SITE_URL } from "@/lib/siteUrl";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-  preload: true,
-  adjustFontFallback: true,
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -151,7 +143,7 @@ export default function RootLayout({
         <Script src="/lockdown-install.js?v=4" strategy="beforeInteractive" />
       </head>
       <body
-        className={`${inter.variable} antialiased text-base subpixel-antialiased font-sans`}
+        className="antialiased text-base subpixel-antialiased font-sans"
       >
         <script
           type="application/ld+json"

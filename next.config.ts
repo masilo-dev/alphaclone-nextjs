@@ -37,10 +37,19 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
+      // Supabase storage (tenant uploads, avatars)
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: '*.supabase.in' },
+      // Unsplash (stock images used in templates/portfolio)
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      // DiceBear (generated avatars)
+      { protocol: 'https', hostname: 'api.dicebear.com' },
+      // Google user profile photos (OAuth)
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      // Twitter/X profile photos
+      { protocol: 'https', hostname: 'pbs.twimg.com' },
+      // GitHub avatars
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
     ],
   },
   compiler: {

@@ -24,17 +24,25 @@ const eslintConfig = defineConfig([
       "react/display-name": "off",
     },
   },
-  // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
     "next-env.d.ts",
+    // Service worker and PWA generated files
     "public/sw.js",
     "public/sw.js.map",
     "public/workbox-*.js",
+    // PDF.js vendor bundle (third-party, not authored here)
+    "public/pdfjs/**",
+    // Other vendor/generated assets under public
+    "public/vendor/**",
+    // One-off migration/fix scripts
     "demo_data_fix.ts",
+    "scripts/**",
+    // Mobile sub-project has its own ESLint config
+    "mobile/**",
   ]),
 ]);
 
