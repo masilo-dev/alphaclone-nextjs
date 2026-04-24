@@ -34,15 +34,22 @@ export interface ServiceItem {
   icon: React.ComponentType<any>;
 }
 
+export interface EmailDraft {
+  to: string;
+  subject: string;
+  body: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model' | 'system';
   senderName?: string;
   senderId?: string;
-  recipientId?: string; // New: target user (null = system/broadcast)
+  recipientId?: string;
   text: string;
   timestamp: Date;
   isThinking?: boolean;
+  emailDraft?: EmailDraft;
   attachments?: {
     id: string;
     url: string;
