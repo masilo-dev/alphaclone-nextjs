@@ -242,6 +242,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 setEmailSummary(null);
                 setReplySuggestions([]);
                 fetch(`/api/zoho/mail?action=markRead&messageId=${id}&folderId=${selectedFolder}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                 }).catch(() => {});
             }

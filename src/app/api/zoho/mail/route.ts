@@ -166,6 +166,17 @@ export async function POST(req: NextRequest) {
     const zohoMail = new ZohoMailService(userId);
 
     try {
+        if (action === 'markRead') {
+            const readMsgId = searchParams.get('messageId');
+            const readFolderId = searchParams.get('folderId');
+            const isRead = searchParams.get('status') !== 'false';
+            if (!readMsgId || !readFolderId) {
+                return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
+            }
+            const markRes = await zohoMail.markAsRead(readMsgId, readFolderId, isRead);
+            return NextResponse.json(markRes);
+        }
+
         if (action === 'subscribe') {
             const result = await zohoMail.subscribeToNotifications();
             return NextResponse.json({ success: true, result });

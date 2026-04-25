@@ -64,6 +64,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
     const [sendingInvoice, setSendingInvoice] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
+    const [aiSendInstructions, setAiSendInstructions] = useState('');
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -366,6 +367,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             subject: `Invoice ${invoice.invoiceNumber}`,
             message: `Hello,\n\nPlease find attached invoice ${invoice.invoiceNumber}.\n\nBest regards,\n${user?.name || 'Team'}`,
         });
+        setAiSendInstructions(
+            `Write a professional invoice delivery email for invoice ${invoice.invoiceNumber} total ${formatCurrency(invoice.total)}.`
+        );
         setShowSendModal(true);
     };
 
@@ -373,8 +377,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         if (!invoiceToSend) return;
         setAiDraftingSend(true);
         try {
+            const instruction = aiSendInstructions.trim()
+                ? aiSendInstructions.trim()
+                : `Write a professional invoice delivery email for invoice ${invoiceToSend.invoiceNumber} total ${formatCurrency(invoiceToSend.total)}.`;
             const draft = await generateEmailDraft(
-                `Write a professional invoice delivery email for invoice ${invoiceToSend.invoiceNumber} total ${formatCurrency(invoiceToSend.total)}.`,
+                instruction,
                 sendForm.recipientEmail,
                 sendForm.subject
             );
@@ -964,6 +971,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200"
                                 value={sendForm.subject}
                                 onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
+                            <textarea
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 min-h-[90px]"
+                                value={aiSendInstructions}
+                                onChange={(e) => setAiSendInstructions(e.target.value)}
+                                placeholder="Example: Keep this friendly, mention due date, and ask if they need a call."
                             />
                         </div>
                         <div>

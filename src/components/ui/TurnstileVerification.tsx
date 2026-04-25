@@ -37,10 +37,13 @@ export default function TurnstileVerification({
 }: TurnstileVerificationProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
+    const mountedRef = useRef(true);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
     useEffect(() => {
+        mountedRef.current = true;
+
         // Site key check
         if (!siteKey || siteKey === 'your_site_key_here') {
             console.error('Cloudflare Turnstile site key is not configured');
@@ -49,7 +52,9 @@ export default function TurnstileVerification({
 
         // Define the callback before loading the script
         window.onloadTurnstileCallback = () => {
-            setIsScriptLoaded(true);
+            if (mountedRef.current) {
+                setIsScriptLoaded(true);
+            }
         };
 
         // Suppress multiple script loads
@@ -67,6 +72,7 @@ export default function TurnstileVerification({
         document.head.appendChild(script);
 
         return () => {
+            mountedRef.current = false;
             // Cleanup: remove the callback if the component unmounts before script loads
             delete (window as any).onloadTurnstileCallback;
         };
@@ -83,7 +89,8 @@ export default function TurnstileVerification({
                     },
                     'expired-callback': () => {
                         if (onExpire) onExpire();
-                        if (widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+                        // Avoid reset() calls on widgets already disposed by route transitions.
+                        // Those trigger noisy "Cannot find Widget" warnings from Turnstile.
                     },
                     'error-callback': () => {
                         if (onError) onError();
@@ -96,9 +103,12 @@ export default function TurnstileVerification({
 
         return () => {
             if (widgetIdRef.current && window.turnstile) {
-                // We don't necessarily want to remove it every render, but on unmount
-                // window.turnstile.remove(widgetIdRef.current);
-                // widgetIdRef.current = null;
+                try {
+                    window.turnstile.remove(widgetIdRef.current);
+                } catch {
+                    // Ignore stale widget cleanup errors.
+                }
+                widgetIdRef.current = null;
             }
         };
     }, [isScriptLoaded, onVerify, onExpire, onError, siteKey, theme]);
