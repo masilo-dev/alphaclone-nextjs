@@ -89,7 +89,8 @@ export const contractServerService = {
             .from('signature_events')
             .insert({
                 contract_id: req.contractId,
-                signer_id: req.userId || contract.client_id || null,
+                // signer_id must reference auth.users. Public signing links do not have auth users.
+                signer_id: req.userId || null,
                 signer_role: req.role,
                 signer_name: req.signerName,
                 signer_email: req.signerEmail,
@@ -148,7 +149,7 @@ export const contractServerService = {
         await supabaseAdmin.from('contract_audit_trail').insert({
             contract_id: req.contractId,
             action: `contract_signed_by_${req.role}`,
-            actor_id: req.userId || contract.client_id || null,
+            actor_id: req.userId || null,
             actor_role: req.role,
             actor_name: req.signerName,
             actor_email: req.signerEmail,
