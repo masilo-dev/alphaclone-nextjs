@@ -144,6 +144,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
     const [sendingQuote, setSendingQuote] = useState(false);
     const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
+    const [aiSendInstructions, setAiSendInstructions] = useState('');
     const serviceDropdownRef = useRef<HTMLDivElement>(null);
     const contactDropdownRef = useRef<HTMLDivElement>(null);
     const [tenantCatalogServices, setTenantCatalogServices] = useState<ServiceItem[]>([]);
@@ -661,6 +662,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             subject: `Quote ${quote.quoteNumber} - ${quote.name}`,
             message: `Hello,\n\nPlease find attached quote ${quote.quoteNumber} for ${quote.name}.\n\nBest regards,\n${userId}`,
         });
+        setAiSendInstructions(
+            `Write a professional quote delivery email for quote ${quote.quoteNumber} (${quote.name}) with total ${formatCurrency(quote.totalAmount, quote.currency)}.`
+        );
         setShowSendModal(true);
     };
 
@@ -668,8 +672,11 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
         if (!quoteToSend) return;
         setAiDraftingSend(true);
         try {
+            const instruction = aiSendInstructions.trim()
+                ? aiSendInstructions.trim()
+                : `Write a professional quote delivery email for quote ${quoteToSend.quoteNumber} (${quoteToSend.name}) with total ${formatCurrency(quoteToSend.totalAmount, quoteToSend.currency)}.`;
             const draft = await generateEmailDraft(
-                `Write a professional quote delivery email for quote ${quoteToSend.quoteNumber} (${quoteToSend.name}) with total ${formatCurrency(quoteToSend.totalAmount, quoteToSend.currency)}.`,
+                instruction,
                 sendForm.recipientEmail,
                 sendForm.subject
             );
@@ -1794,6 +1801,15 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                         value={sendForm.subject}
                         onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
                     />
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
+                        <textarea
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-sm min-h-[90px]"
+                            value={aiSendInstructions}
+                            onChange={(e) => setAiSendInstructions(e.target.value)}
+                            placeholder="Example: Keep it concise, mention payment terms, and ask for approval by Friday."
+                        />
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
                         <textarea

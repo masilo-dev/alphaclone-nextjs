@@ -137,6 +137,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [showSendModal, setShowSendModal] = useState(false);
     const [sendingContract, setSendingContract] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
+    const [aiSendInstructions, setAiSendInstructions] = useState('');
     const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
 
     const today = format(new Date(), 'MMMM d, yyyy');
@@ -334,14 +335,20 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             subject: `Contract: ${form.projectName || 'Service Agreement'}`,
             message: `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
         });
+        setAiSendInstructions(
+            `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
+        );
         setShowSendModal(true);
     };
 
     const handleAiDraftSendMessage = async () => {
         setAiDraftingSend(true);
         try {
+            const instruction = aiSendInstructions.trim()
+                ? aiSendInstructions.trim()
+                : `Write a professional contract delivery email for project ${form.projectName} and client ${form.clientName}.`;
             const draft = await generateEmailDraft(
-                `Write a professional contract delivery email for project ${form.projectName} and client ${form.clientName}.`,
+                instruction,
                 sendForm.recipientEmail,
                 sendForm.subject
             );
@@ -819,6 +826,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 className={inputCls}
                                 value={sendForm.subject}
                                 onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
+                            <textarea
+                                className={`${inputCls} min-h-[90px]`}
+                                value={aiSendInstructions}
+                                onChange={(e) => setAiSendInstructions(e.target.value)}
+                                placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
                             />
                         </div>
                         <div>
