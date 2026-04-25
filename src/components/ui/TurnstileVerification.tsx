@@ -41,6 +41,10 @@ export default function TurnstileVerification({
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const [fatalError, setFatalError] = useState<string | null>(null);
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    const allowedHosts = (process.env.NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS || 'alphaclonesystems.com,www.alphaclonesystems.com,localhost,127.0.0.1')
+        .split(',')
+        .map((h) => h.trim().toLowerCase())
+        .filter(Boolean);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -49,6 +53,19 @@ export default function TurnstileVerification({
         if (!siteKey || siteKey === 'your_site_key_here') {
             const message = 'Security verification is not configured. Please contact support.';
             console.error('Cloudflare Turnstile site key is not configured');
+            setFatalError(message);
+            if (onError) onError(message);
+            return;
+        }
+
+        const host =
+            typeof window !== 'undefined'
+                ? window.location.hostname.toLowerCase()
+                : '';
+        const hostAllowed = allowedHosts.includes(host);
+        if (!hostAllowed) {
+            const message = `Security verification is disabled on ${host}. Use an approved domain: ${allowedHosts.join(', ')}`;
+            console.warn('[Turnstile] Host is not in NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS:', host);
             setFatalError(message);
             if (onError) onError(message);
             return;
@@ -80,7 +97,7 @@ export default function TurnstileVerification({
             // Cleanup: remove the callback if the component unmounts before script loads
             delete (window as any).onloadTurnstileCallback;
         };
-    }, [siteKey]);
+    }, [siteKey, onError, allowedHosts]);
 
     useEffect(() => {
         if (fatalError) return;
