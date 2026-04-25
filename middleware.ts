@@ -61,16 +61,6 @@ function applyRequiredOwaspHeaders(response: NextResponse) {
 
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
-    const hostname = request.nextUrl.hostname.toLowerCase();
-
-    // Keep production host canonical to avoid third-party origin mismatches
-    // (notably Cloudflare Turnstile sitekey/domain validation and postMessage target checks).
-    if (hostname === 'www.alphaclonesystems.com') {
-        const url = request.nextUrl.clone();
-        url.hostname = 'alphaclonesystems.com';
-        return applyRequiredOwaspHeaders(NextResponse.redirect(url, 308));
-    }
-
     const policy = await fetchPlatformPolicy();
 
     // Canonical route consolidation to close legacy entry points.
