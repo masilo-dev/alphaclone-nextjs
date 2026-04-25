@@ -19,8 +19,8 @@ const PrismBackground = React.memo(() => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Exclude background from dashboard routes as requested by user
-    if (pathname?.startsWith('/dashboard')) {
+    // Exclude background from app workflows where readability is critical.
+    if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/contract/')) {
         return null;
     }
 
