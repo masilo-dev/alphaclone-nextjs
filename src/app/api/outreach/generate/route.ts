@@ -23,6 +23,8 @@ interface GeneratedEmail {
   subject:       string;
   body:          string;
   pitchAngle:    string;
+  recipientEmail: string | null;
+  recipientSource: 'lead' | 'inferred' | 'none';
 }
 
 const PITCH_HOOKS: Record<string, string> = {
@@ -38,6 +40,28 @@ const PITCH_HOOKS: Record<string, string> = {
   'low-rating-recovery':   'their rating is below 3 stars — urgency around reputation recovery',
   'no-email-follow-up':    'no email found — produce a cold CALL script instead of an email',
 };
+
+function inferBusinessEmail(lead: LeadForGeneration): string | null {
+  const directEmail = String(lead.email || '').trim();
+  if (directEmail.includes('@')) {
+    return directEmail.toLowerCase();
+  }
+
+  const rawWebsite = String(lead.website || '').trim();
+  if (!rawWebsite) return null;
+
+  try {
+    const normalizedUrl = rawWebsite.startsWith('http://') || rawWebsite.startsWith('https://')
+      ? rawWebsite
+      : `https://${rawWebsite}`;
+    const url = new URL(normalizedUrl);
+    const host = url.hostname.replace(/^www\./i, '').toLowerCase();
+    if (!host || host.includes('localhost') || !host.includes('.')) return null;
+    return `info@${host}`;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * POST /api/outreach/generate
@@ -108,7 +132,7 @@ export async function POST(request: Request) {
         business: l.business_name,
         industry,
         category: l.category || industry,
-        hasEmail:   !!l.email,
+        hasEmail:   !!inferBusinessEmail(l),
         hasPhone:   !!l.phone,
         hasWebsite: !!l.website,
         rating:     l.rating,
@@ -135,7 +159,7 @@ RULES:
 - Reference the specific business name and industry
 - For pitch angle "digital-presence": urgently highlight they have NO website and what they're losing
 - For pitch angle "reputation-management": reference their low rating subtly without being harsh
-- For pitch angle "no-email-follow-up": write a 60-word PHONE CALL SCRIPT instead
+- For leads where hasEmail is false: write a 60-word PHONE CALL SCRIPT instead of an email body
 - End with ONE clear, low-pressure CTA (e.g. "Worth a quick 10-min call?")
 - Do NOT use asterisks, hashtags, or markdown symbols
 - Return ONLY valid JSON array, no other text
@@ -191,11 +215,21 @@ Return this exact JSON structure (array of objects):
     // Merge with original lead data
     const emails: GeneratedEmail[] = generated.map(g => {
       const lead = leads[g.index];
+      const inferredRecipient = lead ? inferBusinessEmail(lead) : null;
+      const directEmail = String(lead?.email || '').trim();
+      const recipientEmail = directEmail.includes('@') ? directEmail.toLowerCase() : inferredRecipient;
+      const recipientSource: 'lead' | 'inferred' | 'none' = directEmail.includes('@')
+        ? 'lead'
+        : recipientEmail
+          ? 'inferred'
+          : 'none';
       return {
         business_name: lead?.business_name || `Lead ${g.index}`,
         subject:       g.subject,
         body:          g.body,
         pitchAngle:    lead?.pitchAngle || 'growth-opportunity',
+        recipientEmail,
+        recipientSource,
       };
     });
 

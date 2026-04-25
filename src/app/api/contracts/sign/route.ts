@@ -4,6 +4,19 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
 
+function getClientIpAddress(req: NextRequest): string {
+    const forwarded = req.headers.get('x-forwarded-for');
+    if (forwarded) {
+        const firstIp = forwarded.split(',')[0]?.trim();
+        if (firstIp) return firstIp;
+    }
+
+    const realIp = req.headers.get('x-real-ip')?.trim();
+    if (realIp) return realIp;
+
+    return '127.0.0.1';
+}
+
 export async function GET(req: NextRequest) {
     try {
         const token = req.nextUrl.searchParams.get('token');
@@ -57,6 +70,8 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const { contractId, role, signatureDataUrl, signerName, signerEmail, signingToken } = body;
+        const normalizedSignerName = String(signerName || '').trim();
+        const normalizedSignerEmail = String(signerEmail || '').trim().toLowerCase();
 
         if ((!contractId || !role) && !signingToken) {
             return NextResponse.json({ error: 'Missing signer context' }, { status: 400 });
@@ -64,8 +79,11 @@ export async function POST(req: NextRequest) {
         if (!signatureDataUrl) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
+        if (signingToken && (!normalizedSignerName || !normalizedSignerEmail)) {
+            return NextResponse.json({ error: 'Signer name and email are required' }, { status: 400 });
+        }
 
-        const ipAddress = req.headers.get('x-forwarded-for') || '127.0.0.1';
+        const ipAddress = getClientIpAddress(req);
         const userAgent = req.headers.get('user-agent') || 'unknown';
         let updatedContract;
 
@@ -73,8 +91,8 @@ export async function POST(req: NextRequest) {
             updatedContract = await contractServerService.signContractWithToken({
                 signingToken,
                 signatureDataUrl,
-                signerName,
-                signerEmail,
+                signerName: normalizedSignerName,
+                signerEmail: normalizedSignerEmail,
                 ipAddress,
                 userAgent,
             });
@@ -93,8 +111,8 @@ export async function POST(req: NextRequest) {
                 userId: user.id,
                 role,
                 signatureDataUrl,
-                signerName,
-                signerEmail,
+                signerName: normalizedSignerName || user.user_metadata?.full_name || user.email || 'Authorized Signer',
+                signerEmail: normalizedSignerEmail || user.email || '',
                 ipAddress,
                 userAgent
             });

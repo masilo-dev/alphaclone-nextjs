@@ -30,6 +30,8 @@ interface GeneratedEmail {
   subject:       string;
   body:          string;
   pitchAngle:    string;
+  recipientEmail: string | null;
+  recipientSource: 'lead' | 'inferred' | 'none';
 }
 
 type SendStatus = 'idle' | 'generating' | 'preview' | 'sending' | 'done';
@@ -72,9 +74,27 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['brevo']);
   const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(false);
 
-  // Leads that can receive auto-outreach (have email)
-  const emailable = leads.filter(l => l?.qualification?.canAutoSend && l?.email);
-  const noEmail   = leads.filter(l => !l?.qualification?.canAutoSend || !l?.email);
+  const inferLeadRecipient = (lead: OutreachLead): string | null => {
+    const directEmail = String(lead?.email || '').trim();
+    if (directEmail.includes('@')) {
+      return directEmail.toLowerCase();
+    }
+
+    const website = String(lead?.website || '').trim();
+    if (!website) return null;
+
+    try {
+      const url = new URL(website.startsWith('http://') || website.startsWith('https://') ? website : `https://${website}`);
+      const host = url.hostname.replace(/^www\./i, '').toLowerCase();
+      if (!host || !host.includes('.') || host.includes('localhost')) return null;
+      return `info@${host}`;
+    } catch {
+      return null;
+    }
+  };
+
+  const leadsWithRecipient = leads.filter((l) => Boolean(inferLeadRecipient(l)));
+  const leadsWithoutRecipient = leads.filter((l) => !inferLeadRecipient(l));
 
   // Fetch user display name and Zoho sender addresses on mount
   useEffect(() => {
@@ -107,8 +127,8 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
   // ── Generate emails ────────────────────────────────────────────────────────
   const handleGenerate = async () => {
-    if (!emailable.length) {
-      toast.error('No leads with email addresses to generate outreach for');
+    if (!leads.length) {
+      toast.error('No leads selected for outreach generation');
       return;
     }
     setStatus('generating');
@@ -118,16 +138,16 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          leads: emailable.map(l => ({
+          leads: leads.map(l => ({
             business_name: l.business_name || 'Unknown Business',
-            email:    l.email,
+            email:    inferLeadRecipient(l) || '',
             phone:    l.phone || '',
             website:  l.website || '',
             rating:   l.rating || 0,
             address:  l.address || '',
             category: l.category || '',
-            pitchAngle: l.qualification?.pitchAngle || 'professional',
-            insights:   l.qualification?.insights || '',
+            pitchAngle: inferLeadRecipient(l) ? (l.qualification?.pitchAngle || 'professional') : 'no-email-follow-up',
+            insights:   Array.isArray(l.qualification?.insights) ? l.qualification.insights : [],
             score:      l.qualification?.score || 0,
           })),
           industry,
@@ -166,8 +186,15 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
     for (let i = 0; i < emails.length; i++) {
       const email = emails[i];
-      const lead  = emailable[i];
-      if (!lead?.email) continue;
+      const recipient = String(email.recipientEmail || '').trim();
+      if (!recipient || !recipient.includes('@')) {
+        results.push({
+          name: email.business_name || 'Unknown Business',
+          status: 'failed',
+          error: 'No recipient email available. Add or import an email for this lead.',
+        });
+        continue;
+      }
 
       try {
         const res = await fetch('/api/outreach/send', {
@@ -175,13 +202,13 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tenantId:    currentTenant.id,
-            leadEmail:   lead.email,
-            leadName:    lead.business_name || 'Unknown Business',
+            leadEmail:   recipient,
+            leadName:    email.business_name || 'Unknown Business',
             subject:     email.subject,
             body:        email.body,
-            pitchAngle:  lead.qualification?.pitchAngle || 'professional',
+            pitchAngle:  email.pitchAngle || 'professional',
             industry,
-            score:       lead.qualification?.score || 0,
+            score:       0,
             fromAddress: fromAddress || undefined,
             queue:       queueOnly,
             deliveryProviders: selectedProviders,
@@ -229,7 +256,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             <div className="min-w-0">
               <h2 className="text-base sm:text-lg font-black text-white truncate">Outreach Automation</h2>
               <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest truncate">
-                {industry} · {emailable.length} emailable · {noEmail.length} phone-only
+                {industry} · {leadsWithRecipient.length} emailable · {leadsWithoutRecipient.length} phone-only
               </p>
             </div>
           </div>
@@ -261,9 +288,9 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                   </div>
                 ))}
               </div>
-              {noEmail.length > 0 && (
+              {leadsWithoutRecipient.length > 0 && (
                 <p className="text-[10px] text-amber-400/80 mt-1">
-                  {noEmail.length} lead{noEmail.length > 1 ? 's have' : ' has'} no email. Phone follow-up recommended.
+                  {leadsWithoutRecipient.length} lead{leadsWithoutRecipient.length > 1 ? 's have' : ' has'} no reachable email. AI will generate phone scripts for these leads.
                 </p>
               )}
             </div>
@@ -366,7 +393,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             {status !== 'done' && (
               <button
                 onClick={handleGenerate}
-                disabled={status === 'generating' || !emailable.length}
+                disabled={status === 'generating' || !leads.length}
                 className="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-sm rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {status === 'generating' ? (
@@ -385,7 +412,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
               <div className="h-full flex flex-col items-center justify-center text-center gap-4 text-slate-600 py-16">
                 <Sparkles className="w-12 h-12 opacity-20" />
                 <p className="text-sm px-2 max-w-md">
-                  Configure your tone and click <strong className="text-slate-400">Generate Emails</strong> to produce personalized outreach for {emailable.length} lead{emailable.length !== 1 ? 's' : ''}.
+                  Configure your tone and click <strong className="text-slate-400">Generate Emails</strong> to produce personalized outreach for {leads.length} lead{leads.length !== 1 ? 's' : ''}.
                 </p>
                 {/* Pitch angle legend */}
                 {leads.length > 0 && (
@@ -408,7 +435,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             {status === 'generating' && (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400 py-16">
                 <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
-                <p className="text-sm">AI is writing {emailable.length} personalized emails…</p>
+                <p className="text-sm">AI is writing {leads.length} personalized outreach drafts…</p>
                 <p className="text-[10px] text-slate-600">Industry: {industry} · Tone: {tone}</p>
               </div>
             )}
@@ -428,7 +455,6 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                 </div>
 
                 {emails.map((email, idx) => {
-                  const lead = emailable[idx];
                   const isEditing = editingIdx === idx;
                   const pa = PITCH_ANGLES[email.pitchAngle];
                   return (
@@ -437,9 +463,20 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                       <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-white truncate">{email.business_name}</p>
-                          <p className="text-[10px] text-slate-500 truncate">To: {lead?.email}</p>
+                          <p className="text-[10px] text-slate-500 truncate">
+                            To: {email.recipientEmail || 'No recipient email'}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${
+                            email.recipientSource === 'lead'
+                              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                              : email.recipientSource === 'inferred'
+                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                                : 'bg-slate-700/40 border-slate-700 text-slate-400'
+                          }`}>
+                            {email.recipientSource === 'lead' ? 'Verified recipient' : email.recipientSource === 'inferred' ? 'Inferred recipient' : 'No recipient'}
+                          </span>
                           {pa && (
                             <span className="text-[9px] px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 font-bold">
                               {pa.label}
@@ -453,6 +490,18 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                       </div>
                       {/* Subject */}
                       <div className="px-4 pt-3 pb-1">
+                        {isEditing && (
+                          <input
+                            value={email.recipientEmail || ''}
+                            onChange={e => setEmails(prev => prev.map((em, i) => i === idx ? {
+                              ...em,
+                              recipientEmail: e.target.value.trim() || null,
+                              recipientSource: 'inferred',
+                            } : em))}
+                            placeholder="recipient@company.com"
+                            className="w-full mb-2 text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none"
+                          />
+                        )}
                         {isEditing ? (
                           <input
                             value={email.subject}
