@@ -15,15 +15,16 @@ function pickProvider(
 ): ResolvedEmailProviderConfig | null {
   const order: EmailProvider[] = preferredProvider
     ? [preferredProvider]
-    : ['brevo', 'sendgrid', 'resend'];
+    : ['brevo', 'sendgrid', 'resend', 'zoho', 'gmail'];
   for (const provider of order) {
     const hit = rows.find((row) => row.type === provider);
     const cfg = (hit?.config || {}) as Record<string, unknown>;
     const apiKey = String(cfg.apiKey || cfg.api_key || '').trim();
-    if (!apiKey) continue;
+    const requiresApiKey = provider === 'brevo' || provider === 'sendgrid' || provider === 'resend';
+    if (requiresApiKey && !apiKey) continue;
     return {
       provider,
-      apiKey,
+      apiKey: apiKey || '',
       fromEmail: String(cfg.fromEmail || cfg.from_email || '').trim() || undefined,
       fromName: String(cfg.fromName || cfg.from_name || '').trim() || undefined,
     };
@@ -59,7 +60,7 @@ export async function resolveEmailProviderConfig(params: {
       .select('type, config')
       .eq('user_id', lookupUserId)
       .eq('enabled', true)
-      .in('type', ['brevo', 'sendgrid', 'resend']);
+      .in('type', ['brevo', 'sendgrid', 'resend', 'zoho', 'gmail']);
     const resolved = pickProvider(
       (data || []) as Array<{ type: string; config: Record<string, unknown> }>,
       params.preferredProvider
@@ -73,7 +74,7 @@ export async function resolveEmailProviderConfig(params: {
       .select('type, config, user_id')
       .eq('tenant_id', tenantId)
       .eq('enabled', true)
-      .in('type', ['brevo', 'sendgrid', 'resend'])
+      .in('type', ['brevo', 'sendgrid', 'resend', 'zoho', 'gmail'])
       .order('updated_at', { ascending: false });
 
     const grouped = (data || []) as Array<{ type: string; config: Record<string, unknown>; user_id?: string }>;
