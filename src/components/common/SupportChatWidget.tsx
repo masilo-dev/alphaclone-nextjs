@@ -88,9 +88,10 @@ export default function SupportChatWidget() {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-    supabase.auth.getUser().then((result) => {
-      if (result.data.user) setUserId(result.data.user.id);
-    });
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) setUserId(data.user.id);
+    })();
     }, []);
 
     useEffect(() => {
