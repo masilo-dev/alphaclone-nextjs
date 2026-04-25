@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 interface TurnstileVerificationProps {
     onVerify: (token: string) => void;
     onExpire?: () => void;
-    onError?: () => void;
+    onError?: (message?: string) => void;
     theme?: 'light' | 'dark' | 'auto';
 }
 
@@ -39,6 +39,7 @@ export default function TurnstileVerification({
     const widgetIdRef = useRef<string | null>(null);
     const mountedRef = useRef(true);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+    const [fatalError, setFatalError] = useState<string | null>(null);
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
     useEffect(() => {
@@ -46,7 +47,10 @@ export default function TurnstileVerification({
 
         // Site key check
         if (!siteKey || siteKey === 'your_site_key_here') {
+            const message = 'Security verification is not configured. Please contact support.';
             console.error('Cloudflare Turnstile site key is not configured');
+            setFatalError(message);
+            if (onError) onError(message);
             return;
         }
 
@@ -79,6 +83,8 @@ export default function TurnstileVerification({
     }, [siteKey]);
 
     useEffect(() => {
+        if (fatalError) return;
+
         if (isScriptLoaded && containerRef.current && !widgetIdRef.current) {
             try {
                 widgetIdRef.current = window.turnstile.render(containerRef.current, {
@@ -93,11 +99,24 @@ export default function TurnstileVerification({
                         // Those trigger noisy "Cannot find Widget" warnings from Turnstile.
                     },
                     'error-callback': () => {
-                        if (onError) onError();
+                        const host = typeof window !== 'undefined' ? window.location.hostname : 'current host';
+                        const message =
+                            `Security verification is unavailable on ${host}. Please refresh, disable strict browser extensions for this page, or contact support.`;
+                        setFatalError(message);
+                        if (widgetIdRef.current && window.turnstile) {
+                            try {
+                                window.turnstile.remove(widgetIdRef.current);
+                            } catch {}
+                            widgetIdRef.current = null;
+                        }
+                        if (onError) onError(message);
                     },
                 });
             } catch (err) {
                 console.error('Error rendering Turnstile:', err);
+                const message = 'Security verification could not initialize. Please refresh and try again.';
+                setFatalError(message);
+                if (onError) onError(message);
             }
         }
 
@@ -111,12 +130,12 @@ export default function TurnstileVerification({
                 widgetIdRef.current = null;
             }
         };
-    }, [isScriptLoaded, onVerify, onExpire, onError, siteKey, theme]);
+    }, [isScriptLoaded, onVerify, onExpire, onError, siteKey, theme, fatalError]);
 
-    if (!siteKey || siteKey === 'your_site_key_here') {
+    if (fatalError) {
         return (
             <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-200 text-xs">
-                Turnstile site key missing. Please check your configuration.
+                {fatalError}
             </div>
         );
     }
