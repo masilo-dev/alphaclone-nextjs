@@ -1,7 +1,9 @@
 import { Resend } from 'resend';
 import sgMail from '@sendgrid/mail';
+import { gmailServerService } from '@/services/server/gmailServerService';
+import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 
-export type EmailProvider = 'brevo' | 'sendgrid' | 'resend';
+export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail';
 
 export type EmailSendInput = {
     apiKey: string;
@@ -20,6 +22,7 @@ export type EmailSendInput = {
         content: string; // base64 content
         contentType?: string;
     }>;
+    userId?: string;
 };
 
 export type EmailSendResult = {
@@ -31,6 +34,38 @@ export type EmailSendResult = {
 
 function normalizeRecipients(to: string | string[]): string[] {
     return Array.isArray(to) ? to : [to];
+}
+
+function encodeGmailRawMessage(params: {
+    to: string;
+    subject: string;
+    html?: string;
+    text?: string;
+    fromEmail: string;
+    fromName?: string;
+    replyTo?: string;
+}) {
+    const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
+    const body = params.html || params.text || '';
+    const mimeType = params.html ? 'text/html' : 'text/plain';
+    const message = [
+        `From: ${(params.fromName || 'AlphaClone Systems').trim()} <${params.fromEmail}>`,
+        `To: ${params.to}`,
+        params.replyTo ? `Reply-To: ${params.replyTo}` : null,
+        `Subject: ${utf8Subject}`,
+        'MIME-Version: 1.0',
+        `Content-Type: ${mimeType}; charset="UTF-8"`,
+        '',
+        body,
+    ]
+        .filter(Boolean)
+        .join('\n');
+
+    return Buffer.from(message)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
 }
 
 async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
@@ -193,12 +228,85 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
     }
 }
 
+async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
+        if (!input.userId) {
+            return { ok: false, provider: 'zoho', error: 'Zoho send requires user context' };
+        }
+        const recipients = normalizeRecipients(input.to);
+        if (!recipients.length) {
+            return { ok: false, provider: 'zoho', error: 'Recipient is required' };
+        }
+
+        const zohoService = new ZohoMailService(input.userId);
+        const result = await zohoService.sendEmail({
+            fromAddress: input.fromEmail,
+            toAddress: recipients[0],
+            subject: input.subject,
+            content: input.html || input.text || '',
+        });
+
+        return {
+            ok: true,
+            provider: 'zoho',
+            emailId: String(result?.data?.messageId || ''),
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            provider: 'zoho',
+            error: error instanceof Error ? error.message : 'Zoho send failed',
+        };
+    }
+}
+
+async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
+        if (!input.userId) {
+            return { ok: false, provider: 'gmail', error: 'Gmail send requires user context' };
+        }
+        const recipients = normalizeRecipients(input.to);
+        if (!recipients.length) {
+            return { ok: false, provider: 'gmail', error: 'Recipient is required' };
+        }
+
+        const raw = encodeGmailRawMessage({
+            to: recipients[0],
+            subject: input.subject,
+            html: input.html,
+            text: input.text,
+            fromEmail: input.fromEmail,
+            fromName: input.fromName,
+            replyTo: input.replyTo,
+        });
+
+        const result = await gmailServerService.proxyRequest(input.userId, 'messages/send', {
+            method: 'POST',
+            body: JSON.stringify({ raw }),
+        });
+
+        return {
+            ok: true,
+            provider: 'gmail',
+            emailId: String(result?.id || ''),
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            provider: 'gmail',
+            error: error instanceof Error ? error.message : 'Gmail send failed',
+        };
+    }
+}
+
 export async function sendWithProviderSdk(
     provider: EmailProvider,
     input: EmailSendInput
 ): Promise<EmailSendResult> {
     if (provider === 'resend') return sendViaResend(input);
     if (provider === 'sendgrid') return sendViaSendGrid(input);
+    if (provider === 'zoho') return sendViaZoho(input);
+    if (provider === 'gmail') return sendViaGmail(input);
     return sendViaBrevo(input);
 }
 

@@ -20,6 +20,7 @@ import { Button, Badge } from '../../ui/UIComponents';
 import { leadService, Lead } from '../../../services/leadService';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface AIOutreachModalProps {
     isOpen: boolean;
@@ -35,6 +36,7 @@ const TONES = [
 ];
 
 const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId }) => {
+    const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
@@ -45,6 +47,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [results, setResults] = useState<any[] | null>(null);
     const [userEmail, setUserEmail] = useState('');
     const [fetchingAccount, setFetchingAccount] = useState(false);
+    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail'>('sendgrid');
 
     useEffect(() => {
         if (isOpen) {
@@ -72,12 +75,30 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         try {
             const { leads: fetchedLeads, error } = await leadService.getLeads();
             if (error) throw new Error(error);
-            // Only show leads with email addresses
-            setLeads((fetchedLeads || []).filter(l => !!l.email));
+            setLeads(fetchedLeads || []);
         } catch (err: any) {
             toast.error('Failed to load leads: ' + err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const inferRecipientEmail = (lead: Lead): string | null => {
+        const directEmail = String((lead as any).email || '').trim();
+        if (directEmail.includes('@')) return directEmail.toLowerCase();
+
+        const website = String((lead as any).website || '').trim();
+        if (!website) return null;
+
+        try {
+            const normalizedUrl = website.startsWith('http://') || website.startsWith('https://')
+                ? website
+                : `https://${website}`;
+            const host = new URL(normalizedUrl).hostname.replace(/^www\./i, '').toLowerCase();
+            if (!host || !host.includes('.') || host.includes('localhost')) return null;
+            return `info@${host}`;
+        } catch {
+            return null;
         }
     };
 
@@ -97,30 +118,100 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             toast.error('Please select at least one lead');
             return;
         }
+        if (!currentTenant?.id) {
+            toast.error('No active workspace selected');
+            return;
+        }
 
         setSending(true);
         try {
-            const response = await fetch(`/api/outreach?userId=${userId}`, {
+            const selectedLeadRecords = leads.filter((lead) => selectedLeads.includes(lead.id));
+            const generationResponse = await fetch('/api/outreach/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    leadIds: selectedLeads,
-                    customPrompt,
+                    leads: selectedLeadRecords.map((lead) => {
+                        const recipient = inferRecipientEmail(lead);
+                        return {
+                            business_name: lead.businessName || 'Unknown Business',
+                            email: recipient || '',
+                            phone: (lead as any).phone || '',
+                            website: (lead as any).website || '',
+                            address: (lead as any).location || '',
+                            category: lead.industry || '',
+                            rating: 0,
+                            pitchAngle: recipient ? 'growth-opportunity' : 'no-email-follow-up',
+                            insights: [],
+                            score: 75,
+                        };
+                    }),
+                    industry: 'mixed',
                     tone: selectedTone,
-                    fromAddress: userEmail
+                    customContext: customPrompt,
+                    senderName: userEmail || 'AlphaClone Systems',
+                    tenantId: currentTenant.id,
                 })
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Outreach failed');
+            const generationData = await generationResponse.json().catch(() => ({}));
+            if (!generationResponse.ok || !generationData.success) {
+                throw new Error(generationData.error || 'Outreach generation failed');
             }
 
-            setResults(data.results);
-            toast.success(`Successfully processed ${data.results.filter((r: any) => r.status === 'success').length} emails!`);
+            const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
+            const sendResults: Array<{ name: string; status: 'success' | 'error'; error?: string }> = [];
+
+            for (const draft of drafts) {
+                const recipient = String(draft.recipientEmail || '').trim();
+                if (!recipient || !recipient.includes('@')) {
+                    sendResults.push({
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'error',
+                        error: 'No recipient email available',
+                    });
+                    continue;
+                }
+
+                const sendResponse = await fetch('/api/outreach/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenantId: currentTenant.id,
+                        leadEmail: recipient,
+                        leadName: draft.business_name,
+                        subject: draft.subject,
+                        body: draft.body,
+                        pitchAngle: draft.pitchAngle || 'growth-opportunity',
+                        industry: 'mixed',
+                        score: 75,
+                        autoSend: true,
+                        consentGranted: true,
+                        confidenceScore: 100,
+                        deliveryProviders: [selectedProvider],
+                        preferredProvider: selectedProvider,
+                        balanceByDailyLimit: false,
+                    }),
+                });
+
+                const sendData = await sendResponse.json().catch(() => ({}));
+                if (!sendResponse.ok || !sendData.success) {
+                    sendResults.push({
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'error',
+                        error: String(sendData.error || 'Outreach failed'),
+                    });
+                } else {
+                    sendResults.push({
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'success',
+                    });
+                }
+            }
+
+            setResults(sendResults);
+            toast.success(`Successfully processed ${sendResults.filter((r) => r.status === 'success').length} emails`);
         } catch (err: any) {
             toast.error(err.message || 'Bulk outreach failed');
         } finally {
@@ -158,7 +249,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white uppercase tracking-tighter">AI Bulk Outreach</h2>
-                            <p className="text-[9px] text-slate-500 font-medium tracking-wide">GMAIL-POWERED PERSONALIZATION</p>
+                            <p className="text-[9px] text-slate-500 font-medium tracking-wide">MULTI-PROVIDER PERSONALIZATION</p>
                         </div>
                     </div>
                     <button
@@ -204,7 +295,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             ) : filteredLeads.length === 0 ? (
                                 <div className="text-center py-12 text-slate-600">
                                     <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                                    <p className="text-sm">No leads found with emails</p>
+                                    <p className="text-sm">No leads available</p>
                                 </div>
                             ) : (
                                 filteredLeads.map(lead => (
@@ -227,7 +318,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[10px] text-slate-500 uppercase tracking-widest">{lead.industry || 'Lead'}</span>
                                                 <span className="text-[10px] text-slate-700">·</span>
-                                                <span className="text-[10px] text-slate-500 truncate">{lead.email}</span>
+                                                <span className="text-[10px] text-slate-500 truncate">{inferRecipientEmail(lead) || 'No recipient email'}</span>
                                             </div>
                                         </div>
                                     </button>
@@ -291,6 +382,24 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                        <ChevronDown className="w-3.5 h-3.5" />
+                                        Step 1b: Delivery Provider
+                                    </h3>
+                                    <select
+                                        value={selectedProvider}
+                                        onChange={(e) => setSelectedProvider(e.target.value as 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail')}
+                                        className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl py-3 px-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all"
+                                    >
+                                        <option value="sendgrid">SendGrid</option>
+                                        <option value="resend">Resend</option>
+                                        <option value="brevo">Brevo</option>
+                                        <option value="zoho">Zoho Mail</option>
+                                        <option value="gmail">Gmail</option>
+                                    </select>
                                 </div>
 
                                 <div>

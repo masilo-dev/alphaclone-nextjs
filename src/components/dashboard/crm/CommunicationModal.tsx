@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck } from 'lucide-react';
+import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck, Sparkles } from 'lucide-react';
 import { Button, Input, Modal } from '../../ui/UIComponents';
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
 import { supabase } from '../../../lib/supabase';
@@ -38,6 +38,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [contactSearch, setContactSearch] = useState('');
     const [showPicker, setShowPicker] = useState(false);
+    const [aiGenerating, setAiGenerating] = useState(false);
 
     const [signature, setSignature] = useState('');
     const pickerRef = useRef<HTMLDivElement>(null);
@@ -226,6 +227,56 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
         }
     };
 
+    const handleGenerateWithAI = async () => {
+        if (!selectedClient) {
+            toast.error('Select a client first.');
+            return;
+        }
+        if (!subject.trim()) {
+            toast.error('Enter a subject first.');
+            return;
+        }
+
+        setAiGenerating(true);
+        try {
+            const prompt = `Write a professional client email in plain text.
+Recipient: ${selectedClient.name}
+Recipient industry: ${selectedClient.industry || 'Unknown'}
+Subject: ${subject}
+Context: ${selectedClient.description || 'No additional context'}
+Current draft: ${body || 'No current draft'}
+Return valid JSON with keys "subject" and "body".`;
+
+            const response = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    systemPrompt: 'You are a professional business email assistant. Return JSON only.',
+                }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data?.text) {
+                throw new Error(data?.error || 'AI generation failed');
+            }
+
+            const cleaned = String(data.text).replace(/```json|```/g, '').trim();
+            try {
+                const parsed = JSON.parse(cleaned);
+                if (parsed.subject) setSubject(String(parsed.subject));
+                if (parsed.body) setBody(String(parsed.body));
+            } catch {
+                setBody(cleaned);
+            }
+            toast.success('AI draft generated.');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to generate AI draft.');
+        } finally {
+            setAiGenerating(false);
+        }
+    };
+
     return (
         <Modal isOpen={true} onClose={onClose} title="Send Email" maxWidth="max-w-2xl">
             <div className="space-y-6">
@@ -346,7 +397,18 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                     />
 
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-slate-300">Message</label>
+                        <div className="flex items-center justify-between gap-2">
+                            <label className="text-sm font-medium text-slate-300">Message</label>
+                            <button
+                                type="button"
+                                onClick={handleGenerateWithAI}
+                                disabled={aiGenerating || !selectedClient || loadingProvider}
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-all disabled:opacity-50"
+                            >
+                                {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                AI Draft
+                            </button>
+                        </div>
                         <textarea
                             value={body}
                             onChange={(e) => setBody(e.target.value)}

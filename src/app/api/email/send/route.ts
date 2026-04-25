@@ -8,7 +8,7 @@ import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailCompositio
 
 /**
  * POST /api/email/send
- * Send a single email via SendGrid (prioritized) or Resend (fallback)
+ * Send a single email via configured provider.
  * Uses per-account credentials from the 'integrations' table.
  */
 export async function POST(req: NextRequest) {
@@ -63,13 +63,14 @@ export async function POST(req: NextRequest) {
             preferredUserId: lookupId || null,
             fallbackToEnv: true,
         });
-        const apiKey = resolved?.apiKey || null;
+        const apiKey = resolved?.apiKey || '';
         if (resolved?.provider) {
             provider = resolved.provider;
             fromEmail = from || resolved.fromEmail || fromEmail;
         }
 
-        if (!apiKey) {
+        const providerNeedsKey = provider === 'sendgrid' || provider === 'resend' || provider === 'brevo';
+        if (providerNeedsKey && !apiKey) {
             return NextResponse.json({ success: false, error: 'Email service not configured for this account' }, { status: 503 });
         }
 
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
             replyTo,
             listUnsubscribeUrl,
             attachments: Array.isArray(attachments) ? attachments : undefined,
+            userId: lookupId || undefined,
         });
 
         if (result.ok) {
@@ -111,7 +113,16 @@ export async function POST(req: NextRequest) {
         }
 
         console.error('[email/send] provider error:', result.error);
-        const code = result.provider === 'sendgrid' ? 'SENDGRID_ERROR' : result.provider === 'resend' ? 'RESEND_ERROR' : 'BREVO_ERROR';
+        const code =
+            result.provider === 'sendgrid'
+                ? 'SENDGRID_ERROR'
+                : result.provider === 'resend'
+                    ? 'RESEND_ERROR'
+                    : result.provider === 'zoho'
+                        ? 'ZOHO_ERROR'
+                        : result.provider === 'gmail'
+                            ? 'GMAIL_ERROR'
+                            : 'BREVO_ERROR';
         return NextResponse.json(
             { success: false, error: 'Email provider rejected this send request', code },
             { status: 502 }
