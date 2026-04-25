@@ -21,6 +21,12 @@ import { useToast } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow, format } from 'date-fns';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const ComposeEmailModal = dynamic(
+  () => import('@/components/dashboard/business/ComposeEmailModal'),
+  { ssr: false }
+);
 
 interface LeadDetailViewProps {
   lead: Lead;
@@ -167,6 +173,9 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
   const [editingNotes, setEditingNotes] = useState(false);
   const [notes, setNotes] = useState(lead.notes || '');
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const [emailDraft, setEmailDraft] = useState<{ to: string; subject: string; body: string } | null>(null);
   
   const leadScore = calculateLeadScore(lead);
   const nextAction = getNextBestAction(lead);
@@ -176,6 +185,13 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
       loadRelatedData();
     }
   }, [isOpen, lead.id]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user?.id) setCurrentUserId(data.user.id);
+    })();
+  }, []);
   
   const loadRelatedData = async () => {
     setIsLoading(true);
@@ -259,9 +275,14 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
       toast.error('No email address available');
       return;
     }
-    
-    // Open email composer with lead context
-    window.open(`/dashboard/email?to=${encodeURIComponent(lead.email)}&subject=${encodeURIComponent(`Partnership Opportunity - ${lead.businessName}`)}`, '_blank');
+
+    const draft = {
+      to: lead.email,
+      subject: `Partnership Opportunity - ${lead.businessName}`,
+      body: `Hello,\n\nI hope you are doing well. I wanted to reach out regarding ${lead.businessName}.\n\nBest regards,`,
+    };
+    setEmailDraft(draft);
+    setShowEmailComposer(true);
   };
   
   const handleScheduleCall = async () => {
@@ -690,6 +711,17 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
             </div>
           </motion.div>
         </>
+      )}
+
+      {showEmailComposer && currentUserId && emailDraft && (
+        <ComposeEmailModal
+          isOpen={true}
+          onClose={() => setShowEmailComposer(false)}
+          userId={currentUserId}
+          initialTo={emailDraft.to}
+          initialSubject={emailDraft.subject}
+          initialBody={emailDraft.body}
+        />
       )}
     </AnimatePresence>
   );
