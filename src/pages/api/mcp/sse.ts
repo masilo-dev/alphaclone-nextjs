@@ -2,21 +2,44 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMCPServer } from '../../../services/mcp/MCPServer';
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://alphaclonesystems.com');
-
-const RESOURCE_METADATA_URL = `${BASE_URL}/.well-known/oauth-protected-resource`;
-
-// Included on every 401 so OAuth clients (Claude, Manus, etc.) can discover
-// the authorization server without additional guessing.
-const WWW_AUTHENTICATE = `Bearer realm="${BASE_URL}", resource_metadata="${RESOURCE_METADATA_URL}"`;
-
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, mcp-session-id, x-tenant-id, x-user-id',
 };
+
+function getRequestBaseUrl(req: NextApiRequest): string {
+  const protoHeader = req.headers['x-forwarded-proto'];
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
+
+  const proto = Array.isArray(protoHeader)
+    ? protoHeader[0]
+    : typeof protoHeader === 'string' && protoHeader.trim()
+      ? protoHeader.split(',')[0].trim()
+      : 'https';
+
+  const host = Array.isArray(hostHeader)
+    ? hostHeader[0]
+    : typeof hostHeader === 'string'
+      ? hostHeader
+      : '';
+
+  if (host) return `${proto}://${host}`;
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'https://alphaclonesystems.com';
+}
+
+function setOauthAuthenticateHeader(req: NextApiRequest, res: NextApiResponse) {
+  const baseUrl = getRequestBaseUrl(req).replace(/\/+$/, '');
+  const resourceMetadataUrl = `${baseUrl}/.well-known/oauth-protected-resource`;
+  const resourceUrl = `${baseUrl}/api/mcp/sse`;
+  // Include both resource and resource_metadata for broader client compatibility.
+  res.setHeader(
+    'WWW-Authenticate',
+    `Bearer realm="${baseUrl}", resource="${resourceUrl}", resource_metadata="${resourceMetadataUrl}"`
+  );
+}
 
 function redactApiKey(value: string | undefined): string {
   if (!value) return 'none';
@@ -104,7 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'MCP endpoint reachable. Provide x-api-key or Authorization Bearer token for authenticated sessions.',
       });
     }
-    res.setHeader('WWW-Authenticate', WWW_AUTHENTICATE);
+    setOauthAuthenticateHeader(req, res);
     return res.status(401).json({
       error:
         'Connection could not be verified. Open your workspace MCP settings, copy a fresh connection key, and try again.',
@@ -188,7 +211,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       authError === 'SERVICE_UNAVAILABLE'
         ? 'The service is temporarily unavailable. Please try again in a few minutes.'
         : 'Connection could not be verified. Open your workspace MCP settings, generate a fresh connection key, and try again.';
-    res.setHeader('WWW-Authenticate', WWW_AUTHENTICATE);
+    setOauthAuthenticateHeader(req, res);
     return res.status(401).json({ error: msg });
   }
 
