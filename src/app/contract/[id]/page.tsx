@@ -214,8 +214,8 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-8 max-w-none prose prose-invert prose-slate print-content">
-                    <div className="whitespace-pre-wrap font-serif leading-relaxed text-slate-300">
+                <div className="p-8 bg-white border-y border-slate-800 print-content">
+                    <div className="whitespace-pre-wrap font-serif leading-relaxed text-slate-900 text-[15px]">
                         {contract.content}
                     </div>
                 </div>
