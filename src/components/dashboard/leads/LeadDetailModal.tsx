@@ -35,6 +35,12 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { googleMapsService } from '../../../services/googleMapsService';
 import { getPublicGoogleMapsApiKey } from '@/config/publicEnv';
+import dynamic from 'next/dynamic';
+
+const ComposeEmailModal = dynamic(
+    () => import('@/components/dashboard/business/ComposeEmailModal'),
+    { ssr: false }
+);
 
 interface LeadDetailModalProps {
     isOpen: boolean;
@@ -86,6 +92,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [isEnriching, setIsEnriching] = useState(false);
     const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+    const [showEmailComposer, setShowEmailComposer] = useState(false);
+    const [emailDraft, setEmailDraft] = useState<{ to: string; subject: string; body: string } | null>(null);
     const [showEditForm, setShowEditForm] = useState(false);
     const [editForm, setEditForm] = useState({
         businessName: lead.businessName || '',
@@ -510,66 +518,23 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             toast.error('Lead does not have an email address');
             return;
         }
-        const { supabase } = await import('../../../lib/supabase');
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (!authUser) {
+        if (!user?.id) {
             toast.error('You must be logged in to send email');
-            return;
-        }
-
-        const { tenantService } = await import('../../../services/tenancy/TenantService');
-        let tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) {
-            const { data: memberships } = await supabase
-                .from('tenant_users')
-                .select('tenant_id')
-                .eq('user_id', authUser.id)
-                .limit(1);
-            tenantId = memberships?.[0]?.tenant_id || null;
-            if (tenantId) {
-                tenantService.setCurrentTenant(tenantId);
-            }
-        }
-        if (!tenantId) {
-            toast.error('No active organization found');
             return;
         }
 
         const subject = `Strategic proposal for ${lead.businessName}`;
         const body =
-            (lead.outreachMessage && lead.outreachMessage.trim().length > 0
+            lead.outreachMessage && lead.outreachMessage.trim().length > 0
                 ? lead.outreachMessage
-                : `Hello ${lead.businessName},\n\nI am reaching out to discuss how we can support your goals in ${lead.industry || 'your industry'}.\n\nPlease let me know if you are available for a short call this week.\n\nRegards,\n${authUser.email || 'Sales Team'}`);
+                : `Hello ${lead.businessName},\n\nI am reaching out to discuss how we can support your goals in ${lead.industry || 'your industry'}.\n\nPlease let me know if you are available for a short call this week.\n\nRegards,\n${user.email || 'Sales Team'}`;
 
-        const loadingId = toast.loading('Sending email via connected providers...');
-        try {
-            const response = await fetch('/api/outreach/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tenantId,
-                    leadEmail: lead.email,
-                    leadName: lead.businessName,
-                    subject,
-                    body,
-                    pitchAngle: 'direct_message',
-                    industry: lead.industry || '',
-                    score: 100,
-                    autoSend: true,
-                    consentGranted: true,
-                    confidenceScore: 100,
-                    deliveryProviders: ['zoho', 'resend', 'brevo', 'sendgrid', 'gmail'],
-                    balanceByDailyLimit: true,
-                }),
-            });
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result?.success) {
-                throw new Error(result?.error || 'Failed to send email');
-            }
-            toast.success(`Email sent via ${String(result?.provider || 'provider').toUpperCase()}`, { id: loadingId });
-        } catch (error: unknown) {
-            toast.error(`Email send failed: ${getErrorMessage(error)}`, { id: loadingId });
-        }
+        setEmailDraft({
+            to: lead.email,
+            subject,
+            body,
+        });
+        setShowEmailComposer(true);
     };
 
     const handleValidateAddress = async () => {
@@ -1295,6 +1260,17 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                     )}
                 </div>
             </div>
+
+            {showEmailComposer && user?.id && emailDraft && (
+                <ComposeEmailModal
+                    isOpen={true}
+                    onClose={() => setShowEmailComposer(false)}
+                    userId={user.id}
+                    initialTo={emailDraft.to}
+                    initialSubject={emailDraft.subject}
+                    initialBody={emailDraft.body}
+                />
+            )}
         </Modal>
     );
 }
