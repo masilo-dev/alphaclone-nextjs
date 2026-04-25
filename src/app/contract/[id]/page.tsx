@@ -215,9 +215,10 @@ export default function PublicContractPage() {
 
                 {/* Content */}
                 <div className="p-8 bg-white border-y border-slate-800 print-content">
-                    <div className="whitespace-pre-wrap font-serif leading-relaxed text-slate-900 text-[15px]">
-                        {contract.content}
-                    </div>
+                    <div
+                        className="font-serif text-slate-900 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: contractToStyledHtml(contract.content || '') }}
+                    />
                 </div>
 
                 {/* Signature Section */}
@@ -296,4 +297,22 @@ export default function PublicContractPage() {
             </div>
         </div>
     );
+}
+
+function contractToStyledHtml(text: string): string {
+    const escaped = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const formatted = escaped
+        .replace(/^# (.+)$/gm, '<h1 style="font-size:28px; text-align:center; text-transform:uppercase; letter-spacing:1px; margin:0 0 18px; font-weight:700; color:#020617;">$1</h1>')
+        .replace(/^## (.+)$/gm, '<h2 style="font-size:17px; text-transform:uppercase; border-bottom:1px solid #cbd5e1; padding-bottom:6px; margin:26px 0 14px; font-weight:700; color:#0f172a;">$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3 style="font-size:15px; margin:16px 0 8px; font-weight:700; color:#0f172a;">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700; color:#020617;">$1</strong>')
+        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #cbd5e1;margin:20px 0;" />')
+        .replace(/\n\n/g, '</p><p style="margin:0 0 12px; text-align:justify;">')
+        .replace(/\n/g, '<br/>');
+
+    return `<div style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:#0f172a;"><p style="margin:0 0 12px; text-align:justify;">${formatted}</p></div>`;
 }
