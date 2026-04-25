@@ -65,8 +65,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
+    supabase.auth.getUser().then((result) => {
+      if (result.data.user) setUserId(result.data.user.id);
     });
   }, []);
 
