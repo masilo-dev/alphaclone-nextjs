@@ -16,9 +16,15 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_SERWIST !== 'true') {
-            void navigator.serviceWorker?.getRegistrations?.().then((regs) => {
-                regs.forEach((r) => void r.unregister());
-            });
+            const key = 'alphaclone_sw_unregistered';
+            if (!sessionStorage.getItem(key)) {
+                void navigator.serviceWorker?.getRegistrations?.().then((regs) => {
+                    if (regs && regs.length > 0) {
+                        regs.forEach((r) => void r.unregister());
+                    }
+                    sessionStorage.setItem(key, 'true');
+                });
+            }
         }
     }, []);
 
