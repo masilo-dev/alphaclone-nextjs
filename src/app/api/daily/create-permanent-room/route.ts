@@ -114,11 +114,11 @@ export async function POST(req: Request) {
             },
             body: JSON.stringify({
                 name: roomName,
+                privacy: 'public',
                 properties: {
                     enable_chat: true,
                     enable_screenshare: true,
                     max_participants: 10,
-                    privacy: 'public',
                     meeting_join_hook: `${appOrigin}/api/meetings/hooks/join`,
                     // Permanent rooms shouldn't expire soon - 10 years
                     exp: Math.floor(Date.now() / 1000) + (10 * 365 * 24 * 60 * 60)
