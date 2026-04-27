@@ -5,6 +5,7 @@ import { dailyService, VideoCall } from '../../../services/dailyService';
 import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy, Trash2 } from 'lucide-react';
 import { CalendlySettingsModal } from './CalendlySettingsModal';
 import SimpleVideoMeeting from '../SimpleVideoMeeting';
+import { format, isFuture } from 'date-fns';
 import { safeFormat } from '../../../utils/dateUtils';
 import { Button, Card, Badge } from '@/components/ui/UIComponents';
 import PermanentMeetingLink from '../PermanentMeetingLink';
