@@ -302,7 +302,7 @@ export default function IngestionPanel() {
                                                                     : [...prev, leadId].slice(0, 20)
                                                             );
                                                         }}
-                                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${event.lead_id && selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-slate-500'}`}
+                                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${event.lead_id ? (selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-slate-500') : 'border-slate-700 hover:border-slate-500'}`}
                                                     >
                                                         {event.lead_id && selectedLeadIds.includes(event.lead_id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                                                     </div>

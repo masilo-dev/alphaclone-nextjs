@@ -53,7 +53,7 @@ export const businessClientService = {
 
             if (error) throw error;
 
-            const clients = (data || []).map((c: any) => ({
+            const clients: BusinessClient[] = (data || []).map((c) => ({
                 id: c.id,
                 tenantId: c.tenant_id,
                 name: c.name,
@@ -72,9 +72,10 @@ export const businessClientService = {
             }));
 
             return { clients, count: count || 0, error: null };
-        } catch (err: any) {
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
             console.error('Error fetching clients:', err);
-            return { clients: [], count: 0, error: err.message };
+            return { clients: [], count: 0, error: message };
         }
     },
 

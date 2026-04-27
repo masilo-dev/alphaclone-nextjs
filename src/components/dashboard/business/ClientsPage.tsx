@@ -222,13 +222,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const handleStageConvert = async (client: BusinessClient, newStage: string) => {
         const prev = client.salesStage;
         // Optimistic update
-        setClients(cs => cs.map(c => c.id === client.id ? { ...c, salesStage: newStage as any } : c));
-        if (selectedClient?.id === client.id) setSelectedClient(s => s ? { ...s, salesStage: newStage as any } : s);
-        const { error } = await businessClientService.updateClient(client.id, { salesStage: newStage as any });
+        setClients(cs => cs.map(c => c.id === client.id ? { ...c, salesStage: newStage as BusinessClient['salesStage'] } : c));
+        if (selectedClient?.id === client.id) setSelectedClient(s => s ? { ...s, salesStage: newStage as BusinessClient['salesStage'] } : s);
+        const { error } = await businessClientService.updateClient(client.id, { salesStage: newStage as BusinessClient['salesStage'] });
         if (error) {
             // Rollback on error
-            setClients(cs => cs.map(c => c.id === client.id ? { ...c, salesStage: prev as any } : c));
-            if (selectedClient?.id === client.id) setSelectedClient(s => s ? { ...s, salesStage: prev as any } : s);
+            setClients(cs => cs.map(c => c.id === client.id ? { ...c, salesStage: prev as BusinessClient['salesStage'] } : c));
+            if (selectedClient?.id === client.id) setSelectedClient(s => s ? { ...s, salesStage: prev as BusinessClient['salesStage'] } : s);
             toast.error('Stage update failed');
         } else {
             toast.success(`${client.name} → ${newStage.charAt(0).toUpperCase() + newStage.slice(1)}`);

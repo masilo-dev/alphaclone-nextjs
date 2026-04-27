@@ -108,10 +108,12 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
         .catch(() => {});
     }
 
-    supabase.auth.getUser().then(({ data }: { data: { user: { email?: string; user_metadata?: Record<string, string> } | null } }) => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
       if (data?.user?.user_metadata?.full_name) setSenderName(data.user.user_metadata.full_name);
       else if (data?.user?.email) setSenderName(data.user.email.split('@')[0]);
-    });
+    };
+    fetchUser();
 
     // Fetch Zoho sender addresses so we can pass fromAddress explicitly
     fetch('/api/zoho/mail?action=sender-addresses')
