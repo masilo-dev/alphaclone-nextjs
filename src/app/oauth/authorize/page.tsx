@@ -63,7 +63,8 @@ function AuthorizeForm() {
   });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }: { data: { user: import('@supabase/supabase-js').User | null } }) => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
       if (!data.user) {
         const next = typeof window !== 'undefined'
           ? encodeURIComponent(window.location.pathname + window.location.search)
@@ -72,7 +73,8 @@ function AuthorizeForm() {
       } else {
         setAuthChecked(true);
       }
-    });
+    };
+    checkUser();
   }, [router]);
 
   useEffect(() => {

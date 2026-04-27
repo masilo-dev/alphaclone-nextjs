@@ -125,12 +125,14 @@ export default function AutomationBuilder() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then((res: any) => {
-      if (res.data.user) {
-        setUserId(res.data.user.id);
-        fetchWorkflows(res.data.user.id);
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+        fetchWorkflows(data.user.id);
       }
-    });
+    };
+    fetchUser();
   }, [fetchWorkflows]);
 
   const fetchHistory = useCallback(async () => {

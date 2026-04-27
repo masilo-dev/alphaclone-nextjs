@@ -63,9 +63,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 setClients(clients || []);
             });
             // Fetch user's email for the From field
-            supabase.auth.getUser().then(({ data }: { data: any }) => {
-                if (data.user?.email) setFrom(data.user.email);
-            });
+            const fetchUser = async () => {
+                const { data } = await supabase.auth.getUser();
+                if (data?.user?.email) setFrom(data.user.email);
+            };
+            fetchUser();
         }
     }, [isOpen, currentTenant?.id]);
 

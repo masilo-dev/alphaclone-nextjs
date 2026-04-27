@@ -129,8 +129,8 @@ export const Input: React.FC<InputProps> = ({
         )}
       </div>
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
-      {!error && (props as any).hint && (
-        <p className="mt-1 text-[10px] text-slate-500 italic">{(props as any).hint}</p>
+      {!error && hint && (
+        <p className="mt-1 text-[10px] text-slate-500 italic">{hint}</p>
       )}
     </div>
   );
@@ -201,7 +201,7 @@ export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = 
       alt={alt || ''} 
       fill 
       className={`object-cover ${className}`} 
-      {...props as any} 
+      {...props as React.ComponentProps<typeof Image>} 
     />
   ) : null
 );
