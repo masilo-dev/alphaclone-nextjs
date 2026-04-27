@@ -294,11 +294,12 @@ export default function IngestionPanel() {
                                             <div 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (!event.lead_id) return;
+                                                    const leadId = event.lead_id;
+                                                    if (!leadId) return;
                                                     setSelectedLeadIds(prev => 
-                                                        prev.includes(event.lead_id!) 
-                                                            ? prev.filter(id => id !== event.lead_id) 
-                                                            : [...prev, event.lead_id].slice(0, 20)
+                                                        prev.includes(leadId) 
+                                                            ? prev.filter(id => id !== leadId) 
+                                                            : [...prev, leadId].slice(0, 20)
                                                     );
                                                 }}
                                                 className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-slate-500'}`}
