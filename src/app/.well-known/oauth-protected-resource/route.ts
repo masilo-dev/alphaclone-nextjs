@@ -10,7 +10,7 @@ export async function GET() {
       resource_metadata: `${baseUrl}/.well-known/oauth-protected-resource`,
       authorization_servers: [baseUrl],
       bearer_methods_supported: ['header', 'query'],
-      scopes_supported: ['read', 'write'],
+      scopes_supported: ["read", "write", MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL],
     },
     {
       headers: {
