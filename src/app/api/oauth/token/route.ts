@@ -67,7 +67,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'invalid_request', error_description: 'Unsupported content type' }, { status: 400 });
     }
 
-    const { grant_type, client_id, client_secret, code, redirect_uri, refresh_token, code_verifier } = body;
+    const authHeader = req.headers.get('authorization');
+    let headerClientId = '';
+    let headerClientSecret = '';
+    if (authHeader && authHeader.toLowerCase().startsWith('basic ')) {
+      const b64 = authHeader.slice(6);
+      try {
+        const decoded = Buffer.from(b64, 'base64').toString('utf8');
+        const colonIdx = decoded.indexOf(':');
+        if (colonIdx > -1) {
+          headerClientId = decodeURIComponent(decoded.slice(0, colonIdx));
+          headerClientSecret = decodeURIComponent(decoded.slice(colonIdx + 1));
+        } else {
+          headerClientId = decodeURIComponent(decoded);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const { grant_type, code, redirect_uri, refresh_token, code_verifier } = body;
+    const client_id = body.client_id || headerClientId;
+    const client_secret = body.client_secret || headerClientSecret;
 
     if (!client_id) {
       return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
@@ -126,8 +147,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const allowTrustedPublicClient =
-        !client_secret && isTrustedPublicRedirectUri(normalizedRedirectUri);
+      const allowTrustedPublicClient = isTrustedPublicRedirectUri(normalizedRedirectUri);
       if (!validRegisteredClient && !allowTrustedPublicClient) {
         return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
       }
