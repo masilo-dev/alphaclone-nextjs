@@ -15,11 +15,16 @@ import {
     Loader2, 
     AlertCircle,
     CheckCircle2,
-    RefreshCw
+    RefreshCw,
+    Video,
+    Zap,
+    Copy,
+    ChevronRight
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
 
 interface BookmarkRow {
     id: string;
@@ -66,6 +71,12 @@ export default function SocialCommandCenter() {
     const [isAddingWatchlist, setIsAddingWatchlist] = useState(false);
     const [scrapingId, setScrapingId] = useState<string | null>(null);
     const [featureWarning, setFeatureWarning] = useState<string | null>(null);
+
+    // Video Generator State
+    const [videoTopic, setVideoTopic] = useState('');
+    const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+    const [videoResult, setVideoResult] = useState<VideoScriptOutput | null>(null);
+    const [videoIntensity, setVideoIntensity] = useState<'standard' | 'high'>('high');
 
     const loadData = async () => {
         if (!currentTenant?.id) return;
@@ -206,6 +217,21 @@ export default function SocialCommandCenter() {
                 error: 'Could not fetch latest posts'
             }
         ).finally(() => setScrapingId(null));
+    };
+
+    const handleGenerateVideo = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!videoTopic) return;
+        setIsGeneratingVideo(true);
+        try {
+            const result = await xaiVideoGenerationService.generateViralScript(videoTopic, videoIntensity);
+            setVideoResult(result);
+            toast.success('Viral script generated with Grok!');
+        } catch (error) {
+            toast.error('Failed to generate script');
+        } finally {
+            setIsGeneratingVideo(false);
+        }
     };
 
     if (loading) {
@@ -448,6 +474,114 @@ export default function SocialCommandCenter() {
                             )}
                         </div>
                     ))}
+                </div>
+            </section>
+            {/* VIRAL VIDEO GENERATOR SECTION */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Video className="w-5 h-5 text-rose-400" />
+                            Viral Video Intelligence (Grok)
+                        </h2>
+                        <p className="text-sm text-slate-400">Generate high-engagement video hooks designed to stop the scroll.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-1 space-y-4">
+                        <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-4 shadow-xl">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Video Topic / Niche</label>
+                                <textarea 
+                                    value={videoTopic}
+                                    onChange={e => setVideoTopic(e.target.value)}
+                                    placeholder="e.g. Why most entrepreneurs fail in their first year..."
+                                    className="w-full h-32 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-rose-500 transition-all resize-none text-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Controversy Level</label>
+                                <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                                    <button 
+                                        onClick={() => setVideoIntensity('standard')}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${videoIntensity === 'standard' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        Standard
+                                    </button>
+                                    <button 
+                                        onClick={() => setVideoIntensity('high')}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${videoIntensity === 'high' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        High Impact
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handleGenerateVideo}
+                                disabled={isGeneratingVideo || !videoTopic}
+                                className="w-full py-3 bg-gradient-to-r from-rose-600 to-violet-600 hover:from-rose-500 hover:to-violet-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-900/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isGeneratingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                                Generate Viral Hook
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-2">
+                        {videoResult ? (
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="px-2 py-1 bg-rose-500/10 border border-rose-500/30 rounded text-[10px] font-bold text-rose-400 uppercase">
+                                            Controversy Score: {videoResult.controversyScore}%
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(`${videoResult.hook}\n\n${videoResult.script}`);
+                                            toast.success('Copied to clipboard');
+                                        }}
+                                        className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div>
+                                        <h4 className="text-xs font-black text-rose-500 uppercase tracking-tighter mb-2 flex items-center gap-2">
+                                            <Zap className="w-3 h-3" /> The Hook (Scroll Stopper)
+                                        </h4>
+                                        <p className="text-lg font-bold text-white leading-tight italic">
+                                            "{videoResult.hook}"
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-tighter mb-2">Video Script</h4>
+                                            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 text-sm text-slate-300 leading-relaxed max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                {videoResult.script}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-black text-slate-500 uppercase tracking-tighter mb-2">Visual Production Cues</h4>
+                                            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 text-sm text-slate-400 italic leading-relaxed">
+                                                {videoResult.visualCues}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="h-full min-h-[300px] border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-600 p-8 text-center">
+                                <Video className="w-12 h-12 mb-4 opacity-20" />
+                                <p className="text-sm">Your AI-generated viral script will appear here.</p>
+                                <p className="text-xs mt-2 opacity-50">Grok will focus on pattern-interrupt hooks to maximize views.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </section>
         </div>
