@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
+import { MCP_OAUTH_SCOPES } from '@/services/mcp/MCPOAuthScopes';
+
 
 export async function GET() {
   const baseUrl = ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
@@ -10,7 +12,7 @@ export async function GET() {
       resource_metadata: `${baseUrl}/.well-known/oauth-protected-resource`,
       authorization_servers: [baseUrl],
       bearer_methods_supported: ['header', 'query'],
-      scopes_supported: ["read", "write", MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL],
+      scopes_supported: ['read', 'write', MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL],
     },
     {
       headers: {
