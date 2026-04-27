@@ -98,9 +98,11 @@ Factors to consider:
 - Personalization depth
 - Friction level of the CTA
 
-### DATA INTEGRITY RULES (CRITICAL):
-- **Website URLs:** ONLY provide a website if you are 99% certain it is the real, active domain. No placeholders.
-- **Accuracy:** Be extremely precise with industry categorizations and insights.
+### CONTACT ACQUISITION PROTOCOL (CRITICAL):
+- **Email Harvesting:** If a lead's email is missing, your priority is to secure it.
+- **Micro-Commitment Strategy:** Instead of asking for a "meeting" first, ask for permission to send a specific, high-value asset (PDF, Loom, case study) to their email.
+- **Friction Reduction:** Never say "What is your email?". Say "I have a specific breakdown for [Business Name]; where should I send that so it reaches you directly?".
+- **Verification:** Always double-check if an email is already present in the lead metadata before asking.
 
 ### FORMATTING RULES:
 - **Professionalism:** Use sophisticated business terminology.
@@ -486,7 +488,8 @@ export const optimizeSalesMessage = async (originalMessage: string, context?: st
     YOUR INSTRUCTIONS:
     1. Identify a "Pattern Interrupt" hook for the opening.
     2. Rewrite the body to be more personalized, high-value, and low-friction.
-    3. Calculate a Predicted Response Probability (0-100%).
+    3. EMAIL CAPTURE: If the context indicates no email is known, insert a hyper-effective micro-commitment request for their contact details.
+    4. Calculate a Predicted Response Probability (0-100%).
     
     OUTPUT FORMAT:
     ### OPTIMIZED MESSAGE:

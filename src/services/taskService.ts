@@ -3,6 +3,7 @@ import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { projectService } from './projectService';
 import { taskDependencyService } from './taskDependencyService';
+import { notificationService } from './notificationService';
 
 export interface Task {
     id: string;
@@ -266,6 +267,18 @@ export const taskService = {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
             }
 
+            // Notify assigned user
+            if (taskData.assignedTo && taskData.assignedTo !== userId) {
+                await notificationService.sendSmartNotification({
+                    userId: taskData.assignedTo,
+                    type: 'task',
+                    title: 'New Task Assigned',
+                    rawContext: `Task: ${taskData.title}. Description: ${taskData.description || 'No description provided.'}`,
+                    link: `/dashboard/tasks/${data.id}`,
+                    priority: taskData.priority || 'medium'
+                });
+            }
+
             const task: Task = {
                 id: data.id,
                 title: data.title,
@@ -375,6 +388,19 @@ export const taskService = {
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
+            // Notify assigned user of status change if someone else updated it
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (updates.status && data.assigned_to && currentUser && data.assigned_to !== currentUser.id) {
+                await notificationService.sendSmartNotification({
+                    userId: data.assigned_to,
+                    type: 'task',
+                    title: 'Task Status Updated',
+                    rawContext: `The task "${data.title}" has been moved to ${data.status.replace('_', ' ')}. Check if any further action is required.`,
+                    link: `/dashboard/tasks/${data.id}`,
+                    priority: data.priority
+                });
             }
 
             // --- AUTO-DEPENDENCY DATE SHIFTING ---
