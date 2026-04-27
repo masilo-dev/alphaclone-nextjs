@@ -3,21 +3,25 @@ import { supabase } from '../lib/supabase';
 export interface Notification {
     id: string;
     userId: string;
-    type: 'message' | 'project' | 'payment' | 'system' | 'alert';
+    type: 'message' | 'project' | 'payment' | 'system' | 'alert' | 'task';
     title: string;
     message?: string;
     read: boolean;
     link?: string;
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    metadata: Record<string, any>;
     created_at: string;
 }
 
 export const notificationService = {
     async sendNotification(params: {
         userId: string;
-        type: 'message' | 'project' | 'payment' | 'system' | 'alert';
+        type: 'message' | 'project' | 'payment' | 'system' | 'alert' | 'task';
         title: string;
         message?: string;
         link?: string;
+        priority?: 'low' | 'medium' | 'high' | 'urgent';
+        metadata?: Record<string, any>;
     }) {
         const { error } = await supabase
             .from('notifications')
@@ -27,6 +31,8 @@ export const notificationService = {
                 title: params.title,
                 message: params.message,
                 link: params.link,
+                priority: params.priority || 'medium',
+                metadata: params.metadata || {},
                 read: false
             });
 
@@ -98,6 +104,54 @@ export const notificationService = {
             });
 
         return channel;
+    },
+
+    /**
+     * AI-Powered Smart Notification
+     * Generates a concise, high-impact summary of a task or event
+     */
+    async sendSmartNotification(params: {
+        userId: string;
+        type: 'task' | 'project' | 'alert';
+        title: string;
+        rawContext: string;
+        link?: string;
+        priority?: 'low' | 'medium' | 'high' | 'urgent';
+    }) {
+        try {
+            const { generateText } = await import('./unifiedAIService');
+            const prompt = `You are a high-performance productivity assistant. 
+            Summarize the following context into a single, punchy, actionable notification sentence (max 15 words).
+            
+            CONTEXT: "${params.rawContext}"
+            
+            STRICT RULES:
+            - No markdown.
+            - No generic "You have a new task".
+            - Focus on the "What" and "Why".`;
+
+            const { text: summary } = await generateText(prompt, 100);
+            
+            return await this.sendNotification({
+                userId: params.userId,
+                type: params.type,
+                title: params.title,
+                message: summary || params.rawContext.substring(0, 100),
+                link: params.link,
+                priority: params.priority,
+                metadata: { aiGenerated: true, originalContext: params.rawContext }
+            });
+        } catch (err) {
+            // Fallback to standard notification
+            return await this.sendNotification({
+                userId: params.userId,
+                type: params.type,
+                title: params.title,
+                message: params.rawContext.substring(0, 100),
+                link: params.link,
+                priority: params.priority
+            });
+        }
     },
 
     unsubscribe(channel: any) {
