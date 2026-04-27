@@ -79,9 +79,11 @@ export default function IngestionPanel() {
 
     useEffect(() => { 
         loadEvents(); 
-        supabase.auth.getUser().then(({ data }) => {
+        const fetchUser = async () => {
+            const { data } = await supabase.auth.getUser();
             if (data?.user) setCurrentUserId(data.user.id);
-        });
+        };
+        fetchUser();
     }, [loadEvents]);
 
     const handleSubmit = async () => {

@@ -292,9 +292,11 @@ export default function KanbanBoard() {
 
   useEffect(() => {
     loadLeads();
-    supabase.auth.getUser().then(({ data }) => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
       if (data?.user) setCurrentUserId(data.user.id);
-    });
+    };
+    fetchUser();
   }, [loadLeads]);
 
   const leadNextSteps = useMemo(() => buildLeadKanbanNextSteps(leads), [leads]);
