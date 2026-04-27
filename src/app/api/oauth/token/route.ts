@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
           .eq('client_id', client_id)
           .single();
         
-        if (client && client.redirect_uris?.some(uri => isTrustedPublicRedirectUri(uri))) {
+        if (client && client.redirect_uris?.some((uri: string) => isTrustedPublicRedirectUri(uri))) {
           allowPublicRefresh = true;
         }
       }
