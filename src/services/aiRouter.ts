@@ -158,17 +158,24 @@ const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'anthropic' | 'xai' 
 };
 
 /**
- * Cleans content of emojis and "messed up" characters for professional artículos.
+ * Cleans content of emojis and "messed up" characters for professional articles.
  */
 export function cleanProfessionalContent(content: string): string {
     // 1. Remove Emojis and Symbols
     const noEmojis = content.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF])/g, '');
     
     // 2. Remove "messed up" characters (unusual unicode that often fails in social platforms)
-    // Keep standard professional characters, punctuation, and currencies.
     const clean = noEmojis.replace(/[^\x20-\x7E\s\u00A0-\u00FF\u2010-\u2022\u20AC]/g, '');
     
     return clean.trim();
+}
+
+/**
+ * Relaxed cleaner for social media that ALLOWS emojis but still removes broken characters.
+ */
+export function cleanSocialContent(content: string): string {
+    // Keep emojis but remove non-standard control chars
+    return content.replace(/[^\x20-\x7E\s\u00A0-\u00FF\u2010-\u2022\u20AC\uD800-\uDBFF\uDC00-\uDFFF]/g, '').trim();
 }
 
 /**

@@ -730,7 +730,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <option value="lead">Leads</option>
                                 <option value="prospect">Prospects</option>
                                 <option value="customer">Customers</option>
-                                <option value="lost">Lost</option>
+                            </select>
+                        </div>
                         <div className="flex items-center justify-between px-1">
                             <button
                                 onClick={() => {
@@ -805,10 +806,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </div>
                                     </div>
                                 </div>
-                                );
-                            })}
-                        </div>
+                            );
+                        })}
                     </div>
+                </div>
 
                     {/* Desktop Split Pane Right Side */}
                     <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
@@ -1000,7 +1001,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             Email
                                         </Button>
                                     </div>
-                                </div>
                                 </div>
                             </div>
                         ) : (

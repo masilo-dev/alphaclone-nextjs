@@ -7,6 +7,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
+
 type LinkedInStatusFilter = 'all' | 'published' | 'scheduled' | 'failed' | 'cancelled';
 
 interface LinkedInPostRow {
@@ -176,6 +178,7 @@ export default function LinkedInManagementTab() {
   const [composeSubmitting, setComposeSubmitting] = useState(false);
   const [aiTopic, setAiTopic] = useState('');
   const [aiTone, setAiTone] = useState<'professional' | 'casual' | 'engaging' | 'promotional'>('professional');
+  const [isViralGenerating, setIsViralGenerating] = useState(false);
   const [aiContentType, setAiContentType] = useState<'linkedin_post' | 'linkedin_article'>('linkedin_post');
   const [aiGenerating, setAiGenerating] = useState(false);
 
@@ -738,6 +741,23 @@ Return only the reply text.`;
     }
   };
 
+  const handleGenerateViralHook = async () => {
+    if (!aiTopic.trim()) {
+      toast.error('Describe the video topic first');
+      return;
+    }
+    setIsViralGenerating(true);
+    try {
+      const result = await xaiVideoGenerationService.generateViralScript(aiTopic, 'high');
+      setComposeCaption(`${result.hook}\n\n${result.script}\n\n${result.visualCues ? `[Visual Cues: ${result.visualCues}]` : ''}`);
+      toast.success('Viral business hook generated!');
+    } catch {
+      toast.error('Failed to generate viral hook');
+    } finally {
+      setIsViralGenerating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
@@ -889,10 +909,17 @@ Return only the reply text.`;
             </button>
             <button
               onClick={handleGenerateLinkedInContent}
-              disabled={aiGenerating || !aiTopic.trim()}
-              className="ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
+              disabled={aiGenerating || isViralGenerating || !aiTopic.trim()}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
             >
-              {aiGenerating ? 'Generating...' : 'Generate with AI'}
+              {aiGenerating ? 'Generating...' : 'Standard AI'}
+            </button>
+            <button
+              onClick={handleGenerateViralHook}
+              disabled={aiGenerating || isViralGenerating || !aiTopic.trim()}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white disabled:opacity-50 flex items-center gap-1"
+            >
+              {isViralGenerating ? 'Viralizing...' : <><Sparkles className="w-3 h-3" /> Viral Hook</>}
             </button>
           </div>
         </div>
