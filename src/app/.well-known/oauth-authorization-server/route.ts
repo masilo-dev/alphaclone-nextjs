@@ -10,7 +10,7 @@ export async function GET() {
     "authorization_endpoint": `${baseUrl}/oauth/authorize`,
     "token_endpoint": `${baseUrl}/api/oauth/token`,
     "registration_endpoint": `${baseUrl}/api/oauth/register`,
-    "scopes_supported": [MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL],
+    "scopes_supported": ["read", "write", MCP_OAUTH_SCOPES.READ_ALL, MCP_OAUTH_SCOPES.WRITE_ALL],
     "response_types_supported": ["code"],
     "grant_types_supported": ["authorization_code", "refresh_token"],
     "token_endpoint_auth_methods_supported": ["none", "client_secret_basic", "client_secret_post"],

@@ -141,6 +141,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let userId: string | null = null;
   let authError: string | null = null;
   let authorizedScopes: string[] = [];
+  console.log('[MCP SSE] start auth lookup', { 
+    has_api_key: Boolean(api_key), 
+    key_prefix: api_key?.substring(0, 7),
+    method: req.method
+  });
+
 
   try {
     const { createClient } = await import('@supabase/supabase-js');
@@ -166,6 +172,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         tenantId = data.tenant_id;
         userId = data.user_id;
         authorizedScopes = data.scopes;
+        console.log('[MCP SSE] OAuth token valid', { 
+          tenantId, 
+          userId, 
+          scopes: authorizedScopes 
+        });
       }
     } else {
       const { data, error } = await supabaseAdmin
@@ -199,6 +210,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       req,
       api_key
     );
+    console.log('[MCP SSE] Auth failed', { authError, tenantId, userId });
     if (isReachabilityProbe) {
       return res.status(200).json({
         ok: true,
