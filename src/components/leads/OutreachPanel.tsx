@@ -182,18 +182,15 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
       }).catch(() => null);
     }
     setStatus('sending');
-    const results: typeof sendResults = [];
-
-    for (let i = 0; i < emails.length; i++) {
-      const email = emails[i];
+    
+    const sendPromises = emails.map(async (email) => {
       const recipient = String(email.recipientEmail || '').trim();
       if (!recipient || !recipient.includes('@')) {
-        results.push({
+        return {
           name: email.business_name || 'Unknown Business',
-          status: 'failed',
+          status: 'failed' as const,
           error: 'No recipient email available. Add or import an email for this lead.',
-        });
-        continue;
+        };
       }
 
       try {
@@ -216,16 +213,17 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
           }),
         });
         const data = await res.json();
-        results.push({
+        return {
           name:   email.business_name || 'Unknown Business',
-          status: data.status === 'sent' ? 'sent' : data.status === 'queued' ? 'queued' : 'failed',
+          status: (data.status === 'sent' ? 'sent' : data.status === 'queued' ? 'queued' : 'failed') as 'sent' | 'queued' | 'failed',
           error:  data.error,
-        });
+        };
       } catch (err: any) {
-        results.push({ name: email.business_name || 'Unknown Business', status: 'failed', error: err.message });
+        return { name: email.business_name || 'Unknown Business', status: 'failed' as const, error: err.message };
       }
-    }
+    });
 
+    const results = await Promise.all(sendPromises);
     setSendResults(results);
     setStatus('done');
     const sentCount   = results.filter(r => r.status === 'sent').length;

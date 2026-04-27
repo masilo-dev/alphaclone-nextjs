@@ -4,8 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Database, Plus, RefreshCw, Loader2, X, Send, TrendingUp,
     AlertTriangle, CheckCircle2, Clock, Filter, Zap, ExternalLink,
-    MessageSquare, Globe, Facebook, FileText
+    MessageSquare, Globe, Facebook, FileText, Sparkles
 } from 'lucide-react';
+import AIOutreachModal from '../business/AIOutreachModal';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -59,6 +60,9 @@ export default function IngestionPanel() {
     const [submitting, setSubmitting] = useState(false);
     const [intentFilter, setIntentFilter] = useState('all');
     const [sourceFilter, setSourceFilter] = useState('all');
+    const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+    const [showOutreachModal, setShowOutreachModal] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string>('');
 
     const loadEvents = useCallback(async () => {
         if (!tenant?.id) return;
@@ -73,7 +77,12 @@ export default function IngestionPanel() {
         setLoading(false);
     }, [tenant]);
 
-    useEffect(() => { loadEvents(); }, [loadEvents]);
+    useEffect(() => { 
+        loadEvents(); 
+        supabase.auth.getUser().then(({ data }) => {
+            if (data?.user) setCurrentUserId(data.user.id);
+        });
+    }, [loadEvents]);
 
     const handleSubmit = async () => {
         if (!form.raw_content.trim()) return toast.error('Content is required');
@@ -141,6 +150,12 @@ export default function IngestionPanel() {
                         className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-colors">
                         <Plus className="w-4 h-4" /> Ingest Content
                     </button>
+                    {selectedLeadIds.length > 0 && (
+                        <button onClick={() => setShowOutreachModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-500/20">
+                            <Sparkles className="w-4 h-4" /> Outreach ({selectedLeadIds.length})
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -271,8 +286,24 @@ export default function IngestionPanel() {
                         <div key={event.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 hover:border-slate-700 transition-colors">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                                    <div className="flex-shrink-0 mt-0.5">
+                                    <div className="flex-shrink-0 mt-0.5 flex flex-col gap-3">
                                         {SOURCE_ICONS[event.source] || <Globe className="w-3.5 h-3.5 text-slate-500" />}
+                                        {event.lead_id && (
+                                            <div 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (!event.lead_id) return;
+                                                    setSelectedLeadIds(prev => 
+                                                        prev.includes(event.lead_id!) 
+                                                            ? prev.filter(id => id !== event.lead_id) 
+                                                            : [...prev, event.lead_id].slice(0, 20)
+                                                    );
+                                                }}
+                                                className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-slate-500'}`}
+                                            >
+                                                {selectedLeadIds.includes(event.lead_id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -308,6 +339,13 @@ export default function IngestionPanel() {
                     ))}
                 </div>
             )}
+
+            <AIOutreachModal
+                isOpen={showOutreachModal}
+                onClose={() => setShowOutreachModal(false)}
+                userId={currentUserId}
+                initialSelectedLeads={selectedLeadIds}
+            />
         </div>
     );
 }

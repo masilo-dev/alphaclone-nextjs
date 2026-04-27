@@ -356,8 +356,27 @@ export default function OmniLeadFinder() {
 
   // Selected leads for outreach
   const selectedLeads = useMemo(() => filteredResults.filter((_, i) => selectedSet.has(i)), [filteredResults, selectedSet]);
-  const toggleSelect  = (idx: number) => setSelectedSet(prev => { const n = new Set(prev); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; });
-  const selectAll     = () => setSelectedSet(new Set(filteredResults.map((_, i) => i)));
+  const toggleSelect  = (idx: number) => setSelectedSet(prev => { 
+    const n = new Set(prev); 
+    if (n.has(idx)) {
+      n.delete(idx); 
+    } else {
+      if (n.size >= 20) {
+        toast.error('Maximum 20 leads allowed for batch outreach');
+        return prev;
+      }
+      n.add(idx); 
+    }
+    return n; 
+  });
+  const selectAll     = () => {
+    if (filteredResults.length > 20) {
+      setSelectedSet(new Set(filteredResults.slice(0, 20).map((_, i) => i)));
+      toast.success('Selected first 20 leads for batch outreach');
+    } else {
+      setSelectedSet(new Set(filteredResults.map((_, i) => i)));
+    }
+  };
   const clearSelected = () => setSelectedSet(new Set());
 
   // ── Save single lead to CRM ────────────────────────────────
@@ -1006,9 +1025,9 @@ export default function OmniLeadFinder() {
                   <button onClick={clearSelected} className="text-[10px] text-slate-500 hover:text-slate-300">Clear ({selectedSet.size})</button>
                   <button
                     onClick={() => setShowOutreach(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-lg shadow-teal-500/10"
                   >
-                    <Sparkles className="w-3.5 h-3.5" /> Automate {selectedSet.size} selected
+                    <Sparkles className="w-3.5 h-3.5" /> Bulk AI Outreach ({selectedSet.size})
                   </button>
                 </>
               )}

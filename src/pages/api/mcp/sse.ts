@@ -245,11 +245,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     sessionIdGenerator: undefined,
   });
 
-  res.setHeader('Cache-Control', 'no-cache, no-transform');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
+  // Normalize Accept header for StreamableHTTPServerTransport which is very strict.
+  // It requires both application/json and text/event-stream to avoid 406 Not Acceptable.
+  const accept = String(req.headers['accept'] || '');
+  if (!accept.includes('application/json') || !accept.includes('text/event-stream')) {
+    req.headers['accept'] = 'application/json, text/event-stream';
+  }
 
   const isGetTransport = req.method === 'GET';
+  if (isGetTransport) {
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+  }
+
   const heartbeatMs = 15000;
   let heartbeat: NodeJS.Timeout | null = null;
 

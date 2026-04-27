@@ -969,6 +969,22 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'send_batch_outreach',
+          description: 'Autonomous Outreach: Generates personalized AI messages and sends them to a specific batch of leads or clients in parallel (max 20).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              lead_ids: { type: 'array', items: { type: 'string' }, description: 'UUIDs of leads from get_leads' },
+              client_ids: { type: 'array', items: { type: 'string' }, description: 'UUIDs of clients from get_clients' },
+              tone: { type: 'string', description: 'professional | friendly | direct | creative' },
+              custom_context: { type: 'string', description: 'Specific instructions for personalization (e.g. "Mention the new product feature")' },
+              delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' }
+            },
+            required: [],
+          },
+        },
+        {
           name: 'send_message',
           description: 'Send a workspace message to a teammate or group thread.',
           inputSchema: {
@@ -2992,6 +3008,95 @@ class AlphaCloneMCPServer {
           }
 
           result = { content: [{ type: 'text', text: actionText }] };
+          break;
+        }
+
+        case 'send_batch_outreach': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { lead_ids = [], client_ids = [], tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
+          
+          if (lead_ids.length === 0 && client_ids.length === 0) {
+            throw new Error('Provide at least one lead_id or client_id');
+          }
+          
+          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 20);
+          
+          // Fetch the leads/clients
+          const [{ data: leads }, { data: clients }] = await Promise.all([
+            supabaseAdmin.from('leads').select('*').in('id', combinedIds).eq('tenant_id', tenant_id),
+            supabaseAdmin.from('business_clients').select('*').in('id', combinedIds).eq('tenant_id', tenant_id)
+          ]);
+            
+          const allEntities = [...(leads || []), ...(clients || [])];
+          
+          if (allEntities.length === 0) {
+            throw new Error('No valid leads or clients found for the provided IDs');
+          }
+
+          // Use the same professional prompt style as the dashboard
+          const results = await Promise.all(allEntities.map(async (entity) => {
+             const email = entity.email || (entity as any).emails?.[0];
+             if (!email) return { name: entity.business_name || entity.name, status: 'failed', error: 'No email found' };
+             
+             try {
+                // 1. Generate personalized message
+                const prompt = `Generate a highly personalized, professional B2B outreach email for ${entity.business_name || entity.name}.
+                Industry: ${entity.industry || 'Business'}.
+                Target Tone: ${tone}.
+                User Context: ${custom_context}.
+                Business Context: ${JSON.stringify(entity.metadata || {})}.
+                
+                Rules:
+                - Max 120 words.
+                - Professional, punchy subject line.
+                - NO emojis.
+                - Clear CTA.`;
+                
+                const aiRes = await routeAutonomousTask('social_caption', prompt); // Reuse caption task for short professional outreach
+                
+                // 2. Send via provider
+                const providerConfig = await resolveEmailProviderConfig({ 
+                    tenantId: tenant_id, 
+                    preferredUserId: user_id, 
+                    preferredProvider: delivery_provider as EmailProvider 
+                });
+                
+                if (!providerConfig) return { name: entity.business_name || entity.name, status: 'failed', error: 'Email provider not configured' };
+                
+                await sendWithProviderSdk(providerConfig, {
+                  to: email,
+                  subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
+                  html: aiRes.content,
+                  fromName: providerConfig.fromName || 'AlphaClone Outreach',
+                  fromEmail: providerConfig.fromEmail || ''
+                });
+
+                // 3. Log the outreach
+                await supabaseAdmin.from('lead_outreach_log').insert({
+                  tenant_id,
+                  user_id,
+                  lead_name: entity.business_name || entity.name,
+                  lead_email: email,
+                  subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
+                  body_html: aiRes.content,
+                  status: 'sent',
+                  provider: providerConfig.provider,
+                });
+                
+                return { name: entity.business_name || entity.name, status: 'sent' };
+             } catch (err: any) {
+                return { name: entity.business_name || entity.name, status: 'failed', error: err.message };
+             }
+          }));
+          
+          result = { 
+            content: [{ 
+              type: 'text', 
+              text: `AI Outreach Batch complete. Sent to ${results.filter(r => r.status === 'sent').length}/${results.length} entities.\n\nResults: ${JSON.stringify(results, null, 2)}` 
+            }] 
+          };
           break;
         }
 
