@@ -125,18 +125,40 @@
 - `ZOHO_INTEGRATION_AUDIT.md`
 - `src/components/ui/LoomVideo.tsx`
 - `scripts/run_migration.ts`
-128: 
-129: ## Date: 2026-04-27 (SALES INTELLIGENCE & SOCIAL EXPANSION)
-130: 
-131: ### Added
-132: - **Instagram Direct Integration**: Full support for Instagram DMs in the unified inbox with platform-specific branding (IG gradients).
-133: - **Sales Intelligence Workbench**: New specialized component for optimizing outreach drafts using high-conversion sales psychology and conversion analysis.
-134: - **Conversion Metrics**: Integrated "Predicted Response Probability" and "Strategic Hook Analysis" across all AI generation pipelines.
-135: - **Lead Intelligence UI**: Enhanced lead detail view to display real-time conversion probability and pattern-interrupting hooks.
-136: 
-137: ### Fixed
-138: - **MCP OAuth Refreshes**: Resolved 400 errors for public clients (Claude/Manus) by allowing secret-less refresh token grants.
-139: - **Facebook Webhook Visibility**: Programmatically ensured all integrated Facebook Pages are subscribed to the messaging webhook.
-140: 
-141: ### Changed
-142: - **Elite Sales Agent Overhaul**: Upgraded `Growth Agent` system prompts to act as a world-class SDR and Behavioral Psychologist.
+
+## Date: 2026-04-27 (SALES INTELLIGENCE & SOCIAL EXPANSION)
+
+### Added
+- **Instagram Direct Integration**: Full support for Instagram DMs in the unified inbox with platform-specific branding (IG gradients).
+- **Sales Intelligence Workbench**: New specialized component for optimizing outreach drafts using high-conversion sales psychology and conversion analysis.
+- **Conversion Metrics**: Integrated "Predicted Response Probability" and "Strategic Hook Analysis" across all AI generation pipelines.
+- **Lead Intelligence UI**: Enhanced lead detail view to display real-time conversion probability and pattern-interrupting hooks.
+
+### Fixed
+- **MCP OAuth Refreshes**: Resolved 400 errors for public clients (Claude/Manus) by allowing secret-less refresh token grants.
+- **Facebook Webhook Visibility**: Programmatically ensured all integrated Facebook Pages are subscribed to the messaging webhook.
+
+### Changed
+- **Elite Sales Agent Overhaul**: Upgraded `Growth Agent` system prompts to act as a world-class SDR and Behavioral Psychologist.
+
+## Date: 2026-04-27 (ELITE NOTIFICATIONS & CONTACT HARVESTING)
+
+### Added
+- **AI Smart Notifications**: Implemented `sendSmartNotification` service that uses AI to summarize complex task updates into punchy, 15-word actionable alerts.
+- **Priority & Metadata Engine**: Migrated the notifications database to support urgency levels (Low to Urgent) and polymorphic metadata payloads.
+- **Elite Contact Acquisition Protocol**: Overhauled the Growth Agent's core logic with a "Micro-Commitment" strategy. The agent now strategically prioritizes securing emails for missing lead data by offering high-value assets.
+
+### Changed
+- **Task Service Automation**: Integrated AI Smart Notifications directly into task assignment and status update flows.
+- **Sales Intelligence Optimization**: Updated the `optimizeSalesMessage` pipeline to automatically detect missing contact info and inject hyper-effective email-capture requests.
+
+## Date: 2026-04-27 (STABILITY & OAUTH HARDENING)
+
+### Fixed
+- **Claude OAuth Connection**: Resolved `McpAuthorizationError` by mapping standard `read` and `write` scopes to internal system scopes in `MCPOAuthScopes.ts`.
+- **Infinite Recursion Loop**: Implemented a `postMessage` loop protector in `layout.tsx` to prevent infinite recursion between the main page and Segment isolation iframes.
+- **SES Console Noise**: Enhanced `lockdown-install.js` to silence SES-related TypeErrors and transient 404/403 errors from Claude and Facebook SDKs.
+- **Service Worker Noise**: Optimized `PWAContext.tsx` to ensure Service Worker unregistration only triggers once per session when PWA features are disabled.
+
+### Changed
+- **CSP Synchronization**: Synchronized Content Security Policy (CSP) in `middleware.ts` with `next.config.ts` and added explicit allow-lists for Claude.ai and Segment.

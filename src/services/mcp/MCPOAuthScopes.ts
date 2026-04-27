@@ -34,13 +34,24 @@ function dedupeScopes(scopes: MCPOAuthScope[]): MCPOAuthScope[] {
 
 export function validateScopes(scopesString: string): MCPOAuthScope[] {
   if (!scopesString) return [];
+  
   const parts = scopesString
-    .split(' ')
-    .map((scope) => scope.trim())
+    .split(/[\s,]+/)
+    .map((scope) => scope.trim().toLowerCase())
     .filter(Boolean);
-  const valid = parts.filter((scope) => VALID_SCOPES.includes(scope as MCPOAuthScope)) as MCPOAuthScope[];
+
+  // Map common aliases to internal scopes
+  const mapped = parts.map(s => {
+    if (s === 'read') return MCP_OAUTH_SCOPES.READ_ALL;
+    if (s === 'write') return MCP_OAUTH_SCOPES.WRITE_ALL;
+    return s;
+  });
+
+  const valid = mapped.filter((scope) => VALID_SCOPES.includes(scope as MCPOAuthScope)) as MCPOAuthScope[];
+  
   const hasReadAll = valid.includes(MCP_OAUTH_SCOPES.READ_ALL);
   const hasWriteAll = valid.includes(MCP_OAUTH_SCOPES.WRITE_ALL);
+  
   if (hasReadAll || hasWriteAll) {
     return dedupeScopes([
       ...(hasReadAll ? [MCP_OAUTH_SCOPES.READ_ALL] : []),
