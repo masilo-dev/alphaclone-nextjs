@@ -60,15 +60,21 @@ export async function POST(req: NextRequest) {
                 
                 // Fetch integration to find tenant
                 // For Instagram, we might need to look up by a linked page or stored IGID
-                let integration;
+                let integration: any;
                 if (isInstagram) {
                     const { data } = await supabaseAdmin
                         .from('instagram_integrations')
-                        .select('tenant_id, user_id, facebook_page_id as page_id')
+                        .select('tenant_id, user_id, facebook_page_id')
                         .eq('instagram_account_id', pageId)
                         .eq('is_active', true)
                         .maybeSingle();
-                    integration = data;
+                    if (data) {
+                        integration = {
+                            tenant_id: data.tenant_id,
+                            user_id: data.user_id,
+                            page_id: data.facebook_page_id
+                        };
+                    }
                 } else {
                     const { data } = await supabaseAdmin
                         .from('facebook_integrations')
