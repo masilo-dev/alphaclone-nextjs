@@ -13,6 +13,7 @@ export type AdminMessageSource =
   | 'facebook'
   | 'whatsapp'
   | 'linkedin'
+  | 'instagram'
   | 'mcp';
 
 export type AdminMessageDirection = 'inbound' | 'outbound';

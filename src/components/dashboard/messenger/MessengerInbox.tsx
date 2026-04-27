@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     MessageSquare, Send, Inbox, Search, Loader2, 
     ArrowLeft, Menu, X, Sparkles, User, RefreshCcw,
-    Circle, CheckCircle2, ShieldCheck, Link as LinkIcon
+    Circle, CheckCircle2, ShieldCheck, Link as LinkIcon,
+    Instagram
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -238,10 +239,17 @@ export default function MessengerInbox() {
         try {
             const suggestion = await generateMessengerReply(
                 lastUserMsg.text, 
-                'Professional, helpful assistant for AlphaClone platform.'
+                'Professional, helpful assistant for AlphaClone platform. Focus on conversion and value.'
             );
-            setReplyText(suggestion);
-            toast.success('AI suggestion generated!');
+            
+            // Handle new format with probability if present
+            if (suggestion.includes('RESPONSE PROBABILITY:')) {
+                setReplyText(suggestion);
+                toast.success('Strategy generated with conversion analysis!');
+            } else {
+                setReplyText(suggestion);
+                toast.success('AI suggestion generated!');
+            }
         } catch (err) {
             toast.error('AI generation failed.');
         } finally {
@@ -313,16 +321,16 @@ export default function MessengerInbox() {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl flex items-center justify-center text-gray-400 font-bold border border-white/5 group-hover:border-blue-500/30 transition-all">
-                                                {conv.contacts?.full_name?.charAt(0) || <User size={18} />}
+                                            <div className={`w-10 h-10 bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-purple-600 to-pink-500' : 'from-gray-800 to-gray-900'} rounded-xl flex items-center justify-center text-white font-bold border border-white/5 group-hover:border-blue-500/30 transition-all`}>
+                                                {conv.metadata?.platform === 'instagram' ? <Instagram size={18} /> : (conv.contacts?.full_name?.charAt(0) || <User size={18} />)}
                                             </div>
                                             <div className="min-w-0">
                                                 <h3 className={`font-bold text-sm truncate max-w-[140px] ${!conv.is_read ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
                                                     {conv.contacts?.full_name || `Customer ${conv.sender_id.substring(0, 4)}`}
                                                 </h3>
                                                 <div className="flex items-center gap-1">
-                                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                                    <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Active</span>
+                                                    <div className={`w-1.5 h-1.5 ${conv.metadata?.platform === 'instagram' ? 'bg-pink-500' : 'bg-green-500'} rounded-full`} />
+                                                    <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -353,13 +361,15 @@ export default function MessengerInbox() {
                                         <ArrowLeft size={20} />
                                     </button>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black shadow-lg">
-                                            {activeConv?.contacts?.full_name?.charAt(0) || 'C'}
+                                        <div className={`w-10 h-10 bg-gradient-to-br ${activeConv?.metadata?.platform === 'instagram' ? 'from-purple-600 to-pink-500' : 'from-blue-600 to-indigo-700'} rounded-xl flex items-center justify-center text-white font-black shadow-lg`}>
+                                            {activeConv?.metadata?.platform === 'instagram' ? <Instagram size={20} /> : (activeConv?.contacts?.full_name?.charAt(0) || 'C')}
                                         </div>
                                         <div>
                                             <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] text-blue-400 font-black uppercase tracking-[0.1em]">Facebook Messenger</span>
+                                                <span className={`text-[10px] ${activeConv?.metadata?.platform === 'instagram' ? 'text-pink-400' : 'text-blue-400'} font-black uppercase tracking-[0.1em]`}>
+                                                    {activeConv?.metadata?.platform === 'instagram' ? 'Instagram Direct' : 'Facebook Messenger'}
+                                                </span>
                                                 {activeConv?.contact_id && (
                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-500 rounded-md border border-green-500/20">
                                                         <CheckCircle2 size={10} />

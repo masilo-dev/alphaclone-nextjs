@@ -19,6 +19,7 @@ import {
     AlertCircle,
     Layout,
     ArrowRight,
+    Target,
     History as HistoryIcon
 } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
@@ -982,14 +983,45 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             )}
 
                             <div className="space-y-6">
+                                <Card className="p-6 bg-indigo-900/10 border-indigo-500/20">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                            <Target className="w-5 h-5 text-indigo-400" />
+                                            Conversion Intelligence
+                                        </h3>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Response Probability</span>
+                                            <div className="text-3xl font-black text-indigo-400">
+                                                {lead.responseProbability || lead.intelligenceScore || 0}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                                                style={{ width: `${lead.responseProbability || lead.intelligenceScore || 0}%` }}
+                                            />
+                                        </div>
+                                        
+                                        <div className="p-4 bg-black/40 rounded-xl border border-white/5">
+                                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
+                                            <p className="text-sm text-slate-300 leading-relaxed">
+                                                {lead.hookAnalysis || "The Sales Agent predicts a high response rate based on industry intent and pain point alignment. Use the pattern-interrupting hook below for maximum conversion."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </Card>
+
                                 <Card className="p-6">
                                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                         <Bot className="w-5 h-5 text-teal-400" />
-                                        AI Insights
+                                        AI Deep Research
                                     </h3>
-                                    <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                                        <p className="text-purple-200 text-sm leading-relaxed">
-                                            {lead.notes || "No AI analysis available yet. Generate insights from the Sales Agent."}
+                                    <div className="p-4 bg-slate-900 border border-white/5 rounded-lg">
+                                        <p className="text-slate-300 text-sm leading-relaxed">
+                                            {lead.notes || "No AI research available yet. Run research to gather market intelligence."}
                                         </p>
                                     </div>
                                 </Card>

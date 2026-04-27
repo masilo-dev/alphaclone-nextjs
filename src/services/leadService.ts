@@ -41,6 +41,8 @@ export interface Lead {
     intelligenceState?: Record<string, number>;
     intelligenceRecommendations?: string[];
     psychologyProfile?: string[];
+    responseProbability?: number;
+    hookAnalysis?: string;
 }
 
 export interface GrowthAgentTarget {
@@ -144,7 +146,9 @@ export const leadService = {
                 intelligenceConfidence: l.intelligence_confidence,
                 intelligenceState: l.intelligence_state || undefined,
                 intelligenceRecommendations: l.intelligence_recommendations || [],
-                psychologyProfile: l.psychology_profile || []
+                psychologyProfile: l.psychology_profile || [],
+                responseProbability: l.metadata?.responseProbability || 0,
+                hookAnalysis: l.metadata?.hookAnalysis || ''
             }));
 
             return { leads, error: null };

@@ -168,7 +168,21 @@ export async function POST(req: NextRequest) {
       if (!refresh_token) {
         return NextResponse.json({ error: 'invalid_request', error_description: 'Missing refresh_token' }, { status: 400 });
       }
-      if (!validRegisteredClient) {
+      let allowPublicRefresh = false;
+      if (!client_secret) {
+        // Fetch client to check if it's public (designated by its redirect URIs)
+        const { data: client } = await supabaseAdmin
+          .from('mcp_oauth_clients')
+          .select('redirect_uris')
+          .eq('client_id', client_id)
+          .single();
+        
+        if (client && client.redirect_uris?.some(uri => isTrustedPublicRedirectUri(uri))) {
+          allowPublicRefresh = true;
+        }
+      }
+
+      if (!validRegisteredClient && !allowPublicRefresh) {
         return NextResponse.json({ error: 'invalid_client' }, { status: 401 });
       }
 
