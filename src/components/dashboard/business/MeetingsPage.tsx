@@ -5,9 +5,9 @@ import { dailyService, VideoCall } from '../../../services/dailyService';
 import { Settings, Video, Calendar, Clock, User as UserIcon, Link, Copy, Trash2 } from 'lucide-react';
 import { CalendlySettingsModal } from './CalendlySettingsModal';
 import SimpleVideoMeeting from '../SimpleVideoMeeting';
-import { format, isFuture } from 'date-fns';
 import { safeFormat } from '../../../utils/dateUtils';
 import { Button, Card, Badge } from '@/components/ui/UIComponents';
+import PermanentMeetingLink from '../PermanentMeetingLink';
 
 interface MeetingsPageProps {
     user: User;
@@ -143,8 +143,13 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     <div>
                         <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
                             <Video className="w-5 h-5 text-teal-400" />
-                            Instant Meeting
+                            Permanent Room & Instant Meeting
                         </h2>
+                        
+                        <div className="mb-8">
+                            <PermanentMeetingLink user={user} onJoinRoom={onJoinRoom || (() => { })} />
+                        </div>
+
                         {/* Re-using the admin component for consistency */}
                         <SimpleVideoMeeting user={user} onJoinRoom={onJoinRoom || (() => { })} />
                     </div>

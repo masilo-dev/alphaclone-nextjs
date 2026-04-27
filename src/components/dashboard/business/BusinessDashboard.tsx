@@ -149,10 +149,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
-        startMeeting(callId);
+        // Open the call in a new tab so navigating the dashboard doesn't kill the connection
+        window.open(`/meet/${callId}`, '_blank');
     };
-
-
     const handleInitiateCallToClient = async (clientId: string) => {
         const toastId = toast.loading('Initiating secure call...');
         try {
