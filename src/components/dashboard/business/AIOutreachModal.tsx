@@ -26,6 +26,7 @@ interface AIOutreachModalProps {
     isOpen: boolean;
     onClose: () => void;
     userId: string;
+    initialSelectedLeads?: string[];
 }
 
 const TONES = [
@@ -35,10 +36,10 @@ const TONES = [
     { id: 'marketing', label: 'Creative', description: 'Persuasive & Bold' },
 ];
 
-const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId }) => {
+const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [] }) => {
     const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
-    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -53,8 +54,11 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         if (isOpen) {
             fetchLeads();
             fetchAccountInfo();
+            if (initialSelectedLeads?.length) {
+                setSelectedLeads(initialSelectedLeads.slice(0, 20));
+            }
         }
-    }, [isOpen, userId]);
+    }, [isOpen, userId, initialSelectedLeads]);
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -161,55 +165,63 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             }
 
             const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
-            const sendResults: Array<{ name: string; status: 'success' | 'error'; error?: string }> = [];
-
-            for (const draft of drafts) {
+            
+            // Execute all sends in parallel for "all at once" experience
+            const sendPromises = drafts.map(async (draft: any) => {
                 const recipient = String(draft.recipientEmail || '').trim();
                 if (!recipient || !recipient.includes('@')) {
-                    sendResults.push({
+                    return {
                         name: String(draft.business_name || 'Unknown Lead'),
                         status: 'error',
                         error: 'No recipient email available',
-                    });
-                    continue;
+                    };
                 }
 
-                const sendResponse = await fetch('/api/outreach/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tenantId: currentTenant.id,
-                        leadEmail: recipient,
-                        leadName: draft.business_name,
-                        subject: draft.subject,
-                        body: draft.body,
-                        pitchAngle: draft.pitchAngle || 'growth-opportunity',
-                        industry: 'mixed',
-                        score: 75,
-                        autoSend: true,
-                        consentGranted: true,
-                        confidenceScore: 100,
-                        deliveryProviders: [selectedProvider],
-                        preferredProvider: selectedProvider,
-                        balanceByDailyLimit: false,
-                    }),
-                });
+                try {
+                    const sendResponse = await fetch('/api/outreach/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenantId: currentTenant.id,
+                            leadEmail: recipient,
+                            leadName: draft.business_name,
+                            subject: draft.subject,
+                            body: draft.body,
+                            pitchAngle: draft.pitchAngle || 'growth-opportunity',
+                            industry: 'mixed',
+                            score: 75,
+                            autoSend: true,
+                            consentGranted: true,
+                            confidenceScore: 100,
+                            deliveryProviders: [selectedProvider],
+                            preferredProvider: selectedProvider,
+                            balanceByDailyLimit: false,
+                        }),
+                    });
 
-                const sendData = await sendResponse.json().catch(() => ({}));
-                if (!sendResponse.ok || !sendData.success) {
-                    sendResults.push({
+                    const sendData = await sendResponse.json().catch(() => ({}));
+                    if (!sendResponse.ok || !sendData.success) {
+                        return {
+                            name: String(draft.business_name || 'Unknown Lead'),
+                            status: 'error',
+                            error: String(sendData.error || 'Outreach failed'),
+                        };
+                    } else {
+                        return {
+                            name: String(draft.business_name || 'Unknown Lead'),
+                            status: 'success',
+                        };
+                    }
+                } catch (err: any) {
+                    return {
                         name: String(draft.business_name || 'Unknown Lead'),
                         status: 'error',
-                        error: String(sendData.error || 'Outreach failed'),
-                    });
-                } else {
-                    sendResults.push({
-                        name: String(draft.business_name || 'Unknown Lead'),
-                        status: 'success',
-                    });
+                        error: err.message,
+                    };
                 }
-            }
+            });
 
+            const sendResults = await Promise.all(sendPromises);
             setResults(sendResults);
             toast.success(`Successfully processed ${sendResults.filter((r) => r.status === 'success').length} emails`);
         } catch (err: any) {
@@ -268,12 +280,20 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
                                 Select Leads ({selectedLeads.length}/20)
                             </h3>
-                            <button
-                                onClick={() => setSelectedLeads([])}
-                                className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
-                            >
-                                Clear All
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setSelectedLeads(filteredLeads.slice(0, 20).map(l => l.id))}
+                                    className="text-[10px] text-teal-400 hover:text-teal-300 uppercase font-bold tracking-widest transition-colors"
+                                >
+                                    Select All
+                                </button>
+                                <button
+                                    onClick={() => setSelectedLeads([])}
+                                    className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                >
+                                    Clear All
+                                </button>
+                            </div>
                         </div>
 
                         <div className="relative mb-6">

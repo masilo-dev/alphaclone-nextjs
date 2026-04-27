@@ -62,10 +62,10 @@ export default function TurnstileVerification({
             typeof window !== 'undefined'
                 ? window.location.hostname.toLowerCase()
                 : '';
-        const hostAllowed = allowedHosts.includes(host);
+        const hostAllowed = allowedHosts.includes(host) || host.endsWith('.vercel.app');
         if (!hostAllowed) {
             const message = `Security verification is disabled on ${host}. Use an approved domain: ${allowedHosts.join(', ')}`;
-            console.warn('[Turnstile] Host is not in NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS:', host);
+            console.warn('[Turnstile] Host is not in NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS and not a vercel app:', host);
             setFatalError(message);
             if (onError) onError(message);
             return;

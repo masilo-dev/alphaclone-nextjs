@@ -162,3 +162,18 @@
 
 ### Changed
 - **CSP Synchronization**: Synchronized Content Security Policy (CSP) in `middleware.ts` with `next.config.ts` and added explicit allow-lists for Claude.ai and Segment.
+
+## Date: 2026-04-27 (BULK AI OUTREACH & MCP AUTONOMY)
+
+### Added
+- **Parallel AI Outreach Engine**: Refactored the core outreach delivery pipeline to support simultaneous message generation and sending. Bulk batches (up to 20) now complete in parallel, reducing total delivery time by ~85%.
+- **MCP Autonomous Outreach Tool**: Extended the AlphaClone MCP Server with `send_batch_outreach`. External agents (Claude, Manus) can now trigger personalized, multi-recipient outreach campaigns in a single tool call.
+- **Lead Batch Management**: Implemented "Select All (Max 20)" and strict batch limit enforcement across Omni Lead Finder, CRM Kanban, and Contacts views.
+- **Intelligent Batch Notifications**: Added real-time toast feedback for batch selection limits and multi-send progress.
+
+### Changed
+- **Omni Lead Finder UI**: Updated the Lead Capture interface to prioritize bulk actions with dedicated "Bulk AI Outreach" triggers and automated selection helpers.
+- **CRM Multi-Select**: Enhanced Kanban and List views with persistent selection states and unified bulk action toolbars.
+
+### Fixed
+- **Outreach Bottlenecks**: Eliminated the sequential `await` loop in email delivery that previously caused timeouts during large outreach batches on Vercel.

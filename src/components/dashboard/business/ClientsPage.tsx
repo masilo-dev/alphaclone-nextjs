@@ -26,7 +26,10 @@ import {
     ChevronLeft,
     FileSpreadsheet,
     Grid3X3,
+    CheckCircle2,
+    Sparkles
 } from 'lucide-react';
+import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
@@ -106,6 +109,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [showCommunicationModal, setShowCommunicationModal] = useState(false);
     const [selectedClientForCommunication, setSelectedClientForCommunication] = useState<BusinessClient | null>(null);
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
+    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+    const [showOutreachModal, setShowOutreachModal] = useState(false);
 
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
@@ -518,6 +523,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <Grid3X3 className="w-4 h-4" />
                         </button>
                     </div>
+                    {selectedClientIds.length > 0 && (
+                        <Button
+                            variant="primary"
+                            onClick={() => setShowOutreachModal(true)}
+                            icon={<Sparkles className="w-4 h-4" />}
+                            className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20"
+                        >
+                            Outreach ({selectedClientIds.length})
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -716,9 +731,27 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <option value="prospect">Prospects</option>
                                 <option value="customer">Customers</option>
                                 <option value="lost">Lost</option>
-                            </select>
+                        <div className="flex items-center justify-between px-1">
+                            <button
+                                onClick={() => {
+                                    if (selectedClientIds.length > 0) {
+                                        setSelectedClientIds([]);
+                                    } else {
+                                        const batch = filteredClients.slice(0, 20).map(c => c.id);
+                                        setSelectedClientIds(batch);
+                                        if (filteredClients.length > 20) {
+                                            toast.success('Selected first 20 contacts for bulk outreach.');
+                                        }
+                                    }
+                                }}
+                                className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-teal-400 transition-colors"
+                            >
+                                {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 20)`}
+                            </button>
+                            {selectedClientIds.length >= 20 && (
+                                <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">Batch Limit Reached</span>
+                            )}
                         </div>
-
                         {/* Client List */}
                         <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                             {filteredClients.map(client => {
@@ -726,10 +759,28 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 return (
                                 <div
                                     key={client.id}
+                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                     onClick={() => setSelectedClient(client)}
-                                    className={`group p-3 rounded-xl cursor-pointer transition-all border ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div 
+                                        className="shrink-0"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedClientIds(prev => {
+                                                if (prev.includes(client.id)) return prev.filter(id => id !== client.id);
+                                                if (prev.length >= 20) {
+                                                    toast.error('Bulk outreach limited to 20 contacts at once.');
+                                                    return prev;
+                                                }
+                                                return [...prev, client.id];
+                                            });
+                                        }}
+                                    >
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${selectedClientIds.includes(client.id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 group-hover:border-slate-500'}`}>
+                                            {selectedClientIds.includes(client.id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <div className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm">
                                             {(client.name || '?').charAt(0)}
                                         </div>
@@ -1044,6 +1095,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     onImport={handleImportClients}
                 />
             )}
+
+            {/* AI Outreach Modal */}
+            <AIOutreachModal
+                isOpen={showOutreachModal}
+                onClose={() => setShowOutreachModal(false)}
+                userId={user.id}
+                initialSelectedLeads={selectedClientIds}
+            />
         </div>
     );
 };
