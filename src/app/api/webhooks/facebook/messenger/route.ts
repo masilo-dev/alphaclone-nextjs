@@ -62,15 +62,11 @@ export async function POST(req: NextRequest) {
                 // For Instagram, we might need to look up by a linked page or stored IGID
                 let integration;
                 if (isInstagram) {
-                    // Try to find by metadata.instagram_id or just find the active FB integration for this tenant
-                    // In a production system, we'd store the IGID explicitly.
-                    // For now, we'll try to find any active FB integration if we don't have a direct mapping.
                     const { data } = await supabaseAdmin
-                        .from('facebook_integrations')
-                        .select('tenant_id, user_id, page_id')
+                        .from('instagram_integrations')
+                        .select('tenant_id, user_id, facebook_page_id as page_id')
+                        .eq('instagram_account_id', pageId)
                         .eq('is_active', true)
-                        .or(`metadata->>instagram_id.eq.${pageId},page_id.eq.${pageId}`) // Fallback to page_id if IGID is same
-                        .limit(1)
                         .maybeSingle();
                     integration = data;
                 } else {
