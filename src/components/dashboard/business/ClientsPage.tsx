@@ -708,8 +708,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 </div>
             ) : (
                 <div className="flex flex-col lg:flex-row gap-4 min-h-0 max-h-[min(92dvh,880px)] lg:max-h-none lg:h-[min(88dvh,900px)] overflow-hidden">
+                    {/* Left Pane: Search + List */}
                     <div className={`flex flex-col gap-3 sm:gap-4 min-h-0 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
-                        {/* Filters */}
                         <div className="flex flex-col gap-4 shrink-0">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -730,9 +730,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <option value="lead">Leads</option>
                                 <option value="prospect">Prospects</option>
                                 <option value="customer">Customers</option>
+                                <option value="lost">Lost</option>
                             </select>
                         </div>
-                        <div className="flex items-center justify-between px-1">
+
+                        <div className="flex items-center justify-between px-1 shrink-0">
                             <button
                                 onClick={() => {
                                     if (selectedClientIds.length > 0) {
@@ -753,253 +755,109 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">Batch Limit Reached</span>
                             )}
                         </div>
-                        {/* Client List */}
+
                         <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                            {filteredClients.map(client => {
-                                const nextStage = STAGE_PIPELINE.find(s => s.id === client.salesStage)?.next;
-                                return (
+                            {filteredClients.map(client => (
                                 <div
                                     key={client.id}
                                     className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                     onClick={() => setSelectedClient(client)}
                                 >
-                                    <div 
-                                        className="shrink-0"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedClientIds(prev => {
-                                                if (prev.includes(client.id)) return prev.filter(id => id !== client.id);
-                                                if (prev.length >= 20) {
-                                                    toast.error('Bulk outreach limited to 20 contacts at once.');
-                                                    return prev;
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedClientIds.includes(client.id)}
+                                            onChange={(e) => {
+                                                e.stopPropagation();
+                                                if (e.target.checked) {
+                                                    if (selectedClientIds.length >= 20) {
+                                                        toast.error('Maximum 20 contacts for bulk outreach.');
+                                                        return;
+                                                    }
+                                                    setSelectedClientIds([...selectedClientIds, client.id]);
+                                                } else {
+                                                    setSelectedClientIds(selectedClientIds.filter(id => id !== client.id));
                                                 }
-                                                return [...prev, client.id];
-                                            });
-                                        }}
-                                    >
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${selectedClientIds.includes(client.id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 group-hover:border-slate-500'}`}>
-                                            {selectedClientIds.includes(client.id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm">
+                                            }}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-600 focus:ring-teal-500/20"
+                                        />
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-slate-300 text-sm">
                                             {(client.name || '?').charAt(0)}
                                         </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-semibold text-white text-sm truncate">{client.name}</h3>
-                                            {client.industry && <p className="text-[11px] text-slate-400 truncate">{client.industry}</p>}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                            {/* One-click convert button — visible on hover */}
-                                            {nextStage && (
-                                                <button
-                                                    onClick={e => { e.stopPropagation(); handleStageConvert(client, nextStage); }}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-500/20 border border-teal-500/40 text-teal-300 hover:bg-teal-500/40 hover:text-white whitespace-nowrap"
-                                                    title={`Convert to ${nextStage}`}
-                                                >
-                                                    → {nextStage.charAt(0).toUpperCase() + nextStage.slice(1)}
-                                                </button>
-                                            )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
+                                        <div className="flex items-center gap-2">
                                             <Badge variant={client.salesStage === 'customer' ? 'success' : client.salesStage === 'lost' ? 'error' : 'blue'}>
                                                 {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
                                             </Badge>
                                         </div>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                    {/* Desktop Split Pane Right Side */}
+                    {/* Right Pane: Details */}
                     <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
                         {selectedClient ? (
                             <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden">
-                                {/* Mobile Header with Back Button */}
-                                <div className="lg:hidden flex items-center justify-between p-3 sm:p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
-                                    <button 
-                                        onClick={() => setSelectedClient(null)}
-                                        className="flex items-center gap-2 text-teal-400 text-sm font-medium hover:text-teal-300 transition-colors"
-                                    >
-                                        <ChevronLeft className="w-5 h-5" />
-                                        Back
+                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-teal-400 text-sm font-medium">
+                                        <ChevronLeft className="w-5 h-5" /> Back
                                     </button>
                                     <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
                                         {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
                                     </Badge>
                                 </div>
 
-                                <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar ios-scroll">
-                                    <div className="flex justify-between items-start gap-3 mb-4 sm:mb-6 shrink-0">
-                                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-lg sm:text-xl md:text-2xl">
-                                            {(selectedClient.name || '?').charAt(0)}
+                                <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                                    <div className="flex justify-between items-start gap-4 mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl">
+                                                {(selectedClient.name || '?').charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-bold text-white">{selectedClient.name}</h2>
+                                                {selectedClient.industry && <p className="text-slate-400 text-sm">{selectedClient.industry}</p>}
+                                            </div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white truncate">{selectedClient.name}</h2>
-                                            {selectedClient.industry && <p className="text-slate-400 text-sm truncate">{selectedClient.industry}</p>}
+                                        <div className="flex gap-2">
+                                            <Dropdown
+                                                trigger={<Button size="sm" variant="ghost" className="!p-2" icon={<MoreVertical className="w-5 h-5" />} />}
+                                                items={[
+                                                    { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
+                                                    { label: 'Delete', icon: <Trash2 className="w-4 h-4"/>, onClick: () => handleDeleteClient(selectedClient.id), variant: 'danger' }
+                                                ]}
+                                            />
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Dropdown
-                                            trigger={
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="!p-2 hover:bg-slate-800"
-                                                    icon={<MoreVertical className="w-5 h-5" />}
-                                                />
-                                            }
-                                            items={[
-                                                { label: 'Edit Client', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
-                                                { label: 'Delete Client', icon: <Trash2 className="w-4 h-4"/>, onClick: () => { handleDeleteClient(selectedClient.id); setSelectedClient(null); }, variant: 'danger' }
-                                            ]}
-                                        />
-                                        <Button className="hidden" size="sm" variant="ghost" onClick={() => setSelectedClient(null)}>
-                                            <X className="w-5 h-5"/>
-                                        </Button>
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 shrink-0">
-                                    <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Email</p>
-                                        <div className="flex items-center gap-2 text-white text-sm">
-                                            <Mail className="w-4 h-4 text-teal-500 shrink-0" />
-                                            <span className="truncate" title={selectedClient.email || 'N/A'}>{selectedClient.email || 'N/A'}</span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                        <div className="bg-slate-800/50 p-3 rounded-xl">
+                                            <p className="text-xs text-slate-400 mb-1">Email</p>
+                                            <div className="flex items-center gap-2 text-white text-sm">
+                                                <Mail className="w-4 h-4 text-teal-500" />
+                                                <span className="truncate">{selectedClient.email || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-800/50 p-3 rounded-xl">
+                                            <p className="text-xs text-slate-400 mb-1">Phone</p>
+                                            <div className="flex items-center gap-2 text-white text-sm">
+                                                <Phone className="w-4 h-4 text-teal-500" />
+                                                <span className="truncate">{selectedClient.phone || 'N/A'}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Phone</p>
-                                        <div className="flex items-center gap-2 text-white text-sm">
-                                            <Phone className="w-4 h-4 text-teal-500 shrink-0" />
-                                            <span className="truncate">{selectedClient.phone || 'N/A'}</span>
-                                        </div>
-                                    </div>
-                                    {selectedClient.location ? (
-                                        <div className="bg-slate-800/50 p-3 rounded-xl sm:col-span-2">
-                                            <p className="text-xs sm:text-sm text-slate-400 mb-1">Location</p>
-                                            <p className="text-sm text-white">{selectedClient.location}</p>
-                                        </div>
-                                    ) : null}
-                                    {selectedClient.website ? (
-                                        <div className="bg-slate-800/50 p-3 rounded-xl sm:col-span-2">
-                                            <p className="text-xs sm:text-sm text-slate-400 mb-1">Website</p>
-                                            <a
-                                                href={selectedClient.website.startsWith('http') ? selectedClient.website : `https://${selectedClient.website}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-sm text-teal-400 hover:text-teal-300 truncate block"
-                                            >
-                                                {selectedClient.website}
-                                            </a>
-                                        </div>
-                                    ) : null}
-                                    <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Sales Stage</p>
-                                        <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
-                                            {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
-                                        </Badge>
-                                    </div>
-                                    <div className="bg-slate-800/50 p-3 rounded-xl">
-                                        <p className="text-xs sm:text-sm text-slate-400 mb-1">Potential Value</p>
-                                        <p className="font-semibold text-teal-400 text-sm sm:text-base">${selectedClient.value.toLocaleString()}</p>
-                                    </div>
-                                </div>
 
-                                {selectedClient.description && (
-                                    <div className="mb-6 shrink-0">
-                                        <h3 className="text-base font-semibold text-white mb-2">Description</h3>
-                                        <div className="bg-slate-800/50 p-4 rounded-xl text-slate-300 whitespace-pre-wrap">
-                                            {selectedClient.description}
+                                    <div className="mt-auto pt-6 border-t border-slate-800">
+                                        <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
+                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForInvoice(selectedClient); setShowInvoiceModal(true); }} icon={<Receipt className="w-4 h-4" />}>Invoice</Button>
+                                            <Button variant="outline" size="sm" onClick={() => handleCallClient(selectedClient)} icon={<Phone className="w-4 h-4" />}>Call</Button>
+                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForCommunication(selectedClient); setShowCommunicationModal(true); }} icon={<Mail className="w-4 h-4" />}>Email</Button>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* ── Stage Pipeline — one-click convert ──── */}
-                                <div className="mb-6 shrink-0">
-                                    <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Convert Stage</h3>
-                                    <div className="flex items-center gap-0 rounded-xl overflow-hidden border border-slate-800">
-                                        {STAGE_PIPELINE.map((stage, i) => {
-                                            const isActive = selectedClient.salesStage === stage.id;
-                                            const stageColors: Record<string, string> = {
-                                                lead: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-                                                prospect: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-                                                customer: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-                                                lost: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-                                            };
-                                            return (
-                                                <button
-                                                    key={stage.id}
-                                                    onClick={() => !isActive && handleStageConvert(selectedClient, stage.id)}
-                                                    className={`flex-1 py-2 text-xs font-bold transition-all border-r border-slate-800 last:border-r-0 ${
-                                                        isActive
-                                                            ? stageColors[stage.id]
-                                                            : 'bg-slate-900 text-slate-500 hover:text-white hover:bg-slate-800'
-                                                    }`}
-                                                    disabled={isActive}
-                                                    title={isActive ? 'Current stage' : `Convert to ${stage.label}`}
-                                                >
-                                                    {isActive ? '● ' : ''}{stage.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    <p className="text-[10px] text-slate-600 mt-1">Click any stage to convert instantly</p>
-                                </div>
-
-                                <div className="mt-auto">
-                                    <h3 className="text-base font-semibold text-white mb-4">Quick Actions</h3>
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="w-full h-10 gap-2"
-                                            onClick={() => {
-                                                setSelectedClientForProposal(selectedClient);
-                                                setShowProposalModal(true);
-                                            }}
-                                            icon={<FilePlus className="w-4 h-4" />}
-                                        >
-                                            Proposal
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full h-10 gap-2 border-teal-500/30 text-teal-400 hover:bg-teal-500/10 hover:text-teal-300"
-                                            onClick={() => {
-                                                setSelectedClientForInvoice(selectedClient);
-                                                setShowInvoiceModal(true);
-                                            }}
-                                            icon={<Receipt className="w-4 h-4" />}
-                                        >
-                                            Invoice
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full h-10 gap-2"
-                                            onClick={() => handleCallClient(selectedClient)}
-                                            icon={<Phone className="w-4 h-4" />}
-                                        >
-                                            Call
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full h-10 gap-2"
-                                            onClick={() => {
-                                                if (selectedClient.email) {
-                                                    setSelectedClientForCommunication(selectedClient);
-                                                    setShowCommunicationModal(true);
-                                                } else {
-                                                    toast.error('No email address on file.');
-                                                }
-                                            }}
-                                            icon={<Mail className="w-4 h-4" />}
-                                        >
-                                            Email
-                                        </Button>
                                     </div>
                                 </div>
                             </div>
