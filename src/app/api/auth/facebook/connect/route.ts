@@ -39,6 +39,12 @@ export async function GET(req: NextRequest) {
         'pages_messaging',          // required for Messenger send
         'leads_retrieval',
         'ads_management',
+        // Instagram scopes added to unify Facebook and Instagram connection
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'instagram_manage_insights',
+        'instagram_manage_messages',
     ].join(',');
 
     const ALLOWED_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
