@@ -125,3 +125,18 @@
 - `ZOHO_INTEGRATION_AUDIT.md`
 - `src/components/ui/LoomVideo.tsx`
 - `scripts/run_migration.ts`
+128: 
+129: ## Date: 2026-04-27 (SALES INTELLIGENCE & SOCIAL EXPANSION)
+130: 
+131: ### Added
+132: - **Instagram Direct Integration**: Full support for Instagram DMs in the unified inbox with platform-specific branding (IG gradients).
+133: - **Sales Intelligence Workbench**: New specialized component for optimizing outreach drafts using high-conversion sales psychology and conversion analysis.
+134: - **Conversion Metrics**: Integrated "Predicted Response Probability" and "Strategic Hook Analysis" across all AI generation pipelines.
+135: - **Lead Intelligence UI**: Enhanced lead detail view to display real-time conversion probability and pattern-interrupting hooks.
+136: 
+137: ### Fixed
+138: - **MCP OAuth Refreshes**: Resolved 400 errors for public clients (Claude/Manus) by allowing secret-less refresh token grants.
+139: - **Facebook Webhook Visibility**: Programmatically ensured all integrated Facebook Pages are subscribed to the messaging webhook.
+140: 
+141: ### Changed
+142: - **Elite Sales Agent Overhaul**: Upgraded `Growth Agent` system prompts to act as a world-class SDR and Behavioral Psychologist.

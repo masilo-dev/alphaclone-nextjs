@@ -51,19 +51,37 @@ export async function POST(req: NextRequest) {
 
         const body = JSON.parse(bodyText);
 
-        if (body.object === 'page') {
+        if (body.object === 'page' || body.object === 'instagram') {
+            const isInstagram = body.object === 'instagram';
             const supabaseAdmin = createSupabaseAdminClient();
             
             for (const entry of body.entry) {
                 const pageId = entry.id;
                 
                 // Fetch integration to find tenant
-                const { data: integration } = await supabaseAdmin
-                    .from('facebook_integrations')
-                    .select('tenant_id, user_id')
-                    .eq('page_id', pageId)
-                    .eq('is_active', true)
-                    .single();
+                // For Instagram, we might need to look up by a linked page or stored IGID
+                let integration;
+                if (isInstagram) {
+                    // Try to find by metadata.instagram_id or just find the active FB integration for this tenant
+                    // In a production system, we'd store the IGID explicitly.
+                    // For now, we'll try to find any active FB integration if we don't have a direct mapping.
+                    const { data } = await supabaseAdmin
+                        .from('facebook_integrations')
+                        .select('tenant_id, user_id, page_id')
+                        .eq('is_active', true)
+                        .or(`metadata->>instagram_id.eq.${pageId},page_id.eq.${pageId}`) // Fallback to page_id if IGID is same
+                        .limit(1)
+                        .maybeSingle();
+                    integration = data;
+                } else {
+                    const { data } = await supabaseAdmin
+                        .from('facebook_integrations')
+                        .select('tenant_id, user_id, page_id')
+                        .eq('page_id', pageId)
+                        .eq('is_active', true)
+                        .single();
+                    integration = data;
+                }
 
                 if (!integration) continue;
 
@@ -87,7 +105,8 @@ export async function POST(req: NextRequest) {
                                         last_message_at: new Date().toISOString(),
                                         is_read: false,
                                         metadata: {
-                                            source: 'facebook_webhook',
+                                            source: isInstagram ? 'instagram_webhook' : 'facebook_webhook',
+                                            platform: isInstagram ? 'instagram' : 'messenger',
                                         },
                                     },
                                     { onConflict: 'tenant_id,page_id,sender_id' }
@@ -133,6 +152,7 @@ export async function POST(req: NextRequest) {
                                 receivedAt: new Date().toISOString(),
                                 metadata: {
                                     pageId,
+                                    platform: isInstagram ? 'instagram' : 'messenger',
                                     conversationId: conversation.id,
                                 },
                             });

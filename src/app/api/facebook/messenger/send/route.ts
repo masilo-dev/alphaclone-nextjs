@@ -6,6 +6,7 @@ import {
     routeErrorResponse,
 } from '@/lib/apiAuth';
 import { facebookService } from '@/services/facebookService';
+import { instagramService } from '@/services/instagramService';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 export async function POST(req: NextRequest) {
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
         // 1. Get conversation details (to get page_id, sender_id, tenant_id)
         const { data: conversation, error: convError } = await supabase
             .from('messenger_conversations')
-            .select('tenant_id, page_id, sender_id')
+            .select('tenant_id, page_id, sender_id, metadata')
             .eq('id', conversationId)
             .single();
 
@@ -32,13 +33,22 @@ export async function POST(req: NextRequest) {
 
         await requireTenantAccess(conversation.tenant_id);
 
-        // 2. Send the message via Facebook
-        const result = await facebookService.sendMessengerMessage(
-            conversation.tenant_id,
-            conversation.page_id,
-            conversation.sender_id,
-            text
-        );
+        // 2. Send the message via Facebook or Instagram
+        const isInstagram = conversation.metadata?.platform === 'instagram';
+        
+        const result = isInstagram 
+            ? await instagramService.sendInstagramMessage(
+                conversation.tenant_id,
+                conversation.page_id,
+                conversation.sender_id,
+                text
+            )
+            : await facebookService.sendMessengerMessage(
+                conversation.tenant_id,
+                conversation.page_id,
+                conversation.sender_id,
+                text
+            );
 
         // 3. Record the message in our DB as a 'page' message
         const { error: msgError } = await supabase
@@ -60,7 +70,7 @@ export async function POST(req: NextRequest) {
         await captureUnifiedMessageFromWebhook({
             supabase: supabase as any,
             tenantId: conversation.tenant_id,
-            source: 'facebook',
+            source: isInstagram ? 'instagram' : 'facebook',
             channel: 'chat',
             direction: 'outbound',
             externalId: result.message_id || null,
