@@ -34,7 +34,7 @@ export const businessClientService = {
     /**
      * Get all clients for a tenant with pagination
      */
-    async getClients(tenantId: string, page: number = 1, limit: number = 50, searchTerm: string = ''): Promise<ClientsResponse> {
+    async getClients(tenantId: string, page: number = 1, limit: number = 1000, searchTerm: string = ''): Promise<ClientsResponse> {
         try {
             const offset = (page - 1) * limit;
 

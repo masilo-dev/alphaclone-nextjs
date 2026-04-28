@@ -101,6 +101,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [editingClient, setEditingClient] = useState<BusinessClient | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [totalCount, setTotalCount] = useState(0);
     const [viewMode, setViewMode] = useState<'list' | 'board' | 'micro'>('list');
     const [showProposalModal, setShowProposalModal] = useState(false);
     const [selectedClientForProposal, setSelectedClientForProposal] = useState<BusinessClient | null>(null);
@@ -119,8 +120,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const loadClients = useCallback(async () => {
         if (!currentTenant) return;
         setLoading(true);
-        const { clients: data } = await businessClientService.getClients(currentTenant.id);
+        // Request a large enough batch to see 'all' contacts for most tenants
+        const { clients: data, count } = await businessClientService.getClients(currentTenant.id, 1, 5000);
         setClients(data);
+        setTotalCount(count || data.length);
         setLoading(false);
     }, [currentTenant]);
 
@@ -473,7 +476,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <div className="min-w-0">
                     <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <Badge variant="blue">{clients.length} total</Badge>
+                        <Badge variant="blue">{totalCount || clients.length} total</Badge>
                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CRM</p>
                     </div>
                 </div>

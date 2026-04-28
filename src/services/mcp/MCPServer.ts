@@ -509,7 +509,7 @@ class AlphaCloneMCPServer {
                   'Workspace UUID. Omit when your MCP connection URL already includes the workspace (OAuth-scoped).',
               },
               status: { type: 'string', description: 'lead | prospect | active | churned' },
-              limit: { type: 'number', description: 'Max records (default 20, max 100)' },
+              limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
               offset: { type: 'number', description: 'Pagination offset (default 0)' },
             },
             required: [],
@@ -561,7 +561,7 @@ class AlphaCloneMCPServer {
             properties: {
               tenant_id: { type: 'string' },
               query: { type: 'string', description: 'Free-text search query' },
-              limit: { type: 'number', description: 'Max records (default 20, max 100)' },
+              limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
             },
             required: ['query'],
           },
@@ -587,6 +587,32 @@ class AlphaCloneMCPServer {
               metadata: { type: 'object' },
             },
             required: ['client_id'],
+          },
+        },
+        {
+          name: 'get_contacts',
+          description: 'Fetch individual people/contacts for a tenant. Use to look up specific people within organizations.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
+              offset: { type: 'number', description: 'Pagination offset (default 0)' },
+            },
+            required: [],
+          },
+        },
+        {
+          name: 'search_contacts',
+          description: 'Search people/contacts by name, email, or phone.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              query: { type: 'string', description: 'Free-text search query' },
+              limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
+            },
+            required: ['query'],
           },
         },
         // ── Leads Pipeline ─────────────────────────────────────────────────
@@ -1950,12 +1976,12 @@ class AlphaCloneMCPServer {
         case 'get_clients': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, industry, location, min_value, max_value, limit = 20, offset = 0, cursor, sort_by, sort_order, fields } = a;
+          const { status, industry, location, min_value, max_value, limit = 100, offset = 0, cursor, sort_by, sort_order, fields } = a;
           const cursorOffset =
             typeof cursor === 'string' && cursor.trim()
               ? Number(Buffer.from(cursor, 'base64').toString('utf8')) || 0
               : 0;
-          const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
+          const pageSize = Math.min(Math.max(Number(limit) || 100, 1), 1000);
           const pageOffset = Math.max(Number(offset) || cursorOffset || 0, 0);
           const selectable = typeof fields === 'string' && fields.trim()
             ? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')
@@ -2045,7 +2071,7 @@ class AlphaCloneMCPServer {
         case 'search_clients': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { query, limit = 20 } = a;
+          const { query, limit = 100 } = a;
           if (typeof query !== 'string' || !query.trim()) {
             throw new Error('query is required');
           }
@@ -2056,8 +2082,64 @@ class AlphaCloneMCPServer {
             .eq('tenant_id', tenant_id)
             .or(`name.ilike.${q},email.ilike.${q},phone.ilike.${q},website.ilike.${q},location.ilike.${q}`)
             .order('created_at', { ascending: false })
-            .limit(Math.min(Number(limit) || 20, 100));
+            .limit(Math.min(Number(limit) || 100, 1000));
           if (error) throw supabaseErrorToMcpClientError('search_clients', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          break;
+        }
+
+        case 'get_contacts': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { limit = 100, offset = 0 } = a;
+          const pageSize = Math.min(Math.max(Number(limit) || 100, 1), 1000);
+          const pageOffset = Math.max(Number(offset) || 0, 0);
+          const { data, error } = await supabaseAdmin
+            .from('contacts')
+            .select('id, first_name, last_name, full_name, email, phone, status, created_at')
+            .eq('tenant_id', tenant_id)
+            .order('created_at', { ascending: false })
+            .range(pageOffset, pageOffset + pageSize - 1);
+          if (error) throw supabaseErrorToMcpClientError('get_contacts', error.message);
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    items: data || [],
+                    pagination: {
+                      limit: pageSize,
+                      offset: pageOffset,
+                      returned: (data || []).length,
+                      has_more: (data || []).length === pageSize,
+                    },
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+          break;
+        }
+
+        case 'search_contacts': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { query, limit = 100 } = a;
+          if (typeof query !== 'string' || !query.trim()) {
+            throw new Error('query is required');
+          }
+          const q = `%${query.trim()}%`;
+          const { data, error } = await supabaseAdmin
+            .from('contacts')
+            .select('id, first_name, last_name, full_name, email, phone, status, created_at')
+            .eq('tenant_id', tenant_id)
+            .or(`first_name.ilike.${q},last_name.ilike.${q},full_name.ilike.${q},email.ilike.${q},phone.ilike.${q}`)
+            .order('created_at', { ascending: false })
+            .limit(Math.min(Number(limit) || 100, 1000));
+          if (error) throw supabaseErrorToMcpClientError('search_contacts', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
           break;
         }
@@ -5728,13 +5810,13 @@ Return ONLY a JSON array of 60 objects:
         case 'get_business_events': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { event_type, from_time, to_time, limit = 50 } = a;
+          const { event_type, from_time, to_time, limit = 100 } = a;
           let query = supabaseAdmin
             .from('business_events')
             .select('id, title, description, event_type, start_time, end_time, attendees, created_by, created_at')
             .eq('tenant_id', tenant_id)
             .order('start_time', { ascending: false })
-            .limit(Math.min(Number(limit) || 50, 200));
+            .limit(Math.min(Number(limit) || 100, 500));
           if (event_type) query = query.eq('event_type', event_type);
           if (typeof from_time === 'string' && from_time.trim()) query = query.gte('start_time', from_time.trim());
           if (typeof to_time === 'string' && to_time.trim()) query = query.lte('start_time', to_time.trim());
@@ -5764,7 +5846,7 @@ Return ONLY a JSON array of 60 objects:
         }
 
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, get_contacts, search_contacts, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // ── Audit Logging ──────────────────────────────────────────────────
