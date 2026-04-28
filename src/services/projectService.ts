@@ -461,11 +461,11 @@ export const projectService = {
                     if (msg.includes('unknown channel error') || msg.includes('channel error')) {
                         console.warn('[Realtime] Projects channel unavailable. Continuing without live updates.');
                     } else {
-                        console.error('❌ Failed to subscribe to projects:', err?.message || 'Unknown channel error');
+                        console.warn('[Realtime] Project subscription failed. Continuing without live updates.', err?.message || 'Unknown channel error');
                     }
                     // Proactive check: if we get a channel error, it's likely RLS or Realtime configuration
                 } else if (status === 'TIMED_OUT') {
-                    console.error('❌ Project subscription timed out - retrying in 5s...');
+                    console.warn('[Realtime] Project subscription timed out. Retrying in 5s...');
                     setTimeout(() => projectService.subscribeToProjects(callback), 5000);
                 }
             });

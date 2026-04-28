@@ -11,8 +11,7 @@ interface TurnstileVerificationProps {
 
 declare global {
     interface Window {
-        onloadTurnstileCallback: () => void;
-        turnstile: {
+        turnstile?: {
             render: (
                 container: string | HTMLElement,
                 options: {
@@ -23,10 +22,49 @@ declare global {
                     theme?: 'light' | 'dark' | 'auto';
                 }
             ) => string;
-            reset: (widgetId: string) => void;
             remove: (widgetId: string) => void;
         };
     }
+}
+
+let turnstileScriptPromise: Promise<void> | null = null;
+
+function ensureTurnstileScript(): Promise<void> {
+    if (typeof window === 'undefined') {
+        return Promise.resolve();
+    }
+
+    if (window.turnstile) {
+        return Promise.resolve();
+    }
+
+    if (turnstileScriptPromise) {
+        return turnstileScriptPromise;
+    }
+
+    turnstileScriptPromise = new Promise<void>((resolve, reject) => {
+        const existingScript = document.querySelector<HTMLScriptElement>('script[src*="turnstile/v0/api.js"]');
+
+        if (existingScript) {
+            existingScript.addEventListener('load', () => resolve(), { once: true });
+            existingScript.addEventListener('error', () => reject(new Error('Turnstile failed to load')), { once: true });
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Turnstile failed to load'));
+        document.head.appendChild(script);
+    }).finally(() => {
+        if (!window.turnstile) {
+            turnstileScriptPromise = null;
+        }
+    });
+
+    return turnstileScriptPromise;
 }
 
 export default function TurnstileVerification({
@@ -38,6 +76,7 @@ export default function TurnstileVerification({
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
     const mountedRef = useRef(true);
+    const lastErrorRef = useRef<string | null>(null);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const [fatalError, setFatalError] = useState<string | null>(null);
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -49,105 +88,104 @@ export default function TurnstileVerification({
     useEffect(() => {
         mountedRef.current = true;
 
-        // Site key check
         if (!siteKey || siteKey === 'your_site_key_here') {
             const message = 'Security verification is not configured. Please contact support.';
             console.error('Cloudflare Turnstile site key is not configured');
             setFatalError(message);
-            if (onError) onError(message);
+            onError?.(message);
             return;
         }
 
-        const host =
-            typeof window !== 'undefined'
-                ? window.location.hostname.toLowerCase()
-                : '';
+        const host = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
         const hostAllowed = allowedHosts.includes(host) || host.endsWith('.vercel.app');
         if (!hostAllowed) {
             const message = `Security verification is disabled on ${host}. Use an approved domain: ${allowedHosts.join(', ')}`;
             console.warn('[Turnstile] Host is not in NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS and not a vercel app:', host);
             setFatalError(message);
-            if (onError) onError(message);
+            onError?.(message);
             return;
         }
 
-        // Define the callback before loading the script
-        window.onloadTurnstileCallback = () => {
-            if (mountedRef.current) {
-                setIsScriptLoaded(true);
-            }
-        };
-
-        // Suppress multiple script loads
-        if (document.querySelector('script[src*="turnstile/v0/api.js"]')) {
-            if (window.turnstile) {
-                setIsScriptLoaded(true);
-            }
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit';
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
+        ensureTurnstileScript()
+            .then(() => {
+                if (mountedRef.current) {
+                    setIsScriptLoaded(true);
+                }
+            })
+            .catch((error) => {
+                if (!mountedRef.current) return;
+                console.error('Error loading Turnstile script:', error);
+                const message = 'Security verification could not load. Please refresh and try again.';
+                setFatalError(message);
+                onError?.(message);
+            });
 
         return () => {
             mountedRef.current = false;
-            // Cleanup: remove the callback if the component unmounts before script loads
-            delete (window as any).onloadTurnstileCallback;
         };
     }, [siteKey, onError, allowedHosts]);
 
     useEffect(() => {
-        if (fatalError) return;
+        if (fatalError || !isScriptLoaded || !containerRef.current || widgetIdRef.current || !window.turnstile) {
+            return;
+        }
 
-        if (isScriptLoaded && containerRef.current && !widgetIdRef.current) {
-            try {
-                widgetIdRef.current = window.turnstile.render(containerRef.current, {
-                    sitekey: siteKey!,
-                    theme: theme,
-                    callback: (token: string) => {
-                        onVerify(token);
-                    },
-                    'expired-callback': () => {
-                        if (onExpire) onExpire();
-                        // Avoid reset() calls on widgets already disposed by route transitions.
-                        // Those trigger noisy "Cannot find Widget" warnings from Turnstile.
-                    },
-                    'error-callback': () => {
-                        const host = typeof window !== 'undefined' ? window.location.hostname : 'current host';
-                        const message =
-                            `Security verification is unavailable on ${host}. Please refresh, disable strict browser extensions for this page, or contact support.`;
-                        setFatalError(message);
-                        if (widgetIdRef.current && window.turnstile) {
-                            try {
-                                window.turnstile.remove(widgetIdRef.current);
-                            } catch {}
-                            widgetIdRef.current = null;
-                        }
-                        if (onError) onError(message);
-                    },
-                });
-            } catch (err) {
-                console.error('Error rendering Turnstile:', err);
-                const message = 'Security verification could not initialize. Please refresh and try again.';
-                setFatalError(message);
-                if (onError) onError(message);
-            }
+        let disposed = false;
+
+        try {
+            widgetIdRef.current = window.turnstile.render(containerRef.current, {
+                sitekey: siteKey!,
+                theme,
+                callback: (token: string) => {
+                    if (disposed || !mountedRef.current) return;
+                    lastErrorRef.current = null;
+                    onVerify(token);
+                },
+                'expired-callback': () => {
+                    if (disposed || !mountedRef.current) return;
+                    onExpire?.();
+                },
+                'error-callback': () => {
+                    if (disposed || !mountedRef.current) return;
+
+                    const host = typeof window !== 'undefined' ? window.location.hostname : 'current host';
+                    const message =
+                        `Security verification is unavailable on ${host}. Please refresh, disable strict browser extensions for this page, or contact support.`;
+
+                    if (lastErrorRef.current === message) {
+                        return;
+                    }
+
+                    lastErrorRef.current = message;
+                    setFatalError(message);
+                    onError?.(message);
+                },
+            });
+        } catch (err) {
+            console.error('Error rendering Turnstile:', err);
+            const message = 'Security verification could not initialize. Please refresh and try again.';
+            setFatalError(message);
+            onError?.(message);
         }
 
         return () => {
-            if (widgetIdRef.current && window.turnstile) {
+            disposed = true;
+            const widgetId = widgetIdRef.current;
+            widgetIdRef.current = null;
+
+            if (widgetId && window.turnstile) {
                 try {
-                    window.turnstile.remove(widgetIdRef.current);
+                    window.turnstile.remove(widgetId);
                 } catch {
-                    // Ignore stale widget cleanup errors.
+                    // Ignore stale widget cleanup errors from route transitions/remounts.
                 }
-                widgetIdRef.current = null;
+            }
+
+            if (containerRef.current) {
+                containerRef.current.innerHTML = '';
             }
         };
-    }, [isScriptLoaded, onVerify, onExpire, onError, siteKey, theme, fatalError]);
+    }, [fatalError, isScriptLoaded, onError, onExpire, onVerify, siteKey, theme]);
 
     if (fatalError) {
         return (

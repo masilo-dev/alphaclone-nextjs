@@ -178,6 +178,12 @@
 ### Fixed
 - **Outreach Bottlenecks**: Eliminated the sequential `await` loop in email delivery that previously caused timeouts during large outreach batches on Vercel.
 
+## Date: 2026-04-28 (CRITICAL BUG FIXES & CSP HARDENING)
+
+### Fixed
+- **Database Schema**: Resolved the 400 Bad Request error during lead insertion by adding missing `metadata` and `social_links` columns to the `leads` table.
+- **CSP Connectivity**: Updated the Content Security Policy (CSP) in `middleware.ts` to allow connectivity to OpenStreetMap (Nominatim), Facebook Graph API, and Instagram API, resolving blocked network requests for geo-services and social integrations.
+
 ## Date: 2026-04-28 (STABILITY & DATA ENRICHMENT HARDENING)
 
 ### Added

@@ -405,14 +405,17 @@ export const messageService = {
                     if (isUnknownChannelRealtimeError(err)) {
                         console.warn('[Realtime] Messages channel unavailable. Continuing without live updates.');
                     } else {
-                        console.error('❌ [Realtime] Failed to subscribe to messages:', err?.message || 'Unknown channel error');
-                        console.error('Subscription details:', { tenantId, channelName, error: err });
+                        console.warn('[Realtime] Messages subscription failed. Continuing without live updates.', {
+                            tenantId,
+                            channelName,
+                            error: err?.message || 'Unknown channel error',
+                        });
                     }
                     // Potential mismatch between server and client bindings often manifests here
                 } else if (status === 'CLOSED') {
                     console.info('[Realtime] Message subscription closed. Reconnecting logic handled by Supabase SDK.');
                 } else if (status === 'TIMED_OUT') {
-                    console.error('❌ [Realtime] Message subscription timed out - check network or database load.');
+                    console.warn('[Realtime] Message subscription timed out. Live updates may be delayed.');
                 }
             });
 
