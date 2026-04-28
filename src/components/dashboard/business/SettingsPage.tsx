@@ -65,11 +65,17 @@ interface SettingsPageProps {
     user: User;
 }
 
+type SettingsTab = 'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing' | 'appearance';
+
+function isSettingsTab(value: string): value is SettingsTab {
+    return ['business', 'notifications', 'security', 'booking', 'integrations', 'billing', 'appearance'].includes(value);
+}
+
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const { backgroundColor, setBackgroundColor } = useTheme();
     const { language, setLanguage, t: translate } = useLanguage();
-    const [activeTab, setActiveTab] = useState<'business' | 'notifications' | 'security' | 'booking' | 'integrations' | 'billing' | 'appearance'>('business');
+    const [activeTab, setActiveTab] = useState<SettingsTab>('business');
     const [uiTheme, setUiTheme] = useState<AcThemeMode>('dark');
 
     // Load + sync theme on mount
@@ -212,8 +218,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         const error = searchParams?.get('error');
         const tab = searchParams?.get('tab');
 
-        if (tab && ['notifications', 'security', 'business', 'booking', 'integrations', 'billing', 'appearance'].includes(tab)) {
-            setActiveTab(tab as any);
+        if (tab && isSettingsTab(tab)) {
+            setActiveTab(tab);
         }
 
         if (error === 'calendly_not_configured') {
@@ -352,7 +358,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         }
     };
 
-    const tabs = [
+    const tabs: Array<{ id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
         { id: 'business', label: 'Business Profile', icon: Building },
         { id: 'appearance', label: 'Appearance', icon: Palette },
         { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -360,7 +366,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         { id: 'booking', label: 'Booking & Calendly', icon: Calendar },
         { id: 'integrations', label: 'Email & Integrations', icon: Mail },
         { id: 'billing', label: 'Billing & Plans', icon: CreditCard }
-    ] as const;
+    ];
 
     const handleDeleteAccount = async () => {
         setIsDeleting(true);

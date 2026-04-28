@@ -13,6 +13,8 @@ import { Avatar } from '../ui/Avatar';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { businessClientService } from '../../services/businessClientService';
+import { leadService } from '../../services/leadService';
+import { supabase } from '../../lib/supabase';
 import { qualifyLead, QualificationResult } from '../../lib/leadQualification';
 import { OutreachPanel } from './OutreachPanel';
 
@@ -399,6 +401,60 @@ export default function OmniLeadFinder() {
   };
 
   // ── Search ───────────────────────────────────────────
+  function uniqueLeadInsights(lead: ScrapedLead): string {
+    const items = [
+      lead.qualification?.insights?.join('; '),
+      lead.category ? `Category: ${lead.category}` : '',
+      lead.rating ? `Rating: ${lead.rating}` : '',
+      lead.source ? `Source: ${lead.source}` : '',
+    ].filter(Boolean);
+    return items.join(' | ');
+  }
+
+  const saveEnrichedLead = async (lead: ScrapedLead, idx: number, quiet = false): Promise<boolean> => {
+    if (!currentTenant) return false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Authentication required');
+
+      const trustScore = lead.qualification?.score || 0;
+      const { lead: savedLead, error } = await leadService.addLead({
+        businessName: lead.business_name,
+        email: lead.email || lead.emails?.[0] || '',
+        phone: lead.phone || '',
+        website: lead.website,
+        industry: niche,
+        location: lead.address || '',
+        source: `Lead Finder:${lead.source || 'unknown'}`,
+        notes: lead.snippet || lead.category || '',
+        isVerified: Boolean(lead.email || lead.emails?.[0] || lead.phone || lead.website),
+        trustScore,
+        verificationNotes: uniqueLeadInsights(lead),
+        lat: lead.lat,
+        lng: lead.lng,
+        metadata: {
+          originalSource: lead.source || 'unknown',
+          originalCategory: lead.category || '',
+          rating: lead.rating || null,
+          finderSnippet: lead.snippet || '',
+          qualification: lead.qualification || null,
+        }
+      });
+      if (error) throw new Error(error);
+      if (savedLead?.id) {
+        await leadService.enrichLead(savedLead.id, user.id);
+      }
+      setSavedIds(prev => new Set([...prev, idx]));
+      if (!quiet) toast.success(`Saved ${lead.business_name} with enrichment`);
+      return true;
+    } catch (error) {
+      if (!quiet) {
+        toast.error(error instanceof Error ? error.message : 'Failed to save lead');
+      }
+      return false;
+    }
+  };
+
   const buildNoLeadsErrorMessage = (sourceErrors?: Record<string, string>) => {
     const failedSources = Object.entries(sourceErrors || {})
       .filter(([, message]) => Boolean(message))
@@ -596,6 +652,16 @@ export default function OmniLeadFinder() {
             setViewMode('map');
             setMapCollapsed(false);
             persistSearchHistory(qualifiedImmediate);
+            if (autoSave) {
+              let savedCount = 0;
+              for (const [index, qualifiedLead] of qualifiedImmediate.entries()) {
+                const saved = await saveEnrichedLead(qualifiedLead, index, true);
+                if (saved) savedCount += 1;
+              }
+              if (savedCount > 0) {
+                toast.success(`Auto-saved ${savedCount} enriched leads`);
+              }
+            }
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedImmediate.length} leads`);
             return { leads: immediateLeads, sourceStats: directData?.sources || {} };
@@ -650,6 +716,16 @@ export default function OmniLeadFinder() {
             setViewMode('map');
             setMapCollapsed(false);
             persistSearchHistory(qualifiedFinal);
+            if (autoSave) {
+              let savedCount = 0;
+              for (const [index, qualifiedLead] of qualifiedFinal.entries()) {
+                const saved = await saveEnrichedLead(qualifiedLead, index, true);
+                if (saved) savedCount += 1;
+              }
+              if (savedCount > 0) {
+                toast.success(`Auto-saved ${savedCount} enriched leads`);
+              }
+            }
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedFinal.length} leads`);
             done = true;
@@ -874,7 +950,7 @@ export default function OmniLeadFinder() {
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${autoSave ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </div>
             <span className={`text-[11px] font-bold ${autoSave ? 'text-teal-400' : 'text-slate-500'}`}>
-              <Save className="w-3 h-3 inline mr-1" />Auto-save to Contacts
+              <Save className="w-3 h-3 inline mr-1" />Auto-save enriched leads
             </span>
           </div>
 
@@ -1218,7 +1294,7 @@ export default function OmniLeadFinder() {
                 </div>
 
                 <div className="flex gap-1.5 mt-2.5" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => saveLeadToCRM(lead, idx)} disabled={isSaved}
+                  <button onClick={() => saveEnrichedLead(lead, idx)} disabled={isSaved}
                     className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium rounded-lg border transition-all ${
                       isSaved
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-default'

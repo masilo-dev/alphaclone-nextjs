@@ -20,6 +20,7 @@ import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { PLAN_PRICING } from '../../services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
 import { Sparkles } from 'lucide-react';
+import type { ClientsResponse } from '../../services/businessClientService';
 
 
 interface Props {
@@ -93,7 +94,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
     useEffect(() => {
         if (currentTenant?.id) {
-            businessClientService.getClients(currentTenant.id).then(({ clients }) => {
+            businessClientService.getClients(currentTenant.id).then(({ clients }: ClientsResponse) => {
                 setClients(clients || []);
             });
 

@@ -3065,12 +3065,14 @@ class AlphaCloneMCPServer {
                 
                 if (!providerConfig) return { name: entity.business_name || entity.name, status: 'failed', error: 'Email provider not configured' };
                 
-                await sendWithProviderSdk(providerConfig, {
+                await sendWithProviderSdk(providerConfig.provider, {
                   to: email,
                   subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
                   html: aiRes.content,
+                  apiKey: providerConfig.apiKey,
                   fromName: providerConfig.fromName || 'AlphaClone Outreach',
-                  fromEmail: providerConfig.fromEmail || ''
+                  fromEmail: providerConfig.fromEmail || '',
+                  userId: providerConfig.ownerUserId || user_id || undefined
                 });
 
                 // 3. Log the outreach

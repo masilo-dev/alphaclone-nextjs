@@ -129,7 +129,7 @@ export default function SocialMediaComposer() {
 
     // Voice input state
     const [isListening, setIsListening] = useState(false);
-    const recognitionRef = useRef<window.SpeechRecognition | null>(null);
+    const recognitionRef = useRef<any>(null);
 
     // AI Image generation state
     const [showAiImagePanel, setShowAiImagePanel] = useState(false);

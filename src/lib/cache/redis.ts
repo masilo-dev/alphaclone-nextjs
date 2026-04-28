@@ -109,10 +109,11 @@ export const cacheService = {
      */
     async delPattern(pattern: string): Promise<void> {
         if (!redisEnabled || !redis) return;
+        const redisClient = redis;
         try {
-            const keys = await redis.keys(pattern);
+            const keys = await redisClient.keys(pattern);
             if (keys.length > 0) {
-                await redis.del(...keys);
+                await redisClient.del(...keys);
             }
         } catch (error) {
             console.error('Cache delete pattern error:', error);

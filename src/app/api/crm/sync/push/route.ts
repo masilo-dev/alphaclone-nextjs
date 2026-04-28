@@ -1,5 +1,4 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
@@ -35,11 +34,18 @@ export async function POST(req: Request) {
 
         const results = [];
 
-        // Sync to HubSpot (only supports deals/leads as generic objects for now)
+        // Sync to HubSpot using entity-specific behavior to avoid bad writes.
         const hubspot = integrations.find((i: any) => i.type === 'hubspot');
         if (hubspot) {
             try {
-                const res = await hubspotService.syncLeadToHubSpot(userId, deal || lead);
+                const res =
+                    entityType === 'deal' || deal
+                        ? {
+                              success: false,
+                              skipped: true,
+                              message: 'HubSpot deal sync is not implemented for this route yet.'
+                          }
+                        : await hubspotService.syncLeadToHubSpot(userId, lead);
                 results.push({ provider: 'hubspot', status: 'success', data: res });
             } catch (e: unknown) {
                 console.error('HubSpot Sync Error:', e);
