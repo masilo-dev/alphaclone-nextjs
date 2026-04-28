@@ -188,6 +188,7 @@
 - **Build Compatibility**: Resolved TypeScript ambiguities in `SettingsPage.tsx`, `AlphaCloneContractModal.tsx`, and `UIComponents.tsx` to ensure zero-error builds on Vercel.
 - **Speech API Typing**: Hardened `SocialMediaComposer.tsx` against environment-specific SpeechRecognition type conflicts.
 - **Lead Metadata Fallback**: Implemented a resilient update mechanism in `leadService.ts` that gracefully handles legacy metadata schema constraints.
+- **MCP Transport Stability**: Hardened the `sse.ts` endpoint with selective OAuth advertising, resolving 401/406 conflicts for non-browser MCP clients.
 
 ### Changed
 - **AI Intelligence Prompts**: Enhanced the intelligence gathering pipeline in `unifiedAIService.ts` to synthesize known emails, social footprints, and tech stacks into outreach summaries.
