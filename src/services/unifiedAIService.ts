@@ -374,6 +374,9 @@ export const enrichLeadData = async (lead: any): Promise<string> => {
     Industry: ${lead.industry}
     Location: ${lead.location}
     Website: ${lead.website || 'N/A'}
+    Known Emails: ${Array.isArray(lead.knownEmails) && lead.knownEmails.length > 0 ? lead.knownEmails.join(', ') : 'N/A'}
+    Social Links: ${lead.socialLinks && Object.keys(lead.socialLinks).length > 0 ? JSON.stringify(lead.socialLinks) : 'N/A'}
+    Known Tech Stack: ${Array.isArray(lead.techStack) && lead.techStack.length > 0 ? lead.techStack.join(', ') : 'N/A'}
 
     Analyze and provide a concise, high-value summary (max 150 words) including:
     1. Likely Technology Stack (based on industry/segment)

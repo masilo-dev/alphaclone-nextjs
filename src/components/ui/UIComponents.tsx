@@ -102,6 +102,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTe
 export const Input: React.FC<InputProps> = ({
   label,
   error,
+  hint,
   icon,
   className = '',
   textarea = false,
@@ -194,17 +195,19 @@ export const Avatar: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ classNa
   <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`} {...props} />
 );
 
-export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => (
-  src ? (
-    <Image 
-      src={src} 
-      alt={alt || ''} 
-      fill 
-      className={`object-cover ${className}`} 
-      {...props as React.ComponentProps<typeof Image>} 
+export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => {
+  const imageProps = props as Omit<React.ComponentProps<typeof Image>, 'src' | 'alt' | 'fill'>;
+
+  return src ? (
+    <Image
+      {...imageProps}
+      src={src}
+      alt={alt || ''}
+      fill
+      className={`object-cover ${className}`}
     />
-  ) : null
-);
+  ) : null;
+};
 
 export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
   <div className={`flex h-full w-full items-center justify-center rounded-full bg-slate-800 text-slate-400 ${className}`} {...props} />

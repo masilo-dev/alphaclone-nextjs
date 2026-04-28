@@ -5,6 +5,8 @@ import { UnifiedCRMService } from './crm/UnifiedCRMService';
 import { assertLeadStageTransition } from '../lib/stageProgression';
 import { intelligenceScoringService } from './intelligence/intelligenceScoringService';
 
+type LeadMetadata = Record<string, any>;
+
 export interface Lead {
     id: string;
     owner_id?: string;
@@ -43,6 +45,8 @@ export interface Lead {
     psychologyProfile?: string[];
     responseProbability?: number;
     hookAnalysis?: string;
+    socialLinks?: Record<string, string>;
+    metadata?: LeadMetadata;
 }
 
 export interface GrowthAgentTarget {
@@ -56,6 +60,128 @@ export interface GrowthAgentTarget {
     last_run_at?: string;
     created_at: string;
     updated_at: string;
+}
+
+function coerceMetadata(value: unknown): LeadMetadata {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return value as LeadMetadata;
+    }
+    return {};
+}
+
+function normalizeSocialLinks(value: unknown): Record<string, string> {
+    const raw = coerceMetadata(value);
+    return Object.fromEntries(
+        Object.entries(raw)
+            .filter(([, link]) => typeof link === 'string' && link.trim().length > 0)
+            .map(([network, link]) => [network, String(link).trim()])
+    );
+}
+
+function uniqueStrings(values: Array<string | null | undefined>): string[] {
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+    for (const value of values) {
+        const item = String(value || '').trim();
+        if (!item) continue;
+        const key = item.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        normalized.push(item);
+    }
+    return normalized;
+}
+
+function extractDomainFromWebsite(website?: string): string | null {
+    const raw = String(website || '').trim();
+    if (!raw) return null;
+    try {
+        const normalized = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+        const host = new URL(normalized).hostname.replace(/^www\./i, '').toLowerCase();
+        return host || null;
+    } catch {
+        return null;
+    }
+}
+
+function buildTrustScore(input: {
+    email?: string;
+    phone?: string;
+    website?: string;
+    socialLinks?: Record<string, string>;
+    techStack?: string[];
+    verifiedEmailCount?: number;
+}): number {
+    let score = 0;
+    if (input.email) score += 30;
+    if (input.phone) score += 25;
+    if (input.website) score += 15;
+    if (input.socialLinks && Object.keys(input.socialLinks).length > 0) score += 10;
+    if (input.techStack && input.techStack.length > 0) score += 10;
+    if ((input.verifiedEmailCount || 0) > 0) score += 10;
+    return Math.min(100, score);
+}
+
+function deriveValueProposition(lead: { industry?: string; website?: string; socialLinks?: Record<string, string>; techStack?: string[] }): string | undefined {
+    const industry = String(lead.industry || '').toLowerCase();
+    if (industry.includes('restaurant') || industry.includes('cafe') || industry.includes('food')) {
+        return 'Improve local discovery, reviews, and direct bookings with a tighter digital funnel.';
+    }
+    if (industry.includes('law') || industry.includes('account') || industry.includes('consult')) {
+        return 'Turn research traffic and referrals into qualified consultations with structured follow-up.';
+    }
+    if (industry.includes('hvac') || industry.includes('plumb') || industry.includes('electric') || industry.includes('roof')) {
+        return 'Capture more high-intent local calls and convert them faster with better intake and follow-up.';
+    }
+    if (lead.website && lead.socialLinks && Object.keys(lead.socialLinks).length === 0) {
+        return 'Strengthen owned web presence with better contact capture and social proof.';
+    }
+    if ((lead.techStack || []).length > 0) {
+        return 'Use the existing digital stack more effectively by tightening conversion and automation gaps.';
+    }
+    return 'Increase qualified inbound demand with sharper positioning, contact capture, and follow-up.';
+}
+
+function normalizeLeadRecord(l: any): Lead {
+    const metadata = coerceMetadata(l.metadata);
+    return {
+        id: l.id,
+        owner_id: l.owner_id,
+        businessName: l.business_name,
+        industry: l.industry,
+        location: l.location,
+        phone: l.phone,
+        email: l.email,
+        website: l.website,
+        source: l.source,
+        stage: l.stage,
+        value: l.value,
+        notes: l.notes,
+        created_at: l.created_at,
+        client_id: l.client_id,
+        isVerified: l.is_verified,
+        trustScore: l.trust_score,
+        verificationNotes: l.verification_notes,
+        outreachHook: l.outreach_hook,
+        strategy: l.strategy,
+        techStack: l.tech_stack || [],
+        painPoints: l.pain_points || [],
+        valueProposition: l.value_proposition,
+        lat: l.latitude,
+        lng: l.longitude,
+        status: l.stage === 'lead' ? 'New' : l.stage,
+        fb: l.website,
+        sdrInsight: l.sdr_insight,
+        intelligenceScore: l.intelligence_score,
+        intelligenceConfidence: l.intelligence_confidence,
+        intelligenceState: l.intelligence_state || undefined,
+        intelligenceRecommendations: l.intelligence_recommendations || [],
+        psychologyProfile: l.psychology_profile || [],
+        responseProbability: metadata.responseProbability || 0,
+        hookAnalysis: metadata.hookAnalysis || '',
+        socialLinks: normalizeSocialLinks(l.social_links),
+        metadata
+    };
 }
 
 export const leadService = {
@@ -114,42 +240,7 @@ export const leadService = {
 
             if (error) throw error;
 
-            const leads: Lead[] = (data || []).map((l: any) => ({
-                id: l.id,
-                owner_id: l.owner_id,
-                businessName: l.business_name,
-                industry: l.industry,
-                location: l.location,
-                phone: l.phone,
-                email: l.email,
-                website: l.website,
-                source: l.source,
-                stage: l.stage,
-                value: l.value,
-                notes: l.notes,
-                created_at: l.created_at,
-                client_id: l.client_id,
-                isVerified: l.is_verified,
-                trustScore: l.trust_score,
-                verificationNotes: l.verification_notes,
-                outreachHook: l.outreach_hook,
-                strategy: l.strategy,
-                techStack: l.tech_stack || [],
-                painPoints: l.pain_points || [],
-                valueProposition: l.value_proposition,
-                lat: l.latitude,
-                lng: l.longitude,
-                status: l.stage === 'lead' ? 'New' : l.stage,
-                fb: l.website,
-                sdrInsight: l.sdr_insight,
-                intelligenceScore: l.intelligence_score,
-                intelligenceConfidence: l.intelligence_confidence,
-                intelligenceState: l.intelligence_state || undefined,
-                intelligenceRecommendations: l.intelligence_recommendations || [],
-                psychologyProfile: l.psychology_profile || [],
-                responseProbability: l.metadata?.responseProbability || 0,
-                hookAnalysis: l.metadata?.hookAnalysis || ''
-            }));
+            const leads: Lead[] = (data || []).map(normalizeLeadRecord);
 
             return { leads, error: null };
         } catch (err) {
@@ -207,6 +298,8 @@ export const leadService = {
                 latitude: lead.lat,
                 longitude: lead.lng,
                 sdr_insight: lead.sdrInsight,
+                social_links: lead.socialLinks || {},
+                metadata: lead.metadata || {},
                 intelligence_score: intelligence.qualifiedProbability,
                 intelligence_confidence: intelligence.confidence,
                 intelligence_state: intelligence.stateDistribution,
@@ -226,35 +319,7 @@ export const leadService = {
                 throw error;
             }
 
-            const newLead: Lead = {
-                id: data.id,
-                businessName: data.business_name,
-                industry: data.industry,
-                location: data.location,
-                phone: data.phone,
-                email: data.email,
-                source: data.source,
-                stage: data.stage,
-                value: data.value,
-                notes: data.notes,
-                status: 'New',
-                outreachMessage: data.outreach_message,
-                outreachStatus: data.outreach_status,
-                isVerified: data.is_verified,
-                trustScore: data.trust_score,
-                verificationNotes: data.verification_notes,
-                outreachHook: data.outreach_hook,
-                strategy: data.strategy,
-                techStack: data.tech_stack || [],
-                painPoints: data.pain_points || [],
-                valueProposition: data.value_proposition,
-                sdrInsight: data.sdr_insight,
-                intelligenceScore: data.intelligence_score,
-                intelligenceConfidence: data.intelligence_confidence,
-                intelligenceState: data.intelligence_state || undefined,
-                intelligenceRecommendations: data.intelligence_recommendations || [],
-                psychologyProfile: data.psychology_profile || []
-            };
+            const newLead: Lead = normalizeLeadRecord(data);
 
             // SYNC TO EXTERNAL CRM
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
@@ -316,6 +381,8 @@ export const leadService = {
                     latitude: l.lat,
                     longitude: l.lng,
                     sdr_insight: l.sdrInsight,
+                    social_links: l.socialLinks || {},
+                    metadata: l.metadata || {},
                     intelligence_score: intelligence.qualifiedProbability,
                     intelligence_confidence: intelligence.confidence,
                     intelligence_state: intelligence.stateDistribution,
@@ -358,7 +425,8 @@ export const leadService = {
             if (existingLead) {
                 const check = assertLeadStageTransition(existingLead.stage, updates.stage);
                 if (!check.ok) {
-                    return { error: check.message };
+                    const { message } = check;
+                    return { error: message };
                 }
             }
         }
@@ -389,6 +457,8 @@ export const leadService = {
         if (updates.lat !== undefined) dbPayload.latitude = updates.lat;
         if (updates.lng !== undefined) dbPayload.longitude = updates.lng;
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
+        if (updates.socialLinks !== undefined) dbPayload.social_links = updates.socialLinks;
+        if (updates.metadata !== undefined) dbPayload.metadata = updates.metadata;
 
         const shouldRecomputeIntelligence = [
             updates.industry,
@@ -445,42 +515,7 @@ export const leadService = {
 
             if (error) throw error;
 
-            const lead: Lead = {
-                id: data.id,
-                owner_id: data.owner_id,
-                businessName: data.business_name,
-                industry: data.industry,
-                location: data.location,
-                phone: data.phone,
-                email: data.email,
-                website: data.website,
-                source: data.source,
-                stage: data.stage,
-                value: data.value,
-                notes: data.notes,
-                created_at: data.created_at,
-                status: data.stage === 'lead' ? 'New' : data.stage,
-                fb: data.website,
-                outreachMessage: data.outreach_message,
-                outreachStatus: data.outreach_status,
-                isVerified: data.is_verified,
-                trustScore: data.trust_score,
-                verificationNotes: data.verification_notes,
-                outreachHook: data.outreach_hook,
-                strategy: data.strategy,
-                techStack: data.tech_stack || [],
-                painPoints: data.pain_points || [],
-                valueProposition: data.value_proposition,
-                sdrInsight: data.sdr_insight,
-                intelligenceScore: data.intelligence_score,
-                intelligenceConfidence: data.intelligence_confidence,
-                intelligenceState: data.intelligence_state || undefined,
-                intelligenceRecommendations: data.intelligence_recommendations || [],
-                psychologyProfile: data.psychology_profile || []
-            };
-
-            // SYNC TO EXTERNAL CRM
-            UnifiedCRMService.syncLead(lead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
+            const lead: Lead = normalizeLeadRecord(data);
 
             return { lead, error: null };
         } catch (err) {
@@ -608,22 +643,189 @@ export const leadService = {
                 .single();
             if (getError || !lead) throw new Error(getError?.message || 'Lead not found');
 
-            // Use the unified AI service for deep business research
+            const existingMetadata = coerceMetadata(lead.metadata);
+            const existingSocialLinks = normalizeSocialLinks(lead.social_links);
+            const domain = extractDomainFromWebsite(lead.website);
+            const discoveredEmails: Array<{ email: string; source: string; confidence: number; verified: boolean }> = [];
+            const verificationNotes: string[] = [];
+            const socialLinks: Record<string, string> = { ...existingSocialLinks };
+            const phoneCandidates = uniqueStrings([lead.phone]);
+            const techStack = uniqueStrings(Array.isArray(lead.tech_stack) ? lead.tech_stack : []);
+            const enrichmentSources: string[] = [];
+
+            if (lead.website) {
+                try {
+                    const response = await fetch('/api/scraper/deep-crawl', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: lead.website, usePlaywright: true })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('deep-crawl');
+                        uniqueStrings(data.emails || []).forEach((email) => {
+                            discoveredEmails.push({ email, source: 'deep-crawl', confidence: 78, verified: false });
+                        });
+                        if (data.phone) phoneCandidates.push(String(data.phone).trim());
+                        Object.assign(socialLinks, normalizeSocialLinks(data.social_links));
+                        verificationNotes.push(`Deep crawl found ${Array.isArray(data.emails) ? data.emails.length : 0} emails`);
+                    }
+                } catch (crawlError) {
+                    console.warn('[LeadService] Deep crawl skipped:', crawlError);
+                }
+            }
+
+            if (domain) {
+                try {
+                    const response = await fetch('/api/scraper/email-discovery', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            domain,
+                            company_name: lead.business_name,
+                            methods: ['dns', 'whois', 'github', 'website', 'linkedin'],
+                            verify: true
+                        })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('email-discovery');
+                        for (const item of Array.isArray(data.emails) ? data.emails : []) {
+                            const email = String(item?.email || '').trim();
+                            if (!email) continue;
+                            discoveredEmails.push({
+                                email,
+                                source: String(item?.source || 'email-discovery'),
+                                confidence: Number(item?.confidence || 0),
+                                verified: Boolean(item?.verified)
+                            });
+                        }
+                        verificationNotes.push(`Email discovery found ${Array.isArray(data.emails) ? data.emails.length : 0} candidates`);
+                    }
+                } catch (emailError) {
+                    console.warn('[LeadService] Email discovery skipped:', emailError);
+                }
+
+                try {
+                    const response = await fetch('/api/scraper/affordable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'enrich_lead',
+                            domain,
+                            tenant_id: this.getTenantId()
+                        })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('affordable-enrichment');
+                        uniqueStrings(data?.technology?.technologies || []).forEach((item) => techStack.push(item));
+                        for (const item of Array.isArray(data?.emails) ? data.emails : []) {
+                            const email = String(item?.email || '').trim();
+                            if (!email) continue;
+                            discoveredEmails.push({
+                                email,
+                                source: 'hunter',
+                                confidence: Number(item?.score || 0),
+                                verified: Boolean(item?.valid)
+                            });
+                        }
+                        if (data?.technology?.company_size) {
+                            verificationNotes.push(`BuiltWith company size: ${data.technology.company_size}`);
+                        }
+                    }
+                } catch (affordableError) {
+                    console.warn('[LeadService] Affordable enrichment skipped:', affordableError);
+                }
+            }
+
+            const rankedEmails = discoveredEmails
+                .filter((item) => item.email.includes('@'))
+                .sort((a, b) => {
+                    if (a.verified !== b.verified) return a.verified ? -1 : 1;
+                    return b.confidence - a.confidence;
+                });
+            const primaryEmail = uniqueStrings([lead.email, rankedEmails[0]?.email])[0] || undefined;
+            const primaryPhone = uniqueStrings([lead.phone, ...phoneCandidates])[0] || undefined;
+            const mergedMetadata = {
+                ...existingMetadata,
+                enrichment: {
+                    ...(coerceMetadata(existingMetadata.enrichment)),
+                    lastEnrichedAt: new Date().toISOString(),
+                    domain,
+                    sources: uniqueStrings([...(Array.isArray(existingMetadata.enrichment?.sources) ? existingMetadata.enrichment.sources : []), ...enrichmentSources]),
+                    discoveredEmails: rankedEmails.slice(0, 10),
+                    discoveredPhones: uniqueStrings(phoneCandidates).slice(0, 5),
+                    socialLinks,
+                    techStack: uniqueStrings(techStack).slice(0, 20),
+                }
+            };
+
             const { enrichLeadData } = await import('./unifiedAIService');
             const intelligence = await enrichLeadData({
                 businessName: lead.business_name || lead.name,
                 industry: lead.industry,
                 location: lead.location || lead.city,
-                website: lead.website
+                website: lead.website,
+                knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
+                socialLinks,
+                techStack: uniqueStrings(techStack).slice(0, 20)
             });
 
-            const { error: updateError } = await supabase
+            const updatePayload: Record<string, unknown> = {
+                notes: intelligence,
+                email: primaryEmail,
+                phone: primaryPhone,
+                social_links: socialLinks,
+                tech_stack: uniqueStrings(techStack).slice(0, 20),
+                value_proposition: lead.value_proposition || deriveValueProposition({
+                    industry: lead.industry,
+                    website: lead.website,
+                    socialLinks,
+                    techStack
+                }),
+                is_verified: Boolean(primaryEmail || primaryPhone),
+                trust_score: buildTrustScore({
+                    email: primaryEmail,
+                    phone: primaryPhone,
+                    website: lead.website,
+                    socialLinks,
+                    techStack,
+                    verifiedEmailCount: rankedEmails.filter((item) => item.verified).length
+                }),
+                verification_notes: uniqueStrings([
+                    lead.verification_notes,
+                    ...verificationNotes,
+                    rankedEmails[0] ? `Top email candidate: ${rankedEmails[0].email} via ${rankedEmails[0].source}` : ''
+                ]).join(' | '),
+                metadata: mergedMetadata,
+                sdr_insight: intelligence.split('\n').map((line: string) => line.trim()).find(Boolean) || lead.sdr_insight || null
+            };
+
+            let { error: updateError } = await supabase
                 .from('leads')
-                .update({ notes: intelligence })
+                .update(updatePayload)
                 .eq('id', id);
+
+            if (updateError && /social_links/i.test(updateError.message || '')) {
+                delete updatePayload.social_links;
+                const retry = await supabase.from('leads').update(updatePayload).eq('id', id);
+                updateError = retry.error;
+            }
+            if (updateError && /metadata/i.test(updateError.message || '')) {
+                delete updatePayload.metadata;
+                const retry = await supabase.from('leads').update(updatePayload).eq('id', id);
+                updateError = retry.error;
+            }
             if (updateError) throw updateError;
 
-            await this.addLeadActivity(id, userId, 'enrichment', 'AI Intelligence Gathering Completed');
+            await this.addLeadActivity(id, userId, 'enrichment', 'Lead enrichment completed', {
+                sources: enrichmentSources,
+                discoveredEmailCount: rankedEmails.length,
+                discoveredPhoneCount: uniqueStrings(phoneCandidates).length,
+                socialLinkCount: Object.keys(socialLinks).length,
+                techStackCount: uniqueStrings(techStack).length,
+            });
 
             return { notes: intelligence, error: null };
         } catch (err: any) {

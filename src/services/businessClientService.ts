@@ -53,7 +53,7 @@ export const businessClientService = {
 
             if (error) throw error;
 
-            const clients: BusinessClient[] = (data || []).map((c) => ({
+            const clients: BusinessClient[] = (data || []).map((c: any) => ({
                 id: c.id,
                 tenantId: c.tenant_id,
                 name: c.name,

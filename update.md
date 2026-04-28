@@ -177,3 +177,19 @@
 
 ### Fixed
 - **Outreach Bottlenecks**: Eliminated the sequential `await` loop in email delivery that previously caused timeouts during large outreach batches on Vercel.
+
+## Date: 2026-04-28 (STABILITY & DATA ENRICHMENT HARDENING)
+
+### Added
+- **Zoho Account Sync**: Implemented unified company/account synchronization logic in `ZohoCRMService.ts`, enabling seamless data flow between AlphaClone and Zoho CRM.
+- **Enriched Lead Tracking**: Overhauled `leadService.ts` and `OmniLeadFinder.tsx` to treat enriched data as a first-class entity with detailed source-aware activity logs.
+
+### Fixed
+- **Build Compatibility**: Resolved TypeScript ambiguities in `SettingsPage.tsx`, `AlphaCloneContractModal.tsx`, and `UIComponents.tsx` to ensure zero-error builds on Vercel.
+- **Speech API Typing**: Hardened `SocialMediaComposer.tsx` against environment-specific SpeechRecognition type conflicts.
+- **Lead Metadata Fallback**: Implemented a resilient update mechanism in `leadService.ts` that gracefully handles legacy metadata schema constraints.
+
+### Changed
+- **AI Intelligence Prompts**: Enhanced the intelligence gathering pipeline in `unifiedAIService.ts` to synthesize known emails, social footprints, and tech stacks into outreach summaries.
+- **Infrastructure**: Optimized `tsconfig.json` by excluding temporary scratch directories and refining build-time include patterns.
+- **Redis Cache**: Refactored pattern deletion in `redis.ts` for improved client stability.
