@@ -141,35 +141,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <Script src="/lockdown-install.js?v=5" strategy="beforeInteractive" />
-        <script
-          id="mcp-loop-protector"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var messageCount = 0;
-                var lastReset = Date.now();
-                var MAX_MESSAGES_PER_SEC = 50;
-                var originalPostMessage = window.postMessage;
-                
-                window.postMessage = function(message, targetOrigin, transfer) {
-                  var now = Date.now();
-                  if (now - lastReset > 1000) {
-                    messageCount = 0;
-                    lastReset = now;
-                  }
-                  messageCount++;
-                  if (messageCount > MAX_MESSAGES_PER_SEC) {
-                    if (messageCount === MAX_MESSAGES_PER_SEC + 1) {
-                      console.warn('[AlphaClone] postMessage recursion detected and throttled.');
-                    }
-                    return;
-                  }
-                  return originalPostMessage.apply(this, arguments);
-                };
-              })();
-            `
-          }}
-        />
       </head>
       <body
         className="antialiased text-base subpixel-antialiased font-sans"
