@@ -332,16 +332,17 @@ async function saveLead(tenantId: string, config: any, supabase: any) {
       .from('leads')
       .insert({
         tenant_id: tenantId,
-        external_id: leadData.id,
-        name: leadData.name,
+        business_name: leadData.name,
         email: leadData.email || null,
         phone: leadData.phone || null,
-        address: leadData.address || leadData.location || null,
+        location: leadData.address || leadData.location || null,
         website: leadData.website || null,
-        business_type: leadData.type || leadData.category || null,
+        industry: leadData.type || leadData.category || null,
         source: source,
         status: 'new',
+        stage: 'lead',
         priority: calculateLeadPriority(leadData),
+        external_id: leadData.id,
         value: estimateLeadValue(leadData),
         metadata: {
           ...leadData.metadata,
@@ -379,7 +380,11 @@ async function updateLead(tenantId: string, config: any, supabase: any) {
     const { data: lead, error } = await supabase
       .from('leads')
       .update({
-        ...updates,
+        ...(updates.name ? { business_name: updates.name } : {}),
+        ...(updates.status ? { status: updates.status, stage: updates.status } : {}),
+        ...(updates.address ? { location: updates.address } : {}),
+        ...(updates.priority ? { priority: updates.priority } : {}),
+        ...Object.fromEntries(Object.entries(updates).filter(([key]) => !['name', 'status', 'address', 'priority'].includes(key))),
         updated_at: new Date().toISOString()
       })
       .eq('id', leadId)
@@ -417,7 +422,7 @@ async function getLeads(tenantId: string, config: any, supabase: any) {
       .eq('tenant_id', tenantId);
 
     if (status) {
-      query = query.eq('status', status);
+      query = query.eq('stage', status);
     }
 
     if (source) {
@@ -467,7 +472,7 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .update({
-        status: 'converted',
+        stage: 'converted',
         converted_at: new Date().toISOString(),
         conversion_type: conversionType
       })
@@ -484,11 +489,9 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
         .from('deals')
         .insert({
           tenant_id: tenantId,
-          lead_id: leadId,
-          name: dealData.name || `Deal from ${lead.name}`,
+          name: dealData.name || `Deal from ${lead.business_name}`,
           value: dealData.value || lead.value || 0,
           stage: dealData.stage || 'initial',
-          status: 'active',
           expected_close_date: dealData.expectedCloseDate,
           probability: dealData.probability || 50,
           created_at: new Date().toISOString()
