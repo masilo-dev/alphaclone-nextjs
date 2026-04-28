@@ -148,8 +148,15 @@ export async function middleware(request: NextRequest) {
     }
 
     const response = await updateSession(request);
+    
+    // Bypass security headers for MCP routes to prevent interference with SSE streaming.
+    if (pathname.startsWith('/api/mcp/')) {
+        return response;
+    }
+
     return applyRequiredOwaspHeaders(response);
 }
+
 
 export const config = {
     matcher: [

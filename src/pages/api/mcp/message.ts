@@ -1,10 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { mcpTransports } from '../../../services/mcp/mcpStore';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, mcp-session-id',
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,33 +19,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(204).end();
   }
 
-  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { sessionId } = req.query;
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
-  if (typeof sessionId !== 'string') {
-    return res.status(400).json({ error: 'Missing or invalid sessionId' });
+  const sessionId = (req.query.sessionId as string) || (req.headers['mcp-session-id'] as string);
+
+  if (!sessionId) {
+    return res.status(400).json({ error: 'Missing sessionId' });
   }
 
   const transport = mcpTransports.get(sessionId);
 
   if (!transport) {
+    console.warn('[MCP Message] Session not found', { sessionId });
     return res.status(404).json({ error: 'Session not found' });
   }
 
-  if (typeof transport.handlePostMessage === 'function') {
-    await transport.handlePostMessage(req as any, res as any);
-    return;
+  try {
+    // SSEServerTransport has a handlePostMessage method to process the incoming JSON-RPC call.
+    if (typeof transport.handlePostMessage === 'function') {
+      await transport.handlePostMessage(req, res);
+    } else {
+      console.error('[MCP Message] Transport does not support handlePostMessage', { sessionId });
+      res.status(500).json({ error: 'Transport mismatch' });
+    }
+  } catch (err) {
+    console.error('[MCP Message] Failed to handle message', { sessionId, error: err });
+    if (!res.writableEnded) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-
-  if (typeof transport.handleRequest === 'function') {
-    await transport.handleRequest(req as any, res as any, req.body);
-    return;
-  }
-
-  return res.status(500).json({ error: 'MCP transport session is invalid' });
 }
+
