@@ -41,6 +41,20 @@ function setOauthAuthenticateHeader(req: NextApiRequest, res: NextApiResponse) {
   );
 }
 
+function shouldAdvertiseOAuth(req: NextApiRequest): boolean {
+  const authHeader = req.headers['authorization'];
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    return true;
+  }
+
+  const acceptHeader = String(req.headers['accept'] || '').toLowerCase();
+  if (acceptHeader.includes('application/json') && !req.query.api_key && !req.headers['x-api-key']) {
+    return true;
+  }
+
+  return false;
+}
+
 function redactApiKey(value: string | undefined): string {
   if (!value) return 'none';
   if (value.length <= 8) return `${value.slice(0, 2)}***`;
@@ -127,7 +141,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'MCP endpoint reachable. Provide x-api-key or Authorization Bearer token for authenticated sessions.',
       });
     }
-    setOauthAuthenticateHeader(req, res);
+    if (shouldAdvertiseOAuth(req)) {
+      setOauthAuthenticateHeader(req, res);
+    }
     return res.status(401).json({
       error:
         'Connection could not be verified. Open your workspace MCP settings, copy a fresh connection key, and try again.',
@@ -223,7 +239,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       authError === 'SERVICE_UNAVAILABLE'
         ? 'The service is temporarily unavailable. Please try again in a few minutes.'
         : 'Connection could not be verified. Open your workspace MCP settings, generate a fresh connection key, and try again.';
-    setOauthAuthenticateHeader(req, res);
+    if (shouldAdvertiseOAuth(req)) {
+      setOauthAuthenticateHeader(req, res);
+    }
     return res.status(401).json({ error: msg });
   }
 
