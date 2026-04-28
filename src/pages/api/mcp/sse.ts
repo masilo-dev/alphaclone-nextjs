@@ -1,59 +1,19 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createMCPServer } from '../../../services/mcp/MCPServer';
+import { mcpTransports } from '../../../services/mcp/mcpStore';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, mcp-session-id, x-tenant-id, x-user-id',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
 };
-
-function getRequestBaseUrl(req: NextApiRequest): string {
-  const protoHeader = req.headers['x-forwarded-proto'];
-  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
-
-  const proto = Array.isArray(protoHeader)
-    ? protoHeader[0]
-    : typeof protoHeader === 'string' && protoHeader.trim()
-      ? protoHeader.split(',')[0].trim()
-      : 'https';
-
-  const host = Array.isArray(hostHeader)
-    ? hostHeader[0]
-    : typeof hostHeader === 'string'
-      ? hostHeader
-      : '';
-
-  if (host) return `${proto}://${host}`;
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return 'https://alphaclonesystems.com';
-}
-
-function setOauthAuthenticateHeader(req: NextApiRequest, res: NextApiResponse) {
-  const baseUrl = getRequestBaseUrl(req).replace(/\/+$/, '');
-  const resourceMetadataUrl = `${baseUrl}/.well-known/oauth-protected-resource`;
-  const resourceUrl = `${baseUrl}/api/mcp/sse`;
-  // Include both resource and resource_metadata for broader client compatibility.
-  res.setHeader(
-    'WWW-Authenticate',
-    `Bearer realm="${baseUrl}", resource="${resourceUrl}", resource_metadata="${resourceMetadataUrl}"`
-  );
-}
-
-function shouldAdvertiseOAuth(req: NextApiRequest): boolean {
-  const authHeader = req.headers['authorization'];
-  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-    return true;
-  }
-
-  const acceptHeader = String(req.headers['accept'] || '').toLowerCase();
-  if (acceptHeader.includes('application/json') && !req.query.api_key && !req.headers['x-api-key']) {
-    return true;
-  }
-
-  return false;
-}
 
 function redactApiKey(value: string | undefined): string {
   if (!value) return 'none';
@@ -71,29 +31,6 @@ function detectMcpClientLabel(req: NextApiRequest): string {
   if (signals.includes('chatgpt') || signals.includes('openai')) return 'chatgpt';
   return 'unknown';
 }
-
-function logAuthDiagnostic(
-  phase: 'missing_key' | 'invalid_key' | 'service_unavailable',
-  req: NextApiRequest,
-  apiKey: string | undefined
-) {
-  const headerKeys = Object.keys(req.headers);
-  console.warn('[MCP SSE] auth diagnostic', {
-    phase,
-    method: req.method,
-    path: req.url,
-    api_key_hint: redactApiKey(apiKey),
-    has_authorization: Boolean(req.headers['authorization']),
-    has_x_api_key: Boolean(req.headers['x-api-key']),
-    header_keys: headerKeys,
-  });
-}
-
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-};
 
 function pickQueryOrHeader(
   req: NextApiRequest,
@@ -114,6 +51,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(204).end();
   }
 
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
   const authHeader = req.headers['authorization'];
@@ -125,28 +66,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     api_key = authHeader.substring(7);
   }
 
-  // A reachability probe is a GET/HEAD with no credentials at all.
-  // A GET that carries a key is an authenticated SSE stream request and must
-  // receive a real auth response, not a silent 200.
-  const hasCredentials = Boolean(api_key);
-  const isReachabilityProbe = !hasCredentials && (req.method === 'GET' || req.method === 'HEAD');
-
   if (!api_key) {
-    logAuthDiagnostic('missing_key', req, undefined);
-    if (isReachabilityProbe) {
-      return res.status(200).json({
-        ok: true,
-        auth_required: true,
-        endpoint: '/api/mcp/sse',
-        message: 'MCP endpoint reachable. Provide x-api-key or Authorization Bearer token for authenticated sessions.',
-      });
-    }
-    if (shouldAdvertiseOAuth(req)) {
-      setOauthAuthenticateHeader(req, res);
-    }
     return res.status(401).json({
-      error:
-        'Connection could not be verified. Open your workspace MCP settings, copy a fresh connection key, and try again.',
+      error: 'Authentication required. Provide x-api-key or Authorization Bearer token.',
     });
   }
 
@@ -156,20 +78,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let tenantId: string | null = null;
   let userId: string | null = null;
   let authError: string | null = null;
-  let authorizedScopes: string[] = [];
-  console.log('[MCP SSE] start auth lookup', { 
-    has_api_key: Boolean(api_key), 
-    key_prefix: api_key?.substring(0, 7),
-    method: req.method
-  });
-
 
   try {
     const { createClient } = await import('@supabase/supabase-js');
     const { ENV } = await import('../../../config/env');
 
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('[MCP SSE] Server configuration incomplete');
       throw new Error('SERVICE_UNAVAILABLE');
     }
 
@@ -178,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (api_key.startsWith('mcp_at_')) {
       const { data, error } = await supabaseAdmin
         .from('mcp_oauth_tokens')
-        .select('tenant_id, user_id, scopes, expires_at')
+        .select('tenant_id, user_id, expires_at')
         .eq('access_token', api_key)
         .single();
 
@@ -187,12 +101,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } else {
         tenantId = data.tenant_id;
         userId = data.user_id;
-        authorizedScopes = data.scopes;
-        console.log('[MCP SSE] OAuth token valid', { 
-          tenantId, 
-          userId, 
-          scopes: authorizedScopes 
-        });
       }
     } else {
       const { data, error } = await supabaseAdmin
@@ -206,8 +114,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } else {
         tenantId = data.tenant_id;
         userId = data.user_id;
-        authorizedScopes = ['*'];
-
+        
         supabaseAdmin
           .from('mcp_api_keys')
           .update({ last_used_at: new Date().toISOString() })
@@ -216,95 +123,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
   } catch (err) {
-    console.error('[MCP SSE] Auth lookup failed:', err);
+    console.error('[MCP SSE] Auth failed:', err);
     authError = 'SERVICE_UNAVAILABLE';
   }
 
   if (authError || !tenantId || !userId) {
-    logAuthDiagnostic(
-      authError === 'SERVICE_UNAVAILABLE' ? 'service_unavailable' : 'invalid_key',
-      req,
-      api_key
-    );
-    console.log('[MCP SSE] Auth failed', { authError, tenantId, userId });
-    if (isReachabilityProbe) {
-      return res.status(200).json({
-        ok: true,
-        auth_required: true,
-        endpoint: '/api/mcp/sse',
-        message: 'MCP endpoint reachable. Authentication required for active sessions.',
-      });
-    }
-    const msg =
-      authError === 'SERVICE_UNAVAILABLE'
-        ? 'The service is temporarily unavailable. Please try again in a few minutes.'
-        : 'Connection could not be verified. Open your workspace MCP settings, generate a fresh connection key, and try again.';
-    if (shouldAdvertiseOAuth(req)) {
-      setOauthAuthenticateHeader(req, res);
-    }
-    return res.status(401).json({ error: msg });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   if (urlTenantId && urlTenantId !== tenantId) {
-    return res.status(403).json({
-      error: 'This connection does not match the workspace in your request. Use the MCP URL from your dashboard.',
-    });
-  }
-  if (urlUserId && urlUserId !== userId) {
-    return res.status(403).json({
-      error: 'This connection does not match the user in your request. Use the MCP URL from your dashboard.',
-    });
+    return res.status(403).json({ error: 'Workspace mismatch' });
   }
 
-  void authorizedScopes;
-
-  const mcpServer = createMCPServer({ tenantId, userId, clientLabel: detectMcpClientLabel(req) });
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
+  // SSEServerTransport handles the SSE stream lifecycle.
+  // It expects the message endpoint URL as the first argument.
+  const transport = new SSEServerTransport('/api/mcp/message', res);
+  
+  console.log('[MCP SSE] New session', {
+    sessionId: transport.sessionId,
+    tenantId,
+    userId,
+    client: detectMcpClientLabel(req)
   });
 
-  // Normalize Accept header for StreamableHTTPServerTransport which is very strict.
-  // It requires both application/json and text/event-stream to avoid 406 Not Acceptable.
-  const accept = String(req.headers['accept'] || '');
-  if (!accept.includes('application/json') || !accept.includes('text/event-stream')) {
-    req.headers['accept'] = 'application/json, text/event-stream';
-  }
+  mcpTransports.set(transport.sessionId, transport);
 
-  const isGetTransport = req.method === 'GET';
-  if (isGetTransport) {
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-  }
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Connection', 'keep-alive');
 
-  const heartbeatMs = 15000;
-  let heartbeat: NodeJS.Timeout | null = null;
+  res.on('close', () => {
+    console.log('[MCP SSE] Session closed', { sessionId: transport.sessionId });
+    mcpTransports.delete(transport.sessionId);
+    // Note: SSEServerTransport might not have a close() in all versions, 
+    // but we remove it from our store to prevent leaks.
+  });
 
-  if (isGetTransport) {
-    heartbeat = setInterval(() => {
-      if (!res.writableEnded) {
-        try {
-          res.write(': heartbeat\n\n');
-        } catch {
-          // Ignore write errors; cleanup happens on close/finish.
-        }
-      }
-    }, heartbeatMs);
-  }
+  const mcpServer = createMCPServer({ 
+    tenantId, 
+    userId, 
+    clientLabel: detectMcpClientLabel(req) 
+  });
 
-  const stopHeartbeat = () => {
-    if (heartbeat) {
-      clearInterval(heartbeat);
-      heartbeat = null;
-    }
-  };
-  res.once('close', stopHeartbeat);
-  res.once('finish', stopHeartbeat);
-
-  try {
-    await mcpServer.server.connect(transport);
-    await transport.handleRequest(req as any, res as any, req.body);
-  } finally {
-    stopHeartbeat();
-  }
+  await mcpServer.server.connect(transport);
 }
+
