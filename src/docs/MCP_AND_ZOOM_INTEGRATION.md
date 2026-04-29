@@ -18,11 +18,11 @@ In `src/services/integrationService.ts`, **Claude Desktop (MCP)** and **Manus AI
 - **Connected** status in Settings → Integrations is derived when that tenant has an MCP API key (both catalog entries share the same key infrastructure).
 - **Disconnect** deletes the tenant’s `mcp_api_keys` row (revokes Claude and Manus access together).
 
-The **HTTP MCP transport** is implemented under **`/api/mcp/sse`** (Pages Router). In API-key mode, the setup guide uses **`/api/mcp/sse?api_key=<token>` only**; tenant and user are inferred from `mcp_api_keys` (no `tenant_id` in the URL). Optional **OAuth 2.1** for MCP clients uses `mcp_oauth_*` tables plus `/.well-known/oauth-authorization-server` and `/api/oauth/token`.
+The **HTTP MCP transport** is implemented under **`/api/mcp/sse`** (Pages Router). The setup guide uses **`/api/mcp/sse?api_key=<token>` only**; tenant and user are inferred from `mcp_api_keys` (no `tenant_id` in the URL). MCP connections do not use OAuth redirects or token exchange.
 
-**What is already in the database for MCP (OAuth 2.1 style)**
+**What is already in the database for MCP**
 
-Migration `20260409181012_oauth_2_1_mcp_authorization.sql` (and related usage of `mcp_api_keys`) supports **MCP OAuth-style flows** at the platform level: `mcp_oauth_clients`, `mcp_oauth_codes`, `mcp_oauth_tokens`, `mcp_api_keys`. That is the correct place to persist **client registrations and tokens** for external MCP clients (e.g. Claude Desktop) calling **your** API — not the same as “click Connect” on a static catalog row.
+MCP access is issued through `mcp_api_keys`. The dashboard setup flow creates or rotates the key and clients connect directly to `/api/mcp/sse?api_key=<token>`.
 
 **Verdict:** Claude/Manus are **operational** for API-key mode via the setup guide. Hardening steps: encrypt tokens at rest, narrow RLS on `mcp_api_keys`, and add refresh-token rotation for Zoom metadata stored in `tenant_integrations`.
 
@@ -43,7 +43,7 @@ Database: `oauth_states.tenant_id` (migration `20260412100000_oauth_states_tenan
 
 ### 1.3 Making Claude / Manus “work well” (recommended next steps)
 
-1. **Claude Desktop:** Register an OAuth client in your MCP authorization layer, document the redirect URL and scopes, and issue tokens into `mcp_oauth_tokens`. Point Claude Desktop’s MCP config at your **HTTPS** MCP endpoint.
+1. **Claude Desktop:** Generate an MCP API key from the dashboard setup guide and point Claude Desktop’s MCP config at your **HTTPS** MCP endpoint.
 2. **Manus:** Same pattern — Manus needs a documented MCP server URL, client id/secret or API key strategy, and strict tenant scoping on every tool.
 3. **Never** store long-lived secrets in `tenant_integrations.metadata` without encryption; prefer **Supabase Vault** or **server-only environment variables**, with only opaque references in the database.
 

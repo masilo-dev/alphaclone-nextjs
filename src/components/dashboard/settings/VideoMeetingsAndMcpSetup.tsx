@@ -207,9 +207,8 @@ export function VideoMeetingsAndMcpSetup() {
                   <Server className="w-4 h-4 shrink-0 mt-0.5" />
                   <p>
                     The MCP HTTP endpoint is <code className="text-slate-300">/api/mcp/sse?api_key=...</code> (the setup
-                    guide copies the full URL; workspace is resolved from the key). OAuth dynamic clients can use{' '}
-                    <code className="text-slate-300">/.well-known/oauth-authorization-server</code> and{' '}
-                    <code className="text-slate-300">/api/oauth/token</code> per your deployment docs.
+                    guide copies the full URL; workspace and user are resolved from the key). MCP connections use API keys
+                    only, so no OAuth redirect or token exchange is required.
                   </p>
                 </div>
                 <ol className="space-y-3">

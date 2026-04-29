@@ -68,38 +68,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    if (api_key.startsWith('mcp_at_')) {
-      const { data, error } = await supabaseAdmin
-        .from('mcp_oauth_tokens')
-        .select('tenant_id, user_id, expires_at')
-        .eq('access_token', api_key)
-        .single();
+    const { data, error } = await supabaseAdmin
+      .from('mcp_api_keys')
+      .select('tenant_id, user_id')
+      .eq('api_key', api_key)
+      .single();
 
-      if (error || !data || new Date(data.expires_at) < new Date()) {
-        authError = 'invalid';
-      } else {
-        tenantId = data.tenant_id;
-        userId = data.user_id;
-      }
+    if (error || !data) {
+      authError = 'invalid';
     } else {
-      const { data, error } = await supabaseAdmin
-        .from('mcp_api_keys')
-        .select('tenant_id, user_id')
-        .eq('api_key', api_key)
-        .single();
+      tenantId = data.tenant_id;
+      userId = data.user_id;
 
-      if (error || !data) {
-        authError = 'invalid';
-      } else {
-        tenantId = data.tenant_id;
-        userId = data.user_id;
-        
-        supabaseAdmin
-          .from('mcp_api_keys')
-          .update({ last_used_at: new Date().toISOString() })
-          .eq('api_key', api_key)
-          .then();
-      }
+      supabaseAdmin
+        .from('mcp_api_keys')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('api_key', api_key)
+        .then();
     }
   } catch (err) {
     console.error('[MCP SSE] Auth failed:', err);
@@ -181,5 +166,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.on('close', cleanup);
   res.on('finish', cleanup);
 }
-
 
