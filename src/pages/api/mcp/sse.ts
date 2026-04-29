@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { createMCPServer } from '../../../services/mcp/MCPServer';
-import { mcpTransports } from '../../../services/mcp/mcpStore';
+import { createClient } from '@supabase/supabase-js';
+import { ENV } from '../../../config/env';
 
 export const config = {
   api: {
@@ -14,23 +13,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
 };
-
-function redactApiKey(value: string | undefined): string {
-  if (!value) return 'none';
-  if (value.length <= 8) return `${value.slice(0, 2)}***`;
-  return `${value.slice(0, 4)}***${value.slice(-4)}`;
-}
-
-function detectMcpClientLabel(req: NextApiRequest): string {
-  const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
-  const origin = String(req.headers.origin || '').toLowerCase();
-  const referer = String(req.headers.referer || '').toLowerCase();
-  const signals = `${userAgent} ${origin} ${referer}`;
-  if (signals.includes('manus')) return 'manus';
-  if (signals.includes('claude')) return 'claude';
-  if (signals.includes('chatgpt') || signals.includes('openai')) return 'chatgpt';
-  return 'unknown';
-}
 
 function pickQueryOrHeader(
   req: NextApiRequest,
@@ -79,16 +61,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let userId: string | null = null;
   let authError: string | null = null;
 
+  if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(500).json({ error: 'SERVER_CONFIGURATION_ERROR' });
+  }
+
+  const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+
   try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const { ENV } = await import('../../../config/env');
-
-    if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('SERVICE_UNAVAILABLE');
-    }
-
-    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-
     if (api_key.startsWith('mcp_at_')) {
       const { data, error } = await supabaseAdmin
         .from('mcp_oauth_tokens')
@@ -135,37 +114,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: 'Workspace mismatch' });
   }
 
-  // SSEServerTransport handles the SSE stream lifecycle.
-  // It expects the message endpoint URL as the first argument.
-  const transport = new SSEServerTransport('/api/mcp/message', res);
-  
-  console.log('[MCP SSE] New session', {
-    sessionId: (transport as any).sessionId,
-    tenantId,
-    userId,
-    client: detectMcpClientLabel(req)
-  });
+  // Create a stateless session record
+  const { data: session, error: sessionError } = await supabaseAdmin
+    .from('mcp_sessions')
+    .insert({
+      tenant_id: tenantId,
+      user_id: userId,
+    })
+    .select('id')
+    .single();
 
-  mcpTransports.set((transport as any).sessionId, transport);
+  if (sessionError || !session) {
+    console.error('[MCP SSE] Failed to create session:', sessionError);
+    return res.status(500).json({ error: 'Failed to initialize MCP session' });
+  }
 
+  const sessionId = session.id;
+
+  // Set up SSE stream
   res.setHeader('X-Accel-Buffering', 'no');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Connection', 'keep-alive');
 
-  res.on('close', () => {
-    console.log('[MCP SSE] Session closed', { sessionId: (transport as any).sessionId });
-    mcpTransports.delete((transport as any).sessionId);
-    // Note: SSEServerTransport might not have a close() in all versions, 
-    // but we remove it from our store to prevent leaks.
-  });
+  // 1. Send the handshake endpoint event
+  res.write(`event: endpoint\ndata: /api/mcp/message?sessionId=${sessionId}\n\n`);
 
-  const mcpServer = createMCPServer({ 
-    tenantId, 
-    userId, 
-    clientLabel: detectMcpClientLabel(req) 
-  });
+  // 2. Subscribe to messages for this session
+  const channel = supabaseAdmin
+    .channel(`mcp_messages:${sessionId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'mcp_messages',
+        filter: `session_id=eq.${sessionId}`,
+      },
+      (payload) => {
+        if (payload.new && payload.new.content) {
+          res.write(`event: message\ndata: ${JSON.stringify(payload.new.content)}\n\n`);
+        }
+      }
+    )
+    .subscribe();
 
-  await mcpServer.server.connect(transport);
+  // 3. Heartbeat to keep connection alive
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) {
+      res.write(': heartbeat\n\n');
+    }
+  }, 15000);
+
+  const cleanup = () => {
+    clearInterval(heartbeat);
+    supabaseAdmin.removeChannel(channel);
+    supabaseAdmin.from('mcp_sessions').delete().eq('id', sessionId).then();
+    console.log('[MCP SSE] Session cleaned up', { sessionId });
+  };
+
+  res.on('close', cleanup);
+  res.on('finish', cleanup);
 }
+
 
