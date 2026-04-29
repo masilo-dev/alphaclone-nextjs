@@ -78,7 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('mcp_api_keys')
         .update({ last_used_at: new Date().toISOString() })
         .eq('api_key', api_key)
-        .then();
+        .then(({ error }) => {
+          if (error) console.error('[MCP] Update last_used_at failed:', error);
+        });
     }
   } catch (err) {
     console.error('[MCP] Auth failed:', err);
@@ -97,8 +99,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   supabaseAdmin
     .from('mcp_sessions')
     .insert({ tenant_id: tenantId, user_id: userId })
-    .then()
-    .catch(err => console.error('[MCP] Session log failed:', err));
+    .then(({ error }) => {
+      if (error) console.error('[MCP] Session log failed:', error);
+    });
 
   const { jsonrpc, method, params, id } = req.body || {};
 
