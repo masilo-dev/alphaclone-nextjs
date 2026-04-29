@@ -448,7 +448,7 @@ class AlphaCloneMCPServer {
     this.setupToolHandlers();
   }
 
-  /** Workspace scope for this HTTP connection (from API key or OAuth). */
+  /** Workspace scope for this HTTP connection (from MCP API key). */
   private requireTenant(args: Record<string, any>): string {
     if (this.ctx?.tenantId) {
       const r = args.tenant_id;
@@ -462,7 +462,7 @@ class AlphaCloneMCPServer {
     const t = args.tenant_id;
     if (!t || typeof t !== 'string') {
       throw new Error(
-        'tenant_id is required unless you use the MCP connection URL from the dashboard (OAuth-scoped workspace). Pass your workspace UUID as tenant_id.'
+        'tenant_id is required unless you use the MCP connection URL from the dashboard (API-key scoped workspace). Pass your workspace UUID as tenant_id.'
       );
     }
     const tid = t.trim();
@@ -506,7 +506,7 @@ class AlphaCloneMCPServer {
               tenant_id: {
                 type: 'string',
                 description:
-                  'Workspace UUID. Omit when your MCP connection URL already includes the workspace (OAuth-scoped).',
+                  'Workspace UUID. Omit when your MCP connection URL already includes the workspace through its API key.',
               },
               status: { type: 'string', description: 'lead | prospect | active | churned' },
               limit: { type: 'number', description: 'Max records (default 100, max 1000)' },

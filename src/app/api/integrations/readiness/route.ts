@@ -27,21 +27,9 @@ export async function GET(request: NextRequest) {
       .select('id, is_active, created_at')
       .eq('tenant_id', tenantId);
 
-    const mcpAuthPromise = supabase
-      .from('oauth_authorizations')
-      .select('id, status, created_at')
-      .eq('tenant_id', tenantId)
-      .eq('provider', 'mcp');
-    const mcpTokenPromise = supabase
-      .from('mcp_oauth_tokens')
-      .select('access_token, expires_at')
-      .eq('tenant_id', tenantId);
-
-    const [facebookResult, mcpKeysResult, mcpAuthResult, mcpTokenResult] = await Promise.all([
+    const [facebookResult, mcpKeysResult] = await Promise.all([
       facebookPromise,
-      mcpKeysPromise,
-      mcpAuthPromise,
-      mcpTokenPromise
+      mcpKeysPromise
     ]);
 
     const facebookRows = facebookResult.error
@@ -60,36 +48,14 @@ export async function GET(request: NextRequest) {
           })()
       : mcpKeysResult.data || [];
 
-    const mcpAuthRows = mcpAuthResult.error
-      ? isMissingTableError(mcpAuthResult.error)
-        ? []
-        : (() => {
-            throw mcpAuthResult.error;
-          })()
-      : mcpAuthResult.data || [];
-    const mcpTokenRows = mcpTokenResult.error
-      ? isMissingTableError(mcpTokenResult.error)
-        ? []
-        : (() => {
-            throw mcpTokenResult.error;
-          })()
-      : mcpTokenResult.data || [];
-
     const activeFacebook = facebookRows.filter(
       (row: any) => row.is_active && row.page_access_token && !row.metadata?.no_pages
     );
     const activeMcpKeys = mcpKeyRows.filter((row: any) => row.is_active);
-    const activeMcpAuth = mcpAuthRows.filter((row: any) => row.status === 'active');
-    const activeMcpTokens = mcpTokenRows.filter((row: any) => {
-      if (!row.access_token) return false;
-      if (!row.expires_at) return true;
-      const expiry = new Date(row.expires_at).getTime();
-      return Number.isFinite(expiry) ? expiry > Date.now() : true;
-    });
 
     const readinessScore = [
       activeFacebook.length > 0 ? 50 : 0,
-      activeMcpKeys.length > 0 || activeMcpAuth.length > 0 || activeMcpTokens.length > 0 ? 50 : 0
+      activeMcpKeys.length > 0 ? 50 : 0
     ].reduce((sum, value) => sum + value, 0);
 
     return NextResponse.json({
@@ -104,12 +70,7 @@ export async function GET(request: NextRequest) {
         },
         mcp: {
           apiKeys: activeMcpKeys.length,
-          authConnections: activeMcpAuth.length,
-          tokenConnections: activeMcpTokens.length,
-          status:
-            activeMcpKeys.length > 0 || activeMcpAuth.length > 0 || activeMcpTokens.length > 0
-              ? 'ready'
-              : 'attention_required'
+          status: activeMcpKeys.length > 0 ? 'ready' : 'attention_required'
         }
       }
     });
