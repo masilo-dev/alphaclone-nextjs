@@ -1,43 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '../../../config/env';
-import { createMCPServer } from '../../../services/mcp/MCPServer';
-
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-};
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-tenant-id, x-user-id',
 };
-
-// Transport for processing POST messages inline
-class InlineTransport {
-  onmessage?: (message: any) => void;
-  onclose?: () => void;
-  onerror?: (error: Error) => void;
-  private response?: any;
-  private resolve?: (val: any) => void;
-
-  async start() {}
-  async close() { this.onclose?.(); }
-  async send(message: any) {
-    this.response = message;
-    if (this.resolve) this.resolve(message);
-  }
-  
-  async handle(message: any): Promise<any> {
-    if (!this.onmessage) throw new Error('Transport not connected');
-    return new Promise((resolve) => {
-      this.resolve = resolve;
-      this.onmessage!(message);
-    });
-  }
-}
 
 function pickQueryOrHeader(
   req: NextApiRequest,
@@ -58,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(204).end();
   }
 
-  if (req.method !== 'GET' && req.method !== 'POST') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
@@ -112,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .then();
     }
   } catch (err) {
-    console.error('[MCP SSE] Auth failed:', err);
+    console.error('[MCP] Auth failed:', err);
     authError = 'SERVICE_UNAVAILABLE';
   }
 
@@ -124,100 +93,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ error: 'Workspace mismatch' });
   }
 
-  // Create a stateless session record
-  const { data: session, error: sessionError } = await supabaseAdmin
+  // Fire and forget session logging
+  supabaseAdmin
     .from('mcp_sessions')
-    .insert({
-      tenant_id: tenantId,
-      user_id: userId,
-    })
-    .select('id')
-    .single();
+    .insert({ tenant_id: tenantId, user_id: userId })
+    .then()
+    .catch(err => console.error('[MCP] Session log failed:', err));
 
-  if (sessionError || !session) {
-    console.error('[MCP SSE] Failed to create session:', sessionError);
-    return res.status(500).json({ error: 'Failed to initialize MCP session' });
+  const { jsonrpc, method, params, id } = req.body || {};
+
+  if (jsonrpc !== '2.0') {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      id: id || null,
+      error: { code: -32600, message: 'Invalid Request' }
+    });
   }
 
-  const sessionId = session.id;
+  let result: any = null;
+  let error: any = null;
 
-  // Set up SSE headers
-  res.setHeader('X-Accel-Buffering', 'no');
-  res.setHeader('Cache-Control', 'no-cache, no-transform');
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Connection', 'keep-alive');
+  switch (method) {
+    case 'initialize':
+      result = {
+        protocolVersion: "2024-11-05",
+        capabilities: { tools: {} },
+        serverInfo: { name: "AlphaClone MCP", version: "1.0.0" }
+      };
+      break;
+    
+    case 'tools/list':
+      result = { tools: [] };
+      break;
 
-  if (req.method === 'POST') {
-    // New Streamable HTTP transport: process message inline
-    try {
-      const message = req.body;
-      if (!message) {
-        return res.status(400).end();
-      }
+    case 'ping':
+      result = {};
+      break;
 
-      const mcpServer = createMCPServer({
-        tenantId,
-        userId,
-        clientLabel: 'claude-http',
-      });
+    case 'notifications/initialized':
+      // Client acknowledgment of initialization
+      return res.status(204).end();
 
-      const transport = new InlineTransport();
-      await mcpServer.server.connect(transport);
-      
-      const response = await transport.handle(message);
-      
-      // Send the response back as an SSE message event
-      res.write(`event: message\ndata: ${JSON.stringify(response)}\n\n`);
-      res.end();
-      
-      // Cleanup session record (stateless for POST)
-      await supabaseAdmin.from('mcp_sessions').delete().eq('id', sessionId);
-      return;
-    } catch (err) {
-      console.error('[MCP SSE] POST processing failed:', err);
-      return res.status(500).end();
-    }
+    default:
+      error = { code: -32601, message: 'Method not found' };
+      break;
   }
 
-  // GET: Existing SSE stream logic
-  const protocol = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['host'];
-  const absoluteMessageUrl = `${protocol}://${host}/api/mcp/message?sessionId=${sessionId}`;
-  
-  res.write(`event: endpoint\ndata: ${absoluteMessageUrl}\n\n`);
+  const response: any = { jsonrpc: '2.0', id: id || null };
+  if (error) {
+    response.error = error;
+  } else {
+    response.result = result;
+  }
 
-  const channel = supabaseAdmin
-    .channel(`mcp_messages:${sessionId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'mcp_messages',
-        filter: `session_id=eq.${sessionId}`,
-      },
-      (payload) => {
-        if (payload.new && payload.new.content) {
-          res.write(`event: message\ndata: ${JSON.stringify(payload.new.content)}\n\n`);
-        }
-      }
-    )
-    .subscribe();
-
-  const heartbeat = setInterval(() => {
-    if (!res.writableEnded) {
-      res.write(': heartbeat\n\n');
-    }
-  }, 15000);
-
-  const cleanup = () => {
-    clearInterval(heartbeat);
-    supabaseAdmin.removeChannel(channel);
-    supabaseAdmin.from('mcp_sessions').delete().eq('id', sessionId).then();
-    console.log('[MCP SSE] Session cleaned up', { sessionId });
-  };
-
-  res.on('close', cleanup);
-  res.on('finish', cleanup);
+  return res.status(200).json(response);
 }
-
