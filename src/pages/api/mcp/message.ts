@@ -1,9 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
 import { ENV } from '../../../config/env';
 import { createMCPServer } from '../../../services/mcp/MCPServer';
+
+// Define the shape of a JSON-RPC message locally to avoid import issues
+type JSONRPCMessage = any;
+
 
 export const config = {
   api: {
@@ -17,7 +19,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, mcp-session-id',
 };
 
-class StatelessSupabaseTransport implements Transport {
+class StatelessSupabaseTransport {
   onmessage?: (message: JSONRPCMessage) => void;
   onerror?: (error: Error) => void;
   onclose?: () => void;
