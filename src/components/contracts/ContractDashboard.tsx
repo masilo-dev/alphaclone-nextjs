@@ -11,7 +11,12 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { format } from 'date-fns';
+import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
+import { ContractAuditLog } from './ContractAuditLog';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
 import {
     getContractProjectTypeOptions,
     getPreferredContractProjectTypes,
@@ -139,6 +144,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
     const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedHtml, setEditedHtml] = useState('');
+    const [previewTab, setPreviewTab] = useState<'document' | 'audit'>('document');
 
     const today = format(new Date(), 'MMMM d, yyyy');
     const ninetyDays = format(new Date(Date.now() + 90 * 86400000), 'MMMM d, yyyy');
@@ -261,11 +269,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 const chunkValue = decoder.decode(value);
                 accumulated += chunkValue;
                 setGeneratedContract(accumulated);
-                
+
                 // Keep UI feeling responsive
                 if (doneReading) break;
             }
 
+            const finalHtml = contractToHTML(accumulated);
+            setEditedHtml(finalHtml);
             setContractId('');
             setIsSigned(false);
             setSignatureName('');
@@ -291,7 +301,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         try {
             const { contract, error } = await contractService.createContract({
                 title: `${form.projectName} — ${form.clientName}`,
-                content: generatedContract,
+                content: isEditing ? editedHtml : (editedHtml || contractToHTML(generatedContract)),
                 client_id: form.clientId || undefined,
                 status: isSigned ? 'sent' : 'draft',
                 payment_amount: parseFloat(form.totalAmount) || 0,
@@ -304,6 +314,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             showActionNextSteps('contract_saved', (path) => router.push(path));
             setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
+            setIsEditing(false);
         } catch (e: any) {
             toast.error(e.message || 'Failed to save contract');
         } finally {
@@ -457,6 +468,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             <button
                                 type="button"
                                 onClick={() => {
+                                    const html = c.content.startsWith('<') ? c.content : contractToHTML(c.content);
+                                    setEditedHtml(html);
                                     setGeneratedContract(c.content);
                                     setContractId(c.id);
                                     setSignatureData(c.admin_signature || '');
@@ -469,6 +482,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     }
 
                                     setStep('preview');
+                                    setIsEditing(false);
+                                    setPreviewTab('document');
                                     setActiveView('new');
                                 }}
                                 className="w-full sm:w-auto justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shrink-0"
@@ -725,9 +740,17 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
                                 <div className="flex gap-2 flex-wrap">
                                     <button onClick={() => setStep('form')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
-                                        <Edit3 className="w-4 h-4" /> Edit Details
+                                        <RotateCcw className="w-4 h-4" /> Edit Parameters
                                     </button>
-                                    {isSigned && (
+                                    {!isSigned && (
+                                        <button
+                                            onClick={() => setIsEditing(!isEditing)}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isEditing ? 'bg-teal-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                                        >
+                                            <Edit3 className="w-4 h-4" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
+                                        </button>
+                                    )}
+                                    {(isSigned || step === 'saved') && (
                                         <>
                                             <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
                                                 <Printer className="w-4 h-4" /> Print / PDF
@@ -735,31 +758,51 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             <button onClick={openSendContractModal} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
                                                 <FileText className="w-4 h-4" /> Send Contract
                                             </button>
-                                            {step !== 'saved' && (
-                                                <button onClick={saveContract} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60">
-                                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                                    Save Contract
-                                                </button>
-                                            )}
                                         </>
                                     )}
-                                    {step === 'saved' && (
-                                        <span className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-xl text-sm font-medium border border-green-500/20">
-                                            <CheckCircle className="w-4 h-4" /> Saved
-                                        </span>
+                                    {step !== 'saved' && (
+                                        <button onClick={saveContract} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60">
+                                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                            Save Contract
+                                        </button>
                                     )}
                                 </div>
-                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
                                     <RotateCcw className="w-4 h-4" /> New Contract
                                 </button>
                             </div>
 
-                            {/* Signature Panel — shown when not yet signed */}
-                            {!isSigned && (
+                            {/* Tab Selection */}
+                            {contractId && (
+                                <div className="flex gap-4 mb-6 border-b border-slate-800">
+                                    <button
+                                        onClick={() => setPreviewTab('document')}
+                                        className={`pb-3 text-sm font-bold transition-all border-b-2 ${previewTab === 'document' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        Contract Document
+                                    </button>
+                                    <button
+                                        onClick={() => setPreviewTab('audit')}
+                                        className={`pb-3 text-sm font-bold transition-all border-b-2 ${previewTab === 'audit' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                                    >
+                                        Audit Trail & Compliance
+                                    </button>
+                                </div>
+                            )}
+
+                            {previewTab === 'audit' ? (
+                                <ContractAuditLog
+                                    contractId={contractId}
+                                    contractTitle={form.projectName || "Contract Audit"}
+                                />
+                            ) : (
+                                <>
+                                    {/* Signature Panel — shown when not yet signed */}
+                                    {!isSigned && !isEditing && (
                                 <div className="bg-gradient-to-br from-teal-900/30 to-slate-900/60 border border-teal-500/30 rounded-2xl p-6">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
-                                            <Edit3 className="w-5 h-5 text-teal-400" />
+                                            <CheckCircle className="w-5 h-5 text-teal-400" />
                                         </div>
                                         <div>
                                             <h3 className="text-white font-bold text-base">Sign to Proceed</h3>
@@ -793,14 +836,57 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             )}
 
                             <p className="text-slate-500 text-xs">
-                                On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area, so page count may be higher than a rough screen estimate.
+                                {isEditing ? 'Editing mode enabled. Your changes will be saved to the final contract.' : 'On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area.'}
                             </p>
+
                             {/* Contract Document */}
-                            <div ref={printRef} className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[600px]">
                                 <div className="p-8 md:p-12 font-serif leading-relaxed" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
-                                    <div className="whitespace-pre-wrap text-sm leading-7" dangerouslySetInnerHTML={{ __html: contractToHTML(generatedContract) }} />
+                                    {isEditing ? (
+                                        <div className="quill-contract-editor">
+                                            <style>{`
+                                                .quill-contract-editor .ql-container {
+                                                    font-family: 'Times New Roman', Georgia, serif !important;
+                                                    font-size: 13pt !important;
+                                                    border: none !important;
+                                                }
+                                                .quill-contract-editor .ql-toolbar {
+                                                    border: none !important;
+                                                    border-bottom: 1px solid #e2e8f0 !important;
+                                                    margin-bottom: 20px;
+                                                    background: #f8fafc;
+                                                    border-radius: 8px 8px 0 0;
+                                                }
+                                                .quill-contract-editor .ql-editor {
+                                                    padding: 0 !important;
+                                                    color: #0f172a !important;
+                                                    min-height: 500px;
+                                                }
+                                            `}</style>
+                                            <ReactQuill
+                                                theme="snow"
+                                                value={editedHtml}
+                                                onChange={setEditedHtml}
+                                                modules={{
+                                                    toolbar: [
+                                                        [{ 'header': [1, 2, 3, false] }],
+                                                        ['bold', 'italic', 'underline', 'strike'],
+                                                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                                        ['clean']
+                                                    ]
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="whitespace-pre-wrap text-[13pt] leading-relaxed text-slate-900"
+                                            dangerouslySetInnerHTML={{ __html: editedHtml || contractToHTML(generatedContract) }}
+                                        />
+                                    )}
                                 </div>
                             </div>
+                            </>
+                        )}
                         </div>
                     )}
                 </>
@@ -1019,7 +1105,7 @@ function buildOnePageTemplateContract(f: ContractForm): string {
 
 ---
 
-**Provider:** ${f.providerName} — ${today}  
+**Provider:** ${f.providerName} — ${today}
 **Client:** ${f.clientName} — ${today}`;
 }
 

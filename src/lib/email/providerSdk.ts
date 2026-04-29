@@ -3,7 +3,7 @@ import sgMail from '@sendgrid/mail';
 import { gmailServerService } from '@/services/server/gmailServerService';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 
-export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail';
+export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow';
 
 export type EmailSendInput = {
     apiKey: string;
@@ -299,6 +299,41 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
     }
 }
 
+async function sendViaMailflow(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
+        const recipients = normalizeRecipients(input.to);
+        const response = await fetch('https://api.mailflow.com/v1/emails', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${input.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                from: input.fromName ? `${input.fromName} <${input.fromEmail}>` : input.fromEmail,
+                to: recipients,
+                subject: input.subject,
+                html: input.html,
+                text: input.text,
+                reply_to: input.replyTo
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            return { ok: false, provider: 'mailflow', error: errorText };
+        }
+
+        const data = await response.json();
+        return { ok: true, provider: 'mailflow', emailId: data.id };
+    } catch (error) {
+        return {
+            ok: false,
+            provider: 'mailflow',
+            error: error instanceof Error ? error.message : 'Mailflow send failed',
+        };
+    }
+}
+
 export async function sendWithProviderSdk(
     provider: EmailProvider,
     input: EmailSendInput
@@ -307,6 +342,7 @@ export async function sendWithProviderSdk(
     if (provider === 'sendgrid') return sendViaSendGrid(input);
     if (provider === 'zoho') return sendViaZoho(input);
     if (provider === 'gmail') return sendViaGmail(input);
+    if (provider === 'mailflow') return sendViaMailflow(input);
     return sendViaBrevo(input);
 }
 

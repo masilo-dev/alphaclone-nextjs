@@ -11,6 +11,7 @@ export interface SignatureRequest {
     signerEmail: string;
     ipAddress: string;
     userAgent: string;
+    consentGiven?: boolean;
 }
 
 export interface TokenSignatureRequest {
@@ -20,6 +21,7 @@ export interface TokenSignatureRequest {
     signerEmail: string;
     ipAddress: string;
     userAgent: string;
+    consentGiven?: boolean;
 }
 
 export const contractServerService = {
@@ -110,6 +112,26 @@ export const contractServerService = {
             .single();
 
         if (sigError) throw sigError;
+
+        // 4.5 Record Consent (Compliance)
+        if (req.consentGiven) {
+            const { error: consentError } = await supabaseAdmin
+                .from('esignature_consents')
+                .insert({
+                    user_id: req.userId || null,
+                    contract_id: req.contractId,
+                    consent_given: true,
+                    consent_text: 'Electronic Signature Disclosure and Consent accepted at time of signing.',
+                    consent_method: 'checkbox',
+                    ip_address: req.ipAddress,
+                    user_agent: req.userAgent,
+                });
+            if (consentError) {
+                console.error('Failed to record consent during signing:', consentError);
+                // We don't throw here to avoid blocking signature if consent record fails but signature event succeeded
+                // though ideally it should be atomic.
+            }
+        }
 
         // 5. Update Contract Status
         const updates: any = {};
@@ -212,6 +234,7 @@ export const contractServerService = {
                 signerEmail: normalizedEmail,
                 ipAddress: req.ipAddress,
                 userAgent: req.userAgent,
+                consentGiven: req.consentGiven,
             });
 
             return updated;

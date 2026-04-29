@@ -348,6 +348,7 @@ export const contractService = {
                     signatureDataUrl,
                     signerName: signerInfo?.name || (role === 'admin' ? 'Administrator' : 'Client'),
                     signerEmail: signerInfo?.email || '',
+                    consentGiven: signerInfo?.consentGiven || false,
                 }),
             });
 

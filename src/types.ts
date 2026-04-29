@@ -66,6 +66,7 @@ export interface ChatMessage {
 }
 
 export type ProjectStage = 'Initiation' | 'Planning' | 'Execution' | 'Review' | 'Closure';
+export const STAGES: ProjectStage[] = ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'];
 
 export interface Project {
   id: string;

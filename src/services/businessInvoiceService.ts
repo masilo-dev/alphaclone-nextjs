@@ -228,16 +228,22 @@ export const businessInvoiceService = {
             if (newInvoice.id) {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
-                    await activityService.logActivity(user.id, 'Invoice Created', {
-                        invoiceId: newInvoice.id,
-                        invoiceNumber: newInvoice.invoiceNumber,
-                        amount: newInvoice.total
-                    }, newInvoice.tenantId, {
-                        before: null,
-                        after: {
+                    await activityService.logAudit({
+                        userId: user.id,
+                        tenantId: newInvoice.tenantId,
+                        action: 'INVOICE_CREATE',
+                        resourceType: 'business_invoices',
+                        resourceId: newInvoice.id,
+                        oldValues: null,
+                        newValues: {
                             status: newInvoice.status,
                             total: newInvoice.total,
-                            clientId: newInvoice.clientId
+                            clientId: newInvoice.clientId,
+                            invoiceNumber: newInvoice.invoiceNumber
+                        },
+                        metadata: {
+                            invoiceNumber: newInvoice.invoiceNumber,
+                            amount: newInvoice.total
                         }
                     });
                 }
@@ -321,24 +327,51 @@ export const businessInvoiceService = {
                 const diffBefore: Record<string, any> = {};
                 const diffAfter: Record<string, any> = {};
 
+                // Map field names for consistent audit diffs (camelCase)
+                const fieldMapping: Record<string, string> = {
+                    client_id: 'clientId',
+                    project_id: 'projectId',
+                    issue_date: 'issueDate',
+                    due_date: 'dueDate',
+                    status: 'status',
+                    subtotal: 'subtotal',
+                    tax_rate: 'taxRate',
+                    tax: 'tax',
+                    discount_amount: 'discountAmount',
+                    total: 'total',
+                    line_items: 'lineItems',
+                    notes: 'notes',
+                    is_public: 'isPublic',
+                    sender_name: 'senderName',
+                    bank_details: 'bankDetails',
+                    mobile_payment_details: 'mobilePaymentDetails',
+                    signature: 'signature'
+                };
+
                 // Only include changed fields in the audit diff
-                Object.keys(updateData).forEach(key => {
-                    // map snake_case from DB to camelCase for diff if possible, or just use DB keys
-                    const oldVal = currentInvoice[key];
-                    const newVal = updateData[key];
+                Object.keys(updateData).forEach(dbKey => {
+                    if (dbKey === 'updated_at') return;
+                    const oldVal = currentInvoice[dbKey];
+                    const newVal = updateData[dbKey];
                     if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-                        diffBefore[key] = oldVal;
-                        diffAfter[key] = newVal;
+                        const label = fieldMapping[dbKey] || dbKey;
+                        diffBefore[label] = oldVal;
+                        diffAfter[label] = newVal;
                     }
                 });
 
                 if (Object.keys(diffAfter).length > 0) {
-                    await activityService.logActivity(user.id, 'Invoice Updated', {
-                        invoiceId,
-                        invoiceNumber: currentInvoice.invoice_number
-                    }, currentInvoice.tenant_id, {
-                        before: diffBefore,
-                        after: diffAfter
+                    await activityService.logAudit({
+                        userId: user.id,
+                        tenantId: currentInvoice.tenant_id,
+                        action: 'INVOICE_UPDATE',
+                        resourceType: 'business_invoices',
+                        resourceId: invoiceId,
+                        oldValues: diffBefore,
+                        newValues: diffAfter,
+                        metadata: {
+                            invoiceNumber: currentInvoice.invoice_number
+                        }
                     });
                 }
             }
@@ -393,6 +426,24 @@ export const businessInvoiceService = {
                 .eq('id', invoiceId);
 
             if (error) throw error;
+
+            // Log audit
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && existing) {
+                await activityService.logAudit({
+                    userId: user.id,
+                    tenantId: null as any, // Tenant ID unknown at this point or should be fetched
+                    action: 'INVOICE_DELETE',
+                    resourceType: 'business_invoices',
+                    resourceId: invoiceId,
+                    oldValues: { invoiceNumber: existing.invoice_number, status: existing.status },
+                    newValues: null,
+                    severity: 'warning',
+                    metadata: {
+                        invoiceNumber: existing.invoice_number
+                    }
+                });
+            }
 
             return { error: null };
         } catch (err: any) {
@@ -530,16 +581,21 @@ export const businessInvoiceService = {
             // GL INTEGRATION: Revenue is recognized on payment receipt
             await this.postRevenueOnPayment(invoiceId, invoice);
 
-            // Log activity
+            // Log audit
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                await activityService.logActivity(user.id, 'Invoice Paid', {
-                    invoiceId: invoiceId,
-                    invoiceNumber: invoice.invoice_number,
-                    amount: invoice.total
-                }, invoice.tenant_id, {
-                    before: { status: invoice.status },
-                    after: { status: 'paid' }
+                await activityService.logAudit({
+                    userId: user.id,
+                    tenantId: invoice.tenant_id,
+                    action: 'INVOICE_PAID',
+                    resourceType: 'business_invoices',
+                    resourceId: invoiceId,
+                    oldValues: { status: invoice.status },
+                    newValues: { status: 'paid' },
+                    metadata: {
+                        invoiceNumber: invoice.invoice_number,
+                        amount: invoice.total
+                    }
                 });
             }
 

@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { contractId, role, signatureDataUrl, signerName, signerEmail, signingToken } = body;
+        const { contractId, role, signatureDataUrl, signerName, signerEmail, signingToken, consentGiven } = body;
         const normalizedSignerName = String(signerName || '').trim();
         const normalizedSignerEmail = String(signerEmail || '').trim().toLowerCase();
 
@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
                 signerEmail: normalizedSignerEmail,
                 ipAddress,
                 userAgent,
+                consentGiven: !!consentGiven,
             });
         } else {
             const supabase = await createSupabaseServerClient();
@@ -114,7 +115,8 @@ export async function POST(req: NextRequest) {
                 signerName: normalizedSignerName || user.user_metadata?.full_name || user.email || 'Authorized Signer',
                 signerEmail: normalizedSignerEmail || user.email || '',
                 ipAddress,
-                userAgent
+                userAgent,
+                consentGiven: !!consentGiven,
             });
         }
 
