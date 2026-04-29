@@ -67,7 +67,20 @@ const nextConfig: NextConfig = {
     return config;
   },
   async rewrites() {
-    return [];
+    return [
+      {
+        source: '/.well-known/oauth-authorization-server',
+        destination: '/api/.well-known/oauth-authorization-server',
+      },
+      {
+        source: '/.well-known/oauth-protected-resource/:path*',
+        destination: '/api/.well-known/oauth-protected-resource/:path*',
+      },
+      {
+        source: '/register',
+        destination: '/api/register',
+      },
+    ];
   },
 
   async headers() {
