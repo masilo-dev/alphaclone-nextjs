@@ -232,7 +232,14 @@ export const businessInvoiceService = {
                         invoiceId: newInvoice.id,
                         invoiceNumber: newInvoice.invoiceNumber,
                         amount: newInvoice.total
-                    }, newInvoice.tenantId);
+                    }, newInvoice.tenantId, {
+                        before: null,
+                        after: {
+                            status: newInvoice.status,
+                            total: newInvoice.total,
+                            clientId: newInvoice.clientId
+                        }
+                    });
                 }
 
                 // Increment quota usage if invoice is not draft
@@ -307,6 +314,34 @@ export const businessInvoiceService = {
                 .eq('id', invoiceId);
 
             if (error) throw error;
+
+            // Log activity with diff
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && currentInvoice) {
+                const diffBefore: Record<string, any> = {};
+                const diffAfter: Record<string, any> = {};
+
+                // Only include changed fields in the audit diff
+                Object.keys(updateData).forEach(key => {
+                    // map snake_case from DB to camelCase for diff if possible, or just use DB keys
+                    const oldVal = currentInvoice[key];
+                    const newVal = updateData[key];
+                    if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+                        diffBefore[key] = oldVal;
+                        diffAfter[key] = newVal;
+                    }
+                });
+
+                if (Object.keys(diffAfter).length > 0) {
+                    await activityService.logActivity(user.id, 'Invoice Updated', {
+                        invoiceId,
+                        invoiceNumber: currentInvoice.invoice_number
+                    }, currentInvoice.tenant_id, {
+                        before: diffBefore,
+                        after: diffAfter
+                    });
+                }
+            }
 
             // GL INTEGRATION: Post to accounting when status changes
             if (updates.status && currentInvoice) {
@@ -502,7 +537,10 @@ export const businessInvoiceService = {
                     invoiceId: invoiceId,
                     invoiceNumber: invoice.invoice_number,
                     amount: invoice.total
-                }, invoice.tenant_id);
+                }, invoice.tenant_id, {
+                    before: { status: invoice.status },
+                    after: { status: 'paid' }
+                });
             }
 
             return { error: null };
