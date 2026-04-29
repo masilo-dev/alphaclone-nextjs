@@ -1,18 +1,43 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '../../../config/env';
+import { createMCPServer } from '../../../services/mcp/MCPServer';
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: true,
   },
 };
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-tenant-id, x-user-id',
 };
+
+// Transport for processing POST messages inline
+class InlineTransport {
+  onmessage?: (message: any) => void;
+  onclose?: () => void;
+  onerror?: (error: Error) => void;
+  private response?: any;
+  private resolve?: (val: any) => void;
+
+  async start() {}
+  async close() { this.onclose?.(); }
+  async send(message: any) {
+    this.response = message;
+    if (this.resolve) this.resolve(message);
+  }
+  
+  async handle(message: any): Promise<any> {
+    if (!this.onmessage) throw new Error('Transport not connected');
+    return new Promise((resolve) => {
+      this.resolve = resolve;
+      this.onmessage!(message);
+    });
+  }
+}
 
 function pickQueryOrHeader(
   req: NextApiRequest,
@@ -33,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(204).end();
   }
 
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
@@ -116,21 +141,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const sessionId = session.id;
 
-  // Set up SSE stream
+  // Set up SSE headers
   res.setHeader('X-Accel-Buffering', 'no');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Connection', 'keep-alive');
 
-  // 1. Send the handshake endpoint event
-  // Use an absolute URL to ensure remote clients (Claude.ai, Manus) resolve it correctly.
+  if (req.method === 'POST') {
+    // New Streamable HTTP transport: process message inline
+    try {
+      const message = req.body;
+      if (!message) {
+        return res.status(400).end();
+      }
+
+      const mcpServer = createMCPServer({
+        tenantId,
+        userId,
+        clientLabel: 'claude-http',
+      });
+
+      const transport = new InlineTransport();
+      await mcpServer.server.connect(transport);
+      
+      const response = await transport.handle(message);
+      
+      // Send the response back as an SSE message event
+      res.write(`event: message\ndata: ${JSON.stringify(response)}\n\n`);
+      res.end();
+      
+      // Cleanup session record (stateless for POST)
+      await supabaseAdmin.from('mcp_sessions').delete().eq('id', sessionId);
+      return;
+    } catch (err) {
+      console.error('[MCP SSE] POST processing failed:', err);
+      return res.status(500).end();
+    }
+  }
+
+  // GET: Existing SSE stream logic
   const protocol = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers['host'];
   const absoluteMessageUrl = `${protocol}://${host}/api/mcp/message?sessionId=${sessionId}`;
   
   res.write(`event: endpoint\ndata: ${absoluteMessageUrl}\n\n`);
 
-  // 2. Subscribe to messages for this session
   const channel = supabaseAdmin
     .channel(`mcp_messages:${sessionId}`)
     .on(
@@ -149,7 +204,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     )
     .subscribe();
 
-  // 3. Heartbeat to keep connection alive
   const heartbeat = setInterval(() => {
     if (!res.writableEnded) {
       res.write(': heartbeat\n\n');
