@@ -140,13 +140,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const transport = new SSEServerTransport('/api/mcp/message', res);
   
   console.log('[MCP SSE] New session', {
-    sessionId: transport.sessionId,
+    sessionId: (transport as any).sessionId,
     tenantId,
     userId,
     client: detectMcpClientLabel(req)
   });
 
-  mcpTransports.set(transport.sessionId, transport);
+  mcpTransports.set((transport as any).sessionId, transport);
 
   res.setHeader('X-Accel-Buffering', 'no');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -154,8 +154,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Connection', 'keep-alive');
 
   res.on('close', () => {
-    console.log('[MCP SSE] Session closed', { sessionId: transport.sessionId });
-    mcpTransports.delete(transport.sessionId);
+    console.log('[MCP SSE] Session closed', { sessionId: (transport as any).sessionId });
+    mcpTransports.delete((transport as any).sessionId);
     // Note: SSEServerTransport might not have a close() in all versions, 
     // but we remove it from our store to prevent leaks.
   });
