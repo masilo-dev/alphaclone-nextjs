@@ -443,7 +443,7 @@ class AlphaCloneMCPServer {
     this.ctx = ctx;
     this.server = new Server(
       { name: 'AlphaClone-MCP', version: '2.0.0' },
-      { capabilities: { tools: {} } }
+      { capabilities: { tools: {}, resources: {}, prompts: {} } }
     );
     this.setupToolHandlers();
   }

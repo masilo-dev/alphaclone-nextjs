@@ -138,7 +138,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Connection', 'keep-alive');
 
   // 1. Send the handshake endpoint event
-  res.write(`event: endpoint\ndata: /api/mcp/message?sessionId=${sessionId}\n\n`);
+  // Use an absolute URL to ensure remote clients (Claude.ai, Manus) resolve it correctly.
+  const protocol = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers['host'];
+  const absoluteMessageUrl = `${protocol}://${host}/api/mcp/message?sessionId=${sessionId}`;
+  
+  res.write(`event: endpoint\ndata: ${absoluteMessageUrl}\n\n`);
 
   // 2. Subscribe to messages for this session
   const channel = supabaseAdmin
