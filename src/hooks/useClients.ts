@@ -27,6 +27,7 @@ export function useClients(tenantId: string | undefined, filters?: UseClientsFil
                 tenantId,
                 pageParam as number,
                 filters?.limit || 50,
+                false,
                 filters?.searchTerm
             );
 

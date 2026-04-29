@@ -5,6 +5,7 @@ import { isEmailSuppressed } from '@/lib/email/suppression';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { logEmailSend } from '@/lib/emailLogger';
 
 /**
  * POST /api/email/send
@@ -105,6 +106,17 @@ export async function POST(req: NextRequest) {
         });
 
         if (result.ok) {
+            await logEmailSend({
+                tenantId: tenantId || null,
+                userId: lookupId || null,
+                provider,
+                toEmail: Array.isArray(to) ? to.join(', ') : to,
+                subject: normalizedSubject,
+                templateName: payload.templateName || null,
+                status: 'sent',
+                emailId: result.emailId
+            });
+
             return NextResponse.json({
                 success: true,
                 id: result.emailId,
@@ -123,6 +135,18 @@ export async function POST(req: NextRequest) {
                         : result.provider === 'gmail'
                             ? 'GMAIL_ERROR'
                             : 'BREVO_ERROR';
+
+        await logEmailSend({
+            tenantId: tenantId || null,
+            userId: lookupId || null,
+            provider,
+            toEmail: Array.isArray(to) ? to.join(', ') : to,
+            subject: normalizedSubject,
+            templateName: payload.templateName || null,
+            status: 'failed',
+            error: result.error
+        });
+
         return NextResponse.json(
             { success: false, error: 'Email provider rejected this send request', code },
             { status: 502 }

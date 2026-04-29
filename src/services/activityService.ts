@@ -487,5 +487,56 @@ export const activityService = {
             timestamp: new Date().toISOString(),
             isSystemAction: true
         }, tenantId);
+    },
+
+    /**
+     * High-fidelity audit logging for sensitive state changes
+     * Writes to the immutable public.audit_logs table
+     */
+    async logAudit(params: {
+        userId: string;
+        tenantId?: string;
+        action: string;
+        resourceType: string;
+        resourceId?: string;
+        oldValues?: any;
+        newValues?: any;
+        severity?: 'info' | 'warning' | 'error' | 'critical';
+        metadata?: Record<string, any>;
+    }) {
+        const {
+            userId,
+            tenantId: passedTenantId,
+            action,
+            resourceType,
+            resourceId,
+            oldValues = {},
+            newValues = {},
+            severity = 'info',
+            metadata = {}
+        } = params;
+
+        const locationData = await getLocationData();
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side';
+        const tenantId = passedTenantId || tenantService.getCurrentTenantId();
+
+        const { error } = await supabase.from('audit_logs').insert({
+            user_id: userId,
+            tenant_id: tenantId,
+            action,
+            resource_type: resourceType,
+            resource_id: resourceId,
+            old_values: oldValues,
+            new_values: newValues,
+            ip_address: locationData.ip,
+            user_agent: ua,
+            severity,
+            metadata: {
+                ...metadata,
+                timestamp: new Date().toISOString()
+            }
+        });
+
+        return { error };
     }
 };

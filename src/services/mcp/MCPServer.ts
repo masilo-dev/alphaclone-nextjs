@@ -2230,6 +2230,7 @@ class AlphaCloneMCPServer {
             error = fallback.error;
           }
           if (error) throw supabaseErrorToMcpClientError('create_client', (error as { message?: string }).message || 'Failed to create client');
+          if (!data) throw new Error('Failed to create client');
           result = {
             content: [
               {

@@ -8,6 +8,7 @@ import { googleDriveService } from '../../../services/googleDriveService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
 import { contractService } from '../../../services/contractService';
+import { esignatureComplianceService } from '../../../services/esignatureComplianceService';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function PublicContractPage() {
@@ -22,6 +23,7 @@ export default function PublicContractPage() {
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [legalName, setLegalName] = useState<string>('');
     const [signerEmail, setSignerEmail] = useState<string>('');
+    const [consentAccepted, setConsentAccepted] = useState(false);
 
     useEffect(() => {
         if (signingToken) {
@@ -65,6 +67,10 @@ export default function PublicContractPage() {
             toast.error('Valid signer email is required');
             return;
         }
+        if (!consentAccepted) {
+            toast.error('You must accept the Electronic Signature Disclosure');
+            return;
+        }
 
         setSigning(true);
         try {
@@ -72,6 +78,7 @@ export default function PublicContractPage() {
                 id: 'public',
                 name: legalName.trim(),
                 email: signerEmail.trim().toLowerCase(),
+                consentGiven: true,
             });
 
             if (error) throw error;
@@ -224,8 +231,26 @@ export default function PublicContractPage() {
                 {/* Signature Section */}
                 {!signed ? (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800">
+                        {/* ESIGN Disclosure */}
+                        <div className="mb-8 p-6 bg-slate-900 border border-slate-700 rounded-xl">
+                            <div
+                                className="text-xs text-slate-400 overflow-y-auto max-h-48 mb-4 esign-disclosure-content"
+                                dangerouslySetInnerHTML={{ __html: esignatureComplianceService.ESIGN_DISCLOSURE }}
+                            />
+                            <div className="flex items-start gap-3 p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg cursor-pointer hover:bg-teal-500/10 transition-colors"
+                                 onClick={() => setConsentAccepted(!consentAccepted)}>
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${consentAccepted ? 'bg-teal-500 border-teal-500' : 'border-slate-500 bg-transparent'}`}>
+                                    {consentAccepted && <CheckCircle className="w-3.5 h-3.5 text-slate-950" />}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-white">I agree to the Electronic Signature Disclosure</p>
+                                    <p className="text-xs text-slate-400 mt-1">I consent to use electronic signatures for this transaction and agree to be legally bound by the terms of this document.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <label className="block text-sm font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>
-                        <div className="overflow-hidden bg-white rounded-xl">
+                        <div className={`overflow-hidden bg-white rounded-xl transition-opacity ${!consentAccepted ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
                             <SignaturePad
                                 onSave={(data, fullName) => {
                                     setSignatureData(data);
@@ -244,7 +269,8 @@ export default function PublicContractPage() {
                                 value={signerEmail}
                                 onChange={(e) => setSignerEmail(e.target.value)}
                                 placeholder="name@company.com"
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+                                disabled={!consentAccepted}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-50"
                             />
                             <p className="text-[11px] text-slate-500 mt-2">Use the same email that received this signing link.</p>
                         </div>
@@ -252,12 +278,12 @@ export default function PublicContractPage() {
                             <span className="text-slate-500 flex items-center gap-1">
                                 <ShieldCheck className="w-3 h-3" /> Secure 256-bit SSL Cryptography Applied
                             </span>
-                            <p className="text-slate-500">Draw your signature in the box above.</p>
+                            <p className="text-slate-500">{consentAccepted ? 'Draw your signature in the box above.' : 'Accept disclosure above to enable signature.'}</p>
                         </div>
                         <button
                             onClick={handleSign}
-                            disabled={signing || !signatureData}
-                            className={`w-full mt-6 py-4 font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-2 ${signatureData && !signing
+                            disabled={signing || !signatureData || !consentAccepted}
+                            className={`w-full mt-6 py-4 font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-2 ${signatureData && !signing && consentAccepted
                                 ? 'bg-teal-500 hover:bg-teal-400 text-slate-900 active:scale-[0.99]'
                                 : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                 }`}

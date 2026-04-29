@@ -112,20 +112,40 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
     const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
     const [showOutreachModal, setShowOutreachModal] = useState(false);
+    const [page, setPage] = useState(1);
+    const [showArchived, setShowArchived] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const PAGE_SIZE = 50;
 
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
     const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
 
-    const loadClients = useCallback(async () => {
+    const loadClients = useCallback(async (isInitial = true) => {
         if (!currentTenant) return;
-        setLoading(true);
-        // Request a large enough batch to see 'all' contacts for most tenants
-        const { clients: data, count } = await businessClientService.getClients(currentTenant.id, 1, 5000);
-        setClients(data);
-        setTotalCount(count || data.length);
+        if (isInitial) setLoading(true);
+
+        const targetPage = isInitial ? 1 : page + 1;
+        const { clients: data, count } = await businessClientService.getClients(
+            currentTenant.id,
+            targetPage,
+            PAGE_SIZE,
+            showArchived,
+            searchTerm
+        );
+
+        if (isInitial) {
+            setClients(data);
+            setPage(1);
+        } else {
+            setClients(prev => [...prev, ...data]);
+            setPage(targetPage);
+        }
+
+        setTotalCount(count);
+        setHasMore(data.length === PAGE_SIZE);
         setLoading(false);
-    }, [currentTenant]);
+    }, [currentTenant, page, showArchived, searchTerm]);
 
     useEffect(() => {
         if (!currentTenant) return;
@@ -133,8 +153,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setLoading(false);
             return;
         }
-        void loadClients();
-    }, [currentTenant, pathname, loadClients]);
+        void loadClients(true);
+    }, [currentTenant, pathname, showArchived]); // searchTerm is omitted to avoid re-fetching on every keystroke; we'll use a manual search button or debounce if needed
 
     useEffect(() => {
         if (stageParam) {
@@ -156,18 +176,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     useEffect(() => {
         filterClients();
-    }, [clients, searchTerm, selectedStage]);
+    }, [clients, selectedStage]);
 
     const filterClients = () => {
         let filtered = clients;
 
-        if (searchTerm) {
-            filtered = filtered.filter(c =>
-                c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.email?.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
+        // Search and Archiving are now handled server-side in loadClients
         if (selectedStage !== 'all') {
             filtered = filtered.filter(c => c.salesStage === selectedStage);
         }
@@ -235,7 +249,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             toast.error('Stage update failed');
         } else {
             toast.success(`${client.name} → ${newStage.charAt(0).toUpperCase() + newStage.slice(1)}`);
-            
+
             // Audit Trail
             if (currentTenant) {
                 import('../../../services/activityService').then(({ activityService }) => {
@@ -331,30 +345,37 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
-    const handleDeleteClient = async (clientId: string) => {
-        if (!confirm('Are you sure you want to delete this client?')) return;
+    const handleArchiveClient = async (clientId: string) => {
+        const verb = showArchived ? 'unarchive' : 'archive';
+        if (!confirm(`Are you sure you want to ${verb} this contact?`)) return;
 
-        const clientToDelete = clients.find(c => c.id === clientId);
-        const { error } = await businessClientService.deleteClient(clientId);
+        const clientToUpdate = clients.find(c => c.id === clientId);
+        // Using updateClient directly for archive/unarchive logic if deleteClient is just setting isActive
+        const { error } = await businessClientService.updateClient(clientId, { isActive: showArchived });
+
         if (!error) {
             setClients(clients.filter(c => c.id !== clientId));
-            toast.success('Client deleted successfully!');
+            toast.success(`Client ${verb}d successfully!`);
 
             // Audit Trail
             if (currentTenant) {
                 import('../../../services/activityService').then(({ activityService }) => {
                     activityService.logSystemAction(
                         user.id,
-                        'DELETE',
-                        `Permanently deleted client: ${clientToDelete?.name || clientId}`,
-                        { clientId, name: clientToDelete?.name },
+                        'EDIT',
+                        `${showArchived ? 'Unarchived' : 'Archived'} client: ${clientToUpdate?.name || clientId}`,
+                        { clientId, name: clientToUpdate?.name, action: verb },
                         currentTenant.id
                     );
                 });
             }
         } else {
-            toast.error('Failed to delete client');
+            toast.error(`Failed to ${verb} client`);
         }
+    };
+
+    const handleLoadMore = () => {
+        void loadClients(false);
     };
 
     const handleImportClients = async (importedClients: Partial<BusinessClient>[]) => {
@@ -495,6 +516,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         icon={<Upload className="w-4 h-4" />}
                     >
                         Import
+                    </Button>
+                    <Button
+                        variant={showArchived ? 'primary' : 'outline'}
+                        onClick={() => setShowArchived(!showArchived)}
+                        icon={<History className="w-4 h-4" />}
+                        className={showArchived ? 'bg-amber-600 hover:bg-amber-500' : ''}
+                    >
+                        {showArchived ? 'Viewing Archived' : 'Show Archived'}
                     </Button>
                     <Button
                         onClick={() => setShowAddModal(true)}
@@ -644,62 +673,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 : client.salesStage === 'prospect' ? 'from-blue-500 to-violet-600'
                                 : 'from-teal-500 to-cyan-600';
                             return (
-                                <div
-                                    key={client.id}
-                                    onClick={() => { setSelectedClient(client); setViewMode('list'); }}
-                                    className="group relative bg-slate-900/80 border border-slate-800 hover:border-teal-500/40 rounded-2xl p-3 cursor-pointer transition-all hover:shadow-lg hover:shadow-teal-500/10 hover:-translate-y-0.5 flex flex-col items-center text-center gap-2"
-                                >
-                                    {/* Stage indicator dot */}
-                                    <div className={`absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-gradient-to-br ${stageColor} shadow-sm`} />
-                                    {/* Avatar */}
-                                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${stageColor} flex items-center justify-center font-bold text-white text-sm shadow-lg`}>
-                                        {initials}
-                                    </div>
-                                    {/* Name + Industry */}
-                                    <div className="w-full">
-                                        <p className="font-semibold text-white text-xs truncate leading-snug">{client.name}</p>
-                                        {client.industry && <p className="text-[10px] text-slate-500 truncate">{client.industry}</p>}
-                                    </div>
-                                    {/* Stage badge */}
-                                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                        client.salesStage === 'customer' ? 'bg-emerald-500/15 text-emerald-400'
-                                        : client.salesStage === 'lost' ? 'bg-slate-700 text-slate-400'
-                                        : client.salesStage === 'prospect' ? 'bg-blue-500/15 text-blue-400'
-                                        : 'bg-teal-500/15 text-teal-400'
-                                    }`}>
-                                        {client.salesStage}
-                                    </span>
-                                    {/* Quick action icons */}
-                                    <div className="flex gap-1 w-full justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {client.email && (
-                                            <a
-                                                href={`mailto:${client.email}`}
-                                                onClick={e => e.stopPropagation()}
-                                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 text-slate-400 transition-colors"
-                                                title={client.email}
-                                            >
-                                                <Mail className="w-3 h-3" />
-                                            </a>
-                                        )}
-                                        {client.phone && (
-                                            <a
-                                                href={`tel:${client.phone}`}
-                                                onClick={e => e.stopPropagation()}
-                                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 text-slate-400 transition-colors"
-                                                title={client.phone}
-                                            >
-                                                <Phone className="w-3 h-3" />
-                                            </a>
-                                        )}
-                                        <button
-                                            onClick={e => { e.stopPropagation(); setEditingClient(client); setShowEditModal(true); }}
-                                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Edit className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                </div>
+                                    <ClientCard
+                                        client={client}
+                                        onEdit={(c) => { setEditingClient(c); setShowEditModal(true); }}
+                                        onDelete={handleArchiveClient}
+                                        onCall={handleCallClient}
+                                        onCreateProposal={(c) => { setSelectedClientForProposal(c); setShowProposalModal(true); }}
+                                        onCreateInvoice={(c) => { setSelectedClientForInvoice(c); setShowInvoiceModal(true); }}
+                                        onSendEmail={(c) => { setSelectedClientForCommunication(c); setShowCommunicationModal(true); }}
+                                        showArchived={showArchived}
+                                    />
                             );
                         })}
                         {filteredClients.length === 0 && (
@@ -766,6 +749,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                     onClick={() => setSelectedClient(client)}
                                 >
+                                    {/* ... checkbox and avatar ... */}
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="checkbox"
@@ -798,6 +782,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
                                 </div>
                             ))}
+
+                            {hasMore && (
+                                <div className="py-4 flex justify-center">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleLoadMore}
+                                        isLoading={loading}
+                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-widest text-[10px]"
+                                    >
+                                        Load More Contacts
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -830,7 +828,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 trigger={<Button size="sm" variant="ghost" className="!p-2" icon={<MoreVertical className="w-5 h-5" />} />}
                                                 items={[
                                                     { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
-                                                    { label: 'Delete', icon: <Trash2 className="w-4 h-4"/>, onClick: () => handleDeleteClient(selectedClient.id), variant: 'danger' }
+                                                    { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
                                                 ]}
                                             />
                                         </div>
@@ -968,14 +966,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail }: { 
-    client: BusinessClient; 
-    onEdit: (c: BusinessClient) => void; 
-    onDelete: (id: string) => void; 
+const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived }: {
+    client: BusinessClient;
+    onEdit: (c: BusinessClient) => void;
+    onDelete: (id: string) => void;
     onCall: (c: BusinessClient) => void;
     onCreateProposal: (c: BusinessClient) => void;
     onCreateInvoice: (c: BusinessClient) => void;
     onSendEmail: (c: BusinessClient) => void;
+    showArchived?: boolean;
 }) => {
     const stageVariants = {
         lead: 'blue',
@@ -1022,10 +1021,10 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
             onClick: () => onEdit(client)
         },
         {
-            label: 'Delete Client',
-            icon: <Trash2 className="w-4 h-4" />,
+            label: showArchived ? 'Unarchive Client' : 'Archive Client',
+            icon: showArchived ? <History className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />,
             onClick: () => onDelete(client.id),
-            variant: 'danger' as const
+            variant: showArchived ? 'default' as const : 'danger' as const
         }
     ];
 

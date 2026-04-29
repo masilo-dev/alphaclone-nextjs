@@ -4,6 +4,7 @@ import { tenantService } from './tenancy/TenantService';
 import { projectService } from './projectService';
 import { taskDependencyService } from './taskDependencyService';
 import { notificationService } from './notificationService';
+import { taskEmailTemplates } from '../lib/email/taskEmailTemplates';
 
 export interface Task {
     id: string;
@@ -277,6 +278,39 @@ export const taskService = {
                     link: `/dashboard/tasks/${data.id}`,
                     priority: taskData.priority || 'medium'
                 });
+
+                // Send Email Notification
+                try {
+                    const { data: assigneeData } = await supabase.from('profiles').select('name, email').eq('id', taskData.assignedTo).single();
+                    if (assigneeData?.email) {
+                        const { data: assignerData } = await supabase.from('profiles').select('name').eq('id', userId).single();
+                        const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
+                        const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
+
+                        await fetch('/api/email/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tenantId,
+                                to: assigneeData.email,
+                                subject: `New Task Assigned: ${taskData.title}`,
+                                templateName: 'taskAssigned',
+                                html: taskEmailTemplates.taskAssigned({
+                                    recipientName: assigneeData.name || 'Team Member',
+                                    assignerName: assignerData?.name,
+                                    taskTitle: taskData.title,
+                                    taskDescription: taskData.description,
+                                    dueDate: taskData.dueDate,
+                                    priority: taskData.priority === 'urgent' ? 'high' : taskData.priority,
+                                    actionUrl,
+                                    workspaceName
+                                })
+                            })
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to send task assignment email:', err);
+                }
             }
 
             const task: Task = {
@@ -401,6 +435,36 @@ export const taskService = {
                     link: `/dashboard/tasks/${data.id}`,
                     priority: data.priority
                 });
+
+                // Send Email Notification for status change (especially completion)
+                try {
+                    if (updates.status === 'completed') {
+                        const { data: creatorData } = await supabase.from('profiles').select('name, email').eq('id', data.created_by).single();
+                        if (creatorData?.email && data.created_by !== currentUser.id) {
+                            const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
+                            const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
+
+                            await fetch('/api/email/send', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    tenantId,
+                                    to: creatorData.email,
+                                    subject: `Task Completed: ${data.title}`,
+                                    templateName: 'taskCompleted',
+                                    html: taskEmailTemplates.taskCompleted({
+                                        recipientName: creatorData.name || 'Task Creator',
+                                        taskTitle: data.title,
+                                        actionUrl,
+                                        workspaceName
+                                    })
+                                })
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to send task status email:', err);
+                }
             }
 
             // --- AUTO-DEPENDENCY DATE SHIFTING ---
@@ -577,6 +641,49 @@ export const taskService = {
                 attachments: data.attachments || [],
                 createdAt: data.created_at,
             };
+
+            // Notify task assignee & creator
+            try {
+                const { data: taskData } = await supabase.from('tasks').select('title, assigned_to, created_by, tenant_id').eq('id', taskId).single();
+                if (taskData) {
+                    const notifyUsers = new Set<string>();
+                    if (taskData.assigned_to && taskData.assigned_to !== userId) notifyUsers.add(taskData.assigned_to);
+                    if (taskData.created_by && taskData.created_by !== userId) notifyUsers.add(taskData.created_by);
+
+                    if (notifyUsers.size > 0) {
+                        const { data: commenterData } = await supabase.from('profiles').select('name').eq('id', userId).single();
+                        const { data: usersToNotify } = await supabase.from('profiles').select('id, name, email').in('id', Array.from(notifyUsers));
+
+                        const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
+                        const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${taskId}` : '';
+
+                        for (const notifyUser of usersToNotify || []) {
+                            if (notifyUser.email) {
+                                await fetch('/api/email/send', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        tenantId: taskData.tenant_id,
+                                        to: notifyUser.email,
+                                        subject: `New Comment on Task: ${taskData.title}`,
+                                        templateName: 'taskComment',
+                                        html: taskEmailTemplates.taskComment({
+                                            recipientName: notifyUser.name || 'Team Member',
+                                            commenterName: commenterData?.name,
+                                            commentText: comment,
+                                            taskTitle: taskData.title,
+                                            actionUrl,
+                                            workspaceName
+                                        })
+                                    })
+                                }).catch(e => console.error('Error sending comment email fetch:', e));
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to notify task comment:', err);
+            }
 
             return { comment: taskComment, error: null };
         } catch (err) {

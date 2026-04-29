@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { quotaService } from './quotaService';
 import { assertContactSalesStageTransition } from '../lib/stageProgression';
 import { tenantService } from './tenancy/TenantService';
+import { activityService } from './activityService';
 
 let hasLoggedMissingAiProviders = false;
 
@@ -34,7 +35,13 @@ export const businessClientService = {
     /**
      * Get all clients for a tenant with pagination
      */
-    async getClients(tenantId: string, page: number = 1, limit: number = 1000, searchTerm: string = ''): Promise<ClientsResponse> {
+    async getClients(
+        tenantId: string,
+        page: number = 1,
+        limit: number = 50,
+        showArchived: boolean = false,
+        searchTerm: string = ''
+    ): Promise<ClientsResponse> {
         try {
             const offset = (page - 1) * limit;
 
@@ -42,6 +49,10 @@ export const businessClientService = {
                 .from('business_clients')
                 .select('*', { count: 'exact' })
                 .eq('tenant_id', tenantId);
+
+            if (!showArchived) {
+                query = query.eq('is_active', true);
+            }
 
             if (searchTerm) {
                 query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
@@ -125,6 +136,23 @@ export const businessClientService = {
             const { data: authData } = await supabase.auth.getUser();
             const quotaUserId = authData?.user?.id || null;
 
+            // Duplicate detection: check for existing client with same email in same tenant
+            if (client.email) {
+                const { data: existing } = await supabase
+                    .from('business_clients')
+                    .select('id, name')
+                    .eq('tenant_id', tenantId)
+                    .eq('email', client.email)
+                    .maybeSingle();
+
+                if (existing) {
+                    return {
+                        client: null,
+                        error: `DUPLICATE_EMAIL: A contact with email ${client.email} already exists (${existing.name}).`
+                    };
+                }
+            }
+
             // Check quota for leads (new clients are considered leads)
             if (client.salesStage === 'lead') {
                 if (quotaUserId) {
@@ -176,20 +204,42 @@ export const businessClientService = {
                 website: data.website
             };
 
-            // Increment quota usage for leads
-            if (newClient.salesStage === 'lead') {
+            if (newClient.id) {
                 if (quotaUserId) {
-                    const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('leads', quotaUserId);
-                    if (!quotaSuccess) {
-                        console.warn('Failed to increment lead quota:', quotaError);
-                    }
-                } else {
-                    console.warn('No authenticated user found for lead quota increment; skipping quota update.');
+                    await activityService.logAudit({
+                        userId: quotaUserId,
+                        tenantId: tenantId,
+                        action: 'CLIENT_CREATE',
+                        resourceType: 'business_clients',
+                        resourceId: newClient.id,
+                        oldValues: null,
+                        newValues: {
+                            name: newClient.name,
+                            email: newClient.email,
+                            salesStage: newClient.salesStage,
+                            value: newClient.value
+                        },
+                        metadata: {
+                            clientName: newClient.name
+                        }
+                    });
                 }
-                
-                // 900% AUTOMATION: Trigger background outreach drafting
-                // Non-blocking so consumer doesn't wait
-                this.autoDraftOutreach(newClient.id).catch(e => console.error('Auto-draft background err:', e));
+
+                // Increment quota usage for leads
+                if (newClient.salesStage === 'lead') {
+                    if (quotaUserId) {
+                        const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('leads', quotaUserId);
+                        if (!quotaSuccess) {
+                            console.warn('Failed to increment lead quota:', quotaError);
+                        }
+                    } else {
+                        console.warn('No authenticated user found for lead quota increment; skipping quota update.');
+                    }
+
+                    // 900% AUTOMATION: Trigger background outreach drafting
+                    // Non-blocking so consumer doesn't wait
+                    this.autoDraftOutreach(newClient.id).catch(e => console.error('Auto-draft background err:', e));
+                }
             }
 
             return { client: newClient, error: null };
@@ -287,6 +337,15 @@ export const businessClientService = {
                 }
             }
 
+            // Get current client data for diffing
+            const { data: currentClient, error: fetchError } = await supabase
+                .from('business_clients')
+                .select('*')
+                .eq('id', clientId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
             const updateData: Record<string, any> = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;
@@ -310,6 +369,55 @@ export const businessClientService = {
 
             if (error) throw error;
 
+            // Log activity with diff
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && currentClient) {
+                const diffBefore: Record<string, any> = {};
+                const diffAfter: Record<string, any> = {};
+
+                // Map field names for consistent audit diffs
+                const fieldMapping: Record<string, string> = {
+                    name: 'name',
+                    email: 'email',
+                    phone: 'phone',
+                    industry: 'industry',
+                    location: 'location',
+                    sales_stage: 'salesStage',
+                    value: 'value',
+                    description: 'description',
+                    custom_fields: 'customFields',
+                    website: 'website',
+                    is_active: 'isActive'
+                };
+
+                Object.keys(updateData).forEach(dbKey => {
+                    if (dbKey === 'updated_at') return;
+                    const oldVal = currentClient[dbKey];
+                    const newVal = updateData[dbKey];
+
+                    if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+                        const label = fieldMapping[dbKey] || dbKey;
+                        diffBefore[label] = oldVal;
+                        diffAfter[label] = newVal;
+                    }
+                });
+
+                if (Object.keys(diffAfter).length > 0) {
+                    await activityService.logAudit({
+                        userId: user.id,
+                        tenantId: currentClient.tenant_id,
+                        action: 'CLIENT_UPDATE',
+                        resourceType: 'business_clients',
+                        resourceId: clientId,
+                        oldValues: diffBefore,
+                        newValues: diffAfter,
+                        metadata: {
+                            clientName: currentClient.name
+                        }
+                    });
+                }
+            }
+
             return { error: null };
         } catch (err: any) {
             console.error('Error updating client:', err);
@@ -319,15 +427,42 @@ export const businessClientService = {
 
     /**
      * Delete a client
+     * Archives a client (soft delete)
      */
     async deleteClient(clientId: string): Promise<{ error: string | null }> {
         try {
+            const { data: clientToArchive } = await supabase
+                .from('business_clients')
+                .select('name, tenant_id, is_active')
+                .eq('id', clientId)
+                .single();
+
+            if (!clientToArchive) return { error: 'Client not found' };
+            if (!clientToArchive.is_active) return { error: 'Client is already archived' };
+
             const { error } = await supabase
                 .from('business_clients')
-                .delete()
+                .update({ is_active: false })
                 .eq('id', clientId);
 
             if (error) throw error;
+
+            // Log audit
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && clientToArchive) {
+                await activityService.logAudit({
+                    userId: user.id,
+                    tenantId: clientToArchive.tenant_id,
+                    action: 'CLIENT_ARCHIVE',
+                    resourceType: 'business_clients',
+                    resourceId: clientId,
+                    oldValues: { isActive: true },
+                    newValues: { isActive: false },
+                    metadata: {
+                        clientName: clientToArchive.name
+                    }
+                });
+            }
 
             return { error: null };
         } catch (err: any) {
@@ -339,29 +474,68 @@ export const businessClientService = {
     /**
      * Import clients from parsed data
      */
-    async importClients(tenantId: string, clients: Partial<BusinessClient>[]): Promise<{ count: number; error: string | null }> {
+    async importClients(tenantId: string, clients: any[], quotaUserId?: string): Promise<{ count: number; error: string | null }> {
         try {
-            const insertData = clients.map((c: any) => ({
-                tenant_id: tenantId,
-                name: c.name || c.company, // Prioritize name, fallback to company if imported data has it
-                email: c.email,
-                phone: c.phone,
-                sales_stage: c.salesStage || c.stage || 'lead',
-                value: c.value || 0,
-                description: c.description || c.notes,
-                location: c.location || c.address,
-                custom_fields: c.customFields || {},
-                is_active: true
-            }));
+            // Filter out duplicates before importing
+            const uniqueClients = [];
+            const duplicateEmails = [];
+
+            for (const client of clients) {
+                if (client.email) {
+                    const { data: existing } = await supabase
+                        .from('business_clients')
+                        .select('id')
+                        .eq('tenant_id', tenantId)
+                        .eq('email', client.email)
+                        .maybeSingle();
+
+                    if (existing) {
+                        duplicateEmails.push(client.email);
+                        continue;
+                    }
+                }
+                uniqueClients.push({
+                    tenant_id: tenantId,
+                    name: client.name,
+                    email: client.email,
+                    phone: client.phone,
+                    industry: client.industry,
+                    location: client.location,
+                    sales_stage: client.salesStage || 'lead',
+                    value: client.value || 0,
+                    is_active: true
+                });
+            }
+
+            if (uniqueClients.length === 0 && duplicateEmails.length > 0) {
+                return { count: 0, error: `All ${duplicateEmails.length} contacts were duplicates and skipped.` };
+            }
 
             const { data, error } = await supabase
                 .from('business_clients')
-                .insert(insertData)
+                .insert(uniqueClients)
                 .select();
 
             if (error) throw error;
 
-            return { count: data?.length || 0, error: null };
+            // Log bulk audit
+            if (quotaUserId && data && data.length > 0) {
+                await activityService.logAudit({
+                    userId: quotaUserId,
+                    tenantId: tenantId,
+                    action: 'CLIENT_IMPORT',
+                    resourceType: 'business_clients',
+                    newValues: {
+                        count: data.length,
+                        skippedDuplicates: duplicateEmails.length
+                    }
+                });
+            }
+
+            return {
+                count: data?.length || 0,
+                error: duplicateEmails.length > 0 ? `Imported ${data?.length} contacts. Skipped ${duplicateEmails.length} duplicates.` : null
+            };
         } catch (err: any) {
             console.error('Error importing clients:', err);
             return { count: 0, error: err.message };
