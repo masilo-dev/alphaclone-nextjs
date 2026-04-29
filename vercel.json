@@ -55,6 +55,14 @@
         {
             "path": "/api/cron/autonomous-runner",
             "schedule": "0 8 * * *"
+        },
+        {
+            "path": "/api/cron/process-recurring-invoices",
+            "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/cron/process-invoice-overdue-reminders",
+            "schedule": "0 1 * * *"
         }
     ]
 }

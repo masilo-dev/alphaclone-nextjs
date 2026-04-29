@@ -2084,7 +2084,18 @@ class AlphaCloneMCPServer {
             .order('created_at', { ascending: false })
             .limit(Math.min(Number(limit) || 100, 1000));
           if (error) throw supabaseErrorToMcpClientError('search_clients', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+              },
+              {
+                type: 'text',
+                text: JSON.stringify(data || [], null, 2),
+              },
+            ],
+          };
           break;
         }
 
@@ -2140,7 +2151,18 @@ class AlphaCloneMCPServer {
             .order('created_at', { ascending: false })
             .limit(Math.min(Number(limit) || 100, 1000));
           if (error) throw supabaseErrorToMcpClientError('search_contacts', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+              },
+              {
+                type: 'text',
+                text: JSON.stringify(data || [], null, 2),
+              },
+            ],
+          };
           break;
         }
 
@@ -2212,7 +2234,7 @@ class AlphaCloneMCPServer {
             content: [
               {
                 type: 'text',
-                text: `Client created: ${JSON.stringify(data)}. Next: open Contacts to verify details, advance funnel stage forward only, and attach a Deal or Invoice when there is real opportunity.`,
+                text: `✅ **Client Created Successfully**\n\n- **Name**: ${data.name}\n- **Email**: ${data.email || 'None'}\n\n*Next Steps: You can now add a deal or create an invoice for this client in the dashboard.*`,
               },
             ],
           };
@@ -4982,7 +5004,18 @@ class AlphaCloneMCPServer {
           if (!isUuidString(project_id)) throw new Error('project_id must be a valid UUID');
           const { data, error } = await supabaseAdmin.from('project_milestones').select('*').eq('tenant_id', tenant_id).eq('project_id', project_id).order('due_date', { ascending: true });
           if (error) throw supabaseErrorToMcpClientError('get_project_milestones', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+              },
+              {
+                type: 'text',
+                text: JSON.stringify(data || [], null, 2),
+              },
+            ],
+          };
           break;
         }
 
@@ -4993,7 +5026,18 @@ class AlphaCloneMCPServer {
           if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
           const { data, error } = await supabaseAdmin.from('invoice_line_items').select('*').eq('tenant_id', tenant_id).eq('invoice_id', invoice_id).order('position', { ascending: true });
           if (error) throw supabaseErrorToMcpClientError('get_invoice_line_items', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+              },
+              {
+                type: 'text',
+                text: JSON.stringify(data || [], null, 2),
+              },
+            ],
+          };
           break;
         }
 
@@ -5064,7 +5108,18 @@ class AlphaCloneMCPServer {
             .order('created_at', { ascending: false })
             .limit(500);
           if (error) throw supabaseErrorToMcpClientError('list_event_subscriptions', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+              },
+              {
+                type: 'text',
+                text: JSON.stringify(data || [], null, 2),
+              },
+            ],
+          };
           break;
         }
 
@@ -5822,7 +5877,18 @@ Return ONLY a JSON array of 60 objects:
           if (typeof to_time === 'string' && to_time.trim()) query = query.lte('start_time', to_time.trim());
           const { data, error } = await query;
           if (error) throw supabaseErrorToMcpClientError('get_business_events', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+              },
+              {
+                type: 'text',
+                text: JSON.stringify(data || [], null, 2),
+              },
+            ],
+          };
           break;
         }
 

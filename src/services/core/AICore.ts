@@ -16,6 +16,14 @@ interface AIContext {
  */
 export class AICore {
   /**
+   * Check if AI providers are configured
+   */
+  isConfigured(): boolean {
+    return !!(process.env.ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || 
+              process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY);
+  }
+
+  /**
    * MARKETING: AI generates marketing strategies
    */
   async generateMarketingStrategy(context: AIContext, goals: string[]): Promise<{

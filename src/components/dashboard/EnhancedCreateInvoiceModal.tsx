@@ -58,6 +58,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [searchQuery, setSearchQuery] = useState('');
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     // Service selection state
     const [selectedIndustry, setSelectedIndustry] = useState<string>('');
@@ -101,6 +102,87 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         };
         loadClients();
     }, [currentTenant?.id]);
+
+    // Canvas Drawing Logic
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas || signatureType !== 'draw') return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Set canvas size for high DPI
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        // Set drawing style
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        const getCoords = (e: MouseEvent | TouchEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            if ('touches' in e) {
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return {
+                x: (e as MouseEvent).clientX - rect.left,
+                y: (e as MouseEvent).clientY - rect.top
+            };
+        };
+
+        const startDrawing = (e: MouseEvent | TouchEvent) => {
+            isDrawing = true;
+            const { x, y } = getCoords(e);
+            lastX = x;
+            lastY = y;
+        };
+
+        const draw = (e: MouseEvent | TouchEvent) => {
+            if (!isDrawing) return;
+            if ('touches' in e) e.preventDefault(); // Prevent scrolling on touch
+            const { x, y } = getCoords(e);
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            lastX = x;
+            lastY = y;
+        };
+
+        const stopDrawing = () => {
+            if (!isDrawing) return;
+            isDrawing = false;
+            setSignatureData(canvas.toDataURL());
+        };
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        return () => {
+            canvas.removeEventListener('mousedown', startDrawing);
+            canvas.removeEventListener('mousemove', draw);
+            window.removeEventListener('mouseup', stopDrawing);
+            canvas.removeEventListener('touchstart', startDrawing);
+            canvas.removeEventListener('touchmove', draw);
+            canvas.removeEventListener('touchend', stopDrawing);
+        };
+    }, [signatureType]);
 
     // Load user services and sectors
     React.useEffect(() => {
@@ -788,79 +870,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </div>
 
                                     {signatureType === 'draw' && (
-                                        <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                                        <div className="bg-white rounded-lg p-2 border border-slate-700">
                                             <canvas
-                                                ref={(canvas) => {
-                                                    if (canvas) {
-                                                        const ctx = canvas.getContext('2d');
-                                                        if (ctx) {
-                                                            // Set canvas size
-                                                            canvas.width = canvas.offsetWidth;
-                                                            canvas.height = 150;
-
-                                                            // Set drawing style
-                                                            ctx.strokeStyle = '#000000';
-                                                            ctx.lineWidth = 2;
-                                                            ctx.lineCap = 'round';
-                                                            ctx.lineJoin = 'round';
-
-                                                            let isDrawing = false;
-                                                            let lastX = 0;
-                                                            let lastY = 0;
-
-                                                            const startDrawing = (e: MouseEvent | TouchEvent) => {
-                                                                isDrawing = true;
-                                                                const rect = canvas.getBoundingClientRect();
-                                                                const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.offsetX;
-                                                                const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.offsetY;
-                                                                lastX = x;
-                                                                lastY = y;
-                                                            };
-
-                                                            const draw = (e: MouseEvent | TouchEvent) => {
-                                                                if (!isDrawing) return;
-                                                                e.preventDefault();
-                                                                const rect = canvas.getBoundingClientRect();
-                                                                const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.offsetX;
-                                                                const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.offsetY;
-
-                                                                ctx.beginPath();
-                                                                ctx.moveTo(lastX, lastY);
-                                                                ctx.lineTo(x, y);
-                                                                ctx.stroke();
-
-                                                                lastX = x;
-                                                                lastY = y;
-                                                            };
-
-                                                            const stopDrawing = () => {
-                                                                isDrawing = false;
-                                                                setSignatureData(canvas.toDataURL());
-                                                            };
-
-                                                            canvas.addEventListener('mousedown', startDrawing);
-                                                            canvas.addEventListener('mousemove', draw);
-                                                            canvas.addEventListener('mouseup', stopDrawing);
-                                                            canvas.addEventListener('mouseout', stopDrawing);
-                                                            canvas.addEventListener('touchstart', startDrawing);
-                                                            canvas.addEventListener('touchmove', draw);
-                                                            canvas.addEventListener('touchend', stopDrawing);
-
-                                                            // Clear button
-                                                            const clearButton = document.createElement('button');
-                                                            clearButton.textContent = 'Clear';
-                                                            clearButton.className = 'mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700';
-                                                            clearButton.onclick = () => {
-                                                                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                                                                setSignatureData(null);
-                                                            };
-                                                            canvas.parentNode?.appendChild(clearButton);
-                                                        }
-                                                    }
-                                                }}
-                                                className="border border-gray-300 rounded cursor-crosshair w-full"
+                                                ref={canvasRef}
+                                                className="cursor-crosshair w-full bg-white touch-none"
                                                 style={{ height: '150px' }}
                                             />
+                                            <div className="flex justify-between mt-2">
+                                                <p className="text-[10px] text-slate-500 uppercase font-bold">Sign here</p>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const canvas = canvasRef.current;
+                                                        if (canvas) {
+                                                            const ctx = canvas.getContext('2d');
+                                                            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                                            setSignatureData(null);
+                                                        }
+                                                    }}
+                                                    className="text-xs text-red-500 hover:text-red-400 font-bold"
+                                                >
+                                                    Clear Signature
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
 

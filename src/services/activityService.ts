@@ -49,12 +49,24 @@ const getLocationData = async () => {
 
 export const activityService = {
     /**
-     * Log user activity
+     * Log user activity with optional field-level diffs
      */
-    async logActivity(userId: string, action: string, metadata: Record<string, unknown> = {}, passedTenantId?: string) {
+    async logActivity(
+        userId: string, 
+        action: string, 
+        metadata: Record<string, unknown> = {}, 
+        passedTenantId?: string,
+        diff?: { before: any; after: any }
+    ) {
         const locationData = await getLocationData();
-        const { browser, deviceType } = parseUserAgent(navigator.userAgent);
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side';
+        const { browser, deviceType } = parseUserAgent(ua);
         const tenantId = passedTenantId || tenantService.getCurrentTenantId();
+
+        const combinedMetadata = {
+            ...metadata,
+            ...(diff ? { _audit_diff: diff } : {})
+        };
 
         const { error } = await supabase.from('activity_logs').insert({
             user_id: userId,
@@ -64,8 +76,8 @@ export const activityService = {
             city: locationData.city,
             device_type: deviceType,
             browser,
-            user_agent: navigator.userAgent,
-            metadata,
+            user_agent: ua,
+            metadata: combinedMetadata,
             tenant_id: tenantId,
         });
 
@@ -77,7 +89,8 @@ export const activityService = {
      */
     async createLoginSession(userId: string) {
         const locationData = await getLocationData();
-        const { browser, deviceType } = parseUserAgent(navigator.userAgent);
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side';
+        const { browser, deviceType } = parseUserAgent(ua);
         const tenantId = tenantService.getCurrentTenantId();
 
         const { data, error } = await supabase
@@ -90,7 +103,7 @@ export const activityService = {
                 device_info: {
                     browser,
                     deviceType,
-                    userAgent: navigator.userAgent,
+                    userAgent: ua,
                 },
                 tenant_id: tenantId,
             })
@@ -375,14 +388,15 @@ export const activityService = {
         location?: string
     ) {
         const locationData = await getLocationData();
-        const { browser, deviceType } = parseUserAgent(userAgent || navigator.userAgent);
+        const ua = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side');
+        const { browser, deviceType } = parseUserAgent(ua);
         const tenantId = tenantService.getCurrentTenantId();
 
         const { error } = await supabase.from('failed_logins').insert({
             tenant_id: tenantId,
             email,
             ip_address: ipAddress || locationData.ip || 'Unknown',
-            user_agent: userAgent || navigator.userAgent,
+            user_agent: ua,
             location: location || `${locationData.city}, ${locationData.country}`,
             device_info: { browser, deviceType },
             failure_reason: failureReason,
@@ -420,7 +434,7 @@ export const activityService = {
             endpoint: options?.endpoint,
             status_code: options?.statusCode,
             severity: options?.severity || 'error',
-            user_agent: navigator.userAgent,
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side',
             ip_address: locationData.ip || 'Unknown',
             metadata: options?.metadata,
         });
