@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { jsPDF } from 'jspdf';
-import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2 } from 'lucide-react';
+import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2 } from 'lucide-react';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
@@ -281,14 +281,26 @@ export default function PublicContractPage() {
                             <p className="text-slate-500">{consentAccepted ? 'Draw your signature in the box above.' : 'Accept disclosure above to enable signature.'}</p>
                         </div>
                         <button
-                            onClick={handleSign}
-                            disabled={signing || !signatureData || !consentAccepted}
-                            className={`w-full mt-6 py-4 font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-2 ${signatureData && !signing && consentAccepted
-                                ? 'bg-teal-500 hover:bg-teal-400 text-slate-900 active:scale-[0.99]'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                }`}
+                            onClick={() => {
+                                if (!signatureData) {
+                                    toast.error('Please click "Confirm Signature" above first');
+                                    return;
+                                }
+                                handleSign();
+                            }}
+                            disabled={signing || !consentAccepted}
+                            className={`flex-1 w-full mt-6 py-4 px-6 rounded-xl font-bold text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                                signing || !consentAccepted
+                                    ? 'bg-slate-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 hover:scale-[1.02] active:scale-95'
+                            }`}
                         >
-                            {signing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Contract'}
+                            {signing ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <CheckCircle2 className="w-5 h-5" />
+                            )}
+                            {!signatureData ? 'Confirm Signature First' : (signing ? 'Signing...' : 'Sign Contract')}
                         </button>
                     </div>
                 ) : (
@@ -326,6 +338,16 @@ export default function PublicContractPage() {
 }
 
 function contractToStyledHtml(text: string): string {
+    if (!text) return '';
+
+    // If it looks like HTML (starts with a tag), trust it but wrap it in a styled container
+    const isHtml = /<[a-z][\s\S]*>/i.test(text);
+
+    if (isHtml) {
+        return `<div class="contract-content" style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:#0f172a;">${text}</div>`;
+    }
+
+    // Otherwise, treat as markdown-ish text
     const escaped = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -340,5 +362,5 @@ function contractToStyledHtml(text: string): string {
         .replace(/\n\n/g, '</p><p style="margin:0 0 12px; text-align:justify;">')
         .replace(/\n/g, '<br/>');
 
-    return `<div style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:#0f172a;"><p style="margin:0 0 12px; text-align:justify;">${formatted}</p></div>`;
+    return `<div class="contract-content" style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:#0f172a;"><p style="margin:0 0 12px; text-align:justify;">${formatted}</p></div>`;
 }
