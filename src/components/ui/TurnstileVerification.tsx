@@ -18,11 +18,13 @@ declare global {
                     sitekey: string;
                     callback: (token: string) => void;
                     'expired-callback'?: () => void;
-                    'error-callback'?: () => void;
+                    'error-callback'?: (code?: string | number) => void;
                     theme?: 'light' | 'dark' | 'auto';
                 }
             ) => string;
             remove: (widgetId: string) => void;
+            reset: (widgetId: string) => void;
+            getResponse: (widgetId: string) => string | undefined;
         };
     }
 }
@@ -145,8 +147,24 @@ export default function TurnstileVerification({
                     if (disposed || !mountedRef.current) return;
                     onExpire?.();
                 },
-                'error-callback': () => {
+                'error-callback': (code?: string | number) => {
                     if (disposed || !mountedRef.current) return;
+
+                    // Handle error 600010 (initialization/token fetch failure) with an automatic retry
+                    if (code === '600010' || code === 600010) {
+                        console.warn('[Turnstile] Error 600010 detected, attempting re-render...');
+                        if (widgetIdRef.current && window.turnstile) {
+                            try {
+                                // Guard the reset call as per recommendations
+                                if (window.turnstile.getResponse(widgetIdRef.current) !== undefined) {
+                                    window.turnstile.reset(widgetIdRef.current);
+                                    return;
+                                }
+                            } catch (e) {
+                                console.error('[Turnstile] Reset failed:', e);
+                            }
+                        }
+                    }
 
                     const host = typeof window !== 'undefined' ? window.location.hostname : 'current host';
                     const message =
