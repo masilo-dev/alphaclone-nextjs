@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Mic, Video as VideoIcon, Volume2, Check, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
-import toast from 'react-hot-toast';
 
 interface DeviceSettingsModalProps {
     isOpen: boolean;

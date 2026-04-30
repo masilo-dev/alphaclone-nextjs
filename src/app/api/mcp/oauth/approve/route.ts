@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { ENV } from '../../../../config/env';
+import { ENV } from '@/config/env';
 
 
 export async function POST(req: Request) {
