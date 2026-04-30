@@ -77,6 +77,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 3. Authorization Code Flow
+    if (grant_type === 'authorization_code') {
+      const code = body.code;
+      if (!code) {
+        return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+      }
+      // Since our "code" is actually the API key itself (generated in /approve), return it directly
+      return NextResponse.json({
+        access_token: code,
+        token_type: 'Bearer',
+        expires_in: 31536000,
+        refresh_token: code
+      });
+    }
+
     return NextResponse.json({ error: 'unsupported_grant_type' }, { status: 400 });
   } catch (err) {
     console.error('[MCP Token API] Error:', err);

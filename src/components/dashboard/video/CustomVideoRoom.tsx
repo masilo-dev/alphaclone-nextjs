@@ -4,9 +4,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useVideoPlatform } from '../../../hooks/useVideoPlatform';
 import CustomVideoTile from './CustomVideoTile';
 import VideoControls from './VideoControls';
-import LiveKitStage from './LiveKitStage';
-import { User } from '../../../types';
-import { dailyService } from '../../../services/dailyService';
+import { DeviceSettingsModal } from './DeviceSettingsModal';
 import toast from 'react-hot-toast';
 import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
@@ -16,8 +14,6 @@ interface CustomVideoRoomProps {
     roomUrl?: string;
     callId: string;
     onLeave: () => void;
-    /** When joining a public meeting with a PIN, pass the validated code for the LiveKit handoff token. */
-    meetingAccessPin?: string | null;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
     isMinimized?: boolean;
@@ -41,7 +37,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     roomUrl: providedRoomUrl,
     callId,
     onLeave,
-    meetingAccessPin = null,
     isMinimized = false,
     onToggleMinimize,
 }) => {
@@ -62,11 +57,17 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         leave,
         reconnect,
         startCamera,
+        setAudioDevice,
+        setVideoDevice,
         toggleAudio,
         toggleVideo,
         toggleScreenShare,
         muteParticipant,
         removeParticipant,
+        isRecording,
+        startRecording,
+        stopRecording,
+        setRoomLocked,
     } = useVideoPlatform();
 
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
@@ -75,21 +76,15 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     const [showParticipants, setShowParticipants] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'speaker'>('speaker');
     const [isMobile, setIsMobile] = useState(false);
-    const [mediaPhase, setMediaPhase] = useState<'daily' | 'livekit'>('daily');
-    const [liveKitUrl, setLiveKitUrl] = useState<string | null>(null);
-    const [liveKitToken, setLiveKitToken] = useState<string | null>(null);
-    const [liveKitHardStop, setLiveKitHardStop] = useState(false);
     const [preJoinAccepted, setPreJoinAccepted] = useState(false);
     const [isCheckingDevices, setIsCheckingDevices] = useState(false);
     const [preJoinError, setPreJoinError] = useState<string | null>(null);
+    const [isLocked, setIsLocked] = useState(false);
+    const [showDeviceSettings, setShowDeviceSettings] = useState(false);
 
     const joinAttemptedRef = useRef(false);
     const isJoinedRef = useRef(isJoined);
     const finalizedRef = useRef(false);
-    const liveKitHandoffRef = useRef(false);
-    const liveKitConnectedRef = useRef(false);
-    const limit60Ref = useRef(false);
-    const warned55Ref = useRef(false);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -174,41 +169,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     }, [startCamera]);
 
-    const handleLiveKitEnd = useCallback(async () => {
-        await finalizeMeetingDb();
-    }, [finalizeMeetingDb]);
-
-    const performHandoff = useCallback(async () => {
-        if (liveKitHandoffRef.current) return;
-        liveKitHandoffRef.current = true;
-        try {
-            await leave();
-            const res = await fetch('/api/livekit/token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    callId,
-                    meetingAccessPin: meetingAccessPin || undefined,
-                }),
-            });
-            const data = (await res.json().catch(() => ({}))) as { error?: string; token?: string; url?: string };
-            if (!res.ok || !data.token || !data.url) {
-                console.error('[meeting] handoff token failed', data.error);
-                toast.error('The meeting could not be continued. It will end now.');
-                await finalizeMeetingDb();
-                return;
-            }
-            setLiveKitUrl(data.url);
-            setLiveKitToken(data.token);
-            setMediaPhase('livekit');
-        } catch (err) {
-            console.error('LiveKit handoff failed:', err);
-            toast.error('The meeting could not be continued. It will end now.');
-            await finalizeMeetingDb();
-        }
-    }, [callId, meetingAccessPin, leave, finalizeMeetingDb]);
-
     // Resolve Room URL if not provided
     useEffect(() => {
         if (resolvedRoomUrl) return;
@@ -266,7 +226,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 import('@/services/activityService').then(({ activityService }) => {
                     activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
                         callId,
-                        mediaPhase: 'daily',
                     }).catch(() => undefined);
                 }).catch(() => undefined);
             } catch (err: any) {
@@ -327,51 +286,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     }, [isJoined, callId, participants, hasMeetingStarted, user]);
 
-    // PIN Recycling Logic (35 Minutes after Start)
-    useEffect(() => {
-        if (!isJoined || !callId || !hasMeetingStarted || !isUserAdmin(user)) return;
-
-        // Create a 35 minute timer (35 * 60 * 1000 = 2100000ms)
-        const expirationTime = 35 * 60 * 1000;
-
-        const recyclePinTimer = setTimeout(async () => {
-            try {
-                const newPin = Math.floor(100000 + Math.random() * 900000).toString();
-
-                const { data: currentRoom } = await supabase
-                    .from('video_calls')
-                    .select('metadata')
-                    .eq('id', callId)
-                    .single();
-
-                const currentMetadata = currentRoom?.metadata || {};
-
-                await supabase
-                    .from('video_calls')
-                    .update({
-                        metadata: { ...currentMetadata, meeting_pin: newPin }
-                    })
-                    .eq('id', callId);
-
-                console.log('PIN Automatically recycled after 35 minutes of meeting start time');
-            } catch (err) {
-                console.error('Failed to recycle PIN:', err);
-            }
-        }, expirationTime);
-
-        return () => clearTimeout(recyclePinTimer);
-    }, [isJoined, callId, hasMeetingStarted, user]);
-
-
-    const mediaPhaseRef = useRef(mediaPhase);
-    useEffect(() => {
-        mediaPhaseRef.current = mediaPhase;
-    }, [mediaPhase]);
-
-    useEffect(() => {
-        liveKitConnectedRef.current = mediaPhase === 'livekit';
-    }, [mediaPhase]);
-
     const handleLeaveRef = useRef(handleLeave);
     useEffect(() => {
         handleLeaveRef.current = handleLeave;
@@ -382,18 +296,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         finalizeMeetingDbRef.current = finalizeMeetingDb;
     }, [finalizeMeetingDb]);
 
-    const performHandoffRef = useRef(performHandoff);
-    useEffect(() => {
-        performHandoffRef.current = performHandoff;
-    }, [performHandoff]);
-
     useEffect(() => {
         return () => {
             void (async () => {
                 if (finalizedRef.current) return;
-                if (liveKitConnectedRef.current) {
-                    await finalizeMeetingDbRef.current();
-                } else if (isJoinedRef.current) {
+                if (isJoinedRef.current) {
                     await handleLeaveRef.current();
                 }
             })();
@@ -404,21 +311,12 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         isJoinedRef.current = isJoined;
     }, [isJoined]);
 
-    const handleLiveKitFatal = useCallback(
-        async (msg: string) => {
-            console.error('[meeting]', msg);
-            toast.error('The connection could not be restored. The meeting will end.');
-            await finalizeMeetingDb();
-        },
-        [finalizeMeetingDb]
-    );
-
     // Subscribe to call status changes
     useEffect(() => {
         if (!callId) return;
 
         const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
-            if (status === 'ended' && (isJoinedRef.current || liveKitConnectedRef.current)) {
+            if (status === 'ended' && isJoinedRef.current) {
                 toast.success('The host has ended the meeting');
                 setTimeout(handleLeave, 1500);
             }
@@ -427,32 +325,12 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return () => unsubscribe();
     }, [callId, handleLeave]);
 
-    const DAILY_SEGMENT_SEC = 1800;
-    const TOTAL_LIMIT_SEC = 3600;
-
     useEffect(() => {
         if (!callStartTime) return;
 
         const interval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - callStartTime.getTime()) / 1000);
             setSecondsElapsed(elapsed);
-
-            if (!warned55Ref.current && elapsed >= 3300) {
-                warned55Ref.current = true;
-                toast.success('Five minutes remaining in this meeting.', { duration: 10000 });
-            }
-            if (mediaPhaseRef.current === 'daily' && elapsed >= DAILY_SEGMENT_SEC) {
-                void performHandoffRef.current();
-            }
-            if (!limit60Ref.current && elapsed >= TOTAL_LIMIT_SEC) {
-                limit60Ref.current = true;
-                toast.error('This meeting has reached its scheduled duration.', { duration: 6000 });
-                if (mediaPhaseRef.current === 'livekit') {
-                    setLiveKitHardStop(true);
-                } else {
-                    void handleLeaveRef.current();
-                }
-            }
         }, 1000);
 
         return () => clearInterval(interval);
@@ -489,6 +367,32 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         if (!isUserAdmin(user)) return;
         try { await removeParticipant(sessionId); toast.success('Removed'); } catch (err) { toast.error('Error'); }
     }, [user, removeParticipant]);
+
+    const handleToggleRecord = useCallback(async () => {
+        if (!isUserAdmin(user)) return;
+        try {
+            if (isRecording) {
+                await stopRecording();
+                toast.success('Recording stopped');
+            } else {
+                await startRecording();
+                toast.success('Recording started');
+            }
+        } catch (err: any) {
+            toast.error('Failed to toggle recording');
+        }
+    }, [user, isRecording, startRecording, stopRecording]);
+
+    const handleToggleLock = useCallback(async () => {
+        if (!isUserAdmin(user)) return;
+        try {
+            await setRoomLocked(!isLocked);
+            setIsLocked(!isLocked);
+            toast.success(isLocked ? 'Room unlocked' : 'Room locked. Guests must knock.');
+        } catch (err: any) {
+            toast.error('Failed to toggle lock');
+        }
+    }, [user, isLocked, setRoomLocked]);
 
     const handleEndMeetingForAll = useCallback(async () => {
         if (!isUserAdmin(user)) return;
@@ -538,22 +442,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
-
-    if (mediaPhase === 'livekit' && liveKitUrl && liveKitToken) {
-        return (
-            <LiveKitStage
-                url={liveKitUrl}
-                token={liveKitToken}
-                displayName={user.name || 'Guest'}
-                secondsElapsed={secondsElapsed}
-                formatElapsed={formatTime}
-                requestHardStop={liveKitHardStop}
-                onHardStopConsumed={() => setLiveKitHardStop(false)}
-                onLeave={() => void handleLiveKitEnd()}
-                onFatalError={(msg) => void handleLiveKitFatal(msg)}
-            />
-        );
-    }
 
     if (!isJoined) {
         if (!preJoinAccepted) {
@@ -775,15 +663,27 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 isMuted={!isAudioEnabled}
                 isVideoOff={!isVideoEnabled}
                 isScreenSharing={isScreenSharing}
+                isRecording={isRecording}
+                isLocked={isLocked}
                 onToggleMic={handleToggleAudio}
                 onToggleVideo={handleToggleVideo}
                 onToggleScreenShare={handleToggleScreenShare}
+                onToggleRecord={handleToggleRecord}
+                onToggleLock={handleToggleLock}
                 onLeave={handleLeave}
                 onToggleParticipants={() => setShowParticipants(!showParticipants)}
+                onToggleSettings={() => setShowDeviceSettings(true)}
                 onEndForAll={isUserAdmin(user) ? handleEndMeetingForAll : undefined}
                 isAdmin={isUserAdmin(user)}
                 roomUrl={resolvedRoomUrl || ''}
                 callId={callId}
+            />
+
+            <DeviceSettingsModal
+                isOpen={showDeviceSettings}
+                onClose={() => setShowDeviceSettings(false)}
+                setAudioDevice={setAudioDevice}
+                setVideoDevice={setVideoDevice}
             />
         </div>
     );

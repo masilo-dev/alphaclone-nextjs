@@ -123,7 +123,7 @@ export const meetingService = {
             // 6. Generate calendar invite
             const calendarInvite = emailTemplates.generateCalendarInvite(emailData);
 
-            // Send via AlphaClone's internal email API
+            // Send via AlphaClone's internal email API to Attendee
             try {
                 await fetch('/api/email/send', {
                     method: 'POST',
@@ -136,7 +136,23 @@ export const meetingService = {
                     }),
                 });
             } catch (emailErr) {
-                console.error('Meeting confirmation email failed (non-blocking):', emailErr);
+                console.error('Meeting confirmation email for attendee failed (non-blocking):', emailErr);
+            }
+
+            // Send to Host
+            try {
+                await fetch('/api/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: data.hostEmail,
+                        subject: `Meeting Scheduled: ${data.title}`,
+                        html: emailHtml,
+                        attachments: [{ filename: 'invite.ics', content: calendarInvite }],
+                    }),
+                });
+            } catch (emailErr) {
+                console.error('Meeting confirmation email for host failed (non-blocking):', emailErr);
             }
 
             return { success: true, call, joinLink, emailData };

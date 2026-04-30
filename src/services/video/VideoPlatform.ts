@@ -231,6 +231,54 @@ export class VideoPlatform {
     }
 
     /**
+     * Set Audio Input Device
+     */
+    async setAudioDevice(deviceId: string): Promise<void> {
+        try {
+            await this.engine.setAudioDevice(deviceId);
+        } catch (error) {
+            const normalized = this.errorHandler.handle(error, { action: 'setAudioDevice' });
+            throw normalized;
+        }
+    }
+
+    /**
+     * Set Video Input Device
+     */
+    async setVideoDevice(deviceId: string): Promise<void> {
+        try {
+            await this.engine.setVideoDevice(deviceId);
+        } catch (error) {
+            const normalized = this.errorHandler.handle(error, { action: 'setVideoDevice' });
+            throw normalized;
+        }
+    }
+
+    /**
+     * Start Recording
+     */
+    async startRecording(): Promise<void> {
+        try {
+            await this.engine.startRecording();
+        } catch (error) {
+            const normalized = this.errorHandler.handle(error, { action: 'startRecording' });
+            throw normalized;
+        }
+    }
+
+    /**
+     * Stop Recording
+     */
+    async stopRecording(): Promise<void> {
+        try {
+            await this.engine.stopRecording();
+        } catch (error) {
+            const normalized = this.errorHandler.handle(error, { action: 'stopRecording' });
+            throw normalized;
+        }
+    }
+
+    /**
      * Get media state
      */
     getMediaState(): Readonly<MediaState> {
