@@ -13,9 +13,9 @@ function AuthorizeContent() {
     const [approving, setApproving] = useState(false);
     const [error, setError] = useState('');
 
-    const clientId = searchParams.get('client_id');
-    const redirectUri = searchParams.get('redirect_uri');
-    const state = searchParams.get('state');
+    const clientId = searchParams?.get('client_id');
+    const redirectUri = searchParams?.get('redirect_uri');
+    const state = searchParams?.get('state');
 
     useEffect(() => {
         if (!loading && !user) {
