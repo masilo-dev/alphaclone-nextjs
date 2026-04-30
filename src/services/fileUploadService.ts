@@ -17,7 +17,10 @@ const ALLOWED_FILE_TYPES = [
     'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
     'application/vnd.ms-powerpoint', // .ppt
     'application/zip',
-    'application/x-zip-compressed'
+    'application/x-zip-compressed',
+    'text/plain',
+    'application/json',
+    'application/xml'
 ];
 
 // Max file size: 100MB
@@ -130,6 +133,155 @@ class FileUploadService {
     /**
      * Upload a single file
      */
+    /**
+     * Deep scan a file buffer for malicious patterns
+     */
+    async scanFile(buffer: Buffer, filename: string, mimeType: string): Promise<{ status: 'clean' | 'infected'; result: any }> {
+        const issues: string[] = [];
+        const content = buffer.toString('utf8').toLowerCase();
+
+        // 1. Check for malicious script patterns (XSS/RCE)
+        const maliciousPatterns = [
+            '<script', 'eval(', 'javascript:', 'onesuccess=', 'onerror=',
+            'powershell', 'cmd.exe', '/bin/sh', 'rm -rf', 'wget ', 'curl '
+        ];
+
+        for (const pattern of maliciousPatterns) {
+            if (content.includes(pattern)) {
+                issues.push(`Malicious pattern detected: ${pattern}`);
+            }
+        }
+
+        // 2. Magic Number Validation (Basic)
+        const header = buffer.slice(0, 4).toString('hex').toUpperCase();
+        const magicNumbers: Record<string, string[]> = {
+            'application/pdf': ['25504446'], // %PDF
+            'image/jpeg': ['FFD8FF'],
+            'image/png': ['89504E47'],
+            'image/webp': ['52494646'], // RIFF (check for WEBP later)
+        };
+
+        const expected = magicNumbers[mimeType];
+        if (expected && !expected.some(magic => header.startsWith(magic))) {
+            issues.push(`Magic number mismatch for ${mimeType}. Detected header: ${header}`);
+        }
+
+        const status = issues.length > 0 ? 'infected' : 'clean';
+        
+        return {
+            status,
+            result: {
+                scanned_at: new Date().toISOString(),
+                filename,
+                mime_type: mimeType,
+                size: buffer.length,
+                issues,
+                score: status === 'clean' ? 100 : 0
+            }
+        };
+    }
+
+    /**
+     * Upload a file from a binary buffer (used by MCP/Server-side)
+     */
+    async uploadFileFromBuffer(
+        buffer: Buffer,
+        filename: string,
+        mimeType: string,
+        tenantId: string,
+        userId: string,
+        metadata?: { tags?: string[]; category?: string; aiSummary?: string; entityType?: string; entityId?: string }
+    ): Promise<FileUploadResult> {
+        try {
+            // 1. Security Scan
+            const scan = await this.scanFile(buffer, filename, mimeType);
+            
+            // 2. Log Scan Result (Audit Trail)
+            await supabase.from('security_scans').insert({
+                tenant_id: tenantId,
+                filename,
+                file_type: mimeType,
+                score: scan.result.score,
+                grade: scan.status === 'clean' ? 'A' : 'F',
+                details: scan.result
+            });
+
+            if (scan.status === 'infected') {
+                // Log high-priority security alert
+                await auditLoggingService.logAction(
+                    'file_security_blocked',
+                    'security',
+                    tenantId,
+                    undefined,
+                    { filename, mimeType, issues: scan.result.issues }
+                );
+
+                return { 
+                    success: false, 
+                    error: `SECURITY BLOCK: This file contains potentially malicious content and has been quarantined. Issues: ${scan.result.issues.join(', ')}` 
+                };
+            }
+
+            // 3. Generate storage path
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(7);
+            const extension = filename.split('.').pop();
+            const storagePath = `${userId}/${timestamp}-${randomString}.${extension}`;
+
+            // 4. Upload to Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('uploads')
+                .upload(storagePath, buffer, {
+                    contentType: mimeType,
+                    upsert: false,
+                });
+
+            if (uploadError) {
+                console.error('Buffer upload error:', uploadError);
+                return { success: false, error: 'Failed to upload file to storage' };
+            }
+
+            // 5. Record in Database
+            const { data: fileRecord, error: dbError } = await supabase
+                .from('file_uploads')
+                .insert({
+                    user_id: userId,
+                    tenant_id: tenantId,
+                    filename: storagePath,
+                    original_filename: filename,
+                    file_type: mimeType,
+                    file_size: buffer.length,
+                    storage_path: uploadData.path,
+                    scan_status: 'clean',
+                    scan_result: scan.result,
+                    entity_type: metadata?.entityType,
+                    entity_id: metadata?.entityId,
+                    tags: metadata?.tags || [],
+                    category: metadata?.category || null,
+                    ai_summary: metadata?.aiSummary || null,
+                })
+                .select()
+                .single();
+
+            if (dbError) {
+                console.error('Database error after buffer upload:', dbError);
+                await supabase.storage.from('uploads').remove([storagePath]);
+                return { success: false, error: 'Failed to record upload in database' };
+            }
+
+            return {
+                success: true,
+                fileId: fileRecord.id,
+                url: this.getProxiedUrl('uploads', storagePath),
+                proxiedUrl: this.getProxiedUrl('uploads', storagePath),
+            };
+
+        } catch (error) {
+            console.error('uploadFileFromBuffer error:', error);
+            return { success: false, error: String(error) };
+        }
+    }
+
     async uploadFile(
         file: File,
         entityType?: string,

@@ -82,6 +82,8 @@ class EmailService {
             this.provider = 'sendgrid';
         } else if (process.env.RESEND_API_KEY) {
             this.provider = 'resend';
+        } else if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET) {
+            this.provider = 'zoho';
         } else {
             this.provider = 'resend';
         }
@@ -101,6 +103,8 @@ class EmailService {
                     return await this.sendWithResend(options);
                 case 'sendgrid':
                     return await this.sendWithSendGrid(options);
+                case 'zoho':
+                    return await this.sendWithZoho(options);
                 default:
                     throw new Error('No email provider configured');
             }
@@ -198,6 +202,33 @@ class EmailService {
     }
 
     /**
+     * Send email using Zoho Mail
+     */
+    private async sendWithZoho(options: EmailOptions & { userId?: string }) {
+        if (!options.userId) {
+            throw new Error('Zoho send requires a userId');
+        }
+
+        const result = await sendWithProviderSdk('zoho', {
+            apiKey: 'oauth', // Zoho uses OAuth, key is ignored in providerSdk if userId is present
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            userId: options.userId,
+        });
+
+        if (!result.ok) {
+            throw new Error(`Zoho error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
+    /**
      * Send email from template
      */
     async sendTemplate(
@@ -279,6 +310,39 @@ class EmailService {
                     </a>
                 `,
                 variables: ['invoice_number', 'amount', 'invoice_url'],
+            },
+            'invoice_receipt': {
+                name: 'invoice_receipt',
+                subject: 'Payment Receipt - {{invoice_number}}',
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #10B981;">Payment Confirmed ✓</h2>
+                        <p>Hi there,</p>
+                        <p>This is a formal receipt for your payment of <strong>{{amount}}</strong>.</p>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Invoice Number:</strong></td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{invoice_number}}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Payment Date:</strong></td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{payment_date}}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Amount Paid:</strong></td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; color: #10B981;">{{amount}}</td>
+                            </tr>
+                        </table>
+                        <p>You can download the full PDF receipt here:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{{receipt_url}}" style="background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                                Download Receipt
+                            </a>
+                        </div>
+                        <p style="color: #666; font-size: 12px;">Thank you for your business!</p>
+                    </div>
+                `,
+                variables: ['invoice_number', 'amount', 'payment_date', 'receipt_url'],
             },
             [EMAIL_TEMPLATES.QUOTA_WARNING]: {
                 name: 'quota_warning',
@@ -396,5 +460,53 @@ export const emailHelpers = {
             limit: limit.toString(),
             upgrade_url: upgradeUrl,
         });
+    },
+
+    /**
+     * Send payment receipt
+     */
+    async sendReceipt(
+        email: string,
+        invoiceNumber: string,
+        amount: string,
+        receiptUrl: string,
+        provider?: EmailProvider,
+        userId?: string
+    ) {
+        const template = 'invoice_receipt';
+        const variables = {
+            invoice_number: invoiceNumber,
+            amount,
+            payment_date: new Date().toLocaleDateString(),
+            receipt_url: receiptUrl,
+        };
+
+        const emailTemplate = (emailService as any).getTemplate(template);
+        if (!emailTemplate) throw new Error('Receipt template not found');
+
+        let html = emailTemplate.html;
+        let subject = emailTemplate.subject;
+        Object.entries(variables).forEach(([key, value]) => {
+            const placeholder = new RegExp(`{{${key}}}`, 'g');
+            html = html.replace(placeholder, String(value));
+            subject = subject.replace(placeholder, String(value));
+        });
+
+        const options: any = {
+            to: email,
+            subject,
+            html,
+        };
+
+        // If a specific provider is requested, temporarily override the singleton's provider
+        // or just pass it through if we update the send method
+        if (provider) {
+            (options as any).provider = provider;
+        }
+        if (userId) {
+            options.userId = userId;
+        }
+
+        return emailService.send(options);
     },
 };
