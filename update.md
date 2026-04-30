@@ -1,5 +1,17 @@
 # Update Log
 
+## Date: 2026-04-30 (MCP STREAMABLE HTTP COMPLIANCE)
+
+### Fixed
+- **MCP Transport Upgrade**: Brought `/api/mcp/sse` into full compliance with the MCP Streamable HTTP transport spec (2025-06-18):
+    - Claude.ai first POSTs an `initialize` request — this is now handled correctly, returning `InitializeResult` + `Mcp-Session-Id` response header.
+    - Subsequent requests are authenticated via `Mcp-Session-Id` header (session lookup) with `api_key` as a fallback for legacy clients.
+    - Fixed protocol header from non-standard `X-MCP-Version` to the correct `MCP-Protocol-Version`.
+    - Added `DELETE /api/mcp/sse` for proper session termination per spec.
+    - Updated CORS allow-list to include `Mcp-Session-Id` and `MCP-Protocol-Version` headers.
+- **Root Cause of ofid_ error**: Claude.ai was receiving a `404/500` on its first `initialize` POST (method not found in handler registry), triggering the "Couldn't reach MCP server" error immediately without any visible network traffic.
+
+
 ## Date: 2026-04-30 (MCP SSE HANDSHAKE HARDENING)
 
 ### Fixed
