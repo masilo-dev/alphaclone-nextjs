@@ -9,8 +9,9 @@
 - **System Email Templates**: Seeded the database with critical system templates (Daily Summary, Morning Briefing, AI Quotas).
 
 ### Fixed
-- **MCP SSE Reliability**: Hardened the SSE handshake and message handling to prevent buffering issues on Vercel.
-- **Legal Navigation**: Resolved routing issues for compliance documentation.
+- **MCP Auth Compatibility**: Updated `validateMCPAuth` to support `api_key` in query parameters, resolving 401 errors for standard MCP SSE clients.
+- **MCP SSE Post Handler**: Implemented a stateless POST handler in `/api/mcp/sse` to allow synchronous JSON-RPC execution as documented.
+- **MCP OAuth2 Token Endpoint**: Deployed a dedicated `/token` endpoint (via middleware rewrite to `/api/mcp/token`) to support OAuth2-based MCP discovery and authentication flows.
 - **Build-Time Type Safety**: Resolved unresolvable MCP SDK schema imports to ensure zero-error builds.
 
 
