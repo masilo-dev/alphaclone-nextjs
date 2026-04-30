@@ -80,6 +80,7 @@ export default function TurnstileVerification({
     const mountedRef = useRef(true);
     const lastErrorRef = useRef<string | null>(null);
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+    const [showLoadingMessage, setShowLoadingMessage] = useState(false);
     const [fatalError, setFatalError] = useState<string | null>(null);
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     const allowedHosts = (process.env.NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS || 'alphaclonesystems.com,www.alphaclonesystems.com,localhost,127.0.0.1')
@@ -108,10 +109,18 @@ export default function TurnstileVerification({
             return;
         }
 
+        const loadingTimer = setTimeout(() => {
+            if (mountedRef.current && !isScriptLoaded) {
+                setShowLoadingMessage(true);
+            }
+        }, 2000);
+
         ensureTurnstileScript()
             .then(() => {
                 if (mountedRef.current) {
                     setIsScriptLoaded(true);
+                    clearTimeout(loadingTimer);
+                    setShowLoadingMessage(false);
                 }
             })
             .catch((error) => {
@@ -214,7 +223,12 @@ export default function TurnstileVerification({
     }
 
     return (
-        <div className="w-full flex justify-center py-2 min-h-[65px]">
+        <div className="w-full flex flex-col items-center justify-center py-2 min-h-[65px]">
+            {showLoadingMessage && !widgetIdRef.current && (
+                <div className="text-[10px] text-slate-500 animate-pulse mb-2">
+                    Verifying secure connection...
+                </div>
+            )}
             <div ref={containerRef} />
         </div>
     );

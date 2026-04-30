@@ -6,6 +6,7 @@ import {
 } from '@/lib/email/platformTemplateEmail';
 import { describeMissingVersusHigherPlans, pricingUpgradeUrl } from '@/config/aiLeadQuotas';
 import { getAiLeadQuotaStatus } from '@/lib/quotas/aiLeadGenerationQuota';
+import { getDailyMotivation } from './generateDailyMotivation';
 
 type ProfileRow = {
     id: string;
@@ -109,6 +110,9 @@ export async function runMorningBriefingEmails(): Promise<{
         const improvements =
             'Tighten follow-up on warm leads, update deal stages for accuracy, and schedule outreach for stalled opportunities.';
 
+        const motivationObj = getDailyMotivation();
+        const motivation = `"${motivationObj.quote}" — ${motivationObj.author}`;
+
         let sentThisProfile = 0;
 
         if (prefs.briefing) {
@@ -121,6 +125,7 @@ export async function runMorningBriefingEmails(): Promise<{
                     summaryDate,
                     todayFocus,
                     improvements,
+                    motivation,
                 },
                 credentialUserId: raw.id,
                 templateAllowlist: SYSTEM_PLATFORM_TEMPLATES,

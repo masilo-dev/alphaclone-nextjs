@@ -114,7 +114,20 @@ export async function POST(req: NextRequest) {
                 );
                 const leadData = await leadRes.json();
 
-                if (!leadData.id) continue;
+                if (!leadRes.ok || !leadData.id) {
+                    console.error('[Facebook Leads Webhook] Failed to fetch lead data:', leadData);
+                    
+                    // Log the error to the integration record for visibility
+                    await supabaseAdmin.from('facebook_integrations').update({
+                        metadata: {
+                            last_webhook_error: leadData.error?.message || 'Failed to fetch lead data',
+                            last_webhook_error_at: new Date().toISOString(),
+                            last_webhook_error_id: leadgenId
+                        }
+                    }).eq('page_id', pageId);
+                    
+                    continue;
+                }
 
                 // Parse field_data into named fields
                 const fields: Record<string, string> = {};
@@ -160,6 +173,15 @@ export async function POST(req: NextRequest) {
                     console.error('[Facebook Leads Webhook] Failed to upsert facebook_lead:', fbLeadError);
                     continue;
                 }
+
+                // Update last success timestamp on integration
+                await supabaseAdmin.from('facebook_integrations').update({
+                    updated_at: new Date().toISOString(),
+                    metadata: {
+                        last_sync_at: new Date().toISOString(),
+                        last_sync_status: 'success'
+                    }
+                }).eq('page_id', pageId);
 
                 // Auto-create a lead in the main leads table
                 if (fbLead && (email || phone || firstName)) {

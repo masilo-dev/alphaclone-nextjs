@@ -1,5 +1,31 @@
 # Update Log
 
+## Date: 2026-04-30 (LEGAL & MCP DISCOVERY HARDENING)
+
+### Added
+- **Legal Compliance Pages**: Deployed dedicated `SLA` and `DPA` legal pages with integrated navigation for enterprise-grade transparency.
+- **MCP Discovery Endpoints**: Implemented stateless discovery endpoints (`/api/mcp/tools`, `/api/mcp/resources`, `/api/mcp/prompts`) for better compatibility with external AI agents.
+- **Daily Motivation Service**: Added automated motivation generation for daily workspace engagement.
+- **System Email Templates**: Seeded the database with critical system templates (Daily Summary, Morning Briefing, AI Quotas).
+
+### Fixed
+- **MCP SSE Reliability**: Hardened the SSE handshake and message handling to prevent buffering issues on Vercel.
+- **Legal Navigation**: Resolved routing issues for compliance documentation.
+- **Build-Time Type Safety**: Resolved unresolvable MCP SDK schema imports to ensure zero-error builds.
+
+
+## Date: 2026-04-30 (FINANCIAL & SOCIAL INTEGRATION HARDENING)
+
+### Added
+- **Workspace Document Persistence**: Added "Save to Workspace" functionality to the Receipt Generator, allowing instant archival of professional financial documents into the `business_invoices` table.
+- **Facebook Token Health Checks**: Implemented proactive token validation in `facebookService` to detect expiring or invalid credentials before they cause integration failures.
+- **Integration Error Dashboarding**: Added real-time error logging for Facebook Graph API failures, surfacing detailed diagnostic data (last error, error codes) directly to the integration records.
+- **Memory-Safe Security Scanning**: Optimized `FileUploadService` to prevent runtime crashes by implementing a chunk-based, MIME-aware scanning strategy for large binary files.
+
+### Fixed
+- **Receipt Workflow Completion**: Resolved the missing persistence trigger in the Receipt Generator UI, enabling full end-to-end archival workflows.
+- **Facebook Webhook Diagnostics**: Hardened the leads webhook handler with better error capture, logging Graph API failures to the database for easier troubleshooting.
+
 ## Date: 2026-04-30 (SECURITY & FINANCIAL HARDENING)
 
 ### Added

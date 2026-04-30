@@ -10,6 +10,7 @@ export const SYSTEM_PLATFORM_TEMPLATES = new Set([
     'Stay In Touch',
     'Morning Briefing',
     'AI and Leads Status',
+    'Daily Motivation',
 ]);
 
 export type PlatformTemplateEmailResult = {

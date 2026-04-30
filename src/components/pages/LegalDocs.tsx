@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle } from 'lucide-react';
+import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle, Clock, Users } from 'lucide-react';
 import PublicNavigation from '@/components/PublicNavigation';
 
 // ---------------------------------------------------------------------------
@@ -233,6 +233,7 @@ export function PrivacyPolicy() {
                         { p: 'Supabase (US)', pu: 'Database & authentication', d: 'All platform data (encrypted at rest)' },
                         { p: 'Stripe, Inc. (US)', pu: 'Payment processing', d: 'Email, billing address, Stripe customer ID' },
                         { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in', d: 'Google account OAuth token, email actions only' },
+                        { p: 'Cloudflare, Inc. (US)', pu: 'Bot protection & security (Turnstile)', d: 'IP address, browser metadata, telemetry' },
                         { p: 'Vercel, Inc. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
                         { p: 'Resend / SendGrid', pu: 'Transactional email delivery', d: 'Email address, email content (transactional only)' },
                         { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
@@ -511,6 +512,7 @@ const cookieCategories = [
          { name: 'sb-[project]-auth-token', purpose: 'Supabase authentication session token. Keeps you logged in.', duration: 'Session / 1 year (refreshed)', party: 'First party' },
          { name: 'sb-[project]-auth-token.0 / .1', purpose: 'Chunked auth token for large session payloads.', duration: 'Session', party: 'First party' },
          { name: 'next-auth.csrf-token', purpose: 'CSRF protection for form submissions.', duration: 'Session', party: 'First party' },
+         { name: 'cf_clearance, cf_bm', purpose: 'Cloudflare Turnstile security tokens. Protects forms from bots and spam.', duration: 'Session / 1 year', party: 'Cloudflare, Inc.' },
          { name: 'cookieConsent', purpose: 'Stores your cookie consent preferences to avoid re-prompting.', duration: '1 year', party: 'First party' },
       ]
    },
@@ -692,4 +694,46 @@ export function CookiePolicy() {
          </Section>
       </LegalLayout>
    );
+}
+
+export function SLA() {
+    return (
+        <LegalLayout
+            title="Service Level Agreement (SLA)"
+            subtitle="Our commitment to service availability and support response times."
+            lastUpdated="April 30, 2026"
+            icon={Clock}
+            color="indigo"
+        >
+            <Section id="availability" title="1. Service Availability">
+                <p>AlphaClone Systems targets a 99.9% uptime for all core platform services, including CRM, Billing, and API access.</p>
+            </Section>
+            <Section id="support" title="2. Support Response Times">
+                <BulletList items={[
+                    'P0 (Critical): 4 hours',
+                    'P1 (High): 12 hours',
+                    'P2 (Normal): 48 hours',
+                ]} />
+            </Section>
+        </LegalLayout>
+    );
+}
+
+export function DPA() {
+    return (
+        <LegalLayout
+            title="Data Processing Agreement (DPA)"
+            subtitle="Governance for the processing of personal data on behalf of our customers."
+            lastUpdated="April 30, 2026"
+            icon={Users}
+            color="blue"
+        >
+            <Section id="roles" title="1. Roles & Responsibilities">
+                <p>AlphaClone acts as a <strong>Data Processor</strong> for the Customer\'s business data, and as a <strong>Data Controller</strong> for account administration data.</p>
+            </Section>
+            <Section id="subprocessors" title="2. Sub-processors">
+                <p>Our sub-processors include Supabase, Stripe, Cloudflare, and Vercel. All data is processed in accordance with GDPR and relevant international standards.</p>
+            </Section>
+        </LegalLayout>
+    );
 }

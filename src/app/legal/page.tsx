@@ -59,6 +59,16 @@ const legalPages = [
     href: '/compliance',
     description: 'Governance and compliance model for business and enterprise use.',
   },
+  {
+    title: 'Service Level Agreement',
+    href: '/sla',
+    description: 'Commitment to platform uptime and support response times.',
+  },
+  {
+    title: 'Data Processing Agreement',
+    href: '/dpa',
+    description: 'Legal framework for data processing and sub-processor management.',
+  },
 ];
 
 export default function LegalHubPage() {
