@@ -147,6 +147,15 @@ export async function middleware(request: NextRequest) {
         return applyRequiredOwaspHeaders(NextResponse.rewrite(url));
     }
 
+    /**
+     * MCP OAuth2 Token Rewrite
+     */
+    if (pathname === '/token') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/api/mcp/token';
+        return applyRequiredOwaspHeaders(NextResponse.rewrite(url));
+    }
+
     const response = await updateSession(request);
     
     // Bypass security headers for MCP routes to prevent interference with SSE streaming.

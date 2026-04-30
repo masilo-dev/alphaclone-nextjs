@@ -60,5 +60,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
+  // 3. POST: Stateless Synchronous Execution (fallback/unified endpoint)
+  if (req.method === 'POST') {
+    try {
+      const mcpServer = createMCPServer({
+        tenantId: tenant_id,
+        userId: user_id,
+        clientLabel: req.headers['x-client-label'] as string || 'mcp-sse-post',
+      });
+
+      let requestBody = req.body;
+      if (typeof requestBody === 'string') {
+        try {
+          requestBody = JSON.parse(requestBody);
+        } catch (e) {
+          console.error('[MCP SSE POST] Body parse failed:', e);
+        }
+      }
+      
+      if (!requestBody || typeof requestBody !== 'object' || !requestBody.method) {
+        return res.status(400).json({
+          jsonrpc: '2.0',
+          error: { code: -32600, message: 'Invalid Request' },
+          id: requestBody?.id || null
+        });
+      }
+
+      const method = requestBody.method;
+      const handlers = (mcpServer.server as any)._requestHandlers;
+      const handler = handlers ? handlers.get(method) : null;
+
+      if (!handler) {
+        return res.status(404).json({
+          jsonrpc: '2.0',
+          error: { code: -32601, message: `Method not found: ${method}` },
+          id: requestBody.id || null
+        });
+      }
+
+      const result = await handler(requestBody);
+      
+      return res.status(200).json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result
+      });
+    } catch (err) {
+      console.error('[MCP SSE POST] Execution failed:', err);
+      return res.status(500).json({
+        jsonrpc: '2.0',
+        error: { code: -32603, message: 'Internal Server Error' },
+        id: req.body?.id || null
+      });
+    }
+  }
+
   return res.status(405).json({ error: 'Method Not Allowed' });
 }

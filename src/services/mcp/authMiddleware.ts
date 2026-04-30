@@ -4,9 +4,9 @@ import { ENV } from '../../config/env';
 
 export async function validateMCPAuth(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers['authorization'];
-  let api_key = req.headers['x-api-key'] as string | undefined;
+  let api_key = (req.headers['x-api-key'] as string) || (req.query.api_key as string);
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (!api_key && authHeader && authHeader.startsWith('Bearer ')) {
     api_key = authHeader.substring(7);
   }
 
