@@ -20,7 +20,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { routeAIRequest } from '@/services/aiRouter';
 import { googlePlacesService } from '@/services/googlePlacesService';
-import { ENV } from '../../../../config/env';
+import { ENV } from '@/config/env';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
