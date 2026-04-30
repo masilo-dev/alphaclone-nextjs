@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
-import { X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, Sparkles, Trash2, Mail, User, CreditCard } from 'lucide-react';
+import { X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, Sparkles, Trash2, Mail, User, CreditCard, Save } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -747,6 +747,15 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                     </Button>
                     <Button
                         variant="secondary"
+                        onClick={handleSaveAndFinalize}
+                        disabled={isSaving || !receiptData.clientName}
+                        isLoading={isSaving}
+                        icon={<Save className="w-4 h-4" />}
+                    >
+                        Save to Workspace
+                    </Button>
+                    <Button
+                        variant="ghost"
                         onClick={handleSaveToDrive}
                         disabled={isSavingToDrive || !receiptData.clientName}
                         isLoading={isSavingToDrive}

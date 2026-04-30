@@ -12,7 +12,6 @@ import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
 import { SITE_URL } from "@/lib/siteUrl";
-import SupportChatWidget from "@/components/common/SupportChatWidget";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -140,6 +139,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://challenges.cloudflare.com" />
+        <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <Script src="/lockdown-install.js?v=5" strategy="beforeInteractive" />
       </head>
       <body
@@ -172,7 +173,6 @@ export default function RootLayout({
           <CookieConsent />
         </Providers>
         <ConsentAwareAnalytics />
-        <SupportChatWidget />
       </body>
     </html>
   );

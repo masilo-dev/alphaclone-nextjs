@@ -74,9 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
-  const sessionId = (req.query.sessionId as string) || (req.headers['mcp-session-id'] as string);
+  const sessionId = req.headers['mcp-session-id'] as string;
   if (!sessionId) {
-    return res.status(400).json({ error: 'Missing sessionId' });
+    return res.status(400).json({ error: 'Missing mcp-session-id header' });
   }
 
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {

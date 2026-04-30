@@ -138,17 +138,29 @@ class FileUploadService {
      */
     async scanFile(buffer: Buffer, filename: string, mimeType: string): Promise<{ status: 'clean' | 'infected'; result: any }> {
         const issues: string[] = [];
-        const content = buffer.toString('utf8').toLowerCase();
-
+        
         // 1. Check for malicious script patterns (XSS/RCE)
-        const maliciousPatterns = [
-            '<script', 'eval(', 'javascript:', 'onesuccess=', 'onerror=',
-            'powershell', 'cmd.exe', '/bin/sh', 'rm -rf', 'wget ', 'curl '
-        ];
+        // Only perform string-based scanning for text-like files to save memory
+        const isTextLike = mimeType.includes('text') || 
+                          mimeType.includes('json') || 
+                          mimeType.includes('xml') || 
+                          mimeType.includes('javascript') ||
+                          mimeType.includes('html');
 
-        for (const pattern of maliciousPatterns) {
-            if (content.includes(pattern)) {
-                issues.push(`Malicious pattern detected: ${pattern}`);
+        if (isTextLike || buffer.length < 1024 * 1024) { // Scan if text-like or small (<1MB)
+            // Limit string conversion to first 2MB to prevent memory overflow
+            const scanLimit = 2 * 1024 * 1024;
+            const content = buffer.slice(0, scanLimit).toString('utf8').toLowerCase();
+            
+            const maliciousPatterns = [
+                '<script', 'eval(', 'javascript:', 'onesuccess=', 'onerror=',
+                'powershell', 'cmd.exe', '/bin/sh', 'rm -rf', 'wget ', 'curl '
+            ];
+
+            for (const pattern of maliciousPatterns) {
+                if (content.includes(pattern)) {
+                    issues.push(`Malicious pattern detected: ${pattern}`);
+                }
             }
         }
 
@@ -176,7 +188,8 @@ class FileUploadService {
                 mime_type: mimeType,
                 size: buffer.length,
                 issues,
-                score: status === 'clean' ? 100 : 0
+                score: status === 'clean' ? 100 : 0,
+                memory_optimized: true
             }
         };
     }
