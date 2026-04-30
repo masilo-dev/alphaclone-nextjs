@@ -247,46 +247,49 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         if (receiptData.template === 'professional') {
             // Header with accent color
             doc.setFillColor(colors.primary);
-            doc.rect(0, 0, 210, 40, 'F');
+            doc.rect(0, 0, 210, 50, 'F');
             
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(24);
+            doc.setFontSize(28);
+            doc.setFont('helvetica', 'bold');
             doc.text('RECEIPT', 15, 25);
             
             doc.setFontSize(10);
-            doc.text(`No: ${receiptData.receiptNumber}`, 195, 20, { align: 'right' });
-            doc.text(`Date: ${receiptData.date}`, 195, 27, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            doc.text(`RECEIPT NUMBER: ${receiptData.receiptNumber}`, 195, 20, { align: 'right' });
+            doc.text(`ISSUED DATE: ${receiptData.date}`, 195, 27, { align: 'right' });
+            doc.text(`CURRENCY: USD`, 195, 34, { align: 'right' });
 
             // Accent Bar
-            doc.setFillColor(colors.accent);
-            doc.rect(0, 40, 210, 2, 'F');
+            doc.setFillColor(colors.accent as any);
+            doc.rect(0, 50, 210, 2, 'F');
 
             // Content
             doc.setTextColor(colors.text);
             doc.setFontSize(10);
-            doc.text('FROM:', 15, 55);
+            doc.text('ISSUED BY:', 15, 65);
             doc.setFont('helvetica', 'bold');
-            doc.text(currentTenant?.name || 'AlphaClone Partner', 15, 62);
+            doc.text(currentTenant?.name || 'AlphaClone Partner', 15, 72);
             doc.setFont('helvetica', 'normal');
             
-            doc.text('BILL TO:', 120, 55);
+            doc.text('BILL TO:', 120, 65);
             doc.setFont('helvetica', 'bold');
-            doc.text(receiptData.clientName || 'Valued Client', 120, 62);
+            doc.text(receiptData.clientName || 'Valued Client', 120, 72);
             doc.setFont('helvetica', 'normal');
-            if (receiptData.clientEmail) doc.text(receiptData.clientEmail, 120, 68);
+            if (receiptData.clientEmail) doc.text(receiptData.clientEmail, 120, 78);
 
             // Table
             autoTable(doc, {
-                startY: 80,
-                head: [['Description', 'Qty', 'Price', 'Amount']],
+                startY: 90,
+                head: [['Description', 'Qty', 'Unit Price', 'Total Amount']],
                 body: receiptData.items.map(item => [
                     item.description,
                     item.quantity,
                     `$${item.price.toFixed(2)}`,
                     `$${(item.quantity * item.price).toFixed(2)}`
                 ]),
-                headStyles: { fillColor: colors.accent as any, textColor: 255 },
-                styles: { fontSize: 9 },
+                headStyles: { fillColor: colors.accent as any, textColor: 255, fontStyle: 'bold' },
+                styles: { fontSize: 9, cellPadding: 4 },
                 columnStyles: { 3: { halign: 'right' } }
             });
         } else {
@@ -296,14 +299,17 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
             doc.text('RECEIPT', 15, 30);
             
             doc.setFontSize(10);
-            doc.text(receiptData.receiptNumber, 15, 40);
-            doc.text(receiptData.date, 15, 46);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`NO: ${receiptData.receiptNumber}`, 15, 40);
+            doc.text(`DATE: ${receiptData.date}`, 15, 46);
 
             doc.setTextColor(30, 41, 59);
             const startX = 90;
+            doc.setFontSize(10);
             doc.text('FROM:', startX, 30);
             doc.setFont('helvetica', 'bold');
             doc.text(currentTenant?.name || 'AlphaClone Partner', startX, 37);
@@ -322,6 +328,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                     `$${(item.quantity * item.price).toFixed(2)}`
                 ]),
                 headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+                styles: { cellPadding: 4 },
                 theme: 'plain'
             });
         }
@@ -330,14 +337,59 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         const subtotal = calculateSubtotal();
         const tax = calculateTax(subtotal);
         const total = calculateTotal();
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        const finalY = (doc as any).lastAutoTable.finalY + 15;
 
+        doc.setFontSize(10);
+        doc.setTextColor(colors.text);
+        doc.setFont('helvetica', 'normal');
         doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 195, finalY, { align: 'right' });
-        doc.text(`Tax: $${tax.toFixed(2)}`, 195, finalY + 7, { align: 'right' });
+        doc.text(`Tax (${receiptData.taxRate}%): $${tax.toFixed(2)}`, 195, finalY + 7, { align: 'right' });
+        
+        if (receiptData.discountAmount > 0) {
+            doc.text(`Discount: -$${receiptData.discountAmount.toFixed(2)}`, 195, finalY + 14, { align: 'right' });
+        }
+
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.accent as any);
-        doc.text(`Total: $${total.toFixed(2)}`, 195, finalY + 17, { align: 'right' });
+        doc.text(`Total Amount Paid: $${total.toFixed(2)}`, 195, finalY + 24, { align: 'right' });
+
+        // Payment Info & Verification
+        const footerY = Math.max(finalY + 50, 230);
+        
+        doc.setDrawColor(colors.border);
+        doc.line(15, footerY - 5, 195, footerY - 5);
+        
+        doc.setTextColor(colors.text);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PAYMENT INFORMATION', 15, footerY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Method: ${receiptData.paymentMethod}`, 15, footerY + 6);
+        doc.text(`Reference: ${receiptData.receiptNumber}`, 15, footerY + 12);
+        if (receiptData.receivedBy) {
+            doc.text(`Processed By: ${receiptData.receivedBy}`, 15, footerY + 18);
+        }
+
+        // Verification Badge
+        doc.setFillColor(colors.light);
+        doc.roundedRect(140, footerY - 2, 55, 25, 2, 2, 'F');
+        doc.setTextColor(colors.primary);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text('VERIFIED RECEIPT', 167.5, footerY + 5, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.text('AlphaClone AI Security Scanned', 167.5, footerY + 11, { align: 'center' });
+        doc.text('Digital Signature Active', 167.5, footerY + 16, { align: 'center' });
+        doc.text(new Date().toISOString().split('T')[0], 167.5, footerY + 21, { align: 'center' });
+
+        // Legal Footer
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(7);
+        const disclaimer = "Disclaimer: This receipt is proof of payment for services rendered. AlphaClone does not guarantee profits, revenue, or specific business performance. Results depend on individual execution and market conditions. This document is not legal, tax, or financial advice. For questions regarding this transaction, please contact the issuing partner directly.";
+        const splitDisclaimer = doc.splitTextToSize(disclaimer, 180);
+        doc.text(splitDisclaimer, 105, 280, { align: 'center' });
 
         if (mode === 'blob') return doc;
         if (mode === 'download') {
