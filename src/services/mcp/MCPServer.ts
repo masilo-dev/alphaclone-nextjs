@@ -36,6 +36,9 @@ import {
 } from '../automation/runtimeService';
 import { getAutomationFailureReport, getAutomationHealth, getAutomationThroughputReport, reconcileOutreachVsLogs } from '../automation/observabilityService';
 import { listBuiltInPlaybooks } from '../automation/playbookService';
+import { emailHelpers } from '../email/emailService';
+import { businessInvoiceService } from '../businessInvoiceService';
+import { fileUploadService } from '../fileUploadService';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -968,6 +971,20 @@ class AlphaCloneMCPServer {
           },
         },
         {
+          name: 'send_receipt',
+          description: 'Send a formal payment receipt for a paid invoice using the specified email provider (Brevo, Resend, Zoho, or SendGrid).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              invoice_id: { type: 'string', description: 'UUID of the PAID invoice' },
+              recipient_email: { type: 'string', description: 'Optional override email for recipient' },
+              provider: { type: 'string', enum: ['brevo', 'resend', 'zoho', 'sendgrid'], description: 'Preferred email provider for this send' }
+            },
+            required: ['invoice_id'],
+          },
+        },
+        {
           name: 'create_bulk_email_campaign',
           description: 'Draft and optionally send a personalized bulk email campaign using connected providers (SendGrid, Resend, Brevo, Zoho Mail, Gmail) with optional daily-limit balancing.',
           inputSchema: {
@@ -1040,6 +1057,24 @@ class AlphaCloneMCPServer {
               tags: { type: 'array', items: { type: 'string' } },
             },
             required: ['file_name', 'mime_type', 'file_base64'],
+          },
+        },
+        {
+          name: 'upload_document',
+          description: 'Upload a document or file (PDF, Docx, Text) into the workspace document management system. Includes automated cyber-security scanning.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              tenant_id: { type: 'string' },
+              filename: { type: 'string', description: 'Original file name with extension' },
+              mime_type: { type: 'string', description: 'MIME type such as application/pdf' },
+              file_base64: { type: 'string', description: 'Raw base64 string or data URL (data:*;base64,...)' },
+              category: { type: 'string', description: 'Optional category (e.g. "Invoice", "Contract")' },
+              tags: { type: 'array', items: { type: 'string' } },
+              entity_type: { type: 'string', description: 'Optional entity type (e.g. "client", "lead")' },
+              entity_id: { type: 'string', description: 'Optional entity UUID' },
+            },
+            required: ['filename', 'mime_type', 'file_base64'],
           },
         },
         {
@@ -3463,6 +3498,44 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'upload_document': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { filename, mime_type, file_base64, category, tags = [], entity_type, entity_id } = a;
+          
+          if (typeof filename !== 'string' || !filename.trim()) throw new Error('filename is required');
+          if (typeof mime_type !== 'string' || !mime_type.trim()) throw new Error('mime_type is required');
+          if (typeof file_base64 !== 'string' || !file_base64.trim()) throw new Error('file_base64 is required');
+
+          const normalizedBase64 = file_base64.includes('base64,')
+            ? file_base64.split('base64,')[1]
+            : file_base64;
+          const binary = Buffer.from(normalizedBase64, 'base64');
+          if (!binary.length) throw new Error('file_base64 is invalid or empty');
+
+          const uploadRes = await fileUploadService.uploadFileFromBuffer(
+            binary,
+            filename.trim(),
+            mime_type.trim(),
+            tenant_id,
+            user_id,
+            {
+                category: typeof category === 'string' ? category : undefined,
+                tags: Array.isArray(tags) ? tags : [],
+                entityType: typeof entity_type === 'string' ? entity_type : undefined,
+                entityId: typeof entity_id === 'string' ? entity_id : undefined
+            }
+          );
+
+          if (!uploadRes.success) {
+            throw new Error(uploadRes.error || 'Failed to upload document');
+          }
+
+          result = { content: [{ type: 'text', text: `Document uploaded and secured: ${JSON.stringify(uploadRes)}` }] };
+          break;
+        }
+
         case 'get_facebook_identities': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -4195,6 +4268,48 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw supabaseErrorToMcpClientError('send_invoice', error.message);
           result = { content: [{ type: 'text', text: `Invoice marked as sent: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        case 'send_receipt': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { invoice_id, recipient_email, provider } = a;
+          if (!isUuidString(invoice_id)) {
+            throw new Error('invoice_id must be a valid invoice UUID');
+          }
+
+          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id);
+          if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
+
+          if (invoice.status !== 'paid') {
+            throw new Error(`Cannot send receipt for invoice in '${invoice.status}' status. Invoice must be 'paid'.`);
+          }
+
+          const to = recipient_email || invoice.client?.email;
+          if (!to) throw new Error('Recipient email is required (not found on client record)');
+
+          const amount = `${invoice.currency || '$'}${invoice.total}`;
+          const receiptUrl = `${process.env.NEXT_PUBLIC_APP_URL}/public/receipt/${invoice.id}`;
+
+          const sendResult = await emailHelpers.sendReceipt(
+            to,
+            invoice.invoice_number,
+            amount,
+            receiptUrl,
+            provider,
+            user_id
+          );
+
+          if (!sendResult.success) throw new Error(`Failed to send receipt: ${sendResult.error}`);
+
+          result = {
+            content: [{
+              type: 'text',
+              text: `Receipt for invoice ${invoice.invoice_number} sent successfully to ${to} via ${provider || 'default provider'}.`,
+            }],
+          };
           break;
         }
 

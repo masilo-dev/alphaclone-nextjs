@@ -66,18 +66,6 @@ const nextConfig: NextConfig = {
     config.output.chunkLoadTimeout = 180000;
     return config;
   },
-  async rewrites() {
-    return [
-      {
-        source: '/.well-known/oauth-authorization-server',
-        destination: '/api/.well-known/oauth-authorization-server',
-      },
-      {
-        source: '/.well-known/oauth-protected-resource/:path*',
-        destination: '/api/.well-known/oauth-protected-resource/:path*',
-      },
-    ];
-  },
 
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
