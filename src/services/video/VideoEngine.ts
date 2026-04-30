@@ -432,6 +432,54 @@ export class VideoEngine {
     }
 
     /**
+     * Set Audio Input Device
+     */
+    async setAudioDevice(deviceId: string): Promise<void> {
+        if (!this.callObject) throw new Error('VideoEngine not initialized');
+        try {
+            await this.callObject.setInputDevicesAsync({ audioDeviceId: deviceId });
+        } catch (error) {
+            throw this.normalizeError(error);
+        }
+    }
+
+    /**
+     * Set Video Input Device
+     */
+    async setVideoDevice(deviceId: string): Promise<void> {
+        if (!this.callObject) throw new Error('VideoEngine not initialized');
+        try {
+            await this.callObject.setInputDevicesAsync({ videoDeviceId: deviceId });
+        } catch (error) {
+            throw this.normalizeError(error);
+        }
+    }
+
+    /**
+     * Start Recording
+     */
+    async startRecording(): Promise<void> {
+        if (!this.callObject || this.state !== 'joined') throw new Error('Cannot start recording: not in call');
+        try {
+            this.callObject.startRecording();
+        } catch (error) {
+            throw this.normalizeError(error);
+        }
+    }
+
+    /**
+     * Stop Recording
+     */
+    async stopRecording(): Promise<void> {
+        if (!this.callObject || this.state !== 'joined') throw new Error('Cannot stop recording: not in call');
+        try {
+            this.callObject.stopRecording();
+        } catch (error) {
+            throw this.normalizeError(error);
+        }
+    }
+
+    /**
      * Get participants
      */
     getParticipants() {

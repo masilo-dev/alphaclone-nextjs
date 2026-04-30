@@ -29,6 +29,7 @@ export interface UseVideoPlatformResult {
     isAudioEnabled: boolean;
     isVideoEnabled: boolean;
     isScreenSharing: boolean;
+    isRecording: boolean;
     participants: ParticipantMediaState[];
     localParticipant: ParticipantMediaState | null;
     remoteParticipants: ParticipantMediaState[];
@@ -47,6 +48,11 @@ export interface UseVideoPlatformResult {
     muteParticipant: (sessionId: string) => Promise<void>;
     removeParticipant: (sessionId: string) => Promise<void>;
     startCamera: () => Promise<void>;
+    setAudioDevice: (deviceId: string) => Promise<void>;
+    setVideoDevice: (deviceId: string) => Promise<void>;
+    startRecording: () => Promise<void>;
+    stopRecording: () => Promise<void>;
+    setRoomLocked: (locked: boolean) => Promise<void>;
 
     // Config
     config: VideoConfiguration;
@@ -65,6 +71,7 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         isAudioEnabled: true,
         isVideoEnabled: true,
         isScreenSharing: false,
+        isRecording: false,
         participants: new Map(),
         localSessionId: null,
     });
@@ -326,6 +333,66 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         }
     }, []);
 
+    const setAudioDevice = useCallback(async (deviceId: string) => {
+        const platform = platformRef.current;
+        if (!platform) return;
+
+        try {
+            setError(null);
+            await platform.setAudioDevice(deviceId);
+        } catch (err: any) {
+            setError(err);
+        }
+    }, []);
+
+    const setVideoDevice = useCallback(async (deviceId: string) => {
+        const platform = platformRef.current;
+        if (!platform) return;
+
+        try {
+            setError(null);
+            await platform.setVideoDevice(deviceId);
+        } catch (err: any) {
+            setError(err);
+        }
+    }, []);
+
+    const startRecording = useCallback(async () => {
+        const platform = platformRef.current;
+        if (!platform) return;
+
+        try {
+            setError(null);
+            await platform.startRecording();
+        } catch (err: any) {
+            setError(err);
+        }
+    }, []);
+
+    const stopRecording = useCallback(async () => {
+        const platform = platformRef.current;
+        if (!platform) return;
+
+        try {
+            setError(null);
+            await platform.stopRecording();
+        } catch (err: any) {
+            setError(err);
+        }
+    }, []);
+
+    const setRoomLocked = useCallback(async (locked: boolean) => {
+        const platform = platformRef.current;
+        if (!platform) return;
+
+        try {
+            setError(null);
+            await platform.getEngine().setRoomLocked(locked);
+        } catch (err: any) {
+            setError(err);
+        }
+    }, []);
+
     // Memoize participant arrays to prevent unnecessary re-renders (prevents Error 310)
     const participants = useMemo(() => {
         return Array.from(mediaState.participants.values());
@@ -361,6 +428,7 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         isAudioEnabled: mediaState.isAudioEnabled,
         isVideoEnabled: mediaState.isVideoEnabled,
         isScreenSharing: mediaState.isScreenSharing,
+        isRecording: mediaState.isRecording,
         participants,
         localParticipant,
         remoteParticipants,
@@ -379,6 +447,11 @@ export function useVideoPlatform(): UseVideoPlatformResult {
         sendChatMessage,
         muteParticipant,
         removeParticipant,
+        setAudioDevice,
+        setVideoDevice,
+        startRecording,
+        stopRecording,
+        setRoomLocked,
 
         // Config
         config: videoConfig,

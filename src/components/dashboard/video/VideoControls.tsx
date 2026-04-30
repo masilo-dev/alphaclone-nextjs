@@ -12,7 +12,10 @@ import {
     Copy,
     Check,
     MessageCircle,
-    MoreHorizontal
+    MoreHorizontal,
+    Disc,
+    Lock,
+    Unlock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -29,9 +32,12 @@ interface VideoControlsProps {
     onToggleSettings?: () => void;
     onEndForAll?: (() => void | Promise<void>) | undefined;
     isAdmin?: boolean;
-    roomUrl?: string;
     callId?: string;
     unreadMessageCount?: number;
+    isRecording?: boolean;
+    isLocked?: boolean;
+    onToggleRecord?: () => void;
+    onToggleLock?: () => void;
 }
 
 interface ControlButtonProps {
@@ -105,12 +111,14 @@ const VideoControls: React.FC<VideoControlsProps> = ({
     onToggleParticipants,
     onToggleChat,
     onToggleSettings,
-    onEndForAll,
-
     isAdmin = false,
     roomUrl,
     callId,
-    unreadMessageCount = 0
+    unreadMessageCount = 0,
+    isRecording = false,
+    isLocked = false,
+    onToggleRecord,
+    onToggleLock
 }) => {
     const [copied, setCopied] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -187,6 +195,24 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                                 label="Settings"
                             />
                         )}
+                        {isAdmin && onToggleLock && (
+                            <ControlButton
+                                onClick={() => { onToggleLock(); setShowMoreActions(false); }}
+                                active={isLocked}
+                                icon={Unlock}
+                                activeIcon={Lock}
+                                label={isLocked ? "Unlock" : "Lock"}
+                            />
+                        )}
+                        {isAdmin && onToggleRecord && (
+                            <ControlButton
+                                onClick={() => { onToggleRecord(); setShowMoreActions(false); }}
+                                active={isRecording}
+                                icon={Disc}
+                                activeIcon={Disc}
+                                label={isRecording ? "Stop Rec" : "Record"}
+                            />
+                        )}
                         <ControlButton
                             onClick={handleCopyLink}
                             icon={copied ? Check : Copy}
@@ -255,6 +281,24 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                                         onClick={onToggleParticipants}
                                         icon={Users}
                                         label="Users"
+                                    />
+                                )}
+                                {isAdmin && onToggleLock && (
+                                    <ControlButton
+                                        onClick={onToggleLock}
+                                        active={isLocked}
+                                        icon={Unlock}
+                                        activeIcon={Lock}
+                                        label={isLocked ? "Unlock" : "Lock"}
+                                    />
+                                )}
+                                {isAdmin && onToggleRecord && (
+                                    <ControlButton
+                                        onClick={onToggleRecord}
+                                        active={isRecording}
+                                        icon={Disc}
+                                        activeIcon={Disc}
+                                        label={isRecording ? "Stop Rec" : "Record"}
                                     />
                                 )}
                                 {onToggleSettings && (

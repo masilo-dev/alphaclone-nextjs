@@ -27,7 +27,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   return res.status(200).json({
     issuer: baseUrl,
-    authorization_endpoint: `${baseUrl}/api/mcp/authorize`,
+    authorization_endpoint: `${baseUrl}/authorize`,
     token_endpoint: `${baseUrl}/api/mcp/token`,
     registration_endpoint: `${baseUrl}/api/mcp/register`,
     response_types_supported: ['code'],
