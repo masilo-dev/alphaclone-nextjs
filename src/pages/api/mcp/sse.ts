@@ -109,28 +109,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         clientLabel: 'manus-mcp-cli',
       });
 
-      // Process the request synchronously using the server's internal logic
-      // This bypasses the need for a persistent transport during this request
-      const request = req.body;
+      // 1. Robust Body Parsing
+      // Next.js bodyParser handles JSON, but we guard against malformed or unparsed strings
+      let request = req.body;
+      if (typeof request === 'string') {
+        try {
+          request = JSON.parse(request);
+        } catch (e) {
+          console.error('[MCP SSE POST] Body parse failed:', e);
+        }
+      }
       
-      if (!request || typeof request !== 'object') {
+      if (!request || typeof request !== 'object' || !request.method) {
+        console.warn('[MCP SSE POST] Invalid JSON-RPC request format:', request);
         return res.status(400).json({
           jsonrpc: '2.0',
-          error: { code: -32600, message: 'Invalid Request' },
-          id: null
+          error: { code: -32600, message: 'Invalid Request: Expected a JSON-RPC 2.0 object with a method property.' },
+          id: request?.id || null
         });
       }
 
-      // Handle the request directly
-      // Note: In MCP SDK, 'server.handleRequest' is the way to process a single request
-      const response = await (mcpServer.server as any).handleRequest(request);
+      // 2. Synchronous Execution
+      // We manually resolve the request handler registered on the server instance.
+      // This allows stateless POST handling without maintaining a persistent transport.
+      const method = request.method;
+      const handlers = (mcpServer.server as any)._requestHandlers;
+      const handler = handlers ? handlers.get(method) : null;
+
+      if (!handler) {
+        console.warn(`[MCP SSE POST] No handler registered for method: ${method}`);
+        return res.status(404).json({
+          jsonrpc: '2.0',
+          error: { code: -32601, message: `Method not found: ${method}` },
+          id: request.id || null
+        });
+      }
+
+      // Execute handler
+      const result = await handler(request);
       
-      return res.status(200).json(response);
+      // Return standard JSON-RPC response
+      return res.status(200).json({
+        jsonrpc: '2.0',
+        id: request.id,
+        result
+      });
+
     } catch (err) {
-      console.error('[MCP SSE POST] Processing failed:', err);
+      console.error('[MCP SSE POST] Execution failed:', err);
       return res.status(500).json({
         jsonrpc: '2.0',
-        error: { code: -32000, message: 'Internal Server Error', data: String(err) },
+        error: { code: -32603, message: 'Internal Server Error', data: String(err) },
         id: req.body?.id || null
       });
     }

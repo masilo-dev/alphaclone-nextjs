@@ -1,5 +1,17 @@
 # Update Log
 
+## Date: 2026-04-30 (SECURITY & FINANCIAL HARDENING)
+
+### Added
+- **Secure Document Upload**: Implemented `scanFile` with malware detection and magic number validation for all incoming documents via `FileUploadService`.
+- **MCP Document Ingestion**: Registered the `upload_document` tool to allow AI agents to securely ingest vetting files into the workspace.
+- **Security Audit Trails**: Automated logging of all document scans and blocking events to the `security_scans` and `audit_logs` tables.
+- **Branded Payment Receipts**: Enhanced the PDF generation engine with professional headers, verification badges, and legal disclaimers.
+
+### Fixed
+- **MCP SSE Transport**: Resolved the critical `400 Bad Request` error on the `/api/mcp/sse` endpoint by implementing robust body parsing and a stateless synchronous handler lookup for serverless environments.
+- **MCP Type Dependencies**: Resolved build-time import errors in `MCPServer.ts` related to the new financial and file service integrations.
+
 ## Date: 2026-04-11 (ENTERPRISE CORE SYSTEMS)
 
 ### Added
