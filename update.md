@@ -1,5 +1,15 @@
 # Update Log
 
+## Date: 2026-04-30 (MCP SSE HANDSHAKE HARDENING)
+
+### Fixed
+- **MCP SSE Connection Stability**: Resolved "Couldn't reach server" errors for external clients (Claude, Manus) by:
+    - Switching to **absolute URLs** for the message endpoint in the SSE `endpoint` event.
+    - Implementing **persistent authentication** by automatically appending the `api_key` to the message endpoint URI.
+    - Optimizing streaming reliability on Vercel/Nginx with `X-Accel-Buffering: no` and `no-transform` cache controls.
+- **MCP Auth Context**: Fixed a bug in `sse.ts` where query-parameter-based API keys were not correctly propagated to database update queries.
+
+
 ## Date: 2026-04-30 (LEGAL & MCP DISCOVERY HARDENING)
 
 ### Added

@@ -38,6 +38,7 @@ export async function validateMCPAuth(req: NextApiRequest, res: NextApiResponse)
   return {
     tenant_id: keyData.tenant_id,
     user_id: keyData.user_id,
+    apiKey: api_key, // Return the key used for auth
     supabaseAdmin,
   };
 }
