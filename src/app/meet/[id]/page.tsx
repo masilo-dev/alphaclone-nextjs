@@ -317,9 +317,7 @@ export default function MeetPage() {
                     user={user || guestUser}
                     roomUrl={roomUrl}
                     callId={callId!}
-                    meetingAccessPin={validatedMeetingPin}
                     onLeave={() => router.push(user ? '/dashboard' : '/')}
-                    showSidebar={false}
                 />
             )}
         </div>
