@@ -4,6 +4,7 @@
 
 ### Fixed
 - **Build-Time Module Resolution**: Corrected invalid import paths for `ENV` in `ai/leads` and `mcp/oauth/approve` API routes, resolving "Module not found" errors in Turbopack.
+- **Type Safety Hardening**: Resolved "searchParams is possibly null" error in `authorize/page.tsx` by implementing optional chaining for URL parameter retrieval.
 - **Supabase Admin Integration**: Fixed broken `supabaseAdmin` import and missing client initialization in the Daily webhook handler.
 - **Import Cleanup**: Removed duplicate `toast` imports in `DeviceSettingsModal.tsx` that were causing build-time syntax warnings.
 - **Production Readiness**: Verified that all critical API routes used in automated workflows are correctly referencing system configuration and security libraries.
