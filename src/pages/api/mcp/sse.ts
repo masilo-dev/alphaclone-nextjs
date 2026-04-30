@@ -20,26 +20,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const auth = await validateMCPAuth(req, res);
   if (!auth) return;
 
-  const { tenant_id, user_id, supabaseAdmin } = auth;
-  const api_key = (req.headers['authorization']?.substring(7)) || (req.headers['x-api-key'] as string);
+  const { tenant_id, user_id, apiKey, supabaseAdmin } = auth;
 
   // 2. GET: SSE Handshake
   if (req.method === 'GET') {
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Prevent Vercel/Nginx buffering
     res.setHeader('X-MCP-Version', '2.0.0');
     
     // Standard MCP SSE 'endpoint' event
-    // We send the dedicated message handling URL.
-    const endpoint = `/api/mcp/messages`;
-    res.write(`event: endpoint\ndata: ${endpoint}\n\n`);
+    // We send an absolute URL and include the api_key to ensure subsequent POSTs are authorized.
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const endpointUrl = `${protocol}://${host}/api/mcp/messages?api_key=${encodeURIComponent(apiKey)}`;
+    
+    res.write(`event: endpoint\ndata: ${endpointUrl}\n\n`);
     
     // Update last used timestamp
     await supabaseAdmin
       .from('mcp_api_keys')
       .update({ last_used_at: new Date().toISOString() })
-      .eq('api_key', api_key);
+      .eq('api_key', apiKey);
 
     // Create a session record
     await supabaseAdmin
