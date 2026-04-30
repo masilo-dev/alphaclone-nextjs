@@ -156,6 +156,22 @@ export async function middleware(request: NextRequest) {
         return applyRequiredOwaspHeaders(NextResponse.rewrite(url));
     }
 
+    /**
+     * OAuth 2.0 Discovery Rewrites (RFC 9728 / RFC 8414)
+     * Claude.ai fetches these before attempting any MCP connection.
+     */
+    if (pathname === '/.well-known/oauth-protected-resource') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/api/mcp/well-known/oauth-protected-resource';
+        return NextResponse.rewrite(url);
+    }
+
+    if (pathname === '/.well-known/oauth-authorization-server') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/api/mcp/well-known/oauth-authorization-server';
+        return NextResponse.rewrite(url);
+    }
+
     const response = await updateSession(request);
     
     // Bypass security headers for MCP routes to prevent interference with SSE streaming.
