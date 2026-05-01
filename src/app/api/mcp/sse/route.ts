@@ -26,9 +26,15 @@ export async function GET(req: NextRequest) {
     .eq('api_key', apiKey);
 
   // Create a session record
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
   await supabaseAdmin
     .from('mcp_sessions')
-    .insert({ tenant_id, user_id, metadata: { client_label: 'sse-handshake-app' } });
+    .insert({ 
+      tenant_id, 
+      user_id, 
+      expires_at: expiresAt,
+      metadata: { client_label: 'sse-handshake-app' } 
+    });
 
   const protocol = req.headers.get('x-forwarded-proto') || 'https';
   const host = req.headers.get('host');
@@ -109,7 +115,7 @@ export async function POST(req: NextRequest) {
         user_id,
         expires_at: expiresAt,
         metadata: {
-          client_label: requestBody.params?.clientInfo?.name || 'claude-app',
+          client_label: requestBody.params?.clientInfo?.name || 'mcp-sse-app',
           protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
         },
       })
@@ -160,24 +166,36 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        error: { code: -32001, message: 'MCP session not found. Please re-initialize.' },
-        id: requestBody.id ?? null,
-      }, { status: 404, headers: MCP_CORS_HEADERS });
+      // Session not found, but let's try a stateless fallback if possible
+      const auth = await validateMCPAuthApp(req);
+      if ('error' in auth) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'MCP session not found and no valid API key provided. Please re-initialize.' },
+          id: requestBody.id ?? null,
+        }, { status: 404, headers: MCP_CORS_HEADERS });
+      }
+      tenantId = auth.tenant_id;
+      userId = auth.user_id;
+    } else {
+      const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
+      if (expiry < new Date()) {
+        // Session expired, fallback to api_key if possible
+        const auth = await validateMCPAuthApp(req);
+        if ('error' in auth) {
+          return NextResponse.json({
+            jsonrpc: '2.0',
+            error: { code: -32001, message: 'MCP session expired and no valid API key provided. Please re-initialize.' },
+            id: requestBody.id ?? null,
+          }, { status: 404, headers: MCP_CORS_HEADERS });
+        }
+        tenantId = auth.tenant_id;
+        userId = auth.user_id;
+      } else {
+        tenantId = session.tenant_id;
+        userId = session.user_id;
+      }
     }
-
-    const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
-    if (expiry < new Date()) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        error: { code: -32001, message: 'MCP session expired. Please re-initialize.' },
-        id: requestBody.id ?? null,
-      }, { status: 404, headers: MCP_CORS_HEADERS });
-    }
-
-    tenantId = session.tenant_id;
-    userId = session.user_id;
   } else {
     // Stateless fallback using api_key (e.g. for simple HTTP transport clients)
     const auth = await validateMCPAuthApp(req);
