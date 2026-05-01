@@ -8,6 +8,8 @@ import { DeviceSettingsModal } from './DeviceSettingsModal';
 import toast from 'react-hot-toast';
 import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import { User } from '../../../types';
+import { dailyService } from '../../../services/dailyService';
 
 interface CustomVideoRoomProps {
     user: User;

@@ -32,6 +32,7 @@ interface VideoControlsProps {
     onToggleSettings?: () => void;
     onEndForAll?: (() => void | Promise<void>) | undefined;
     isAdmin?: boolean;
+    roomUrl?: string;
     callId?: string;
     unreadMessageCount?: number;
     isRecording?: boolean;

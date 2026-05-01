@@ -12,6 +12,10 @@
 - **OAuth2 Well-Known Metadata**: Deployed RFC-compliant discovery routes at `/.well-known/oauth-authorization-server` and `oauth-protected-resource` using App Router route handlers.
 
 ### Fixed
+- **Build Stability (Type Safety)**: Resolved critical build-time errors in the Video Conferencing and AI Router modules:
+    - Fixed missing `User` and `dailyService` imports in `CustomVideoRoom.tsx`.
+    - Corrected `VideoControlsProps` interface to include the `roomUrl` property.
+    - Resolved variable scoping errors in the `chatWithXAI` vision implementation.
 - **xAI Model Fallbacks**: Updated the smart router to automatically alias `grok-latest` and `grok-2-latest` to the new `grok-4.3` flagship, ensuring zero-interruption service during model transitions.
 - **Middleware Security Interference**: Refactored `middleware.ts` to explicitly bypass security headers and session handling for all MCP API routes, ensuring uninterrupted JSON-RPC communication and SSE event delivery.
 - **Consolidated Registration**: Moved dynamic client registration to `/api/mcp/register` and updated OAuth discovery metadata to match.
