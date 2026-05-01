@@ -278,7 +278,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             })
             .filter((row: ProviderConfig | null): row is ProviderConfig => row !== null);
 
-        const activeProviders = providerConfigs.filter((provider) =>
+        const activeProviders = providerConfigs.filter((provider: any) =>
             selectedProviders.length > 0 ? selectedProviders.includes(provider.id) : true
         );
 

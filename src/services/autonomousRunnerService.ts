@@ -130,7 +130,7 @@ export const autonomousRunnerService = {
             .order('created_at', { ascending: false })
             .limit(50);
 
-          const buyingSignals = (recentMessages || []).filter((m) => hasBuyingSignal(String(m.text || '')));
+          const buyingSignals = (recentMessages || []).filter((m: any) => hasBuyingSignal(String(m.text || '')));
           let createdTasks = 0;
           let autoReplies = 0;
           for (const msg of buyingSignals.slice(0, 5)) {

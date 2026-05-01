@@ -49,15 +49,16 @@ export async function POST(req: NextRequest) {
     if (sessionError || !session) {
       return NextResponse.json({
         jsonrpc: '2.0',
-        error: { code: -32001, message: 'Session not found. Send a new initialize request.' },
+        error: { code: -32001, message: 'MCP session not found. Please re-initialize.' },
         id: requestBody.id ?? null,
       }, { status: 404, headers: MCP_CORS_HEADERS });
     }
 
-    if (new Date(session.expires_at) < new Date()) {
+    const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
+    if (expiry < new Date()) {
       return NextResponse.json({
         jsonrpc: '2.0',
-        error: { code: -32001, message: 'Session expired. Send a new initialize request.' },
+        error: { code: -32001, message: 'MCP session expired. Please re-initialize.' },
         id: requestBody.id ?? null,
       }, { status: 404, headers: MCP_CORS_HEADERS });
     }
@@ -65,12 +66,19 @@ export async function POST(req: NextRequest) {
     tenantId = session.tenant_id;
     userId = session.user_id;
   } else {
+    // Stateless fallback using api_key (e.g. for simple HTTP transport clients)
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
+  }
+
+  // Handle Notifications (null ID)
+  if (requestBody.id === null || requestBody.id === undefined) {
+    // For now, we just acknowledge notifications with 202 or 200
+    return new NextResponse(null, { status: 202, headers: MCP_CORS_HEADERS });
   }
 
   try {
@@ -87,7 +95,7 @@ export async function POST(req: NextRequest) {
     if (!methodHandler) {
       return NextResponse.json({
         jsonrpc: '2.0',
-        error: { code: -32601, message: `Method not found: ${method}` },
+        error: { code: -32601, message: `MCP Method not found: ${method}` },
         id: requestBody.id ?? null,
       }, { status: 404, headers: MCP_CORS_HEADERS });
     }
@@ -107,6 +115,7 @@ export async function POST(req: NextRequest) {
       id: requestBody?.id ?? null,
     }, { status: 500, headers: MCP_CORS_HEADERS });
   }
+
 }
 
 export async function OPTIONS(req: NextRequest) {
