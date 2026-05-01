@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (cors) return cors;
 
   return NextResponse.json({
-    ok: true,
+    ok: "yes",
     service: 'mcp',
     transport: 'streamable-http',
     protocol_version: '2024-11-05',
