@@ -18,21 +18,16 @@ async function handleDiscovery(req: NextRequest, method: string) {
   }
 
   try {
-    const mcpServer = createMCPServer({
-      tenantId: auth.tenant_id,
-      userId: auth.user_id,
-      clientLabel: `discovery-${method}-app`,
-    });
-
-    const handlers = (mcpServer.server as any)._requestHandlers;
-    const handler = handlers ? handlers.get(method) : null;
-
-    if (!handler) {
-      return NextResponse.json({ error: `${method} handler not initialized` }, { status: 500, headers: MCP_CORS_HEADERS });
+    if (method === 'prompts/list') {
+      return NextResponse.json({ prompts: [] }, { headers: { ...MCP_CORS_HEADERS, 'X-MCP-Version': '2.0.0' } });
     }
 
-    const result = await handler({});
-    return NextResponse.json(result, { headers: { ...MCP_CORS_HEADERS, 'X-MCP-Version': '2.0.0' } });
+    if (method === 'tools/list') {
+      const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
+      return NextResponse.json({ tools: MCP_TOOLS }, { headers: { ...MCP_CORS_HEADERS, 'X-MCP-Version': '2.0.0' } });
+    }
+
+    return NextResponse.json({ error: 'Method Not Supported' }, { status: 400, headers: MCP_CORS_HEADERS });
   } catch (err) {
     console.error(`[MCP Discovery ${method}] Error:`, err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: MCP_CORS_HEADERS });

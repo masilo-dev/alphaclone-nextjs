@@ -7,6 +7,7 @@ import {
   // @ts-ignore
   ListPromptsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
+import { MCP_TOOLS } from './toolManifest';
 import { randomUUID } from 'crypto';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
@@ -512,53 +513,6 @@ class AlphaCloneMCPServer {
 
     // ── Tool Manifest ──────────────────────────────────────────────────────────
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        // ── CRM & Clients ──────────────────────────────────────────────────
-        {
-          name: 'get_clients',
-          description: 'Fetch CRM clients for a tenant. Use to look up existing clients or filter by status.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: {
-                type: 'string',
-                description:
-                  'Workspace UUID. Omit when your MCP connection URL already includes the workspace through its API key.',
-              },
-              status: { type: 'string', description: 'lead | prospect | active | churned' },
-              limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
-              offset: { type: 'number', description: 'Pagination offset (default 0)' },
-            },
-            required: [],
-          },
-        },
-        {
-          name: 'create_client',
-          description: 'Create a new CRM client/contact record.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              name: { type: 'string' },
-              email: { type: 'string' },
-              phone: { type: 'string' },
-              industry: { type: 'string' },
-              website: { type: 'string' },
-              location: { type: 'string', description: 'Physical address or location' },
-              sales_stage: { type: 'string', description: 'lead | prospect | customer | lost' },
-              value: { type: 'number', description: 'Estimated client value' },
-              source: { type: 'string' },
-              notes: { type: 'string' },
-              metadata: {
-                type: 'object',
-                description:
-                  'Optional extra fields stored on the client (e.g. rating, review_count, source_url, maps_place_id) for imports from Maps or outreach.',
-              },
-            },
-            required: ['name'],
-          },
-        },
-        {
           name: 'get_client_by_id',
           description: 'Fetch a single client record by UUID for update or review flows.',
           inputSchema: {
