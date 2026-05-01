@@ -8,11 +8,10 @@ export async function GET(req: NextRequest) {
   if (cors) return cors;
 
   return NextResponse.json({
-    ok: "yes",
+    ok: true,
     service: 'mcp',
     transport: 'streamable-http',
     protocol_version: '2024-11-05',
-    version: '2.0.1',
     endpoint: '/api/mcp/sse',
     timestamp: new Date().toISOString(),
   }, {
