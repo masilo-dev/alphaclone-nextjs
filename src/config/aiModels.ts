@@ -42,6 +42,18 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
         id: 'gpt-4o-mini',
         name: 'GPT-4o mini',
         description: 'Affordable and intelligent small model.'
+    },
+
+    // --- xAI Grok Series (2026) ---
+    {
+        id: 'grok-4.3',
+        name: 'Grok-4.3',
+        description: 'Latest high-performance model from xAI. Superior reasoning and speed.'
+    },
+    {
+        id: 'grok-4',
+        name: 'Grok-4 Vision',
+        description: 'Multi-modal Grok model with advanced image and document understanding.'
     }
 ];
 

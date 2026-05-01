@@ -1,14 +1,18 @@
 # Update Log
 
-## Date: 2026-05-01 (MCP CONSOLIDATION & APP ROUTER MIGRATION)
+## Date: 2026-05-01 (MCP CONSOLIDATION & xAI MODERNIZATION)
 
 ### Added
+- **xAI Grok-4 Modernization**: Upgraded the AI infrastructure to support the latest xAI flagship models (**Grok-4.3** and **Grok-4 Vision**).
+- **Grok Vision Support**: Implemented multi-modal support for Grok, allowing the system to process images and documents via xAI's vision capabilities in chat and streaming modes.
+- **Algorithmic Momentum Engineering**: Overhauled social media generation prompts with "Dwell-Depth" engineering and curiosity loops to maximize platform reach and retention.
 - **App Router MCP Implementation**: Migrated the entire MCP (Model Context Protocol) infrastructure to the Next.js App Router (`src/app/api/mcp`), resolving persistent 404 errors caused by router collisions between `pages` and `app` directories.
 - **Streamable HTTP SSE Handler**: Implemented a modern `ReadableStream` based SSE handler for the `/api/mcp/sse` endpoint, providing robust streaming performance on Vercel and resolving connection timeouts.
 - **Consolidated Discovery**: Unified all MCP discovery endpoints under the standard `/api/mcp/` prefix (tools, resources, prompts, health).
 - **OAuth2 Well-Known Metadata**: Deployed RFC-compliant discovery routes at `/.well-known/oauth-authorization-server` and `oauth-protected-resource` using App Router route handlers.
 
 ### Fixed
+- **xAI Model Fallbacks**: Updated the smart router to automatically alias `grok-latest` and `grok-2-latest` to the new `grok-4.3` flagship, ensuring zero-interruption service during model transitions.
 - **Middleware Security Interference**: Refactored `middleware.ts` to explicitly bypass security headers and session handling for all MCP API routes, ensuring uninterrupted JSON-RPC communication and SSE event delivery.
 - **Consolidated Registration**: Moved dynamic client registration to `/api/mcp/register` and updated OAuth discovery metadata to match.
 - **CORS Consistency**: Implemented unified CORS headers across all MCP endpoints to support external AI clients (Claude Desktop, Manus).
