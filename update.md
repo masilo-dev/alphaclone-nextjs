@@ -11,7 +11,9 @@
 - **Consolidated Discovery**: Unified all MCP discovery endpoints under the standard `/api/mcp/` prefix (tools, resources, prompts, health).
 - **OAuth2 Well-Known Metadata**: Deployed RFC-compliant discovery routes at `/.well-known/oauth-authorization-server` and `oauth-protected-resource` using App Router route handlers.
 
-### Fixed
+- **Build Stability (Supabase Admin)**: Resolved a critical build blocker where missing `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_URL` during module evaluation caused the Next.js build to crash.
+    - Implemented `supabase-shared.ts` with a resilient "unavailable client" proxy that prevents crashes during build/CI while maintaining appropriate error reporting at runtime.
+    - Updated `createSupabaseAdminClient` and `createSupabaseServerClient` to return this proxy during build/CI instead of throwing errors.
 - **Build Stability (Type Safety)**: Resolved critical build-time errors in the Video Conferencing and AI Router modules:
     - Fixed missing `User` and `dailyService` imports in `CustomVideoRoom.tsx`.
     - Corrected `VideoControlsProps` interface to include the `roomUrl` property.
