@@ -525,7 +525,7 @@ export async function routeAIChat(
       return await chatWithOpenAI(history, message, systemPrompt, model);
     }
     if (requestedModel.startsWith('grok') && xai) {
-      return await chatWithXAI(history, message, systemPrompt, model);
+      return await chatWithXAI(history, message, systemPrompt, model, image);
     }
     if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
       // Gemini chat is fallback-only in this simplified router, but we can call it directly
@@ -554,7 +554,7 @@ export async function routeAIChat(
   if (xai) {
     try {
       console.log('[AI Router] Attempting xAI chat...');
-      const response = await chatWithXAI(history, message, systemPrompt);
+      const response = await chatWithXAI(history, message, systemPrompt, undefined, image);
       console.log('[AI Router] ✓ xAI chat succeeded');
       return response;
     } catch (error: any) {
@@ -725,7 +725,8 @@ async function chatWithXAI(
   history: Array<{ role: string; content: string }>,
   message: string,
   systemPrompt?: string,
-  model?: string
+  model?: string,
+  image?: string
 ): Promise<AIResponse> {
   if (!xai) {
     throw new Error('xAI API key not configured');
