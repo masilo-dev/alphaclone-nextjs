@@ -18,7 +18,7 @@ In `src/services/integrationService.ts`, **Claude Desktop (MCP)** and **Manus AI
 - **Connected** status in Settings → Integrations is derived when that tenant has an MCP API key (both catalog entries share the same key infrastructure).
 - **Disconnect** deletes the tenant’s `mcp_api_keys` row (revokes Claude and Manus access together).
 
-The **HTTP MCP transport** is implemented under **`/api/mcp/sse`** (Pages Router). The setup guide uses **`/api/mcp/sse?api_key=<token>` only**; tenant and user are inferred from `mcp_api_keys` (no `tenant_id` in the URL). MCP connections do not use OAuth redirects or token exchange.
+The **HTTP MCP transport** is implemented under **`/api/mcp/sse`** (App Router). The setup guide uses **`/api/mcp/sse?api_key=<token>` only**; tenant and user are inferred from `mcp_api_keys` (no `tenant_id` in the URL). MCP connections do not use OAuth redirects or token exchange.
 
 **What is already in the database for MCP**
 

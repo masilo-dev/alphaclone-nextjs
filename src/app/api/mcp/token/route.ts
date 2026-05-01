@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         token_type: 'Bearer',
         expires_in: 3600,
         scope: 'read write'
-      });
+      }, { headers: { 'Access-Control-Allow-Origin': '*' } });
     }
 
     // 2. Refresh Token Flow
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         refresh_token: session.refresh_token,
         token_type: 'Bearer',
         expires_in: 3600
-      });
+      }, { headers: { 'Access-Control-Allow-Origin': '*' } });
     }
 
     // 3. Authorization Code Flow
@@ -89,13 +89,13 @@ export async function POST(req: NextRequest) {
         token_type: 'Bearer',
         expires_in: 31536000,
         refresh_token: code
-      });
+      }, { headers: { 'Access-Control-Allow-Origin': '*' } });
     }
 
-    return NextResponse.json({ error: 'unsupported_grant_type' }, { status: 400 });
+    return NextResponse.json({ error: 'unsupported_grant_type' }, { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
   } catch (err) {
     console.error('[MCP Token API] Error:', err);
-    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+    return NextResponse.json({ error: 'server_error' }, { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
   }
 }
 
@@ -105,7 +105,8 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
     },
   });
 }
+
