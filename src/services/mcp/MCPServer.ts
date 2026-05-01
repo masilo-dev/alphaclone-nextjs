@@ -1,5 +1,12 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { 
+  CallToolRequestSchema, 
+  ListToolsRequestSchema,
+  // @ts-ignore
+  ListResourcesRequestSchema,
+  // @ts-ignore
+  ListPromptsRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'crypto';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
@@ -496,6 +503,13 @@ class AlphaCloneMCPServer {
   }
 
   private setupToolHandlers() {
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+      resources: [],
+    }));
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => ({
+      prompts: [],
+    }));
+
     // ── Tool Manifest ──────────────────────────────────────────────────────────
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
@@ -3090,12 +3104,12 @@ class AlphaCloneMCPServer {
           if (String(target_audience).toLowerCase() === 'all_leads') {
             const { data } = await supabaseAdmin.from('leads').select('id, email').eq('tenant_id', tenant_id);
             if (data) {
-                recipients = data.filter(d => d.email).map(d => ({ id: d.id, email: d.email! }));
+                recipients = data.filter((d: any) => d.email).map((d: any) => ({ id: d.id, email: d.email! }));
             }
           } else if (String(target_audience).toLowerCase() === 'all_clients') {
             const { data } = await supabaseAdmin.from('business_clients').select('id, email').eq('tenant_id', tenant_id);
             if (data) {
-                recipients = data.filter(d => d.email).map(d => ({ id: d.id, email: d.email! }));
+                recipients = data.filter((d: any) => d.email).map((d: any) => ({ id: d.id, email: d.email! }));
             }
           } else {
             throw new Error('target_audience must be exactly "all_leads" or "all_clients"');
@@ -3548,7 +3562,7 @@ class AlphaCloneMCPServer {
             .order('updated_at', { ascending: false });
           if (error) throw supabaseErrorToMcpClientError('get_facebook_identities', error.message);
 
-          const identities = (pages || []).map((page) => {
+          const identities = (pages || []).map((page: any) => {
             const tasks = Array.isArray((page as any)?.metadata?.page_tasks)
               ? ((page as any).metadata.page_tasks as string[])
               : [];
@@ -3642,7 +3656,7 @@ class AlphaCloneMCPServer {
               .in('id', ids);
             if (assetsError) throw supabaseErrorToMcpClientError('create_social_post', assetsError.message);
             resolvedAssetUrls = (assets || [])
-              .map((asset) => String(asset.public_url || ''))
+              .map((asset: any) => String(asset.public_url || ''))
               .filter(Boolean);
           }
 
@@ -3792,7 +3806,7 @@ class AlphaCloneMCPServer {
           }
 
           const scopes = Array.isArray(li.scopes)
-            ? li.scopes.map((scope) => String(scope).toLowerCase())
+            ? li.scopes.map((scope: any) => String(scope).toLowerCase())
             : [];
           const companyPagesRaw = Array.isArray((li as any)?.metadata?.company_pages)
             ? ((li as any).metadata.company_pages as Array<Record<string, unknown>>)
@@ -3938,7 +3952,7 @@ class AlphaCloneMCPServer {
               .in('id', ids);
             if (assetsError) throw supabaseErrorToMcpClientError('create_linkedin_post', assetsError.message);
             resolvedAssetUrls = (assets || [])
-              .map((asset) => String(asset.public_url || ''))
+              .map((asset: any) => String(asset.public_url || ''))
               .filter(Boolean);
           }
           const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls];

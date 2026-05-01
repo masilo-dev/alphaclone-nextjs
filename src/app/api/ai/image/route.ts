@@ -185,8 +185,8 @@ export async function POST(req: NextRequest) {
         }
 
         let result: Awaited<ReturnType<typeof generateWithProvider>> | null = null;
-        let lastErrorStatus = 502;
-        let lastErrorPayload: unknown = null;
+        let lastErrorStatus = 500;
+        let lastErrorPayload: any = null;
 
         for (const p of availableProviders) {
             result = await generateWithProvider({
@@ -199,19 +199,40 @@ export async function POST(req: NextRequest) {
             if (result.ok) {
                 break;
             }
-            // Upstream provider 4xx/5xx should not be surfaced as client 400 for this API.
-            // Keep this endpoint's client-facing contract stable with gateway-style errors.
-            lastErrorStatus = result.status >= 500 ? 502 : 503;
+
+            // Map upstream status to a more appropriate local status
+            if (result.status === 429) {
+                lastErrorStatus = 429;
+            } else if (result.status === 400) {
+                lastErrorStatus = 400;
+            } else if (result.status === 401 || result.status === 403) {
+                lastErrorStatus = 500; // API key/permission issue is a server-side failure for the user
+            } else if (result.status >= 500) {
+                lastErrorStatus = 502;
+            } else {
+                lastErrorStatus = 503;
+            }
+
             lastErrorPayload = result.error;
-            console.error('AI image provider error:', { provider: p, error: result.error });
+            console.error(`AI image provider error [${p}]:`, { status: result.status, error: result.error });
         }
 
         if (!result || !result.ok) {
+            const errorMessage = lastErrorStatus === 429 
+                ? 'Image generation service is currently overloaded. Please try again in a few minutes.'
+                : 'Image generation failed';
+            
             return NextResponse.json(
-                { error: 'Image generation failed', code: 'IMAGE_PROVIDER_ERROR', details: lastErrorPayload },
+                { 
+                    error: errorMessage, 
+                    code: lastErrorStatus === 429 ? 'RATE_LIMIT_EXCEEDED' : 'IMAGE_PROVIDER_ERROR',
+                    details: lastErrorPayload,
+                    status: lastErrorStatus
+                },
                 { status: lastErrorStatus }
             );
         }
+
 
         const imageUrl = result.url;
         const revisedPrompt = result.revisedPrompt;

@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
       .select('user_id')
       .eq('tenant_id', tenantId);
     const tenantUserIds = (tenantUsersData || [])
-      .map((row) => String((row as { user_id?: string }).user_id || '').trim())
-      .filter((value) => value.length > 0);
+      .map((row: any) => String((row as { user_id?: string }).user_id || '').trim())
+      .filter((value: any) => value.length > 0);
     const fallbackUserId = '00000000-0000-0000-0000-000000000000';
     const intelligenceSnapshotPromise = integratedIntelligenceService
       .generateSnapshot(supabase, tenantId, { persist: false })
