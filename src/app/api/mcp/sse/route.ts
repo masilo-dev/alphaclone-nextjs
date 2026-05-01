@@ -3,6 +3,7 @@ import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,62 +99,11 @@ export async function POST(req: NextRequest) {
 
   const method: string = requestBody.method;
 
-  // 1. Special case: initialize
-  if (method === 'initialize') {
-    const auth = await validateMCPAuthApp(req);
-    if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
-    }
-
-    const { tenant_id, user_id, supabaseAdmin } = auth;
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
-
-    const { data: sessionRow } = await supabaseAdmin
-      .from('mcp_sessions')
-      .insert({
-        tenant_id,
-        user_id,
-        expires_at: expiresAt,
-        metadata: {
-          client_label: requestBody.params?.clientInfo?.name || 'mcp-sse-app',
-          protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
-        },
-      })
-      .select('id')
-      .single();
-
-    const sessionId = sessionRow?.id;
-    
-    const response = NextResponse.json({
-      jsonrpc: '2.0',
-      id: requestBody.id,
-      result: {
-        protocolVersion: MCP_PROTOCOL_VERSION,
-        capabilities: {
-          tools: {},
-          resources: {},
-          prompts: {},
-        },
-        serverInfo: {
-          name: 'AlphaClone-MCP',
-          version: '2.0.0',
-        },
-      },
-    }, { headers: MCP_CORS_HEADERS });
-
-    if (sessionId) {
-      response.headers.set('Mcp-Session-Id', sessionId);
-    }
-    response.headers.set('MCP-Protocol-Version', MCP_PROTOCOL_VERSION);
-
-    return response;
-  }
-
-  // 2. All other methods
   const mcpSessionId = req.headers.get('mcp-session-id');
   let tenantId = '';
   let userId = '';
 
+  // Handle Authentication for all methods
   if (mcpSessionId) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: MCP_CORS_HEADERS });
@@ -197,7 +147,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } else {
-    // Stateless fallback using api_key (e.g. for simple HTTP transport clients)
+    // Stateless fallback using api_key (e.g. for simple HTTP transport clients or initialize method)
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
@@ -214,13 +164,6 @@ export async function POST(req: NextRequest) {
     }, { status: 401, headers: MCP_CORS_HEADERS });
   }
 
-  // Handle Notifications (null ID)
-  if (requestBody.id === null || requestBody.id === undefined) {
-    // For now, we just acknowledge notifications with 202 or 200
-    return new NextResponse(null, { status: 202, headers: MCP_CORS_HEADERS });
-  }
-
-  // Execute
   try {
     const mcpServer = createMCPServer({
       tenantId,
@@ -228,27 +171,55 @@ export async function POST(req: NextRequest) {
       clientLabel: req.headers.get('x-client-label') || 'mcp-client-app',
     });
 
-    const handlers = (mcpServer.server as any)._requestHandlers;
+    const transport = new StatelessTransport();
+    await mcpServer.server.connect(transport);
+
     if (ENV.NODE_ENV !== 'production') {
-      console.log(`[MCP SSE] Handler lookup: ${method} (Tenant: ${tenantId})`);
-    }
-    const methodHandler = handlers?.get(method);
-
-    if (!methodHandler) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        error: { code: -32601, message: `MCP Method not found: ${method}` },
-        id: requestBody.id ?? null,
-      }, { status: 404, headers: MCP_CORS_HEADERS });
+      console.log(`[MCP SSE POST] Passing method: ${requestBody.method} to SDK (Tenant: ${tenantId})`);
     }
 
-    const result = await methodHandler(requestBody);
+    if (transport.onmessage) {
+      // Feed the incoming message to the official SDK loop
+      transport.onmessage(requestBody);
+    }
 
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      id: requestBody.id,
-      result,
-    }, { headers: { ...MCP_CORS_HEADERS, 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION } });
+    // Wait for the SDK to emit a response
+    const responseMessage = await transport.getResponse(10000);
+
+    if (!responseMessage) {
+      // No response generated (e.g. for notifications)
+      return new NextResponse(null, { status: 202, headers: MCP_CORS_HEADERS });
+    }
+
+    const headers = new Headers({
+      ...MCP_CORS_HEADERS,
+      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+    });
+
+    // If it was an initialize request, generate a new session ID for subsequent requests
+    if (requestBody.method === 'initialize' && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
+      const { data: sessionRow } = await supabaseAdmin
+        .from('mcp_sessions')
+        .insert({
+          tenant_id: tenantId,
+          user_id: userId,
+          expires_at: expiresAt,
+          metadata: {
+            client_label: requestBody.params?.clientInfo?.name || 'mcp-sse-app',
+            protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
+          },
+        })
+        .select('id')
+        .single();
+
+      if (sessionRow?.id) {
+        headers.set('Mcp-Session-Id', sessionRow.id);
+      }
+    }
+
+    return NextResponse.json(responseMessage, { headers });
   } catch (err) {
     console.error('[MCP SSE POST App] Execution failed:', err);
     return NextResponse.json({
