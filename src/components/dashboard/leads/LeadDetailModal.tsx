@@ -22,7 +22,7 @@ import {
     Target,
     History as HistoryIcon
 } from 'lucide-react';
-import { Modal, Button, Input, Card, Badge } from '../../ui/UIComponents';
+import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponents';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
 import { calendarService, CalendarEvent } from '../../../services/calendarService';
@@ -674,114 +674,88 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                        <Button
-                            variant="primary"
-                            className="bg-indigo-900 border border-indigo-500/50 hover:bg-indigo-800 flex-1 sm:flex-none"
-                            size="sm"
-                            onClick={handleExecuteFullFlow}
-                            isLoading={isLoading}
-                        >
-                            <Zap className="w-4 h-4 mr-2 text-indigo-400" />
-                            Execute Full Flow
-                        </Button>
+                    <div className="flex items-center gap-2">
                         {lead.email && (
-                            <Button variant="outline" size="sm" onClick={handleSendProviderEmail} className="flex-1 sm:flex-none">
-                                <Mail className="w-4 h-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Email</span>
+                            <Button 
+                                variant="primary" 
+                                size="sm" 
+                                onClick={handleSendProviderEmail}
+                                className="bg-teal-600 hover:bg-teal-500 shadow-teal-500/10"
+                            >
+                                <Mail className="w-4 h-4 mr-2" />
+                                Email
                             </Button>
                         )}
                         <Button
                             variant="outline"
                             size="sm"
-                            className="border-white/10 text-slate-200 hover:bg-slate-800 flex-1 sm:flex-none"
-                            onClick={() => setShowEditForm((prev) => !prev)}
-                            title="Edit lead details"
-                        >
-                            <FileText className="w-4 h-4 sm:mr-2 text-slate-300" />
-                            <span className="hidden sm:inline">{showEditForm ? 'Close Edit' : 'Edit Lead'}</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
                             onClick={handleEnrich}
                             isLoading={isEnriching}
-                            className="flex-1 sm:flex-none border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
-                            title="AI Market Intelligence"
+                            className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
                         >
-                            <Bot className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline text-white">Research</span>
+                            <Bot className="w-4 h-4 mr-2" />
+                            Research
                         </Button>
-                        <Button
-                            variant="outline"
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 flex-1 sm:flex-none"
-                            size="sm"
-                            onClick={() => {
-                                setActiveTab('tasks');
-                                setShowTaskForm(true);
-                            }}
-                            title="Quick Task"
-                        >
-                            <CheckCircle2 className="w-4 h-4 sm:mr-2 text-yellow-500" />
-                            <span className="hidden sm:inline">Task</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 flex-1 sm:flex-none"
-                            size="sm"
-                            onClick={handleCreateProject}
-                            title="Convert to Project"
-                        >
-                            <Layout className="w-4 h-4 sm:mr-2 text-teal-500" />
-                            <span className="hidden sm:inline">Project</span>
-                        </Button>
-                        <Button
-                            variant="primary"
-                            className="bg-indigo-600 hover:bg-indigo-500 flex-1 sm:flex-none"
-                            size="sm"
-                            onClick={() => setShowQuoteForm(true)}
-                            title="Generate Quote"
-                        >
-                            <FileText className="w-4 h-4 sm:mr-2 text-white" />
-                            <span className="hidden sm:inline">Quote</span>
-                        </Button>
-                        <Button
-                            variant="primary"
-                            className="bg-teal-600 hover:bg-teal-500 flex-1 sm:flex-none"
-                            size="sm"
-                            onClick={() => {
-                                const name = window.prompt('Enter Deal Name:', lead.businessName);
-                                if (name) handleConvert(name);
-                            }}
-                            title="Convert to Deal"
-                        >
-                            <Zap className="w-4 h-4 sm:mr-2 text-white" />
-                            <span className="hidden sm:inline">Deal</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="border-teal-500/40 text-teal-300 hover:bg-teal-500/10 flex-1 sm:flex-none"
-                            size="sm"
-                            onClick={() => {
-                                onClose();
-                                router.push(`/dashboard/deals?createFromLead=1&leadId=${encodeURIComponent(lead.id)}`);
-                            }}
-                            title="Open deals pipeline with this lead pre-selected"
-                        >
-                            <ArrowRight className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Pipeline</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleValidateAddress}
-                            isLoading={isValidatingAddress}
-                            className="flex-1 sm:flex-none border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-                            title="Verify global address authenticity"
-                        >
-                            <MapPin className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline text-white">Validate Adr</span>
-                        </Button>
+
+                        <Dropdown
+                            trigger={
+                                <Button variant="outline" size="sm" className="px-2">
+                                    <MoreVertical className="w-4 h-4" />
+                                </Button>
+                            }
+                            items={[
+                                {
+                                    label: showEditForm ? 'Close Edit' : 'Edit Lead',
+                                    icon: <FileText className="w-4 h-4" />,
+                                    onClick: () => setShowEditForm(!showEditForm)
+                                },
+                                {
+                                    label: 'Quick Task',
+                                    icon: <CheckCircle2 className="w-4 h-4 text-yellow-500" />,
+                                    onClick: () => {
+                                        setActiveTab('tasks');
+                                        setShowTaskForm(true);
+                                    }
+                                },
+                                {
+                                    label: 'Convert to Project',
+                                    icon: <Layout className="w-4 h-4 text-teal-500" />,
+                                    onClick: handleCreateProject
+                                },
+                                {
+                                    label: 'Generate Quote',
+                                    icon: <FileText className="w-4 h-4 text-indigo-400" />,
+                                    onClick: () => setShowQuoteForm(true)
+                                },
+                                {
+                                    label: 'Convert to Deal',
+                                    icon: <Zap className="w-4 h-4 text-amber-500" />,
+                                    onClick: () => {
+                                        const name = window.prompt('Enter Deal Name:', lead.businessName);
+                                        if (name) handleConvert(name);
+                                    }
+                                },
+                                {
+                                    label: 'Pipeline View',
+                                    icon: <ArrowRight className="w-4 h-4" />,
+                                    onClick: () => {
+                                        onClose();
+                                        router.push(`/dashboard/deals?createFromLead=1&leadId=${encodeURIComponent(lead.id)}`);
+                                    }
+                                },
+                                {
+                                    label: 'Validate Address',
+                                    icon: <MapPin className="w-4 h-4 text-blue-400" />,
+                                    onClick: handleValidateAddress
+                                },
+                                {
+                                    label: 'Execute Full Flow',
+                                    icon: <Zap className="w-4 h-4 text-indigo-400" />,
+                                    onClick: handleExecuteFullFlow,
+                                    variant: 'default'
+                                }
+                            ]}
+                        />
                     </div>
                 </div>
 
