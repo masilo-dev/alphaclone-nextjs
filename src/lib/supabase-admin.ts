@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { createUnavailableSupabaseClient } from './supabase-shared';
 
 /**
  * Creates a Supabase client with the service role key to bypass RLS.
@@ -11,7 +12,7 @@ export function createSupabaseAdminClient() {
     const serviceRoleKey = ENV.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
-        throw new Error('Supabase Admin configuration missing (URL or Service Role Key)');
+        return createUnavailableSupabaseClient('SupabaseAdmin');
     }
 
     return createClient(supabaseUrl, serviceRoleKey, {
