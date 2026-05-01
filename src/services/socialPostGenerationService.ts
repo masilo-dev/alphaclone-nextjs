@@ -26,36 +26,41 @@ type GenerateOutput = {
 function getPlatformRules(platform: SocialPlatform): string {
   if (platform === 'linkedin') {
     return [
-      'Tone: professional, insight-led, no fluff.',
-      'Structure: hook on line 1, narrative + business lesson.',
-      'Length target: 900-1300 characters.',
-      'Hashtags: maximum 3 and only targeted tags.',
-      'No emoji and no generic motivational phrases.',
+      'Tone: Authoritative, insight-dense, founder-led.',
+      'Structure: 3-Act Narrative (Hook, Insight Density, Discussion).',
+      'Act 1 (The Hook): Must trigger a "See More" click within the first 2 lines. Use curiosity gaps or bold contrarian statements.',
+      'Act 2 (Insight Density): Use white space and bullet points to slow scroll speed. Deliver "Save-Worthy" value density.',
+      'Act 3 (The Loop): Open-ended question designed to spark a threaded discussion, not just a binary answer.',
+      'Length target: 1100-1600 characters (rewarding longer session time).',
+      'Hashtags: Maximum 3, integrated naturally.',
+      'Visuals: Use tasteful, functional emojis (arrows, bullets) to improve scannability.',
     ].join('\n');
   }
   return [
-    'Tone: conversational, practical, community-first.',
-    'Structure: short opening hook, concrete value, clear CTA.',
-    'Thread-first style: make opening sentence invite discussion.',
-    'No emoji and no generic motivational phrases.',
-    'Prefer concise readability and direct examples.',
+    'Tone: Conversational, community-first, tactical.',
+    'Structure: Short opening hook, concrete value, Clear Action.',
+    'Retention Signal: Make the first sentence a "Scroll Stopper" (Emotional or Tactical).',
+    'Act 2 (The Meat): Provide a step-by-step breakdown or a "Real Story" to maximize dwell time.',
+    'CTA: Spark threaded comments. Tag-a-friend prompts are allowed but use sparingly.',
+    'Length: Concise but high-value.',
+    'Visuals: Use emojis to signal tone and friendly community atmosphere.',
   ].join('\n');
 }
 
 function getPillarFrame(pillar: ContentPillar): string {
   switch (pillar) {
     case 'behind_the_scenes':
-      return 'Reveal a real operational process change and what it improved.';
+      return 'Reveal a real operational struggle and the non-obvious solution. Focus on vulnerability leading to authority.';
     case 'client_results':
-      return 'Use a case-study format with before/after outcomes.';
+      return 'A "Transformation Deep-Dive." Before/After/The Lesson. Show the ROI but emphasize the process.';
     case 'contrarian_take':
-      return 'Challenge a common industry assumption with evidence.';
+      return 'Challenge a sacred industry belief. Use data or logical sharp-reasoning to back it up.';
     case 'tactical_how_to':
-      return 'Deliver practical steps the audience can use immediately.';
+      return 'A "Cheat Sheet" style post. Deliver immediate utility that feels like a paid product snippet.';
     case 'personal_brand':
-      return 'Use founder perspective tied to a practical business lesson.';
+      return 'Connect a personal anecdote to a high-level business philosophy. Humanize the system.';
     default:
-      return 'Provide a concrete insight with a specific action.';
+      return 'Deliver a "Single Source of Truth" insight with one clear action step.';
   }
 }
 

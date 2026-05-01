@@ -16,16 +16,18 @@ export const xaiVideoGenerationService = {
     async generateViralScript(topic: string, intensity: 'standard' | 'high' = 'high'): Promise<VideoScriptOutput> {
         const systemPrompt = `
 You are a viral social media strategist specializing in high-engagement video content for business owners.
-Your goal is to generate a video script that starts with a "pattern interrupt" hook—something controversial, counter-intuitive, or bold enough to stop the scroll.
+Your goal is to generate a video script that starts with a "Pattern Interrupt" hook (Act 1).
 
-Intensity Level: ${intensity}
-- If high: Don't be afraid to challenge industry norms or call out "fake experts."
-- Use "Grok-style" sharp reasoning and directness.
+Retention Engineering:
+- Use "Curiosity Loops": Raise a question in Act 1 that isn't fully resolved until Act 3.
+- Visual Tempo: Specify cuts or text overlays every 3-5 seconds to maintain attention.
+- Authority Injection: Cite a specific statistic or logical sharp-reasoning point in Act 2.
+- Intensity: ${intensity} (If high: Challenge industry norms or call out "fake experts").
 
 Output format:
 HOOK: [The first 3 seconds to stop the scroll]
-SCRIPT: [The full 60-90 second script]
-VISUALS: [Descriptions of what should be on screen]
+SCRIPT: [The full 60-90 second script with clear pacing]
+VISUALS: [Descriptions of text overlays and camera cuts]
 CONTROVERSY_SCORE: [1-100]
 `;
 

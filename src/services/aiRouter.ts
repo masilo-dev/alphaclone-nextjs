@@ -49,11 +49,12 @@ function isXaiModelError(error: any): boolean {
 }
 
 function normalizeXaiModel(model?: string): string {
-  const candidate = String(model || 'grok-2-latest').trim();
-  if (!candidate) return 'grok-2-latest';
+  const candidate = String(model || 'grok-4.3').trim();
+  if (!candidate) return 'grok-4.3';
   const aliases: Record<string, string> = {
-    'grok-latest': 'grok-2-latest',
-    grok: 'grok-2-latest',
+    'grok-latest': 'grok-4.3',
+    'grok-2-latest': 'grok-4.3',
+    grok: 'grok-4.3',
   };
   return aliases[candidate] || candidate;
 }
@@ -104,6 +105,8 @@ export const MODEL_PRICING = {
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-4-turbo': { input: 10, output: 30 },
   'gpt-4': { input: 30, output: 60 },
+  'grok-4.3': { input: 2, output: 10 },
+  'grok-4': { input: 5, output: 15 },
   'grok-2-latest': { input: 2, output: 10 },
   'grok-3-mini': { input: 0.3, output: 0.5 },
 
@@ -151,9 +154,9 @@ export type AIStrengthTask = 'legal' | 'strategy' | 'social_article' | 'social_c
 const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'anthropic' | 'xai' | 'openai'; model: string }> = {
   'legal': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
   'strategy': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
-  'social_article': { provider: 'xai', model: 'grok-2-latest' },
-  'social_caption': { provider: 'xai', model: 'grok-2-latest' },
-  'inbox_reply': { provider: 'xai', model: 'grok-2-latest' },
+  'social_article': { provider: 'xai', model: 'grok-4.3' },
+  'social_caption': { provider: 'xai', model: 'grok-4.3' },
+  'inbox_reply': { provider: 'xai', model: 'grok-4.3' },
   'creative_media': { provider: 'openai', model: 'gpt-4o' }
 };
 
@@ -317,7 +320,7 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
       return {
         stream: await streamWithXAI(options),
         provider: 'xai',
-        model: options.model || 'grok-2-latest'
+        model: options.model || 'grok-4.3'
       };
     }
   }
@@ -343,7 +346,7 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
       return {
         stream: await streamWithXAI(options),
         provider: 'xai',
-        model: options.model || 'grok-2-latest'
+        model: options.model || 'grok-4.3'
       };
     } catch (error) {
       console.warn('[AI Router] xAI stream failed, falling back...');
@@ -422,7 +425,24 @@ async function completeWithXAI(options: AIRequestOptions): Promise<AIResponse> {
   const model = normalizeXaiModel(options.model);
   const messages: any[] = [];
   messages.push({ role: 'system', content: mergeXaiSystemPrompt(options.systemPrompt) });
-  messages.push({ role: 'user', content: options.prompt });
+
+  // Handle Vision (Base64 Image) if provided
+  if (options.image) {
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: options.prompt },
+        {
+          type: 'image_url',
+          image_url: {
+            url: options.image.startsWith('data:') ? options.image : `data:image/jpeg;base64,${options.image}`
+          }
+        }
+      ]
+    });
+  } else {
+    messages.push({ role: 'user', content: options.prompt });
+  }
 
   let completion;
   try {
@@ -729,6 +749,19 @@ async function chatWithXAI(
     });
   }
 
+  // Handle Vision for the latest message if image is provided
+  const finalMessageContent = image 
+    ? [
+        { type: 'text', text: message },
+        { 
+          type: 'image_url', 
+          image_url: { 
+            url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}` 
+          } 
+        }
+      ]
+    : message;
+
   let completion;
   try {
     completion = await xai.chat.completions.create({
@@ -736,7 +769,7 @@ async function chatWithXAI(
       messages: [
         ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
         ...chatMessages,
-        { role: 'user', content: message }
+        { role: 'user', content: finalMessageContent }
       ],
       max_tokens: 4096,
       temperature: 0.7,
@@ -1000,13 +1033,26 @@ async function streamWithXAI(options: AIRequestOptions): Promise<ReadableStream>
   const model = normalizeXaiModel(options.model);
   const encoder = new TextEncoder();
 
+  // Vision support in stream if provided
+  const userContent = options.image
+    ? [
+        { type: 'text', text: options.prompt },
+        {
+          type: 'image_url',
+          image_url: {
+            url: options.image.startsWith('data:') ? options.image : `data:image/jpeg;base64,${options.image}`
+          }
+        }
+      ]
+    : options.prompt;
+
   return new ReadableStream({
     async start(controller) {
       const stream = await xai.chat.completions.create({
         model,
         messages: [
           { role: 'system' as const, content: mergeXaiSystemPrompt(options.systemPrompt) },
-          { role: 'user' as const, content: options.prompt },
+          { role: 'user' as const, content: userContent as any },
         ],
         max_tokens: options.maxTokens || 4096,
         temperature: options.temperature || 0.7,

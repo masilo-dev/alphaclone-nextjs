@@ -5730,10 +5730,18 @@ STRATEGIC GOAL: ${monthly_goal}
 TOPICS: ${topics.join(', ')}
 
 Rules:
-- Monday thought leadership, Tuesday tactical tip, Wednesday social proof, Thursday personal story, Friday CTA offer, Saturday community, Sunday teaser.
+- Monday: High-Intensity Thought Leadership (Act 1 focus).
+- Tuesday: Tactical "Cheat Sheet" Deep-Dive (Act 2 focus).
+- Wednesday: Client Transformation / Social Proof (Act 3 focus).
+- Thursday: Personal Founder Anecdote (Human-AI Hybrid).
+- Friday: "The Hard Truth" Contrarian Take.
+- Saturday: Community Threaded Discussion.
+- Sunday: Teaser / Retention Loop for next week.
+
+Content Engineering:
 - Avoid generic motivation. Every post idea must include one of: concrete insight, contrarian angle, real story, or data point.
-- LinkedIn style: professional, insight-led, no fluff, no emoji, max 3 targeted hashtags.
-- Facebook style: conversational and community-first, with practical CTA.
+- LinkedIn style: Authoritative, insight-dense, engineered for "Dwell Depth" (1100-1600 chars). Use functional emojis for scannability.
+- Facebook style: Conversational "Thread-First" hooks.
 - Ensure no duplicate topic framing across 30 days.
 
 Return ONLY a JSON array of 60 objects:
