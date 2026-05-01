@@ -35,6 +35,58 @@ export async function POST(req: NextRequest) {
   let tenantId: string;
   let userId: string;
 
+  // 1. Special case: initialize
+  if (requestBody.method === 'initialize') {
+    const auth = await validateMCPAuthApp(req);
+    if ('error' in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
+    }
+
+    const { tenant_id, user_id, supabaseAdmin } = auth;
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
+
+    const { data: sessionRow } = await supabaseAdmin
+      .from('mcp_sessions')
+      .insert({
+        tenant_id,
+        user_id,
+        expires_at: expiresAt,
+        metadata: {
+          client_label: requestBody.params?.clientInfo?.name || 'mcp-messages-app',
+          protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
+        },
+      })
+      .select('id')
+      .single();
+
+    const sessionId = sessionRow?.id;
+    
+    const response = NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: {
+        protocolVersion: MCP_PROTOCOL_VERSION,
+        capabilities: {
+          tools: {},
+          resources: {},
+          prompts: {},
+        },
+        serverInfo: {
+          name: 'AlphaClone-MCP',
+          version: '2.0.0',
+        },
+      },
+    }, { headers: MCP_CORS_HEADERS });
+
+    if (sessionId) {
+      response.headers.set('Mcp-Session-Id', sessionId);
+    }
+    response.headers.set('MCP-Protocol-Version', MCP_PROTOCOL_VERSION);
+
+    return response;
+  }
+
+  // 2. All other methods - handle session or stateless fallback
   if (mcpSessionId) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: MCP_CORS_HEADERS });
@@ -47,24 +99,36 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        error: { code: -32001, message: 'MCP session not found. Please re-initialize.' },
-        id: requestBody.id ?? null,
-      }, { status: 404, headers: MCP_CORS_HEADERS });
+      // Session not found, but let's try a stateless fallback if possible
+      const auth = await validateMCPAuthApp(req);
+      if ('error' in auth) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'MCP session not found and no valid API key provided. Please re-initialize.' },
+          id: requestBody.id ?? null,
+        }, { status: 404, headers: MCP_CORS_HEADERS });
+      }
+      tenantId = auth.tenant_id;
+      userId = auth.user_id;
+    } else {
+      const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
+      if (expiry < new Date()) {
+        // Session expired, fallback to api_key if possible
+        const auth = await validateMCPAuthApp(req);
+        if ('error' in auth) {
+          return NextResponse.json({
+            jsonrpc: '2.0',
+            error: { code: -32001, message: 'MCP session expired and no valid API key provided. Please re-initialize.' },
+            id: requestBody.id ?? null,
+          }, { status: 404, headers: MCP_CORS_HEADERS });
+        }
+        tenantId = auth.tenant_id;
+        userId = auth.user_id;
+      } else {
+        tenantId = session.tenant_id;
+        userId = session.user_id;
+      }
     }
-
-    const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
-    if (expiry < new Date()) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        error: { code: -32001, message: 'MCP session expired. Please re-initialize.' },
-        id: requestBody.id ?? null,
-      }, { status: 404, headers: MCP_CORS_HEADERS });
-    }
-
-    tenantId = session.tenant_id;
-    userId = session.user_id;
   } else {
     // Stateless fallback using api_key (e.g. for simple HTTP transport clients)
     const auth = await validateMCPAuthApp(req);
