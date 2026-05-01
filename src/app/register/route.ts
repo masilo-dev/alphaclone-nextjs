@@ -6,22 +6,10 @@ export async function GET() {
 }
 
 export async function POST() {
-  // OAuth Dynamic Client Registration for AI (Claude)
-  const response = NextResponse.json({
-    client_id: 'alphaclone-mcp-client',
-    client_secret: 'not-used',
-    registration_access_token: 'not-used',
-    client_id_issued_at: Math.floor(Date.now() / 1000),
-    token_endpoint_auth_method: 'none',
-  }, { status: 201 });
-
-  // Prevent Vercel from caching this response
-  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  response.headers.set('Pragma', 'no-cache');
-  response.headers.set('Expires', '0');
-  
-  return response;
+  // Moved to /api/mcp/register/route.ts
+  return NextResponse.json({ error: 'Moved to /api/mcp/register' }, { status: 410 });
 }
+
 
 export async function OPTIONS() {
   return new NextResponse(null, {

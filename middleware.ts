@@ -153,7 +153,7 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/token') {
         const url = request.nextUrl.clone();
         url.pathname = '/api/mcp/token';
-        return applyRequiredOwaspHeaders(NextResponse.rewrite(url));
+        return NextResponse.rewrite(url);
     }
 
     /**
@@ -172,15 +172,15 @@ export async function middleware(request: NextRequest) {
         return NextResponse.rewrite(url);
     }
 
-    const response = await updateSession(request);
-    
-    // Bypass security headers for MCP routes to prevent interference with SSE streaming.
+    // Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
     if (pathname.startsWith('/api/mcp/')) {
-        return response;
+        return NextResponse.next();
     }
 
+    const response = await updateSession(request);
     return applyRequiredOwaspHeaders(response);
 }
+
 
 
 export const config = {
