@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
       metadata: { client_label: 'sse-handshake-app' } 
     });
 
-  const protocol = req.headers.get('x-forwarded-proto') || 'https';
-  const host = req.headers.get('host');
+  const protocol = req.headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https';
+  const host = req.headers.get('host') ?? '';
   const endpointUrl = `${protocol}://${host}/api/mcp/messages?api_key=${encodeURIComponent(apiKey)}`;
 
   const stream = new ReadableStream({
@@ -151,8 +151,8 @@ export async function POST(req: NextRequest) {
 
   // 2. All other methods
   const mcpSessionId = req.headers.get('mcp-session-id');
-  let tenantId: string;
-  let userId: string;
+  let tenantId = '';
+  let userId = '';
 
   if (mcpSessionId) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
@@ -206,6 +206,14 @@ export async function POST(req: NextRequest) {
     userId = auth.user_id;
   }
 
+  if (!tenantId || !userId) {
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      error: { code: -32001, message: 'Authentication failed: missing tenant or user context' },
+      id: requestBody.id ?? null,
+    }, { status: 401, headers: MCP_CORS_HEADERS });
+  }
+
   // Handle Notifications (null ID)
   if (requestBody.id === null || requestBody.id === undefined) {
     // For now, we just acknowledge notifications with 202 or 200
@@ -221,7 +229,10 @@ export async function POST(req: NextRequest) {
     });
 
     const handlers = (mcpServer.server as any)._requestHandlers;
-    const methodHandler = handlers ? handlers.get(method) : null;
+    if (ENV.NODE_ENV !== 'production') {
+      console.log(`[MCP SSE] Handler lookup: ${method} (Tenant: ${tenantId})`);
+    }
+    const methodHandler = handlers?.get(method);
 
     if (!methodHandler) {
       return NextResponse.json({
