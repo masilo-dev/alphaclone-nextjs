@@ -21,6 +21,7 @@ import { leadService, Lead } from '../../../services/leadService';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
 
 interface AIOutreachModalProps {
     isOpen: boolean;
@@ -48,6 +49,8 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [results, setResults] = useState<any[] | null>(null);
     const [userEmail, setUserEmail] = useState('');
     const [fetchingAccount, setFetchingAccount] = useState(false);
+    const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
+    const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
     const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail'>('sendgrid');
 
     useEffect(() => {
@@ -66,9 +69,21 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) {
                 setUserEmail(user.email);
+                
+                // Also fetch integrations for this user
+                const { integrations: userIntegrations } = await integrationsService.getUserIntegrations(user.id);
+                const emailIntegrations = userIntegrations.filter(i => 
+                    ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'].includes(i.type) && i.enabled
+                );
+                setIntegrations(emailIntegrations);
+                
+                if (emailIntegrations.length > 0) {
+                    setSelectedIntegrationId(emailIntegrations[0].id);
+                    setSelectedProvider(emailIntegrations[0].type as any);
+                }
             }
         } catch (err) {
-            console.error('Failed to fetch user email:', err);
+            console.error('Failed to fetch user info/integrations:', err);
         } finally {
             setFetchingAccount(false);
         }
@@ -385,42 +400,62 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 <div>
                                     <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
                                         <Mail className="w-3.5 h-3.5" />
-                                        Step 1: Outgoing Email (From)
+                                        Step 1: Outgoing Sender
                                     </h3>
-                                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4 flex items-center justify-between group hover:border-teal-500/20 transition-all">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20">
-                                                <Mail className="w-5 h-5 text-teal-400" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Sender Address</p>
-                                                {fetchingAccount ? (
-                                                    <div className="h-4 w-32 bg-slate-800 animate-pulse rounded mt-1" />
-                                                ) : (
-                                                    <p className="text-white text-sm font-bold">{userEmail || 'Active Gmail Connection'}</p>
-                                                )}
-                                            </div>
+                                    {integrations.length > 0 ? (
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {integrations.map(integration => (
+                                                <button
+                                                    key={integration.id}
+                                                    onClick={() => {
+                                                        setSelectedIntegrationId(integration.id);
+                                                        setSelectedProvider(integration.type as any);
+                                                    }}
+                                                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between group ${
+                                                        selectedIntegrationId === integration.id
+                                                            ? 'bg-teal-500/10 border-teal-500/40'
+                                                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                                                            selectedIntegrationId === integration.id
+                                                                ? 'bg-teal-500/20 border-teal-500/30'
+                                                                : 'bg-slate-800 border-slate-700'
+                                                        }`}>
+                                                            <Mail className={`w-5 h-5 ${selectedIntegrationId === integration.id ? 'text-teal-400' : 'text-slate-500'}`} />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{integration.name}</p>
+                                                            <p className="text-white text-sm font-bold truncate max-w-[200px]">
+                                                                {integration.config.fromEmail || integration.config.email || 'Connected Account'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {selectedIntegrationId === integration.id && (
+                                                        <div className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center">
+                                                            <Check className="w-3.5 h-3.5 text-slate-900" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            ))}
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="bg-slate-900/50 border border-dashed border-slate-800 rounded-3xl p-6 text-center">
+                                            <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                                            <p className="text-xs text-slate-500 mb-4">No email providers connected</p>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => window.open('/dashboard/settings/integrations', '_blank')}
+                                                className="text-[10px] uppercase tracking-widest font-bold"
+                                            >
+                                                Connect Provider
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
-                                        <ChevronDown className="w-3.5 h-3.5" />
-                                        Step 1b: Delivery Provider
-                                    </h3>
-                                    <select
-                                        value={selectedProvider}
-                                        onChange={(e) => setSelectedProvider(e.target.value as 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail')}
-                                        className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl py-3 px-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all"
-                                    >
-                                        <option value="sendgrid">SendGrid</option>
-                                        <option value="resend">Resend</option>
-                                        <option value="brevo">Brevo</option>
-                                        <option value="zoho">Zoho Mail</option>
-                                        <option value="gmail">Gmail</option>
-                                    </select>
-                                </div>
 
                                 <div>
                                     <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
