@@ -101,6 +101,28 @@ function safeJsonParse(text: string): unknown {
   }
 }
 
+/**
+ * Audit Remediation: The "N/A" Data Trap
+ * Detects placeholder strings and converts them to null for clean database ingestion.
+ */
+function cleanPlaceholderValue<T>(val: T): T | null {
+  if (typeof val === 'string') {
+    const v = val.trim().toLowerCase();
+    const placeholders = ['n/a', 'not available', 'none', 'null', 'undefined', '-', 'placeholder'];
+    if (placeholders.includes(v)) return null as any;
+  }
+  return val;
+}
+
+function cleanObjectPlaceholders<T extends Record<string, any>>(obj: T): T {
+  const result = { ...obj };
+  for (const key in result) {
+    (result as any)[key] = cleanPlaceholderValue(result[key]);
+  }
+  return result;
+}
+
+
 function formatBusinessValue(value: unknown, indent = 0): string {
   const space = '  '.repeat(indent);
   if (value == null) return `${space}not available`;
@@ -214,6 +236,7 @@ function appendContractDisclaimer(body: string, attribution: string): string {
 function supabaseErrorToMcpClientError(toolName: string, message: string): Error {
   const m = message.toLowerCase();
   console.error(`[MCP ${toolName}]`, message);
+  
   if (
     m.includes('does not exist') ||
     m.includes('schema cache') ||
@@ -222,8 +245,13 @@ function supabaseErrorToMcpClientError(toolName: string, message: string): Error
     m.includes('42p01') ||
     m.includes('invalid input syntax')
   ) {
+    const isSchemaDesync = m.includes('schema cache') || m.includes('does not exist') || m.includes('42p01');
+    const helpText = isSchemaDesync 
+      ? 'Database schema desync detected. Please refresh the workspace connection or contact your administrator to reload the API schema.'
+      : 'Workspace data could not be loaded (database or schema error on our side).';
+      
     return new Error(
-      'Workspace data could not be loaded (database or schema error on our side). Retry shortly. If it persists, contact support with your workspace ID and the MCP tool name you used.'
+      `${helpText} Retry shortly. If it persists, contact support with your workspace ID and the MCP tool name (${toolName}) you used.`
     );
   }
   return new Error(MCP_GENERIC_OPERATION_ERROR);
@@ -720,7 +748,7 @@ class AlphaCloneMCPServer {
           break;
         }
 
-        // â”€â”€ create_client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ——————————————————————————————————————————————————————————————————————————————
         case 'create_client': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -732,8 +760,8 @@ class AlphaCloneMCPServer {
             industry,
             website,
             location,
-            sales_stage = 'lead',
-            value = 0,
+            sales_stage,
+            value,
             source,
             notes,
             metadata,
@@ -745,7 +773,7 @@ class AlphaCloneMCPServer {
               : {};
           const primary = await supabaseAdmin
             .from('business_clients')
-            .insert({
+            .insert(cleanObjectPlaceholders({
               tenant_id,
               name,
               email: email || null,
@@ -759,7 +787,7 @@ class AlphaCloneMCPServer {
               custom_fields: { source: resolvedSource, ...metaExtra },
               is_active: true,
               owner_id,
-            })
+            }))
             .select('id, name, email')
             .single();
           let data = primary.data;
@@ -767,7 +795,7 @@ class AlphaCloneMCPServer {
           if (error && isSchemaOrRelationError(error)) {
             const fallback = await supabaseAdmin
               .from('business_clients')
-              .insert({
+              .insert(cleanObjectPlaceholders({
                 tenant_id,
                 name,
                 email: email || null,
@@ -777,7 +805,7 @@ class AlphaCloneMCPServer {
                 location: location || null,
                 description: notes || null,
                 custom_fields: { source: resolvedSource, ...metaExtra },
-              })
+              }))
               .select('id, name, email')
               .single();
             data = fallback.data;
@@ -812,10 +840,25 @@ class AlphaCloneMCPServer {
             notes,
             is_active,
             metadata,
+            search_email,
+            search_name,
           } = a;
-          if (!isUuidString(client_id)) {
-            throw new Error('client_id must be a valid UUID from get_clients');
+
+          let resolvedId = client_id;
+
+          // Smart Lookup fallback
+          if (!resolvedId && (search_email || search_name)) {
+            let lookup = supabaseAdmin.from('business_clients').select('id').eq('tenant_id', tenant_id);
+            if (search_email) lookup = lookup.eq('email', search_email);
+            if (search_name) lookup = lookup.eq('name', search_name);
+            const { data: found } = await lookup.limit(1).maybeSingle();
+            if (found) resolvedId = found.id;
           }
+
+          if (!isUuidString(resolvedId)) {
+            throw new Error('client_id must be a valid UUID. Use get_clients or provide search_email/search_name for Smart Lookup.');
+          }
+
           const update: Record<string, unknown> = {};
           if (name !== undefined) update.name = typeof name === 'string' ? name.trim() : name;
           if (email !== undefined) update.email = email || null;
@@ -830,14 +873,16 @@ class AlphaCloneMCPServer {
           if (metadata !== undefined && metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
             update.custom_fields = metadata;
           }
-          if (Object.keys(update).length === 0) {
+
+          const cleanedUpdate = cleanObjectPlaceholders(update);
+          if (Object.keys(cleanedUpdate).length === 0) {
             throw new Error('Provide at least one field to update');
           }
           const { data, error } = await supabaseAdmin
             .from('business_clients')
-            .update(update)
+            .update(cleanedUpdate)
             .eq('tenant_id', tenant_id)
-            .eq('id', client_id.trim())
+            .eq('id', (resolvedId as string).trim())
             .select('id, name, email, phone, sales_stage, value, is_active, updated_at')
             .single();
           if (error) throw supabaseErrorToMcpClientError('update_client', error.message);
@@ -1153,7 +1198,7 @@ class AlphaCloneMCPServer {
 
           const primaryInsert = await supabaseAdmin
             .from('leads')
-            .insert({
+            .insert(cleanObjectPlaceholders({
               tenant_id,
               owner_id,
               business_name: primaryName,
@@ -1165,7 +1210,7 @@ class AlphaCloneMCPServer {
               stage: 'lead',
               source: resolvedSource,
               notes: notes || null,
-            })
+            }))
             .select('id, business_name, email, status')
             .single();
 
@@ -1236,11 +1281,24 @@ class AlphaCloneMCPServer {
         case 'update_lead': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { lead_id, business_name, email, phone, industry, location, source, notes, status, stage } = a;
-          if (!isUuidString(lead_id)) {
-            throw new Error('lead_id must be a valid lead UUID from get_leads');
+          const { lead_id, business_name, email, phone, industry, location, source, notes, status, stage, search_email, search_business_name } = a;
+          
+          let resolvedId = lead_id;
+
+          // Smart Lookup fallback
+          if (!resolvedId && (search_email || search_business_name)) {
+            let lookup = supabaseAdmin.from('leads').select('id').eq('tenant_id', tenant_id);
+            if (search_email) lookup = lookup.eq('email', search_email);
+            if (search_business_name) lookup = lookup.eq('business_name', search_business_name);
+            const { data: found } = await lookup.limit(1).maybeSingle();
+            if (found) resolvedId = found.id;
           }
-          const update: Record<string, any> = {};
+
+          if (!isUuidString(resolvedId)) {
+            throw new Error('lead_id must be a valid lead UUID. Use get_leads or provide search_email/search_business_name for Smart Lookup.');
+          }
+
+          const update: Record<string, any> = cleanObjectPlaceholders({});
           if (business_name !== undefined) update.business_name = business_name;
           if (email !== undefined) update.email = email || null;
           if (phone !== undefined) update.phone = normalizePhoneForStorage(phone);
@@ -1250,12 +1308,15 @@ class AlphaCloneMCPServer {
           if (notes !== undefined) update.notes = notes || null;
           if (status !== undefined) update.status = status;
           if (stage !== undefined) update.stage = stage;
-          if (Object.keys(update).length === 0) throw new Error('Provide at least one field to update');
+          
+          const cleanedUpdate = cleanObjectPlaceholders(update);
+          if (Object.keys(cleanedUpdate).length === 0) throw new Error('Provide at least one field to update');
+
           const { data, error } = await supabaseAdmin
             .from('leads')
-            .update(update)
+            .update(cleanedUpdate)
             .eq('tenant_id', tenant_id)
-            .eq('id', lead_id.trim())
+            .eq('id', (resolvedId as string).trim())
             .select('id, business_name, status, stage, updated_at')
             .single();
           if (error) throw supabaseErrorToMcpClientError('update_lead', error.message);

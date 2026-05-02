@@ -10,6 +10,9 @@ import { generateEmailReply, generateEmailDraft } from '@/services/unifiedAIServ
 import { taskService } from '@/services/taskService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { integrationsService, IntegrationConfig } from '@/services/integrationsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface Message {
     messageId: string;
@@ -37,6 +40,8 @@ type ZohoMailViewProps = {
 };
 
 export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) {
+    const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [selectedFolder, setSelectedFolder] = useState<string>('1'); // Inbox
@@ -45,7 +50,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [composing, setComposing] = useState(false);
-    const [emailData, setEmailData] = useState({ to: '', subject: '', body: '' });
+    const [emailData, setEmailData] = useState({ to: '', subject: '', body: '', provider: null as string | null });
+    const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
+    const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
@@ -76,6 +83,27 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         const query = params.toString();
         return query ? `/api/auth/zoho/connect?${query}` : '/api/auth/zoho/connect';
     })();
+
+    useEffect(() => {
+        if (user?.id) {
+            integrationsService.getUserIntegrations(user.id).then(({ integrations }) => {
+                const emailTypes = ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
+                const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+                setAvailableProviders(filtered);
+                
+                // Default to Zoho if available
+                const zoho = filtered.find(p => p.type === 'zoho');
+                setSelectedProvider(zoho || filtered[0] || null);
+            });
+        }
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (emailData.provider) {
+            const provider = availableProviders.find(p => p.type === emailData.provider);
+            if (provider) setSelectedProvider(provider);
+        }
+    }, [emailData.provider, availableProviders]);
 
     useEffect(() => {
         const verifyZohoMailReady = async () => {
@@ -331,20 +359,30 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         }
         setSending(true);
         try {
-            const data = await zohoFetch('/api/zoho/mail', {
+            // Use unified email API if it's not Zoho, or if we want multi-provider support
+            const res = await fetch('/api/email/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    toAddress: emailData.to,
+                    to: emailData.to,
                     subject: normalizedSubject,
-                    content: emailData.body,
-                }),
+                    text: emailData.body,
+                    tenantId: currentTenant?.id,
+                    userId: user?.id,
+                    provider: selectedProvider?.type || 'zoho'
+                })
             });
-            if (data !== null) {
-                setComposing(false);
-                setEmailData({ to: '', subject: '', body: '' });
-                toast.success('Email sent!');
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: 'Failed to send' }));
+                throw new Error(err.error || 'Failed to send email');
             }
+
+            setComposing(false);
+            setEmailData({ to: '', subject: '', body: '', provider: null });
+            toast.success(`Email sent via ${selectedProvider?.name || 'Zoho'}`);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to send email');
         } finally {
             setSending(false);
         }
@@ -368,6 +406,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 to: recipient,
                 subject: /^re:/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`,
                 body: reply,
+                provider: null
             });
             setComposing(true);
             setAiPrompt('');
@@ -689,6 +728,23 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     <button onClick={() => setComposing(false)} className="p-3 text-gray-500 hover:text-white rounded-xl hover:bg-white/5"><X size={24} /></button>
                                 </div>
                                 <form onSubmit={handleSend} className="space-y-6">
+                                    {availableProviders.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-6">
+                                            {availableProviders.map(provider => (
+                                                <button
+                                                    key={provider.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedProvider(provider)}
+                                                    className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                                        ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20'
+                                                        : 'bg-gray-950/50 text-gray-500 border-white/5 hover:border-white/10'
+                                                        }`}
+                                                >
+                                                    {provider.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <div className="flex justify-between"><label className="text-xs font-medium text-gray-400">To</label><button type="button" onClick={() => setIsContactPickerOpen(true)} className="text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full">Directory</button></div>
@@ -729,7 +785,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                         <button onClick={() => handleDelete(selectedMessage!)} className="p-2 hover:bg-white/5 text-gray-500"><Trash2 size={18} /></button>
                                     </div>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+                                <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar min-h-0">
                                     {loading ? <div className="text-center py-40 opacity-30"><Loader2 className="animate-spin inline mr-2"/>Loading...</div> : (
                                         <div className="max-w-4xl mx-auto space-y-8">
                                             <div className="flex justify-between items-center pb-6 border-b border-white/5">
@@ -738,7 +794,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                     <div><p className="font-semibold text-white">{messageContent?.sender}</p><p className="text-gray-500 text-xs">{formatDate(messageContent?.receivedTime)}</p></div>
                                                 </div>
                                             </div>
-                                            <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: messageContent?.content ?? '' }} />
+                                            <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-base break-words" dangerouslySetInnerHTML={{ __html: (messageContent?.content && messageContent.content !== 'na') ? messageContent.content : '<div class="flex flex-col items-center justify-center py-20 text-gray-500 italic"><p>No message content available</p></div>' }} />
                                             
                                             {emailSummary && (
                                                 <div className="mt-6 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl">
@@ -774,6 +830,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                                         to: selectedMessageMeta?.sender ?? messageContent?.sender ?? '',
                                                                         subject: /^re:/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`,
                                                                         body: suggestion,
+                                                                        provider: null
                                                                     });
                                                                     setComposing(true);
                                                                     setReplySuggestions([]);
@@ -795,6 +852,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                             to: selectedMessageMeta?.sender ?? messageContent?.sender ?? '',
                                                             subject: /^re:/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`,
                                                             body: '',
+                                                            provider: null
                                                         });
                                                         setComposing(true);
                                                     }}
@@ -818,7 +876,20 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 <div className="flex items-center gap-1.5 text-blue-400/70"><Sparkles size={11} /><span>AI Auto-Apply active</span></div>
             </div>
 
-            <LeadOutreachModal isOpen={isLeadModalOpen} onClose={() => setIsLeadModalOpen(false)} onEmailDrafted={data => { setEmailData(data); setComposing(true); setSelectedMessage(null); }} />
+            <LeadOutreachModal 
+                isOpen={isLeadModalOpen} 
+                onClose={() => setIsLeadModalOpen(false)} 
+                onEmailDrafted={(data) => {
+                    setEmailData({
+                        to: data.to,
+                        subject: data.subject,
+                        body: data.body,
+                        provider: data.provider || null
+                    });
+                    setComposing(true);
+                    setSelectedMessage(null);
+                }} 
+            />
             <CRMContactPickerModal isOpen={isContactPickerOpen} onClose={() => setIsContactPickerOpen(false)} onSelectContact={email => setEmailData(prev => ({ ...prev, to: email }))} />
 
             <style jsx global>{`

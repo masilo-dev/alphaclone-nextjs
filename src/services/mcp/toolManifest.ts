@@ -75,12 +75,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'update_client',
-    description: 'Update core client fields including stage, value, and notes.',
+    description: 'Update core client fields including stage, value, and notes. Supports Smart Lookup via search_email or search_name if client_id is unknown.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string' },
         client_id: { type: 'string', description: 'UUID from get_clients/get_client_by_id' },
+        search_email: { type: 'string', description: 'Smart Lookup: Find client by email if client_id is unknown.' },
+        search_name: { type: 'string', description: 'Smart Lookup: Find client by name if client_id is unknown.' },
         name: { type: 'string' },
         email: { type: 'string' },
         phone: { type: 'string' },
@@ -93,7 +95,7 @@ export const MCP_TOOLS = [
         is_active: { type: 'boolean' },
         metadata: { type: 'object' },
       },
-      required: ['client_id'],
+      required: [],
     },
   },
   {
@@ -343,12 +345,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'update_lead',
-    description: 'Update lead details including contact info, source, notes, status, and stage.',
+    description: 'Update lead details. Supports Smart Lookup via search_email or search_business_name if lead_id is unknown.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string' },
         lead_id: { type: 'string', description: 'UUID of the lead to update' },
+        search_email: { type: 'string', description: 'Smart Lookup: Find lead by email if lead_id is unknown.' },
+        search_business_name: { type: 'string', description: 'Smart Lookup: Find lead by business name if lead_id is unknown.' },
         business_name: { type: 'string' },
         email: { type: 'string' },
         phone: { type: 'string' },
@@ -359,7 +363,7 @@ export const MCP_TOOLS = [
         status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
         stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
       },
-      required: ['lead_id'],
+      required: [],
     },
   },
   // ── Deals ──────────────────────────────────────────────────────────
@@ -618,7 +622,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_post',
-    description: 'Alias of create_social_post for agent compatibility.',
+    description: 'DEPRECATED: Use create_social_post instead. Alias of create_social_post for legacy agent compatibility.',
     inputSchema: {
       type: 'object',
       properties: {
