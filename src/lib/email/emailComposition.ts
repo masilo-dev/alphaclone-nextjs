@@ -1,8 +1,4 @@
-const DEFAULT_SYSTEM_FOOTER_LINES = [
-  '--',
-  'AlphaClone Systems',
-  'This message was sent by AlphaClone communication automation.',
-];
+const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [];
 
 export function normalizeEmailSubject(subject: string): string {
   return String(subject || '').trim().replace(/\s+/g, ' ');
