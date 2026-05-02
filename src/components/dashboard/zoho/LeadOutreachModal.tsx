@@ -8,19 +8,38 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, Lead } from '@/services/leadService';
 import { generateEmailReply, generateText } from '@/services/unifiedAIService';
+import { integrationsService, IntegrationConfig } from '@/services/integrationsService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LeadOutreachModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onEmailDrafted: (data: { to: string; subject: string; body: string }) => void;
+    onEmailDrafted: (data: { to: string; subject: string; body: string; provider?: string }) => void;
 }
 
 export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: LeadOutreachModalProps) {
+    const { user } = useAuth();
     const [query, setQuery] = useState('');
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState<Partial<Lead>[]>([]);
     const [syncing, setSyncing] = useState<string | null>(null);
     const [syncedIds, setSyncedIds] = useState<Set<string>>(new Set());
+    const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
+    const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
+
+    React.useEffect(() => {
+        if (isOpen && user?.id) {
+            integrationsService.getUserIntegrations(user.id).then(({ integrations }) => {
+                const emailTypes = ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
+                const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+                setAvailableProviders(filtered);
+                
+                // Default to Zoho if available, else first one
+                const zoho = filtered.find(p => p.type === 'zoho');
+                setSelectedProvider(zoho || filtered[0] || null);
+            });
+        }
+    }, [isOpen, user?.id]);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,7 +112,8 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
             onEmailDrafted({
                 to: lead.email || '',
                 subject: `Strategic Partnership Opportunity for ${lead.businessName}`,
-                body: draft || ''
+                body: draft || '',
+                provider: selectedProvider?.type
             });
             onClose();
         } catch (err) {
@@ -137,8 +157,25 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="p-6">
+                {/* Provider Selection & Search Bar */}
+                <div className="p-6 space-y-4">
+                    {availableProviders.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {availableProviders.map(provider => (
+                                <button
+                                    key={provider.id}
+                                    onClick={() => setSelectedProvider(provider)}
+                                    className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                        ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20'
+                                        : 'bg-gray-950/50 text-gray-500 border-white/5 hover:border-white/10'
+                                        }`}
+                                >
+                                    {provider.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    
                     <form onSubmit={handleSearch} className="relative group">
                         <div className="absolute inset-y-0 left-5 flex items-center text-gray-500 group-focus-within:text-blue-400 transition-colors pointer-events-none">
                             <Search size={20} />
