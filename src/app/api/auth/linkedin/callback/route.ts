@@ -17,8 +17,9 @@ type LinkedInOAuthState = {
 };
 
 const LINKEDIN_REQUIRED_SCOPES = [
-  // Keep activation tied to posting capability only.
+  // Keep activation tied to posting capability.
   'w_member_social',
+  'w_organization_social',
 ] as const;
 
 function normalizeScopes(raw: unknown): string[] {
@@ -154,7 +155,9 @@ export async function GET(req: NextRequest) {
       tokenData.grantedScopes,
     ];
     const scopes = Array.from(new Set(scopeCandidates.flatMap((raw) => normalizeScopes(raw))));
-    const hasWriteScope = scopes.includes('w_member_social');
+    const hasMemberWriteScope = scopes.includes('w_member_social');
+    const hasOrgWriteScope = scopes.includes('w_organization_social');
+    const hasWriteScope = hasMemberWriteScope || hasOrgWriteScope;
     const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope.toLowerCase()));
 
     const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
@@ -227,8 +230,8 @@ export async function GET(req: NextRequest) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
     }
 
-    if (!hasWriteScope) {
-      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_w_member_social' });
+    if (!hasMemberWriteScope && !hasOrgWriteScope) {
+      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_write_permissions' });
     }
     await admin.from('tenant_integrations').upsert(
       {

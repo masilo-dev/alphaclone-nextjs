@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
         'pages_read_engagement',
         'pages_read_user_content',
         'pages_manage_posts',       // required to post content to page
+        'pages_manage_engagement',  // required to comment on posts
         'pages_messaging',          // required for Messenger send
         'leads_retrieval',
         'ads_management',
