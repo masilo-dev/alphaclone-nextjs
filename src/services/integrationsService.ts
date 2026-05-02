@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface IntegrationConfig {
     id: string;
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho';
+    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook';
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -328,6 +328,8 @@ export const integrationsService = {
             resend: 'Resend',
             brevo: 'Brevo',
             zoho: 'Zoho Mail',
+            gmail: 'Gmail',
+            facebook: 'Facebook',
         };
         return names[type] || type;
     },
