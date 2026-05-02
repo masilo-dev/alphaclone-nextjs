@@ -7,6 +7,7 @@ import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { businessClientService } from '../../../services/businessClientService';
+import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { getMimeType } from '../../../utils/mimeTypes';
 
@@ -42,6 +43,8 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [selectedTone, setSelectedTone] = useState('professional');
     const [from, setFrom] = useState('');
     const [clients, setClients] = useState<any[]>([]);
+    const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
+    const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -62,14 +65,37 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             businessClientService.getClients(currentTenant.id).then(({ clients }) => {
                 setClients(clients || []);
             });
-            // Fetch user's email for the From field
+
+            // Fetch available email integrations
+            integrationsService.getUserIntegrations(userId).then(({ integrations }) => {
+                const emailTypes = ['gmail', 'sendgrid', 'resend', 'brevo', 'zoho'];
+                const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+                setAvailableProviders(filtered);
+                
+                // Set default provider (prefer Gmail if available, otherwise first one)
+                const gmail = filtered.find(p => p.type === 'gmail');
+                setSelectedProvider(gmail || filtered[0] || null);
+            });
+
+            // Fetch user's email for the fallback From field
             const fetchUser = async () => {
                 const { data } = await supabase.auth.getUser();
                 if (data?.user?.email) setFrom(data.user.email);
             };
             fetchUser();
         }
-    }, [isOpen, currentTenant?.id]);
+    }, [isOpen, currentTenant?.id, userId]);
+
+    // Update 'From' field when provider changes
+    React.useEffect(() => {
+        if (selectedProvider) {
+            const config = selectedProvider.config;
+            const providerFrom = config.fromEmail || config.from_email || config.senderEmail;
+            if (providerFrom) {
+                setFrom(providerFrom);
+            }
+        }
+    }, [selectedProvider]);
 
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -197,7 +223,8 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
         setSending(true);
         try {
-            const res = await fetch(`/api/gmail/messages/send?userId=${userId}`, {
+            // Use unified email sending API
+            const res = await fetch('/api/email/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -207,7 +234,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     cc: cc || undefined,
                     bcc: bcc || undefined,
                     subject,
-                    messageBody: body,
+                    text: body,
+                    tenantId: currentTenant?.id,
+                    userId: userId,
+                    from: from || undefined,
+                    provider: selectedProvider?.type || 'gmail',
                     attachments: attachments.length > 0 ? attachments.map(att => ({
                         filename: att.name,
                         data: att.data,
@@ -221,7 +252,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 throw new Error(err.error || 'Failed to send message');
             }
 
-            toast.success('Email sent via Gmail');
+            toast.success(`Email sent via ${selectedProvider?.name || 'Provider'}`);
             onClose();
             setTo('');
             setCc('');
@@ -262,7 +293,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-white uppercase tracking-tight">Compose Email</h2>
-                                    <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Gmail · AI Assistant</p>
+                                    <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">{selectedProvider?.name || 'Unified'} · AI Assistant</p>
                                 </div>
                             </div>
                             <button
@@ -330,17 +361,43 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                             </motion.div>
 
                             <div className="grid grid-cols-1 gap-6">
+                                {/* PROVIDER SELECTION */}
+                                {availableProviders.length > 0 && (
+                                    <div>
+                                        <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Email Provider</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {availableProviders.map(provider => (
+                                                <button
+                                                    key={provider.id}
+                                                    onClick={() => setSelectedProvider(provider)}
+                                                    className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                                        ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
+                                                        : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
+                                                        }`}
+                                                >
+                                                    {provider.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* FROM: SENDER */}
                                 <div>
-                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender</label>
+                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender Address</label>
                                     <div className="relative group">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                             <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
                                         </div>
-                                        <div className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-slate-300 transition-all shadow-inner cursor-not-allowed">
-                                            {from || 'Connecting to Gmail...'}
-                                        </div>
+                                        <input
+                                            type="text"
+                                            value={from}
+                                            onChange={e => setFrom(e.target.value)}
+                                            placeholder="sender@yourdomain.com"
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
+                                        />
                                     </div>
+                                    <p className="mt-2 px-1 text-[8px] text-slate-500 font-mono uppercase tracking-wider">Note: Ensure this address is verified with your selected provider.</p>
                                 </div>
 
                                 {/* TO: RECIPIENT */}
