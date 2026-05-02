@@ -2274,6 +2274,75 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'create_facebook_comment': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { page_id, post_id, message } = a;
+
+          if (typeof post_id !== 'string' || !post_id.trim()) throw new Error('post_id is required');
+          if (typeof message !== 'string' || !message.trim()) throw new Error('message is required');
+
+          let resolvedPageId = typeof page_id === 'string' && page_id.trim() ? page_id.trim() : '';
+          let integration: FacebookIntegrationIdentity | null = null;
+
+          if (resolvedPageId) {
+            const { data: specificIntegration, error: integrationError } = await supabaseAdmin
+              .from('facebook_integrations')
+              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+              .eq('tenant_id', tenant_id)
+              .eq('page_id', resolvedPageId)
+              .eq('is_active', true)
+              .maybeSingle();
+            if (integrationError) throw supabaseErrorToMcpClientError('create_facebook_comment', integrationError.message);
+            integration = (specificIntegration as FacebookIntegrationIdentity | null) || null;
+          } else {
+            const { data: identities, error: identitiesError } = await supabaseAdmin
+              .from('facebook_integrations')
+              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+              .eq('tenant_id', tenant_id)
+              .eq('is_active', true);
+            if (identitiesError) throw supabaseErrorToMcpClientError('create_facebook_comment', identitiesError.message);
+            integration = pickPreferredFacebookIdentity((identities || []) as FacebookIntegrationIdentity[]);
+            if (integration?.page_id) resolvedPageId = integration.page_id;
+          }
+
+          if (!resolvedPageId || !integration?.page_access_token) {
+            throw new Error('No connected Facebook pages with comment permissions were found.');
+          }
+
+          const response = await fetch(
+            `https://graph.facebook.com/v19.0/${post_id}/comments`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: message.trim(),
+                access_token: integration.page_access_token,
+              }),
+            }
+          );
+
+          const fb = await response.json();
+          if (!response.ok || fb?.error) {
+            throw new Error(fb?.error?.message || 'Facebook comment failed');
+          }
+
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: `Facebook comment created: ${JSON.stringify({
+                  id: fb.id,
+                  page_id: resolvedPageId,
+                  page_name: integration.page_name,
+                })}`,
+              },
+            ],
+          };
+          break;
+        }
+
         // â”€â”€ LinkedIn tools â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'get_linkedin_identities': {
           const a = args as Record<string, any>;

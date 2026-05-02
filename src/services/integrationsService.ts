@@ -327,6 +327,7 @@ export const integrationsService = {
             sendgrid: 'SendGrid',
             resend: 'Resend',
             brevo: 'Brevo',
+            zoho: 'Zoho Mail',
         };
         return names[type] || type;
     },

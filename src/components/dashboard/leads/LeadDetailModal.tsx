@@ -20,6 +20,7 @@ import {
     Layout,
     ArrowRight,
     Target,
+    MoreVertical,
     History as HistoryIcon
 } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponents';

@@ -18,6 +18,9 @@ type LinkedInOAuthState = {
 const LINKEDIN_REQUESTED_SCOPES = [
   // Core posting scope.
   'w_member_social',
+  // Organization/Company posting scopes.
+  'w_organization_social',
+  'r_organization_social',
   // OpenID identity scopes used by /v2/userinfo.
   'openid',
   'profile',
