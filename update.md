@@ -1,5 +1,18 @@
 # Update Log
 
+## Date: 2026-05-02 (SOCIAL EXPANSION & BUILD STABILIZATION)
+
+### Added
+- **LinkedIn Company Page Support**: Upgraded the LinkedIn integration to support **Company Pages**. Updated OAuth flows (`connect` and `callback`) to request `w_organization_social` and `r_organization_social` scopes, allowing AlphaClone to manage and post to organization-level profiles.
+- **Facebook Page Commenting**: Enhanced Facebook integrations with the `pages_manage_engagement` scope. Autonomous agents can now directly interact with Page posts through comments.
+- **Facebook Commenting MCP Tool**: Implemented the `create_facebook_comment` tool in `MCPServer.ts`. This tool utilizes the Page Access Token to programmatically post comments on Page content, enabling fully autonomous social engagement loops.
+
+### Fixed
+- **Vercel Build Stability (Icon Imports)**: Resolved a critical build-time "Cannot find name 'MoreVertical'" error in `LeadDetailModal.tsx`. Successfully identified and added the missing import from `lucide-react`.
+- **Vercel Build Stability (Integration Mapping)**: Fixed a TypeScript compilation error in `integrationsService.ts` where the `zoho` integration type was missing from the mandatory names mapping record.
+- **Production Readiness**: Verified the entire codebase with `npx tsc --noEmit` to ensure zero type errors, guaranteeing a stable production deployment on Vercel.
+
+
 ## Date: 2026-05-01 (MCP CONSOLIDATION & xAI MODERNIZATION)
 
 ### Added
