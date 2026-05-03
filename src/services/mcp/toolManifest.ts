@@ -739,6 +739,60 @@ export const MCP_TOOLS = [
       required: ['post_urn'],
     },
   },
+  {
+    name: 'create_linkedin_event',
+    description: 'Create a LinkedIn organization event. Use for webinars, networking, or brand announcements.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        name: { type: 'string', description: 'Event title' },
+        description: { type: 'string' },
+        start_time: { type: 'string', description: 'ISO datetime' },
+        end_time: { type: 'string', description: 'ISO datetime' },
+        timezone: { type: 'string', description: 'e.g. UTC, America/New_York' },
+        event_type: { type: 'string', enum: ['ONLINE', 'IN_PERSON'], default: 'ONLINE' },
+        online_url: { type: 'string', description: 'Meeting link if ONLINE' },
+        linkedin_organization_id: { type: 'string', description: 'Required organization ID to host the event' },
+      },
+      required: ['name', 'start_time', 'end_time', 'linkedin_organization_id'],
+    },
+  },
+  {
+    name: 'get_linkedin_ad_accounts',
+    description: 'List LinkedIn Advertising accounts connected to the workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_linkedin_ad_campaigns',
+    description: 'Fetch ad campaigns for a specific LinkedIn ad account.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        ad_account_id: { type: 'string', description: 'The LinkedIn ad account URN or ID' },
+        status: { type: 'string', description: 'ACTIVE | PAUSED | ARCHIVED | CANCELED' },
+      },
+      required: ['ad_account_id'],
+    },
+  },
+  {
+    name: 'get_linkedin_member_profile',
+    description: 'Retrieve the basic profile and identity data for the authenticated LinkedIn member.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+      },
+      required: [],
+    },
+  },
   // ── Projects ───────────────────────────────────────────────────────
   {
     name: 'get_projects',

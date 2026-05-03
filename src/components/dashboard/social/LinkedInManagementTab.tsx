@@ -47,16 +47,6 @@ interface LinkedInCommentRow {
   createdAt: number | null;
 }
 
-interface LinkedInInboxItem {
-  postId: string;
-  postUrn: string;
-  postCaption: string;
-  commentUrn: string;
-  commentText: string;
-  actor: string;
-  createdAt: number | null;
-}
-
 interface LinkedInEngagement {
   likesCount: number;
   commentsCount: number;
@@ -162,11 +152,6 @@ export default function LinkedInManagementTab() {
   const [engagementByPost, setEngagementByPost] = useState<Record<string, LinkedInEngagement>>({});
   const [engagementLoading, setEngagementLoading] = useState<Record<string, boolean>>({});
   const [replyByComment, setReplyByComment] = useState<Record<string, string>>({});
-  const [inboxItems, setInboxItems] = useState<LinkedInInboxItem[]>([]);
-  const [inboxLoading, setInboxLoading] = useState(false);
-  const [inboxReplyByComment, setInboxReplyByComment] = useState<Record<string, string>>({});
-  const [inboxActionLoading, setInboxActionLoading] = useState<Record<string, boolean>>({});
-  const [inboxAiLoading, setInboxAiLoading] = useState<Record<string, boolean>>({});
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
   const [composeCaption, setComposeCaption] = useState('');
   const [composeLinkUrl, setComposeLinkUrl] = useState('');
@@ -252,6 +237,23 @@ export default function LinkedInManagementTab() {
     if (statusFilter === 'all') return accountPosts;
     return accountPosts.filter((post) => post.status === statusFilter);
   }, [posts, statusFilter, selectedLinkedInMemberId]);
+
+  const duplicateGroups = useMemo(() => {
+    const groups: Record<string, string[]> = {};
+    posts.forEach((p) => {
+      const cap = (p.caption || '').trim().toLowerCase();
+      if (!cap || cap.length < 10) return;
+      if (!groups[cap]) groups[cap] = [];
+      groups[cap].push(p.id);
+    });
+    const filtered: Record<string, string[]> = {};
+    Object.entries(groups).forEach(([text, ids]) => {
+      if (ids.length > 1) filtered[text] = ids;
+    });
+    return filtered;
+  }, [posts]);
+
+  const duplicateCount = useMemo(() => Object.values(duplicateGroups).length, [duplicateGroups]);
 
   const hasWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
@@ -509,109 +511,6 @@ ${parentContext}Return only the comment text.`;
     }
   };
 
-  const loadInbox = async () => {
-    if (!currentTenant?.id) return;
-    setInboxLoading(true);
-    try {
-      const res = await fetch('/api/linkedin/inbox', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId: currentTenant.id,
-          linkedinMemberId: selectedLinkedInMemberId || undefined,
-          limit: 50,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.error(data.error || 'Failed to load LinkedIn inbox');
-        return;
-      }
-      setInboxItems(Array.isArray(data.items) ? data.items : []);
-      if (data.note) {
-        toast.success('LinkedIn engagement inbox updated');
-      }
-    } catch {
-      toast.error('Failed to load LinkedIn inbox');
-    } finally {
-      setInboxLoading(false);
-    }
-  };
-
-  const handleInboxReply = async (item: LinkedInInboxItem) => {
-    if (!currentTenant?.id) return;
-    if (!hasWriteScope) {
-      toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
-      return;
-    }
-    const message = (inboxReplyByComment[item.commentUrn] || '').trim();
-    if (!message) {
-      toast.error('Write a reply first');
-      return;
-    }
-    setInboxActionLoading((prev) => ({ ...prev, [item.commentUrn]: true }));
-    try {
-      const res = await fetch('/api/linkedin/comment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId: currentTenant.id,
-          postUrn: item.postUrn,
-          parentCommentUrn: item.commentUrn,
-          text: message,
-          linkedinMemberId: selectedLinkedInMemberId || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.error(data.error || 'Failed to send LinkedIn reply');
-        return;
-      }
-      setInboxReplyByComment((prev) => ({ ...prev, [item.commentUrn]: '' }));
-      toast.success('LinkedIn reply sent');
-    } catch {
-      toast.error('Failed to send LinkedIn reply');
-    } finally {
-      setInboxActionLoading((prev) => ({ ...prev, [item.commentUrn]: false }));
-    }
-  };
-
-  const handleGenerateInboxAiReply = async (item: LinkedInInboxItem) => {
-    setInboxAiLoading((prev) => ({ ...prev, [item.commentUrn]: true }));
-    try {
-      const prompt = `Write one short LinkedIn reply to this inbound comment. Tone: smart, friendly, light humor, professional-safe, no slang. Max 220 characters.
-
-Post caption:
-${String(item.postCaption || '').slice(0, 900)}
-
-Inbound comment:
-${String(item.commentText || '').slice(0, 500)}
-
-Return only the reply text.`;
-      const res = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          model: 'grok-2-latest',
-          temperature: 0.9,
-          maxTokens: 120,
-          tenantId: currentTenant?.id || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.text) {
-        toast.error(data.error || 'Failed to generate AI reply');
-        return;
-      }
-      setInboxReplyByComment((prev) => ({ ...prev, [item.commentUrn]: String(data.text).trim() }));
-      toast.success('AI inbox reply ready');
-    } catch {
-      toast.error('Failed to generate AI reply');
-    } finally {
-      setInboxAiLoading((prev) => ({ ...prev, [item.commentUrn]: false }));
-    }
-  };
 
   const handleSubmitLinkedInPost = async (publishNow: boolean) => {
     if (!currentTenant?.id) return;
@@ -760,480 +659,396 @@ Return only the reply text.`;
 
   if (loading) {
     return (
-      <div className="h-64 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-sky-400" />
+      <div className="h-64 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+        <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Linkedin className="w-5 h-5 text-sky-400" />
-            LinkedIn Manager
-          </h2>
-          <p className="text-sm text-slate-400">Manage LinkedIn posts, status, comments, and reactions from dashboard.</p>
-        </div>
-        <button
-          onClick={loadData}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs bg-slate-800 border border-slate-700 text-slate-300 hover:text-white"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
-        </button>
-      </div>
-
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        {schemaWarning && (
-          <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-200">
-            {schemaWarning}
+    <div className="space-y-6">
+      {/* ── Topbar ────────────────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-sky-600/20 flex items-center justify-center border border-sky-500/30">
+            <Linkedin className="w-6 h-6 text-sky-400" />
           </div>
-        )}
-        {integrations.length === 0 ? (
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <p className="text-sm text-amber-300 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              LinkedIn is not connected for this workspace account.
-            </p>
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-tight">LinkedIn manager</h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className={`w-2 h-2 rounded-full ${selectedIntegration?.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+              <p className="text-xs text-slate-400 font-medium">
+                {selectedIntegration?.is_active 
+                  ? `${selectedLinkedInMemberId} — personal profile` 
+                  : 'Disconnected — reconnect required'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {!selectedIntegration?.is_active && (
             <button
               onClick={handleConnectLinkedIn}
-              className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-900/20"
             >
-              Connect LinkedIn
+              Connect
             </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <span className="font-semibold">Connection:</span>
-              <span className={selectedIntegration?.is_active ? 'text-green-300' : 'text-amber-300'}>
-                {selectedIntegration?.is_active ? 'Active' : 'Inactive'}
-              </span>
-              {selectedLinkedInMemberId && (
-                <span className="text-xs px-2 py-0.5 rounded-full border border-sky-500/40 bg-sky-500/10 text-sky-300">
-                  Active account: {selectedLinkedInMemberId}
-                </span>
-              )}
-              {!hasWriteScope && <span className="text-amber-300">Missing write scope</span>}
-              {!selectedIntegration?.is_active && (
-                <span className="text-amber-300">Reconnect to activate this account</span>
-              )}
-            </div>
-            <div className="flex items-end gap-2 flex-wrap">
-              <div>
-              <label className="text-xs text-slate-500 mb-1 block">LinkedIn account</label>
-              <select
-                value={selectedLinkedInMemberId}
-                onChange={(e) => setSelectedLinkedInMemberId(e.target.value)}
-                className="w-full md:w-[360px] px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-sky-500"
-              >
-                {integrations.map((row) => (
-                  <option key={row.linkedin_member_id} value={row.linkedin_member_id}>
-                    {row.linkedin_member_id}
-                  </option>
-                ))}
-              </select>
-              </div>
-              <button
-                onClick={handleConnectLinkedIn}
-                className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30"
-              >
-                Reconnect LinkedIn
-              </button>
-              <button
-                onClick={handleDisconnectLinkedIn}
-                className="px-3 py-2 rounded-lg text-xs font-semibold bg-red-600/15 border border-red-500/30 text-red-300 hover:bg-red-600/25"
-              >
-                Disconnect LinkedIn
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {(integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
-                (integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
-                  <span key={scope} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800 text-slate-300">
-                    {scope}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-slate-500">No scopes available from provider metadata.</span>
-              )}
-            </div>
-          </div>
-        )}
+          )}
+          <button
+            onClick={loadData}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </button>
+          <button
+            onClick={() => {
+              const el = document.getElementById('compose-section');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-950 hover:bg-white transition-all flex items-center gap-1.5"
+          >
+            <span className="text-sm font-bold">+</span>
+            New post
+          </button>
+        </div>
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
-        <div>
-          <h3 className="text-sm font-semibold text-white">Write LinkedIn Post</h3>
-          <p className="text-xs text-slate-400">Create and publish from this LinkedIn page directly.</p>
+      {schemaWarning && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 flex items-center gap-3">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          {schemaWarning}
         </div>
-        <div className="rounded-lg border border-violet-500/25 bg-violet-500/10 p-3 space-y-2">
-          <p className="text-xs font-semibold text-violet-300">AI Content Generator</p>
-          <input
-            value={aiTopic}
-            onChange={(e) => setAiTopic(e.target.value)}
-            placeholder="What should this LinkedIn content be about?"
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
-          />
-          <div className="flex flex-wrap gap-2">
-            {(['professional', 'engaging', 'casual', 'promotional'] as const).map((tone) => (
+      )}
+
+      {/* ── Main Layout ────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
+        
+        {/* ── Left Column: Queue ─────────────────────────────────────── */}
+        <div className="space-y-4">
+          <div className="px-1">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Post queue</h3>
+            <p className="text-xs text-slate-500 mt-1">Scheduled and published posts</p>
+          </div>
+
+          {duplicateCount > 0 && (
+            <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-amber-200">
+                  {duplicateCount === 1 
+                    ? '2 posts with identical content detected — review before publishing' 
+                    : `${duplicateCount * 2} posts with duplicate content detected`}
+                </p>
+                <p className="text-xs text-amber-400/80 mt-0.5">Duplicates are flagged in your queue below.</p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 flex-wrap pb-2">
+            {(['all', 'published', 'scheduled', 'failed', 'cancelled'] as LinkedInStatusFilter[]).map((status) => (
               <button
-                key={tone}
-                onClick={() => setAiTone(tone)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
-                  aiTone === tone ? 'bg-violet-500 text-white' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                  statusFilter === status
+                    ? 'bg-sky-600 border-sky-500 text-white shadow-lg shadow-sky-900/20'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
-                {tone}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setAiContentType('linkedin_post')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                aiContentType === 'linkedin_post' ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
-              }`}
-            >
-              LinkedIn Post
-            </button>
-            <button
-              onClick={() => setAiContentType('linkedin_article')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                aiContentType === 'linkedin_article' ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
-              }`}
-            >
-              LinkedIn Article
-            </button>
-            <button
-              onClick={handleGenerateLinkedInContent}
-              disabled={aiGenerating || isViralGenerating || !aiTopic.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
-            >
-              {aiGenerating ? 'Generating...' : 'Standard AI'}
-            </button>
-            <button
-              onClick={handleGenerateViralHook}
-              disabled={aiGenerating || isViralGenerating || !aiTopic.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white disabled:opacity-50 flex items-center gap-1"
-            >
-              {isViralGenerating ? 'Viralizing...' : <><Sparkles className="w-3 h-3" /> Viral Hook</>}
-            </button>
-          </div>
-        </div>
-        <textarea
-          value={composeCaption}
-          onChange={(e) => setComposeCaption(e.target.value)}
-          rows={5}
-          placeholder="Write your LinkedIn post..."
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 resize-none"
-        />
-        <input
-          value={composeLinkUrl}
-          onChange={(e) => setComposeLinkUrl(e.target.value)}
-          placeholder="Optional link URL (https://...)"
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-        />
-        <input
-          value={composeImageUrl}
-          onChange={(e) => setComposeImageUrl(e.target.value)}
-          placeholder="Optional media URL (image or video)"
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-        />
-        <input
-          type="file"
-          accept="image/*,video/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void handleUploadLinkedInMedia(file);
-          }}
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white file:mr-3 file:rounded-md file:border-0 file:bg-slate-700 file:px-3 file:py-1.5 file:text-xs file:text-slate-200"
-        />
-        {mediaUploading && <p className="text-xs text-slate-400">Uploading media...</p>}
-        <select
-          value={composeMediaType}
-          onChange={(e) => setComposeMediaType(e.target.value as 'image' | 'video')}
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
-        >
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-        </select>
-        <select
-          value={selectedLinkedInOrganizationId}
-          onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
-        >
-          <option value="">Post as personal profile</option>
-          {companyPages.map((page) => (
-            <option
-              key={page.id}
-              value={page.id}
-              disabled={!hasOrganizationWriteScope}
-            >
-              {page.name || page.vanityName || page.id}{!hasOrganizationWriteScope ? ' (requires w_organization_social)' : ''}
-            </option>
-          ))}
-        </select>
-        {selectedLinkedInOrganizationId && !hasOrganizationWriteScope && (
-          <p className="text-xs text-amber-300">
-            Company page posting requires `w_organization_social`. Reconnect LinkedIn and approve organization posting permissions.
-          </p>
-        )}
-        <input
-          type="datetime-local"
-          value={composeScheduledAt}
-          onChange={(e) => setComposeScheduledAt(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
-        />
-        {!canComposeLinkedIn && (
-          <p className="text-xs text-amber-300">
-            To publish, select an active LinkedIn account with write scope (`w_member_social`).
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => handleSubmitLinkedInPost(true)}
-            disabled={composeSubmitting || !canComposeLinkedIn || !canPostAsSelectedCompany}
-            className="px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
-          >
-            {composeSubmitting ? 'Submitting...' : 'Post Now'}
-          </button>
-          <button
-            onClick={() => handleSubmitLinkedInPost(false)}
-            disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn || !canPostAsSelectedCompany}
-            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
-          >
-            Schedule Post
-          </button>
-        </div>
-      </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {(['all', 'published', 'scheduled', 'failed', 'cancelled'] as LinkedInStatusFilter[]).map((status) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(status)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-              statusFilter === status
-                ? 'bg-sky-500/20 border-sky-500/40 text-sky-300'
-                : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
-            }`}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
-
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-semibold text-white">LinkedIn Inbox</h3>
-            <p className="text-xs text-slate-400">Review inbound comments on your LinkedIn posts and reply from dashboard.</p>
-          </div>
-          <button
-            onClick={loadInbox}
-            disabled={inboxLoading}
-            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-50"
-          >
-            {inboxLoading ? 'Loading...' : 'Load Inbox'}
-          </button>
-        </div>
-        {inboxItems.length === 0 ? (
-          <p className="text-xs text-slate-500">No inbox items loaded yet.</p>
-        ) : (
-          <div className="space-y-2 max-h-[420px] overflow-auto pr-1">
-            {inboxItems.map((item) => (
-              <div key={`${item.postUrn}-${item.commentUrn}`} className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 space-y-2">
-                <p className="text-[11px] text-slate-500">
-                  {item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown time'} | {item.actor || 'LinkedIn user'}
-                </p>
-                <p className="text-xs text-slate-300">
-                  <span className="font-semibold text-slate-200">Comment:</span> {item.commentText}
-                </p>
-                <p className="text-[11px] text-slate-500 line-clamp-2">
-                  <span className="font-semibold text-slate-400">Post:</span> {item.postCaption || 'No caption'}
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
-                  <input
-                    value={inboxReplyByComment[item.commentUrn] || ''}
-                    onChange={(e) => setInboxReplyByComment((prev) => ({ ...prev, [item.commentUrn]: e.target.value }))}
-                    placeholder="Reply to this inbox comment..."
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                  />
-                  <button
-                    onClick={() => handleInboxReply(item)}
-                    disabled={!hasWriteScope || !!inboxActionLoading[item.commentUrn]}
-                    className="px-3 py-2 rounded-lg text-xs bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
-                  >
-                    {inboxActionLoading[item.commentUrn] ? 'Replying...' : 'Reply'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateInboxAiReply(item)}
-                    disabled={!!inboxAiLoading[item.commentUrn]}
-                    className="px-3 py-2 rounded-lg text-xs bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
-                  >
-                    {inboxAiLoading[item.commentUrn] ? 'Generating...' : 'AI Reply'}
-                  </button>
-                </div>
+          <div className="space-y-1 bg-slate-900/40 rounded-2xl border border-slate-800/60 overflow-hidden divide-y divide-slate-800/60">
+            {filteredPosts.length === 0 ? (
+              <div className="py-20 text-center">
+                <Linkedin className="w-10 h-10 text-slate-700 mx-auto mb-3 opacity-20" />
+                <p className="text-slate-500 text-sm">No LinkedIn posts for selected filter.</p>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        {filteredPosts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-700 py-14 text-center">
-            <p className="text-slate-400">No LinkedIn posts for selected filter.</p>
-          </div>
-        ) : (
-          filteredPosts.map((post) => (
-            <div key={post.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_BADGE[post.status] || STATUS_BADGE.draft}`}>
-                  {post.status}
-                </span>
-                <span className="text-xs text-slate-500">{new Date(post.created_at).toLocaleString()}</span>
-              </div>
-              <p className="text-sm text-slate-200 whitespace-pre-line line-clamp-3">{post.caption}</p>
-              {post.error_message && <p className="text-xs text-red-300">{post.error_message}</p>}
-              {post.status === 'published' && !resolveLinkedInPostUrn(post) && (
-                <p className="text-xs text-amber-300">
-                  Comments unavailable for this item because no LinkedIn post reference was saved yet. Run post reconciliation to backfill LinkedIn URNs for already published posts.
-                </p>
-              )}
-              {resolveLinkedInPostUrn(post) && (
-                <a
-                  href={`https://www.linkedin.com/feed/update/${encodeURIComponent(resolveLinkedInPostUrn(post) || '')}/`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-sky-300 hover:underline"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  View on LinkedIn
-                </a>
-              )}
-
-              {resolveLinkedInPostUrn(post) && (
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 pt-2">
-                  <input
-                    value={commentByPost[post.id] || ''}
-                    onChange={(e) => setCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                    placeholder="Write a comment..."
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                  />
-                  <button
-                    onClick={() => handleComment(post)}
-                    disabled={!hasWriteScope || !!actionLoading[`comment-${post.id}`]}
-                    className="px-3 py-2 rounded-lg text-xs bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50 inline-flex items-center gap-1"
+            ) : (
+              filteredPosts.map((post) => {
+                const isDup = Object.values(duplicateGroups).some(ids => ids.includes(post.id));
+                return (
+                  <div 
+                    key={post.id} 
+                    className={`p-5 transition-all group relative ${isDup ? 'bg-amber-500/[0.03]' : 'hover:bg-white/[0.02]'}`}
                   >
-                    <MessageCircle className="w-3 h-3" />
-                    {actionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
-                  </button>
-                  <button
-                    onClick={() => handleGenerateAiReply(post)}
-                    disabled={!!aiReplyLoading[post.id]}
-                    className="px-3 py-2 rounded-lg text-xs bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50 inline-flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    {aiReplyLoading[post.id] ? 'Generating...' : 'AI Quick Reply'}
-                  </button>
-                  <div className="flex gap-2">
-                    <select
-                      value={reactionByPost[post.id] || 'LIKE'}
-                      onChange={(e) => setReactionByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                      className="px-2 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
-                    >
-                      {['LIKE', 'PRAISE', 'APPRECIATION', 'EMPATHY', 'INTEREST', 'MAYBE'].map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleReaction(post)}
-                      disabled={!hasWriteScope || !!actionLoading[`reaction-${post.id}`]}
-                      className="px-3 py-2 rounded-lg text-xs bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50 inline-flex items-center gap-1"
-                    >
-                      <ThumbsUp className="w-3 h-3" />
-                      {actionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
-                    </button>
-                  </div>
-                  <div className="md:col-span-3 flex items-center gap-3 text-xs text-slate-400">
-                    <button
-                      onClick={() => loadEngagement(post)}
-                      disabled={!!engagementLoading[post.id]}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-50"
-                    >
-                      {engagementLoading[post.id] ? 'Refreshing...' : 'Load Engagement'}
-                    </button>
-                    <span className="inline-flex items-center gap-1">
-                      <ThumbsUp className="w-3 h-3" />
-                      Likes: {engagementByPost[post.id]?.likesCount ?? 0}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageCircle className="w-3 h-3" />
-                      Comments: {engagementByPost[post.id]?.commentsCount ?? (commentsByPost[post.id]?.length || 0)}
-                    </span>
-                  </div>
-                <div className="md:col-span-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-slate-300">Post comments</p>
-                    <button
-                      onClick={() => loadComments(post)}
-                      disabled={!!commentsLoading[post.id]}
-                      className="px-2.5 py-1 rounded-lg text-[11px] bg-slate-800 border border-slate-700 text-slate-300 hover:text-white disabled:opacity-50"
-                    >
-                      {commentsLoading[post.id] ? 'Loading...' : 'Load Comments'}
-                    </button>
-                  </div>
-                  {commentsWarningByPost[post.id] && (
-                    <p className="text-xs text-amber-300">{commentsWarningByPost[post.id]}</p>
-                  )}
-                  {(commentsByPost[post.id] || []).length > 0 ? (
-                    <div className="space-y-2">
-                      {(commentsByPost[post.id] || []).slice(0, 20).map((comment) => (
-                        <div key={comment.commentUrn} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5 space-y-2">
-                          <p className="text-xs text-slate-300">
-                            <span className="font-semibold text-slate-200">{comment.actor || 'LinkedIn user'}:</span>{' '}
-                            {comment.text || ''}
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
-                            <input
-                              value={replyByComment[comment.commentUrn] || ''}
-                              onChange={(e) => setReplyByComment((prev) => ({ ...prev, [comment.commentUrn]: e.target.value }))}
-                              placeholder="Reply to this comment..."
-                              className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
-                            />
-                            <button
-                              onClick={() => handleComment(post, comment.commentUrn, replyByComment[comment.commentUrn])}
-                              disabled={!hasWriteScope || !!actionLoading[`reply-${comment.commentUrn}`]}
-                              className="px-3 py-2 rounded-lg text-xs bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
-                            >
-                              {actionLoading[`reply-${comment.commentUrn}`] ? 'Replying...' : 'Reply'}
-                            </button>
-                            <button
-                              onClick={() => handleGenerateAiReply(post, comment.commentUrn, comment.text)}
-                              disabled={!!aiReplyLoading[`reply-${comment.commentUrn}`]}
-                              className="px-3 py-2 rounded-lg text-xs bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
-                            >
-                              {aiReplyLoading[`reply-${comment.commentUrn}`] ? 'Generating...' : 'AI Reply'}
-                            </button>
-                          </div>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-1.5 shrink-0">
+                        {isDup && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-tighter">
+                            Duplicate
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-tighter w-fit ${STATUS_BADGE[post.status] || STATUS_BADGE.draft}`}>
+                          {post.status}
+                        </span>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium leading-relaxed ${isDup ? 'text-slate-100' : 'text-slate-300'} line-clamp-2 mb-1 group-hover:line-clamp-none transition-all`}>
+                          {post.caption}
+                        </p>
+                        <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
+                          <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          <span className="opacity-30">—</span>
+                          <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                          
+                          {resolveLinkedInPostUrn(post) && (
+                            <>
+                              <span className="opacity-30">—</span>
+                              <a
+                                href={`https://www.linkedin.com/feed/update/${encodeURIComponent(resolveLinkedInPostUrn(post) || '')}/`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-1"
+                              >
+                                View on LinkedIn
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            </>
+                          )}
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => loadComments(post)}
+                          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                          title="View comments"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => loadEngagement(post)}
+                          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                          title="Refresh stats"
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-xs text-slate-500">No comments loaded yet for this post.</p>
-                  )}
-                </div>
-                </div>
-              )}
+
+                    {/* Quick Engagement Stats */}
+                    {(engagementByPost[post.id] || (commentsByPost[post.id]?.length > 0)) && (
+                      <div className="mt-3 flex items-center gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest pl-[60px]">
+                        <span className="flex items-center gap-1">
+                          <ThumbsUp className="w-3 h-3 text-slate-600" />
+                          {engagementByPost[post.id]?.likesCount ?? 0} Likes
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3 text-slate-600" />
+                          {engagementByPost[post.id]?.commentsCount ?? (commentsByPost[post.id]?.length || 0)} Comments
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Inline Comments Area (Expanding) */}
+                    {commentsByPost[post.id] && (
+                      <div className="mt-4 pl-[60px] space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Recent Comments</p>
+                          <button onClick={() => setCommentsByPost(prev => { const n = {...prev}; delete n[post.id]; return n; })} className="text-[10px] text-slate-600 hover:text-slate-400">Close</button>
+                        </div>
+                        {commentsByPost[post.id].length === 0 ? (
+                          <p className="text-xs text-slate-600 italic">No comments found.</p>
+                        ) : (
+                          commentsByPost[post.id].slice(0, 5).map(c => (
+                            <div key={c.commentUrn} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-sky-400">{c.actor || 'LinkedIn User'}</span>
+                                <span className="text-[9px] text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
+                              </div>
+                              <p className="text-xs text-slate-300">{c.text}</p>
+                              <div className="flex gap-2">
+                                <input 
+                                  value={replyByComment[c.commentUrn] || ''}
+                                  onChange={(e) => setReplyByComment(prev => ({...prev, [c.commentUrn]: e.target.value}))}
+                                  placeholder="Type reply..." 
+                                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white focus:border-sky-500 focus:outline-none"
+                                />
+                                <button 
+                                  onClick={() => handleComment(post, c.commentUrn)}
+                                  className="px-2 py-1 rounded-lg bg-sky-600/20 text-sky-400 text-[10px] font-bold hover:bg-sky-600/30"
+                                >
+                                  Reply
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* ── Right Column: Compose ──────────────────────────────────── */}
+        <div id="compose-section" className="space-y-4 lg:sticky lg:top-6">
+          <div className="px-1 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Compose</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Post as {selectedLinkedInOrganizationId ? 'company' : 'personal profile'}
+              </p>
             </div>
-          ))
-        )}
+            <div className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-violet-400" />
+              <span className="text-[10px] font-bold text-violet-300 uppercase tracking-tighter">AI draft</span>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/60 space-y-5">
+            {/* AI Controls */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tone</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {(['Professional', 'Engaging', 'Casual', 'Promotional'] as const).map((tone) => (
+                    <button
+                      key={tone}
+                      onClick={() => setAiTone(tone.toLowerCase() as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        aiTone === tone.toLowerCase() 
+                          ? 'bg-sky-600 text-white shadow-lg shadow-sky-900/20' 
+                          : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {tone}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Format</label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setAiContentType('linkedin_post')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      aiContentType === 'linkedin_post' 
+                        ? 'bg-sky-600 text-white shadow-lg shadow-sky-900/20' 
+                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    LinkedIn post
+                  </button>
+                  <button
+                    onClick={() => setAiContentType('linkedin_article')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      aiContentType === 'linkedin_article' 
+                        ? 'bg-sky-600 text-white shadow-lg shadow-sky-900/20' 
+                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Article
+                  </button>
+                  <button
+                    onClick={handleGenerateViralHook}
+                    disabled={isViralGenerating || !aiTopic.trim()}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-slate-200 border border-transparent hover:border-rose-500/30 transition-all disabled:opacity-30"
+                  >
+                    {isViralGenerating ? '...' : 'Viral hook'}
+                  </button>
+                  <button
+                    onClick={handleGenerateLinkedInContent}
+                    disabled={aiGenerating || !aiTopic.trim()}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30"
+                  >
+                    {aiGenerating ? '...' : 'Standard AI'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <textarea
+                value={aiTopic}
+                onChange={(e) => setAiTopic(e.target.value)}
+                placeholder="What should this post be about? Describe it or let AI draft it..."
+                rows={3}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-white placeholder-slate-600 focus:border-sky-500/50 focus:outline-none transition-all resize-none group-hover:border-slate-700"
+              />
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <div className="group relative">
+                <textarea
+                  value={composeCaption}
+                  onChange={(e) => setComposeCaption(e.target.value)}
+                  placeholder="Post content will appear here..."
+                  rows={6}
+                  className="w-full bg-transparent border-b border-slate-800 py-2 text-sm text-slate-300 placeholder-slate-700 focus:border-sky-500 focus:outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={composeLinkUrl}
+                  onChange={(e) => setComposeLinkUrl(e.target.value)}
+                  placeholder="Link URL (option)"
+                  className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none"
+                />
+                <input
+                  value={composeImageUrl}
+                  onChange={(e) => setComposeImageUrl(e.target.value)}
+                  placeholder="Media URL (option)"
+                  className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <div className="flex-1 relative">
+                  <input
+                    type="datetime-local"
+                    value={composeScheduledAt}
+                    onChange={(e) => setComposeScheduledAt(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-sky-500 focus:outline-none [color-scheme:dark]"
+                  />
+                </div>
+                <button
+                  onClick={() => handleSubmitLinkedInPost(false)}
+                  disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-950 hover:bg-slate-100 disabled:opacity-20 transition-all"
+                >
+                  Schedule
+                </button>
+              </div>
+
+              <button
+                onClick={() => handleSubmitLinkedInPost(true)}
+                disabled={composeSubmitting || !canComposeLinkedIn}
+                className="w-full py-3 rounded-xl text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-900/40 transition-all disabled:opacity-50"
+              >
+                {composeSubmitting ? 'Publishing...' : 'Publish now'}
+              </button>
+
+              <div className="pt-2 border-t border-slate-800/50">
+                 <select
+                  value={selectedLinkedInOrganizationId}
+                  onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
+                  className="w-full bg-transparent text-[10px] font-bold text-slate-500 uppercase tracking-widest focus:outline-none cursor-pointer hover:text-slate-300 transition-colors"
+                >
+                  <option value="" className="bg-slate-900">Personal Profile</option>
+                  {companyPages.map((page) => (
+                    <option key={page.id} value={page.id} className="bg-slate-900">
+                      Company: {page.name || page.vanityName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
