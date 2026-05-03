@@ -3270,6 +3270,136 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'create_linkedin_event': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { name, description, start_time, end_time, timezone = 'UTC', event_type = 'ONLINE', online_url, linkedin_organization_id } = a;
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('access_token')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_event', liErr.message);
+          if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
+
+          const payload = {
+            owner: `urn:li:organization:${linkedin_organization_id}`,
+            name: name.trim(),
+            description: description ? description.trim() : '',
+            startTime: Date.parse(start_time),
+            endTime: Date.parse(end_time),
+            timezone,
+            eventType: event_type,
+            onlineEventConfig: event_type === 'ONLINE' ? { onlineUrl: online_url } : undefined,
+          };
+
+          const resp = await fetch('https://api.linkedin.com/v2/events', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${li.access_token}`,
+              'Content-Type': 'application/json',
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+            body: JSON.stringify(payload),
+          });
+          const raw = await resp.text();
+          if (!resp.ok) throw new Error(`LinkedIn event creation failed: ${raw}`);
+          result = { content: [{ type: 'text', text: `LinkedIn event created successfully: ${raw}` }] };
+          break;
+        }
+
+        case 'get_linkedin_ad_accounts': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('access_token')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_accounts', liErr.message);
+          if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
+
+          const resp = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search&search=(status:(values:LIST(ACTIVE,PAUSED)))', {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${li.access_token}`,
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(`Failed to fetch LinkedIn ad accounts: ${JSON.stringify(data)}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'get_linkedin_ad_campaigns': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { ad_account_id, status } = a;
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('access_token')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_campaigns', liErr.message);
+          if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
+
+          const statusFilter = status ? `(status:(values:LIST(${status})))` : '';
+          const searchParams = `(account:(values:LIST(urn:li:adAccountV2:${ad_account_id})))` + (statusFilter ? `,${statusFilter}` : '');
+          const url = `https://api.linkedin.com/v2/adCampaignsV2?q=search&search=${encodeURIComponent(searchParams)}`;
+
+          const resp = await fetch(url, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${li.access_token}`,
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(`Failed to fetch LinkedIn ad campaigns: ${JSON.stringify(data)}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'get_linkedin_member_profile': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+
+          const { data: li, error: liErr } = await supabaseAdmin
+            .from('linkedin_integrations')
+            .select('access_token')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_member_profile', liErr.message);
+          if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
+
+          const resp = await fetch('https://api.linkedin.com/v2/userinfo', {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${li.access_token}`,
+            },
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(`Failed to fetch LinkedIn profile: ${JSON.stringify(data)}`);
+          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
         // â”€â”€ get_expenses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'get_expenses': {
           const a = args as Record<string, any>;

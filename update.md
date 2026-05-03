@@ -1,5 +1,28 @@
 # Update Log
 
+## Date: 2026-05-03 (UI MODERNIZATION & WIZARD REFACTOR)
+
+### Added
+- **CampaignBuilder Wizard Overhaul**: Refactored the Marketing Campaigns module from a flat form into a structured, non-technical **3-step wizard** (Write → Choose Recipients → Send/Schedule).
+    - Replaced technical `{{token}}` syntax with clickable **Personalization Buttons** (First Name, Company, etc.).
+    - Implemented a prominent **"Let AI write this for me"** primary action for automated drafting.
+    - Simplified recipient selection into four plain-English categories: "Everyone", "Specific Group", "Manual Selection", and "CSV Import".
+- **Campaign History Sidebar**: Added a persistent sidebar to the Campaign module showing human-readable statistics (sent counts and dates) for past campaigns.
+- **Facebook Integration UI Overhaul**: Modernized the Facebook module with a high-performance three-panel layout.
+    - Added an inline **Duplicate Content Warning** banner to prevent accidental double-posting.
+    - Integrated a dedicated **Hashtag Management Area** with suggested tags.
+    - Implemented real-time **Account Status Indicators** (Connected/Disconnected) in the top bar.
+- **LinkedIn Management UI Refresh**: Upgraded the LinkedIn tab with independent scrolling panels and a cleaner folder structure.
+    - Separated AI tools (Auto-reply, Lead Outreach) from the main folder navigation.
+    - Fixed avatar logic to display initials instead of generic placeholders.
+- **Zoho Mail UI Cleanup**: Improved the Zoho interface with independent scrolling for folders, email lists, and bodies.
+    - Pinned the **Reply Box** to the bottom of the email panel for persistent access.
+
+### Fixed
+- **JSX Structural Integrity**: Resolved missing closing div tags and syntax errors in `CampaignBuilder.tsx`.
+- **Type Safety (Facebook)**: Fixed missing `useMemo` imports and misnamed function references in `FacebookIntegrationTab.tsx`.
+- **Vercel Build Stability**: Verified all modernized components pass strict `tsc` typechecking to ensure zero-error production deployments.
+
 ## Date: 2026-05-02 (SOCIAL EXPANSION & BUILD STABILIZATION)
 
 ### Added
