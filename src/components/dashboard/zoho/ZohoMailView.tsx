@@ -183,7 +183,6 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             setMessageContent(messageCache[id]);
             setSelectedMessage(id);
             setEmailSummary(null);
-            setReplySuggestions([]);
             return;
         }
 
@@ -195,7 +194,6 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 setMessageContent(data);
                 setSelectedMessage(id);
                 setEmailSummary(null);
-                setReplySuggestions([]);
             }
         } finally { setLoading(false); }
     };
