@@ -433,6 +433,13 @@ nav a,
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Prevent iOS Safari from auto-zooming on input focus */
+input, textarea, select {
+  font-size: 16px !important;
 }
 
 /* Active state for touch feedback */
@@ -496,19 +503,6 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Fix for iOS input zoom - Mobile Only */
-@media (max-width: 640px) {
-
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="tel"],
-  input[type="number"],
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
-}
 
 /* Desktop Inputs - Match base font size */
 @media (min-width: 641px) {
