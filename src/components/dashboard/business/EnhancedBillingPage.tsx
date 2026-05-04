@@ -152,14 +152,36 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
             {/* Chart */}
             {!isMobile && (
-                <Card className="p-6 bg-slate-900/40 border-white/5 h-64">
-                    <ResponsiveContainer width="100%" height="100%">
+                <Card className="p-6 bg-slate-900/40 border-white/5 h-80">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
                         <LineChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
-                            <XAxis dataKey="date" stroke="#4b5563" fontSize={10} />
-                            <YAxis stroke="#4b5563" fontSize={10} />
-                            <Tooltip contentStyle={{ backgroundColor: '#0f0f0f', border: '1px solid #ffffff10' }} />
-                            <Line type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={2} dot={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                            <XAxis 
+                                dataKey="date" 
+                                stroke="#4b5563" 
+                                fontSize={10} 
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <YAxis 
+                                stroke="#4b5563" 
+                                fontSize={10} 
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(val) => `$${val}`}
+                            />
+                            <Tooltip 
+                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '8px' }}
+                                itemStyle={{ color: '#14b8a6' }}
+                            />
+                            <Line 
+                                type="monotone" 
+                                dataKey="revenue" 
+                                stroke="#14b8a6" 
+                                strokeWidth={2} 
+                                dot={false} 
+                                activeDot={{ r: 4, strokeWidth: 0 }}
+                            />
                         </LineChart>
                     </ResponsiveContainer>
                 </Card>

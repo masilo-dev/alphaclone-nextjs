@@ -71,8 +71,8 @@ const nextConfig: NextConfig = {
     const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
-      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform https://challenges.cloudflare.com/cdn-cgi/challenge-platform;
+      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https: http:;
       media-src 'self' blob: data: https:;
@@ -82,7 +82,7 @@ const nextConfig: NextConfig = {
       form-action 'self';
       frame-ancestors 'self';
       frame-src 'self' blob: data: https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com https://www.loom.com https://*.loom.com;
-      connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://alphaclone.tech wss://alphaclone.tech https://challenges.cloudflare.com/cdn-cgi/challenge-platform https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://nominatim.openstreetmap.org https://*.facebook.com https://*.instagram.com;
+      connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://alphaclone.tech wss://alphaclone.tech https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://nominatim.openstreetmap.org https://*.facebook.com https://*.instagram.com;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
