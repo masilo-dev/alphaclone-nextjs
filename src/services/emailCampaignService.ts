@@ -84,6 +84,7 @@ export interface MarketingContact {
     company?: string;
     firstName?: string;
     lastName?: string;
+    industry?: string;
 }
 
 type EmailTemplateRow = {
@@ -146,6 +147,7 @@ export const emailCampaignService = {
                         name: safeName || String(c.email),
                         email: String(c.email).trim(),
                         company: c.website || undefined,
+                        industry: c.industry || undefined,
                         firstName: parts[0] || undefined,
                         lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
                     };
