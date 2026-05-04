@@ -157,7 +157,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://challenges.cloudflare.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
-        <Script src="/lockdown-install.js?v=5" strategy="beforeInteractive" />
+        <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
       </head>
       <body
         className="antialiased text-base subpixel-antialiased font-sans"

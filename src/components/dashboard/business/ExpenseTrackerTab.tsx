@@ -40,8 +40,8 @@ interface Expense {
 const STATUS_STYLES: Record<string, string> = {
     pending: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
     approved: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
-    rejected: 'bg-red-500/15 text-red-400 border-red-500/30',
-    reimbursed: 'bg-green-500/15 text-green-400 border-green-500/30',
+    rejected: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    reimbursed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 };
 
 const PAYMENT_METHODS = ['card', 'cash', 'bank_transfer', 'check', 'other'];
@@ -68,12 +68,14 @@ const EMPTY_FORM = {
     billable: false,
     notes: '',
     category_id: '',
+    asset_account_id: '',
 };
 
 export default function ExpenseTrackerTab() {
     const { currentTenant: tenant } = useTenant();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+    const [assetAccounts, setAssetAccounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -88,10 +90,10 @@ export default function ExpenseTrackerTab() {
         if (!tenant?.id) return;
         setLoading(true);
 
-        const [expRes, catRes] = await Promise.all([
+        const [expRes, catRes, accRes] = await Promise.all([
             supabase
                 .from('expenses')
-                .select('*, expense_categories(id, name, color, icon)')
+                .select('*, expense_categories(id, name, color, icon), asset_accounts:accounts!asset_account_id(id, name)')
                 .eq('tenant_id', tenant.id)
                 .order('date', { ascending: false })
                 .limit(200),
@@ -101,10 +103,17 @@ export default function ExpenseTrackerTab() {
                 .eq('tenant_id', tenant.id)
                 .eq('is_active', true)
                 .order('name'),
+            supabase
+                .from('accounts')
+                .select('id, name, code')
+                .eq('tenant_id', tenant.id)
+                .eq('account_type', 'asset')
+                .order('name'),
         ]);
 
         if (!expRes.error) setExpenses(expRes.data || []);
         if (!catRes.error) setCategories(catRes.data || []);
+        if (!accRes.error) setAssetAccounts(accRes.data || []);
         setLoading(false);
     }, [tenant]);
 
@@ -154,6 +163,7 @@ export default function ExpenseTrackerTab() {
             billable: form.billable,
             notes: form.notes || null,
             category_id: form.category_id || null,
+            asset_account_id: form.asset_account_id || null,
         };
 
         let error;
@@ -188,6 +198,7 @@ export default function ExpenseTrackerTab() {
             billable: expense.billable,
             notes: expense.notes || '',
             category_id: expense.category_id || '',
+            asset_account_id: (expense as any).asset_account_id || '',
         });
         setEditingId(expense.id);
         setShowForm(true);
@@ -349,6 +360,16 @@ export default function ExpenseTrackerTab() {
                                 {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
                             </select>
                         </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Paid From (Asset)</label>
+                            <select value={form.asset_account_id} onChange={e => setForm(f => ({ ...f, asset_account_id: e.target.value }))}
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm">
+                                <option value="">Select Account</option>
+                                {assetAccounts.map(acc => (
+                                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.code})</option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="sm:col-span-2">
                             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Description</label>
                             <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
@@ -407,7 +428,7 @@ export default function ExpenseTrackerTab() {
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</th>
                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Vendor</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Method</th>
+                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Method / Account</th>
                                 <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
                                 <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                                 <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -440,8 +461,11 @@ export default function ExpenseTrackerTab() {
                                     <td className="px-4 py-3 text-slate-400 text-xs truncate max-w-[120px]">
                                         {expense.vendor_name || '—'}
                                     </td>
-                                    <td className="px-4 py-3 text-slate-400 text-xs capitalize">
-                                        {expense.payment_method?.replace('_', ' ')}
+                                    <td className="px-4 py-3 text-slate-400 text-xs">
+                                        <p className="capitalize">{expense.payment_method?.replace('_', ' ')}</p>
+                                        {(expense as any).asset_accounts?.name && (
+                                            <p className="text-[10px] text-slate-600 font-mono">{(expense as any).asset_accounts.name}</p>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3 text-right font-semibold text-white whitespace-nowrap">
                                         {fmt(expense.total ?? expense.amount, expense.currency)}

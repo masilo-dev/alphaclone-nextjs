@@ -10,6 +10,7 @@ import { contactSchema } from '../../schemas/validation';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import TurnstileVerification from '../ui/TurnstileVerification';
+import ObfuscatedEmail from '../common/ObfuscatedEmail';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -144,15 +145,15 @@ const ContactPage: React.FC = () => {
                                     <div>
                                         <div className="font-semibold mb-1">Email</div>
                                         <div className="flex flex-col gap-1">
-                                            <a href="mailto:info@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
-                                                General: info@alphaclonesystems.com
-                                            </a>
-                                            <a href="mailto:sales@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
-                                                Sales: sales@alphaclonesystems.com
-                                            </a>
-                                            <a href="mailto:admin@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
-                                                Administration: admin@alphaclonesystems.com
-                                            </a>
+                                            <div className="text-teal-400">
+                                                General: <ObfuscatedEmail email="info@alphaclonesystems.com" className="hover:text-teal-300" />
+                                            </div>
+                                            <div className="text-teal-400">
+                                                Sales: <ObfuscatedEmail email="sales@alphaclonesystems.com" className="hover:text-teal-300" />
+                                            </div>
+                                            <div className="text-teal-400">
+                                                Administration: <ObfuscatedEmail email="admin@alphaclonesystems.com" className="hover:text-teal-300" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

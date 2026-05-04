@@ -104,7 +104,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const getStatusStyles = (status: string) => {
         switch (status) {
             case 'paid': return 'text-teal-400 bg-teal-400/10 border-teal-500/20';
-            case 'sent': return 'text-blue-400 bg-blue-400/10 border-blue-500/20';
+            case 'sent': return 'text-teal-400 bg-teal-400/10 border-teal-500/20';
             case 'overdue': return 'text-rose-400 bg-rose-400/10 border-rose-500/20';
             default: return 'text-slate-400 bg-slate-400/10 border-slate-500/20';
         }
@@ -139,7 +139,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                     { label: 'Revenue', value: stats.totalRevenue, color: 'text-teal-400' },
-                    { label: 'Pending', value: stats.pendingAmount, color: 'text-blue-400' },
+                    { label: 'Pending', value: stats.pendingAmount, color: 'text-teal-400' },
                     { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
                     { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
                 ].map(s => (

@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
-import TurnstileVerification from '@/components/ui/TurnstileVerification';
+import TurnstileVerification, { TurnstileRef } from '@/components/ui/TurnstileVerification';
 import Image from 'next/image';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
@@ -72,6 +72,7 @@ function LoginContent() {
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [registrationOpen, setRegistrationOpen] = useState(true);
     const [policyLoaded, setPolicyLoaded] = useState(false);
+    const turnstileRef = React.useRef<TurnstileRef>(null);
 
     const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
 
@@ -135,6 +136,7 @@ function LoginContent() {
             const verifyData = await verifyRes.json();
             if (!verifyData.success) {
                 setError('Security verification failed. Please try again.');
+                turnstileRef.current?.reset();
                 setIsLoading(false);
                 return;
             }
@@ -244,6 +246,7 @@ function LoginContent() {
                     setError(signInError);
                 }
                 setIsLoading(false);
+                turnstileRef.current?.reset();
                 return;
             }
 
@@ -259,6 +262,7 @@ function LoginContent() {
             setIsLoading(false);
         } catch (err) {
             setError('An unexpected error occurred. Please try again.');
+            turnstileRef.current?.reset();
             setIsLoading(false);
         }
     };
@@ -680,6 +684,7 @@ function LoginContent() {
                         )}
 
                         <TurnstileVerification
+                            ref={turnstileRef}
                             onVerify={(token) => {
                                 setTurnstileToken(token);
                                 setError('');

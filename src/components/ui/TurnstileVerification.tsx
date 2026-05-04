@@ -1,12 +1,16 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 
 interface TurnstileVerificationProps {
     onVerify: (token: string) => void;
     onExpire?: () => void;
     onError?: (message?: string) => void;
     theme?: 'light' | 'dark' | 'auto';
+}
+
+export interface TurnstileRef {
+    reset: () => void;
 }
 
 declare global {
@@ -69,12 +73,12 @@ function ensureTurnstileScript(): Promise<void> {
     return turnstileScriptPromise;
 }
 
-export default function TurnstileVerification({
+const TurnstileVerification = forwardRef<TurnstileRef, TurnstileVerificationProps>(({
     onVerify,
     onExpire,
     onError,
     theme = 'dark',
-}: TurnstileVerificationProps) {
+}, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
     const mountedRef = useRef(true);
@@ -82,6 +86,18 @@ export default function TurnstileVerification({
     const [isScriptLoaded, setIsScriptLoaded] = useState(false);
     const [showLoadingMessage, setShowLoadingMessage] = useState(false);
     const [fatalError, setFatalError] = useState<string | null>(null);
+
+    useImperativeHandle(ref, () => ({
+        reset: () => {
+            if (widgetIdRef.current && window.turnstile) {
+                try {
+                    window.turnstile.reset(widgetIdRef.current);
+                } catch (e) {
+                    console.error('[Turnstile] Manual reset failed:', e);
+                }
+            }
+        }
+    }));
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     const allowedHosts = (process.env.NEXT_PUBLIC_TURNSTILE_ALLOWED_HOSTS || 'alphaclonesystems.com,www.alphaclonesystems.com,localhost,127.0.0.1')
         .split(',')
@@ -232,4 +248,6 @@ export default function TurnstileVerification({
             <div ref={containerRef} />
         </div>
     );
-}
+});
+
+export default TurnstileVerification;
