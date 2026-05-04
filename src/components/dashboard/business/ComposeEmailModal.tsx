@@ -310,17 +310,17 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 rounded-3xl p-6 relative overflow-hidden group"
+                                className="bg-gradient-to-br from-teal-500/10 to-slate-500/10 border border-teal-500/20 rounded-3xl p-6 relative overflow-hidden group"
                             >
                                 <div className="absolute top-0 right-0 p-8 pointer-events-none opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Sparkles className="w-24 h-24 text-indigo-400" />
+                                    <Sparkles className="w-24 h-24 text-teal-400" />
                                 </div>
 
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-indigo-500 rounded-lg">
+                                    <div className="p-2 bg-teal-500 rounded-lg">
                                         <Wand2 className="w-3 h-3 text-white" />
                                     </div>
-                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">AI Assistant</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-400">AI Assistant</span>
                                 </div>
 
                                 <div className="space-y-4 relative z-10">
@@ -330,7 +330,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 key={tone.id}
                                                 onClick={() => setSelectedTone(tone.id)}
                                                 className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${selectedTone === tone.id
-                                                    ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
+                                                    ? 'bg-teal-500 text-white border-teal-400 shadow-lg shadow-teal-500/20'
                                                     : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
                                                     }`}
                                             >
@@ -345,14 +345,14 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 value={aiPrompt}
                                                 onChange={e => setAiPrompt(e.target.value)}
                                                 placeholder="Instruction: e.g. 'Draft a follow-up about the proposal...'"
-                                                className="w-full bg-slate-950/80 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder:text-slate-600 focus:border-indigo-500/50 outline-none transition-all"
+                                                className="w-full bg-slate-950/80 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder:text-slate-600 focus:border-teal-500/50 outline-none transition-all"
                                                 onKeyDown={e => e.key === 'Enter' && handleAIGenerate()}
                                             />
                                         </div>
                                         <Button
                                             onClick={handleAIGenerate}
                                             disabled={generating || !aiPrompt.trim()}
-                                            className="h-auto bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-black uppercase tracking-widest px-5 rounded-2xl shrink-0 shadow-xl shadow-indigo-600/20"
+                                            className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-[9px] font-black uppercase tracking-widest px-5 rounded-2xl shrink-0 shadow-xl shadow-teal-600/20"
                                         >
                                             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write with AI'}
                                         </Button>
@@ -590,7 +590,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     onClick={onClose}
                                     className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
                                 >
-                                    Abort
+                                    Cancel
                                 </button>
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}

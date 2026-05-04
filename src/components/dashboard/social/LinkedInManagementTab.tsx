@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Linkedin, RefreshCw, ExternalLink, MessageCircle, ThumbsUp, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
+import { Linkedin, RefreshCw, ExternalLink, MessageCircle, ThumbsUp, AlertTriangle, Loader2, Sparkles, X, Plus, Calendar, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
 
@@ -70,11 +72,11 @@ function normalizeScopes(raw: unknown): string[] {
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-700/50 text-slate-300 border-slate-700',
-  scheduled: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  queued: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  publishing: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  published: 'bg-green-500/15 text-green-300 border-green-500/30',
-  failed: 'bg-red-500/15 text-red-300 border-red-500/30',
+  scheduled: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+  queued: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  publishing: 'bg-teal-600/15 text-teal-400 border-teal-600/30',
+  published: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+  failed: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
   cancelled: 'bg-slate-600/20 text-slate-400 border-slate-600/30',
 };
 
@@ -137,6 +139,8 @@ function isLinkedInPostSchemaBehind(selectUsed: string | null): boolean {
 export default function LinkedInManagementTab() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { isMobile, isTablet, isDesktop } = useBreakpoint();
+  
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<LinkedInPostRow[]>([]);
   const [integrations, setIntegrations] = useState<LinkedInIntegrationRow[]>([]);
@@ -166,6 +170,7 @@ export default function LinkedInManagementTab() {
   const [isViralGenerating, setIsViralGenerating] = useState(false);
   const [aiContentType, setAiContentType] = useState<'linkedin_post' | 'linkedin_article'>('linkedin_post');
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [showComposeSheet, setShowComposeSheet] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
@@ -561,6 +566,7 @@ ${parentContext}Return only the comment text.`;
       setComposeImageUrl('');
       setComposeMediaType('image');
       setComposeScheduledAt('');
+      setShowComposeSheet(false);
       await loadData();
     } catch {
       toast.error('Failed to submit LinkedIn post', { id: toastId });
@@ -657,28 +663,180 @@ ${parentContext}Return only the comment text.`;
     }
   };
 
+  const ComposePanel = ({ isSheet = false }) => (
+    <div className={`space-y-5 ${isSheet ? 'p-6' : 'p-5 rounded-2xl bg-slate-900/40 border border-slate-800/60'}`}>
+      {/* AI Controls */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tone</label>
+          <div className="flex flex-wrap gap-1.5">
+            {(['Professional', 'Engaging', 'Casual', 'Promotional'] as const).map((tone) => (
+              <button
+                key={tone}
+                onClick={() => setAiTone(tone.toLowerCase() as any)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  aiTone === tone.toLowerCase() 
+                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {tone}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Format</label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setAiContentType('linkedin_post')}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                aiContentType === 'linkedin_post' 
+                  ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
+                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Post
+            </button>
+            <button
+              onClick={() => setAiContentType('linkedin_article')}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                aiContentType === 'linkedin_article' 
+                  ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
+                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Article
+            </button>
+            <button
+              onClick={handleGenerateViralHook}
+              disabled={isViralGenerating || !aiTopic.trim()}
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-rose-500/30 transition-all disabled:opacity-30"
+            >
+              {isViralGenerating ? '...' : 'Viral hook'}
+            </button>
+            <button
+              onClick={handleGenerateLinkedInContent}
+              disabled={aiGenerating || !aiTopic.trim()}
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30"
+            >
+              {aiGenerating ? '...' : 'Standard AI'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative group">
+        <textarea
+          value={aiTopic}
+          onChange={(e) => setAiTopic(e.target.value)}
+          placeholder="What should this post be about? Describe it or let AI draft it..."
+          rows={3}
+          className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-white placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-none group-hover:border-slate-700"
+        />
+      </div>
+
+      <div className="space-y-3 pt-2">
+        <div className="group relative">
+          <textarea
+            value={composeCaption}
+            onChange={(e) => setComposeCaption(e.target.value)}
+            placeholder="Post content will appear here..."
+            rows={6}
+            className="w-full bg-transparent border-b border-slate-800 py-2 text-sm text-slate-300 placeholder-slate-700 focus:border-teal-500 focus:outline-none transition-all resize-none"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="relative">
+            <input
+              value={composeLinkUrl}
+              onChange={(e) => setComposeLinkUrl(e.target.value)}
+              placeholder="Link URL (option)"
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+            />
+          </div>
+          <div className="relative">
+            <input
+              value={composeImageUrl}
+              onChange={(e) => setComposeImageUrl(e.target.value)}
+              placeholder="Media URL (option)"
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+          <div className="flex-1 relative">
+            <input
+              type="datetime-local"
+              value={composeScheduledAt}
+              onChange={(e) => setComposeScheduledAt(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 focus:outline-none [color-scheme:dark]"
+            />
+          </div>
+          <button
+            onClick={() => handleSubmitLinkedInPost(false)}
+            disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn}
+            className="px-6 py-3 rounded-xl text-sm font-bold bg-white text-slate-950 hover:bg-slate-100 disabled:opacity-20 transition-all flex items-center justify-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            Schedule
+          </button>
+        </div>
+
+        <div className={isSheet ? "sticky bottom-0 left-0 right-0 pt-4 pb-6 bg-slate-900 border-t border-slate-800 -mx-6 px-6" : ""}>
+          <button
+            onClick={() => handleSubmitLinkedInPost(true)}
+            disabled={composeSubmitting || !canComposeLinkedIn}
+            className="w-full py-4 rounded-xl text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {composeSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {composeSubmitting ? 'Publishing...' : 'Publish now'}
+          </button>
+        </div>
+
+        <div className="pt-2 border-t border-slate-800/50">
+           <select
+            value={selectedLinkedInOrganizationId}
+            onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
+            className="w-full bg-transparent py-2 text-xs font-bold text-slate-500 uppercase tracking-widest focus:outline-none cursor-pointer hover:text-slate-300 transition-colors"
+          >
+            <option value="" className="bg-slate-900">Personal Profile</option>
+            {companyPages.map((page) => (
+              <option key={page.id} value={page.id} className="bg-slate-900">
+                Company: {page.name || page.vanityName}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="h-64 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
         <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 lg:pb-0">
       {/* ── Topbar ────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-sky-600/20 flex items-center justify-center border border-sky-500/30">
-            <Linkedin className="w-6 h-6 text-sky-400" />
+          <div className="w-11 h-11 rounded-lg bg-teal-600/20 flex items-center justify-center border border-teal-500/30">
+            <Linkedin className="w-6 h-6 text-teal-400" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-white tracking-tight">LinkedIn manager</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <div className={`w-2 h-2 rounded-full ${selectedIntegration?.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-              <p className="text-xs text-slate-400 font-medium">
+              <p className="text-xs text-slate-400 font-medium truncate max-w-[150px] sm:max-w-none">
                 {selectedIntegration?.is_active 
                   ? `${selectedLinkedInMemberId} — personal profile` 
                   : 'Disconnected — reconnect required'}
@@ -691,40 +849,43 @@ ${parentContext}Return only the comment text.`;
           {!selectedIntegration?.is_active && (
             <button
               onClick={handleConnectLinkedIn}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-900/20"
+              className="px-4 py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-900/20"
             >
               Connect
             </button>
           )}
           <button
             onClick={loadData}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all flex items-center gap-1.5"
+            className="w-11 h-11 sm:w-auto sm:px-4 sm:py-2.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <button
             onClick={() => {
-              const el = document.getElementById('compose-section');
-              el?.scrollIntoView({ behavior: 'smooth' });
+              if (isMobile) setShowComposeSheet(true);
+              else {
+                const el = document.getElementById('compose-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }
             }}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-950 hover:bg-white transition-all flex items-center gap-1.5"
+            className="hidden sm:flex px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-950 hover:bg-white transition-all items-center gap-2"
           >
-            <span className="text-sm font-bold">+</span>
+            <Plus className="w-4 h-4" />
             New post
           </button>
         </div>
       </div>
 
       {schemaWarning && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 flex items-center gap-3">
-          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
           {schemaWarning}
         </div>
       )}
 
       {/* ── Main Layout ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
+      <div className={`grid gap-6 items-start ${isDesktop ? 'grid-cols-[1fr_400px]' : isTablet ? 'grid-cols-1' : 'grid-cols-1'}`}>
         
         {/* ── Left Column: Queue ─────────────────────────────────────── */}
         <div className="space-y-4">
@@ -735,8 +896,8 @@ ${parentContext}Return only the comment text.`;
 
           {duplicateCount > 0 && (
             <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/30">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <div className="w-11 h-11 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-amber-200">
@@ -749,14 +910,14 @@ ${parentContext}Return only the comment text.`;
             </div>
           )}
 
-          <div className="flex gap-2 flex-wrap pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth flex-nowrap">
             {(['all', 'published', 'scheduled', 'failed', 'cancelled'] as LinkedInStatusFilter[]).map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                className={`px-5 py-3 rounded-full text-xs font-bold transition-all border whitespace-nowrap min-w-fit ${
                   statusFilter === status
-                    ? 'bg-sky-600 border-sky-500 text-white shadow-lg shadow-sky-900/20'
+                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
                 }`}
               >
@@ -768,7 +929,7 @@ ${parentContext}Return only the comment text.`;
           <div className="space-y-1 bg-slate-900/40 rounded-2xl border border-slate-800/60 overflow-hidden divide-y divide-slate-800/60">
             {filteredPosts.length === 0 ? (
               <div className="py-20 text-center">
-                <Linkedin className="w-10 h-10 text-slate-700 mx-auto mb-3 opacity-20" />
+                <Linkedin className="w-12 h-12 text-slate-700 mx-auto mb-4 opacity-20" />
                 <p className="text-slate-500 text-sm">No LinkedIn posts for selected filter.</p>
               </div>
             ) : (
@@ -777,27 +938,27 @@ ${parentContext}Return only the comment text.`;
                 return (
                   <div 
                     key={post.id} 
-                    className={`p-5 transition-all group relative ${isDup ? 'bg-amber-500/[0.03]' : 'hover:bg-white/[0.02]'}`}
+                    className={`p-5 sm:p-6 transition-all group relative ${isDup ? 'bg-amber-500/[0.03]' : 'hover:bg-white/[0.02]'}`}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1.5 shrink-0">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                      <div className="flex flex-row sm:flex-col gap-2 shrink-0">
                         {isDup && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-tighter">
+                          <span className="text-xs font-bold px-3 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-tighter">
                             Duplicate
                           </span>
                         )}
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-tighter w-fit ${STATUS_BADGE[post.status] || STATUS_BADGE.draft}`}>
+                        <span className={`text-xs font-bold px-3 py-1 rounded border uppercase tracking-tighter w-fit ${STATUS_BADGE[post.status] || STATUS_BADGE.draft}`}>
                           {post.status}
                         </span>
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-relaxed ${isDup ? 'text-slate-100' : 'text-slate-300'} line-clamp-2 mb-1 group-hover:line-clamp-none transition-all`}>
+                        <p className={`text-sm font-medium leading-relaxed ${isDup ? 'text-slate-100' : 'text-slate-300'} line-clamp-3 group-hover:line-clamp-none transition-all mb-2`}>
                           {post.caption}
                         </p>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
                           <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          <span className="opacity-30">—</span>
+                          <span className="opacity-30 hidden sm:inline">—</span>
                           <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                           
                           {resolveLinkedInPostUrn(post) && (
@@ -807,43 +968,43 @@ ${parentContext}Return only the comment text.`;
                                 href={`https://www.linkedin.com/feed/update/${encodeURIComponent(resolveLinkedInPostUrn(post) || '')}/`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-1"
+                                className="text-teal-400 hover:text-teal-300 hover:underline flex items-center gap-1 py-1"
                               >
-                                View on LinkedIn
-                                <ExternalLink className="w-2.5 h-2.5" />
+                                View
+                                <ExternalLink className="w-3 h-3" />
                               </a>
                             </>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity w-full sm:w-auto justify-end">
                         <button 
                           onClick={() => loadComments(post)}
-                          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all bg-slate-800/50 sm:bg-transparent"
                           title="View comments"
                         >
-                          <MessageCircle className="w-4 h-4" />
+                          <MessageCircle className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={() => loadEngagement(post)}
-                          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all bg-slate-800/50 sm:bg-transparent"
                           title="Refresh stats"
                         >
-                          <ThumbsUp className="w-4 h-4" />
+                          <ThumbsUp className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
 
                     {/* Quick Engagement Stats */}
                     {(engagementByPost[post.id] || (commentsByPost[post.id]?.length > 0)) && (
-                      <div className="mt-3 flex items-center gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest pl-[60px]">
-                        <span className="flex items-center gap-1">
-                          <ThumbsUp className="w-3 h-3 text-slate-600" />
+                      <div className="mt-4 flex items-center gap-6 text-xs text-slate-500 font-bold uppercase tracking-widest sm:pl-[100px]">
+                        <span className="flex items-center gap-2">
+                          <ThumbsUp className="w-4 h-4 text-slate-600" />
                           {engagementByPost[post.id]?.likesCount ?? 0} Likes
                         </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="w-3 h-3 text-slate-600" />
+                        <span className="flex items-center gap-2">
+                          <MessageCircle className="w-4 h-4 text-slate-600" />
                           {engagementByPost[post.id]?.commentsCount ?? (commentsByPost[post.id]?.length || 0)} Comments
                         </span>
                       </div>
@@ -851,31 +1012,31 @@ ${parentContext}Return only the comment text.`;
 
                     {/* Inline Comments Area (Expanding) */}
                     {commentsByPost[post.id] && (
-                      <div className="mt-4 pl-[60px] space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="mt-6 sm:pl-[100px] space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Recent Comments</p>
-                          <button onClick={() => setCommentsByPost(prev => { const n = {...prev}; delete n[post.id]; return n; })} className="text-[10px] text-slate-600 hover:text-slate-400">Close</button>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Recent Comments</p>
+                          <button onClick={() => setCommentsByPost(prev => { const n = {...prev}; delete n[post.id]; return n; })} className="text-xs text-slate-600 hover:text-slate-400 px-2 py-1">Close</button>
                         </div>
                         {commentsByPost[post.id].length === 0 ? (
-                          <p className="text-xs text-slate-600 italic">No comments found.</p>
+                          <p className="text-sm text-slate-600 italic">No comments found.</p>
                         ) : (
                           commentsByPost[post.id].slice(0, 5).map(c => (
-                            <div key={c.commentUrn} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] space-y-2">
+                            <div key={c.commentUrn} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05] space-y-3">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-sky-400">{c.actor || 'LinkedIn User'}</span>
-                                <span className="text-[9px] text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
+                                <span className="text-xs font-bold text-teal-400">{c.actor || 'LinkedIn User'}</span>
+                                <span className="text-[10px] text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
                               </div>
-                              <p className="text-xs text-slate-300">{c.text}</p>
-                              <div className="flex gap-2">
+                              <p className="text-sm text-slate-300 leading-relaxed">{c.text}</p>
+                              <div className="flex flex-col sm:flex-row gap-2">
                                 <input 
                                   value={replyByComment[c.commentUrn] || ''}
                                   onChange={(e) => setReplyByComment(prev => ({...prev, [c.commentUrn]: e.target.value}))}
                                   placeholder="Type reply..." 
-                                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white focus:border-sky-500 focus:outline-none"
+                                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-teal-500 focus:outline-none"
                                 />
                                 <button 
                                   onClick={() => handleComment(post, c.commentUrn)}
-                                  className="px-2 py-1 rounded-lg bg-sky-600/20 text-sky-400 text-[10px] font-bold hover:bg-sky-600/30"
+                                  className="h-11 px-4 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-500 transition-colors"
                                 >
                                   Reply
                                 </button>
@@ -892,164 +1053,70 @@ ${parentContext}Return only the comment text.`;
           </div>
         </div>
 
-        {/* ── Right Column: Compose ──────────────────────────────────── */}
-        <div id="compose-section" className="space-y-4 lg:sticky lg:top-6">
-          <div className="px-1 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Compose</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Post as {selectedLinkedInOrganizationId ? 'company' : 'personal profile'}
-              </p>
+        {/* ── Right Column: Compose (Desktop/Tablet) ─────────────────── */}
+        {!isMobile && (
+          <div id="compose-section" className="space-y-4 lg:sticky lg:top-6">
+            <div className="px-1 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Compose</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Post as {selectedLinkedInOrganizationId ? 'company' : 'personal profile'}
+                </p>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                <span className="text-xs font-bold text-teal-300 uppercase tracking-tighter">AI draft</span>
+              </div>
             </div>
-            <div className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-violet-400" />
-              <span className="text-[10px] font-bold text-violet-300 uppercase tracking-tighter">AI draft</span>
-            </div>
+
+            <ComposePanel />
           </div>
+        )}
+      </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/60 space-y-5">
-            {/* AI Controls */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tone</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {(['Professional', 'Engaging', 'Casual', 'Promotional'] as const).map((tone) => (
-                    <button
-                      key={tone}
-                      onClick={() => setAiTone(tone.toLowerCase() as any)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        aiTone === tone.toLowerCase() 
-                          ? 'bg-sky-600 text-white shadow-lg shadow-sky-900/20' 
-                          : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {tone}
-                    </button>
-                  ))}
-                </div>
-              </div>
+      {/* ── Mobile Compose Button ────────────────────────────────────── */}
+      {isMobile && (
+        <button
+          onClick={() => setShowComposeSheet(true)}
+          className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-teal-600 text-white shadow-2xl flex items-center justify-center z-40 active:scale-90 transition-transform"
+        >
+          <Plus className="w-8 h-8" />
+        </button>
+      )}
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Format</label>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => setAiContentType('linkedin_post')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      aiContentType === 'linkedin_post' 
-                        ? 'bg-sky-600 text-white shadow-lg shadow-sky-900/20' 
-                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    LinkedIn post
-                  </button>
-                  <button
-                    onClick={() => setAiContentType('linkedin_article')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                      aiContentType === 'linkedin_article' 
-                        ? 'bg-sky-600 text-white shadow-lg shadow-sky-900/20' 
-                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    Article
-                  </button>
-                  <button
-                    onClick={handleGenerateViralHook}
-                    disabled={isViralGenerating || !aiTopic.trim()}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-slate-200 border border-transparent hover:border-rose-500/30 transition-all disabled:opacity-30"
-                  >
-                    {isViralGenerating ? '...' : 'Viral hook'}
-                  </button>
-                  <button
-                    onClick={handleGenerateLinkedInContent}
-                    disabled={aiGenerating || !aiTopic.trim()}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30"
-                  >
-                    {aiGenerating ? '...' : 'Standard AI'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative group">
-              <textarea
-                value={aiTopic}
-                onChange={(e) => setAiTopic(e.target.value)}
-                placeholder="What should this post be about? Describe it or let AI draft it..."
-                rows={3}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-white placeholder-slate-600 focus:border-sky-500/50 focus:outline-none transition-all resize-none group-hover:border-slate-700"
-              />
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <div className="group relative">
-                <textarea
-                  value={composeCaption}
-                  onChange={(e) => setComposeCaption(e.target.value)}
-                  placeholder="Post content will appear here..."
-                  rows={6}
-                  className="w-full bg-transparent border-b border-slate-800 py-2 text-sm text-slate-300 placeholder-slate-700 focus:border-sky-500 focus:outline-none transition-all resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  value={composeLinkUrl}
-                  onChange={(e) => setComposeLinkUrl(e.target.value)}
-                  placeholder="Link URL (option)"
-                  className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none"
-                />
-                <input
-                  value={composeImageUrl}
-                  onChange={(e) => setComposeImageUrl(e.target.value)}
-                  placeholder="Media URL (option)"
-                  className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <div className="flex-1 relative">
-                  <input
-                    type="datetime-local"
-                    value={composeScheduledAt}
-                    onChange={(e) => setComposeScheduledAt(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-sky-500 focus:outline-none [color-scheme:dark]"
-                  />
-                </div>
+      {/* ── Mobile Compose Sheet ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {isMobile && showComposeSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowComposeSheet(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-x-0 bottom-0 bg-slate-900 rounded-t-[32px] z-[70] max-h-[92vh] overflow-y-auto no-scrollbar border-t border-slate-800"
+            >
+              <div className="sticky top-0 bg-slate-900 pt-4 pb-2 px-6 flex items-center justify-between border-b border-slate-800/50 z-10">
+                <div className="w-12 h-1.5 bg-slate-800 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
+                <h2 className="text-lg font-bold text-white">Create Post</h2>
                 <button
-                  onClick={() => handleSubmitLinkedInPost(false)}
-                  disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-950 hover:bg-slate-100 disabled:opacity-20 transition-all"
+                  onClick={() => setShowComposeSheet(false)}
+                  className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 text-slate-400"
                 >
-                  Schedule
+                  <X className="w-6 h-6" />
                 </button>
               </div>
-
-              <button
-                onClick={() => handleSubmitLinkedInPost(true)}
-                disabled={composeSubmitting || !canComposeLinkedIn}
-                className="w-full py-3 rounded-xl text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-900/40 transition-all disabled:opacity-50"
-              >
-                {composeSubmitting ? 'Publishing...' : 'Publish now'}
-              </button>
-
-              <div className="pt-2 border-t border-slate-800/50">
-                 <select
-                  value={selectedLinkedInOrganizationId}
-                  onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
-                  className="w-full bg-transparent text-[10px] font-bold text-slate-500 uppercase tracking-widest focus:outline-none cursor-pointer hover:text-slate-300 transition-colors"
-                >
-                  <option value="" className="bg-slate-900">Personal Profile</option>
-                  {companyPages.map((page) => (
-                    <option key={page.id} value={page.id} className="bg-slate-900">
-                      Company: {page.name || page.vanityName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              <ComposePanel isSheet />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
