@@ -27,6 +27,49 @@ function loadPreferences(): CookiePreferences | null {
     }
 }
 
+const CRAWLER_USER_AGENTS = [
+    'googlebot',
+    'bingbot',
+    'yandexbot',
+    'baiduspider',
+    'facebookexternalhit',
+    'twitterbot',
+    'rogerbot',
+    'linkedinbot',
+    'embedly',
+    'quora link preview',
+    'showyoubot',
+    'outbrain',
+    'pinterest/0.',
+    'developers.google.com/+/web/snippet',
+    'slackbot',
+    'vkshare',
+    'w3c_validator',
+    'redditbot',
+    'applebot',
+    'whatsapp',
+    'flipboard',
+    'tumblr',
+    'bitlybot',
+    'skypeuripreview',
+    'nuzzel',
+    'discordbot',
+    'google page speed',
+    'qwantify',
+    'pinterestbot',
+    'bitrix link preview',
+    'xing-content-proxy',
+    'chrome-lighthouse',
+    'telegrambot',
+    'seo-site-checkup'
+];
+
+function isCrawler(): boolean {
+    if (typeof window === 'undefined') return false;
+    const ua = window.navigator.userAgent.toLowerCase();
+    return CRAWLER_USER_AGENTS.some(bot => ua.includes(bot));
+}
+
 function savePreferences(prefs: CookiePreferences) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
@@ -79,9 +122,9 @@ export default function CookieConsent() {
 
     useEffect(() => {
         const saved = loadPreferences();
-        if (!saved) {
+        if (!saved && !isCrawler()) {
             setVisible(true);
-        } else {
+        } else if (saved) {
             setPrefs(saved);
         }
 

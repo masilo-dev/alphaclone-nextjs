@@ -127,13 +127,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                   {/* Logo */}
                   <div className="flex items-center gap-3 cursor-pointer group">
                      <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                        <img
+                        <Image
                            src="/logo.png"
                            alt="AlphaClone"
                            width={36}
                            height={36}
                            className="object-contain"
-                           onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                      </div>
                      <span className="text-xl font-bold tracking-tight text-white font-marketing-heading">AlphaClone</span>
@@ -199,7 +198,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      <div className="flex items-center justify-between px-4 py-5 border-b border-slate-800">
                         <Link href="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
                            <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                              <img
+                              <Image
                                  src="/logo.png"
                                  alt="AlphaClone"
                                  width={32}
@@ -446,7 +445,14 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            { title: 'Invoice Workspace', caption: 'Draft, sent, overdue, and paid tracking' },
                         ].map((item) => (
                            <div key={item.title} className="rounded-xl border border-cyan-500/15 bg-[#081228]/90 p-3">
-                              <img src="/window.svg" alt={`${item.title} workflow preview`} className="w-full h-20 object-contain opacity-80 mb-2" />
+                              <div className="relative w-full h-20 mb-2 opacity-80">
+                                 <Image 
+                                    src="/window.svg" 
+                                    alt={`${item.title} workflow preview`} 
+                                    fill
+                                    className="object-contain" 
+                                 />
+                              </div>
                               <h4 className="text-sm font-semibold text-white">{item.title}</h4>
                               <p className="text-xs text-slate-300">{item.caption}</p>
                            </div>
@@ -563,11 +569,14 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            transition={{ delay: index * 0.16, duration: 0.85, ease: 'easeOut' }}
                            className={`group rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-3 ${shot.span}`}
                         >
-                           <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950/80">
-                              <img
+                           <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950/80 relative">
+                              <Image
                                  src={shot.src}
                                  alt={shot.title}
+                                 width={800}
+                                 height={450}
                                  className={`w-full ${shot.mediaClass} transition-transform duration-500 group-hover:scale-[1.02]`}
+                                 style={{ height: 'auto' }}
                               />
                            </div>
                            <h4 className="mt-3 text-base font-bold text-cyan-200">{shot.title}</h4>

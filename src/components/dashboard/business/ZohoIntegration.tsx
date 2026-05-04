@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Database, CheckCircle2, AlertCircle, RefreshCw, XCircle, Globe, ExternalLink } from 'lucide-react';
+import { Database, CheckCircle2, AlertCircle, RefreshCw, XCircle, Globe, ExternalLink, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tenantService } from '@/services/tenancy/TenantService';
 
@@ -118,7 +118,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-xl font-bold mb-4">Zoho Workspace Integration</h3>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4">Zoho Workspace Integration</h3>
                 <p className="text-slate-400 mb-6">
                     Connect your Zoho account to synchronize CRM data and manage Zoho Mail directly within the platform.
                 </p>
@@ -182,18 +182,18 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                         {isConnected ? (
                             <button
                                 onClick={handleDisconnect}
-                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-sm rounded-xl border border-red-500/20 transition-all active:scale-95"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-widest rounded-xl border border-white/5 transition-all active:scale-95"
                             >
                                 <XCircle className="w-4 h-4" />
-                                Disconnect Zoho
+                                Disconnect
                             </button>
                         ) : (
                             <button
                                 onClick={handleConnect}
                                 disabled={connecting}
-                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
                             >
-                                {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                                 {connecting ? 'Connecting...' : 'Connect Zoho'}
                             </button>
                         )}
@@ -235,9 +235,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                         <button
                             onClick={handleSendTest}
                             disabled={isTesting}
-                            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-white font-semibold text-sm rounded-xl border border-slate-700 transition-all"
+                            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-white font-black text-[10px] uppercase tracking-widest rounded-xl border border-white/5 transition-all"
                         >
-                            {isTesting ? 'Sending test...' : 'Send Test'}
+                            {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Test'}
                         </button>
                     </div>
                 </div>

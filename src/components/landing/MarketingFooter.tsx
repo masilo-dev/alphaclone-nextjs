@@ -3,6 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Github, Twitter, Linkedin, Mail, Shield, Globe, Lock } from 'lucide-react';
+import Image from 'next/image';
+import ObfuscatedEmail from '../common/ObfuscatedEmail';
 
 const MarketingFooter: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -49,6 +51,8 @@ const MarketingFooter: React.FC = () => {
         },
     ];
 
+    // Note: We'll obfuscate the actual link in the render loop below if it's a mailto
+
     return (
         <footer className="relative bg-slate-950/90 border-t border-slate-900/50 pt-20 pb-10 backdrop-blur-md overflow-hidden">
             {/* Subtle background glow */}
@@ -59,19 +63,12 @@ const MarketingFooter: React.FC = () => {
                     <div className="col-span-2">
                         <Link href="/" className="inline-flex items-center gap-3 mb-6">
                             <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                                <img
+                                <Image
                                     src="/logo.png"
                                     alt="AlphaClone Systems Logo"
                                     width={36}
                                     height={36}
-                                    className="object-contain max-h-full max-w-full"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        const fallback = document.createElement('div');
-                                        fallback.className = 'w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center shadow-lg shadow-teal-500/20';
-                                        fallback.innerHTML = '<span class="text-slate-950 font-black text-lg">AS</span>';
-                                        e.currentTarget.parentElement?.appendChild(fallback);
-                                    }}
+                                    className="object-contain"
                                 />
                             </div>
                             <span className="text-xl font-bold tracking-tight text-white">
@@ -100,9 +97,17 @@ const MarketingFooter: React.FC = () => {
                             <ul className="space-y-4 text-sm text-slate-400">
                                 {section.links.map((link) => (
                                     <li key={link.label}>
-                                        <Link href={link.href} className="hover:text-teal-400 transition-colors">
-                                            {link.label}
-                                        </Link>
+                                        {link.href.startsWith('mailto:') ? (
+                                            <ObfuscatedEmail 
+                                                email={link.href.replace('mailto:', '')} 
+                                                label={link.label}
+                                                className="hover:text-teal-400 transition-colors"
+                                            />
+                                        ) : (
+                                            <Link href={link.href} className="hover:text-teal-400 transition-colors">
+                                                {link.label}
+                                            </Link>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
