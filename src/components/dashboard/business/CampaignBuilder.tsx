@@ -244,9 +244,72 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                             </button>
                                         ))}
                                     </div>
+
+                                    {/* Segmented Group Selection */}
+                                    {recipientType === 'specific' && (
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-8 bg-slate-950 border border-white/5 rounded-[32px] space-y-6">
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-teal-500">Pick Segments</h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => (
+                                                    <button 
+                                                        key={industry}
+                                                        onClick={() => {
+                                                            const ids = contacts.filter(c => c.industry === industry).map(c => c.id);
+                                                            setSelectedContactIds(prev => {
+                                                                const isSelected = ids.every(id => prev.includes(id));
+                                                                return isSelected ? prev.filter(id => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]));
+                                                            });
+                                                        }}
+                                                        className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${contacts.filter(c => c.industry === industry).every(c => selectedContactIds.includes(c.id)) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/10'}`}
+                                                    >
+                                                        <span className="text-sm font-bold uppercase tracking-tight">{industry}</span>
+                                                        <span className="text-[10px] font-black opacity-50 bg-white/5 px-2 py-1 rounded-lg">{contacts.filter(c => c.industry === industry).length}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Manual Pick Selection */}
+                                    {recipientType === 'few' && (
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-8 bg-slate-950 border border-white/5 rounded-[32px] space-y-6">
+                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                                <h4 className="text-xs font-black uppercase tracking-widest text-teal-500">Search Contacts</h4>
+                                                <div className="relative w-full sm:w-64">
+                                                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                                                    <input 
+                                                        type="text" 
+                                                        value={contactSearch} 
+                                                        onChange={e => setContactSearch(e.target.value)} 
+                                                        placeholder="Name or company..." 
+                                                        className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl pl-10 pr-4 text-xs text-white outline-none focus:border-teal-500/50" 
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2">
+                                                {contacts.filter(c => !contactSearch || c.name?.toLowerCase().includes(contactSearch.toLowerCase()) || c.company?.toLowerCase().includes(contactSearch.toLowerCase())).map(contact => (
+                                                    <button 
+                                                        key={contact.id}
+                                                        onClick={() => setSelectedContactIds(prev => prev.includes(contact.id) ? prev.filter(id => id !== contact.id) : [...prev, contact.id])}
+                                                        className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all ${selectedContactIds.includes(contact.id) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/10'}`}
+                                                    >
+                                                        <div>
+                                                            <p className="text-sm font-bold text-white uppercase tracking-tight">{contact.name || contact.email}</p>
+                                                            <p className="text-[10px] text-slate-500 font-medium">{contact.company || 'Private Contact'}</p>
+                                                        </div>
+                                                        <CheckCircle2 size={18} className={selectedContactIds.includes(contact.id) ? 'text-teal-400' : 'text-slate-800'} />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+
                                     <div className="flex items-center justify-between pt-8 border-t border-white/5">
                                         <button onClick={() => setActiveStep(1)} className="px-8 py-4 text-slate-500 font-black uppercase text-xs hover:text-slate-300">Back</button>
-                                        <button onClick={() => setActiveStep(3)} disabled={!recipientType} className="px-10 py-5 bg-teal-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-teal-900/20 disabled:opacity-50 disabled:grayscale">Review</button>
+                                        <div className="flex items-center gap-6">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{selectedContactIds.length} Recipients Picked</span>
+                                            <button onClick={() => setActiveStep(3)} disabled={!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0)} className="px-10 py-5 bg-teal-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-teal-900/20 disabled:opacity-50 disabled:grayscale">Review</button>
+                                        </div>
                                     </div>
                                 </motion.div>
                             )}

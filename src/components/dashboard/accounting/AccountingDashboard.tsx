@@ -107,7 +107,7 @@ export default function AccountingDashboard() {
                         recentTransactions: simpleTransactions
                     });
                     const { accounts: fetchedAccounts } = await chartOfAccountsService.getAccounts();
-                    if (fetchedAccounts) setAccounts(fetchedAccounts);
+                    setAccounts(fetchedAccounts || []);
                 }
             } finally {
                 if (mounted) setLoading(false);
@@ -117,6 +117,19 @@ export default function AccountingDashboard() {
         loadAccountingData();
         return () => { mounted = false; };
     }, [currentTenant, period]);
+
+    const handleInitializeAccounts = async () => {
+        const loadToast = toast.loading('Initializing business accounts...');
+        try {
+            await chartOfAccountsService.initializeDefaultAccounts();
+            toast.success('Accounts initialized successfully!', { id: loadToast });
+            // Reload data
+            const { accounts: fetchedAccounts } = await chartOfAccountsService.getAccounts();
+            setAccounts(fetchedAccounts || []);
+        } catch (e: any) {
+            toast.error(`Initialization failed: ${e.message}`, { id: loadToast });
+        }
+    };
 
     const handleReceiptSuccess = async (extractedData: any) => {
         setIsUploadOpen(false);
@@ -150,6 +163,27 @@ export default function AccountingDashboard() {
 
     return (
         <div className={`space-y-6 max-w-7xl mx-auto pb-24 ${isMobile ? 'px-2' : 'px-6'}`}>
+            {/* Initialization Banner for Empty Accounts */}
+            {!loading && accounts.length === 0 && (
+                <div className="bg-teal-500/10 border border-teal-500/20 rounded-[32px] p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-2xl shadow-teal-900/10 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
+                        <div className="w-16 h-16 bg-teal-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-teal-500/20 shrink-0">
+                            <ShieldCheck size={32} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight">Setup your ledger</h3>
+                            <p className="text-slate-400 text-sm mt-1 max-w-md">Your Chart of Accounts is currently empty. Initialize standard business categories to start tracking your revenue and expenses.</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={handleInitializeAccounts}
+                        className="w-full md:w-auto px-10 py-5 bg-teal-500 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-400 active:scale-95 transition-all"
+                    >
+                        Initialize Accounts
+                    </button>
+                </div>
+            )}
+
             {/* Standardized Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
