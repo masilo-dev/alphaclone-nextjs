@@ -124,7 +124,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
-    const [isSocialChatOpen, setIsSocialChatOpen] = useState(false);
     const {
         activeMeetingCallId,
         isMeetingMinimized,
@@ -857,51 +856,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 </React.Suspense>
             )}
 
-            {/* Omnipresent Social Messaging Widget */}
-            <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end pointer-events-none">
-                <AnimatePresence>
-                    {isSocialChatOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl mb-4 overflow-hidden flex flex-col pointer-events-auto"
-                            style={{ width: 'min(calc(100vw - 2rem), 450px)', height: 'min(calc(100vh - 8rem), 700px)' }}
-                        >
-                            <div className="flex items-center justify-between p-3 border-b border-slate-800 bg-slate-900/50">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex -space-x-1">
-                                        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shadow-sm border border-slate-900"><span className="text-[10px] font-bold text-white">f</span></div>
-                                        <div className="w-6 h-6 rounded-full bg-sky-600 flex items-center justify-center shadow-sm border border-slate-900"><span className="text-[10px] font-bold text-white">in</span></div>
-                                    </div>
-                                    <span className="text-sm font-bold text-white">Social Inbox</span>
-                                </div>
-                                <button
-                                    onClick={() => setIsSocialChatOpen(false)}
-                                    className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <div className="flex-1 relative bg-slate-950">
-                                <React.Suspense fallback={<div className="flex items-center justify-center h-full"><RefreshCw className="w-5 h-5 animate-spin text-teal-500" /></div>}>
-                                    <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
-                                        <FacebookIntegrationTab user={user} tenant={currentTenant} />
-                                    </div>
-                                </React.Suspense>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <button
-                    onClick={() => setIsSocialChatOpen(!isSocialChatOpen)}
-                    className="w-14 h-14 rounded-full bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/50 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 pointer-events-auto border-2 border-teal-400/20"
-                >
-                    {isSocialChatOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-                </button>
-            </div>
         </div>
     );
 }

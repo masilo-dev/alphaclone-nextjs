@@ -244,6 +244,9 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                                 {account.accountName}
                                             </option>
                                         ))}
+                                        {accounts.filter(a => transactionType === 'received' ? (a.accountType === 'revenue' || a.accountType === 'other_income') : (a.accountType === 'expense' || a.accountType === 'other_expense')).length === 0 && (
+                                            <option disabled>No {transactionType === 'received' ? 'revenue' : 'expense'} accounts found.</option>
+                                        )}
                                     </select>
                                 </div>
                                 <div className="flex-[2] w-full">

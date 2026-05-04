@@ -168,7 +168,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 fontSize={10} 
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(val) => `$${val}`}
+                                tickFormatter={(val: number) => `$${val}`}
                             />
                             <Tooltip 
                                 contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '8px' }}

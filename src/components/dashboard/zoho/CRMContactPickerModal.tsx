@@ -15,10 +15,12 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState('');
+    const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (isOpen) {
             fetchLeads();
+            setSelectedEmails(new Set());
         }
     }, [isOpen]);
 
@@ -43,6 +45,25 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
         )
     );
 
+    const toggleSelection = (email: string) => {
+        setSelectedEmails(prev => {
+            const next = new Set(prev);
+            if (next.has(email)) next.delete(email);
+            else next.add(email);
+            return next;
+        });
+    };
+
+    const handleConfirm = () => {
+        if (selectedEmails.size === 0) {
+            onClose();
+            return;
+        }
+        const emailsStr = Array.from(selectedEmails).join(', ');
+        onSelectContact(emailsStr, 'Selected Contacts');
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -59,17 +80,17 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-2xl bg-gray-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 flex items-center justify-between shadow-sm">
+                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-teal-600/10 to-teal-600/10 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-600/20 rounded-xl text-blue-400">
+                        <div className="p-2 bg-teal-600/20 rounded-xl text-teal-400">
                             <Mail size={24} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white tracking-tight">Select CRM Contact</h2>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Pick a recipient from your leads directory</p>
+                            <h2 className="text-xl font-black text-white tracking-tight">Bulk CRM Selection</h2>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Select multiple recipients for your email</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -78,9 +99,9 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 </div>
 
                 {/* Search Bar */}
-                <div className="p-4 border-b border-white/5">
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-4 flex items-center text-gray-500 group-focus-within:text-blue-400 transition-colors pointer-events-none">
+                <div className="p-4 border-b border-white/5 flex gap-2">
+                    <div className="relative flex-1 group">
+                        <div className="absolute inset-y-0 left-4 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">
                             <Search size={18} />
                         </div>
                         <input 
@@ -88,7 +109,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             placeholder="Search by name, email, or industry..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
                         />
                     </div>
                 </div>
@@ -97,8 +118,8 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-                            <Loader2 size={32} className="animate-spin text-blue-500" />
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Loading Directory...</p>
+                            <Loader2 size={32} className="animate-spin text-teal-500" />
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-teal-400">Loading Directory...</p>
                         </div>
                     ) : filteredLeads.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-40 italic">
@@ -111,17 +132,14 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                         filteredLeads.map(lead => (
                             <button 
                                 key={lead.id}
-                                onClick={() => {
-                                    onSelectContact(lead.email as string, lead.businessName);
-                                    onClose();
-                                }}
-                                className="w-full text-left bg-gray-950/40 border border-white/5 rounded-2xl p-4 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group relative overflow-hidden flex items-center justify-between"
+                                onClick={() => toggleSelection(lead.email as string)}
+                                className={`w-full text-left bg-slate-950/40 border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-white/5 hover:border-teal-500/30 hover:bg-teal-500/5'}`}
                             >
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-white text-base group-hover:text-blue-200 transition-colors">{lead.businessName}</h3>
+                                    <h3 className="font-bold text-white text-base group-hover:text-teal-200 transition-colors">{lead.businessName}</h3>
                                     <div className="flex items-center gap-3 text-xs text-gray-500">
                                         <div className="flex items-center gap-1.5 font-medium">
-                                            <Mail size={12} className="text-blue-400/50" />
+                                            <Mail size={12} className="text-teal-400/50" />
                                             {lead.email}
                                         </div>
                                         {lead.industry && (
@@ -132,12 +150,30 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                                         )}
                                     </div>
                                 </div>
-                                <div className="p-2 rounded-xl bg-gray-800/50 text-gray-400 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                                <div className={`p-2 rounded-xl transition-all ${selectedEmails.has(lead.email as string) ? 'bg-teal-500 text-white' : 'bg-gray-800/50 text-gray-400 group-hover:text-teal-400'}`}>
                                     <CheckCircle2 size={18} />
                                 </div>
                             </button>
                         ))
                     )}
+                </div>
+
+                {/* Footer Actions */}
+                <div className="p-6 border-t border-white/5 bg-slate-950/50 flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-500">
+                        {selectedEmails.size} recipients selected
+                    </p>
+                    <div className="flex gap-3">
+                        <button onClick={onClose} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-all">
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleConfirm}
+                            className="px-8 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
+                        >
+                            Add Recipients
+                        </button>
+                    </div>
                 </div>
             </motion.div>
         </div>
