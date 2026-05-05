@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { withWorkflow } from "workflow/next";
 
 // PWA worker is opt-in in production: it intercepts /api and /dashboard and has caused
 // false 503s behind Cloudflare and with extensions (SES lockdown). Dev stays off.
@@ -149,16 +150,18 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(
-  withSerwist(nextConfig),
-  {
-    org: process.env.SENTRY_ORG,
-    project: process.env.SENTRY_PROJECT,
-    silent: !process.env.CI,
-    widenClientFileUpload: true,
-    sourcemaps: {
-      deleteSourcemapsAfterUpload: true,
-    },
-    tunnelRoute: "/monitoring",
-  }
+export default withWorkflow(
+  withSentryConfig(
+    withSerwist(nextConfig),
+    {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: !process.env.CI,
+      widenClientFileUpload: true,
+      sourcemaps: {
+        deleteSourcemapsAfterUpload: true,
+      },
+      tunnelRoute: "/monitoring",
+    }
+  )
 );
