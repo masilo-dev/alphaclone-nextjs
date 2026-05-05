@@ -19,6 +19,7 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  serverExternalPackages: ['playwright-core', 'chromium-bidi'],
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -60,12 +61,23 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
-    serverExternalPackages: ['playwright-core', 'chromium-bidi'],
+
   },
   turbopack: {},
   webpack: (config) => {
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
+    // Explicitly mark playwright-core and its sub-dependencies as external
+    if (config.externals) {
+      if (Array.isArray(config.externals)) {
+        config.externals.push('playwright-core', 'chromium-bidi');
+      } else {
+        config.externals = [config.externals, 'playwright-core', 'chromium-bidi'];
+      }
+    } else {
+      config.externals = ['playwright-core', 'chromium-bidi'];
+    }
+
     return config;
   },
 
