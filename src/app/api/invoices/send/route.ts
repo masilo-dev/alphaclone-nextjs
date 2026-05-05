@@ -117,12 +117,12 @@ export async function POST(req: NextRequest) {
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
 
-    const { workflowRunId } = await start(invoiceLifecycleWorkflow, [{ invoiceId, tenantId }]);
+    const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId, tenantId }]);
 
     return NextResponse.json({ 
       success: true, 
       message: 'Invoice sent successfully',
-      workflowRunId
+      runId
     });
   } catch (error) {
     console.error('[invoices/send] error:', error);

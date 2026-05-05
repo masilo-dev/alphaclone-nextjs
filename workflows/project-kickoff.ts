@@ -36,7 +36,7 @@ async function createMilestones(projectId: string, tenantId: string) {
     { project_id: projectId, title: 'Project Charter Approved', status: 'pending' },
     { project_id: projectId, title: 'Environment Setup', status: 'pending' }
   ];
-  await supabase.from('project_milestones').insert(milestones.map(m => ({ ...m, tenant_id: tenantId })));
+  await supabase.from('project_milestones').insert(milestones.map((m: any) => ({ ...m, tenant_id: tenantId })));
 }
 
 async function assignTeam(projectId: string) {
@@ -54,7 +54,7 @@ async function checkProgress(projectId: string, tenantId: string) {
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
   const { data: milestones } = await supabase.from('project_milestones').select('status').eq('project_id', projectId);
-  const allDone = milestones?.every(m => m.status === 'completed');
+  const allDone = milestones?.every((m: any) => m.status === 'completed');
   
   if (!allDone) {
     console.warn(`Project ${projectId} milestones are behind schedule!`);

@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         const meetingUrl = `${baseUrl}/meet/${linkToken}`;
 
-        const { workflowRunId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId: user.id }]); // Assuming tenantId is user.id for now or fetch from context
+        const { runId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId: user.id }]); // Assuming tenantId is user.id for now or fetch from context
 
         return NextResponse.json({
             meetingId: videoCall.id,
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
             durationMinutes: actualDuration,
             title: title,
             hostId: hostId,
-            workflowRunId
+            runId
         });
 
     } catch (error) {

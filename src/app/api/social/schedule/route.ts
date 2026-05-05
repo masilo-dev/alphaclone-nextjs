@@ -657,9 +657,9 @@ export async function POST(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 
-    const { workflowRunId } = await start(socialScheduleWorkflow, [{ postId: post.id, tenantId }]);
+    const { runId } = await start(socialScheduleWorkflow, [{ postId: post.id, tenantId }]);
 
-    return NextResponse.json({ success: true, post, workflowRunId });
+    return NextResponse.json({ success: true, post, runId });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'social/schedule.POST' });
   }
