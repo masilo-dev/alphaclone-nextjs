@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { start } from 'workflow';
+import { start } from 'workflow/api';
 import { videoRoomOrchestrationWorkflow } from '../../../../../workflows/video-room-orchestration';
 import {
     createAdminSupabaseClientOrThrow,
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         const meetingUrl = `${baseUrl}/meet/${linkToken}`;
 
-        const { workflowRunId } = await start(videoRoomOrchestrationWorkflow, { meetingId: videoCall.id, tenantId: user.id }); // Assuming tenantId is user.id for now or fetch from context
+        const { workflowRunId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId: user.id }]); // Assuming tenantId is user.id for now or fetch from context
 
         return NextResponse.json({
             meetingId: videoCall.id,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { start } from 'workflow';
+import { start } from 'workflow/api';
 import { contractLifecycleWorkflow } from '../../../../../workflows/contract-lifecycle';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
@@ -350,7 +350,7 @@ async function sendContract(tenantId: string, config: any, supabase: any, origin
       .eq('id', contractId)
       .eq('tenant_id', tenantId);
 
-    const { workflowRunId } = await start(contractLifecycleWorkflow, { contractId, tenantId });
+    const { workflowRunId } = await start(contractLifecycleWorkflow, [{ contractId, tenantId }]);
 
     return {
       success: true,
