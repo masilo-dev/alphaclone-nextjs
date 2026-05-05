@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { start } from 'workflow';
+import { emailCampaignWorkflow } from '../../../../../../workflows/email-campaign';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 import { campaignSendSchema } from '@/schemas/validation';
 
@@ -18,7 +20,9 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json({ error: result.error || 'Failed to send campaign', code: 'CAMPAIGN_SEND_FAILED' }, { status: 500 });
         }
-        return NextResponse.json({ success: true });
+        const { workflowRunId } = await start(emailCampaignWorkflow, { campaignId, tenantId });
+
+        return NextResponse.json({ success: true, workflowRunId });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to send campaign', request);
     }

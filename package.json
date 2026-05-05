@@ -121,6 +121,7 @@
     "uuid": "^13.0.0",
     "web-push": "^3.6.7",
     "web-vitals": "^5.1.0",
+    "workflow": "^4.2.4",
     "zod": "^4.3.5"
   },
   "devDependencies": {

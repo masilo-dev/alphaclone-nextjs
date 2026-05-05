@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { start } from 'workflow';
+import { contractLifecycleWorkflow } from '../../../../../workflows/contract-lifecycle';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
@@ -348,10 +350,13 @@ async function sendContract(tenantId: string, config: any, supabase: any, origin
       .eq('id', contractId)
       .eq('tenant_id', tenantId);
 
+    const { workflowRunId } = await start(contractLifecycleWorkflow, { contractId, tenantId });
+
     return {
       success: true,
       message: 'Contract sent successfully',
       signingUrl,
+      workflowRunId
     };
   } catch (error: any) {
     return operationFailed('contracts/management', error);
