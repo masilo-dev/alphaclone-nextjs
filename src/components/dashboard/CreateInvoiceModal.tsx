@@ -219,7 +219,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 setCreatedInvoiceId(invoice.id);
                 setCreatedInvoice(invoice);
 
-                // Auto-save PDF - Wrapped in a non-blocking try-catch to prevent hanging
+                // Auto-save PDF - Defined here so it can use closure variables
                 const autoSavePdf = async () => {
                     try {
                         const client = clients.find(c => c.id === finalClientId);
@@ -261,12 +261,18 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                     } catch (pdfErr) {
                         console.warn('Non-critical: Failed to auto-save invoice PDF, but invoice was created.', pdfErr);
-                        // We don't throw here to ensure the user can still see the success state
                     }
                 };
 
-                // Run PDF auto-save but don't strictly block the UI if it's already "Finalized" in DB
-                await autoSavePdf();
+                // Run PDF auto-save - we transition to success state immediately after starting it
+                // but we keep track of it to enable the 'Sign' button later
+                autoSavePdf().then(() => {
+                    console.log('Background PDF generation completed');
+                }).catch(err => {
+                    console.warn('Background PDF generation failed:', err);
+                });
+
+                // Audit Trail
 
                 // Audit Trail
                 const { activityService } = await import('../../services/activityService');
@@ -618,8 +624,19 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             <h3 className="text-2xl font-bold text-white mb-2">Success!</h3>
                             <p className="text-slate-400 mb-8 px-8">Invoice saved to Document Hub.</p>
                             <div className="flex flex-col gap-3 w-64">
-                                <Button onClick={() => lastCreatedFile && handleOpenFile(lastCreatedFile)} className="bg-teal-600">Sign & Finalize</Button>
-                                <Button variant="outline" onClick={handleDownloadPDF}>Download</Button>
+                                <Button 
+                                    onClick={() => lastCreatedFile && handleOpenFile(lastCreatedFile)} 
+                                    className="bg-teal-600"
+                                    disabled={!lastCreatedFile}
+                                >
+                                    {lastCreatedFile ? 'Sign & Finalize' : (
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Processing PDF...
+                                        </div>
+                                    )}
+                                </Button>
+                                <Button variant="outline" onClick={handleDownloadPDF}>Download PDF</Button>
                                 <Button variant="ghost" onClick={handleClose}>Done</Button>
                             </div>
                         </div>
