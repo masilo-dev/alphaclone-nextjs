@@ -9,7 +9,8 @@
 
 ### Fixed
 - **Playwright Build Error**: Resolved a critical build-time error where `playwright-core` and `chromium-bidi` could not be resolved during bundling.
-    - Added `serverExternalPackages: ['playwright-core', 'chromium-bidi']` to `next.config.ts` to exclude these packages from the bundle.
+    - Added `serverExternalPackages: ['playwright-core', 'chromium-bidi']` to `next.config.ts` and marked them as external in the webpack configuration.
+    - Added `chromium-bidi` directly to `package.json` dependencies to resolve module resolution failures during the Vercel/esbuild bundling process.
 - **Vercel 404 Caching**: Resolved a critical issue where Vercel cached 404 responses for `.well-known` routes.
     - Added explicit `no-store, no-cache` headers in `next.config.ts` for all `/.well-known/:path*` routes.
     - Implemented `Cache-Control: no-store` in the discovery route handlers.
