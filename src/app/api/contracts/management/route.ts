@@ -350,13 +350,13 @@ async function sendContract(tenantId: string, config: any, supabase: any, origin
       .eq('id', contractId)
       .eq('tenant_id', tenantId);
 
-    const { workflowRunId } = await start(contractLifecycleWorkflow, [{ contractId, tenantId }]);
+    const { runId } = await start(contractLifecycleWorkflow, [{ contractId, tenantId }]);
 
     return {
       success: true,
       message: 'Contract sent successfully',
       signingUrl,
-      workflowRunId
+      runId
     };
   } catch (error: any) {
     return operationFailed('contracts/management', error);

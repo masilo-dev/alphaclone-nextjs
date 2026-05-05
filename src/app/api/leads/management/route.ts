@@ -97,7 +97,7 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
     // Save search results to database for tracking
     await saveLeadSearchResults(tenantId, uniqueLeads, config, supabase);
 
-    const { workflowRunId } = await start(leadFindingWorkflow, [{ query: businessType, location, tenantId }]);
+    const { runId } = await start(leadFindingWorkflow, [{ query: businessType, location, tenantId }]);
 
     return {
       success: true,
@@ -107,7 +107,7 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
         sources: sources,
         location: location,
         searchTime: new Date().toISOString(),
-        workflowRunId
+        runId
       },
       message: `Found ${uniqueLeads.length} leads`
     };

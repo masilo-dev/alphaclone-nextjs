@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
         if (!result.success) {
             return NextResponse.json({ error: result.error || 'Failed to send campaign', code: 'CAMPAIGN_SEND_FAILED' }, { status: 500 });
         }
-        const { workflowRunId } = await start(emailCampaignWorkflow, [{ campaignId, tenantId }]);
+        const { runId } = await start(emailCampaignWorkflow, [{ campaignId, tenantId }]);
 
-        return NextResponse.json({ success: true, workflowRunId });
+        return NextResponse.json({ success: true, runId });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to send campaign', request);
     }
