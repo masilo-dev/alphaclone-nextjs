@@ -47,7 +47,7 @@ import { listBuiltInPlaybooks } from '../automation/playbookService';
 import { emailHelpers } from '../email/emailService';
 import { businessInvoiceService } from '../businessInvoiceService';
 import { fileUploadService } from '../fileUploadService';
-import { start } from 'workflow';
+import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '../../../workflows/invoice-lifecycle';
 import { contractLifecycleWorkflow } from '../../../workflows/contract-lifecycle';
 import { leadFindingWorkflow } from '../../../workflows/lead-finding';
@@ -4830,7 +4830,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { invoice_id } = a;
-          const { workflowRunId } = await start(invoiceLifecycleWorkflow, { invoiceId: invoice_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4839,7 +4839,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { contract_id } = a;
-          const { workflowRunId } = await start(contractLifecycleWorkflow, { contractId: contract_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(contractLifecycleWorkflow, [{ contractId: contract_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4848,7 +4848,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { query, location } = a;
-          const { workflowRunId } = await start(leadFindingWorkflow, { query, location, tenantId: tenant_id });
+          const { workflowRunId } = await start(leadFindingWorkflow, [{ query, location, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4857,7 +4857,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { lead_id } = a;
-          const { workflowRunId } = await start(leadNurtureWorkflow, { leadId: lead_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(leadNurtureWorkflow, [{ leadId: lead_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4866,7 +4866,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { deal_id, stage } = a;
-          const { workflowRunId } = await start(dealStageWorkflow, { dealId: deal_id, stage, tenantId: tenant_id });
+          const { workflowRunId } = await start(dealStageWorkflow, [{ dealId: deal_id, stage, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4875,7 +4875,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { post_id } = a;
-          const { workflowRunId } = await start(socialScheduleWorkflow, { postId: post_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(socialScheduleWorkflow, [{ postId: post_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4884,7 +4884,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { campaign_id } = a;
-          const { workflowRunId } = await start(emailCampaignWorkflow, { campaignId: campaign_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(emailCampaignWorkflow, [{ campaignId: campaign_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4893,7 +4893,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { project_id } = a;
-          const { workflowRunId } = await start(projectKickoffWorkflow, { projectId: project_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(projectKickoffWorkflow, [{ projectId: project_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4902,7 +4902,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { meeting_id } = a;
-          const { workflowRunId } = await start(videoRoomOrchestrationWorkflow, { meetingId: meeting_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: meeting_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4911,7 +4911,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { user_id } = a;
-          const { workflowRunId } = await start(userOnboardingWorkflow, { userId: user_id, tenantId: tenant_id });
+          const { workflowRunId } = await start(userOnboardingWorkflow, [{ userId: user_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
@@ -4920,7 +4920,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { prompt } = a;
-          const { workflowRunId } = await start(mcpAgentWorkflow, { prompt, tenantId: tenant_id });
+          const { workflowRunId } = await start(mcpAgentWorkflow, [{ prompt, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }

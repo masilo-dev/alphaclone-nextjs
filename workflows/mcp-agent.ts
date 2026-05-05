@@ -1,11 +1,10 @@
-import { workflow } from 'workflow';
-
-
 /**
  * MCP Agent Workflow
  * A durable AI agent that can run long-running tasks.
  */
-export const mcpAgentWorkflow = workflow(async ({ prompt, tenantId }: { prompt: string; tenantId: string }) => {
+export async function mcpAgentWorkflow({ prompt, tenantId }: { prompt: string; tenantId: string }) {
+  "use workflow";
+  
   // Logic for a durable agent
   // This uses the workflow context to maintain state across steps
   
@@ -13,4 +12,4 @@ export const mcpAgentWorkflow = workflow(async ({ prompt, tenantId }: { prompt: 
 
   console.log(`Agent result for tenant ${tenantId}: ${result}`);
   return result;
-});
+}

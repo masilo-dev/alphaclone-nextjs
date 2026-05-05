@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { start } from 'workflow';
+import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '../../../../../workflows/invoice-lifecycle';
 
 async function renderInvoicePdf(invoice: any): Promise<Buffer> {
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
 
-    const { workflowRunId } = await start(invoiceLifecycleWorkflow, { invoiceId, tenantId });
+    const { workflowRunId } = await start(invoiceLifecycleWorkflow, [{ invoiceId, tenantId }]);
 
     return NextResponse.json({ 
       success: true, 

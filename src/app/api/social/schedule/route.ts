@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { start } from 'workflow';
+import { start } from 'workflow/api';
 import { socialScheduleWorkflow } from '../../../../../workflows/social-schedule';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
@@ -657,7 +657,7 @@ export async function POST(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 
-    const { workflowRunId } = await start(socialScheduleWorkflow, { postId: post.id, tenantId });
+    const { workflowRunId } = await start(socialScheduleWorkflow, [{ postId: post.id, tenantId }]);
 
     return NextResponse.json({ success: true, post, workflowRunId });
   } catch (err: unknown) {
