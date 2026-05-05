@@ -47,6 +47,18 @@ import { listBuiltInPlaybooks } from '../automation/playbookService';
 import { emailHelpers } from '../email/emailService';
 import { businessInvoiceService } from '../businessInvoiceService';
 import { fileUploadService } from '../fileUploadService';
+import { start } from 'workflow';
+import { invoiceLifecycleWorkflow } from '../../../workflows/invoice-lifecycle';
+import { contractLifecycleWorkflow } from '../../../workflows/contract-lifecycle';
+import { leadFindingWorkflow } from '../../../workflows/lead-finding';
+import { leadNurtureWorkflow } from '../../../workflows/lead-nurture';
+import { dealStageWorkflow } from '../../../workflows/deal-stage';
+import { socialScheduleWorkflow } from '../../../workflows/social-schedule';
+import { emailCampaignWorkflow } from '../../../workflows/email-campaign';
+import { projectKickoffWorkflow } from '../../../workflows/project-kickoff';
+import { videoRoomOrchestrationWorkflow } from '../../../workflows/video-room-orchestration';
+import { userOnboardingWorkflow } from '../../../workflows/user-onboarding';
+import { mcpAgentWorkflow } from '../../../workflows/mcp-agent';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -4811,6 +4823,105 @@ Return ONLY a JSON array of 60 objects:
           });
           if (response.status === 'failed') throw new Error(response.error || response.message);
           result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
+        case 'start_invoice_lifecycle': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { invoice_id } = a;
+          const { workflowRunId } = await start(invoiceLifecycleWorkflow, { invoiceId: invoice_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'start_contract_lifecycle': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { contract_id } = a;
+          const { workflowRunId } = await start(contractLifecycleWorkflow, { contractId: contract_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'start_lead_campaign': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { query, location } = a;
+          const { workflowRunId } = await start(leadFindingWorkflow, { query, location, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'start_lead_nurture': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { lead_id } = a;
+          const { workflowRunId } = await start(leadNurtureWorkflow, { leadId: lead_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'trigger_deal_automation': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { deal_id, stage } = a;
+          const { workflowRunId } = await start(dealStageWorkflow, { dealId: deal_id, stage, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'schedule_social_automation': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { post_id } = a;
+          const { workflowRunId } = await start(socialScheduleWorkflow, { postId: post_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'start_email_campaign': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { campaign_id } = a;
+          const { workflowRunId } = await start(emailCampaignWorkflow, { campaignId: campaign_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'kickoff_project_automation': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { project_id } = a;
+          const { workflowRunId } = await start(projectKickoffWorkflow, { projectId: project_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'orchestrate_meeting_workflow': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { meeting_id } = a;
+          const { workflowRunId } = await start(videoRoomOrchestrationWorkflow, { meetingId: meeting_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'onboard_user_automation': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { user_id } = a;
+          const { workflowRunId } = await start(userOnboardingWorkflow, { userId: user_id, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
+          break;
+        }
+
+        case 'run_mcp_agent_workflow': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { prompt } = a;
+          const { workflowRunId } = await start(mcpAgentWorkflow, { prompt, tenantId: tenant_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, workflowRunId }, null, 2) }] };
           break;
         }
 

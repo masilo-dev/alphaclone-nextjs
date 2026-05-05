@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { start } from 'workflow';
+import { invoiceLifecycleWorkflow } from '../../../../../workflows/invoice-lifecycle';
 
 async function renderInvoicePdf(invoice: any): Promise<Buffer> {
   const items = Array.isArray(invoice.items) ? invoice.items : [];
@@ -115,7 +117,13 @@ export async function POST(req: NextRequest) {
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
 
-    return NextResponse.json({ success: true, message: 'Invoice sent successfully' });
+    const { workflowRunId } = await start(invoiceLifecycleWorkflow, { invoiceId, tenantId });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Invoice sent successfully',
+      workflowRunId
+    });
   } catch (error) {
     console.error('[invoices/send] error:', error);
     return routeErrorResponse(error, 'Failed to send invoice', req);

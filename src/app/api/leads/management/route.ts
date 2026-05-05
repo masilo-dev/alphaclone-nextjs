@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { start } from 'workflow';
+import { leadFindingWorkflow } from '../../../../../workflows/lead-finding';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
@@ -95,6 +97,8 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
     // Save search results to database for tracking
     await saveLeadSearchResults(tenantId, uniqueLeads, config, supabase);
 
+    const { workflowRunId } = await start(leadFindingWorkflow, { query: businessType, location, tenantId });
+
     return {
       success: true,
       data: {
@@ -102,7 +106,8 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
         total: uniqueLeads.length,
         sources: sources,
         location: location,
-        searchTime: new Date().toISOString()
+        searchTime: new Date().toISOString(),
+        workflowRunId
       },
       message: `Found ${uniqueLeads.length} leads`
     };

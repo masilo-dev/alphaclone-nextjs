@@ -1553,4 +1553,138 @@ export const MCP_TOOLS = [
       required: [],
     },
   },
+  {
+    name: 'start_invoice_lifecycle',
+    description: 'Vercel Workflows: Trigger the full durable invoice lifecycle (PDF -> Send -> Reminders -> Overdue).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        invoice_id: { type: 'string' }
+      },
+      required: ['invoice_id'],
+    },
+  },
+  {
+    name: 'start_contract_lifecycle',
+    description: 'Vercel Workflows: Trigger the durable contract lifecycle (Signature -> Project -> Task Creation -> Invoicing).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        contract_id: { type: 'string' }
+      },
+      required: ['contract_id'],
+    },
+  },
+  {
+    name: 'start_lead_campaign',
+    description: 'Vercel Workflows: Trigger lead finding automation (Scrape -> Enrich -> Score -> Inject).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        query: { type: 'string' },
+        location: { type: 'string' }
+      },
+      required: ['query', 'location'],
+    },
+  },
+  {
+    name: 'start_lead_nurture',
+    description: 'Vercel Workflows: Trigger durable lead nurturing outreach sequence.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        lead_id: { type: 'string' }
+      },
+      required: ['lead_id'],
+    },
+  },
+  {
+    name: 'trigger_deal_automation',
+    description: 'Vercel Workflows: Trigger deal stage automation based on stage changes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        deal_id: { type: 'string' },
+        stage: { type: 'string' }
+      },
+      required: ['deal_id', 'stage'],
+    },
+  },
+  {
+    name: 'schedule_social_automation',
+    description: 'Vercel Workflows: Trigger social post publication and engagement tracking.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        post_id: { type: 'string' }
+      },
+      required: ['post_id'],
+    },
+  },
+  {
+    name: 'start_email_campaign',
+    description: 'Vercel Workflows: Trigger bulk email campaign and performance tracking.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        campaign_id: { type: 'string' }
+      },
+      required: ['campaign_id'],
+    },
+  },
+  {
+    name: 'kickoff_project_automation',
+    description: 'Vercel Workflows: Trigger project environment setup and milestone monitoring.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        project_id: { type: 'string' }
+      },
+      required: ['project_id'],
+    },
+  },
+  {
+    name: 'orchestrate_meeting_workflow',
+    description: 'Vercel Workflows: Trigger post-meeting cleanup and CRM sync.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        meeting_id: { type: 'string' }
+      },
+      required: ['meeting_id'],
+    },
+  },
+  {
+    name: 'onboard_user_automation',
+    description: 'Vercel Workflows: Trigger durable user onboarding sequence.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        user_id: { type: 'string' }
+      },
+      required: ['user_id'],
+    },
+  },
+  {
+    name: 'run_mcp_agent_workflow',
+    description: 'Vercel Workflows: Run a durable AI agent workflow for complex tasks.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        prompt: { type: 'string' }
+      },
+      required: ['prompt'],
+    },
+  },
 ];
