@@ -60,6 +60,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
+    serverExternalPackages: ['playwright-core', 'chromium-bidi'],
   },
   turbopack: {},
   webpack: (config) => {
