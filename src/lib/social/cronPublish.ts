@@ -1,7 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
   enqueueSocialPostSync,
   findRecentDuplicateLinkedInCaption,
@@ -9,20 +6,10 @@ import {
   updateSocialPostLinkedInUrnWithRetry,
 } from '@/lib/social/linkedinPublishHelpers';
 
-type SchedulePayload = {
-  tenantId?: string;
-  title?: string;
-  caption?: string;
-  platforms?: string[];
-  media_urls?: string[];
-  media_types?: string[];
-  link_url?: string | null;
-  hashtags?: string[];
-  scheduled_at?: string | null;
-  facebook_page_id?: string | null;
-  linkedin_member_id?: string | null;
-  linkedin_organization_id?: string | null;
-  publish_now?: boolean;
+type PublishResult = {
+  ok: boolean;
+  platform: 'facebook' | 'linkedin';
+  reason?: string;
 };
 
 function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name: string | null }> {
@@ -43,12 +30,6 @@ function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name
     .filter((page): page is { id: string; name: string | null } => !!page);
 }
 
-type PublishResult = {
-  ok: boolean;
-  platform: 'facebook' | 'linkedin';
-  reason?: string;
-};
-
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 20000): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -63,14 +44,6 @@ function isMissingColumn(error: unknown, columnName: string) {
   if (!error || typeof error !== 'object') return false;
   const maybeError = error as { code?: string; message?: string };
   return maybeError.code === '42703' && (maybeError.message || '').includes(columnName);
-}
-
-function getMissingColumnName(error: unknown): string | null {
-  if (!error || typeof error !== 'object') return null;
-  const maybeError = error as { code?: string; message?: string };
-  if (maybeError.code !== '42703' || !maybeError.message) return null;
-  const match = maybeError.message.match(/column "([^"]+)"/i);
-  return match?.[1] || null;
 }
 
 function isStatusConstraintViolation(error: unknown): boolean {
@@ -103,59 +76,11 @@ function normalizeScopes(raw: unknown): string[] {
   return [];
 }
 
-async function ensureTenantMembership(userId: string, tenantId: string) {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from('tenant_users')
-    .select('tenant_id')
-    .eq('user_id', userId)
-    .eq('tenant_id', tenantId)
-    .maybeSingle();
-
-  if (error || !data) return false;
-  return true;
-}
-
-async function insertSocialPostWithFallback(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  payload: Record<string, unknown>
-) {
-  const mutablePayload: Record<string, unknown> = { ...payload };
-  const maxAttempts = 10;
-  let attempt = 0;
-
-  while (attempt < maxAttempts) {
-    attempt += 1;
-    const insertRes = await supabase
-      .from('social_posts')
-      .insert(mutablePayload)
-      .select('*')
-      .single();
-
-    if (!insertRes.error) {
-      return insertRes;
-    }
-
-    const missingColumn = getMissingColumnName(insertRes.error);
-    if (!missingColumn || !(missingColumn in mutablePayload)) {
-      return insertRes;
-    }
-
-    delete mutablePayload[missingColumn];
-  }
-
-  return await supabase
-    .from('social_posts')
-    .insert(mutablePayload)
-    .select('*')
-    .single();
-}
-
 async function updateSocialPostStatusWithFallback(
-  adminClient: ReturnType<typeof createSupabaseAdminClient>,
   postId: string,
   payload: Record<string, unknown>
 ) {
+  const adminClient = createSupabaseAdminClient();
   const firstTry = await adminClient
     .from('social_posts')
     .update(payload)
@@ -243,7 +168,7 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
     }).eq('id', postId);
     return { ok: true, platform: 'facebook' };
   } catch (err) {
-    console.error('[social/schedule] publish job error:', err);
+    console.error('[cron/social-publish] Facebook publish error:', err);
     return { ok: false, platform: 'facebook', reason: 'Publish job failed' };
   }
 }
@@ -350,18 +275,16 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         : typeof post.metadata?.linkedin_organization_id === 'string'
           ? String(post.metadata.linkedin_organization_id)
           : null;
-    const companyPages = Array.isArray((activeIntegration as any)?.metadata?.company_pages)
-      ? ((activeIntegration as any).metadata.company_pages as Array<Record<string, unknown>>)
-      : [];
+    const companyPages = extractCompanyPagesFromMetadata((activeIntegration as any)?.metadata);
     const selectedCompany = requestedOrganizationId
-      ? companyPages.find((page) => String(page?.id || '') === requestedOrganizationId)
+      ? companyPages.find((page) => String(page.id) === requestedOrganizationId)
       : null;
     const canPostAsCompany = !!selectedCompany && scopes.includes('w_organization_social');
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
       : activeIntegration.linkedin_person_urn;
 
-    async function registerAndUploadLinkedInImage(authorUrn: string, imageUrl: string): Promise<string> {
+    async function registerAndUploadLinkedInImage(author: string, imageUrl: string): Promise<string> {
       const imageFetch = await fetchWithTimeout(imageUrl, { method: 'GET' }, 25000);
       if (!imageFetch.ok) {
         throw new Error(`Could not download image URL (${imageFetch.status})`);
@@ -379,7 +302,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         body: JSON.stringify({
           registerUploadRequest: {
             recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-            owner: authorUrn,
+            owner: author,
             serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
           },
         }),
@@ -447,8 +370,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       return {
         ok: false,
         platform: 'linkedin',
-        reason:
-          'Duplicate post: the same caption was published from this workspace in the last 7 days. Change the text or remove the earlier post.',
+        reason: 'Duplicate post detected in the last 7 days.',
       };
     }
 
@@ -503,18 +425,17 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
           externalId: postUrn,
           lastError: retry.error || retry2.error,
         });
-        console.error('[social/schedule] LinkedIn URN persist failed; queued for reconciliation', postId, retry.error);
       }
     }
 
     return { ok: true, platform: 'linkedin' };
   } catch (err) {
-    console.error('[social/schedule] linkedin publish error:', err);
+    console.error('[cron/social-publish] LinkedIn publish error:', err);
     return { ok: false, platform: 'linkedin', reason: 'LinkedIn publish failed' };
   }
 }
 
-async function publishSocialPost(postId: string) {
+export async function publishSocialPost(postId: string) {
   const adminClient = createSupabaseAdminClient();
   const { data: post } = await adminClient
     .from('social_posts')
@@ -546,7 +467,7 @@ async function publishSocialPost(postId: string) {
     return;
   }
 
-  await updateSocialPostStatusWithFallback(adminClient, postId, {
+  await updateSocialPostStatusWithFallback(postId, {
     status: 'publishing',
     error_message: null,
   });
@@ -556,7 +477,7 @@ async function publishSocialPost(postId: string) {
 
   if (failed.length > 0 && succeeded.length === 0) {
     const message = failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | ');
-    await updateSocialPostStatusWithFallback(adminClient, postId, {
+    await updateSocialPostStatusWithFallback(postId, {
       status: 'failed',
       error_message: message,
     });
@@ -567,7 +488,7 @@ async function publishSocialPost(postId: string) {
     const partialMessage = `Partial publish: ${failed
       .map((r) => `${r.platform}: ${r.reason || 'failed'}`)
       .join(' | ')}`;
-    await updateSocialPostStatusWithFallback(adminClient, postId, {
+    await updateSocialPostStatusWithFallback(postId, {
       status: 'published',
       published_at: new Date().toISOString(),
       error_message: partialMessage,
@@ -575,179 +496,31 @@ async function publishSocialPost(postId: string) {
     return;
   }
 
-  await updateSocialPostStatusWithFallback(adminClient, postId, {
+  await updateSocialPostStatusWithFallback(postId, {
     status: 'published',
     published_at: new Date().toISOString(),
     error_message: null,
   });
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export async function publishDueSocialPosts(limit = 25) {
+  const adminClient = createSupabaseAdminClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await adminClient
+    .from('social_posts')
+    .select('id')
+    .eq('status', 'scheduled')
+    .not('scheduled_at', 'is', null)
+    .lte('scheduled_at', nowIso)
+    .order('scheduled_at', { ascending: true })
+    .limit(limit);
 
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (error) throw error;
 
-    const body = (await req.json()) as SchedulePayload;
-    const tenantId = body.tenantId?.trim();
-
-    if (!tenantId || !body.caption?.trim()) {
-      return NextResponse.json({ error: 'tenantId and caption are required' }, { status: 400 });
-    }
-
-    const isMember = await ensureTenantMembership(user.id, tenantId);
-    if (!isMember) {
-      return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
-    }
-
-    const requestedOrganizationId = body.linkedin_organization_id?.trim() || null;
-    if (requestedOrganizationId) {
-      const { data: liIntegration, error: liError } = await supabase
-        .from('linkedin_integrations')
-        .select('metadata')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .limit(1)
-        .maybeSingle();
-      if (liError || !liIntegration) {
-        return NextResponse.json({ error: 'LinkedIn integration is not connected for this workspace.' }, { status: 400 });
-      }
-      const companyPages = extractCompanyPagesFromMetadata(liIntegration.metadata);
-      const hasCompany = companyPages.some((company) => company.id === requestedOrganizationId);
-      if (!hasCompany) {
-        return NextResponse.json({ error: 'Selected LinkedIn company page does not belong to this connected account.' }, { status: 400 });
-      }
-    }
-
-    const parsedScheduledAt = body.scheduled_at ? new Date(body.scheduled_at) : null;
-    if (parsedScheduledAt && Number.isNaN(parsedScheduledAt.getTime())) {
-      return NextResponse.json({ error: 'Invalid scheduled_at date value' }, { status: 400 });
-    }
-    const scheduledAt = parsedScheduledAt ? parsedScheduledAt.toISOString() : null;
-    const shouldPublishNow = body.publish_now === true || !scheduledAt;
-
-    // Use a legacy-safe insert status; some deployments still enforce
-    // an older social_posts_status_check that rejects "queued".
-    const status = 'scheduled';
-
-    const insertPayload = {
-      tenant_id: tenantId,
-      user_id: user.id,
-      title: body.title?.trim() || null,
-      caption: body.caption.trim(),
-      platforms: body.platforms?.length ? body.platforms : ['facebook'],
-      media_urls: body.media_urls || [],
-      media_types: body.media_types || [],
-      link_url: body.link_url || null,
-      hashtags: body.hashtags || [],
-      status,
-      scheduled_at: shouldPublishNow ? null : scheduledAt,
-      facebook_page_id: body.facebook_page_id || null,
-      linkedin_member_id: body.linkedin_member_id || null,
-      linkedin_organization_id: requestedOrganizationId,
-    };
-
-    const { data: post, error } = await insertSocialPostWithFallback(supabase, insertPayload);
-
-    if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
-
-    if (shouldPublishNow) {
-      await publishSocialPost(post.id);
-    }
-
-    return NextResponse.json({ success: true, post });
-  } catch (err: unknown) {
-    return clientErrorResponse(err, { request: req, scope: 'social/schedule.POST' });
+  const duePosts = data || [];
+  for (const post of duePosts) {
+    await publishSocialPost(post.id);
   }
-}
 
-export async function GET(req: NextRequest) {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenantId')?.trim();
-    const pageId = searchParams.get('pageId')?.trim();
-
-    if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
-
-    const isMember = await ensureTenantMembership(user.id, tenantId);
-    if (!isMember) {
-      return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
-    }
-
-    let query = supabase
-      .from('social_posts')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (pageId) query = query.eq('facebook_page_id', pageId);
-
-    const { data, error } = await query;
-    if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.GET' });
-
-    return NextResponse.json({ posts: data || [] });
-  } catch (err: unknown) {
-    return clientErrorResponse(err, { request: req, scope: 'social/schedule.GET' });
-  }
-}
-
-export async function PATCH(req: NextRequest) {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = (await req.json()) as {
-      postId?: string;
-      tenantId?: string;
-      action?: 'publish_now' | 'cancel';
-    };
-
-    if (!body.postId || !body.tenantId || !body.action) {
-      return NextResponse.json({ error: 'postId, tenantId, action are required' }, { status: 400 });
-    }
-
-    const isMember = await ensureTenantMembership(user.id, body.tenantId);
-    if (!isMember) {
-      return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
-    }
-
-    if (body.action === 'cancel') {
-      const { error } = await supabase
-        .from('social_posts')
-        .update({ status: 'cancelled' })
-        .eq('id', body.postId)
-        .eq('tenant_id', body.tenantId);
-      if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
-      return NextResponse.json({ success: true });
-    }
-
-    const { error } = await supabase
-      .from('social_posts')
-      .update({ status: 'scheduled', scheduled_at: null, error_message: null })
-      .eq('id', body.postId)
-      .eq('tenant_id', body.tenantId);
-
-    if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
-
-    await publishSocialPost(body.postId);
-    return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    return clientErrorResponse(err, { request: req, scope: 'social/schedule.PATCH' });
-  }
+  return duePosts.length;
 }

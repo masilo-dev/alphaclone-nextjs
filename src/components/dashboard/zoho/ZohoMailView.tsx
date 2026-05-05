@@ -140,9 +140,17 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     };
 
     const filteredMessages = useMemo(() => {
-        if (categoryFilter === 'all') return messages;
-        return messages.filter(msg => msg.category === categoryFilter);
-    }, [messages, categoryFilter]);
+        const scoped = categoryFilter === 'all'
+            ? messages
+            : messages.filter(msg => msg.category === categoryFilter);
+        const query = searchTerm.trim().toLowerCase();
+        if (!query) return scoped;
+        return scoped.filter(msg =>
+            (msg.sender || '').toLowerCase().includes(query) ||
+            (msg.subject || '').toLowerCase().includes(query) ||
+            (msg.snippet || '').toLowerCase().includes(query)
+        );
+    }, [messages, categoryFilter, searchTerm]);
 
     const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
         const targetUrl = userIdProp ? `${url}${url.includes('?') ? '&' : '?'}userId=${encodeURIComponent(userIdProp)}` : url;
@@ -157,7 +165,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     };
 
     useEffect(() => { fetchFolders(); }, []);
-    useEffect(() => { if (selectedFolder && !searchTerm) fetchMessages(selectedFolder); }, [selectedFolder, searchTerm]);
+    useEffect(() => { if (selectedFolder) fetchMessages(selectedFolder); }, [selectedFolder]);
 
     const fetchFolders = async () => {
         const data = await zohoFetch('/api/zoho/mail?action=folders');
@@ -369,6 +377,12 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                             />
                         </div>
                     </div>
+
+                    {error && (
+                        <div className="mx-4 mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+                            {error}
+                        </div>
+                    )}
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                         {/* Category Filter Pills & Bulk Actions */}

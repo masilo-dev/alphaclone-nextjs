@@ -42,8 +42,8 @@ const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
     const handleConnect = () => {
         if (!user) return;
         setConnecting(true);
-        // Redirect to our connect API route
-        window.location.href = `/api/auth/google/gmail/connect?userId=${user.id}`;
+        const returnTo = encodeURIComponent('/dashboard/business/settings?tab=integrations');
+        window.location.href = `/api/auth/google/gmail/connect?userId=${user.id}&returnTo=${returnTo}`;
     };
 
     const handleDisconnect = async () => {

@@ -10,7 +10,7 @@ import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services
 
 interface PermanentMeetingLinkProps {
     user: User;
-    onJoinRoom: (roomUrl: string) => void;
+    onJoinRoom: (meetingId: string) => void;
 }
 
 /**
@@ -25,11 +25,13 @@ interface PermanentMeetingLinkProps {
 const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoinRoom }) => {
     const { currentTenant } = useTenant(); // Added useTenant hook
     const [roomData, setRoomData] = useState<{
+        id: string;
         link: string;
         url: string;
         loading: boolean;
         error: string | null;
     }>({
+        id: '',
         link: '',
         url: '',
         loading: true,
@@ -47,6 +49,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
             const cached = prefs.permanentMeetingLink;
             if (cached?.link && cached?.roomUrl) {
                 setRoomData({
+                    id: cached.roomId || '',
                     link: cached.link,
                     url: cached.roomUrl,
                     loading: false,
@@ -78,6 +81,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
 
             // Single state update with all data
             setRoomData({
+                id: data.id,
                 link: shareLink,
                 url: data.url,
                 loading: false,
@@ -87,6 +91,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
             await mergeDashboardPreferences(user.id, {
                 permanentMeetingLink: {
                     roomName: data.name,
+                    roomId: data.id,
                     roomUrl: data.url,
                     link: shareLink,
                     createdAt: new Date().toISOString(),
@@ -96,6 +101,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
         } catch (err) {
             console.error('Failed to initialize permanent room:', err);
             setRoomData({
+                id: '',
                 link: '',
                 url: '',
                 loading: false,
@@ -125,10 +131,10 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
     }, [roomData.link]);
 
     const handleJoinNow = useCallback(() => {
-        if (roomData.url) {
-            onJoinRoom(roomData.url);
+        if (roomData.id) {
+            onJoinRoom(roomData.id);
         }
-    }, [roomData.url, onJoinRoom]);
+    }, [roomData.id, onJoinRoom]);
 
     // Loading state
     if (roomData.loading) {

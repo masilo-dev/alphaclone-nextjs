@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { googlePlacesService } from '@/services/googlePlacesService';
+import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadsManagementSchema } from '@/schemas/validation';
 
 function resolveGooglePlacesApiKey(): string | null {
@@ -238,29 +239,33 @@ async function searchFacebookLeads(tenantId: string, businessType: string, limit
 
 async function searchLinkedInLeads(businessType: string, location: string, limit: number, filters: any) {
   try {
-    // Note: LinkedIn API requires special access
-    // This is a mock implementation
-    const leads = [
-      {
-        id: 'li_1',
-        name: 'Sample Business',
-        source: 'linkedin',
-        type: 'company',
-        location: location,
-        industry: businessType,
-        employees: '11-50',
-        website: 'https://example.com',
-        description: 'Sample business description',
-        metadata: {
-          companyId: '12345',
-          founded: '2010',
-          headquarters: location
-        },
-        foundAt: new Date().toISOString()
-      }
-    ];
+    if (!hasRemoteBrowserConfigured()) {
+      return [];
+    }
 
-    return leads.filter(lead => passesFilters(lead, filters));
+    const rows = await fetchSerpLeadsViaBrowser(businessType, location, Math.min(Math.max(limit, 5), 20), {
+      searchQuery: `${businessType} ${location} site:linkedin.com/company`,
+    });
+
+    const leads = rows.map((row, index) => ({
+      id: `li_${index + 1}_${Buffer.from(`${row.business_name}:${row.website}`).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}`,
+      name: row.business_name,
+      source: 'linkedin',
+      type: 'company_profile',
+      location: row.address || location,
+      industry: businessType,
+      website: row.website || null,
+      phone: row.phone || null,
+      email: row.email || null,
+      description: row.snippet || 'Public company profile discovered from LinkedIn search.',
+      metadata: {
+        publicProfileUrl: row.website || null,
+        contact_discovery_method: 'public_search',
+      },
+      foundAt: new Date().toISOString()
+    }));
+
+    return leads.filter((lead) => passesFilters(lead, filters));
   } catch (error) {
     console.error('LinkedIn search error:', error);
     return [];

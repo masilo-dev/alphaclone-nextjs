@@ -10,6 +10,9 @@ interface PublicNavigationProps {
     onLoginClick: () => void;
 }
 
+const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
+const LOGIN_HREF = '/auth/login';
+
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -102,12 +105,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         ))}
                         <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-800">
                             <Link
-                                href="/auth/login"
+                                href={LOGIN_HREF}
                                 className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                             >
                                 Login
                             </Link>
-                            <Link href="/register" className="inline-flex items-center">
+                            <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
                                 <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20">
                                     Start Free Trial
                                 </Button>
@@ -127,12 +130,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             </button>
                         )}
                         <Link
-                            href="/auth/login"
+                            href={LOGIN_HREF}
                             className="inline-flex items-center h-9 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                         >
                             Login
                         </Link>
-                        <Link href="/register">
+                        <Link href={BUSINESS_SIGNUP_HREF}>
                             <Button size="sm" className="inline-flex items-center h-9 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-3 py-1.5 text-xs shadow-lg shadow-teal-500/20">
                                 Start Free
                             </Button>
@@ -174,12 +177,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             </div>
                         </div>
                         <div className="pt-4 pb-6 flex flex-col gap-3 mt-auto border-t border-slate-800/80">
-                            <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
                                 <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base">
                                     Login
                                 </Button>
                             </Link>
-                            <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                            <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
                                 <Button className="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 text-base h-auto">
                                     Start Free Trial
                                 </Button>

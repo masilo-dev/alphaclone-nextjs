@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { chartOfAccountsService, ChartOfAccount } from '@/services/accounting/chartOfAccountsService';
 import toast from 'react-hot-toast';
 
 interface ExpenseCategory {
@@ -35,6 +36,11 @@ interface Expense {
     category_id: string | null;
     created_at: string;
     expense_categories?: ExpenseCategory;
+    asset_account?: {
+        id: string;
+        account_name: string;
+        account_code: string;
+    } | null;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -75,7 +81,7 @@ export default function ExpenseTrackerTab() {
     const { currentTenant: tenant } = useTenant();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-    const [assetAccounts, setAssetAccounts] = useState<any[]>([]);
+    const [assetAccounts, setAssetAccounts] = useState<ChartOfAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -90,10 +96,10 @@ export default function ExpenseTrackerTab() {
         if (!tenant?.id) return;
         setLoading(true);
 
-        const [expRes, catRes, accRes] = await Promise.all([
+        const [expRes, catRes] = await Promise.all([
             supabase
                 .from('expenses')
-                .select('*, expense_categories(id, name, color, icon), asset_accounts:accounts!asset_account_id(id, name)')
+                .select('*, expense_categories(id, name, color, icon), asset_account:chart_of_accounts!asset_account_id(id, account_name, account_code)')
                 .eq('tenant_id', tenant.id)
                 .order('date', { ascending: false })
                 .limit(200),
@@ -103,21 +109,40 @@ export default function ExpenseTrackerTab() {
                 .eq('tenant_id', tenant.id)
                 .eq('is_active', true)
                 .order('name'),
-            supabase
-                .from('accounts')
-                .select('id, name, code')
-                .eq('tenant_id', tenant.id)
-                .eq('account_type', 'asset')
-                .order('name'),
         ]);
+
+        let assetAccountsResult = await chartOfAccountsService.getAccountsByType('asset');
+
+        if (!assetAccountsResult.error && assetAccountsResult.accounts.length === 0) {
+            const initResult = await chartOfAccountsService.initializeDefaultAccounts();
+            if (initResult.success) {
+                assetAccountsResult = await chartOfAccountsService.getAccountsByType('asset');
+            }
+        }
 
         if (!expRes.error) setExpenses(expRes.data || []);
         if (!catRes.error) setCategories(catRes.data || []);
-        if (!accRes.error) setAssetAccounts(accRes.data || []);
+        if (!assetAccountsResult.error) {
+            setAssetAccounts(assetAccountsResult.accounts);
+        } else {
+            setAssetAccounts([]);
+        }
         setLoading(false);
     }, [tenant]);
 
     useEffect(() => { loadData(); }, [loadData]);
+
+    useEffect(() => {
+        if (!form.asset_account_id && assetAccounts.length > 0) {
+            const preferredAccount = assetAccounts.find((account) =>
+                account.accountSubtype === 'current_asset' ||
+                account.accountName.toLowerCase().includes('cash') ||
+                account.accountName.toLowerCase().includes('bank')
+            ) || assetAccounts[0];
+
+            setForm((prev) => ({ ...prev, asset_account_id: preferredAccount.id }));
+        }
+    }, [assetAccounts, form.asset_account_id]);
 
     // Seed default categories if none exist
     useEffect(() => {
@@ -366,9 +391,14 @@ export default function ExpenseTrackerTab() {
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm">
                                 <option value="">Select Account</option>
                                 {assetAccounts.map(acc => (
-                                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.code})</option>
+                                    <option key={acc.id} value={acc.id}>{acc.accountName} ({acc.accountCode})</option>
                                 ))}
                             </select>
+                            {assetAccounts.length === 0 && (
+                                <p className="mt-2 text-xs text-amber-400">
+                                    No asset accounts are available yet. Open Accounting and initialize the chart of accounts if this stays empty.
+                                </p>
+                            )}
                         </div>
                         <div className="sm:col-span-2">
                             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Description</label>
@@ -463,8 +493,11 @@ export default function ExpenseTrackerTab() {
                                     </td>
                                     <td className="px-4 py-3 text-slate-400 text-xs">
                                         <p className="capitalize">{expense.payment_method?.replace('_', ' ')}</p>
-                                        {(expense as any).asset_accounts?.name && (
-                                            <p className="text-[10px] text-slate-600 font-mono">{(expense as any).asset_accounts.name}</p>
+                                        {expense.asset_account?.account_name && (
+                                            <p className="text-[10px] text-slate-600 font-mono">
+                                                {expense.asset_account.account_name}
+                                                {expense.asset_account.account_code ? ` (${expense.asset_account.account_code})` : ''}
+                                            </p>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-right font-semibold text-white whitespace-nowrap">

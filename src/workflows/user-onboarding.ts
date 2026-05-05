@@ -1,68 +1,184 @@
 import { sleep } from 'workflow';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  SYSTEM_PLATFORM_TEMPLATES,
+  defaultDashboardUrl,
+  sendPlatformTemplateEmail,
+} from '@/lib/email/platformTemplateEmail';
+
+type UserContext = {
+  email: string;
+  name: string;
+};
 
 /**
  * User Onboarding Workflow
- * Guides new users through the first week on the platform.
+ * Sends real lifecycle emails and prepares a few default workspace resources.
  */
 export async function userOnboardingWorkflow({ userId, tenantId }: { userId: string; tenantId: string }) {
   "use workflow";
-  
-  const supabase = createSupabaseAdminClient();
-  await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
-  // 1. Setup Workspace
-  await setupWorkspace(userId);
-
-  // 2. Send Welcome Email
+  await setupWorkspace(userId, tenantId);
   await sendWelcome(userId);
 
-  // 3. Send Getting Started Guide (Wait 1 day)
   await sleep('1d');
   await sendGuide(userId);
 
-  // 4. Send Activation Nudge (Wait 3 days)
   await sleep('3d');
-  const hasInvoiced = await checkUsage(tenantId);
+  const usage = await checkUsage(tenantId);
 
-  if (!hasInvoiced) {
-    await sendNudge(userId);
+  if (!usage.hasCoreActivation) {
+    await sendNudge(userId, usage);
   }
 
-  // 5. Send Week One Check-In (Wait 7 days)
   await sleep('7d');
-  await weekOneCheckin(userId);
+  await weekOneCheckin(userId, usage);
 }
 
-async function setupWorkspace(userId: string) {
+async function setupWorkspace(userId: string, tenantId: string) {
   "use step";
-  console.log(`Initializing workspace for user ${userId}`);
+
+  const supabase = createSupabaseAdminClient();
+  await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+
+  const [{ error: accountsError }, { error: activityError }] = await Promise.all([
+    supabase.rpc('create_default_chart_of_accounts', { p_tenant_id: tenantId }),
+    supabase.from('activity_logs').insert({
+      user_id: userId,
+      tenant_id: tenantId,
+      action: 'ONBOARDING_STARTED',
+      metadata: {
+        workflow: 'user_onboarding',
+        source: 'activation_lifecycle',
+      },
+    }),
+  ]);
+
+  if (accountsError) {
+    console.warn('[userOnboardingWorkflow] chart of accounts setup skipped:', accountsError.message);
+  }
+
+  if (activityError) {
+    console.warn('[userOnboardingWorkflow] activity log insert skipped:', activityError.message);
+  }
 }
 
 async function sendWelcome(userId: string) {
   "use step";
-  console.log(`Sending welcome email to user ${userId}`);
+  await sendLifecycleEmail(userId, 'Welcome Email', {}, true);
 }
 
 async function sendGuide(userId: string) {
   "use step";
-  console.log(`Sending getting started guide to user ${userId}`);
+  await sendLifecycleEmail(userId, 'Morning Briefing', {
+    dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
+    focusArea: 'Complete one activation step and one revenue step today.',
+  });
 }
 
 async function checkUsage(tenantId: string) {
   "use step";
+
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId);
-  return (count || 0) > 0;
+
+  const [invoiceRes, leadRes, dealRes, socialRes] = await Promise.all([
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    supabase.from('social_posts').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+  ]);
+
+  const invoiceCount = invoiceRes.count || 0;
+  const leadCount = leadRes.count || 0;
+  const dealCount = dealRes.count || 0;
+  const socialCount = socialRes.count || 0;
+
+  return {
+    invoiceCount,
+    leadCount,
+    dealCount,
+    socialCount,
+    hasCoreActivation: invoiceCount > 0 || leadCount > 0 || dealCount > 0 || socialCount > 0,
+  };
 }
 
-async function sendNudge(userId: string) {
+async function sendNudge(
+  userId: string,
+  usage: { invoiceCount: number; leadCount: number; dealCount: number; socialCount: number }
+) {
   "use step";
-  console.log(`Sending activation nudge to user ${userId}: "Try creating your first invoice!"`);
+
+  const lowestSignalArea =
+    usage.leadCount === 0 ? 'finding your first lead' :
+    usage.dealCount === 0 ? 'creating your first deal' :
+    usage.socialCount === 0 ? 'scheduling your first post' :
+    'sending your first invoice';
+
+  await sendLifecycleEmail(userId, 'Stay In Touch', {
+    dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
+    focusArea: `You are one action away from momentum. Start with ${lowestSignalArea}.`,
+  });
 }
 
-async function weekOneCheckin(userId: string) {
+async function weekOneCheckin(
+  userId: string,
+  usage: { invoiceCount: number; leadCount: number; dealCount: number; socialCount: number; hasCoreActivation: boolean }
+) {
   "use step";
-  console.log(`Sending week one check-in survey to user ${userId}`);
+
+  await sendLifecycleEmail(userId, usage.hasCoreActivation ? 'AI and Leads Status' : 'Daily Motivation', {
+    dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
+    focusArea: usage.hasCoreActivation
+      ? `Week-one snapshot: ${usage.leadCount} leads, ${usage.dealCount} deals, ${usage.invoiceCount} invoices, ${usage.socialCount} social posts.`
+      : 'Week one is the right time to complete your first real workflow inside the app.',
+  });
+}
+
+async function getUserContext(userId: string): Promise<UserContext | null> {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.auth.admin.getUserById(userId);
+
+  if (error || !data.user?.email) {
+    console.warn('[userOnboardingWorkflow] user lookup failed:', error?.message || 'Missing email');
+    return null;
+  }
+
+  return {
+    email: data.user.email.toLowerCase().trim(),
+    name:
+      (data.user.user_metadata?.name as string | undefined) ||
+      data.user.email.split('@')[0] ||
+      'there',
+  };
+}
+
+async function sendLifecycleEmail(
+  userId: string,
+  templateName: string,
+  variables: Record<string, string | number>,
+  skipIfWelcomeAlreadySent = false
+) {
+  const user = await getUserContext(userId);
+  if (!user) return;
+
+  const supabase = createSupabaseAdminClient();
+  const result = await sendPlatformTemplateEmail(supabase, {
+    templateName,
+    to: user.email,
+    variables: {
+      name: user.name,
+      email: user.email,
+      dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
+      ...variables,
+    },
+    credentialUserId: userId,
+    templateAllowlist: SYSTEM_PLATFORM_TEMPLATES,
+    authUserId: userId,
+    skipIfWelcomeAlreadySent,
+  });
+
+  if (!result.success && !result.skipped) {
+    console.warn(`[userOnboardingWorkflow] failed to send ${templateName}:`, result.error);
+  }
 }

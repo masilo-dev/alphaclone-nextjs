@@ -142,14 +142,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     }, []);
 
     // -- PERSISTENT VIDEO CALL STATE --
-    // Note: Video calls now use dedicated pages (/meet/[id])
     const { tasks: bgTasks } = useBackgroundTasks();
     const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
 
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
-        // Open the call in a new tab so navigating the dashboard doesn't kill the connection
-        window.open(`/meet/${callId}`, '_blank');
+        startMeeting(callId);
     };
     const handleInitiateCallToClient = async (clientId: string) => {
         const toastId = toast.loading('Initiating secure call...');
@@ -730,6 +728,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
+                            aria-label={sidebarOpen ? 'Close menu' : 'Menu'}
+                            title={sidebarOpen ? 'Close menu' : 'Open menu'}
                             className="lg:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
                         >
                             <Menu className="w-6 h-6" />

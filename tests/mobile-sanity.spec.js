@@ -41,11 +41,11 @@ test.describe('Mobile Sanity Check', () => {
         // Check for hamburger menu - only if in mobile viewport
         const width = page.viewportSize().width;
         if (width < 768) {
-            await expect(page.locator('button[aria-label="Menu"], .hamburger')).toBeVisible();
-            await page.click('button[aria-label="Menu"], .hamburger');
+            await expect(page.locator('button[aria-label="Menu"]')).toBeVisible();
+            await page.click('button[aria-label="Menu"]');
 
             // Check menu drawer content
-            await expect(page.locator('text=Settings')).toBeVisible();
+            await expect(page.locator('text=System Settings')).toBeVisible();
             await expect(page.locator('text=Log Out')).toBeVisible();
         }
     });

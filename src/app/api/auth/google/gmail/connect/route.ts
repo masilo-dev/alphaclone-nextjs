@@ -6,8 +6,9 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
+    const returnTo = searchParams.get('returnTo') || '/dashboard/business/messages';
 
-    console.log('Gmail Connect Request:', { userId });
+    console.log('Gmail Connect Request:', { userId, returnTo });
 
     if (!userId) {
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -23,6 +24,8 @@ export async function GET(req: NextRequest) {
         console.error('Missing GOOGLE_CLIENT_ID');
         return NextResponse.json({ error: 'Server configuration error: Missing Google Client ID' }, { status: 500 });
     }
+
+    const safeReturnTo = returnTo.startsWith('/dashboard') ? returnTo : '/dashboard/business/messages';
 
     try {
         console.log('Creating admin client...');
@@ -72,6 +75,11 @@ export async function GET(req: NextRequest) {
             'openid'
         ].join(' ');
 
+        const encodedState = JSON.stringify({
+            nonce: stateNonce,
+            returnTo: safeReturnTo,
+        });
+
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${clientId}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
@@ -79,7 +87,7 @@ export async function GET(req: NextRequest) {
             `scope=${encodeURIComponent(scopes)}&` +
             `access_type=offline&` +
             `prompt=consent&` +
-            `state=${stateNonce}`;
+            `state=${encodeURIComponent(encodedState)}`;
 
         console.log('Redirecting to Google Auth URL...');
         return NextResponse.redirect(authUrl);

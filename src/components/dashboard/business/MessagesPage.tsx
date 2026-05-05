@@ -23,6 +23,7 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
     const [checking, setChecking] = useState(true);
     const [gmailConnected, setGmailConnected] = useState(false);
     const [activeProvider, setActiveProvider] = useState<MailProvider | null>(null);
+    const [connecting, setConnecting] = useState(false);
 
     useEffect(() => {
         const check = async () => {
@@ -92,12 +93,25 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => router.push('/dashboard/business/settings?tab=integrations')}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-teal-900/20"
-                    >
-                        Go to Integrations <ArrowRight className="w-4 h-4" />
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <button
+                            onClick={() => {
+                                setConnecting(true);
+                                const returnTo = encodeURIComponent('/dashboard/business/messages');
+                                window.location.href = `/api/auth/google/gmail/connect?userId=${user.id}&returnTo=${returnTo}`;
+                            }}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-teal-900/20 disabled:opacity-70"
+                            disabled={connecting}
+                        >
+                            {connecting ? 'Connecting Gmail...' : 'Connect Gmail Here'} <ArrowRight className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => router.push('/dashboard/business/settings?tab=integrations')}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-bold transition-all border border-slate-700"
+                        >
+                            Open Integrations
+                        </button>
+                    </div>
                 </motion.div>
             </div>
         );
@@ -134,4 +148,3 @@ const MessagesPage: React.FC<MessagesPageProps> = ({ user }) => {
 };
 
 export default MessagesPage;
-

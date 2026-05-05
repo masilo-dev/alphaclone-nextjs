@@ -7,7 +7,7 @@ export const metadata: Metadata = {
         'AlphaClone login',
         'business software login',
         'CRM login',
-        'client portal login',
+        'business workspace login',
         'business operations platform login',
         'AlphaClone sign in',
     ],

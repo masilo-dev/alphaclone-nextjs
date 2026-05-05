@@ -49,10 +49,11 @@ export function hasRemoteBrowserConfigured(): boolean {
 export async function fetchSerpLeadsViaBrowser(
   niche: string,
   location: string,
-  limit: number
+  limit: number,
+  options?: { searchQuery?: string }
 ): Promise<BrowserSerpLeadRow[]> {
-  const q = `${niche} ${location}`.trim() || niche;
-  const searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(`${q} business contact phone`)}`;
+  const q = options?.searchQuery?.trim() || `${niche} ${location}`.trim() || niche;
+  const searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(options?.searchQuery?.trim() || `${q} business contact phone`)}`;
 
   const { page } = await BrowserManager.createPage();
   const ctx = page.context();

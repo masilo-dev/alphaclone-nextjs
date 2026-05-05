@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield } from 'lucide-react';
+import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
@@ -54,9 +54,10 @@ function LoginContent() {
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState(businessNameParam || '');
-    const [isBusiness, setIsBusiness] = useState(typeParam === 'business' || typeParam === 'agency' || typeParam === 'freelancer' || !!businessNameParam);
+    const [isBusiness] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>(
         planParam && ['starter', 'pro', 'enterprise'].includes(planParam) ? planParam : 'starter'
     );
@@ -72,6 +73,7 @@ function LoginContent() {
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [registrationOpen, setRegistrationOpen] = useState(true);
     const [policyLoaded, setPolicyLoaded] = useState(false);
+    const [passwordResetSentTo, setPasswordResetSentTo] = useState('');
     const turnstileRef = React.useRef<TurnstileRef>(null);
 
     const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
@@ -113,10 +115,30 @@ function LoginContent() {
         };
     });
 
+    const triggerOnboardingWorkflow = async (tenantId: string) => {
+        try {
+            const { supabase } = await import('@/lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return;
+
+            await fetch('/api/onboarding/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ tenantId }),
+            });
+        } catch (error) {
+            console.warn('Failed to start onboarding workflow:', error);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isLoading) return;
         setError('');
+        setPasswordResetSentTo('');
         setIsLoading(true);
 
         try {
@@ -167,7 +189,7 @@ function LoginContent() {
                 }
 
                 const { authService } = await import('@/services/authService');
-                const role = isBusiness ? 'tenant_admin' : 'client';
+                const role = 'tenant_admin';
                 const { user, error: signUpError } = await authService.signUp(email, password, name, role);
 
                 if (signUpError) {
@@ -217,6 +239,7 @@ function LoginContent() {
 
                         // Redirect to dashboard for new trial users (No card required)
                         if (newTenant) {
+                            void triggerOnboardingWorkflow(newTenant.id);
                             router.push('/dashboard/business');
                             return;
                         }
@@ -492,28 +515,16 @@ function LoginContent() {
                     )}
                     <h1 className="text-xl font-bold text-white mb-1.5">AlphaClone Systems</h1>
                     <p className="text-slate-400 text-sm">
-                        {isRegistering ? 'Create your professional account' : 'Sign in to your dashboard'}
+                        {isRegistering ? 'Create your Business OS workspace' : 'Sign in to your Business OS dashboard'}
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {isRegistering && (
                         <div className="animate-slide-up space-y-3">
-                            <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-3 max-w-md mx-auto">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsBusiness(false)}
-                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-                                >
-                                    CLIENT ACCOUNT
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsBusiness(true)}
-                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-                                >
-                                    BUSINESS OS
-                                </button>
+                            <div className="max-w-md mx-auto rounded-lg border border-teal-500/20 bg-teal-500/10 px-4 py-3 text-center">
+                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
+                                <p className="mt-1 text-sm text-slate-300">New signups create a business workspace. Client account creation is disabled on this screen.</p>
                             </div>
 
                             <div className="max-w-md mx-auto w-full">
@@ -526,61 +537,58 @@ function LoginContent() {
                                 />
                             </div>
 
-                            {isBusiness && (
-                                <div className="animate-slide-up space-y-4">
-                                    <div className="max-w-md mx-auto w-full">
-                                        <Input
-                                            label="Business Name"
-                                            value={businessName}
-                                            onChange={(e) => setBusinessName(e.target.value)}
-                                            placeholder="AlphaCorp Industries"
-                                            required={isBusiness}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-3 text-center">Select Your Plan</label>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {plans.map((plan) => (
-                                                <button
-                                                    key={plan.id}
-                                                    type="button"
-                                                    onClick={() => setSelectedPlan(plan.id)}
-                                                    className={`p-4 rounded-xl border text-left transition-all relative group overflow-hidden ${selectedPlan === plan.id
-                                                        ? 'bg-teal-900/20 border-teal-500 ring-1 ring-teal-500'
-                                                        : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
-                                                        }`}
-                                                >
-                                                    {selectedPlan === plan.id && (
-                                                        <div className="absolute top-0 right-0 p-2">
-                                                            <CheckCircle2 className="w-5 h-5 text-teal-400" />
-                                                        </div>
-                                                    )}
-                                                    <div className="font-bold text-base text-white mb-0.5">{plan.name}</div>
-                                                    <div className="text-xl font-bold text-teal-400 mb-1">{plan.price}</div>
-                                                    {plan.description && (
-                                                        <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">{plan.description}</p>
-                                                    )}
-                                                    <ul className="space-y-1.5">
-                                                        {plan.features.map((feat, idx) => (
-                                                            <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-500/60 flex-shrink-0 mt-1" />
-                                                                {feat}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <p className="text-xs text-teal-400 mt-3 text-center flex items-center justify-center gap-2">
-                                            <span>Includes 14-Day Free Trial</span>
-                                            <span className="w-1 h-1 rounded-full bg-teal-500" />
-                                            <span>No Card Required</span>
-                                        </p>
-                                    </div>
-
+                            <div className="animate-slide-up space-y-4">
+                                <div className="max-w-md mx-auto w-full">
+                                    <Input
+                                        label="Business Name"
+                                        value={businessName}
+                                        onChange={(e) => setBusinessName(e.target.value)}
+                                        placeholder="AlphaCorp Industries"
+                                        required={isBusiness}
+                                    />
                                 </div>
-                            )}
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-3 text-center">Select Your Plan</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {plans.map((plan) => (
+                                            <button
+                                                key={plan.id}
+                                                type="button"
+                                                onClick={() => setSelectedPlan(plan.id)}
+                                                className={`p-4 rounded-xl border text-left transition-all relative group overflow-hidden ${selectedPlan === plan.id
+                                                    ? 'bg-teal-900/20 border-teal-500 ring-1 ring-teal-500'
+                                                    : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
+                                                    }`}
+                                            >
+                                                {selectedPlan === plan.id && (
+                                                    <div className="absolute top-0 right-0 p-2">
+                                                        <CheckCircle2 className="w-5 h-5 text-teal-400" />
+                                                    </div>
+                                                )}
+                                                <div className="font-bold text-base text-white mb-0.5">{plan.name}</div>
+                                                <div className="text-xl font-bold text-teal-400 mb-1">{plan.price}</div>
+                                                {plan.description && (
+                                                    <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">{plan.description}</p>
+                                                )}
+                                                <ul className="space-y-1.5">
+                                                    {plan.features.map((feat, idx) => (
+                                                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-teal-500/60 flex-shrink-0 mt-1" />
+                                                            {feat}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-teal-400 mt-3 text-center flex items-center justify-center gap-2">
+                                        <span>Includes 14-Day Free Trial</span>
+                                        <span className="w-1 h-1 rounded-full bg-teal-500" />
+                                        <span>No Card Required</span>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -589,7 +597,10 @@ function LoginContent() {
                             label="Email Address"
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (passwordResetSentTo) setPasswordResetSentTo('');
+                            }}
                             placeholder="name@company.com"
                             required
                             autoComplete="email"
@@ -598,13 +609,23 @@ function LoginContent() {
                         <div className="relative">
                             <Input
                                 label="Password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
                                 required
+                                className={!isRegistering ? 'pr-28' : 'pr-14'}
                                 autoComplete={isRegistering ? "new-password" : "current-password"}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                className={`absolute top-9 ${!isRegistering ? 'right-16' : 'right-3'} text-slate-400 hover:text-teal-400 transition-colors`}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                title={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -618,8 +639,10 @@ function LoginContent() {
                                         const { error: resetErr } = await authService.resetPassword(email);
                                         if (resetErr) {
                                             setError(resetErr);
+                                            setPasswordResetSentTo('');
                                         } else {
                                             setError('');
+                                            setPasswordResetSentTo(email);
                                             toast.success('Password reset link sent to your email!');
                                         }
                                         setIsLoading(false);
@@ -630,6 +653,12 @@ function LoginContent() {
                                 </button>
                             )}
                         </div>
+
+                        {!isRegistering && passwordResetSentTo && (
+                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-3 text-teal-300 text-sm">
+                                Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>. Open the email, set a new password, then return here to sign in.
+                            </div>
+                        )}
 
                         {isRegistering && (
                             <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">

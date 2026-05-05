@@ -1,8 +1,20 @@
 const { test, expect } = require('@playwright/test');
 
+async function openMobileMenu(page) {
+    const menuButton = page.locator('button[aria-label="Menu"]');
+    await expect(menuButton).toBeVisible();
+    await menuButton.click();
+}
+
+async function navigateViaShell(page, sectionLabel, itemLabel, expectedUrl) {
+    await openMobileMenu(page);
+    await page.getByRole('button', { name: sectionLabel }).click();
+    await page.getByRole('button', { name: itemLabel }).click();
+    await expect(page).toHaveURL(new RegExp(expectedUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+}
+
 test.describe('Mobile Production Readiness', () => {
     test.beforeEach(async ({ page }) => {
-        // Pre-seed localStorage to bypass onboarding/welcome
         await page.addInitScript(() => {
             const userId = 'df841125-59ce-4e09-aa2d-5b746ec03d9b';
             localStorage.setItem(`welcome_seen_${userId}`, 'true');
@@ -17,53 +29,30 @@ test.describe('Mobile Production Readiness', () => {
         await expect(page).toHaveURL(/\/dashboard/);
     });
 
-    test('CRM Client Import visibility on mobile', async ({ page }) => {
-        await page.click('button[aria-label="Menu"], .hamburger');
-        await page.click('text=CRM');
+    test('Contacts import flow is reachable from the current mobile CRM shell', async ({ page }) => {
+        await navigateViaShell(page, 'Acquire and nurture', 'Step 2: Capture contacts', '/dashboard/contacts');
 
-        // Wait for CRM tab to load
-        await expect(page.locator('text=CRM Management')).toBeVisible();
+        await expect(page.getByText('Contacts')).toBeVisible();
+        const importButton = page.getByRole('button', { name: 'Import' });
+        await expect(importButton).toBeVisible();
+        await importButton.click();
 
-        // Check for Import button
-        const importBtn = page.locator('button:has-text("Import Clients")');
-        await expect(importBtn).toBeVisible();
-        await importBtn.click();
-
-        // Modal should appear
-        await expect(page.locator('text=Import Business Clients')).toBeVisible();
-        await expect(page.locator('text=Drop CSV or Excel files')).toBeVisible();
+        await expect(page.getByText('Import Clients')).toBeVisible();
     });
 
-    test('Reports and Exports on mobile', async ({ page }) => {
-        // Check Finance exports
-        await page.click('button[aria-label="Menu"], .hamburger');
-        await page.click('text=Finance');
-        await expect(page.locator('text=Financial Center')).toBeVisible();
+    test('Revenue shell routes load on mobile without blank states', async ({ page }) => {
+        await navigateViaShell(page, 'Revenue and legal', 'Billing Center', '/dashboard/business/billing');
+        await expect(page.getByText('Billing Hub')).toBeVisible();
 
-        await expect(page.locator('button:has-text("Export PDF")')).toBeVisible();
-        await expect(page.locator('button:has-text("Export Excel")')).toBeVisible();
-
-        // Check Analytics exports
-        await page.click('button[aria-label="Menu"], .hamburger');
-        await page.click('text=Analytics');
-        await expect(page.locator('text=Live Operations')).toBeVisible();
-
-        await expect(page.locator('button:has-text("PDF")')).toBeVisible();
-        await expect(page.locator('button:has-text("Excel")')).toBeVisible();
+        await navigateViaShell(page, 'Revenue and legal', 'Revenue Analytics', '/dashboard/business/daily-summary');
+        await expect(page.getByText('Daily Summary Dashboard')).toBeVisible();
     });
 
-    test('Gmail connection state on mobile', async ({ page }) => {
-        await page.click('button[aria-label="Menu"], .hamburger');
-        await page.click('text=Communications');
+    test('Mail entry point stays reachable from the current mobile shell', async ({ page }) => {
+        await navigateViaShell(page, 'Acquire and nurture', 'Gmail', '/dashboard/mail');
 
-        await expect(page.locator('text=Communication Center')).toBeVisible();
-
-        // Check for Gmail button
-        const gmailBtn = page.locator('button:has-text("Connect Gmail")');
-        if (await gmailBtn.count() > 0) {
-            await expect(gmailBtn).toBeVisible();
-        } else {
-            await expect(page.locator('text=Gmail Connected')).toBeVisible();
-        }
+        const connectState = page.getByText('Unified Communication Hub');
+        const inboxState = page.getByText('Inbox');
+        await expect(connectState.or(inboxState).first()).toBeVisible();
     });
 });

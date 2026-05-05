@@ -1,13 +1,14 @@
 import { NextRequest } from 'next/server';
 import {
+  createAuthorizationServerResponse,
   createDiscoveryOptionsResponse,
-  createProtectedResourceResponse,
 } from '@/lib/mcpWellKnown';
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  return createProtectedResourceResponse(req);
+  return createAuthorizationServerResponse(req);
 }
 
 export async function OPTIONS() {
