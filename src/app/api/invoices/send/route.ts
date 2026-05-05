@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
-import { invoiceLifecycleWorkflow } from '../../../../../workflows/invoice-lifecycle';
+import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
 
 async function renderInvoicePdf(invoice: any): Promise<Buffer> {
   const items = Array.isArray(invoice.items) ? invoice.items : [];

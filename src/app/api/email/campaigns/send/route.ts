@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
-import { emailCampaignWorkflow } from '../../../../../../workflows/email-campaign';
+import { emailCampaignWorkflow } from '@/workflows/email-campaign';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 import { campaignSendSchema } from '@/schemas/validation';
 

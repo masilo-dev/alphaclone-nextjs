@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { start } from 'workflow/api';
-import { videoRoomOrchestrationWorkflow } from '../../../../../workflows/video-room-orchestration';
+import { videoRoomOrchestrationWorkflow } from '@/workflows/video-room-orchestration';
 import {
     createAdminSupabaseClientOrThrow,
     requireAuthenticatedUser,
