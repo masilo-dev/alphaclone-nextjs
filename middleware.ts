@@ -77,6 +77,13 @@ export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
 
     if (pathname.startsWith('/.well-known')) {
+        // MCP Discovery routes should bypass complex OWASP headers (like CSP) to ensure compatibility
+        if (
+            pathname.startsWith('/.well-known/oauth-protected-resource') ||
+            pathname.startsWith('/.well-known/oauth-authorization-server')
+        ) {
+            return NextResponse.next();
+        }
         return applyRequiredOwaspHeaders(NextResponse.next());
     }
 

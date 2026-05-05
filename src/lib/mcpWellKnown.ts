@@ -12,52 +12,54 @@ function getDiscoveryHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Cache-Control': 'no-store, no-cache',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-mcp-version',
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Vary': 'Origin, Access-Control-Request-Headers',
   };
 }
 
 export function createProtectedResourceResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
+  const data = {
+    resource: `${baseUrl}/api/mcp/sse`,
+    authorization_servers: [baseUrl],
+    bearer_methods_supported: ['header', 'query'],
+    resource_documentation: `${baseUrl}/api/mcp/health`,
+    scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+  };
 
-  return NextResponse.json(
-    {
-      resource: `${baseUrl}/api/mcp/sse`,
-      authorization_servers: [baseUrl],
-      bearer_methods_supported: ['header', 'query'],
-      resource_documentation: `${baseUrl}/api/mcp/health`,
-      scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    },
-    {
-      headers: getDiscoveryHeaders(),
-    }
-  );
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: getDiscoveryHeaders(),
+  });
 }
 
 export function createAuthorizationServerResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
+  const data = {
+    issuer: baseUrl,
+    authorization_endpoint: `${baseUrl}/authorize`,
+    token_endpoint: `${baseUrl}/api/mcp/token`,
+    registration_endpoint: `${baseUrl}/api/mcp/register`,
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+    code_challenge_methods_supported: ['S256'],
+    token_endpoint_auth_methods_supported: ['none', 'client_secret_basic'],
+    scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    service_documentation: `${baseUrl}/api/mcp/health`,
+  };
 
-  return NextResponse.json(
-    {
-      issuer: baseUrl,
-      authorization_endpoint: `${baseUrl}/authorize`,
-      token_endpoint: `${baseUrl}/api/mcp/token`,
-      registration_endpoint: `${baseUrl}/api/mcp/register`,
-      response_types_supported: ['code'],
-      grant_types_supported: ['authorization_code', 'refresh_token'],
-      code_challenge_methods_supported: ['S256'],
-      token_endpoint_auth_methods_supported: ['none', 'client_secret_basic'],
-      scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-      service_documentation: `${baseUrl}/api/mcp/health`,
-    },
-    {
-      headers: getDiscoveryHeaders(),
-    }
-  );
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: getDiscoveryHeaders(),
+  });
 }
 
 export function createDiscoveryOptionsResponse() {
-  return new NextResponse(null, {
+  return new Response(null, {
     status: 204,
     headers: getDiscoveryHeaders(),
   });
