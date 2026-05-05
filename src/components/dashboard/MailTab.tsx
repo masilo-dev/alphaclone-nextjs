@@ -54,8 +54,8 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 
     const handleConnectGmail = () => {
         setIsConnecting(true);
-        // Gmail connection logic - redirecting to auth endpoint
-        window.location.href = `/api/auth/gmail/connect?userId=${user.id}`;
+        const returnTo = encodeURIComponent('/dashboard/mail');
+        window.location.href = `/api/auth/google/gmail/connect?userId=${user.id}&returnTo=${returnTo}`;
     };
 
     return (
@@ -137,4 +137,3 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 };
 
 export default MailTab;
-

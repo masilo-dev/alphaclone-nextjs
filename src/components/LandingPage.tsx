@@ -19,6 +19,7 @@ import {
    Mail, 
    ArrowRight,
    Video,
+   ChevronDown,
 } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
@@ -43,13 +44,13 @@ const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
    </div>
 );
 
-const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: () => void }) => {
+const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
+const LOGIN_HREF = '/auth/login';
+
+const LandingPage = () => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [scrolled, setScrolled] = useState(false);
-   const [activeService, setActiveService] = useState('');
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
-   const [isLoginOpen, setIsLoginOpen] = useState(false);
-   const [publicProjects] = useState(projects);
    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
    const [contactForm, setContactForm] = useState({
       name: '',
@@ -57,6 +58,25 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       subject: '',
       message: ''
    });
+
+   // Smooth scroll function
+   const scrollToSection = useCallback((sectionId: string) => {
+      setMobileMenuOpen(false);
+      setServicesDropdownOpen(false);
+      const element = document.getElementById(sectionId);
+      if (element) {
+         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+         return;
+      }
+      window.location.href = `/#${sectionId}`;
+   }, []);
+
+   const platformMenuItems = useMemo(() => ([
+      { label: 'CRM and Pipeline', action: () => scrollToSection('services') },
+      { label: 'Messaging and Meetings', action: () => scrollToSection('video') },
+      { label: 'Finance and Billing', action: () => scrollToSection('pricing') },
+      { label: 'Lead Operations', action: () => scrollToSection('services') },
+   ]), [scrollToSection]);
 
    // Scroll handling for navbar styling only.
    useEffect(() => {
@@ -69,16 +89,14 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
       return () => window.removeEventListener('scroll', handleScroll);
    }, []);
 
-   // Smooth scroll function
-   const scrollToSection = useCallback((sectionId: string) => {
-      setMobileMenuOpen(false);
-      const element = document.getElementById(sectionId);
-      if (element) {
-         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-         return;
+   useEffect(() => {
+      if (mobileMenuOpen) {
+         document.body.classList.add('menu-open');
+      } else {
+         document.body.classList.remove('menu-open');
       }
-      window.location.href = `/#${sectionId}`;
-   }, []);
+      return () => document.body.classList.remove('menu-open');
+   }, [mobileMenuOpen]);
 
    // Handle contact form submission
    const handleContactSubmit = async (e: React.FormEvent) => {
@@ -124,9 +142,9 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
             scrolled ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-lg' : 'bg-slate-950/80 backdrop-blur-lg'
          } translate-y-0`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-               <div className="flex justify-between items-center h-16 sm:h-[4.5rem]">
+               <div className="flex items-center justify-between gap-4 h-16 sm:h-[4.5rem]">
                   {/* Logo */}
-                  <div className="flex items-center gap-3 cursor-pointer group">
+                  <Link href="/" className="flex items-center gap-3 cursor-pointer group shrink-0">
                      <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
                         <Image
                            src="/logo.png"
@@ -137,37 +155,75 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                         />
                      </div>
                      <span className="text-xl font-bold tracking-tight text-white font-marketing-heading">AlphaClone</span>
-                  </div>
+                  </Link>
 
                   {/* Desktop Nav */}
-                  <div className="hidden lg:flex items-center gap-8">
+                  <div className="hidden lg:flex flex-1 items-center justify-center gap-7 px-4">
                      <Link href="/" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Home</Link>
                      <Link href="/guide" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guide</Link>
-                     <button onClick={() => scrollToSection('services')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Platform</button>
+                     <div
+                        className="relative"
+                        onMouseEnter={() => setServicesDropdownOpen(true)}
+                        onMouseLeave={() => setServicesDropdownOpen(false)}
+                     >
+                        <button
+                           onClick={() => setServicesDropdownOpen((open) => !open)}
+                           className="inline-flex items-center gap-1 h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                           aria-expanded={servicesDropdownOpen}
+                           aria-label="Toggle platform menu"
+                        >
+                           Platform
+                           <ChevronDown className={`w-4 h-4 transition-transform ${servicesDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {servicesDropdownOpen && (
+                           <div className="absolute left-1/2 top-full mt-3 w-64 -translate-x-1/2 rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                              {platformMenuItems.map((item) => (
+                                 <button
+                                    key={item.label}
+                                    onClick={item.action}
+                                    className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-300 transition-colors hover:bg-slate-900 hover:text-white"
+                                 >
+                                    <span>{item.label}</span>
+                                    <ArrowRight className="w-4 h-4 text-teal-400" />
+                                 </button>
+                              ))}
+                           </div>
+                        )}
+                     </div>
                      <button onClick={() => scrollToSection('pricing')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing</button>
                      <Link href="/docs" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Docs</Link>
                      <Link href="/faq" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">FAQ</Link>
                      <Link href="/ecosystem" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Ecosystem</Link>
                      <button onClick={() => scrollToSection('contact')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Contact</button>
+                  </div>
 
-                     <div className="flex items-center gap-3 ml-6 pl-6 border-l border-white/10">
-                        <button 
-                           onClick={() => window.location.href = '/login'}
-                           className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                        >
-                           Login
-                        </button>
-                        <Button
-                           onClick={() => window.location.href = '/register'}
-                           className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 h-10"
-                        >
-                           Start Now
+                  <div className="hidden lg:flex items-center gap-3 shrink-0">
+                     <Link
+                        href={LOGIN_HREF}
+                        className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                     >
+                        Login
+                     </Link>
+                     <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
+                        <Button className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 h-10">
+                           Start Free
                         </Button>
-                     </div>
+                     </Link>
                   </div>
 
                   {/* Mobile Menu Trigger */}
-                  <div className="lg:hidden">
+                  <div className="lg:hidden flex items-center gap-2">
+                     <Link
+                        href={LOGIN_HREF}
+                        className="inline-flex items-center h-9 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                     >
+                        Login
+                     </Link>
+                     <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
+                        <Button className="h-9 px-3 text-xs font-bold bg-teal-500 hover:bg-teal-400 text-slate-950">
+                           Start Free
+                        </Button>
+                     </Link>
                      <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -235,6 +291,18 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            >
                               Guide
                            </Link>
+                           <div className="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
+                              Platform
+                           </div>
+                           {platformMenuItems.map((item) => (
+                              <button
+                                 key={item.label}
+                                 onClick={item.action}
+                                 className="w-full text-left px-4 py-3 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                              >
+                                 {item.label}
+                              </button>
+                           ))}
                            {['services', 'pricing', 'contact'].map((item) => (
                               <button
                                  key={item}
@@ -269,7 +337,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                            {/* Login - prominent in nav, not hidden at bottom */}
                            <div className="pt-4 mt-4 border-t border-slate-800">
                               <Link
-                                 href="/login"
+                                 href={LOGIN_HREF}
                                  onClick={() => setMobileMenuOpen(false)}
                                  className="flex items-center justify-between w-full px-4 py-4 text-lg font-bold text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-xl transition-colors border border-teal-500/20"
                               >
@@ -283,12 +351,12 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      {/* Mobile Menu Footer CTA */}
                      <div className="border-t border-slate-800 p-4">
                         <button
-                           onClick={() => { window.location.href = '/register'; }}
+                           onClick={() => { window.location.href = BUSINESS_SIGNUP_HREF; }}
                            className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-black text-lg rounded-2xl transition-all shadow-xl shadow-teal-500/30"
                         >
                            Start Free Trial
                         </button>
-                        <p className="text-center text-xs text-slate-500 mt-2">14-day free trial · No card required</p>
+                        <p className="text-center text-xs text-slate-500 mt-2">14-day free trial - No card required</p>
                      </div>
                   </div>
                </motion.div>
@@ -358,7 +426,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                      {/* CTAs */}
                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                         <Button
-                           onClick={() => window.location.href = '/register'}
+                           onClick={() => window.location.href = BUSINESS_SIGNUP_HREF}
                            className="h-14 px-8 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xl shadow-cyan-500/20"
                         >
                            Start Free Trial
@@ -829,7 +897,7 @@ const LandingPage = ({ projects = [], onLogin }: { projects?: any[]; onLogin?: (
                               ))}
                            </ul>
                            <Button
-                              onClick={() => window.location.href = '/register'}
+                              onClick={() => window.location.href = BUSINESS_SIGNUP_HREF}
                               className={`h-12 sm:h-14 w-full text-base sm:text-lg font-bold ${plan.popular ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
                            >
                               Start Free Trial

@@ -66,7 +66,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
                 if (loginBtn) {
                   loginBtn.click();
                 } else {
-                  router.push('/register');
+                  router.push('/auth/login?register=true&type=business&plan=starter');
                 }
               }}
               className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 hover:bg-teal-500 transition-colors"
@@ -110,7 +110,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />
       ) : (
-        <LandingPage onLogin={handleLogin} projects={projects} />
+        <LandingPage />
       )}
     </>
   );

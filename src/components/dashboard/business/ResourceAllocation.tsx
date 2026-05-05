@@ -3,11 +3,24 @@ import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, Ch
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { resourceService, TeamMember, BusinessResource as Resource } from '../../../services/resourceService';
 import { projectService } from '../../../services/projectService';
+import { Project } from '../../../types';
 import toast from 'react-hot-toast';
 
 interface ResourceAllocationProps {
   onResourceUpdate?: (resources: Resource[]) => void;
   onTeamUpdate?: (team: TeamMember[]) => void;
+}
+
+interface AllocationProject {
+  id: string;
+  name: string;
+  client: string;
+  budget: number;
+  deadline: string;
+  status: 'active' | 'completed' | 'on_hold';
+  assignedResources: string[];
+  progress: number;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
 }
 
 const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
@@ -16,7 +29,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<AllocationProject[]>([]);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddResource, setShowAddResource] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -34,7 +47,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
       const [teamRes, resourceRes, projectRes] = await Promise.all([
         resourceService.getTeamMembers(),
         resourceService.getResources(),
-        projectService.getProjects()
+        projectService.getProjects('', 'tenant_admin')
       ]);
 
       if (teamRes.error) toast.error(teamRes.error);
@@ -42,17 +55,17 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
       
       setTeamMembers(teamRes.team || []);
       setResources(resourceRes.resources || []);
-      setProjects((projectRes.projects || []).map(p => ({
+      setProjects((projectRes.projects || []).map((p: Project) => ({
           id: p.id,
           name: p.name,
           client: p.ownerName || 'Unknown Client',
-          budget: p.progress * 100, // Placeholder calculation
-          deadline: p.updatedAt || '',
+          budget: p.budget || 0,
+          deadline: p.dueDate || p.createdAt || '',
           status: p.status === 'Completed' ? 'completed' : 'active',
           assignedResources: p.team || [],
           progress: p.progress,
           priority: 'medium'
-      } as any)));
+      })));
     } catch (err) {
       console.error('Failed to load allocation data:', err);
       toast.error('Failed to sync allocation data');
@@ -338,7 +351,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
     );
   };
 
-  const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
+  const ProjectCard: React.FC<{ project: AllocationProject }> = ({ project }) => {
     const assignedTeam = teamMembers.filter(member =>
       project.assignedResources?.includes(member.name) || project.assignedResources?.includes(member.id)
     );
@@ -534,7 +547,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 
         {/* Add Team Member Modal */}
         {showAddMember && (
-            <Modal title="Add Team Member" onClose={() => setShowAddMember(false)}>
+            <Modal isOpen={true} title="Add Team Member" onClose={() => setShowAddMember(false)}>
                 <form onSubmit={handleAddMember} className="space-y-4">
                     <Input name="name" label="Full Name" placeholder="e.g. John Doe" required />
                     <Input name="role" label="Role" placeholder="e.g. Senior Developer" required />
@@ -554,7 +567,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 
         {/* Add Resource Modal */}
         {showAddResource && (
-            <Modal title="Add Resource" onClose={() => setShowAddResource(false)}>
+            <Modal isOpen={true} title="Add Resource" onClose={() => setShowAddResource(false)}>
                 <form onSubmit={handleAddResource} className="space-y-4">
                     <Input name="name" label="Resource Name" placeholder="e.g. AWS Credits" required />
                     <div className="grid grid-cols-2 gap-4">

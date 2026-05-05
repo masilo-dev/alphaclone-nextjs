@@ -1,20 +1,17 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { requireTenantAccess } from '@/lib/apiAuth';
 import { stripe } from '@/lib/stripe';
-import { headers } from 'next/headers';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
         const { priceId, planId, tenantId, adminEmail, successUrl, cancelUrl } = await req.json();
 
         if (!priceId || !tenantId) {
             return NextResponse.json({ error: 'Missing priceId or tenantId' }, { status: 400 });
         }
+
+        await requireTenantAccess(tenantId);
 
         // Apply discount for starter plan if applicable
         const discounts = [];
@@ -42,12 +39,14 @@ export async function POST(req: Request) {
             metadata: {
                 tenantId,
                 planId,
+                plan: planId,
             },
             subscription_data: {
                 trial_period_days: 14,
                 metadata: {
                     tenantId,
                     planId,
+                    plan: planId,
                 },
             },
         });

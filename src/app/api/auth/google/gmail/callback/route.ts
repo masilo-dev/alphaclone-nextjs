@@ -5,15 +5,29 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
-    const stateNonce = searchParams.get('state');
+    const stateParam = searchParams.get('state');
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+    let stateNonce = '';
+    let returnTo = '/dashboard/business/messages';
 
-    console.log('Gmail Callback Received:', { stateNonce, hasCode: !!code });
+    if (stateParam) {
+        try {
+            const parsed = JSON.parse(stateParam);
+            stateNonce = typeof parsed?.nonce === 'string' ? parsed.nonce : '';
+            if (typeof parsed?.returnTo === 'string' && parsed.returnTo.startsWith('/dashboard')) {
+                returnTo = parsed.returnTo;
+            }
+        } catch {
+            stateNonce = stateParam;
+        }
+    }
+
+    console.log('Gmail Callback Received:', { stateNonce, hasCode: !!code, returnTo });
 
     if (!code || !stateNonce) {
         console.error('Gmail Callback: Missing code or state');
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error&reason=missing_params`);
+        return NextResponse.redirect(`${appUrl}${returnTo}?gmail=error&reason=missing_params`);
     }
 
     try {
@@ -31,7 +45,7 @@ export async function GET(req: NextRequest) {
 
         if (stateError || !stateData) {
             console.error('Gmail Callback: Invalid or expired state', stateError);
-            return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error&reason=invalid_state`);
+            return NextResponse.redirect(`${appUrl}${returnTo}?gmail=error&reason=invalid_state`);
         }
 
         const userId = stateData.user_id;
@@ -88,9 +102,11 @@ export async function GET(req: NextRequest) {
             throw upsertError;
         }
 
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=connected`);
+        const separator = returnTo.includes('?') ? '&' : '?';
+        return NextResponse.redirect(`${appUrl}${returnTo}${separator}gmail=connected`);
     } catch (err) {
         console.error('Gmail Callback Error:', err);
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?gmail=error`);
+        const separator = returnTo.includes('?') ? '&' : '?';
+        return NextResponse.redirect(`${appUrl}${returnTo}${separator}gmail=error`);
     }
 }

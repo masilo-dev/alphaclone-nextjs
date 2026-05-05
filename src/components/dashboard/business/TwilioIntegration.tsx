@@ -48,15 +48,21 @@ const TwilioIntegration: React.FC = () => {
             const data = await res.json();
             if (data.connected) {
                 setConnected(true);
-                setSavedSid(data.accountSid || '');
-                setSavedPhone(data.phoneNumber || '');
+                setSavedSid(data.accountSidMasked || '');
+                setSavedPhone(data.phoneNumberMasked || '');
                 setConnectedAt(data.connectedAt || null);
             } else {
                 setConnected(false);
+                setSavedSid('');
+                setSavedPhone('');
+                setConnectedAt(null);
             }
         } catch (error) {
             console.error('Error fetching Twilio status:', error);
             setConnected(false);
+            setSavedSid('');
+            setSavedPhone('');
+            setConnectedAt(null);
         } finally {
             setLoading(false);
         }

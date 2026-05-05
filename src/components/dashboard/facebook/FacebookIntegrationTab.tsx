@@ -840,7 +840,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         
                                         {imagePreview && (
                                             <div className="relative rounded-2xl overflow-hidden aspect-video group border border-white/10">
-                                                <img src={imagePreview} className="w-full h-full object-cover" />
+                                                <img src={imagePreview} alt="" className="w-full h-full object-cover" />
                                                 <button onClick={clearImage} className="absolute top-4 right-4 w-11 h-11 bg-black/60 backdrop-blur-md rounded-full text-white flex items-center justify-center border border-white/20">
                                                     <X size={24} />
                                                 </button>
@@ -890,17 +890,220 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                             </div>
                         )}
 
-                        {/* Page Feed / Inbox placeholders */}
-                        {(activeTab === 'posts' || activeTab === 'messenger') && (
-                            <div className="flex flex-col items-center justify-center py-24 text-center space-y-6">
-                                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
-                                    {activeTab === 'posts' ? <Activity size={40} className="text-gray-700" /> : <MessageCircle size={40} className="text-gray-700" />}
+                        {activeTab === 'messenger' && (
+                            <MessengerInbox />
+                        )}
+
+                        {activeTab === 'posts' && (
+                            <div className="space-y-6">
+                                <div className="flex flex-col gap-4 rounded-[28px] border border-white/5 bg-[#141414] p-5 sm:p-6">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <h2 className="text-xl font-black text-white uppercase tracking-tight">Page Posts</h2>
+                                            <p className="text-sm text-gray-500">Live posts, queued items, and publish diagnostics for the selected page.</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    void loadScheduleQueue();
+                                                    if (selectedPageId) void fetchPagePosts(selectedPageId);
+                                                }}
+                                                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-black uppercase text-white"
+                                            >
+                                                <RefreshCw size={14} className={(postsLoading || queueLoading) ? 'animate-spin' : ''} />
+                                                Refresh
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {reconnectRequired && (
+                                        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                                            Facebook access needs attention. Reconnect the page to resume publishing and inbox sync.
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-wrap gap-2">
+                                        {pages.map((p) => (
+                                            <button
+                                                key={p.page_id}
+                                                onClick={() => setSelectedPageId(p.page_id)}
+                                                className={`rounded-xl border px-4 py-2 text-xs font-black uppercase transition-all ${
+                                                    selectedPageId === p.page_id
+                                                        ? 'border-blue-500 bg-blue-600 text-white'
+                                                        : 'border-white/10 bg-white/5 text-gray-400'
+                                                }`}
+                                            >
+                                                {p.page_name}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Syncing {TAB_LABELS[activeTab]}</h3>
-                                    <p className="text-sm text-gray-500 max-w-xs mx-auto mt-2">We are currently pulling the latest data from Meta servers for your selected page.</p>
+
+                                <div className="grid gap-6 lg:grid-cols-[0.95fr,1.05fr]">
+                                    <div className="space-y-4 rounded-[28px] border border-white/5 bg-[#141414] p-5 sm:p-6">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-white">Queue</h3>
+                                            <div className="flex gap-2">
+                                                {(['all', 'scheduled', 'published', 'failed'] as const).map((filter) => (
+                                                    <button
+                                                        key={filter}
+                                                        onClick={() => setActiveQueueFilter(filter)}
+                                                        className={`rounded-lg px-3 py-1 text-[10px] font-black uppercase ${
+                                                            activeQueueFilter === filter ? 'bg-white/10 text-white' : 'text-gray-500'
+                                                        }`}
+                                                    >
+                                                        {filter}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {queueLoading ? (
+                                            <div className="flex items-center justify-center py-16 text-gray-500">
+                                                <Loader2 className="animate-spin" size={20} />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {[...scheduledPosts, ...postHistory]
+                                                    .filter((post) => activeQueueFilter === 'all' || post.status === activeQueueFilter)
+                                                    .slice(0, 8)
+                                                    .map((post) => (
+                                                        <div key={post.id} className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                                                            <div className="mb-2 flex items-center justify-between gap-3">
+                                                                <span className="truncate text-xs font-black uppercase tracking-widest text-white">
+                                                                    {post.status}
+                                                                </span>
+                                                                <span className="text-[10px] text-gray-500">
+                                                                    {new Date(post.scheduled_at || post.created_at).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            <p className="line-clamp-3 text-sm text-gray-300">{post.caption}</p>
+                                                            {post.error_message && (
+                                                                <p className="mt-2 text-xs text-rose-300">{post.error_message}</p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                {scheduledPosts.length === 0 && postHistory.length === 0 && (
+                                                    <div className="rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center text-sm text-gray-500">
+                                                        No posts in the publishing queue yet.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-4 rounded-[28px] border border-white/5 bg-[#141414] p-5 sm:p-6">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-white">Recent Feed</h3>
+                                            {postsNextCursor && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (selectedPageId && postsNextCursor) void fetchPagePosts(selectedPageId, postsNextCursor);
+                                                    }}
+                                                    disabled={loadingMorePosts}
+                                                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-black uppercase text-white disabled:opacity-50"
+                                                >
+                                                    {loadingMorePosts ? 'Loading...' : 'Load More'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {postsLoading && pagePosts.length === 0 ? (
+                                            <div className="flex items-center justify-center py-16 text-gray-500">
+                                                <Loader2 className="animate-spin" size={20} />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {pagePosts.map((post: any) => (
+                                                    <div key={post.id} className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                                                        <div className="mb-3 flex items-start justify-between gap-3">
+                                                            <div>
+                                                                <p className="text-xs font-black uppercase tracking-widest text-gray-500">
+                                                                    {post.created_time ? new Date(post.created_time).toLocaleString() : 'Recent'}
+                                                                </p>
+                                                                <p className="mt-2 whitespace-pre-wrap text-sm text-gray-200">
+                                                                    {post.message || post.story || 'Post published without text.'}
+                                                                </p>
+                                                            </div>
+                                                            {duplicateMap[(post.message || '').trim()] > 1 && (
+                                                                <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-[10px] font-black uppercase text-amber-200">
+                                                                    Duplicate copy
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {post.full_picture && (
+                                                            <img src={post.full_picture} alt="" className="mb-3 max-h-72 w-full rounded-2xl object-cover" />
+                                                        )}
+
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <button
+                                                                onClick={() => loadPostComments(post.id)}
+                                                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase text-white"
+                                                            >
+                                                                Comments
+                                                            </button>
+                                                            <button
+                                                                onClick={() => loadPostInsights(post.id)}
+                                                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase text-white"
+                                                            >
+                                                                Insights
+                                                            </button>
+                                                            {post.permalink_url && (
+                                                                <a
+                                                                    href={post.permalink_url}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase text-white"
+                                                                >
+                                                                    Open Post
+                                                                </a>
+                                                            )}
+                                                        </div>
+
+                                                        {commentsLoadingByPost[post.id] && (
+                                                            <div className="mt-3 text-xs text-gray-500">Loading comments...</div>
+                                                        )}
+                                                        {commentsErrorByPost[post.id] && (
+                                                            <div className="mt-3 text-xs text-rose-300">{commentsErrorByPost[post.id]}</div>
+                                                        )}
+                                                        {commentsByPost[post.id]?.length > 0 && (
+                                                            <div className="mt-3 space-y-2">
+                                                                {commentsByPost[post.id].slice(0, 3).map((comment: any) => (
+                                                                    <div key={comment.id} className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-sm text-gray-300">
+                                                                        <div className="mb-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                                                            {comment.from?.name || 'Comment'}
+                                                                        </div>
+                                                                        {comment.message || 'No comment text returned.'}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {insightsByPost[post.id]?.rows && insightsByPost[post.id].rows!.length > 0 && (
+                                                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                                                {insightsByPost[post.id].rows!.slice(0, 4).map((row) => (
+                                                                    <div key={row.name} className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
+                                                                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">{row.name}</div>
+                                                                        <div className="mt-1 text-sm text-white">{row.values?.[0]?.value ?? 0}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {insightsByPost[post.id]?.note && (
+                                                            <div className="mt-3 text-xs text-gray-500">{insightsByPost[post.id]?.note}</div>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                {pagePosts.length === 0 && (
+                                                    <div className="rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center text-sm text-gray-500">
+                                                        No page posts returned yet for this page.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <button onClick={() => loadData()} className="px-6 py-3 bg-white/5 rounded-xl text-xs font-black text-white border border-white/10 uppercase">Retry Sync</button>
                             </div>
                         )}
                     </div>

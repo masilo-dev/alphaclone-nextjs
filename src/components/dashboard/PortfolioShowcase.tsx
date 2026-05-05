@@ -133,9 +133,6 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             setUploadProgress(40);
 
             // Generate unique filename
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
             setUploadProgress(60);
 
             // Import fileUploadService
@@ -146,9 +143,9 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             const uploadRes = await fileUploadService.uploadFile(
                 compressedBlob as any, 
                 'project-images', 
-                project?.id || 'new',
+                editingProject?.id || 'new',
                 user.id,
-                currentTenant.id,
+                tenantService.getCurrentTenantId() || '',
                 { category: 'Portfolio', tags: ['Project'] }
             );
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { RefreshCw, CheckCircle, AlertCircle, Database, Layout, ExternalLink } from 'lucide-react';
@@ -12,6 +12,40 @@ export default function ZohoCRMIntegration() {
     const { user } = useAuth();
     const [syncing, setSyncing] = useState(false);
     const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message?: string }>({ type: 'idle' });
+    const [connectionLoading, setConnectionLoading] = useState(true);
+    const [zohoStatus, setZohoStatus] = useState<{
+        isConnected: boolean;
+        mailReady?: boolean;
+        baseConnected?: boolean;
+    } | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadZohoStatus = async () => {
+            setConnectionLoading(true);
+            try {
+                const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
+                const data = await res.json().catch(() => ({}));
+                if (!cancelled) {
+                    setZohoStatus({
+                        isConnected: data?.isConnected === true,
+                        mailReady: data?.mailReady === true,
+                        baseConnected: data?.baseConnected === true,
+                    });
+                }
+            } catch {
+                if (!cancelled) setZohoStatus(null);
+            } finally {
+                if (!cancelled) setConnectionLoading(false);
+            }
+        };
+
+        void loadZohoStatus();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const handleSync = async (module?: string) => {
         if (!user) {
@@ -23,6 +57,7 @@ export default function ZohoCRMIntegration() {
         try {
             const res = await fetch(`/api/zoho/crm/sync?userId=${user.id}`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ module })
             });
             const data = await res.json();
@@ -30,6 +65,9 @@ export default function ZohoCRMIntegration() {
                 setStatus({ type: 'success', message: data.message });
                 toast.success(data.message || 'Zoho sync completed');
                 showActionNextSteps('zoho_sync_done', (path) => router.push(path));
+            } else if (data?.reconnect) {
+                setStatus({ type: 'error', message: data.error || 'Zoho needs to be reconnected.' });
+                toast.error(data.error || 'Reconnect Zoho to continue');
             } else {
                 setStatus({ type: 'error', message: data.error });
             }
@@ -110,10 +148,22 @@ export default function ZohoCRMIntegration() {
             </div>
 
             <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between text-xs text-gray-500">
-                <p>Last full sync: 2 hours ago</p>
+                <p>
+                    {connectionLoading
+                        ? 'Checking Zoho connection...'
+                        : zohoStatus?.baseConnected
+                            ? 'Zoho CRM connection detected'
+                            : 'Zoho is not connected yet'}
+                </p>
                 <div className="flex gap-4">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> OAuth Token Valid</span>
+                    <span className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${zohoStatus?.baseConnected ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+                        {zohoStatus?.baseConnected ? 'CRM Connected' : 'CRM Needs Attention'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${zohoStatus?.mailReady ? 'bg-green-500' : 'bg-slate-500'}`}></span>
+                        {zohoStatus?.mailReady ? 'Mail Ready' : 'Mail Not Ready'}
+                    </span>
                 </div>
             </div>
         </div>

@@ -73,6 +73,11 @@ export default function LaunchActivationChecklist() {
     return { done, total, percent };
   }, [stepState]);
 
+  const nextRecommended = useMemo(
+    () => CHECKLIST_ITEMS.find((item) => !stepState[item.id]) || null,
+    [stepState]
+  );
+
   if (completion.done === completion.total) return null;
 
   return (
@@ -83,6 +88,11 @@ export default function LaunchActivationChecklist() {
           {completion.done}/{completion.total} complete
         </span>
       </div>
+      {nextRecommended && (
+        <p className="mb-3 text-sm text-slate-300">
+          Best next step: <span className="font-semibold text-white">{nextRecommended.label}</span>
+        </p>
+      )}
       <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
         <div className="h-full bg-teal-500 transition-all" style={{ width: `${completion.percent}%` }} />
       </div>
@@ -107,4 +117,3 @@ export default function LaunchActivationChecklist() {
     </div>
   );
 }
-

@@ -109,7 +109,7 @@ export const authService = {
                         id: data.user.id,
                         email: data.user.email || '',
                         name: metadata?.name || data.user.email?.split('@')[0] || 'User',
-                        role: 'client', // Default fallback
+                        role: (metadata?.role as UserRole) || 'tenant_admin',
                         avatar: metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
                     };
                 } else {

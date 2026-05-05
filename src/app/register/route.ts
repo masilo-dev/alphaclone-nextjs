@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   // Original human registration page redirect
-  return NextResponse.redirect(new URL('/auth/login?register=true', 'https://www.alphaclonesystems.com'));
+  return NextResponse.redirect(new URL('/auth/login?register=true&type=business&plan=starter', 'https://www.alphaclonesystems.com'));
 }
 
 export async function POST() {

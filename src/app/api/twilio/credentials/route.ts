@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
 
 /**
  * Required Supabase table (run once in your Supabase SQL editor):
@@ -18,20 +18,21 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
  * );
  */
 
-async function getAuthenticatedUser(req: NextRequest) {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
+function maskAccountSid(value: string) {
+    return value.length > 8 ? `${value.slice(0, 4)}...${value.slice(-4)}` : value;
 }
 
-/** GET /api/twilio/credentials?tenantId=xxx — returns masked credentials */
-export async function GET(req: NextRequest) {
-    const user = await getAuthenticatedUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+function maskPhoneNumber(value: string) {
+    return value.length > 4 ? `${'*'.repeat(Math.max(0, value.length - 4))}${value.slice(-4)}` : value;
+}
 
+/** GET /api/twilio/credentials?tenantId=xxx - returns masked credentials */
+export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+
+    await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
@@ -47,17 +48,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
         connected: true,
-        accountSid: data.account_sid,
-        phoneNumber: data.phone_number,
+        accountSidMasked: maskAccountSid(data.account_sid),
+        phoneNumberMasked: maskPhoneNumber(data.phone_number),
         connectedAt: data.created_at,
     });
 }
 
-/** POST /api/twilio/credentials — save or update credentials */
+/** POST /api/twilio/credentials - save or update credentials */
 export async function POST(req: NextRequest) {
-    const user = await getAuthenticatedUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const { tenantId, accountSid, authToken, phoneNumber } = await req.json();
 
     if (!tenantId || !accountSid || !authToken || !phoneNumber) {
@@ -67,7 +65,8 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    // Quick validation — verify credentials work before saving
+    await requireTenantAccess(tenantId);
+
     try {
         const testUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`;
         const testRes = await fetch(testUrl, {
@@ -77,7 +76,7 @@ export async function POST(req: NextRequest) {
         });
         if (!testRes.ok) {
             return NextResponse.json(
-                { error: 'Invalid Twilio credentials — please check your Account SID and Auth Token.' },
+                { error: 'Invalid Twilio credentials - please check your Account SID and Auth Token.' },
                 { status: 400 }
             );
         }
@@ -108,14 +107,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
 }
 
-/** DELETE /api/twilio/credentials?tenantId=xxx — disconnect */
+/** DELETE /api/twilio/credentials?tenantId=xxx - disconnect */
 export async function DELETE(req: NextRequest) {
-    const user = await getAuthenticatedUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+
+    await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase

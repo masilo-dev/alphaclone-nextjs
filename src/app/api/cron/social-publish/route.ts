@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { start } from "workflow/api";
-import { socialPublishing } from "@/workflows/cron-workflows";
+import { publishDueSocialPosts } from '@/lib/social/cronPublish';
 
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
   if (denied) return denied;
 
   try {
-    const { runId } = await start(socialPublishing);
-    
+    const publishedCount = await publishDueSocialPosts();
+
     return NextResponse.json({
       success: true,
-      runId,
+      publishedCount,
       timestamp: new Date().toISOString()
     });
   } catch (err: unknown) {

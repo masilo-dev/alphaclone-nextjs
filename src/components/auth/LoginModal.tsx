@@ -20,7 +20,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [isBusiness, setIsBusiness] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMfaChallenge, setShowMfaChallenge] = useState(false);
@@ -85,7 +84,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
         }
 
         const { authService } = await import('../../services/authService');
-        const role = isBusiness ? 'tenant_admin' : 'client';
+        const role = 'tenant_admin';
         const { user, error: signUpError } = await authService.signUp(email, password, name, role);
 
         if (signUpError) {
@@ -97,7 +96,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
         if (user) {
           // 2. TENANT CREATION (If Business selected)
-          if (isBusiness && businessName) {
+          if (businessName) {
             try {
               const { tenantService } = await import('../../services/tenancy/TenantService');
               const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -159,7 +158,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
         </div>
         <h4 className="text-slate-200 font-medium text-lg">AlphaClone Systems</h4>
         <p className="text-sm text-slate-500 mt-1">
-          {isRegistering ? 'Join the future of enterprise management' : 'Enterprise & Client Portal'}
+          {isRegistering ? 'Create your Business OS workspace' : 'Business OS secure access'}
         </p>
       </div>
 
@@ -202,21 +201,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           <>
             {isRegistering && (
               <div className="animate-slide-up space-y-4">
-                <div className="flex p-1 bg-slate-800/50 rounded-lg border border-slate-700/50 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsBusiness(false)}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${!isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-                  >
-                    CLIENT ACCOUNT
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsBusiness(true)}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${isBusiness ? 'bg-teal-500 text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-                  >
-                    BUSINESS OS
-                  </button>
+                <div className="rounded-lg border border-teal-500/20 bg-teal-500/10 px-4 py-3 text-center">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
+                  <p className="mt-1 text-sm text-slate-300">New signups create a business workspace. Client account creation is disabled here.</p>
                 </div>
 
                 <Input
@@ -227,17 +214,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                   required={isRegistering}
                 />
 
-                {isBusiness && (
-                  <div className="animate-slide-up">
-                    <Input
-                      label="Business Name"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder="AlphaCorp Industries"
-                      required={isBusiness}
-                    />
-                  </div>
-                )}
+                <div className="animate-slide-up">
+                  <Input
+                    label="Business Name"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="AlphaCorp Industries"
+                    required={isRegistering}
+                  />
+                </div>
               </div>
             )}
 
@@ -338,7 +323,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             </>
           ) : (
             <>
-              <UserPlus className="w-4 h-4" /> New Client? Create Account
+              <UserPlus className="w-4 h-4" /> Create Business Workspace
             </>
           )}
         </button>

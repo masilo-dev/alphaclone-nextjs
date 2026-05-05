@@ -51,11 +51,21 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                 const { chartOfAccountsService } = await import('../../services/accounting/chartOfAccountsService');
                 const { businessClientService } = await import('../../services/businessClientService');
 
-                const [expenseRes, assetRes, clientsRes] = await Promise.all([
+                let [expenseRes, assetRes, clientsRes] = await Promise.all([
                     chartOfAccountsService.getAccountsByType('expense'),
                     chartOfAccountsService.getAccountsByType('asset'),
                     businessClientService.getClients(currentTenant.id)
                 ]);
+
+                if (expenseRes.accounts.length === 0 || assetRes.accounts.length === 0) {
+                    const initResult = await chartOfAccountsService.initializeDefaultAccounts();
+                    if (initResult.success) {
+                        [expenseRes, assetRes] = await Promise.all([
+                            chartOfAccountsService.getAccountsByType('expense'),
+                            chartOfAccountsService.getAccountsByType('asset'),
+                        ]);
+                    }
+                }
 
                 if (expenseRes.accounts) {
                     setExpenseAccounts(expenseRes.accounts);

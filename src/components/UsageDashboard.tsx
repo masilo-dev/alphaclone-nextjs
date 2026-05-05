@@ -25,16 +25,20 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
         setLoading(false);
     }
 
+    useEffect(() => {
+        void loadUsageData();
+    }, [tenantId, showAlerts]);
+
     function getStatusColor(status: string): string {
         switch (status) {
             case 'ok':
-                return 'bg-green-500';
+                return 'bg-emerald-500';
             case 'approaching':
-                return 'bg-yellow-500';
+                return 'bg-amber-400';
             case 'exceeded':
                 return 'bg-red-500';
             default:
-                return 'bg-gray-500';
+                return 'bg-slate-500';
         }
     }
 
@@ -54,36 +58,35 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
     function formatMetricName(name: string): string {
         return name
             .split('_')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
     }
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="flex items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-teal-500"></div>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            {/* Alerts Section */}
             {showAlerts && alerts.length > 0 && (
-                <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-                    <h3 className="text-lg font-semibold text-yellow-800 mb-2">⚠️ Quota Alerts</h3>
+                <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4">
+                    <h3 className="mb-2 text-lg font-semibold text-amber-100">Quota Alerts</h3>
                     <div className="space-y-2">
-                        {alerts.map(alert => (
+                        {alerts.map((alert) => (
                             <div key={alert.id} className="flex items-center justify-between text-sm">
-                                <span className="text-yellow-700">
-                                    {formatMetricName(alert.metric_name)}: {alert.current_value} /{' '}
-                                    {alert.limit_value}
+                                <span className="text-amber-50">
+                                    {formatMetricName(alert.metric_name)}: {alert.current_value} / {alert.limit_value}
                                 </span>
                                 <span
-                                    className={`px-2 py-1 rounded text-xs font-medium ${alert.alert_type === 'exceeded'
-                                            ? 'bg-red-100 text-red-800'
-                                            : 'bg-yellow-100 text-yellow-800'
-                                        }`}
+                                    className={`rounded px-2 py-1 text-xs font-medium ${
+                                        alert.alert_type === 'exceeded'
+                                            ? 'bg-red-500/20 text-red-100'
+                                            : 'bg-amber-500/20 text-amber-100'
+                                    }`}
                                 >
                                     {alert.alert_type}
                                 </span>
@@ -91,69 +94,63 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                         ))}
                     </div>
                     <a
-                        href="/settings/billing"
-                        className="mt-3 inline-block text-sm font-medium text-blue-600 hover:text-blue-700"
+                        href="/dashboard/business/settings"
+                        className="mt-3 inline-block text-sm font-medium text-teal-300 hover:text-teal-200"
                     >
-                        Upgrade Plan →
+                        Review billing and quotas -&gt;
                     </a>
                 </div>
             )}
 
-            {/* Usage Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {usage.map(metric => (
-                    <div key={metric.metric_name} className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-sm font-medium text-gray-700">
-                                {formatMetricName(metric.metric_name)}
-                            </h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {usage.map((metric) => (
+                    <div key={metric.metric_name} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                        <div className="mb-2 flex items-center justify-between">
+                            <h4 className="text-sm font-medium text-slate-200">{formatMetricName(metric.metric_name)}</h4>
                             <span
                                 className={`h-2 w-2 rounded-full ${getStatusColor(metric.status)}`}
                                 title={getStatusText(metric.status)}
                             ></span>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+                        <div className="relative mb-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
                             <div
-                                className={`absolute top-0 left-0 h-full transition-all ${getStatusColor(
-                                    metric.status
-                                )}`}
+                                className={`absolute left-0 top-0 h-full transition-all ${getStatusColor(metric.status)}`}
                                 style={{ width: `${Math.min(metric.percentage_used, 100)}%` }}
                             ></div>
                         </div>
 
-                        {/* Usage Numbers */}
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">
+                            <span className="text-slate-400">
                                 {metric.current_value.toLocaleString()} /{' '}
-                                {metric.limit_value === 999999
-                                    ? '∞'
-                                    : metric.limit_value.toLocaleString()}
+                                {metric.limit_value === 999999 ? 'Unlimited' : metric.limit_value.toLocaleString()}
                             </span>
-                            <span className={`font-medium ${metric.status === 'exceeded' ? 'text-red-600' :
-                                    metric.status === 'approaching' ? 'text-yellow-600' :
-                                        'text-green-600'
-                                }`}>
+                            <span
+                                className={`font-medium ${
+                                    metric.status === 'exceeded'
+                                        ? 'text-red-400'
+                                        : metric.status === 'approaching'
+                                            ? 'text-amber-300'
+                                            : 'text-emerald-400'
+                                }`}
+                            >
                                 {metric.percentage_used.toFixed(1)}%
                             </span>
                         </div>
 
-                        {/* Status Text */}
-                        <div className="mt-2 text-xs text-gray-500">{getStatusText(metric.status)}</div>
+                        <div className="mt-2 text-xs text-slate-500">{getStatusText(metric.status)}</div>
                     </div>
                 ))}
             </div>
 
-            {/* Upgrade CTA if any metrics exceeded */}
-            {usage.some(m => m.status === 'exceeded') && (
-                <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-center">
-                    <p className="text-blue-800 mb-2">
-                        You've reached the limit for some features. Upgrade to continue using all features.
+            {usage.some((metric) => metric.status === 'exceeded') && (
+                <div className="rounded-2xl border border-teal-500/25 bg-teal-500/10 p-4 text-center">
+                    <p className="mb-2 text-teal-100">
+                        You&apos;ve reached the limit for some features. Review your plan or upgrade to keep everything moving.
                     </p>
                     <a
-                        href="/settings/billing"
-                        className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        href="/dashboard/business/settings"
+                        className="inline-block rounded-lg bg-teal-500 px-4 py-2 font-medium text-slate-950 transition-colors hover:bg-teal-400"
                     >
                         View Plans & Upgrade
                     </a>

@@ -121,6 +121,15 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: '/.well-known/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache',
+          },
+        ],
+      },
+      {
         source: '/_next/static/(.*)',
         headers: [
           {

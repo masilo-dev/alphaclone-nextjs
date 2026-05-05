@@ -1,4 +1,23 @@
 # Update Log
+
+## Date: 2026-05-05 (MCP WELL-KNOWN ROUTE & CACHE HARDENING)
+
+### Added
+- **MCP Protected Resource Discovery**: Implemented standard OAuth protected resource discovery at `/.well-known/oauth-protected-resource` and a catch-all `[...path]` handler.
+    - This allows external clients like Claude.ai to automatically discover the auth server and resource metadata via RFC 9728.
+- **Dynamic Discovery Library**: Created `@/lib/mcpWellKnown.ts` to provide unified, environment-aware discovery responses for both Authorization Servers and Protected Resources.
+
+### Fixed
+- **Vercel 404 Caching**: Resolved a critical issue where Vercel cached 404 responses for `.well-known` routes.
+    - Added explicit `no-store, no-cache` headers in `next.config.ts` for all `/.well-known/:path*` routes.
+    - Implemented `Cache-Control: no-store` in the discovery route handlers.
+- **Middleware Pass-Through**: Updated `middleware.ts` to explicitly allow `/.well-known` paths to pass through without session validation or redirects, ensuring discovery remains accessible to unauthenticated AI agents.
+- **MCP Token Path**: Verified the `/token` middleware rewrite to `/api/mcp/token` is functioning correctly for OAuth2-based discovery.
+
+### Production Readiness
+- **Vercel Cache Invalidation**: Forced a redeploy with `--force` to purge stale 404 caches.
+- **Type Safety**: Verified that all new discovery routes and library functions pass strict typechecking.
+
  
 ## Date: 2026-05-04 (PWA RESPONSIVE OVERHAUL & MOBILE OPTIMIZATION)
 
