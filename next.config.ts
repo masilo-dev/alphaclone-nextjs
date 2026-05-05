@@ -68,14 +68,15 @@ const nextConfig: NextConfig = {
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
     // Explicitly mark playwright-core and its sub-dependencies as external
+    const externalList = ['playwright-core', 'chromium-bidi'];
     if (config.externals) {
       if (Array.isArray(config.externals)) {
-        config.externals.push('playwright-core', 'chromium-bidi');
+        config.externals.push(...externalList, /^chromium-bidi\//);
       } else {
-        config.externals = [config.externals, 'playwright-core', 'chromium-bidi'];
+        config.externals = [config.externals, ...externalList, /^chromium-bidi\//];
       }
     } else {
-      config.externals = ['playwright-core', 'chromium-bidi'];
+      config.externals = [...externalList, /^chromium-bidi\//];
     }
 
     return config;
