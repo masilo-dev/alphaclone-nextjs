@@ -1,44 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, CheckCircle, FileText } from 'lucide-react';
-import { Button } from '../../ui/UIComponents';
-
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  skills: string[];
-  availability: number; // percentage (0-100)
-  hourlyRate: number;
-  currentProjects: string[];
-  maxProjects: number;
-  status: 'available' | 'busy' | 'unavailable';
-  lastActive: string;
-}
-
-interface Resource {
-  id: string;
-  name: string;
-  type: 'human' | 'equipment' | 'software' | 'budget';
-  description: string;
-  capacity: number;
-  used: number;
-  unit: 'hours' | 'days' | 'percentage' | 'currency';
-  costPerUnit: number;
-  availability: 'available' | 'limited' | 'unavailable';
-}
-
-interface Project {
-  id: string;
-  name: string;
-  client: string;
-  budget: number;
-  deadline: string;
-  status: 'planning' | 'active' | 'completed' | 'on_hold';
-  assignedResources: string[];
-  progress: number;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-}
+import { Users, Calendar, DollarSign, TrendingUp, Plus, Edit3, Trash2, Clock, CheckCircle, FileText, Loader2 } from 'lucide-react';
+import { Button, Modal, Input } from '../../ui/UIComponents';
+import { resourceService, TeamMember, BusinessResource as Resource } from '../../../services/resourceService';
+import { projectService } from '../../../services/projectService';
+import toast from 'react-hot-toast';
 
 interface ResourceAllocationProps {
   onResourceUpdate?: (resources: Resource[]) => void;
@@ -57,138 +22,93 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
 
-  // Sample data - replace with actual data from your backend
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Load initial data
-    const sampleTeam: TeamMember[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        role: 'Senior Developer',
-        email: 'john@alphaclone.com',
-        skills: ['React', 'Node.js', 'TypeScript'],
-        availability: 80,
-        hourlyRate: 75,
-        currentProjects: ['Project Alpha', 'Project Beta'],
-        maxProjects: 3,
-        status: 'available',
-        lastActive: '2024-01-15T10:30:00Z'
-      },
-      {
-        id: '2',
-        name: 'Jane Smith',
-        role: 'UI/UX Designer',
-        email: 'jane@alphaclone.com',
-        skills: ['Figma', 'Adobe XD', 'Prototyping'],
-        availability: 60,
-        hourlyRate: 65,
-        currentProjects: ['Project Gamma'],
-        maxProjects: 2,
-        status: 'available',
-        lastActive: '2024-01-15T09:15:00Z'
-      },
-      {
-        id: '3',
-        name: 'Mike Johnson',
-        role: 'Project Manager',
-        email: 'mike@alphaclone.com',
-        skills: ['Agile', 'Scrum', 'Team Leadership'],
-        availability: 90,
-        hourlyRate: 85,
-        currentProjects: ['Project Alpha', 'Project Gamma', 'Project Delta'],
-        maxProjects: 4,
-        status: 'busy',
-        lastActive: '2024-01-15T11:45:00Z'
-      }
-    ];
-
-    const sampleResources: Resource[] = [
-      {
-        id: '1',
-        name: 'Development Hours',
-        type: 'human',
-        description: 'Available development hours per week',
-        capacity: 120,
-        used: 85,
-        unit: 'hours',
-        costPerUnit: 75,
-        availability: 'available'
-      },
-      {
-        id: '2',
-        name: 'Design Hours',
-        type: 'human',
-        description: 'Available design hours per week',
-        capacity: 40,
-        used: 24,
-        unit: 'hours',
-        costPerUnit: 65,
-        availability: 'available'
-      },
-      {
-        id: '3',
-        name: 'Project Budget Q1',
-        type: 'budget',
-        description: 'Q1 project budget allocation',
-        capacity: 50000,
-        used: 32500,
-        unit: 'currency',
-        costPerUnit: 1,
-        availability: 'limited'
-      },
-      {
-        id: '4',
-        name: 'AWS Credits',
-        type: 'software',
-        description: 'Available AWS credits for hosting',
-        capacity: 1000,
-        used: 650,
-        unit: 'currency',
-        costPerUnit: 1,
-        availability: 'available'
-      }
-    ];
-
-    const sampleProjects: Project[] = [
-      {
-        id: '1',
-        name: 'Project Alpha',
-        client: 'TechCorp Inc.',
-        budget: 25000,
-        deadline: '2024-02-15',
-        status: 'active',
-        assignedResources: ['1', '3'],
-        progress: 65,
-        priority: 'high'
-      },
-      {
-        id: '2',
-        name: 'Project Beta',
-        client: 'StartupXYZ',
-        budget: 15000,
-        deadline: '2024-03-01',
-        status: 'planning',
-        assignedResources: ['1'],
-        progress: 25,
-        priority: 'medium'
-      },
-      {
-        id: '3',
-        name: 'Project Gamma',
-        client: 'RetailChain Co.',
-        budget: 35000,
-        deadline: '2024-01-30',
-        status: 'active',
-        assignedResources: ['2', '3'],
-        progress: 80,
-        priority: 'urgent'
-      }
-    ];
-
-    setTeamMembers(sampleTeam);
-    setResources(sampleResources);
-    setProjects(sampleProjects);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [teamRes, resourceRes, projectRes] = await Promise.all([
+        resourceService.getTeamMembers(),
+        resourceService.getResources(),
+        projectService.getProjects()
+      ]);
+
+      if (teamRes.error) toast.error(teamRes.error);
+      if (resourceRes.error) toast.error(resourceRes.error);
+      
+      setTeamMembers(teamRes.team || []);
+      setResources(resourceRes.resources || []);
+      setProjects((projectRes.projects || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          client: p.ownerName || 'Unknown Client',
+          budget: p.progress * 100, // Placeholder calculation
+          deadline: p.updatedAt || '',
+          status: p.status === 'Completed' ? 'completed' : 'active',
+          assignedResources: p.team || [],
+          progress: p.progress,
+          priority: 'medium'
+      } as any)));
+    } catch (err) {
+      console.error('Failed to load allocation data:', err);
+      toast.error('Failed to sync allocation data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      
+      const memberData: Partial<TeamMember> = {
+          name: formData.get('name') as string,
+          role: formData.get('role') as string,
+          email: formData.get('email') as string,
+          max_projects: parseInt(formData.get('max_projects') as string) || 3,
+          hourly_rate: parseFloat(formData.get('hourly_rate') as string) || 0,
+          skills: (formData.get('skills') as string).split(',').map(s => s.trim()),
+          status: 'available'
+      };
+
+      const { member, error } = await resourceService.addTeamMember(memberData);
+      if (error) {
+          toast.error(error);
+      } else {
+          toast.success('Team member added');
+          setShowAddMember(false);
+          loadData();
+      }
+  };
+
+  const handleAddResource = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      
+      const resourceData: Partial<Resource> = {
+          name: formData.get('name') as string,
+          type: formData.get('type') as any,
+          capacity: parseFloat(formData.get('capacity') as string) || 0,
+          unit: formData.get('unit') as any,
+          cost_per_unit: parseFloat(formData.get('cost_per_unit') as string) || 0,
+          availability: 'available'
+      };
+
+      const { error } = await resourceService.addResource(resourceData);
+      if (error) {
+          toast.error(error);
+      } else {
+          toast.success('Resource added');
+          setShowAddResource(false);
+          loadData();
+      }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -247,7 +167,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
   };
 
   const TeamMemberCard: React.FC<{ member: TeamMember }> = ({ member }) => {
-    const utilization = calculateUtilization(member.currentProjects.length, member.maxProjects);
+    const utilization = calculateUtilization(member.current_projects?.length || 0, member.max_projects);
 
     return (
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors">
@@ -301,7 +221,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
         <div className="space-y-2 mb-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-400">Project Load</span>
-            <span className="text-white">{member.currentProjects.length}/{member.maxProjects}</span>
+            <span className="text-white">{(member.current_projects?.length || 0)}/{member.max_projects}</span>
           </div>
           <div className="w-full bg-slate-700 rounded-full h-2">
             <div
@@ -327,10 +247,10 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-400">
-          <span>{formatCurrency(member.hourlyRate)}/hr</span>
+          <span>{formatCurrency(member.hourly_rate)}/hr</span>
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {getTimeAgo(member.lastActive)}
+            {member.last_active ? getTimeAgo(member.last_active) : 'Never'}
           </span>
         </div>
       </div>
@@ -408,7 +328,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 
         <div className="flex items-center justify-between">
           <span className="text-sm text-slate-400">
-            {formatCurrency(resource.costPerUnit)}/{resource.unit}
+            {formatCurrency(resource.cost_per_unit)}/{resource.unit}
           </span>
           <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(resource.availability)}`}>
             {resource.availability}
@@ -420,7 +340,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
 
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
     const assignedTeam = teamMembers.filter(member =>
-      project.assignedResources.includes(member.id)
+      project.assignedResources?.includes(member.name) || project.assignedResources?.includes(member.id)
     );
 
     return (
@@ -493,6 +413,15 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-12 h-12 text-teal-500 animate-spin mb-4" />
+        <p className="text-slate-400">Syncing resource allocation...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
         {/* Header */}
@@ -558,7 +487,7 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
               <h4 className="font-semibold text-white">Budget Used</h4>
             </div>
             <div className="text-2xl font-bold text-yellow-400">
-              {formatCurrency(resources.reduce((sum, r) => sum + r.used * r.costPerUnit, 0))}
+              {formatCurrency(resources.reduce((sum, r) => sum + r.used * r.cost_per_unit, 0))}
             </div>
             <div className="text-sm text-slate-400">total spent</div>
           </div>
@@ -603,8 +532,62 @@ const ResourceAllocation: React.FC<ResourceAllocationProps> = ({
           </div>
         </div>
 
-        {/* Add/Edit Modals would go here */}
-        {/* Implementation of modals for adding/editing team members and resources */}
+        {/* Add Team Member Modal */}
+        {showAddMember && (
+            <Modal title="Add Team Member" onClose={() => setShowAddMember(false)}>
+                <form onSubmit={handleAddMember} className="space-y-4">
+                    <Input name="name" label="Full Name" placeholder="e.g. John Doe" required />
+                    <Input name="role" label="Role" placeholder="e.g. Senior Developer" required />
+                    <Input name="email" label="Email" type="email" placeholder="john@example.com" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input name="max_projects" label="Max Projects" type="number" defaultValue="3" />
+                        <Input name="hourly_rate" label="Hourly Rate ($)" type="number" defaultValue="0" />
+                    </div>
+                    <Input name="skills" label="Skills (comma separated)" placeholder="React, Node, SQL" />
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button variant="ghost" onClick={() => setShowAddMember(false)}>Cancel</Button>
+                        <Button type="submit" className="bg-teal-600">Add Member</Button>
+                    </div>
+                </form>
+            </Modal>
+        )}
+
+        {/* Add Resource Modal */}
+        {showAddResource && (
+            <Modal title="Add Resource" onClose={() => setShowAddResource(false)}>
+                <form onSubmit={handleAddResource} className="space-y-4">
+                    <Input name="name" label="Resource Name" placeholder="e.g. AWS Credits" required />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-sm text-slate-400">Type</label>
+                            <select name="type" className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white outline-none focus:border-teal-500">
+                                <option value="human">Human (Hours)</option>
+                                <option value="software">Software / SaaS</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="budget">Budget / Cash</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm text-slate-400">Unit</label>
+                            <select name="unit" className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white outline-none focus:border-teal-500">
+                                <option value="hours">Hours</option>
+                                <option value="days">Days</option>
+                                <option value="currency">Currency ($)</option>
+                                <option value="percentage">Percentage (%)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input name="capacity" label="Total Capacity" type="number" defaultValue="0" required />
+                        <Input name="cost_per_unit" label="Cost Per Unit" type="number" defaultValue="0" />
+                    </div>
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button variant="ghost" onClick={() => setShowAddResource(false)}>Cancel</Button>
+                        <Button type="submit" className="bg-blue-600">Add Resource</Button>
+                    </div>
+                </form>
+            </Modal>
+        )}
       </div>
   );
 };

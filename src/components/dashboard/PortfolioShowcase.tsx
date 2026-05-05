@@ -138,30 +138,28 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
             setUploadProgress(60);
 
-            // Upload with timeout (30 seconds)
-            const uploadPromise = supabase.storage
-                .from('project-images')
-                .upload(fileName, compressedBlob, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+            // Import fileUploadService
+            const { fileUploadService } = await import('../../services/fileUploadService');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Authentication required');
 
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Upload timeout - network too slow')), 30000)
+            const uploadRes = await fileUploadService.uploadFile(
+                compressedBlob as any, 
+                'project-images', 
+                project?.id || 'new',
+                user.id,
+                currentTenant.id,
+                { category: 'Portfolio', tags: ['Project'] }
             );
 
-            const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
-
-            if (error) {
-                console.error('Upload error:', error);
-                toast.error('Failed to upload image. Please try again.');
-                return null;
+            if (!uploadRes.success || !uploadRes.proxiedUrl) {
+                throw new Error(uploadRes.error || 'Upload failed');
             }
 
             setUploadProgress(80);
 
-            // Get public URL
-            const publicUrl = `/api/storage/project-images/${fileName}`;
+            // Get public URL from the service result
+            const publicUrl = uploadRes.proxiedUrl;
 
             setUploadProgress(100);
 

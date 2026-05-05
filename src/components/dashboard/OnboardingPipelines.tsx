@@ -45,11 +45,17 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
     const loadLeads = async () => {
         setLoading(true);
         try {
-            const { leads: data } = await leadService.getLeads();
-            setLeads(data || []);
-        } catch (err) {
+            const { leads: data, error } = await leadService.getLeads();
+            if (error) {
+                console.error('Lead Service Error:', error);
+                toast.error(error);
+                setLeads([]);
+            } else {
+                setLeads(data || []);
+            }
+        } catch (err: any) {
             console.error('Failed to load leads:', err);
-            toast.error('Failed to load leads');
+            toast.error(err.message || 'Failed to load leads');
         } finally {
             setLoading(false);
         }
