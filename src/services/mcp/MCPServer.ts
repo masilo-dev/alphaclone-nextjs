@@ -48,17 +48,17 @@ import { emailHelpers } from '../email/emailService';
 import { businessInvoiceService } from '../businessInvoiceService';
 import { fileUploadService } from '../fileUploadService';
 import { start } from 'workflow/api';
-import { invoiceLifecycleWorkflow } from '../../../workflows/invoice-lifecycle';
-import { contractLifecycleWorkflow } from '../../../workflows/contract-lifecycle';
-import { leadFindingWorkflow } from '../../../workflows/lead-finding';
-import { leadNurtureWorkflow } from '../../../workflows/lead-nurture';
-import { dealStageWorkflow } from '../../../workflows/deal-stage';
-import { socialScheduleWorkflow } from '../../../workflows/social-schedule';
-import { emailCampaignWorkflow } from '../../../workflows/email-campaign';
-import { projectKickoffWorkflow } from '../../../workflows/project-kickoff';
-import { videoRoomOrchestrationWorkflow } from '../../../workflows/video-room-orchestration';
-import { userOnboardingWorkflow } from '../../../workflows/user-onboarding';
-import { mcpAgentWorkflow } from '../../../workflows/mcp-agent';
+import { invoiceLifecycleWorkflow } from '../../workflows/invoice-lifecycle';
+import { contractLifecycleWorkflow } from '../../workflows/contract-lifecycle';
+import { leadFindingWorkflow } from '../../workflows/lead-finding';
+import { leadNurtureWorkflow } from '../../workflows/lead-nurture';
+import { dealStageWorkflow } from '../../workflows/deal-stage';
+import { socialScheduleWorkflow } from '../../workflows/social-schedule';
+import { emailCampaignWorkflow } from '../../workflows/email-campaign';
+import { projectKickoffWorkflow } from '../../workflows/project-kickoff';
+import { videoRoomOrchestrationWorkflow } from '../../workflows/video-room-orchestration';
+import { userOnboardingWorkflow } from '../../workflows/user-onboarding';
+import { mcpAgentWorkflow } from '../../workflows/mcp-agent';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

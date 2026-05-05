@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
-import { contractLifecycleWorkflow } from '../../../../../workflows/contract-lifecycle';
+import { contractLifecycleWorkflow } from '@/workflows/contract-lifecycle';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';

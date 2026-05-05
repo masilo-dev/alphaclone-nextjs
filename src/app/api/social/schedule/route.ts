@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { start } from 'workflow/api';
-import { socialScheduleWorkflow } from '../../../../../workflows/social-schedule';
+import { socialScheduleWorkflow } from '@/workflows/social-schedule';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {

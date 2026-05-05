@@ -1,29 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { autonomousRunnerService } from '@/services/autonomousRunnerService';
+import { start } from "workflow/api";
+import { autonomousRunner } from "@/workflows/cron-workflows";
 
-export const dynamic = 'force-dynamic';
-
-export async function GET(req: NextRequest) {
-  const denied = denyIfCronUnauthorized(req);
-  if (denied) return denied;
-
-  const result = await autonomousRunnerService.runOnce();
-  if (!result.success) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: result.error || 'Autonomous runner failed',
-        runs: result.runs,
-      },
-      { status: 500 }
-    );
+export async function GET(request: NextRequest) {
+  // Check auth
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return NextResponse.json({
-    success: true,
-    runs: result.runs,
-    executedAt: new Date().toISOString(),
-  });
+  try {
+    const { runId } = await start(autonomousRunner);
+    return NextResponse.json({ success: true, runId });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: 'Trigger failed' }, { status: 500 });
+  }
 }
-

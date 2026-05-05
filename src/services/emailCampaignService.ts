@@ -650,22 +650,24 @@ export const emailCampaignService = {
     },
 
     /**
-     * Send email campaign
+     * Send email campaign via durable workflow
      */
-    async sendCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
+    async sendCampaign(campaignId: string): Promise<{ success: boolean; runId?: string; error: string | null }> {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('No active tenant');
-            const res = await fetch('/api/email/campaigns/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId, campaignId }),
-            });
-            const payload = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(payload.error || 'Failed to send campaign');
-            return { success: true, error: null };
+            
+            const { start } = await import("workflow/api");
+            const { campaignDelivery } = await import("@/workflows/campaign-delivery");
+            const { runId } = await start(campaignDelivery, [{ 
+                campaignId, 
+                tenantId,
+                userId: "system" // Or current user ID if available
+            }]);
+            
+            return { success: true, runId, error: null };
         } catch (err) {
-            console.error('Campaign sending failed:', err);
+            console.error('Campaign workflow trigger failed:', err);
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },

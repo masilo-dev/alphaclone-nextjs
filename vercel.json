@@ -49,8 +49,9 @@
         }
     ],
     "functions": {
-        "workflows/**": {
-            "maxDuration": 800
+        "src/app/api/**/*": {
+            "maxDuration": 300,
+            "memory": 1024
         }
     }
 }
