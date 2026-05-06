@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bot, Check, X, Loader2 } from 'lucide-react';
+import { Bot, Check, X, Loader2, Shield } from 'lucide-react';
 import Link from 'next/link';
 
 function AuthorizeContent() {
@@ -13,13 +13,15 @@ function AuthorizeContent() {
     const [approving, setApproving] = useState(false);
     const [error, setError] = useState('');
 
-    const clientId = searchParams?.get('client_id');
-    const redirectUri = searchParams?.get('redirect_uri');
-    const state = searchParams?.get('state');
+    const clientId            = searchParams?.get('client_id');
+    const redirectUri         = searchParams?.get('redirect_uri');
+    const state               = searchParams?.get('state');
+    const codeChallenge       = searchParams?.get('code_challenge');
+    const codeChallengeMethod = searchParams?.get('code_challenge_method') || 'S256';
+    const scope               = searchParams?.get('scope') || 'read write';
 
     useEffect(() => {
         if (!loading && !user) {
-            // Redirect to login if not authenticated
             const currentUrl = window.location.pathname + window.location.search;
             router.push(`/login?returnTo=${encodeURIComponent(currentUrl)}`);
         }
@@ -39,14 +41,18 @@ function AuthorizeContent() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    user_id: user.id,
+                    client_id: clientId,
                     redirect_uri: redirectUri,
                     state,
-                    user_id: user.id
+                    code_challenge: codeChallenge || undefined,
+                    code_challenge_method: codeChallenge ? codeChallengeMethod : undefined,
+                    scope,
                 })
             });
 
             const data = await res.json();
-            
+
             if (!res.ok) {
                 throw new Error(data.error || 'Failed to approve authorization');
             }
@@ -65,10 +71,15 @@ function AuthorizeContent() {
 
     const handleDeny = () => {
         if (redirectUri) {
-            const url = new URL(redirectUri);
-            url.searchParams.set('error', 'access_denied');
-            if (state) url.searchParams.set('state', state);
-            window.location.href = url.toString();
+            try {
+                const url = new URL(redirectUri);
+                url.searchParams.set('error', 'access_denied');
+                url.searchParams.set('error_description', 'The user denied access');
+                if (state) url.searchParams.set('state', state);
+                window.location.href = url.toString();
+            } catch {
+                router.push('/dashboard');
+            }
         } else {
             router.push('/dashboard');
         }
@@ -82,13 +93,13 @@ function AuthorizeContent() {
         );
     }
 
-    if (!clientId || !redirectUri) {
+    if (!redirectUri) {
         return (
             <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-white text-center">
                 <div className="bg-slate-900/40 p-8 rounded-3xl border border-slate-800 max-w-md w-full">
                     <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h1 className="text-xl font-bold mb-2">Invalid Request</h1>
-                    <p className="text-slate-400 mb-6">Missing client_id or redirect_uri parameters.</p>
+                    <p className="text-slate-400 mb-6">Missing redirect_uri parameter.</p>
                     <Link href="/dashboard" className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
                         Return to Dashboard
                     </Link>
@@ -100,18 +111,37 @@ function AuthorizeContent() {
     return (
         <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-white relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-[20%] left-[30%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse"></div>
+                <div className="absolute top-[20%] left-[30%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse" />
             </div>
 
             <div className="relative z-10 bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
                 <div className="w-20 h-20 bg-teal-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-teal-500/20">
                     <Bot className="w-10 h-10 text-teal-400" />
                 </div>
-                
+
                 <h1 className="text-2xl font-bold mb-2">Authorize Connection</h1>
-                <p className="text-slate-400 mb-8">
+                <p className="text-slate-400 mb-2">
                     An AI Assistant (Claude) is requesting access to your AlphaClone workspace to perform automated tasks on your behalf.
                 </p>
+
+                {codeChallenge && (
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-teal-400 mb-6">
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>PKCE-secured connection</span>
+                    </div>
+                )}
+
+                <div className="text-left bg-slate-800/40 rounded-xl p-4 mb-6 text-sm space-y-2">
+                    <p className="text-slate-300 font-medium">This will allow Claude to:</p>
+                    <ul className="text-slate-400 space-y-1 list-disc list-inside">
+                        <li>Read your CRM, deals, and contacts</li>
+                        <li>Manage tasks and projects on your behalf</li>
+                        <li>Access your workspace tools via MCP</li>
+                    </ul>
+                    {clientId && (
+                        <p className="text-slate-500 text-xs pt-1">Client: {clientId}</p>
+                    )}
+                </div>
 
                 {error && (
                     <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">
@@ -132,14 +162,14 @@ function AuthorizeContent() {
                         )}
                         {approving ? 'Authorizing...' : 'Authorize Access'}
                     </button>
-                    
+
                     <button
                         onClick={handleDeny}
                         disabled={approving}
                         className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-transparent hover:bg-slate-800 text-slate-300 rounded-xl font-medium transition-all disabled:opacity-50"
                     >
                         <X className="w-5 h-5" />
-                        Cancel and Return
+                        Deny Access
                     </button>
                 </div>
             </div>

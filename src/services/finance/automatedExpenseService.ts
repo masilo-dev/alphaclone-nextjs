@@ -1,5 +1,6 @@
-import { ExpenseService } from './ExpenseService';
-import { unifiedAIService } from '../unifiedAIService';
+import { expenseService } from './ExpenseService';
+import { generateText } from '../unifiedAIService';
+
 
 export const automatedExpenseService = {
     /**
@@ -23,22 +24,25 @@ export const automatedExpenseService = {
         Return ONLY a JSON object with these fields.`;
 
         try {
-            const { text: jsonString } = await unifiedAIService.generateText(prompt, 500);
+            const { text: jsonString } = await generateText(prompt, 500);
+            if (!jsonString) throw new Error('AI returned no response for expense parsing.');
             const parsed = JSON.parse(jsonString.replace(/```json|```/g, '').trim());
 
             if (!parsed.description || !parsed.amount) {
                 throw new Error('Could not extract required expense fields from raw data.');
             }
 
-            const expenseService = new ExpenseService();
-            return await expenseService.createExpense({
-                tenant_id: params.tenantId,
-                description: parsed.description,
-                amount: parsed.amount,
-                category: parsed.category || 'Other',
-                date: parsed.date || new Date().toISOString().split('T')[0],
-                status: 'pending'
-            });
+            return await expenseService.createExpense(
+                params.tenantId,
+                params.userId,
+                {
+                    description: parsed.description,
+                    amount: parsed.amount,
+                    category_id: undefined, // AI-parsed; no category ID lookup at this stage
+                    date: parsed.date || new Date().toISOString().split('T')[0],
+                    notes: `AI-parsed from: "${params.rawData.slice(0, 120)}"`,
+                }
+            );
         } catch (err) {
             console.error('[automatedExpenseService] Failed to automate expense:', err);
             throw err;
