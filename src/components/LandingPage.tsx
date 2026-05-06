@@ -580,81 +580,116 @@ const LandingPage = () => {
                </div>
             </section>
 
-            {/* Product Screens */}
+            {/* Platform Proof — Outcome-Focused (no screenshots) */}
             <section className="py-16 bg-[#040A12]">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="mb-10 text-center">
                      <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Other platforms give you features. Alphaclone gives you outcomes.
+                        Built for how modern businesses actually operate.
                      </h2>
                      <p className="text-slate-300 max-w-3xl mx-auto">
-                        Real screens from lead management, deal pipeline, social integrations, and mobile operations.
+                        Every module is connected. Data entered in one place flows automatically across CRM, billing, projects, and AI — no copy-paste, no integrations to maintain.
                      </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Outcome cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
                      {[
                         {
-                           src: '/screenshots/lead-detail.png',
-                           title: 'Lead Detail Workspace',
-                           caption: 'Execute full lead flow, validation, and conversion steps.',
-                           span: 'lg:col-span-2',
-                           mediaClass: 'h-56 lg:h-64 object-cover',
+                           metric: '12+',
+                           unit: 'tools replaced',
+                           detail: 'CRM, invoicing, contracts, projects, video, email campaigns, AI agents — unified.',
+                           color: 'from-cyan-500/20 to-cyan-500/5',
+                           border: 'border-cyan-500/25',
+                           accent: 'text-cyan-400',
                         },
                         {
-                           src: '/screenshots/deals-dashboard.png',
-                           title: 'Deal Pipeline Board',
-                           caption: 'Forecast, weighted pipeline, and next-action guidance.',
-                           span: 'lg:col-span-1',
-                           mediaClass: 'h-56 lg:h-64 object-cover',
+                           metric: '< 30 min',
+                           unit: 'to full operation',
+                           detail: 'Guided onboarding wizard. No IT required. No migrations. Start with live data from day one.',
+                           color: 'from-teal-500/20 to-teal-500/5',
+                           border: 'border-teal-500/25',
+                           accent: 'text-teal-400',
                         },
                         {
-                           src: '/screenshots/facebook-integration.png',
-                           title: 'Facebook Business Integration',
-                           caption: 'Business page posting and lead capture controls.',
-                           span: 'lg:col-span-1',
-                           mediaClass: 'h-52 lg:h-56 object-cover',
+                           metric: '25+',
+                           unit: 'MCP tools for AI',
+                           detail: 'Claude and Manus can operate your entire workspace: leads, deals, tasks, invoices, and email.',
+                           color: 'from-violet-500/20 to-violet-500/5',
+                           border: 'border-violet-500/25',
+                           accent: 'text-violet-400',
                         },
                         {
-                           src: '/screenshots/mobile-crm.png',
-                           title: 'Mobile CRM Pipeline',
-                           caption: 'Field workflow for stage moves and deal actions.',
-                           span: 'lg:col-span-1',
-                           mediaClass: 'h-52 lg:h-56 object-contain bg-slate-950',
+                           metric: '99.9%',
+                           unit: 'uptime SLA',
+                           detail: 'Deployed on Vercel Edge Network with Supabase PostgreSQL 17. Built to run without you watching.',
+                           color: 'from-blue-500/20 to-blue-500/5',
+                           border: 'border-blue-500/25',
+                           accent: 'text-blue-400',
                         },
                         {
-                           src: '/screenshots/mobile-marketplace.png',
-                           title: 'Mobile Integrations',
-                           caption: 'Connect AI tools and platform integrations in-app.',
-                           span: 'lg:col-span-1',
-                           mediaClass: 'h-52 lg:h-56 object-contain bg-slate-950',
+                           metric: 'RLS + RBAC',
+                           unit: 'security model',
+                           detail: 'Row-Level Security on every table. Role-based access. Audit logs. GDPR-compliant by design.',
+                           color: 'from-emerald-500/20 to-emerald-500/5',
+                           border: 'border-emerald-500/25',
+                           accent: 'text-emerald-400',
                         },
-                     ].map((shot, index) => (
-                        <motion.article
-                           key={shot.title}
+                        {
+                           metric: '$0',
+                           unit: 'integration cost',
+                           detail: 'Every module shares the same data layer. No Zapier. No webhooks to maintain. It just works.',
+                           color: 'from-orange-500/20 to-orange-500/5',
+                           border: 'border-orange-500/25',
+                           accent: 'text-orange-400',
+                        },
+                     ].map((card, index) => (
+                        <motion.div
+                           key={card.unit}
                            initial={{ opacity: 0, y: 12 }}
                            whileInView={{ opacity: 1, y: 0 }}
                            viewport={{ once: true }}
-                           transition={{ delay: index * 0.16, duration: 0.85, ease: 'easeOut' }}
-                           className={`group rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-3 ${shot.span}`}
+                           transition={{ delay: index * 0.1, duration: 0.7, ease: 'easeOut' }}
+                           className={`rounded-2xl border ${card.border} bg-gradient-to-br ${card.color} p-6`}
                         >
-                           <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950/80 relative">
-                              <Image
-                                 src={shot.src}
-                                 alt={shot.title}
-                                 width={800}
-                                 height={450}
-                                 className={`w-full ${shot.mediaClass} transition-transform duration-500 group-hover:scale-[1.02]`}
-                                 style={{ height: 'auto' }}
-                              />
-                           </div>
-                           <h4 className="mt-3 text-base font-bold text-cyan-200">{shot.title}</h4>
-                           <p className="mt-1 text-sm text-slate-300 leading-relaxed">{shot.caption}</p>
-                        </motion.article>
+                           <div className={`text-4xl font-black mb-1 ${card.accent}`}>{card.metric}</div>
+                           <div className="text-sm font-bold text-white uppercase tracking-wide mb-3">{card.unit}</div>
+                           <p className="text-sm text-slate-300 leading-relaxed">{card.detail}</p>
+                        </motion.div>
                      ))}
+                  </div>
+
+                  {/* Workflow connector strip */}
+                  <div className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-6">
+                     <p className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4 text-center">Connected workflow — no manual handoffs</p>
+                     <div className="flex flex-wrap items-center justify-center gap-2 text-sm font-medium">
+                        {[
+                           'Lead captured',
+                           '→',
+                           'Deal created',
+                           '→',
+                           'Proposal sent',
+                           '→',
+                           'Contract signed',
+                           '→',
+                           'Invoice issued',
+                           '→',
+                           'Project started',
+                           '→',
+                           'Revenue recorded',
+                        ].map((step, i) => (
+                           <span
+                              key={i}
+                              className={step === '→' ? 'text-slate-600' : 'px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-slate-200'}
+                           >
+                              {step}
+                           </span>
+                        ))}
+                     </div>
                   </div>
                </div>
             </section>
+
 
             {/* Privacy and Compliance */}
             <section className="py-14 border-y border-slate-800 bg-slate-950/70">
