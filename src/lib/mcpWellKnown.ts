@@ -41,13 +41,16 @@ export function createAuthorizationServerResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
   const data = {
     issuer: baseUrl,
-    authorization_endpoint: `${baseUrl}/authorize`,
+    // Server-side automated endpoint (supports Authorization header for headless flow)
+    authorization_endpoint: `${baseUrl}/api/mcp/authorize`,
+    // Human-facing UI endpoint (for users who prefer browser-based approval)
+    human_authorization_endpoint: `${baseUrl}/authorize`,
     token_endpoint: `${baseUrl}/api/mcp/token`,
     registration_endpoint: `${baseUrl}/api/mcp/register`,
     response_types_supported: ['code'],
-    grant_types_supported: ['authorization_code', 'refresh_token'],
-    code_challenge_methods_supported: ['S256'],
-    token_endpoint_auth_methods_supported: ['none', 'client_secret_basic'],
+    grant_types_supported: ['authorization_code', 'refresh_token', 'client_credentials'],
+    code_challenge_methods_supported: ['S256', 'plain'],
+    token_endpoint_auth_methods_supported: ['none', 'client_secret_basic', 'client_secret_post'],
     scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
     service_documentation: `${baseUrl}/api/mcp/health`,
   };
