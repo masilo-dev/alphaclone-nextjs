@@ -37,11 +37,33 @@ export async function resolveEmailProviderConfig(params: {
   preferredUserId?: string | null;
   preferredProvider?: EmailProvider;
   fallbackToEnv?: boolean;
+  forcePlatform?: boolean;
 }): Promise<ResolvedEmailProviderConfig | null> {
   const supabase = createSupabaseAdminClient();
   const tenantId = params.tenantId || null;
   let lookupUserId = params.preferredUserId || null;
 
+  // 1. If forcePlatform is set, skip DB lookups and go straight to Env
+  if (params.forcePlatform) {
+    if (process.env.BREVO_PLATFORM_API_KEY) {
+      return {
+        provider: 'brevo',
+        apiKey: process.env.BREVO_PLATFORM_API_KEY,
+        fromEmail: process.env.BREVO_FROM_EMAIL || undefined,
+        fromName: process.env.BREVO_FROM_NAME || 'AlphaClone Platform',
+      };
+    }
+    // Fallback to BREVO_API_KEY if platform key missing
+    if (process.env.BREVO_API_KEY) {
+      return {
+        provider: 'brevo',
+        apiKey: process.env.BREVO_API_KEY,
+        fromEmail: process.env.BREVO_FROM_EMAIL || undefined,
+      };
+    }
+  }
+
+  // 2. Standard resolution (User -> Tenant -> Env)
   if (!lookupUserId && tenantId) {
     const { data: membership } = await supabase
       .from('tenant_users')

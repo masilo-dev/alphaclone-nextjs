@@ -154,7 +154,69 @@ export const notificationService = {
         }
     },
 
-    unsubscribe(channel: any) {
+    async unsubscribe(channel: any) {
         supabase.removeChannel(channel);
+    },
+
+    /**
+     * Send a Platform-Wide Notification (Email + Internal)
+     * Uses the BREVO_PLATFORM_API_KEY for emails.
+     */
+    async sendPlatformNotification(params: {
+        userId: string;
+        title: string;
+        message: string;
+        link?: string;
+        priority?: 'low' | 'medium' | 'high' | 'urgent';
+        tenantId?: string;
+    }) {
+        // 1. Send internal notification
+        await this.sendNotification({
+            userId: params.userId,
+            type: 'system',
+            title: params.title,
+            message: params.message,
+            link: params.link,
+            priority: params.priority || 'medium',
+            metadata: { platformNotification: true }
+        });
+
+        // 2. Send platform-wide email via Brevo Platform Key
+        try {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('email, name')
+                .eq('id', params.userId)
+                .single();
+
+            if (profile?.email) {
+                const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || '';
+                
+                await fetch(`${baseUrl}/api/email/send`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-internal-api-key': process.env.INTERNAL_API_KEY || ''
+                    },
+                    body: JSON.stringify({
+                        tenantId: params.tenantId,
+                        to: profile.email,
+                        subject: params.title,
+                        html: `
+                            <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                                <h2 style="color: #0d9488;">AlphaClone Platform</h2>
+                                <p>${params.message}</p>
+                                ${params.link ? `<a href="${baseUrl}${params.link}" style="display: inline-block; padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Update</a>` : ''}
+                                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                                <small style="color: #666;">This is an automated platform notification.</small>
+                            </div>
+                        `,
+                        isPlatformNotification: true
+                    })
+                });
+            }
+        } catch (err) {
+            console.error('[sendPlatformNotification] Email failed:', err);
+        }
     }
 };
