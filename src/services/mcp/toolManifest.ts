@@ -13,11 +13,11 @@ export const MCP_TOOLS = [
         tenant_id: {
           type: 'string',
           description:
-            'Workspace UUID. Omit when your MCP connection URL already includes the workspace through its API key.',
+            'Business Account Context. Omit when your connection already includes the workspace through its access key.',
         },
         status: { type: 'string', description: 'lead | prospect | active | churned' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
-        offset: { type: 'number', description: 'Pagination offset (default 0)' },
+        offset: { type: 'number', description: 'Starting record index (default 0)' },
       },
       required: [],
     },
@@ -28,7 +28,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         name: { type: 'string' },
         email: { type: 'string' },
         phone: { type: 'string' },
@@ -50,12 +50,12 @@ export const MCP_TOOLS = [
   },
   {
     name: 'get_client_by_id',
-    description: 'Fetch a single client record by UUID for update or review flows.',
+    description: 'Fetch a single client record by reference for update or review flows.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        client_id: { type: 'string', description: 'UUID from get_clients or search_clients' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        client_id: { type: 'string', description: 'Reference from get_clients or search_clients' },
       },
       required: ['client_id'],
     },
@@ -66,7 +66,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         query: { type: 'string', description: 'Free-text search query' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
       },
@@ -79,8 +79,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        client_id: { type: 'string', description: 'UUID from get_clients/get_client_by_id' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        client_id: { type: 'string', description: 'Reference from get_clients/get_client_by_id' },
         search_email: { type: 'string', description: 'Smart Lookup: Find client by email if client_id is unknown.' },
         search_name: { type: 'string', description: 'Smart Lookup: Find client by name if client_id is unknown.' },
         name: { type: 'string' },
@@ -104,7 +104,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
         offset: { type: 'number', description: 'Pagination offset (default 0)' },
       },
@@ -117,7 +117,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         query: { type: 'string', description: 'Free-text search query' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
       },
@@ -131,7 +131,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
         stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
         limit: { type: 'number', description: 'Max records (default 20, max 100)' },
@@ -147,7 +147,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         dry_run: { type: 'boolean', description: 'If true, only report changes without writing updates (default true).' },
         default_country_code: { type: 'string', description: 'Default country code used for local 10-digit numbers (default 1).' },
         limit: { type: 'number', description: 'Max rows scanned per table (default 5000, max 20000).' },
@@ -162,11 +162,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'run_playbook',
-    description: 'Run a backend automation playbook. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.',
+    description: 'Run a business automation sequence. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         playbook_id: { type: 'string' },
         inputs: { type: 'object' },
         auto_high_risk: { type: 'boolean', description: 'If true, high-risk steps execute automatically.' },
@@ -181,8 +181,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        run_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        run_id: { type: 'string', description: 'Execution reference' },
       },
       required: ['run_id'],
     },
@@ -193,7 +193,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         run_id: { type: 'string' },
         step_id: { type: 'string' },
         auto_high_risk: { type: 'boolean' },
@@ -207,7 +207,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         run_id: { type: 'string' },
       },
       required: ['run_id'],
@@ -219,7 +219,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         lead_id: { type: 'string' },
       },
       required: ['lead_id'],
@@ -231,7 +231,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         log_id: { type: 'string' },
         tracking_id: { type: 'string' },
       },
@@ -244,7 +244,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         social_post_id: { type: 'string' },
       },
       required: ['social_post_id'],
@@ -256,7 +256,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         invoice_id: { type: 'string' },
       },
       required: ['invoice_id'],
@@ -268,7 +268,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
       },
       required: [],
     },
@@ -279,7 +279,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         limit: { type: 'number' },
       },
       required: [],
@@ -291,7 +291,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         hours: { type: 'number' },
       },
       required: [],
@@ -303,7 +303,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         limit: { type: 'number' },
       },
       required: [],
@@ -315,7 +315,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         business_name: { type: 'string' },
         contact_name: { type: 'string', description: 'Full name of the contact' },
         email: { type: 'string' },
@@ -334,8 +334,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        lead_id: { type: 'string', description: 'UUID of the lead to update' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        lead_id: { type: 'string', description: 'Reference of the lead to update' },
         status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
         stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
         notes: { type: 'string', description: 'Reason for the status change or qualifying notes' },
@@ -349,8 +349,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        lead_id: { type: 'string', description: 'UUID of the lead to update' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        lead_id: { type: 'string', description: 'Reference of the lead to update' },
         search_email: { type: 'string', description: 'Smart Lookup: Find lead by email if lead_id is unknown.' },
         search_business_name: { type: 'string', description: 'Smart Lookup: Find lead by business name if lead_id is unknown.' },
         business_name: { type: 'string' },
@@ -373,7 +373,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost' },
         limit: { type: 'number' },
       },
@@ -386,7 +386,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         name: { type: 'string', description: 'Deal name/title' },
         value: { type: 'number', description: 'Estimated deal value in USD' },
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
@@ -401,8 +401,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        deal_id: { type: 'string', description: 'UUID from get_deals' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        deal_id: { type: 'string', description: 'Reference from get_deals' },
         name: { type: 'string' },
         value: { type: 'number' },
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost' },
@@ -419,8 +419,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        client_id: { type: 'string', description: 'UUID from get_clients' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        client_id: { type: 'string', description: 'Reference from get_clients' },
         issue_date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
         due_date: { type: 'string', description: 'YYYY-MM-DD' },
         subtotal: { type: 'number' },
@@ -438,9 +438,9 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         status: { type: 'string', description: 'draft | sent | paid | overdue | cancelled | void' },
-        client_id: { type: 'string', description: 'Optional client UUID' },
+        client_id: { type: 'string', description: 'Optional client reference' },
         limit: { type: 'number', description: 'Max records (default 20, max 100)' },
       },
       required: [],
@@ -452,8 +452,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        invoice_id: { type: 'string', description: 'UUID from create_invoice or get_invoices' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        invoice_id: { type: 'string', description: 'Reference from create_invoice or get_invoices' },
         due_date: { type: 'string' },
         subtotal: { type: 'number' },
         tax: { type: 'number' },
@@ -471,8 +471,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        invoice_id: { type: 'string', description: 'UUID from create_invoice or invoice list' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        invoice_id: { type: 'string', description: 'Reference from create_invoice or invoice list' },
         recipient_email: { type: 'string', description: 'Optional override email for recipient' },
       },
       required: ['invoice_id'],
@@ -484,8 +484,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        invoice_id: { type: 'string', description: 'UUID of the PAID invoice' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        invoice_id: { type: 'string', description: 'Reference of the PAID invoice' },
         recipient_email: { type: 'string', description: 'Optional override email for recipient' },
         provider: { type: 'string', enum: ['brevo', 'resend', 'zoho', 'sendgrid'], description: 'Preferred email provider for this send' }
       },
@@ -498,7 +498,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         name: { type: 'string', description: 'Internal name of the campaign' },
         subject: { type: 'string', description: 'Subject line of the email' },
         body_html: { type: 'string', description: 'Full HTML body of the email. You may use {{name}}, {{firstName}}, {{lastName}}, {{company}}, {{fromName}} variables.' },
@@ -525,9 +525,9 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        lead_ids: { type: 'array', items: { type: 'string' }, description: 'UUIDs of leads from get_leads' },
-        client_ids: { type: 'array', items: { type: 'string' }, description: 'UUIDs of clients from get_clients' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        lead_ids: { type: 'array', items: { type: 'string' }, description: 'References of leads from get_leads' },
+        client_ids: { type: 'array', items: { type: 'string' }, description: 'References of clients from get_clients' },
         tone: { type: 'string', description: 'professional | friendly | direct | creative' },
         custom_context: { type: 'string', description: 'Specific instructions for personalization (e.g. "Mention the new product feature")' },
         delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' }
@@ -541,26 +541,26 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        recipient_id: { type: 'string', description: 'Optional user UUID recipient' },
-        group_id: { type: 'string', description: 'Optional group/thread UUID' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        recipient_id: { type: 'string', description: 'Optional user reference recipient' },
+        group_id: { type: 'string', description: 'Optional group/thread reference' },
         text: { type: 'string' },
         priority: { type: 'string', description: 'low | normal | high | urgent' },
-        reply_to: { type: 'string', description: 'Optional parent message UUID' },
+        reply_to: { type: 'string', description: 'Optional parent message reference' },
       },
       required: ['text'],
     },
   },
   {
     name: 'upload_media_asset',
-    description: 'Upload an image or video binary payload into workspace media storage and return the stored media asset id and URL.',
+    description: 'Upload an image or video file into workspace media storage and return the stored media reference and URL.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         file_name: { type: 'string', description: 'Original file name with extension' },
         mime_type: { type: 'string', description: 'MIME type such as image/png or video/mp4' },
-        file_base64: { type: 'string', description: 'Raw base64 string or data URL (data:*;base64,...)' },
+        file_base64: { type: 'string', description: 'File data encoded as string (data:*;base64,...)' },
         alt_text: { type: 'string' },
         tags: { type: 'array', items: { type: 'string' } },
       },
@@ -573,14 +573,14 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         filename: { type: 'string', description: 'Original file name with extension' },
         mime_type: { type: 'string', description: 'MIME type such as application/pdf' },
-        file_base64: { type: 'string', description: 'Raw base64 string or data URL (data:*;base64,...)' },
+        file_base64: { type: 'string', description: 'File data encoded as string (data:*;base64,...)' },
         category: { type: 'string', description: 'Optional category (e.g. "Invoice", "Contract")' },
         tags: { type: 'array', items: { type: 'string' } },
         entity_type: { type: 'string', description: 'Optional entity type (e.g. "client", "lead")' },
-        entity_id: { type: 'string', description: 'Optional entity UUID' },
+        entity_id: { type: 'string', description: 'Optional entity reference' },
       },
       required: ['filename', 'mime_type', 'file_base64'],
     },
@@ -591,7 +591,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
       },
       required: [],
     },
@@ -602,17 +602,17 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin | instagram | x | tiktok (default: facebook)' },
         page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
         caption: { type: 'string' },
         link_url: { type: 'string' },
         media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs' },
-        media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset UUIDs uploaded to the workspace library' },
+        media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset references uploaded to the workspace library' },
         hashtags: { type: 'array', items: { type: 'string' } },
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
-        task_id: { type: 'string', description: 'Optional task UUID to update with execution notes' },
+        task_id: { type: 'string', description: 'Optional task reference to update with execution notes' },
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
         mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
@@ -626,7 +626,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin | instagram | x | tiktok (default: facebook)' },
         page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
         caption: { type: 'string' },
@@ -646,7 +646,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
       },
       required: [],
     },
@@ -657,15 +657,15 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         text: { type: 'string', description: 'Post text content' },
         post_as: { type: 'string', description: 'personal | company | all_pages (default: personal)' },
         media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs for scheduled publishing' },
-        media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset UUIDs uploaded to the workspace library' },
+        media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset references uploaded to the workspace library' },
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
         linkedin_organization_id: { type: 'string', description: 'Optional LinkedIn organization ID to post as company page' },
-        task_id: { type: 'string', description: 'Optional task UUID to update with execution notes' },
+        task_id: { type: 'string', description: 'Optional task reference to update with execution notes' },
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
         mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
@@ -679,7 +679,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         limit: { type: 'number' },
       },
       required: [],
@@ -691,7 +691,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
         linkedin_organization_id: { type: 'string', description: 'Optional organization ID for organization analytics lookup' },
       },
@@ -704,7 +704,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         post_urn: { type: 'string', description: 'Optional specific LinkedIn post URN to scan' },
         limit_posts: { type: 'number', description: 'How many recent LinkedIn posts to scan (default 10, max 30)' },
         limit_comments_per_post: { type: 'number', description: 'How many comments per post to inspect (default 30, max 100)' },
@@ -719,7 +719,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
         text: { type: 'string' },
       },
@@ -732,7 +732,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
         reaction_type: { type: 'string', description: 'LIKE | PRAISE | MAYBE | EMPATHY | INTEREST | APPRECIATION' },
       },
@@ -745,7 +745,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         name: { type: 'string', description: 'Event title' },
         description: { type: 'string' },
         start_time: { type: 'string', description: 'ISO datetime' },
@@ -764,7 +764,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
       },
       required: [],
     },
@@ -775,7 +775,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         ad_account_id: { type: 'string', description: 'The LinkedIn ad account URN or ID' },
         status: { type: 'string', description: 'ACTIVE | PAUSED | ARCHIVED | CANCELED' },
       },
@@ -788,7 +788,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
       },
       required: [],
     },
@@ -797,11 +797,11 @@ export const MCP_TOOLS = [
   {
     name: 'get_projects',
     description:
-      'List business projects for the workspace. tenant_id must be the workspace UUID from your MCP URL (never a name or slug).',
+      'List business projects for the workspace. tenant_id must be the workspace reference from your connection (never a name or slug).',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Workspace UUID' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         status: { type: 'string' },
       },
       required: [],
@@ -814,7 +814,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         name: { type: 'string', description: 'Project name/title' },
         description: { type: 'string', description: 'Optional project brief' },
         status: { type: 'string', description: 'planning | active | on_hold | completed | cancelled' },
@@ -826,12 +826,12 @@ export const MCP_TOOLS = [
   {
     name: 'update_project_status',
     description:
-      'Update a project status. project_id must be the UUID from get_projects, not the project name.',
+      'Update a project status. project_id must be the unique reference from get_projects, not the project name.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        project_id: { type: 'string', description: 'UUID from get_projects' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        project_id: { type: 'string', description: 'Reference from get_projects' },
         status: { type: 'string' },
         notes: { type: 'string' },
       },
@@ -845,10 +845,10 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         project_id: {
           type: 'string',
-          description: 'Optional. UUID of the linked business project (same as tasks.related_to_project).',
+          description: 'Optional. Reference of the linked business project (same as tasks.related_to_project).',
         },
         assigned_to: { type: 'string' },
         completed: { type: 'boolean', description: 'If true, only completed tasks; if false, only open tasks.' },
@@ -870,12 +870,12 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         title: { type: 'string' },
         description: { type: 'string' },
         project_id: {
           type: 'string',
-          description: 'Optional. UUID of business project to link (stored as related_to_project).',
+          description: 'Optional. Reference of business project to link (stored as related_to_project).',
         },
         assigned_to: { type: 'string' },
         due_date: { type: 'string', description: 'ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)' },
@@ -890,11 +890,11 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        task_id: { type: 'string', description: 'Task UUID from get_tasks' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        task_id: { type: 'string', description: 'Task reference from get_tasks' },
         title: { type: 'string' },
         description: { type: 'string' },
-        assigned_to: { type: 'string', description: 'Optional assignee user UUID' },
+        assigned_to: { type: 'string', description: 'Optional assignee user reference' },
         due_date: { type: 'string', description: 'ISO 8601 datetime or date string' },
         priority: { type: 'string', description: 'low | medium | high | urgent' },
         status: { type: 'string', description: 'ideas | todo | in_progress | review | completed | cancelled' },
@@ -909,8 +909,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        task_id: { type: 'string', description: 'Task UUID from get_tasks' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        task_id: { type: 'string', description: 'Task reference from get_tasks' },
         note: { type: 'string', description: 'Plain text note to append' },
       },
       required: ['task_id', 'note'],
@@ -923,7 +923,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         status: { type: 'string', description: 'pending | approved | rejected' },
         from_date: { type: 'string', description: 'YYYY-MM-DD' },
         to_date: { type: 'string', description: 'YYYY-MM-DD' },
@@ -933,11 +933,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_expense',
-    description: 'Log a new business expense. Use when the user describes a purchase or receipt they want recorded.',
+    description: 'Log a new business expense manually. Use when the user specifies all details.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         description: { type: 'string', description: 'What was purchased / vendor name' },
         amount: { type: 'number', description: 'Amount in USD' },
         category: { type: 'string', description: 'Office Supplies | Travel | Software | Marketing | Meals | Utilities | Other' },
@@ -947,13 +947,25 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'automate_expense_entry',
+    description: 'Autonomous Accounting: Use AI to parse a receipt image description or raw text and automatically record an expense.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        raw_data: { type: 'string', description: 'Raw text from a receipt, email, or user description of a purchase.' },
+      },
+      required: ['raw_data'],
+    },
+  },
+  {
     name: 'get_revenue_summary',
     description:
       'Read-only: Totals plus paid/outstanding split by calendar month and by client_id (from invoices).',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         period: { type: 'string', description: 'Optional hint: monthly | quarterly | yearly (grouping uses invoice created_at month).' },
       },
       required: [],
@@ -966,7 +978,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         contract_type: { type: 'string', description: 'NDA | MSA | SOW | Service Agreement | Consulting Agreement | Freelance Contract' },
         client_name: { type: 'string', description: 'Name of the client or counterparty' },
         key_terms: { type: 'string', description: 'Describe the scope, payment terms, duration, deliverables, and any special conditions' },
@@ -980,8 +992,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        client_id: { type: 'string', description: 'Optional UUID of the client from get_clients' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        client_id: { type: 'string', description: 'Optional reference of the client from get_clients' },
         title: { type: 'string', description: 'Document Title' },
         content: { type: 'string', description: 'The full Markdown or HTML content of the contract' },
         type: { type: 'string', description: 'nda | msa | sow | service_agreement | freelance_contract' },
@@ -1021,7 +1033,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         limit: { type: 'number' },
       },
       required: [],
@@ -1033,8 +1045,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        client_id: { type: 'string', description: 'Client UUID from get_clients.' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        client_id: { type: 'string', description: 'Client reference from get_clients.' },
         client_email: { type: 'string', description: 'Optional email fallback when client_id is unknown.' },
         limit: { type: 'number', description: 'Max records (default 50, max 200).' },
       },
@@ -1047,8 +1059,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        user_id: { type: 'string', description: 'Optional user UUID. Defaults to MCP connection user.' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        user_id: { type: 'string', description: 'Optional user reference. Defaults to connection user.' },
         folder_id: { type: 'string', description: 'Zoho folderId. Omit to return folders.' },
         search_query: { type: 'string', description: 'If provided, perform Zoho mailbox search.' },
         limit: { type: 'number', description: 'Max records (default 20, max 100).' },
@@ -1063,7 +1075,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         user_id: { type: 'string' },
         to: { type: 'string' },
         subject: { type: 'string' },
@@ -1080,7 +1092,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         user_id: { type: 'string' },
         from_date: { type: 'string', description: 'ISO date/datetime lower bound.' },
         to_date: { type: 'string', description: 'ISO date/datetime upper bound.' },
@@ -1094,7 +1106,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         client_id: { type: 'string' },
         limit: { type: 'number' },
       },
@@ -1107,7 +1119,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         industry: { type: 'string' },
         location: { type: 'string' },
         sales_stage: { type: 'string' },
@@ -1126,7 +1138,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         client_id: { type: 'string' },
         metadata: { type: 'object' },
       },
@@ -1139,7 +1151,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         task_id: { type: 'string' },
         depends_on_task_id: { type: 'string' },
       },
@@ -1152,7 +1164,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         task_id: { type: 'string' },
         frequency: { type: 'string', description: 'Daily | Weekly | Monthly | Yearly' },
         interval: { type: 'number' },
@@ -1169,7 +1181,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         project_id: { type: 'string' },
       },
       required: ['project_id'],
@@ -1181,7 +1193,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         invoice_id: { type: 'string' },
       },
       required: ['invoice_id'],
@@ -1193,7 +1205,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         invoice_id: { type: 'string' },
         amount: { type: 'number' },
         paid_at: { type: 'string' },
@@ -1208,7 +1220,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         from_date: { type: 'string' },
         to_date: { type: 'string' },
       },
@@ -1221,7 +1233,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         event_name: { type: 'string' },
         target: { type: 'string', description: 'playbook or webhook target identifier.' },
         config: { type: 'object' },
@@ -1253,7 +1265,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         client_ids: { type: 'array', items: { type: 'string' } },
         sales_stage: { type: 'string' },
         dry_run: { type: 'boolean' },
@@ -1267,7 +1279,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         tasks: { type: 'array', items: { type: 'object' } },
         dry_run: { type: 'boolean' },
       },
@@ -1280,7 +1292,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         client_ids: { type: 'array', items: { type: 'string' } },
         subject: { type: 'string' },
         html: { type: 'string' },
@@ -1296,7 +1308,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         status: { type: 'string', description: 'draft | sent | accepted | declined' },
       },
       required: [],
@@ -1308,10 +1320,10 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         name: { type: 'string', description: 'Quote title' },
-        contact_id: { type: 'string', description: 'Optional contact/client UUID' },
-        deal_id: { type: 'string', description: 'Optional deal UUID' },
+        contact_id: { type: 'string', description: 'Optional contact/client reference' },
+        deal_id: { type: 'string', description: 'Optional deal reference' },
         currency: { type: 'string', description: 'Default USD' },
         valid_for_days: { type: 'number', description: 'Default 30' },
         notes: { type: 'string' },
@@ -1327,8 +1339,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        quote_id: { type: 'string', description: 'UUID from get_quotes' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        quote_id: { type: 'string', description: 'Reference from get_quotes' },
         name: { type: 'string' },
         status: { type: 'string', description: 'draft | sent | viewed | accepted | rejected | expired | converted' },
         notes: { type: 'string' },
@@ -1345,8 +1357,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        message_id: { type: 'string', description: 'Message UUID from inbox/history' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        message_id: { type: 'string', description: 'Message reference from inbox/history' },
         business_name: { type: 'string', description: 'Optional override business/contact name' },
         source: { type: 'string', description: 'Default Inbound Message' },
       },
@@ -1359,8 +1371,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        deal_id: { type: 'string', description: 'Deal UUID from get_deals' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        deal_id: { type: 'string', description: 'Deal reference from get_deals' },
       },
       required: ['deal_id'],
     },
@@ -1371,7 +1383,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         command: { type: 'string', description: 'Natural language command captured from voice' },
       },
       required: ['command'],
@@ -1384,10 +1396,10 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         action: { type: 'string', description: 'Short action key, e.g. mcp_note | integration_sync | user_request' },
         entity_type: { type: 'string', description: 'Category, e.g. mcp | lead | integration' },
-        entity_id: { type: 'string', description: 'Optional UUID of related entity' },
+        entity_id: { type: 'string', description: 'Optional reference of related entity' },
         summary: { type: 'human-readable one-line summary' },
         payload: {
           type: 'object',
@@ -1403,7 +1415,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         monthly_goal: { type: 'string', description: 'The strategic objective for this month (e.g. "Lead gen for SaaS product")' },
         topics: { type: 'array', items: { type: 'string' }, description: 'Optional list of specific topics to cover. If omitted, the AI will decide based on the goal.' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin (default: both)' }
@@ -1413,11 +1425,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_post_with_ai_image',
-    description: 'Autonomous Creator: Generates a professional AI image, saves it to permanent storage, writes a professional article using Grok, and schedules it. Supports OpenAI, Grok (xAI), or externally provided images (e.g. from Manus).',
+    description: 'Autonomous Creator: Generates a professional AI image, saves it to permanent storage, writes a professional article and schedules it.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         topic: { type: 'string' },
         image_prompt: { type: 'string', description: 'Visual style for the AI image.' },
         image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
@@ -1434,7 +1446,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         limit: { type: 'number' }
       },
       required: [],
@@ -1442,12 +1454,12 @@ export const MCP_TOOLS = [
   },
   {
     name: 'autonomous_reply',
-    description: 'Autonomous Assistant: Drafts or sends a professional, emoji-free reply to a lead or client message using the best-suited AI model (Claude for strategy, Grok for speed).',
+    description: 'Autonomous Assistant: Drafts or sends a professional, emoji-free reply to a lead or client message using the best-suited AI model.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
-        entity_id: { type: 'string', description: 'The UUID of the message or thread' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        entity_id: { type: 'string', description: 'The reference of the message or thread' },
         platform: { type: 'string', description: 'email | facebook | linkedin' },
         draft_only: { type: 'boolean', description: 'If true, saves as a draft for your review. If false, sends immediately.' }
       },
@@ -1460,7 +1472,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         booking_type_id: { type: 'string' },
         start_time: { type: 'string', description: 'ISO datetime' },
         end_time: { type: 'string', description: 'ISO datetime' },
@@ -1479,7 +1491,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         plan_id: { type: 'string', description: 'starter | pro | enterprise' },
         price_id: { type: 'string' },
         admin_email: { type: 'string' },
@@ -1495,7 +1507,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         event_type: { type: 'string' },
         project_id: { type: 'string' },
         client_id: { type: 'string' },
@@ -1513,7 +1525,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         title: { type: 'string' },
         description: { type: 'string' },
         start_time: { type: 'string', description: 'ISO datetime' },
@@ -1530,7 +1542,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         event_type: { type: 'string' },
         from_time: { type: 'string', description: 'ISO datetime lower bound for start_time' },
         to_time: { type: 'string', description: 'ISO datetime upper bound for start_time' },
@@ -1545,7 +1557,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         document_url: { type: 'string' },
         document_text: { type: 'string' },
         document_type: { type: 'string', description: 'contract | proposal | invoice | nda | other' },
@@ -1555,11 +1567,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'start_invoice_lifecycle',
-    description: 'Vercel Workflows: Trigger the full durable invoice lifecycle (PDF -> Send -> Reminders -> Overdue).',
+    description: 'Autonomous Workflows: Trigger the full durable invoice lifecycle (PDF -> Send -> Reminders -> Overdue).',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         invoice_id: { type: 'string' }
       },
       required: ['invoice_id'],
@@ -1567,11 +1579,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'start_contract_lifecycle',
-    description: 'Vercel Workflows: Trigger the durable contract lifecycle (Signature -> Project -> Task Creation -> Invoicing).',
+    description: 'Autonomous Workflows: Trigger the durable contract lifecycle (Signature -> Project -> Task Creation -> Invoicing).',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         contract_id: { type: 'string' }
       },
       required: ['contract_id'],
@@ -1579,11 +1591,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'start_lead_campaign',
-    description: 'Vercel Workflows: Trigger lead finding automation (Scrape -> Enrich -> Score -> Inject).',
+    description: 'Autonomous Workflows: Trigger lead finding automation (Scrape -> Enrich -> Score -> Inject).',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         query: { type: 'string' },
         location: { type: 'string' }
       },
@@ -1592,11 +1604,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'start_lead_nurture',
-    description: 'Vercel Workflows: Trigger durable lead nurturing outreach sequence.',
+    description: 'Autonomous Workflows: Trigger durable lead nurturing outreach sequence.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         lead_id: { type: 'string' }
       },
       required: ['lead_id'],
@@ -1608,7 +1620,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         deal_id: { type: 'string' },
         stage: { type: 'string' }
       },
@@ -1621,7 +1633,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         post_id: { type: 'string' }
       },
       required: ['post_id'],
@@ -1633,7 +1645,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         campaign_id: { type: 'string' }
       },
       required: ['campaign_id'],
@@ -1645,7 +1657,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         project_id: { type: 'string' }
       },
       required: ['project_id'],
@@ -1657,7 +1669,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         meeting_id: { type: 'string' }
       },
       required: ['meeting_id'],
@@ -1669,7 +1681,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string' },
+        tenant_id: { type: 'string', description: 'Business Account Context' },
         user_id: { type: 'string' }
       },
       required: ['user_id'],

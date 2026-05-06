@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
     try {
-        const { to, subject, html, text, message, from, fromName, tenantId, userId, replyTo, attachments } = payload;
+        const { to, subject, html, text, message, from, fromName, tenantId, userId, replyTo, attachments, isPlatformNotification } = payload;
         const normalizedSubject = normalizeEmailSubject(subject);
         const bodyText = text || message;
         const normalizedText = ensureFooter(bodyText || '');
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
             tenantId: tenantId || null,
             preferredUserId: lookupId || null,
             fallbackToEnv: true,
+            forcePlatform: Boolean(isPlatformNotification),
         });
         const apiKey = resolved?.apiKey || '';
         if (resolved?.provider) {

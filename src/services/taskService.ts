@@ -270,13 +270,13 @@ export const taskService = {
 
             // Notify assigned user
             if (taskData.assignedTo && taskData.assignedTo !== userId) {
-                await notificationService.sendSmartNotification({
+                await notificationService.sendPlatformNotification({
                     userId: taskData.assignedTo,
-                    type: 'task',
                     title: 'New Task Assigned',
-                    rawContext: `Task: ${taskData.title}. Description: ${taskData.description || 'No description provided.'}`,
+                    message: `You have been assigned a new task: ${taskData.title}. Priority: ${taskData.priority || 'medium'}.`,
                     link: `/dashboard/tasks/${data.id}`,
-                    priority: taskData.priority || 'medium'
+                    priority: taskData.priority || 'medium',
+                    tenantId
                 });
 
                 // Send Email Notification
@@ -427,13 +427,13 @@ export const taskService = {
             // Notify assigned user of status change if someone else updated it
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (updates.status && data.assigned_to && currentUser && data.assigned_to !== currentUser.id) {
-                await notificationService.sendSmartNotification({
+                await notificationService.sendPlatformNotification({
                     userId: data.assigned_to,
-                    type: 'task',
                     title: 'Task Status Updated',
-                    rawContext: `The task "${data.title}" has been moved to ${data.status.replace('_', ' ')}. Check if any further action is required.`,
+                    message: `The task "${data.title}" has been moved to ${data.status.replace('_', ' ')}. Check if any further action is required.`,
                     link: `/dashboard/tasks/${data.id}`,
-                    priority: data.priority
+                    priority: data.priority,
+                    tenantId
                 });
 
                 // Send Email Notification for status change (especially completion)
