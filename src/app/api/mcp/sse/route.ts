@@ -7,7 +7,7 @@ import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
 
-const MCP_PROTOCOL_VERSION = '2025-06-18';
+const MCP_PROTOCOL_VERSION = '2025-11-25';
 
 export async function GET(req: NextRequest) {
   const cors = handleCorsApp(req);
