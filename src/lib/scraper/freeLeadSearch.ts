@@ -290,25 +290,34 @@ export async function runLeadStep(input: {
 
   if (input.step === 'init') {
     try {
-      const [osmRes, hereRes] = await Promise.allSettled([
+      const [osmRes, hereRes, firecrawlRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
         fetchHERE(input.niche, input.location, LEADS_PER_SEARCH),
+        import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${input.niche} in ${input.location}`, LEADS_PER_SEARCH)),
+        input.usePlaywright && hasRemoteBrowserConfigured() 
+          ? fetchSerpLeadsViaBrowser(input.niche, input.location, LEADS_PER_SEARCH) 
+          : Promise.resolve([])
       ]);
 
       if (osmRes.status === 'fulfilled') {
         const verified = osmRes.value.filter((r) => hasContactInfo(r));
         partial.push(...enrichWithContactFlag(verified));
         sourceStats.osm = verified.length;
-      } else {
-        sourceErrors.osm = 'OSM temporarily unavailable';
       }
-
       if (hereRes.status === 'fulfilled') {
         const verified = hereRes.value.filter((r) => hasContactInfo(r));
         partial.push(...enrichWithContactFlag(verified));
         sourceStats.here = verified.length;
-      } else {
-        sourceErrors.here = 'HERE temporarily unavailable';
+      }
+      if (firecrawlRes.status === 'fulfilled') {
+        const verified = firecrawlRes.value.filter((r) => hasContactInfo(r));
+        partial.push(...enrichWithContactFlag(verified));
+        sourceStats.firecrawl = verified.length;
+      }
+      if (browserRes.status === 'fulfilled') {
+        const verified = (browserRes.value as any[]).filter((r) => hasContactInfo(r));
+        partial.push(...enrichWithContactFlag(verified));
+        sourceStats.browser = verified.length;
       }
     } catch {
       console.warn('[Scraper:Job] Primary sources failed');
@@ -327,7 +336,7 @@ export async function runLeadStep(input: {
     }
     return {
       nextStep: 'fallbacks',
-      progress: 45,
+      progress: 60,
       partialResults: dedupeAndSort(partial, input.sortBy),
       finalResults: [],
       sourceStats,
@@ -339,9 +348,8 @@ export async function runLeadStep(input: {
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
     
-    const [googleRes, firecrawlRes] = await Promise.allSettled([
-      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm),
-      import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${input.niche} in ${input.location}`, need))
+    const [googleRes] = await Promise.allSettled([
+      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm)
     ]);
 
     if (googleRes.status === 'fulfilled') {
@@ -356,17 +364,9 @@ export async function runLeadStep(input: {
         sourceErrors.google = 'Google Places unavailable';
       }
     }
-
-    if (firecrawlRes.status === 'fulfilled') {
-      const verified = firecrawlRes.value.filter((r) => hasContactInfo(r));
-      partial.push(...enrichWithContactFlag(verified));
-      sourceStats.firecrawl = verified.length;
-    } else {
-      sourceErrors.firecrawl = 'Firecrawl AI unavailable';
-    }
     return {
-      nextStep: 'browser',
-      progress: 75,
+      nextStep: 'finalize',
+      progress: 90,
       partialResults: dedupeAndSort(partial, input.sortBy),
       finalResults: [],
       sourceStats,

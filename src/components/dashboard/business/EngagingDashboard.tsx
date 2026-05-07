@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
+import DailySummarySystem from './DailySummarySystem';
 
 // ─── Greeting Helpers ────────────────────────────────────────────────
 function getGreeting(): { text: string; Icon: React.FC<any> } {
@@ -171,6 +172,16 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     Open Guide
                     <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
+            </motion.div>
+
+            {/* Daily Summary System */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden"
+            >
+                <DailySummarySystem />
             </motion.div>
 
             {/* Quick Actions */}

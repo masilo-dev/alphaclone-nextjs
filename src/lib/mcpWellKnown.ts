@@ -18,6 +18,8 @@ function getDiscoveryHeaders() {
     'Pragma': 'no-cache',
     'Expires': '0',
     'Vary': 'Origin, Access-Control-Request-Headers',
+    'x-mcp-version': '2025-06-18',
+    'x-protocol-version': '2025-06-18',
   };
 }
 
@@ -29,6 +31,7 @@ export function createProtectedResourceResponse(req: NextRequest) {
     bearer_methods_supported: ['header', 'query'],
     resource_documentation: `${baseUrl}/api/mcp/health`,
     scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    resource_indicators_supported: true,
   };
 
   return new Response(JSON.stringify(data), {
