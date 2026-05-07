@@ -115,7 +115,17 @@ export async function POST(req: NextRequest) {
       );
     }
     if (error) return clientErrorResponse(error, { request: req, scope: 'scraper/jobs/create.POST' });
-    return NextResponse.json({ success: true, job });
+    
+    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads.map(({ source, ...rest }) => rest) : []);
+    const sanitizedJob = {
+      ...job,
+      source_stats: {},
+      source_errors: null,
+      partial_results: sanitizeLeads(job.partial_results || []),
+      final_results: sanitizeLeads(job.final_results || []),
+    };
+
+    return NextResponse.json({ success: true, job: sanitizedJob });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'scraper/jobs/create.POST' });
   }
