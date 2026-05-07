@@ -1,5 +1,6 @@
 import Browserbase from '@browserbasehq/sdk';
 import { chromium, Browser, Page } from 'playwright-core';
+import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer-core';
 
 /**
  * Universal Browser Manager for Lead Acquisition
@@ -162,5 +163,60 @@ export class BrowserManager {
       process.env.BROWSERBASE_API_KEY?.trim() ||
         process.env.BROWSER_WS_ENDPOINT?.trim()
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Puppeteer variant — second engine, different fingerprint vs Playwright
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Same as createPage() but uses puppeteer-core instead of playwright-core.
+   * Connects to Browserbase via CDP. Returns { page, close }.
+   */
+  static async createPuppeteerPage(): Promise<{ page: PuppeteerPage; close: () => Promise<void> }> {
+    const apiKey = process.env.BROWSERBASE_API_KEY?.trim();
+    const wsEndpoint = process.env.BROWSER_WS_ENDPOINT?.split(',')[0]?.trim();
+
+    let pBrowser: PuppeteerBrowser;
+    let sessionId: string | null = null;
+    let bbApiKey: string | null = null;
+
+    if (apiKey) {
+      const bb = new Browserbase({ apiKey });
+      const projectId = process.env.BROWSERBASE_PROJECT_ID?.trim();
+      const session = await bb.sessions.create({
+        projectId: projectId || undefined,
+        timeout: 900,
+      });
+      sessionId = session.id;
+      bbApiKey = apiKey;
+      pBrowser = await puppeteer.connect({ browserWSEndpoint: session.connectUrl });
+      console.log(`[BrowserManager:Puppeteer] Browserbase session ${session.id}`);
+    } else if (wsEndpoint) {
+      pBrowser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint });
+    } else {
+      // Dev fallback
+      if (process.env.VERCEL) throw new Error('No remote browser for Puppeteer on Vercel');
+      pBrowser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+    }
+
+    const page = await pBrowser.newPage();
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+    );
+    await page.setViewport({ width: 1280, height: 800 });
+
+    const close = async (): Promise<void> => {
+      await page.close().catch(() => null);
+      if (sessionId && bbApiKey) {
+        try {
+          const bb = new Browserbase({ apiKey: bbApiKey });
+          await bb.sessions.update(sessionId, { status: 'REQUEST_RELEASE' });
+        } catch { /* already completed */ }
+      }
+      await pBrowser.close().catch(() => null);
+    };
+
+    return { page, close };
   }
 }
