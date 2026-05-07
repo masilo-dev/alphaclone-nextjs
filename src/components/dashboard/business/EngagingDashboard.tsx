@@ -17,7 +17,11 @@ import {
     Rocket,
     Globe,
     Linkedin,
-    Loader2
+    Loader2,
+    TrendingUp,
+    Users as UsersIcon,
+    DollarSign,
+    Target
 } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
@@ -147,6 +151,89 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         New Project
                     </button>
                 </div>
+            </div>
+
+            {/* KPI Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/30 transition-colors group relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-teal-500/10 transition-colors" />
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                            <DollarSign className="w-6 h-6 text-teal-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-400">Total Revenue</p>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
+                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(stats?.totalRevenue || 0)}
+                            </h3>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-colors group relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                            <UsersIcon className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-400">Total Clients</p>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
+                                {stats?.clientCount || 0}
+                            </h3>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-purple-500/30 transition-colors group relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-purple-500/10 transition-colors" />
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                            <Target className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-400">Total Leads</p>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
+                                {stats?.totalLeads || 0}
+                            </h3>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.25 }}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-orange-500/30 transition-colors group relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-orange-500/10 transition-colors" />
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                            <TrendingUp className="w-6 h-6 text-orange-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-400">Forecast</p>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
+                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(stats?.salesForecast || 0)}
+                            </h3>
+                        </div>
+                    </div>
+                </motion.div>
             </div>
 
             {/* Onboarding Guide Link */}
