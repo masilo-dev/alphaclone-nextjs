@@ -13,7 +13,7 @@ export interface LeadResult {
   address?: string;
   rating?: number;
   category?: string;
-  source: 'yelp' | 'here' | 'osm' | 'browser' | 'google';
+  source: 'here' | 'osm' | 'browser' | 'google';
   lat?: number;
   lng?: number;
   hasContact: boolean;
@@ -55,37 +55,6 @@ export function dedupeAndSort(results: LeadResult[], sortBy: string): LeadResult
   if (sortBy === 'rating_desc') return unique.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   if (sortBy === 'rating_asc') return unique.sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0));
   return unique;
-}
-
-async function fetchYelp(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
-  const apiKey = process.env.YELP_API_KEY;
-  if (!apiKey || apiKey.startsWith('your_')) throw new Error('Yelp API key not configured');
-  const params = new URLSearchParams({
-    term: niche,
-    location: location || 'United States',
-    limit: String(Math.min(limit, 50)),
-    sort_by: 'rating',
-  });
-  const res = await fetch(`https://api.yelp.com/v3/businesses/search?${params}`, {
-    headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
-    signal: AbortSignal.timeout(9000),
-  });
-  if (!res.ok) throw new Error(`Yelp API error: ${res.status}`);
-  const data = await res.json();
-  return (data.businesses || []).map((b: any): LeadResult => ({
-    business_name: b.name,
-    website: b.url || '',
-    snippet: b.categories?.[0]?.title || 'Business',
-    phone: b.display_phone || b.phone || '',
-    email: '',
-    address: [b.location?.address1, b.location?.city, b.location?.state, b.location?.country].filter(Boolean).join(', '),
-    rating: b.rating,
-    category: b.categories?.[0]?.title || '',
-    source: 'yelp',
-    lat: b.coordinates?.latitude,
-    lng: b.coordinates?.longitude,
-    hasContact: false,
-  }));
 }
 
 async function fetchHERE(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
@@ -315,7 +284,7 @@ export async function runLeadStep(input: {
   sourceErrors: Record<string, string>;
   fallbackUsed: boolean;
 }> {
-  const sourceStats = { osm: 0, google: 0, yelp: 0, here: 0, browser: 0, ...input.sourceStats };
+  const sourceStats = { osm: 0, google: 0, here: 0, browser: 0, ...input.sourceStats };
   const sourceErrors = { ...input.sourceErrors };
   const partial = [...input.partialResults];
 
@@ -370,18 +339,9 @@ export async function runLeadStep(input: {
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
     
-    const [yelpRes, googleRes] = await Promise.allSettled([
-      fetchYelp(input.niche, input.location, need),
+    const [googleRes] = await Promise.allSettled([
       fetchGooglePlaces(input.niche, input.location, need, input.radiusKm),
     ]);
-
-    if (yelpRes.status === 'fulfilled') {
-      const verified = yelpRes.value.filter((r) => hasContactInfo(r));
-      partial.push(...enrichWithContactFlag(verified));
-      sourceStats.yelp = verified.length;
-    } else {
-      sourceErrors.yelp = 'Yelp unavailable';
-    }
 
     if (googleRes.status === 'fulfilled') {
       const verified = googleRes.value.filter((r) => hasContactInfo(r));

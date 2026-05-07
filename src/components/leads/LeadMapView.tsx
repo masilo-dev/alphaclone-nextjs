@@ -355,7 +355,6 @@ export default function LeadMapView({
           )}
         </div>
         <p className="text-slate-400 uppercase tracking-wider mb-0.5">Sources</p>
-        <span className="text-orange-400">Yelp</span>
         <span className="text-blue-400">HERE Maps</span>
         <span className="text-emerald-400">OpenStreetMap</span>
       </div>

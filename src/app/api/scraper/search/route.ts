@@ -64,42 +64,6 @@ function enrichWithContactFlag(leads: Array<Omit<LeadResult, 'hasContact'> & Par
   return leads.map((l) => ({ ...l, hasContact: hasContactInfo(l) }));
 }
 
-// ─── Strategy 1 (Fallback): Yelp Fusion ───────────────────────────────────────
-async function fetchYelp(niche: string, location: string, limit = 20, sortBy: string): Promise<LeadResult[]> {
-  const apiKey = process.env.YELP_API_KEY;
-  if (!apiKey || apiKey.startsWith('your_')) throw new Error('Yelp API key not configured');
-
-  const params = new URLSearchParams({
-    term: niche,
-    location: location || 'United States',
-    limit: String(Math.min(limit, 50)),
-    sort_by: 'rating',
-  });
-
-  const res = await fetch(`https://api.yelp.com/v3/businesses/search?${params}`, {
-    headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
-    signal: AbortSignal.timeout(12000),
-  });
-
-  if (!res.ok) throw new Error(`Yelp API error: ${res.status} ${res.statusText}`);
-  const data = await res.json();
-
-  return (data.businesses || []).map((b: any): LeadResult => ({
-    business_name: b.name,
-    website:       b.url || '',
-    snippet:       b.categories?.[0]?.title || 'Business',
-    phone:         b.display_phone || b.phone || '',
-    email:         '',   // Yelp doesn't provide email
-    address:       [b.location?.address1, b.location?.city, b.location?.state, b.location?.country].filter(Boolean).join(', '),
-    rating:        b.rating,
-    category:      b.categories?.[0]?.title || '',
-    source:        'yelp',
-    lat:           b.coordinates?.latitude,
-    lng:           b.coordinates?.longitude,
-    hasContact:    false, // filled by enrichWithContactFlag
-  }));
-}
-
 // ─── Strategy 2 (Fallback): HERE Maps Places ──────────────────────────────────
 async function fetchHERE(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
   const apiKey = process.env.HERE_API_KEY;
@@ -525,30 +489,17 @@ export async function POST(request: Request) {
       console.warn('[Scraper] Primary sources failed:', err);
     }
 
-    // ── Step 3: Yelp if still short ────────────────────────────────────────────
-    const needMore = results.length < LEADS_PER_SEARCH;
-    if (needMore && !isBudgetExceeded()) {
-      console.log(`[Scraper] After OSM+HERE: ${results.length} leads — activating Yelp fallback…`);
-      const yelpRes = await fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy).catch(() => []);
-      
-      if (yelpRes.length > 0) {
-        const enriched = enrichWithContactFlag(yelpRes);
-        results.push(...enriched);
-        sourceCounts.yelp = enriched.length;
-        console.log(`[Scraper] Yelp: ${enriched.length} leads`);
-      }
-    }
-
-    // ── Step 4: Google Places (FINAL fallback if still short) ──────────────────
-    const needFinalFallback = results.length < LEADS_PER_SEARCH;
-    if (needFinalFallback && !isBudgetExceeded()) {
+    // ── Step 2: Google Places (FALLBACK if still short) ──────────────────
+    const needFallback = results.length < LEADS_PER_SEARCH;
+    if (needFallback && !isBudgetExceeded()) {
+      console.log(`[Scraper] After OSM+HERE: ${results.length} leads — activating Google fallback…`);
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
         const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
         const enriched = enrichWithContactFlag(googleRows);
         results.push(...enriched);
         sourceCounts.google = enriched.length;
-        console.log(`[Scraper] Google Places (Step 4): ${enriched.length} leads`);
+        console.log(`[Scraper] Google Places (Step 2): ${enriched.length} leads`);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
