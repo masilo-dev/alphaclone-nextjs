@@ -37,9 +37,7 @@ function firstEmailFromText(text: string): string {
 }
 
 export function hasRemoteBrowserConfigured(): boolean {
-  const bb = process.env.BROWSERBASE_API_KEY?.trim();
-  const ws = process.env.BROWSER_WS_ENDPOINT?.trim();
-  return Boolean(bb || ws);
+  return BrowserManager.hasRemoteConfigured();
 }
 
 /**
@@ -55,8 +53,7 @@ export async function fetchSerpLeadsViaBrowser(
   const q = options?.searchQuery?.trim() || `${niche} ${location}`.trim() || niche;
   const searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(options?.searchQuery?.trim() || `${q} business contact phone`)}`;
 
-  const { page } = await BrowserManager.createPage();
-  const ctx = page.context();
+  const { page, close } = await BrowserManager.createPage();
 
   try {
     await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 22000 });
@@ -119,6 +116,6 @@ export async function fetchSerpLeadsViaBrowser(
 
     return out;
   } finally {
-    await ctx.close().catch(() => null);
+    await close().catch(() => null);
   }
 }

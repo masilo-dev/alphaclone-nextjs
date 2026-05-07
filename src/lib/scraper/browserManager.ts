@@ -4,127 +4,163 @@ import { chromium, Browser, Page } from 'playwright-core';
 /**
  * Universal Browser Manager for Lead Acquisition
  *
- * Supports:
- * - Multi-provider load balancing (e.g., Browserless & BrowserCat)
- * - Browserbase managed sessions (BROWSERBASE_API_KEY)
- * - Automatic Failover (tries next provider if one fails or hits limits)
- * - Local Chromium fallback for development
+ * Serverless-safe: creates a fresh session per call (no singleton).
+ *
+ * Priority order:
+ *  1. Browserbase managed session (BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID)
+ *  2. Generic CDP endpoint (BROWSER_WS_ENDPOINT) — comma-separated for load balancing
+ *  3. Local Chromium — development only (never runs on Vercel)
  */
 
+export interface BrowserSession {
+  page: Page;
+  /** Call this when you are done — closes context and releases the Browserbase session */
+  close: () => Promise<void>;
+}
+
+async function launchViaBrowserbase(): Promise<{ browser: Browser; sessionId: string }> {
+  const apiKey = process.env.BROWSERBASE_API_KEY?.trim();
+  const projectId = process.env.BROWSERBASE_PROJECT_ID?.trim();
+
+  if (!apiKey) throw new Error('BROWSERBASE_API_KEY not set');
+
+  const bb = new Browserbase({ apiKey });
+  const session = await bb.sessions.create({
+    projectId: projectId || undefined,
+    timeout: 900, // 15 min max — Vercel functions cut off at ~800 s on Pro
+  });
+
+  const browser = await chromium.connectOverCDP(session.connectUrl, {
+    timeout: 60_000,
+  });
+
+  console.log(`[BrowserManager] Browserbase session ${session.id}`);
+  return { browser, sessionId: session.id };
+}
+
+async function launchViaCDP(endpoints: string[]): Promise<Browser> {
+  const shuffled = [...endpoints].sort(() => Math.random() - 0.5);
+  for (const url of shuffled) {
+    try {
+      const browser = await chromium.connectOverCDP(url, { timeout: 60_000 });
+      console.log(`[BrowserManager] Connected to remote CDP: ${url}`);
+      return browser;
+    } catch (e: any) {
+      console.warn(`[BrowserManager] CDP endpoint failed (${url}): ${e.message}`);
+    }
+  }
+  throw new Error('All remote CDP endpoints failed');
+}
+
+async function launchLocal(): Promise<Browser> {
+  if (process.env.VERCEL) {
+    throw new Error(
+      'Local browser fallback is disabled on Vercel. ' +
+        'Set BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID.'
+    );
+  }
+  console.log('[BrowserManager] Using local Chromium (dev only)');
+  return chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 export class BrowserManager {
-  private static browser: Browser | null = null;
-  private static browserbaseSessionId: string | null = null;
+  /**
+   * Creates a **per-request** browser session and returns a page + a close()
+   * function that properly releases all resources including the Browserbase
+   * session.
+   *
+   * Usage:
+   *   const { page, close } = await BrowserManager.createPage();
+   *   try { ... } finally { await close(); }
+   */
+  static async createPage(): Promise<BrowserSession> {
+    const wsEndpointString = process.env.BROWSER_WS_ENDPOINT || '';
+    const cdpEndpoints = wsEndpointString
+      .split(',')
+      .map((u) => u.trim())
+      .filter(Boolean);
 
-  static async getBrowser(): Promise<Browser> {
-    if (this.browser?.isConnected()) {
-      return this.browser;
-    }
-    if (this.browser) {
-      await this.browser.close().catch(() => null);
-      this.browser = null;
-      this.browserbaseSessionId = null;
-    }
+    let browser: Browser;
+    let sessionId: string | null = null;
+    let apiKey: string | null = null;
 
-    const endpointString = process.env.BROWSER_WS_ENDPOINT || '';
-    const endpoints = endpointString.split(',').map(u => u.trim()).filter(Boolean);
-    
-    // 1. Remote Multi-Provider Strategy (shuffled for load balancing)
-    if (endpoints.length > 0) {
-      const shuffledEndpoints = endpoints.sort(() => Math.random() - 0.5);
-      console.log(`[BrowserManager] Initializing connection to ${shuffledEndpoints.length} providers...`);
-      
-      for (const url of shuffledEndpoints) {
-        try {
-          const providerName = url.includes('browserless') ? 'Browserless' : 
-                               url.includes('browsercat') ? 'BrowserCat' : 'Remote Hub';
-          
-          console.log(`[BrowserManager] Orchestrating connection: ${providerName}...`);
-          
-          // Using 60s timeout for remote cluster establishment
-          this.browser = await chromium.connectOverCDP(url, { timeout: 60000 });
-          console.log(`[BrowserManager] Active Engine: ${providerName}`);
-          return this.browser;
-        } catch (e: any) {
-          console.warn(`[BrowserManager] Provider ${url} connection failed: ${e.message}. Trying next...`);
+    // 1. Browserbase (primary for Vercel)
+    if (process.env.BROWSERBASE_API_KEY?.trim()) {
+      try {
+        const result = await launchViaBrowserbase();
+        browser = result.browser;
+        sessionId = result.sessionId;
+        apiKey = process.env.BROWSERBASE_API_KEY.trim();
+      } catch (e: any) {
+        console.warn(`[BrowserManager] Browserbase failed, trying CDP: ${e.message}`);
+        if (cdpEndpoints.length === 0) {
+          // No CDP either — fall through to local
+          browser = await launchLocal();
+        } else {
+          browser = await launchViaCDP(cdpEndpoints);
         }
       }
-      console.warn('[BrowserManager] All remote providers exhausted/down.');
+    } else if (cdpEndpoints.length > 0) {
+      // 2. Generic CDP (Browserless, BrowserCat, etc.)
+      browser = await launchViaCDP(cdpEndpoints);
+    } else {
+      // 3. Local dev fallback
+      browser = await launchLocal();
     }
 
-    // 1b. Browserbase (managed CDP session)
-    const browserbaseKey = process.env.BROWSERBASE_API_KEY?.trim();
-    if (browserbaseKey) {
-      try {
-        const bb = new Browserbase({ apiKey: browserbaseKey });
-        const projectId = process.env.BROWSERBASE_PROJECT_ID?.trim();
-        const session = await bb.sessions.create({
-          projectId: projectId || undefined,
-          timeout: 900,
-        });
-        this.browserbaseSessionId = session.id;
-        this.browser = await chromium.connectOverCDP(session.connectUrl, { timeout: 60000 });
-        console.log(`[BrowserManager] Browserbase session ${session.id}`);
-        return this.browser;
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.warn(`[BrowserManager] Browserbase connection failed: ${msg}`);
-        this.browserbaseSessionId = null;
-        this.browser = null;
-      }
-    }
-
-    // 2. Local Fallback Strategy (Dev only)
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.VERCEL;
-    
-    if (!isDev) {
-      const msg =
-        'Fatal: Local browser fallback is disabled in production. Set BROWSERBASE_API_KEY, BROWSER_WS_ENDPOINT, or another remote CDP endpoint.';
-      console.error(`[BrowserManager] ${msg}`);
-      throw new Error(msg);
-    }
-
-    console.log('[BrowserManager] Reverting to Local Browser Cluster...');
-    try {
-      this.browser = await chromium.launch({ 
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'] 
-      });
-      return this.browser;
-    } catch (e: any) {
-      const msg = 'Fatal: No browser engine cluster available (Remote or Local)';
-      console.error(`[BrowserManager] ${msg}:`, e.message);
-      throw new Error(msg);
-    }
-
-  }
-
-  static async createPage(): Promise<{ page: Page, browser: Browser }> {
-    const browser = await this.getBrowser();
     const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      viewport: { width: 1280, height: 800 }
+      userAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+        '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      viewport: { width: 1280, height: 800 },
     });
     const page = await context.newPage();
-    return { page, browser };
+
+    const close = async (): Promise<void> => {
+      // 1. Close the context first (closes all pages)
+      await context.close().catch(() => null);
+
+      // 2. Release the Browserbase session so it doesn't count against your quota
+      if (sessionId && apiKey) {
+        try {
+          const bb = new Browserbase({ apiKey });
+          await bb.sessions.update(sessionId, { status: 'REQUEST_RELEASE' });
+          console.log(`[BrowserManager] Released Browserbase session ${sessionId}`);
+        } catch {
+          /* session may already be auto-completed */
+        }
+      }
+
+      // 3. Close the browser connection
+      await browser.close().catch(() => null);
+    };
+
+    return { page, close };
   }
 
-  static async close() {
-    const sessionId = this.browserbaseSessionId;
-    this.browserbaseSessionId = null;
-    if (sessionId && process.env.BROWSERBASE_API_KEY?.trim()) {
-      try {
-        const bb = new Browserbase({ apiKey: process.env.BROWSERBASE_API_KEY.trim() });
-        await bb.sessions.update(sessionId, { status: 'REQUEST_RELEASE' });
-      } catch {
-        /* session may already be completed */
-      }
-    }
-    if (this.browser) {
-      try {
-        await this.browser.close();
-      } finally {
-        this.browser = null;
-      }
-    }
+  /**
+   * @deprecated Use createPage() — the returned close() handles everything.
+   * Kept for backward compat; calling it is a no-op.
+   */
+  static async close(): Promise<void> {
+    // No-op: sessions are now per-request. close() is returned from createPage().
+  }
+
+  /**
+   * Whether a remote browser is configured (Browserbase or CDP endpoint).
+   * Used by freeLeadSearch to decide whether to attempt the browser step.
+   */
+  static hasRemoteConfigured(): boolean {
+    return Boolean(
+      process.env.BROWSERBASE_API_KEY?.trim() ||
+        process.env.BROWSER_WS_ENDPOINT?.trim()
+    );
   }
 }
