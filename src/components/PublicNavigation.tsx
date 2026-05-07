@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/UIComponents';
 
 interface PublicNavigationProps {
@@ -18,14 +19,57 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     const [isScrolled, setIsScrolled] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
+    const menuRef = useRef<HTMLDivElement>(null);
 
+    // Scroll lock and Escape key handler
     useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setMobileMenuOpen(false);
+        };
+
         if (mobileMenuOpen) {
             document.body.classList.add('menu-open');
+            window.addEventListener('keydown', handleKeyDown);
         } else {
             document.body.classList.remove('menu-open');
         }
-        return () => document.body.classList.remove('menu-open');
+
+        return () => {
+            document.body.classList.remove('menu-open');
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [mobileMenuOpen]);
+
+    // Simple Focus Trap
+    useEffect(() => {
+        if (!mobileMenuOpen || !menuRef.current) return;
+
+        const focusableElements = menuRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        const handleTabKey = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab') return;
+
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleTabKey);
+        firstElement?.focus();
+
+        return () => window.removeEventListener('keydown', handleTabKey);
     }, [mobileMenuOpen]);
 
     useEffect(() => {
@@ -33,7 +77,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
             setIsScrolled(window.scrollY > 20);
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
-        handleScroll(); // Initial check
+        handleScroll();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -57,6 +101,31 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
             return;
         }
         router.push('/');
+    };
+
+    // Staggered variants
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.08,
+                delayChildren: 0.2
+            }
+        },
+        exit: {
+            opacity: 0,
+            transition: {
+                staggerChildren: 0.05,
+                staggerDirection: -1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+        exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
     };
 
     return (
@@ -140,56 +209,83 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                 Start Free
                             </Button>
                         </Link>
+                        
+                        {/* Burger Button with Morphing Icon */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className={`p-1.5 rounded-lg border transition-all duration-300 ml-1 ${isScrolled && !mobileMenuOpen
+                            className={`relative w-10 h-10 flex flex-col items-center justify-center rounded-lg border transition-all duration-300 ml-1 ${isScrolled && !mobileMenuOpen
                                     ? 'bg-slate-950/80 backdrop-blur-md border-slate-700 text-white shadow-lg shadow-black/50'
                                     : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400'
                                 }`}
                             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                            aria-expanded={mobileMenuOpen}
+                            aria-controls="mobile-menu"
                         >
-                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            <div className="relative w-5 h-5 flex flex-col items-center justify-center">
+                                <span className={`absolute h-0.5 w-full bg-current transform transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'rotate-45 translate-y-0' : '-translate-y-1.5'}`} />
+                                <span className={`absolute h-0.5 w-full bg-current transform transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'opacity-0 scale-x-0' : 'opacity-100'}`} />
+                                <span className={`absolute h-0.5 w-full bg-current transform transition-all duration-300 ease-in-out ${mobileMenuOpen ? '-rotate-45 translate-y-0' : 'translate-y-1.5'}`} />
+                            </div>
                         </button>
                     </div>
                 </div>
 
                 {/* Mobile Nav Overlay */}
-                {mobileMenuOpen && (
-                    <div
-                        className="lg:hidden fixed inset-0 z-[130] bg-slate-950/98 backdrop-blur-2xl animate-fade-in p-6 pt-24 flex flex-col"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex-1 overflow-y-auto">
-                            <div className="space-y-1 pb-6">
-                                {navItems.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        href={item.path}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={`block text-lg font-bold py-3.5 border-b border-slate-900/50 transition-colors ${isActive(item.path)
-                                            ? 'text-teal-400'
-                                            : 'text-slate-300 hover:text-white'
-                                            }`}
-                                    >
-                                        {item.label}
-                                    </Link>
-                                ))}
+                <AnimatePresence>
+                    {mobileMenuOpen && (
+                        <motion.div
+                            id="mobile-menu"
+                            ref={menuRef}
+                            role="dialog"
+                            aria-modal="true"
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            variants={containerVariants}
+                            className="lg:hidden fixed inset-0 z-[130] bg-slate-950/98 backdrop-blur-2xl p-6 pt-24 flex flex-col"
+                            onClick={() => setMobileMenuOpen(false)} // Outside click close
+                        >
+                            <div 
+                                className="flex-1 overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside list
+                            >
+                                <div className="space-y-1 pb-6">
+                                    {navItems.map((item) => (
+                                        <motion.div key={item.path} variants={itemVariants}>
+                                            <Link
+                                                href={item.path}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className={`block text-lg font-bold py-3.5 border-b border-slate-900/50 transition-colors ${isActive(item.path)
+                                                    ? 'text-teal-400'
+                                                    : 'text-slate-300 hover:text-white'
+                                                    }`}
+                                            >
+                                                {item.label}
+                                            </Link>
+                                        </motion.div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div className="pt-4 pb-6 flex flex-col gap-3 mt-auto border-t border-slate-800/80">
-                            <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
-                                <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base">
-                                    Login
-                                </Button>
-                            </Link>
-                            <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
-                                <Button className="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 text-base h-auto">
-                                    Start Free Trial
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                )}
+                            
+                            <motion.div 
+                                variants={itemVariants}
+                                className="pt-4 pb-6 flex flex-col gap-3 mt-auto border-t border-slate-800/80"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
+                                    <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base h-auto">
+                                        Login
+                                    </Button>
+                                </Link>
+                                <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
+                                    <Button className="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 text-base h-auto">
+                                        Start Free Trial
+                                    </Button>
+                                </Link>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </nav>
     );

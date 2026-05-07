@@ -4,6 +4,7 @@ import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/a
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
 import { scraperSearchSchema } from '@/schemas/validation';
+import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
 
 const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
@@ -548,9 +549,8 @@ export async function POST(request: Request) {
 
     if (results.length === 0) {
       return NextResponse.json({
-        success: false, results: [], sourceErrors,
-        error:
-          'No leads found from available sources. Configure GOOGLE_PLACES_API_KEY with Places API (New) + Geocoding enabled, or try a larger city. See sourceErrors for details.',
+        success: false, results: [],
+        error: 'No leads found. Try a different niche or location.',
       });
     }
 
@@ -561,9 +561,31 @@ export async function POST(request: Request) {
 
     // Apply sort
     const sorted = sortResults(unique, sortBy);
-
-    // Slice to LEADS_PER_SEARCH
     let final = sorted.slice(0, LEADS_PER_SEARCH);
+
+    // ── Step 5: Enrichment waterfall (only for leads missing contact info) ────
+    // Runs in parallel, budget 25s total across all leads
+    const ENRICH_BUDGET_MS = 25000;
+    const enrichStart = Date.now();
+    await Promise.allSettled(
+      final
+        .filter((r) => r.website && !r.phone && !r.email)
+        .slice(0, 10) // cap at 10 to stay within Vercel 60s
+        .map(async (lead) => {
+          if (Date.now() - enrichStart > ENRICH_BUDGET_MS) return;
+          try {
+            const enriched = await enrichLeadWebsite(
+              lead.website,
+              ENRICH_BUDGET_MS - (Date.now() - enrichStart)
+            );
+            if (enriched.emails.length > 0) lead.email = enriched.emails[0];
+            if (enriched.phone) lead.phone = enriched.phone;
+            if (enriched.emails.length > 0 || enriched.phone) lead.hasContact = true;
+          } catch {
+            // silently skip — lead still goes through without enrichment
+          }
+        })
+    );
     let dedupedAgainstHistory = 0;
     const tenantIdForDedupe = tenantId || '';
     if (tenantIdForDedupe) {
@@ -575,11 +597,12 @@ export async function POST(request: Request) {
       }
     }
 
+    // Strip source field from response — never expose data sources to frontend
+    const safeResults = final.map(({ source: _source, ...rest }) => rest);
+
     return NextResponse.json({
       success: true,
-      results: final,
-      sourceErrors,
-      sources: sourceCounts,
+      results: safeResults,
       fallbackUsed: needMoreAfterOsm,
       quota: tenantId ? {
         limit:     DAILY_LEAD_LIMIT,
