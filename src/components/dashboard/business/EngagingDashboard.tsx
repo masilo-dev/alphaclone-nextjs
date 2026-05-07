@@ -4,57 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
-import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
-import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
-import { useTenantLoadingSafe } from '@/hooks/useTenantSafe';
-import { businessClientService } from '../../../services/businessClientService';
-import { dailyService } from '../../../services/dailyService';
-import { supabase } from '../../../lib/supabase';
 import {
-    DollarSign,
-    Users,
-    Briefcase,
-    TrendingUp,
-    Clock,
-    CheckCircle,
-    AlertCircle,
     ArrowRight,
     Calendar,
     BarChart2,
-    Target,
-    Video,
-    CheckSquare,
     FileText,
     UserPlus,
     Zap,
     Sun,
     Sunset,
     Moon,
-    Star,
-    XCircle,
-    Loader2,
-    Facebook,
-    Smartphone,
-    MessageSquare,
-    Mail,
     Rocket,
-    Sparkles,
-    Award,
-    Gift,
-    Heart,
-    ThumbsUp,
-    Lightbulb,
-    Flag,
-    Play,
-    Plus,
-    Settings,
-    Bell,
-    Flame,
     Globe,
-    Linkedin
+    Linkedin,
+    Loader2
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import { WrapChart } from '../../../lib/chartWrapper';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 
@@ -67,27 +31,6 @@ function getGreeting(): { text: string; Icon: React.FC<any> } {
     return { text: 'Good night', Icon: Moon };
 }
 
-interface OnboardingStep {
-    id: string;
-    title: string;
-    description: string;
-    icon: React.FC<any>;
-    completed: boolean;
-    action: string;
-    actionUrl?: string;
-    reward?: string;
-}
-
-interface Achievement {
-    id: string;
-    title: string;
-    description: string;
-    icon: React.FC<any>;
-    unlocked: boolean;
-    progress: number;
-    maxProgress: number;
-}
-
 interface QuickAction {
     id: string;
     title: string;
@@ -98,41 +41,14 @@ interface QuickAction {
 }
 
 const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats }) => {
-    const currentTenant = useCurrentTenantSafe();
-    const tenantLoading = useTenantLoadingSafe();
-    const [metrics, setMetrics] = useState({
-        totalRevenue: stats?.totalRevenue || 0,
-        totalClients: stats?.clientCount || 0,
-        activeProjects: stats?.activeProjects || 0,
-        pendingInvoices: stats?.pendingInvoices || 0,
-        overdueInvoices: stats?.overdueInvoices || 0,
-        weightedPipeline: stats?.weightedPipeline || 0,
-        salesForecast: stats?.salesForecast || 0
-    });
-    const [revenueData, setRevenueData] = useState<any[]>(stats?.monthlyRevenue || []);
-    const [loading, setLoading] = useState(!stats);
-    const [showOnboarding, setShowOnboarding] = useState(true);
-    const [achievements, setAchievements] = useState<Achievement[]>([]);
-    const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([]);
-    const [progressPercentage, setProgressPercentage] = useState(0);
-    const [streak, setStreak] = useState(0);
+    const [loading, setLoading] = useState(false);
     const [welcomeMessage, setWelcomeMessage] = useState('');
-    const [usingPlaceholderData, setUsingPlaceholderData] = useState(false);
     const greeting = getGreeting();
     const firstName = (user.name || user.email || 'there').split(' ')[0];
 
-    // Defensive checks to prevent React errors
     useEffect(() => {
-        if (!greeting || !greeting.text || !greeting.Icon) {
-            console.error('Invalid greeting object:', greeting);
-        }
-    }, [greeting]);
-
-    useEffect(() => {
-        if (tenantLoading) return;
-        loadDashboardData();
         generateWelcomeMessage();
-    }, [currentTenant?.id, tenantLoading]);
+    }, [user.name, user.email]);
 
     const generateWelcomeMessage = () => {
         const messages = [
@@ -143,188 +59,6 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             `Let's achieve your goals, ${firstName}.`,
         ];
         setWelcomeMessage(messages[Math.floor(Math.random() * messages.length)]);
-    };
-
-    const loadDashboardData = async () => {
-        try {
-            setLoading(true);
-
-            if (tenantLoading) {
-                return;
-            }
-
-            if (!currentTenant?.id) {
-                setUsingPlaceholderData(false);
-                setOnboardingSteps([]);
-                setAchievements([]);
-                setProgressPercentage(0);
-                setStreak(0);
-                return;
-            }
-
-            setUsingPlaceholderData(false);
-            const response = await fetch(`/api/dashboard/progress?tenantId=${currentTenant.id}`);
-            const data = await response.json().catch(() => ({}));
-
-            if (response.ok && data.success) {
-                const progressData = data.data;
-                setUsingPlaceholderData(false);
-                
-                setMetrics({
-                    totalRevenue: progressData.totalRevenue,
-                    totalClients: progressData.clientCount,
-                    activeProjects: progressData.activeProjects,
-                    pendingInvoices: progressData.pendingInvoices,
-                    overdueInvoices: 0, // Calculate from invoices
-                    weightedPipeline: 0, // Calculate from leads
-                    salesForecast: 0 // Calculate from pipeline
-                });
-
-                setRevenueData(progressData.monthlyRevenue || []);
-                setProgressPercentage(progressData.progressPercentage);
-                setStreak(progressData.streak);
-                setAchievements(progressData.achievements || []);
-
-                // Update onboarding steps based on real data
-                const steps: OnboardingStep[] = [
-                    {
-                        id: 'first-client',
-                        title: 'Add Your First Client',
-                        description: 'Start building your client base',
-                        icon: Users,
-                        completed: progressData.onboardingProgress?.hasClients || false,
-                        action: 'Add Client',
-                        actionUrl: '/dashboard/crm',
-                        reward: 'Client Master badge'
-                    },
-                    {
-                        id: 'first-invoice',
-                        title: 'Create Your First Invoice',
-                        description: 'Start tracking your revenue',
-                        icon: FileText,
-                        completed: progressData.onboardingProgress?.hasRevenue || false,
-                        action: 'Create Invoice',
-                        actionUrl: '/dashboard/accounting',
-                        reward: 'Money Maker badge'
-                    },
-                    {
-                        id: 'first-project',
-                        title: 'Launch Your First Project',
-                        description: 'Organize your work effectively',
-                        icon: Briefcase,
-                        completed: progressData.onboardingProgress?.hasProjects || false,
-                        action: 'New Project',
-                        actionUrl: '/dashboard/business/projects?new=true',
-                        reward: 'Project Pro Badge'
-                    },
-                    {
-                        id: 'setup-integrations',
-                        title: 'Connect Your Tools',
-                        description: 'Supercharge your workflow',
-                        icon: Zap,
-                        completed: progressData.onboardingProgress?.hasIntegrations || false,
-                        action: 'Setup',
-                        actionUrl: '/dashboard/marketplace',
-                        reward: 'Integration Expert badge'
-                    }
-                ];
-
-                setOnboardingSteps(steps);
-            } else {
-                const details = String(data?.error || data?.message || 'unknown error');
-                setUsingPlaceholderData(false);
-                toast.error(`Could not load live dashboard metrics: ${details}`);
-            }
-
-        } catch (error) {
-            console.error('Error loading dashboard data:', error);
-            setUsingPlaceholderData(false);
-            toast.error('Could not load live dashboard metrics. Please refresh and verify workspace access.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadDemoData = () => {
-        setUsingPlaceholderData(true);
-        const demoSteps: OnboardingStep[] = [
-            {
-                id: 'first-client',
-                title: 'Add Your First Client',
-                description: 'Start building your client base',
-                icon: Users,
-                completed: false,
-                action: 'Add Client',
-                actionUrl: '/dashboard/crm',
-                reward: 'Client Master badge'
-            },
-            {
-                id: 'first-invoice',
-                title: 'Create Your First Invoice',
-                description: 'Start tracking your revenue',
-                icon: FileText,
-                completed: false,
-                action: 'Create Invoice',
-                actionUrl: '/dashboard/accounting',
-                reward: 'Money Maker badge'
-            },
-            {
-                id: 'first-project',
-                title: 'Launch Your First Project',
-                description: 'Organize your work effectively',
-                icon: Briefcase,
-                completed: false,
-                action: 'New Project',
-                actionUrl: '/dashboard/business/projects?new=true',
-                reward: 'Project Pro Badge'
-            },
-            {
-                id: 'setup-integrations',
-                title: 'Connect Your Tools',
-                description: 'Supercharge your workflow',
-                icon: Zap,
-                completed: false,
-                action: 'Setup',
-                actionUrl: '/dashboard/marketplace',
-                reward: 'Integration Expert badge'
-            }
-        ];
-
-        setOnboardingSteps(demoSteps);
-        setProgressPercentage(0);
-        setStreak(1);
-
-        const demoAchievements: Achievement[] = [
-            {
-                id: 'client-collector',
-                title: 'Client Collector',
-                description: 'Add 10 clients',
-                icon: Users,
-                unlocked: false,
-                progress: 0,
-                maxProgress: 10
-            },
-            {
-                id: 'revenue-generator',
-                title: 'Revenue Generator',
-                description: 'Earn $10,000',
-                icon: DollarSign,
-                unlocked: false,
-                progress: 0,
-                maxProgress: 10000
-            },
-            {
-                id: 'project-master',
-                title: 'Project Master',
-                description: 'Complete 5 projects',
-                icon: Briefcase,
-                unlocked: false,
-                progress: 0,
-                maxProgress: 5
-            }
-        ];
-
-        setAchievements(demoAchievements);
     };
 
     const router = useRouter();
@@ -390,14 +124,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
     return (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
-            {usingPlaceholderData && (
-                <div
-                    role="status"
-                    className="rounded-xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-amber-100 text-sm"
-                >
-                    Sample metrics and checklist are shown until live workspace data is available or loads successfully.
-                </div>
-            )}
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 truncate">
@@ -475,163 +202,6 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </div>
             </motion.div>
 
-            {/* Stats with Emotional Context */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    {
-                        label: 'Total Revenue',
-                        value: `$${metrics.totalRevenue.toLocaleString()}`,
-                        icon: DollarSign,
-                        color: 'text-green-400',
-                        bgColor: 'bg-green-500/10',
-                        borderColor: 'border-green-500/30',
-                        emotion: metrics.totalRevenue > 0 ? '🎉 Killing it!' : '💰 Time to earn!',
-                        trend: '+12%'
-                    },
-                    {
-                        label: 'Active Clients',
-                        value: metrics.totalClients.toString(),
-                        icon: Users,
-                        color: 'text-blue-400',
-                        bgColor: 'bg-blue-500/10',
-                        borderColor: 'border-blue-500/30',
-                        emotion: metrics.totalClients > 5 ? '🌟 Network growing!' : '🤝 Start connecting!',
-                        trend: '+3'
-                    },
-                    {
-                        label: 'Active Projects',
-                        value: metrics.activeProjects.toString(),
-                        icon: Briefcase,
-                        color: 'text-indigo-400',
-                        bgColor: 'bg-indigo-500/10',
-                        borderColor: 'border-indigo-500/30',
-                        emotion: metrics.activeProjects > 0 ? 'Building momentum!' : 'Time to build!',
-                        trend: '+2'
-                    },
-                    {
-                        label: 'Pending Invoices',
-                        value: metrics.pendingInvoices.toString(),
-                        icon: FileText,
-                        color: 'text-orange-400',
-                        bgColor: 'bg-orange-500/10',
-                        borderColor: 'border-orange-500/30',
-                        emotion: metrics.pendingInvoices > 0 ? '💸 Get paid!' : '✅ All caught up!',
-                        trend: metrics.pendingInvoices > 0 ? '-1' : '0'
-                    }
-                ].map((stat, index) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 + index * 0.1 }}
-                        className={`bg-slate-800 rounded-xl p-6 border ${stat.borderColor}`}
-                    >
-                        <div className="flex items-center justify-between mb-2">
-                            <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                                <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                            </div>
-                            <span className="text-xs text-green-400 font-medium">{stat.trend}</span>
-                        </div>
-                        <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                        <div className="text-sm text-slate-400 mb-2">{stat.label}</div>
-                        <div className="text-xs text-slate-500">{stat.emotion}</div>
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Achievements */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="bg-slate-800 rounded-2xl p-6 border border-slate-700"
-            >
-                <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-yellow-400" />
-                    Achievements
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {achievements.map((achievement, index) => (
-                        <motion.div
-                            key={achievement.id}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.7 + index * 0.1 }}
-                            className={`p-4 rounded-lg border ${
-                                achievement.unlocked 
-                                    ? 'bg-yellow-500/10 border-yellow-500/30' 
-                                    : 'bg-slate-700/50 border-slate-600'
-                            }`}
-                        >
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                    achievement.unlocked ? 'bg-yellow-500' : 'bg-slate-600'
-                                }`}>
-                                    <achievement.icon className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-medium text-white">{achievement.title}</h3>
-                                    <p className="text-xs text-slate-400">{achievement.description}</p>
-                                </div>
-                                {achievement.unlocked && (
-                                    <Star className="w-5 h-5 text-yellow-400" />
-                                )}
-                            </div>
-                            
-                            {/* Progress Bar */}
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs text-slate-400">
-                                    <span>Progress</span>
-                                    <span>{achievement.progress}/{achievement.maxProgress}</span>
-                                </div>
-                                <div className="w-full bg-slate-600 rounded-full h-2">
-                                    <div 
-                                        className={`h-2 rounded-full transition-all ${
-                                            achievement.unlocked ? 'bg-yellow-400' : 'bg-blue-400'
-                                        }`}
-                                        style={{ width: `${(achievement.progress / achievement.maxProgress) * 100}%` }}
-                                    />
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </motion.div>
-
-            {/* Motivational Message */}
-            <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="bg-gradient-to-r from-indigo-600 to-teal-600 rounded-2xl p-6 text-white text-center shadow-xl"
-            >
-                <div className="text-4xl mb-2">💪</div>
-                <h3 className="text-xl font-bold mb-2">You're Doing Amazing!</h3>
-                <p className="text-purple-100">
-                    {progressPercentage === 100 
-                        ? "You've mastered the basics! Keep pushing forward and building your empire."
-                        : "Every step counts! You're building something incredible, one action at a time."
-                    }
-                </p>
-                <div className="mt-4 flex justify-center gap-4">
-                    <Button
-                        onClick={() => router.push('/dashboard/integrations')}
-                        className="bg-white text-indigo-600 hover:bg-indigo-50"
-                    >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Unlock More Features
-                    </Button>
-                    <Button
-                        onClick={() => router.push('/dashboard/settings')}
-                        variant="outline"
-                        className="border-white text-white hover:bg-white/10"
-                    >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Customize Experience
-                    </Button>
-                </div>
-            </motion.div>
         </div>
     );
 };
