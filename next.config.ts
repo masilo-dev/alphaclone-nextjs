@@ -64,6 +64,22 @@ const nextConfig: NextConfig = {
 
   },
   turbopack: {},
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/mcp',
+        destination: '/api/mcp/well-known/oauth-protected-resource',
+      },
+      {
+        source: '/.well-known/oauth-protected-resource',
+        destination: '/api/mcp/well-known/oauth-protected-resource',
+      },
+      {
+        source: '/.well-known/oauth-authorization-server',
+        destination: '/api/mcp/well-known/oauth-authorization-server',
+      },
+    ];
+  },
   webpack: (config) => {
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;

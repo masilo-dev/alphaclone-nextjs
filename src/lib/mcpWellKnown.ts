@@ -18,8 +18,9 @@ function getDiscoveryHeaders() {
     'Pragma': 'no-cache',
     'Expires': '0',
     'Vary': 'Origin, Access-Control-Request-Headers',
-    'x-mcp-version': '2025-06-18',
-    'x-protocol-version': '2025-06-18',
+    'x-mcp-version': '2025-11-25',
+    'x-protocol-version': '2025-11-25',
+    'MCP-Protocol-Version': '2025-11-25',
   };
 }
 
