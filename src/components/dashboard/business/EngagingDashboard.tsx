@@ -132,15 +132,15 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 truncate">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-white truncate">
                         {greeting?.text || 'Hello'}, {firstName}
                     </h1>
-                    <p className="text-slate-600 mt-1 text-sm sm:text-base">{welcomeMessage}</p>
+                    <p className="text-slate-400 mt-1 text-sm sm:text-base">{welcomeMessage}</p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <button 
                         onClick={() => router.push('/dashboard/crm?quickAdd=true')}
-                        className="px-3 py-2 sm:px-4 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm active:scale-95"
+                        className="px-3 py-2 sm:px-4 bg-slate-800 border border-slate-700 rounded-lg text-xs sm:text-sm font-medium text-white hover:bg-slate-700 transition-colors shadow-sm active:scale-95"
                     >
                         Quick Add
                     </button>
@@ -235,31 +235,6 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </div>
                 </motion.div>
             </div>
-
-            {/* Onboarding Guide Link */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-slate-800 rounded-2xl p-6 border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                        <Rocket className="w-6 h-6 text-blue-400" />
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-bold text-white">Platform Onboarding Guide</h2>
-                        <p className="text-sm text-slate-400">Learn how to configure your workspace and start building.</p>
-                    </div>
-                </div>
-                <Button
-                    onClick={() => router.push('/guide')}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500"
-                >
-                    Open Guide
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-            </motion.div>
 
             {/* Daily Summary System */}
             <motion.div

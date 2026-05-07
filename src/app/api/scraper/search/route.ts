@@ -65,7 +65,7 @@ function enrichWithContactFlag(leads: Array<Omit<LeadResult, 'hasContact'> & Par
 }
 
 // ─── Strategy 2 (Fallback): HERE Maps Places ──────────────────────────────────
-async function fetchHERE(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
+async function fetchHERE(niche: string, location: string, limit = 50, radiusKm = 25): Promise<LeadResult[]> {
   const apiKey = process.env.HERE_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) throw new Error('HERE API key not configured');
 
@@ -78,8 +78,10 @@ async function fetchHERE(niche: string, location: string, limit = 20): Promise<L
   const pos = geoData.items?.[0]?.position;
   if (!pos) throw new Error('HERE: could not geocode location');
 
+  // Use circular bias for better local discovery
+  const radiusM = Math.min(Math.max(radiusKm * 1000, 1000), 100000);
   const searchRes = await fetch(
-    `https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(niche)}&at=${pos.lat},${pos.lng}&limit=${Math.min(limit, 100)}&apiKey=${apiKey}`,
+    `https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(niche)}&at=${pos.lat},${pos.lng}&in=circle:${pos.lat},${pos.lng};r=${radiusM}&limit=${Math.min(limit, 100)}&apiKey=${apiKey}`,
     { signal: AbortSignal.timeout(12000) }
   );
   if (!searchRes.ok) throw new Error(`HERE Discover error: ${searchRes.status}`);
@@ -279,18 +281,24 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
     // Extended Overpass query: match by name OR by shop/amenity/office/craft category
     // We include node, way, and relation.
     const q = `
-[out:json][timeout:12];
+[out:json][timeout:15];
 (
   node["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
   node["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
   node["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
   node["office"~"${nicheEscaped}",i](${south},${west},${north},${east});
   node["craft"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["leisure"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["tourism"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["healthcare"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  node["industrial"~"${nicheEscaped}",i](${south},${west},${north},${east});
   
   way["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
   way["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
   way["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
   way["office"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  way["craft"~"${nicheEscaped}",i](${south},${west},${north},${east});
+  way["leisure"~"${nicheEscaped}",i](${south},${west},${north},${east});
   
   relation["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
   relation["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
@@ -463,8 +471,8 @@ export async function POST(request: Request) {
     try {
       const [osmRes, hereRes, firecrawlRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm),
-        fetchHERE(niche, location, LEADS_PER_SEARCH),
-        import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} in ${location}`, LEADS_PER_SEARCH)),
+        fetchHERE(niche, location, LEADS_PER_SEARCH, radiusKm),
+        import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} businesses in ${location} contact info`, LEADS_PER_SEARCH)),
         hasRemoteBrowserConfigured() ? fetchSerpLeadsViaBrowser(niche, location, LEADS_PER_SEARCH) : Promise.resolve([])
       ]);
 

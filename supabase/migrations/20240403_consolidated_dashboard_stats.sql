@@ -52,21 +52,33 @@ BEGIN
     FROM leads
     WHERE tenant_id = p_tenant_id;
 
-    -- 3a. Client Metrics
+    -- 3a. Client Metrics (FIXED: Use business_clients table)
     SELECT COUNT(*)
     INTO v_client_count
-    FROM tenant_users tu
-    JOIN profiles p ON tu.user_id = p.id
-    WHERE tu.tenant_id = p_tenant_id AND p.role = 'client';
+    FROM business_clients
+    WHERE tenant_id = p_tenant_id;
 
-    -- 4. Momentum & Activity Calculations
+    -- 4. Momentum & Activity Calculations (FIXED: Use audit_logs)
     -- Activity in last 24h
     SELECT COUNT(*)
     INTO v_activity_24h
-    FROM activity_logs
+    FROM audit_logs
     WHERE tenant_id = p_tenant_id 
-      AND (p_user_id IS NULL OR user_id = p_user_id)
       AND created_at >= v_now - INTERVAL '24 hours';
+
+    -- 4b. Recent Activity (FIXED: Populate recentActivity JSON)
+    SELECT JSONB_AGG(activity)
+    INTO v_recent_activity
+    FROM (
+        SELECT 
+            action as type,
+            COALESCE(metadata->>'clientName', action) as title,
+            created_at as date
+        FROM audit_logs
+        WHERE tenant_id = p_tenant_id
+        ORDER BY created_at DESC
+        LIMIT 5
+    ) activity;
 
     -- New leads in last 24h
     SELECT COUNT(*)
@@ -92,11 +104,11 @@ BEGIN
         v_momentum_score := GREATEST(0, v_momentum_score - 20);
     END IF;
 
-    -- Calculate Login Streak (Days with at least one activity log)
+    -- Calculate Login Streak (Days with at least one audit log)
     IF p_user_id IS NOT NULL THEN
         WITH daily_activity AS (
             SELECT DISTINCT date_trunc('day', created_at) as activity_day
-            FROM activity_logs
+            FROM audit_logs
             WHERE user_id = p_user_id
             ORDER BY activity_day DESC
         ),
@@ -116,13 +128,13 @@ BEGIN
     SELECT 
         COALESCE(SUM(value * (CAST(probability AS numeric) / 100)), 0),
         COALESCE(SUM(CASE 
-            WHEN stage = 'closed_won' THEN value 
+            WHEN status = 'won' THEN value 
             WHEN expected_close_date >= CURRENT_DATE THEN value * (CAST(probability AS numeric) / 100)
             ELSE 0 
         END), 0)
     INTO v_weighted_pipeline, v_sales_forecast
     FROM deals
-    WHERE tenant_id = p_tenant_id AND stage != 'closed_lost';
+    WHERE tenant_id = p_tenant_id AND status != 'lost';
 
     -- 6. Pipeline Stages (JSON map)
     SELECT jsonb_object_agg(stage, count)
