@@ -525,23 +525,6 @@ export async function POST(request: Request) {
       console.warn('[Scraper] Primary sources failed:', err);
     }
 
-    // ── Step 2: Google Places (DISABLED for now) ──────────────────────────────
-    /*
-    const needMoreAfterPrimary = results.length < LEADS_PER_SEARCH;
-    if (needMoreAfterPrimary && !isBudgetExceeded()) {
-      try {
-        const want = LEADS_PER_SEARCH - results.length + 5;
-        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
-        const enriched = enrichWithContactFlag(googleRows);
-        results.push(...enriched);
-        sourceCounts.google = enriched.length;
-        console.log(`[Scraper] Google Places: ${enriched.length} leads`);
-      } catch (err: unknown) {
-        // ... error handling
-      }
-    }
-    */
-
     // ── Step 3: Yelp if still short ────────────────────────────────────────────
     const needMore = results.length < LEADS_PER_SEARCH;
     if (needMore && !isBudgetExceeded()) {
@@ -553,6 +536,27 @@ export async function POST(request: Request) {
         results.push(...enriched);
         sourceCounts.yelp = enriched.length;
         console.log(`[Scraper] Yelp: ${enriched.length} leads`);
+      }
+    }
+
+    // ── Step 4: Google Places (FINAL fallback if still short) ──────────────────
+    const needFinalFallback = results.length < LEADS_PER_SEARCH;
+    if (needFinalFallback && !isBudgetExceeded()) {
+      try {
+        const want = LEADS_PER_SEARCH - results.length + 5;
+        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
+        const enriched = enrichWithContactFlag(googleRows);
+        results.push(...enriched);
+        sourceCounts.google = enriched.length;
+        console.log(`[Scraper] Google Places (Step 4): ${enriched.length} leads`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
+          sourceErrors.google = 'Google Maps Billing Error: Please verify your Google Cloud console billing.';
+        } else {
+          sourceErrors.google = msg;
+        }
+        console.warn('[Scraper] Google Places fallback failed:', err);
       }
     }
 

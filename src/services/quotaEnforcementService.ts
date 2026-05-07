@@ -126,6 +126,17 @@ export const quotaEnforcementService = {
      * Get usage summary for tenant
      */
     async getUsageSummary(tenantId: string): Promise<UsageSummary[]> {
+        if (!tenantId || tenantId === 'undefined' || tenantId === 'null') {
+            return [];
+        }
+        
+        // Simple UUID format check
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(tenantId)) {
+            console.warn('[QuotaService] Invalid tenantId format:', tenantId);
+            return [];
+        }
+
         try {
             const { data, error } = await supabase.rpc('get_tenant_usage_summary', {
                 p_tenant_id: tenantId,
