@@ -250,12 +250,12 @@ async function passJSDOM(url: string): Promise<Partial<EnrichmentResult>> {
     const dom = new JSDOM(res.body, { url });
     const doc = dom.window.document;
 
-    const mailtoLinks = [...doc.querySelectorAll<HTMLAnchorElement>('a[href^="mailto:"]')]
-      .map((a) => a.href.replace('mailto:', '').split('?')[0].toLowerCase().trim())
+    const mailtoLinks = [...doc.querySelectorAll('a[href^="mailto:"]')]
+      .map((a: any) => (a.href || '').replace('mailto:', '').split('?')[0].toLowerCase().trim())
       .filter(Boolean);
 
-    const telLink = doc.querySelector<HTMLAnchorElement>('a[href^="tel:"]');
-    const phone = telLink?.href.replace('tel:', '').trim() ?? '';
+    const telLink = doc.querySelector('a[href^="tel:"]');
+    const phone = (telLink as any)?.href?.replace('tel:', '').trim() ?? '';
 
     const bodyText = doc.body?.textContent ?? '';
     const fromText = extractFromText(bodyText);
