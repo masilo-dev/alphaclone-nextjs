@@ -100,6 +100,57 @@ interface FacebookIntegrationTabProps {
     tenant: any;
 }
 
+const SidebarContent = ({ 
+    activeTab, 
+    setActiveTab, 
+    leadsCount, 
+    isMobile 
+}: { 
+    activeTab: string; 
+    setActiveTab: (tab: any) => void; 
+    leadsCount: number; 
+    isMobile: boolean;
+}) => (
+    <div className="space-y-8">
+        <div>
+            <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Content Control</div>
+            <div className="space-y-1">
+                <button onClick={() => setActiveTab('post')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'post' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
+                    <Plus size={20} />
+                    <span className="text-sm font-bold">Compose Post</span>
+                </button>
+                <button onClick={() => setActiveTab('posts')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'posts' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
+                    <Activity size={20} />
+                    <span className="text-sm font-bold">Page Feed</span>
+                </button>
+            </div>
+        </div>
+        <div>
+            <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Direct Response</div>
+            <div className="space-y-1">
+                <button onClick={() => setActiveTab('leads')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'leads' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
+                    <Users size={20} />
+                    <span className="text-sm font-bold">Lead Manager</span>
+                    {leadsCount > 0 && <span className="ml-auto bg-teal-500 text-white text-[10px] px-2 py-1 rounded-full font-black">{leadsCount}</span>}
+                </button>
+                <button onClick={() => setActiveTab('messenger')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'messenger' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
+                    <MessageCircle size={20} />
+                    <span className="text-sm font-bold">Messenger Inbox</span>
+                </button>
+            </div>
+        </div>
+        <div>
+            <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Settings</div>
+            <div className="space-y-1">
+                <button onClick={() => setActiveTab('pages')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'pages' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
+                    <Building2 size={20} />
+                    <span className="text-sm font-bold">Manage Pages</span>
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 export default function FacebookIntegrationTab(props: FacebookIntegrationTabProps) {
   return (
     <FacebookErrorBoundary>
@@ -608,47 +659,6 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         );
     }
 
-    const SidebarContent = () => (
-        <div className="space-y-8">
-            <div>
-                <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Content Control</div>
-                <div className="space-y-1">
-                    <button onClick={() => { setActiveTab('post'); if (isMobile) router.push('#'); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'post' ? 'bg-blue-600/10 text-white border border-blue-500/20' : 'text-gray-500 hover:text-gray-300'}`}>
-                        <Plus size={20} />
-                        <span className="text-sm font-bold">Compose Post</span>
-                    </button>
-                    <button onClick={() => { setActiveTab('posts'); if (isMobile) router.push('#'); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'posts' ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}>
-                        <Activity size={20} />
-                        <span className="text-sm font-bold">Page Feed</span>
-                    </button>
-                </div>
-            </div>
-            <div>
-                <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Direct Response</div>
-                <div className="space-y-1">
-                    <button onClick={() => { setActiveTab('leads'); if (isMobile) router.push('#'); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'leads' ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}>
-                        <Users size={20} />
-                        <span className="text-sm font-bold">Lead Manager</span>
-                        {leads.length > 0 && <span className="ml-auto bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full">{leads.length}</span>}
-                    </button>
-                    <button onClick={() => { setActiveTab('messenger'); if (isMobile) router.push('#'); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'messenger' ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}>
-                        <MessageCircle size={20} />
-                        <span className="text-sm font-bold">Messenger Inbox</span>
-                    </button>
-                </div>
-            </div>
-            <div>
-                <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Settings</div>
-                <div className="space-y-1">
-                    <button onClick={() => { setActiveTab('pages'); if (isMobile) router.push('#'); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'pages' ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}>
-                        <Building2 size={20} />
-                        <span className="text-sm font-bold">Manage Pages</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
     return (
         <div className={`flex flex-col bg-[#0f0f0f] rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative ${isMobile ? 'h-auto min-h-[calc(100vh-120px)]' : 'h-[calc(100vh-140px)]'}`}>
             {!isConnected && (
@@ -665,7 +675,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         </div>
                         <button
                             onClick={handleConnect}
-                            className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold shadow-2xl shadow-blue-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 text-lg"
+                            className="w-full py-5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold shadow-2xl shadow-teal-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 text-lg"
                         >
                             <Facebook size={24} />
                             Connect Meta Account
@@ -677,14 +687,14 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             {/* Header */}
             <div className="h-20 border-b border-white/5 bg-[#141414] px-4 sm:px-6 flex items-center justify-between z-10 shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <div className="w-11 h-11 bg-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-600/20">
                         <Facebook size={24} className="text-white" />
                     </div>
                     <div>
                         <h1 className="text-sm font-black tracking-widest text-white uppercase truncate max-w-[120px] sm:max-w-none">Facebook</h1>
                         <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                            <span className="text-[10px] text-gray-500 font-bold uppercase">{isConnected ? 'Active' : 'Offline'}</span>
+                            <span className="text-[10px] text-teal-400 font-bold uppercase">{isConnected ? 'Active' : 'Offline'}</span>
                         </div>
                     </div>
                 </div>
@@ -692,7 +702,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 <div className="flex items-center gap-3">
                     {isConnected && !isMobile && (
                         <div className="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-xl border border-white/5">
-                            <Users size={14} className="text-blue-400" />
+                            <Users size={14} className="text-teal-400" />
                             <select 
                                 value={selectedPageId}
                                 onChange={(e) => setSelectedPageId(e.target.value)}
@@ -719,7 +729,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 {/* Desktop Sidebar */}
                 {!isMobile && (
                     <div className="w-72 flex flex-col bg-[#0a0a0a] overflow-y-auto custom-scrollbar border-r border-white/5 p-4 shrink-0">
-                        <SidebarContent />
+                        <SidebarContent 
+                            activeTab={activeTab} 
+                            setActiveTab={setActiveTab} 
+                            leadsCount={leads.length} 
+                            isMobile={isMobile} 
+                        />
                     </div>
                 )}
 
@@ -733,10 +748,10 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`px-5 py-3 rounded-xl text-xs font-bold border whitespace-nowrap transition-all ${
+                                        className={`px-5 py-3 rounded-xl text-xs font-black border whitespace-nowrap transition-all ${
                                             activeTab === tab
-                                                ? 'bg-blue-600 border-blue-500 text-white'
-                                                : 'bg-white/5 border-white/5 text-gray-500'
+                                                ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
+                                                : 'bg-white/5 border-white/5 text-gray-500 hover:text-gray-300'
                                         }`}
                                     >
                                         {TAB_LABELS[tab]}
@@ -770,7 +785,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         <div key={lead.id} className="bg-[#141414] border border-white/5 rounded-3xl p-5 sm:p-6 transition-all hover:border-white/10 group">
                                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-black text-lg">
+                                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-400 font-black text-lg">
                                                         {getInitials(`${lead.first_name} ${lead.last_name}`)}
                                                     </div>
                                                     <div className="min-w-0">
@@ -1110,16 +1125,16 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 </div>
             </div>
 
-            {/* Bottom Status Bar for Mobile */}
+            {/* Bottom Status Bar for Mobile - Positioned above BottomNav to avoid collision */}
             {isMobile && isConnected && (
-                <div className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/10 px-6 py-4 flex items-center justify-between z-30 backdrop-blur-xl">
+                <div className="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+64px)] left-0 right-0 bg-[#0a0a0a]/95 border-t border-white/10 px-6 py-4 flex items-center justify-between z-[40] backdrop-blur-xl">
                     <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest truncate max-w-[120px]">
+                        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
                             {pages.find(p => p.page_id === selectedPageId)?.page_name || 'No Page'}
                         </span>
                     </div>
-                    <button onClick={handleConnect} className="text-[10px] font-black text-blue-500 uppercase tracking-widest py-2 px-4 bg-blue-500/10 rounded-lg">Switch Page</button>
+                    <button onClick={() => setActiveTab('pages')} className="text-[10px] font-black text-teal-400 uppercase tracking-widest py-2 px-4 bg-teal-500/10 rounded-lg border border-teal-500/20">Switch Page</button>
                 </div>
             )}
 
@@ -1140,8 +1155,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         >
                             <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between bg-black/20">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center">
-                                        <Sparkles className="w-5 h-5 text-blue-400" />
+                                    <div className="w-10 h-10 bg-teal-600/20 rounded-xl flex items-center justify-center">
+                                        <Sparkles className="w-5 h-5 text-teal-400" />
                                     </div>
                                     <h3 className="text-lg font-black text-white uppercase tracking-tight">AI Writer</h3>
                                 </div>
@@ -1189,7 +1204,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                 <button 
                                     onClick={handleAiGeneratePost}
                                     disabled={aiGenerating || !aiTopic.trim()}
-                                    className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase shadow-2xl shadow-blue-900/40 disabled:opacity-50 transition-all flex items-center justify-center gap-3 text-base"
+                                    className="w-full py-5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-black uppercase shadow-2xl shadow-teal-900/40 disabled:opacity-50 transition-all flex items-center justify-center gap-3 text-base"
                                 >
                                     {aiGenerating ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} />}
                                     Generate Draft
