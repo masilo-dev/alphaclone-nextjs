@@ -369,9 +369,10 @@ export async function runLeadStep(input: {
 
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
-    // Google Places is DISABLED
-    const [yelpRes] = await Promise.allSettled([
+    
+    const [yelpRes, googleRes] = await Promise.allSettled([
       fetchYelp(input.niche, input.location, need),
+      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm),
     ]);
 
     if (yelpRes.status === 'fulfilled') {
@@ -380,6 +381,19 @@ export async function runLeadStep(input: {
       sourceStats.yelp = verified.length;
     } else {
       sourceErrors.yelp = 'Yelp unavailable';
+    }
+
+    if (googleRes.status === 'fulfilled') {
+      const verified = googleRes.value.filter((r) => hasContactInfo(r));
+      partial.push(...enrichWithContactFlag(verified));
+      sourceStats.google = verified.length;
+    } else {
+      const msg = googleRes.reason instanceof Error ? googleRes.reason.message : String(googleRes.reason);
+      if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
+        sourceErrors.google = 'Google Maps Billing Error: Please verify your Google Cloud console billing.';
+      } else {
+        sourceErrors.google = 'Google Places unavailable';
+      }
     }
     return {
       nextStep: 'browser',
