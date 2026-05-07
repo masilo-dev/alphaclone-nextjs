@@ -44,7 +44,7 @@ export interface LeadResult {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source:        'yelp' | 'here' | 'osm' | 'browser' | 'google';
+  source:        'firecrawl' | 'here' | 'osm' | 'browser' | 'google';
   lat?:          number;
   lng?:          number;
   hasContact:    boolean;   // true = phone OR email present
@@ -457,7 +457,7 @@ export async function POST(request: Request) {
 
     const results: LeadResult[] = [];
     const sourceErrors: Record<string, string> = {};
-    const sourceCounts: Record<string, number>  = { osm: 0, google: 0, yelp: 0, here: 0, browser: 0 };
+    const sourceCounts: Record<string, number>  = { osm: 0, google: 0, here: 0, firecrawl: 0, browser: 0 };
 
     // ── Step 1: OSM and HERE run together (primary sources) ──────────────────
     try {
@@ -489,25 +489,33 @@ export async function POST(request: Request) {
       console.warn('[Scraper] Primary sources failed:', err);
     }
 
-    // ── Step 2: Google Places (FALLBACK if still short) ──────────────────
+    // ── Step 2: Google Places and Firecrawl AI (FALLBACKS) ────────────────────
     const needFallback = results.length < LEADS_PER_SEARCH;
     if (needFallback && !isBudgetExceeded()) {
-      console.log(`[Scraper] After OSM+HERE: ${results.length} leads — activating Google fallback…`);
+      console.log(`[Scraper] After OSM+HERE: ${results.length} leads — activating fallbacks…`);
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
-        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
-        const enriched = enrichWithContactFlag(googleRows);
-        results.push(...enriched);
-        sourceCounts.google = enriched.length;
-        console.log(`[Scraper] Google Places (Step 2): ${enriched.length} leads`);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
-          sourceErrors.google = 'Google Maps Billing Error: Please verify your Google Cloud console billing.';
-        } else {
-          sourceErrors.google = msg;
+        
+        const [googleRows, firecrawlRows] = await Promise.all([
+          fetchGooglePlaces(niche, location, want, radiusKm).catch(() => []),
+          import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} in ${location}`, want)).catch(() => [])
+        ]);
+
+        if (googleRows.length > 0) {
+          const enriched = enrichWithContactFlag(googleRows);
+          results.push(...enriched);
+          sourceCounts.google = enriched.length;
+          console.log(`[Scraper] Google Places: ${enriched.length} leads`);
         }
-        console.warn('[Scraper] Google Places fallback failed:', err);
+
+        if (firecrawlRows.length > 0) {
+          const enriched = enrichWithContactFlag(firecrawlRows);
+          results.push(...enriched);
+          sourceCounts.firecrawl = enriched.length;
+          console.log(`[Scraper] Firecrawl AI: ${enriched.length} leads`);
+        }
+      } catch (err: unknown) {
+        console.warn('[Scraper] Fallback step failed:', err);
       }
     }
 

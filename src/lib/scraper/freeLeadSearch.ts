@@ -13,7 +13,7 @@ export interface LeadResult {
   address?: string;
   rating?: number;
   category?: string;
-  source: 'here' | 'osm' | 'browser' | 'google';
+  source: 'here' | 'osm' | 'browser' | 'google' | 'firecrawl';
   lat?: number;
   lng?: number;
   hasContact: boolean;
@@ -284,7 +284,7 @@ export async function runLeadStep(input: {
   sourceErrors: Record<string, string>;
   fallbackUsed: boolean;
 }> {
-  const sourceStats = { osm: 0, google: 0, here: 0, browser: 0, ...input.sourceStats };
+  const sourceStats = { osm: 0, google: 0, here: 0, browser: 0, firecrawl: 0, ...input.sourceStats };
   const sourceErrors = { ...input.sourceErrors };
   const partial = [...input.partialResults];
 
@@ -339,8 +339,9 @@ export async function runLeadStep(input: {
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
     
-    const [googleRes] = await Promise.allSettled([
+    const [googleRes, firecrawlRes] = await Promise.allSettled([
       fetchGooglePlaces(input.niche, input.location, need, input.radiusKm),
+      import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${input.niche} in ${input.location}`, need))
     ]);
 
     if (googleRes.status === 'fulfilled') {
@@ -354,6 +355,14 @@ export async function runLeadStep(input: {
       } else {
         sourceErrors.google = 'Google Places unavailable';
       }
+    }
+
+    if (firecrawlRes.status === 'fulfilled') {
+      const verified = firecrawlRes.value.filter((r) => hasContactInfo(r));
+      partial.push(...enrichWithContactFlag(verified));
+      sourceStats.firecrawl = verified.length;
+    } else {
+      sourceErrors.firecrawl = 'Firecrawl AI unavailable';
     }
     return {
       nextStep: 'browser',
