@@ -282,7 +282,7 @@ async function passPuppeteer(url: string): Promise<Partial<EnrichmentResult>> {
     const { page, close } = await BrowserManager.createPuppeteerPage();
     closeSession = close;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 18000 });
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
     const html = await page.content();
     const fromText = extractFromText(html);
     return {
@@ -309,7 +309,7 @@ async function passPlaywright(url: string): Promise<Partial<EnrichmentResult>> {
     const { page, close } = await BrowserManager.createPage();
     closeSession = close;
     await page.goto(url, { waitUntil: 'networkidle', timeout: 22000 });
-    await page.waitForTimeout(2500);
+    await new Promise(resolve => setTimeout(resolve, 2500));
     const html = await page.content();
     const fromText = extractFromText(html);
     return {
