@@ -151,14 +151,14 @@ async function loadPageHtml(url: string) {
     console.warn('[Playwright Scrape] Static fetch failed, falling back to browser engine:', error);
   }
 
-  const { page } = await BrowserManager.createPage();
+  const { page, close } = await BrowserManager.createPage();
 
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     await page.waitForTimeout(1500);
     return await page.content();
   } finally {
-    await page.context().close().catch(() => undefined);
+    await close().catch(() => undefined);
   }
 }
 

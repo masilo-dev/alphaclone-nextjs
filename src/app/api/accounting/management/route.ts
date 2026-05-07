@@ -703,7 +703,7 @@ async function generateInvoicePDF(params: any) {
   }
   
   const htmlContent = generateInvoiceHTML(invoice, template);
-  const { page } = await BrowserManager.createPage();
+  const { page, close } = await BrowserManager.createPage();
   try {
     await page.setContent(htmlContent, { waitUntil: 'networkidle', timeout: 30000 });
     await page.emulateMedia({ media: 'print' });
@@ -722,7 +722,7 @@ async function generateInvoicePDF(params: any) {
     });
     return Buffer.from(pdf);
   } finally {
-    await page.context().close().catch(() => undefined);
+    await close().catch(() => undefined);
   }
 }
 

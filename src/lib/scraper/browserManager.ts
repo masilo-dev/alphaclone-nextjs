@@ -25,29 +25,40 @@ async function launchViaBrowserbase(): Promise<{ browser: Browser; sessionId: st
 
   if (!apiKey) throw new Error('BROWSERBASE_API_KEY not set');
 
-  const bb = new Browserbase({ apiKey });
-  const session = await bb.sessions.create({
-    projectId: projectId || undefined,
-    timeout: 900, // 15 min max — Vercel functions cut off at ~800 s on Pro
-  });
+  try {
+    const bb = new Browserbase({ apiKey });
+    const session = await bb.sessions.create({
+      projectId: projectId || undefined,
+      timeout: 900, // 15 min max
+    });
 
-  const browser = await chromium.connectOverCDP(session.connectUrl, {
-    timeout: 60_000,
-  });
+    const browser = await chromium.connectOverCDP(session.connectUrl, {
+      timeout: 20_000, // Faster timeout for connection
+    });
 
-  console.log(`[BrowserManager] Browserbase session ${session.id}`);
-  return { browser, sessionId: session.id };
+    console.log(`[BrowserManager] Browserbase session ${session.id}`);
+    return { browser, sessionId: session.id };
+  } catch (e: any) {
+    if (e.status === 402 || (e.message && e.message.includes('402'))) {
+      console.error('[BrowserManager] Browserbase ERROR: 402 Payment Required. Check subscription.');
+    }
+    throw e;
+  }
 }
 
 async function launchViaCDP(endpoints: string[]): Promise<Browser> {
   const shuffled = [...endpoints].sort(() => Math.random() - 0.5);
   for (const url of shuffled) {
     try {
-      const browser = await chromium.connectOverCDP(url, { timeout: 60_000 });
+      const browser = await chromium.connectOverCDP(url, { timeout: 20_000 });
       console.log(`[BrowserManager] Connected to remote CDP: ${url}`);
       return browser;
     } catch (e: any) {
-      console.warn(`[BrowserManager] CDP endpoint failed (${url}): ${e.message}`);
+      if (e.message?.includes('503') || e.message?.includes('Service Unavailable')) {
+        console.error(`[BrowserManager] CDP ERROR 503 (Service Unavailable) for ${url}`);
+      } else {
+        console.warn(`[BrowserManager] CDP endpoint failed (${url}): ${e.message}`);
+      }
     }
   }
   throw new Error('All remote CDP endpoints failed');
