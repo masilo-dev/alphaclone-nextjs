@@ -409,11 +409,11 @@ export default function MessengerInbox() {
                                                 >
                                                     <div className={`max-w-[70%] p-4 rounded-2xl text-sm ${
                                                         isMe 
-                                                        ? 'bg-blue-600 text-white rounded-br-none shadow-lg shadow-blue-600/20' 
+                                                        ? 'bg-teal-600 text-white rounded-br-none shadow-lg shadow-teal-600/20' 
                                                         : 'bg-white/5 text-gray-200 border border-white/5 rounded-bl-none'
                                                     }`}>
                                                         <p className="leading-relaxed">{msg.text}</p>
-                                                        <div className={`text-[8px] mt-2 font-black uppercase tracking-widest ${isMe ? 'text-blue-200' : 'text-gray-500'}`}>
+                                                        <div className={`text-[8px] mt-2 font-black uppercase tracking-widest ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
@@ -431,7 +431,7 @@ export default function MessengerInbox() {
                                         <button 
                                             onClick={handleAiSuggest}
                                             disabled={aiGenerating || msgLoading}
-                                            className="flex items-center gap-2 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white px-4 py-2 rounded-xl border border-indigo-600/20 transition-all font-black uppercase tracking-widest text-[9px] disabled:opacity-50"
+                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-black uppercase tracking-widest text-[9px] disabled:opacity-50"
                                         >
                                             {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                             <span>Smart Reply</span>
@@ -444,11 +444,11 @@ export default function MessengerInbox() {
                                             placeholder="Write a message..."
                                             value={replyText}
                                             onChange={e => setReplyText(e.target.value)}
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/30 focus:outline-none transition-all text-sm pr-16"
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all text-sm pr-16"
                                         />
                                         <button 
                                             disabled={sending || !replyText.trim()}
-                                            className="bg-blue-600 hover:bg-blue-500 p-4 rounded-2xl text-white shadow-xl shadow-blue-600/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center shrink-0"
+                                            className="bg-teal-600 hover:bg-teal-500 p-4 rounded-2xl text-white shadow-xl shadow-teal-600/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center shrink-0"
                                         >
                                             {sending ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
                                         </button>
@@ -464,8 +464,8 @@ export default function MessengerInbox() {
                             <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest mb-2">Messenger Command</h3>
                             <p className="text-xs text-gray-600 max-w-xs leading-relaxed uppercase tracking-tighter">Choose a customer thread to engage at scale with AI-assisted messaging.</p>
                             
-                            <div className="mt-12 p-6 bg-blue-600/5 rounded-2xl border border-blue-500/10 max-w-sm">
-                                <div className="flex items-center gap-2 mb-3 text-blue-400">
+                            <div className="mt-12 p-6 bg-teal-600/5 rounded-2xl border border-teal-500/10 max-w-sm">
+                                <div className="flex items-center gap-2 mb-3 text-teal-400">
                                     <ShieldCheck size={16} />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Enterprise Shield</span>
                                 </div>
