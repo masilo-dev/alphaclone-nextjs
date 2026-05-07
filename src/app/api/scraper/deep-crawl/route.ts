@@ -8,7 +8,7 @@ import { scraperDeepCrawlSchema } from '@/schemas/validation';
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
 export async function POST(request: Request) {
-  let browserInstance = null;
+  let browserClose: (() => Promise<void>) | null = null;
   try {
     const payload = await request.json();
     const parsed = scraperDeepCrawlSchema.safeParse(payload);
@@ -45,8 +45,8 @@ export async function POST(request: Request) {
     } catch (e: unknown) {
       console.log('[Scraper] Static extraction failed or skipped. Launching Browser Engine...', e);
       try {
-          const { page, browser } = await BrowserManager.createPage();
-          browserInstance = browser;
+          const { page, close } = await BrowserManager.createPage();
+          browserClose = close;
           await page.goto(cleanUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
           // Wait a bit for JS to render
           await page.waitForTimeout(2000); 
@@ -122,8 +122,8 @@ export async function POST(request: Request) {
     console.error(`Deep Crawl Error:`, error);
     return NextResponse.json({ success: false, error: 'Deep crawl failed', code: 'DEEP_CRAWL_FAILED', emails: [], phone: '', social_links: {} }, { status: 500 });
   } finally {
-    if (browserInstance) {
-      try { await browserInstance.close(); } catch {}
+    if (browserClose) {
+      await browserClose().catch(() => {});
     }
   }
 }

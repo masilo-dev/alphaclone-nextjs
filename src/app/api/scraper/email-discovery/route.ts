@@ -189,7 +189,6 @@ async function discoverViaGitHub(companyName: string, domain: string): Promise<E
  */
 async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]> {
   const results: EmailResult[] = [];
-  let browserInstance = null;
   
   const urlsToTry = [
     `https://${domain}`,
@@ -200,9 +199,10 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
     `https://www.${domain}/contact`
   ];
   
+  let closeSession: (() => Promise<void>) | null = null;
   try {
-    const { page, browser } = await BrowserManager.createPage();
-    browserInstance = browser;
+    const { page, close } = await BrowserManager.createPage();
+    closeSession = close;
     
     for (const url of urlsToTry) {
       try {
@@ -297,7 +297,7 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
     console.warn('[EmailDiscovery] Website scraping failed:', err);
     return [];
   } finally {
-    // Don't close browser to allow reuse
+    if (closeSession) await closeSession().catch(() => null);
   }
 }
 
@@ -308,9 +308,11 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
 async function discoverViaLinkedIn(companyName: string): Promise<EmailResult[]> {
   const results: EmailResult[] = [];
   
+  let closeSession: (() => Promise<void>) | null = null;
   try {
     // Use Playwright to search LinkedIn
-    const { page, browser } = await BrowserManager.createPage();
+    const { page, close } = await BrowserManager.createPage();
+    closeSession = close;
     
     // Search for company employees on LinkedIn (public pages only)
     const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(companyName)}`;
@@ -321,11 +323,12 @@ async function discoverViaLinkedIn(companyName: string): Promise<EmailResult[]> 
     // Note: LinkedIn blocks most scraping, this is a best-effort attempt
     // In practice, this may return empty results due to LinkedIn's anti-scraping
     
-    await browser.close();
     return results;
   } catch (err) {
     console.warn('[EmailDiscovery] LinkedIn lookup failed:', err);
     return [];
+  } finally {
+    if (closeSession) await closeSession().catch(() => null);
   }
 }
 

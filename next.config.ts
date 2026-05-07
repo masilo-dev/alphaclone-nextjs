@@ -19,7 +19,7 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ['playwright-core', 'chromium-bidi'],
+  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk'],
   typescript: {
     ignoreBuildErrors: false,
   },
