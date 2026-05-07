@@ -235,7 +235,9 @@ async function passCheerio(url: string): Promise<Partial<EnrichmentResult>> {
 async function passJSDOM(url: string): Promise<Partial<EnrichmentResult>> {
   try {
     const { default: got } = await import('got');
-    const { JSDOM } = await import('jsdom');
+    // Use dynamic string to bypass Turbopack static analysis
+    const libName = 'jsdom';
+    const { JSDOM } = await import(libName);
     
     const res = await got(url, {
       timeout: { request: 10000 },

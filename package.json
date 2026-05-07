@@ -81,6 +81,7 @@
     "html-docx-js-typescript": "^0.1.5",
     "html2pdf.js": "^0.14.0",
     "jotai": "^2.16.2",
+    "jsdom": "^29.1.1",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "leaflet": "^1.9.4",
