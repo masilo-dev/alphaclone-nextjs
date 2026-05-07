@@ -205,17 +205,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                 <ArrowLeft className="w-4 h-4" />
                             </button>
                         )}
-                        <Link
-                            href={LOGIN_HREF}
-                            className="inline-flex items-center h-9 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                        >
-                            Login
-                        </Link>
-                        <Link href={BUSINESS_SIGNUP_HREF}>
-                            <Button size="sm" className="inline-flex items-center h-9 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-3 py-1.5 text-xs shadow-lg shadow-teal-500/20">
-                                Start Free
-                            </Button>
-                        </Link>
                         
                         {/* Burger Button with Morphing Icon */}
                         <button

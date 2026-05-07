@@ -108,8 +108,26 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       .select('*')
       .single();
 
+    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads.map(({ source, ...rest }) => rest) : []);
+    const sanitizeStats = (stats: any) => {
+      if (!stats || typeof stats !== 'object') return {};
+      const sanitized: Record<string, number> = {};
+      Object.entries(stats).forEach(([_, count], i) => {
+        if (typeof count === 'number' && count > 0) sanitized[`engine_${i + 1}`] = count;
+      });
+      return sanitized;
+    };
+
+    const sanitizedJob = {
+      ...updatedJob,
+      source_stats: sanitizeStats(updatedJob.source_stats),
+      source_errors: updatedJob.source_errors ? { info: 'System processing' } : null,
+      partial_results: sanitizeLeads(updatedJob.partial_results),
+      final_results: sanitizeLeads(updatedJob.final_results),
+    };
+
     if (updateError) return clientErrorResponse(updateError, { request: req, scope: 'scraper/jobs/[id]/step.POST' });
-    return NextResponse.json({ success: true, job: updatedJob });
+    return NextResponse.json({ success: true, job: sanitizedJob });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'scraper/jobs/[id]/step.POST' });
   }

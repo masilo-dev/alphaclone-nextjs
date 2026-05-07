@@ -464,7 +464,7 @@ export default function OmniLeadFinder() {
       return 'No leads found. Try a broader location or a different industry.';
     }
 
-    return `No leads found. Sources with errors: ${failedSources.join(', ')}. Check API keys and browser configuration, then try again.`;
+    return `No leads found for this search criteria. Please try refining your location or industry and try again.`;
   };
 
   const persistSearchHistory = (searchLeads: ScrapedLead[]) => {
@@ -770,20 +770,19 @@ export default function OmniLeadFinder() {
               AlphaClone Business Lead
             </h1>
             <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5 leading-relaxed">
-              Primary: <span className="text-emerald-400 font-semibold">OpenStreetMap</span> · Fallbacks: Yelp · HERE · Browser (remote CDP / Browserbase)
-              {fallbackUsed && <span className="block sm:inline sm:ml-2 text-amber-400">Fallback sources used</span>}
+              Intelligence: <span className="text-emerald-400 font-semibold">Multi-Engine Real-Time Search</span> · Status: Active
+              {fallbackUsed && <span className="block sm:inline sm:ml-2 text-amber-400">Deep search coverage active</span>}
             </p>
           </div>
           <div className="flex flex-col gap-2 w-full sm:w-auto sm:items-end shrink-0">
             {Object.keys(sourceStats).length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                {Object.entries(sourceStats).map(([src, count]) =>
-                  count > 0 ? (
-                    <span key={src} className={`text-[9px] font-black px-2 py-1 rounded-full border ${SOURCE_COLORS[src] || 'text-slate-400 border-slate-700 bg-slate-800'}`}>
-                      {src.toUpperCase()}: {count}
-                    </span>
-                  ) : null
-                )}
+                <span className="text-[9px] font-black px-2 py-1 rounded-full border text-teal-400 border-teal-500/30 bg-teal-500/10">
+                  ENGINES ACTIVE: {Object.keys(sourceStats).length}
+                </span>
+                <span className="text-[9px] font-black px-2 py-1 rounded-full border text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+                  TOTAL RESULTS: {Object.values(sourceStats).reduce((a, b) => a + b, 0)}
+                </span>
               </div>
             )}
             {dailyQuota && (
@@ -1044,24 +1043,11 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Source</label>
-              <div className="flex flex-wrap gap-1">
-                {(['all', 'osm', 'google', 'yelp', 'here', 'browser'] as SourceFilter[]).map(src => (
-                  <button key={src} onClick={() => setFilterSource(src)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${filterSource === src ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'}`}>
-                    {src === 'all'
-                      ? 'All'
-                      : src === 'osm'
-                        ? 'OSM'
-                        : src === 'yelp'
-                          ? 'Yelp'
-                          : src === 'google'
-                            ? 'Google'
-                          : src === 'here'
-                            ? 'HERE'
-                            : 'Browser'}
-                  </button>
-                ))}
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result Engine Status</label>
+              <div className="flex items-center gap-1">
+                <div className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                  All Engines Syncing
+                </div>
               </div>
             </div>
 
@@ -1248,11 +1234,6 @@ export default function OmniLeadFinder() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 ml-1 flex-shrink-0">
-                    {lead.source && (
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded border uppercase ${SOURCE_COLORS[lead.source] || ''}`}>
-                        {lead.source}
-                      </span>
-                    )}
                     {qual && (
                       <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${qual.bgColor} ${qual.borderColor} ${qual.color}`}>
                         {qual.label} · {qual.score}
