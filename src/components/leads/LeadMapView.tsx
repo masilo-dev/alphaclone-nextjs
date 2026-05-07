@@ -358,7 +358,6 @@ export default function LeadMapView({
         <span className="text-orange-400">Yelp</span>
         <span className="text-blue-400">HERE Maps</span>
         <span className="text-emerald-400">OpenStreetMap</span>
-        <span className="text-slate-300">Google Places</span>
       </div>
 
       {/* Pin count */}

@@ -209,9 +209,9 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                         {/* Burger Button with Morphing Icon */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className={`relative w-10 h-10 flex flex-col items-center justify-center rounded-lg border transition-all duration-300 ml-1 ${isScrolled && !mobileMenuOpen
-                                    ? 'bg-slate-950/80 backdrop-blur-md border-slate-700 text-white shadow-lg shadow-black/50'
-                                    : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400'
+                            className={`relative w-11 h-11 flex flex-col items-center justify-center rounded-xl border transition-all duration-300 ml-1 ${mobileMenuOpen
+                                    ? 'bg-slate-900 border-teal-500/50 text-teal-400 shadow-lg shadow-teal-500/10'
+                                    : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400 hover:border-teal-500/30'
                                 }`}
                             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                             aria-expanded={mobileMenuOpen}

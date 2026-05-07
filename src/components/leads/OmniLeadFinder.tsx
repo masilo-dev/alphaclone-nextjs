@@ -456,6 +456,10 @@ export default function OmniLeadFinder() {
   };
 
   const buildNoLeadsErrorMessage = (sourceErrors?: Record<string, string>) => {
+    const errs = Object.values(sourceErrors || {}).filter(Boolean);
+    const billingErr = errs.find(e => e.toLowerCase().includes('billing') || e.toLowerCase().includes('credit') || e.toLowerCase().includes('authorized'));
+    if (billingErr) return billingErr;
+
     const failedSources = Object.entries(sourceErrors || {})
       .filter(([, message]) => Boolean(message))
       .map(([source]) => source.toUpperCase());
@@ -464,7 +468,7 @@ export default function OmniLeadFinder() {
       return 'No leads found. Try a broader location or a different industry.';
     }
 
-    return `No leads found for this search criteria. Please try refining your location or industry and try again.`;
+    return `No leads found. Some sources reported errors: ${failedSources.join(', ')}. Please check your API configurations.`;
   };
 
   const persistSearchHistory = (searchLeads: ScrapedLead[]) => {

@@ -191,16 +191,46 @@ async function fetchOpenStreetMap(
 ): Promise<LeadResult[]> {
   const isGlobal = !location || /global|world|anywhere/i.test(location);
   const geoQuery = isGlobal ? 'London, UK' : location;
-  const nomRes = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`,
-    { headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' }, signal: AbortSignal.timeout(7000) }
-  );
-  if (!nomRes.ok) throw new Error('Nominatim geocoding failed');
-  const nomData = await nomRes.json();
-  if (!nomData[0]) throw new Error(`Location not found "${location}"`);
+  const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`;
+  let nomData: any[] = [];
+  try {
+    const nomRes = await fetch(nomUrl, { 
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' },
+      signal: AbortSignal.timeout(7000) 
+    });
+    if (nomRes.ok) nomData = await nomRes.json();
+  } catch (e) {
+    console.warn('[OSM:Job] Nominatim geocode failed, trying fallbacks...');
+  }
 
-  const centerLat = parseFloat(nomData[0].lat);
-  const centerLon = parseFloat(nomData[0].lon);
+  let centerLat: number;
+  let centerLon: number;
+
+  if (nomData?.[0]) {
+    centerLat = parseFloat(nomData[0].lat);
+    centerLon = parseFloat(nomData[0].lon);
+  } else {
+    // Fallback: HERE Geocoding
+    try {
+      const hereKey = process.env.HERE_API_KEY;
+      if (hereKey && !hereKey.startsWith('your_')) {
+        const hRes = await fetch(
+          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereKey}`,
+          { signal: AbortSignal.timeout(6000) }
+        );
+        if (hRes.ok) {
+          const hData = await hRes.json();
+          const pos = hData.items?.[0]?.position;
+          if (pos) {
+            centerLat = pos.lat;
+            centerLon = pos.lng;
+          } else throw new Error('no results');
+        } else throw new Error('here failed');
+      } else throw new Error('no key');
+    } catch (err) {
+      throw new Error(`Location geocoding failed for "${location}". Please try a more specific city.`);
+    }
+  }
   const isBroad = isGlobal || /state|province|country|usa|uk|canada|europe/i.test(location);
   const baseDelta = Math.min(Math.max(radiusKm / 111, 0.01), 1.2);
   const deltas = isBroad
@@ -291,12 +321,28 @@ export async function runLeadStep(input: {
 
   if (input.step === 'init') {
     try {
-      const osmResults = await fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm);
-      const verified = osmResults.filter((r) => hasContactInfo(r));
-      partial.push(...enrichWithContactFlag(verified));
-      sourceStats.osm = verified.length;
+      const [osmRes, hereRes] = await Promise.allSettled([
+        fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
+        fetchHERE(input.niche, input.location, LEADS_PER_SEARCH),
+      ]);
+
+      if (osmRes.status === 'fulfilled') {
+        const verified = osmRes.value.filter((r) => hasContactInfo(r));
+        partial.push(...enrichWithContactFlag(verified));
+        sourceStats.osm = verified.length;
+      } else {
+        sourceErrors.osm = 'OSM temporarily unavailable';
+      }
+
+      if (hereRes.status === 'fulfilled') {
+        const verified = hereRes.value.filter((r) => hasContactInfo(r));
+        partial.push(...enrichWithContactFlag(verified));
+        sourceStats.here = verified.length;
+      } else {
+        sourceErrors.here = 'HERE temporarily unavailable';
+      }
     } catch {
-      sourceErrors.osm = 'OSM temporarily unavailable';
+      console.warn('[Scraper:Job] Primary sources failed');
     }
     const finalMaybe = dedupeAndSort(partial, input.sortBy).slice(0, LEADS_PER_SEARCH);
     if (finalMaybe.length >= LEADS_PER_SEARCH) {
@@ -323,31 +369,17 @@ export async function runLeadStep(input: {
 
   if (input.step === 'fallbacks') {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
-    const [googleRes, yelpRes, hereRes] = await Promise.allSettled([
-      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm),
+    // Google Places is DISABLED
+    const [yelpRes] = await Promise.allSettled([
       fetchYelp(input.niche, input.location, need),
-      fetchHERE(input.niche, input.location, need),
     ]);
-    if (googleRes.status === 'fulfilled') {
-      const verified = googleRes.value.filter((r) => hasContactInfo(r));
-      partial.push(...enrichWithContactFlag(verified));
-      sourceStats.google = verified.length;
-    } else {
-      sourceErrors.google = 'Google Places unavailable';
-    }
+
     if (yelpRes.status === 'fulfilled') {
       const verified = yelpRes.value.filter((r) => hasContactInfo(r));
       partial.push(...enrichWithContactFlag(verified));
       sourceStats.yelp = verified.length;
     } else {
       sourceErrors.yelp = 'Yelp unavailable';
-    }
-    if (hereRes.status === 'fulfilled') {
-      const verified = hereRes.value.filter((r) => hasContactInfo(r));
-      partial.push(...enrichWithContactFlag(verified));
-      sourceStats.here = verified.length;
-    } else {
-      sourceErrors.here = 'HERE unavailable';
     }
     return {
       nextStep: 'browser',

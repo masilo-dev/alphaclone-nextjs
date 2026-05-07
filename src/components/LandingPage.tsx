@@ -213,24 +213,14 @@ const LandingPage = () => {
 
                   {/* Mobile Menu Trigger */}
                   <div className="lg:hidden flex items-center gap-2">
-                     <Link
-                        href={LOGIN_HREF}
-                        className="inline-flex items-center h-9 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                     >
-                        Login
-                     </Link>
-                     <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
-                        <Button className="h-9 px-3 text-xs font-bold bg-teal-500 hover:bg-teal-400 text-slate-950">
-                           Start Free
-                        </Button>
-                     </Link>
+                    {/* Buttons removed from mobile header to avoid crowding, they are in the burger menu */}
                      <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                         aria-expanded={mobileMenuOpen}
-                        className={`w-12 h-12 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
-                           ? 'text-teal-400 bg-slate-900 border-teal-500/50'
-                           : 'text-white bg-white/5 border-white/10 hover:border-white/20'
+                        className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
+                           ? 'text-teal-400 bg-slate-900 border-teal-500/50 shadow-lg shadow-teal-500/10'
+                           : 'text-white bg-white/5 border-white/10 hover:border-teal-500/30'
                            }`}
                      >
                         <HamburgerIcon isOpen={mobileMenuOpen} />
