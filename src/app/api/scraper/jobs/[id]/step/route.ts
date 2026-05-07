@@ -121,7 +121,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     const sanitizedJob = {
       ...updatedJob,
       source_stats: sanitizeStats(updatedJob.source_stats),
-      source_errors: updatedJob.source_errors ? { info: 'System processing' } : null,
+      source_errors: updatedJob.source_errors,
       partial_results: sanitizeLeads(updatedJob.partial_results),
       final_results: sanitizeLeads(updatedJob.final_results),
     };

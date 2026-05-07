@@ -239,19 +239,47 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
   // 1. Nominatim → lat/lon (Using for free world-wide coverage)
   const isGlobal = !location || /global|world|anywhere/i.test(location);
   const geoQuery = isGlobal ? 'London, UK' : location; // Default to major hub if global
-  
   const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`;
-  const nomRes = await fetch(nomUrl, { 
-    headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' },
-    signal: AbortSignal.timeout(10000),
-  });
   
-  if (!nomRes.ok) throw new Error('Nominatim geocoding failed');
-  const nomData = await nomRes.json();
-  if (!nomData[0]) throw new Error(`OSM: location not found "${location}"`);
+  let nomData: any[] = [];
+  try {
+    const nomRes = await fetch(nomUrl, { 
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (nomRes.ok) nomData = await nomRes.json();
+  } catch (e) {
+    console.warn('[OSM] Nominatim primary geocode failed, trying fallbacks...');
+  }
 
-  const centerLat = parseFloat(nomData[0].lat);
-  const centerLon = parseFloat(nomData[0].lon);
+  let centerLat: number;
+  let centerLon: number;
+
+  if (nomData?.[0]) {
+    centerLat = parseFloat(nomData[0].lat);
+    centerLon = parseFloat(nomData[0].lon);
+  } else {
+    // Fallback: Try HERE geocoding if available
+    try {
+      const hereApiKey = process.env.HERE_API_KEY;
+      if (hereApiKey && !hereApiKey.startsWith('your_')) {
+        const hereGeoRes = await fetch(
+          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereApiKey}`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (hereGeoRes.ok) {
+          const hereData = await hereGeoRes.json();
+          const pos = hereData.items?.[0]?.position;
+          if (pos) {
+            centerLat = pos.lat;
+            centerLon = pos.lng;
+          } else throw new Error('HERE geocode no results');
+        } else throw new Error('HERE geocode failed');
+      } else throw new Error('No HERE key');
+    } catch (err) {
+      throw new Error(`Location not found: "${location}". OSM and fallbacks failed to geocode.`);
+    }
+  }
 
   // 2. Adaptive Bounding Box (Progressively widen)
   // For street-level precision, we start with a very small delta (0.01 deg ~= 1km)
@@ -467,66 +495,64 @@ export async function POST(request: Request) {
     const sourceErrors: Record<string, string> = {};
     const sourceCounts: Record<string, number>  = { osm: 0, google: 0, yelp: 0, here: 0, browser: 0 };
 
-    // ── Step 1: OSM runs FIRST (primary, always free) ─────────────────────────
+    // ── Step 1: OSM and HERE run together (primary sources) ──────────────────
     try {
-      const osmResults = await fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm);
-      const enriched = enrichWithContactFlag(osmResults);
-      results.push(...enriched);
-      sourceCounts.osm = enriched.length;
-      const withContact = enriched.filter((r) => r.hasContact).length;
-      console.log(`[Scraper] OSM returned ${enriched.length} leads (${withContact} with contact info)`);
-    } catch (err: unknown) {
-      sourceErrors.osm = SOURCE_UNAVAILABLE;
-      console.warn('[Scraper] OSM failed:', err);
-    }
-
-    // ── Step 2: Google Places (validated geocode + Text Search) before paid Yelp/HERE ──
-    const needMoreAfterOsm = results.length < LEADS_PER_SEARCH;
-    if (needMoreAfterOsm && !isBudgetExceeded()) {
-      try {
-        const want = LEADS_PER_SEARCH - results.length + 5;
-        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
-        const enriched = enrichWithContactFlag(googleRows);
-        results.push(...enriched);
-        sourceCounts.google = enriched.length;
-        const withContact = enriched.filter((r) => r.hasContact).length;
-        console.log(`[Scraper] Google Places: ${enriched.length} leads (${withContact} with contact info)`);
-      } catch (err: unknown) {
-        sourceErrors.google =
-          err instanceof Error ? err.message : SOURCE_UNAVAILABLE;
-        console.warn('[Scraper] Google Places fallback failed:', err);
-      }
-    }
-
-    // ── Step 3: Yelp / HERE if still short ─────────────────────────────────────
-    const needMore = results.length < LEADS_PER_SEARCH;
-    if (needMore && !isBudgetExceeded()) {
-      console.log(`[Scraper] After OSM+Google: ${results.length} leads — activating Yelp/HERE…`);
-      const [yelpRes, hereRes] = await Promise.allSettled([
-        fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy),
-        fetchHERE(niche, location, LEADS_PER_SEARCH - results.length + 5),
+      const [osmRes, hereRes] = await Promise.allSettled([
+        fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm),
+        fetchHERE(niche, location, LEADS_PER_SEARCH),
       ]);
 
-      if (yelpRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(yelpRes.value);
+      if (osmRes.status === 'fulfilled') {
+        const enriched = enrichWithContactFlag(osmRes.value);
         results.push(...enriched);
-        sourceCounts.yelp = enriched.length;
-        const withContact = enriched.filter((r) => r.hasContact).length;
-        console.log(`[Scraper] Yelp: ${enriched.length} leads (${withContact} with contact info)`);
+        sourceCounts.osm = enriched.length;
+        console.log(`[Scraper] OSM returned ${enriched.length} leads`);
       } else {
-        console.warn('[Scraper] Yelp fallback failed:', yelpRes.reason);
-        sourceErrors.yelp = SOURCE_UNAVAILABLE;
+        sourceErrors.osm = SOURCE_UNAVAILABLE;
+        console.warn('[Scraper] OSM failed:', osmRes.reason);
       }
 
       if (hereRes.status === 'fulfilled') {
         const enriched = enrichWithContactFlag(hereRes.value);
         results.push(...enriched);
         sourceCounts.here = enriched.length;
-        const withContact = enriched.filter((r) => r.hasContact).length;
-        console.log(`[Scraper] HERE: ${enriched.length} leads (${withContact} with contact info)`);
+        console.log(`[Scraper] HERE returned ${enriched.length} leads`);
       } else {
-        console.warn('[Scraper] HERE fallback failed:', hereRes.reason);
         sourceErrors.here = SOURCE_UNAVAILABLE;
+        console.warn('[Scraper] HERE failed:', hereRes.reason);
+      }
+    } catch (err: unknown) {
+      console.warn('[Scraper] Primary sources failed:', err);
+    }
+
+    // ── Step 2: Google Places (DISABLED for now) ──────────────────────────────
+    /*
+    const needMoreAfterPrimary = results.length < LEADS_PER_SEARCH;
+    if (needMoreAfterPrimary && !isBudgetExceeded()) {
+      try {
+        const want = LEADS_PER_SEARCH - results.length + 5;
+        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm);
+        const enriched = enrichWithContactFlag(googleRows);
+        results.push(...enriched);
+        sourceCounts.google = enriched.length;
+        console.log(`[Scraper] Google Places: ${enriched.length} leads`);
+      } catch (err: unknown) {
+        // ... error handling
+      }
+    }
+    */
+
+    // ── Step 3: Yelp if still short ────────────────────────────────────────────
+    const needMore = results.length < LEADS_PER_SEARCH;
+    if (needMore && !isBudgetExceeded()) {
+      console.log(`[Scraper] After OSM+HERE: ${results.length} leads — activating Yelp fallback…`);
+      const yelpRes = await fetchYelp(niche, location, LEADS_PER_SEARCH - results.length + 5, sortBy).catch(() => []);
+      
+      if (yelpRes.length > 0) {
+        const enriched = enrichWithContactFlag(yelpRes);
+        results.push(...enriched);
+        sourceCounts.yelp = enriched.length;
+        console.log(`[Scraper] Yelp: ${enriched.length} leads`);
       }
     }
 
@@ -548,9 +574,12 @@ export async function POST(request: Request) {
     }
 
     if (results.length === 0) {
+      const bestError = sourceErrors.google || sourceErrors.osm || sourceErrors.yelp || 'No leads found. Try a different niche or location.';
       return NextResponse.json({
-        success: false, results: [],
-        error: 'No leads found. Try a different niche or location.',
+        success: false,
+        results: [],
+        error: bestError,
+        sourceErrors,
       });
     }
 
@@ -603,7 +632,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       results: safeResults,
-      fallbackUsed: needMoreAfterOsm,
+      fallbackUsed: results.length < LEADS_PER_SEARCH,
       quota: tenantId ? {
         limit:     DAILY_LEAD_LIMIT,
         used:      quotaInfo.used,
