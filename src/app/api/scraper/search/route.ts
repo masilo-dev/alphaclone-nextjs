@@ -459,11 +459,13 @@ export async function POST(request: Request) {
     const sourceErrors: Record<string, string> = {};
     const sourceCounts: Record<string, number>  = { osm: 0, google: 0, here: 0, firecrawl: 0, browser: 0 };
 
-    // ── Step 1: OSM and HERE run together (primary sources) ──────────────────
+    // ── Step 1: OSM, HERE, Firecrawl and Browser run together (primary sources) ──
     try {
-      const [osmRes, hereRes] = await Promise.allSettled([
+      const [osmRes, hereRes, firecrawlRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm),
         fetchHERE(niche, location, LEADS_PER_SEARCH),
+        import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} in ${location}`, LEADS_PER_SEARCH)),
+        hasRemoteBrowserConfigured() ? fetchSerpLeadsViaBrowser(niche, location, LEADS_PER_SEARCH) : Promise.resolve([])
       ]);
 
       if (osmRes.status === 'fulfilled') {
@@ -471,35 +473,36 @@ export async function POST(request: Request) {
         results.push(...enriched);
         sourceCounts.osm = enriched.length;
         console.log(`[Scraper] OSM returned ${enriched.length} leads`);
-      } else {
-        sourceErrors.osm = SOURCE_UNAVAILABLE;
-        console.warn('[Scraper] OSM failed:', osmRes.reason);
       }
-
       if (hereRes.status === 'fulfilled') {
         const enriched = enrichWithContactFlag(hereRes.value);
         results.push(...enriched);
         sourceCounts.here = enriched.length;
         console.log(`[Scraper] HERE returned ${enriched.length} leads`);
-      } else {
-        sourceErrors.here = SOURCE_UNAVAILABLE;
-        console.warn('[Scraper] HERE failed:', hereRes.reason);
+      }
+      if (firecrawlRes.status === 'fulfilled') {
+        const enriched = enrichWithContactFlag(firecrawlRes.value);
+        results.push(...enriched);
+        sourceCounts.firecrawl = enriched.length;
+        console.log(`[Scraper] Firecrawl AI returned ${enriched.length} leads`);
+      }
+      if (browserRes.status === 'fulfilled') {
+        const enriched = enrichWithContactFlag(browserRes.value);
+        results.push(...enriched);
+        sourceCounts.browser = enriched.length;
+        console.log(`[Scraper] Browser SERP returned ${enriched.length} leads`);
       }
     } catch (err: unknown) {
       console.warn('[Scraper] Primary sources failed:', err);
     }
 
-    // ── Step 2: Google Places and Firecrawl AI (FALLBACKS) ────────────────────
+    // ── Step 2: Google Places (FALLBACK) ────────────────────
     const needFallback = results.length < LEADS_PER_SEARCH;
     if (needFallback && !isBudgetExceeded()) {
-      console.log(`[Scraper] After OSM+HERE: ${results.length} leads — activating fallbacks…`);
+      console.log(`[Scraper] After free sources: ${results.length} leads — activating Google fallback…`);
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
-        
-        const [googleRows, firecrawlRows] = await Promise.all([
-          fetchGooglePlaces(niche, location, want, radiusKm).catch(() => []),
-          import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} in ${location}`, want)).catch(() => [])
-        ]);
+        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm).catch(() => []);
 
         if (googleRows.length > 0) {
           const enriched = enrichWithContactFlag(googleRows);
@@ -507,32 +510,8 @@ export async function POST(request: Request) {
           sourceCounts.google = enriched.length;
           console.log(`[Scraper] Google Places: ${enriched.length} leads`);
         }
-
-        if (firecrawlRows.length > 0) {
-          const enriched = enrichWithContactFlag(firecrawlRows);
-          results.push(...enriched);
-          sourceCounts.firecrawl = enriched.length;
-          console.log(`[Scraper] Firecrawl AI: ${enriched.length} leads`);
-        }
       } catch (err: unknown) {
-        console.warn('[Scraper] Fallback step failed:', err);
-      }
-    }
-
-    // Step 4: Browser-based SERP supplement (Browserbase or BROWSER_WS_ENDPOINT)
-    const stillNeed = results.length < LEADS_PER_SEARCH;
-    if (stillNeed && hasRemoteBrowserConfigured() && !isBudgetExceeded()) {
-      try {
-        const want = LEADS_PER_SEARCH - results.length + 5;
-        const browserRows = await fetchSerpLeadsViaBrowser(niche, location, want);
-        const enriched = enrichWithContactFlag(browserRows);
-        results.push(...enriched);
-        sourceCounts.browser = enriched.length;
-        const withContact = enriched.filter((r) => r.hasContact).length;
-        console.log(`[Scraper] Browser SERP: ${enriched.length} leads (${withContact} with contact info)`);
-      } catch (err: unknown) {
-        sourceErrors.browser = SOURCE_UNAVAILABLE;
-        console.warn('[Scraper] Browser SERP supplement failed:', err);
+        console.warn('[Scraper] Google fallback failed:', err);
       }
     }
 

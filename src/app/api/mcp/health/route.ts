@@ -11,13 +11,13 @@ export async function GET(req: NextRequest) {
     ok: true,
     service: 'mcp',
     transport: 'streamable-http',
-    protocol_version: '2024-11-05',
+    protocol_version: '2025-06-18',
     endpoint: '/api/mcp/sse',
     timestamp: new Date().toISOString(),
   }, {
     headers: {
       ...MCP_CORS_HEADERS,
-      'MCP-Protocol-Version': '2024-11-05',
+      'MCP-Protocol-Version': '2025-06-18',
     },
   });
 }
