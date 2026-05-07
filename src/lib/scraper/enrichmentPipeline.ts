@@ -18,9 +18,6 @@
  */
 
 import * as cheerio from 'cheerio';
-import { parse as parseHtml } from 'node-html-parser';
-import { JSDOM } from 'jsdom';
-import got from 'got';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 
 // ---------------------------------------------------------------------------
@@ -128,7 +125,7 @@ function isComplete(r: EnrichmentResult): boolean {
 
 async function isAllowedByRobots(url: string): Promise<boolean> {
   try {
-    // Dynamically import to avoid bundling issues
+    const { default: got } = await import('got');
     const { RobotsTxtGuard } = await import('robots-txt-guard');
     const parsed = new URL(url);
     const robotsUrl = `${parsed.origin}/robots.txt`;
@@ -147,6 +144,9 @@ async function isAllowedByRobots(url: string): Promise<boolean> {
 
 async function passNodeHtmlParser(url: string): Promise<Partial<EnrichmentResult>> {
   try {
+    const { default: got } = await import('got');
+    const { parse: parseHtml } = await import('node-html-parser');
+
     const res = await got(url, {
       timeout: { request: 8000 },
       headers: {
@@ -191,6 +191,7 @@ async function passNodeHtmlParser(url: string): Promise<Partial<EnrichmentResult
 
 async function passCheerio(url: string): Promise<Partial<EnrichmentResult>> {
   try {
+    const { default: got } = await import('got');
     const res = await got(url, {
       timeout: { request: 10000 },
       headers: {
@@ -233,6 +234,9 @@ async function passCheerio(url: string): Promise<Partial<EnrichmentResult>> {
 
 async function passJSDOM(url: string): Promise<Partial<EnrichmentResult>> {
   try {
+    const { default: got } = await import('got');
+    const { JSDOM } = await import('jsdom');
+    
     const res = await got(url, {
       timeout: { request: 10000 },
       headers: { 'User-Agent': 'Mozilla/5.0 AlphaCloneBot/1.0' },
