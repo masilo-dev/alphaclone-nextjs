@@ -42,9 +42,7 @@ export default function PlanActivationPanel() {
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-white">Your plan, status, and usage are now visible here</h3>
-                        <p className="mt-1 max-w-3xl text-sm text-slate-400">
-                            All plans include the same product surface. The difference is quota scale, team size, storage, and support level.
-                        </p>
+
                     </div>
                 </div>
 
@@ -81,9 +79,7 @@ export default function PlanActivationPanel() {
                         <Gauge className="h-3.5 w-3.5" />
                         What Counts
                     </div>
-                    <div className="text-sm text-slate-300">
-                        AI usage, projects, storage, users, contracts, and API volume are quota-aware.
-                    </div>
+
                 </div>
             </div>
 

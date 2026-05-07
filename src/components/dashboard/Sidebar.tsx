@@ -100,7 +100,14 @@ const Sidebar = React.memo<SidebarProps>(({
     }, [router, onNavigate, setSidebarOpen]);
 
     const toggleExpanded = useCallback((label: string) => {
-        setExpanded(prev => ({ ...prev, [label]: !prev[label] }));
+        setExpanded(prev => {
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+            if (isMobile) {
+                // On mobile, close others when opening one
+                return prev[label] ? {} : { [label]: true };
+            }
+            return { ...prev, [label]: !prev[label] };
+        });
     }, []);
 
     const jumpNavOptions = useMemo(() => {

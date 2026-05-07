@@ -421,85 +421,30 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </div>
             </div>
 
-            {/* Onboarding Progress */}
-            {progressPercentage < 100 && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-slate-800 rounded-2xl p-6 border border-slate-700"
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                            <Rocket className="w-5 h-5 text-blue-400" />
-                            Quick Start Guide
-                        </h2>
-                        <button
-                            onClick={() => setShowOnboarding(!showOnboarding)}
-                            className="text-slate-400 hover:text-white transition-colors"
-                        >
-                            {showOnboarding ? 'Hide' : 'Show'}
-                        </button>
+            {/* Onboarding Guide Link */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-slate-800 rounded-2xl p-6 border border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <Rocket className="w-6 h-6 text-blue-400" />
                     </div>
-
-                    <AnimatePresence>
-                        {showOnboarding && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="space-y-3"
-                            >
-                                {onboardingSteps.map((step, index) => (
-                                    <motion.div
-                                        key={step.id}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className={`flex items-center justify-between p-4 rounded-lg border ${
-                                            step.completed 
-                                                ? 'bg-green-500/10 border-green-500/30' 
-                                                : 'bg-slate-700/50 border-slate-600'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                step.completed ? 'bg-green-500' : 'bg-slate-600'
-                                            }`}>
-                                                <step.icon className="w-5 h-5 text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-medium text-white">{step.title}</h3>
-                                                <p className="text-sm text-slate-400">{step.description}</p>
-                                                {step.completed && step.reward && (
-                                                    <p className="text-xs text-green-400 mt-1">🎁 {step.reward}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        
-                                        {!step.completed && step.actionUrl && (
-                                            <Button
-                                                onClick={() => {
-                                                    if (step.actionUrl) {
-                                                        router.push(step.actionUrl);
-                                                    }
-                                                }}
-                                                className="bg-blue-500 hover:bg-blue-600"
-                                            >
-                                                {step.action}
-                                            </Button>
-                                        )}
-                                        
-                                        {step.completed && (
-                                            <CheckCircle className="w-6 h-6 text-green-400" />
-                                        )}
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-            )}
+                    <div>
+                        <h2 className="text-lg font-bold text-white">Platform Onboarding Guide</h2>
+                        <p className="text-sm text-slate-400">Learn how to configure your workspace and start building.</p>
+                    </div>
+                </div>
+                <Button
+                    onClick={() => router.push('/guide')}
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500"
+                >
+                    Open Guide
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+            </motion.div>
 
             {/* Quick Actions */}
             <motion.div

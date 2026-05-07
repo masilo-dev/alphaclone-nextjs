@@ -49,6 +49,9 @@ const LOGIN_HREF = '/auth/login';
 
 const LandingPage = () => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+   const [mobilePlatformOpen, setMobilePlatformOpen] = useState(false);
+   const [mobileResourcesOpen, setMobileResourcesOpen] = useState(false);
+   const [mobileCompanyOpen, setMobileCompanyOpen] = useState(false);
    const [scrolled, setScrolled] = useState(false);
    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -266,65 +269,124 @@ const LandingPage = () => {
 
                      {/* Mobile Menu Content */}
                      <div className="flex-1 px-4 py-6">
-                        <nav className="space-y-1">
+                        <nav className="space-y-2">
                            <Link
                               href="/"
                               onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                              className="block w-full text-left px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
                            >
                               Home
                            </Link>
-                           <Link
-                              href="/guide"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                           >
-                              Guide
-                           </Link>
-                           <div className="px-4 pt-2 pb-1 text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
-                              Platform
-                           </div>
-                           {platformMenuItems.map((item) => (
-                              <button
-                                 key={item.label}
-                                 onClick={item.action}
-                                 className="w-full text-left px-4 py-3 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                              >
-                                 {item.label}
-                              </button>
-                           ))}
-                           {['services', 'pricing', 'contact'].map((item) => (
-                              <button
-                                 key={item}
-                                 onClick={() => scrollToSection(item)}
-                                 className="w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors capitalize"
-                              >
-                                 {item === 'services' ? 'Platform' : item.charAt(0).toUpperCase() + item.slice(1)}
-                              </button>
-                           ))}
-                           <Link
-                              href="/docs"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                           >
-                              Docs
-                           </Link>
-                           <Link
-                              href="/faq"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                           >
-                              FAQ
-                           </Link>
-                           <Link
-                              href="/ecosystem"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-4 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                           >
-                              Ecosystem
-                           </Link>
 
-                           {/* Login - prominent in nav, not hidden at bottom */}
+                           {/* Platform Dropdown */}
+                           <div className="space-y-1">
+                              <button
+                                 onClick={() => setMobilePlatformOpen(!mobilePlatformOpen)}
+                                 className="flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                              >
+                                 Platform
+                                 <ChevronDown className={`w-5 h-5 transition-transform ${mobilePlatformOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence>
+                                 {mobilePlatformOpen && (
+                                    <motion.div
+                                       initial={{ height: 0, opacity: 0 }}
+                                       animate={{ height: 'auto', opacity: 1 }}
+                                       exit={{ height: 0, opacity: 0 }}
+                                       className="overflow-hidden pl-4 space-y-1"
+                                    >
+                                       {platformMenuItems.map((item) => (
+                                          <button
+                                             key={item.label}
+                                             onClick={() => { item.action(); setMobileMenuOpen(false); }}
+                                             className="w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+                                          >
+                                             {item.label}
+                                          </button>
+                                       ))}
+                                       <button
+                                          onClick={() => { scrollToSection('services'); setMobileMenuOpen(false); }}
+                                          className="w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+                                       >
+                                          Capabilities
+                                       </button>
+                                    </motion.div>
+                                 )}
+                              </AnimatePresence>
+                           </div>
+
+                           {/* Resources Dropdown */}
+                           <div className="space-y-1">
+                              <button
+                                 onClick={() => setMobileResourcesOpen(!mobileResourcesOpen)}
+                                 className="flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                              >
+                                 Resources
+                                 <ChevronDown className={`w-5 h-5 transition-transform ${mobileResourcesOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence>
+                                 {mobileResourcesOpen && (
+                                    <motion.div
+                                       initial={{ height: 0, opacity: 0 }}
+                                       animate={{ height: 'auto', opacity: 1 }}
+                                       exit={{ height: 0, opacity: 0 }}
+                                       className="overflow-hidden pl-4 space-y-1"
+                                    >
+                                       {[
+                                          { label: 'Guide', href: '/guide' },
+                                          { label: 'Docs', href: '/docs' },
+                                          { label: 'FAQ', href: '/faq' },
+                                          { label: 'Ecosystem', href: '/ecosystem' }
+                                       ].map((item) => (
+                                          <Link
+                                             key={item.label}
+                                             href={item.href}
+                                             onClick={() => setMobileMenuOpen(false)}
+                                             className="block w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+                                          >
+                                             {item.label}
+                                          </Link>
+                                       ))}
+                                    </motion.div>
+                                 )}
+                              </AnimatePresence>
+                           </div>
+
+                           {/* Company Dropdown */}
+                           <div className="space-y-1">
+                              <button
+                                 onClick={() => setMobileCompanyOpen(!mobileCompanyOpen)}
+                                 className="flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+                              >
+                                 Company
+                                 <ChevronDown className={`w-5 h-5 transition-transform ${mobileCompanyOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence>
+                                 {mobileCompanyOpen && (
+                                    <motion.div
+                                       initial={{ height: 0, opacity: 0 }}
+                                       animate={{ height: 'auto', opacity: 1 }}
+                                       exit={{ height: 0, opacity: 0 }}
+                                       className="overflow-hidden pl-4 space-y-1"
+                                    >
+                                       {[
+                                          { label: 'Pricing', section: 'pricing' },
+                                          { label: 'Contact', section: 'contact' }
+                                       ].map((item) => (
+                                          <button
+                                             key={item.label}
+                                             onClick={() => { scrollToSection(item.section); setMobileMenuOpen(false); }}
+                                             className="w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+                                          >
+                                             {item.label}
+                                          </button>
+                                       ))}
+                                    </motion.div>
+                                 )}
+                              </AnimatePresence>
+                           </div>
+
+                           {/* Login - prominent in nav */}
                            <div className="pt-4 mt-4 border-t border-slate-800">
                               <Link
                                  href={LOGIN_HREF}
@@ -570,115 +632,7 @@ const LandingPage = () => {
                </div>
             </section>
 
-            {/* Platform Proof — Outcome-Focused (no screenshots) */}
-            <section className="py-16 bg-[#040A12]">
-               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="mb-10 text-center">
-                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Built for how modern businesses actually operate.
-                     </h2>
-                     <p className="text-slate-300 max-w-3xl mx-auto">
-                        Every module is connected. Data entered in one place flows automatically across CRM, billing, projects, and AI — no copy-paste, no integrations to maintain.
-                     </p>
-                  </div>
 
-                  {/* Outcome cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-                     {[
-                        {
-                           metric: '12+',
-                           unit: 'tools replaced',
-                           detail: 'CRM, invoicing, contracts, projects, video, email campaigns, AI agents — unified.',
-                           color: 'from-cyan-500/20 to-cyan-500/5',
-                           border: 'border-cyan-500/25',
-                           accent: 'text-cyan-400',
-                        },
-                        {
-                           metric: '< 30 min',
-                           unit: 'to full operation',
-                           detail: 'Guided onboarding wizard. No IT required. No migrations. Start with live data from day one.',
-                           color: 'from-teal-500/20 to-teal-500/5',
-                           border: 'border-teal-500/25',
-                           accent: 'text-teal-400',
-                        },
-                        {
-                           metric: '25+',
-                           unit: 'MCP tools for AI',
-                           detail: 'Claude and Manus can operate your entire workspace: leads, deals, tasks, invoices, and email.',
-                           color: 'from-violet-500/20 to-violet-500/5',
-                           border: 'border-violet-500/25',
-                           accent: 'text-violet-400',
-                        },
-                        {
-                           metric: '99.9%',
-                           unit: 'uptime SLA',
-                           detail: 'Deployed on Vercel Edge Network with Supabase PostgreSQL 17. Built to run without you watching.',
-                           color: 'from-blue-500/20 to-blue-500/5',
-                           border: 'border-blue-500/25',
-                           accent: 'text-blue-400',
-                        },
-                        {
-                           metric: 'RLS + RBAC',
-                           unit: 'security model',
-                           detail: 'Row-Level Security on every table. Role-based access. Audit logs. GDPR-compliant by design.',
-                           color: 'from-emerald-500/20 to-emerald-500/5',
-                           border: 'border-emerald-500/25',
-                           accent: 'text-emerald-400',
-                        },
-                        {
-                           metric: '$0',
-                           unit: 'integration cost',
-                           detail: 'Every module shares the same data layer. No Zapier. No webhooks to maintain. It just works.',
-                           color: 'from-orange-500/20 to-orange-500/5',
-                           border: 'border-orange-500/25',
-                           accent: 'text-orange-400',
-                        },
-                     ].map((card, index) => (
-                        <motion.div
-                           key={card.unit}
-                           initial={{ opacity: 0, y: 12 }}
-                           whileInView={{ opacity: 1, y: 0 }}
-                           viewport={{ once: true }}
-                           transition={{ delay: index * 0.1, duration: 0.7, ease: 'easeOut' }}
-                           className={`rounded-2xl border ${card.border} bg-gradient-to-br ${card.color} p-6`}
-                        >
-                           <div className={`text-4xl font-black mb-1 ${card.accent}`}>{card.metric}</div>
-                           <div className="text-sm font-bold text-white uppercase tracking-wide mb-3">{card.unit}</div>
-                           <p className="text-sm text-slate-300 leading-relaxed">{card.detail}</p>
-                        </motion.div>
-                     ))}
-                  </div>
-
-                  {/* Workflow connector strip */}
-                  <div className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-6">
-                     <p className="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-4 text-center">Connected workflow — no manual handoffs</p>
-                     <div className="flex flex-wrap items-center justify-center gap-2 text-sm font-medium">
-                        {[
-                           'Lead captured',
-                           '→',
-                           'Deal created',
-                           '→',
-                           'Proposal sent',
-                           '→',
-                           'Contract signed',
-                           '→',
-                           'Invoice issued',
-                           '→',
-                           'Project started',
-                           '→',
-                           'Revenue recorded',
-                        ].map((step, i) => (
-                           <span
-                              key={i}
-                              className={step === '→' ? 'text-slate-600' : 'px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-slate-200'}
-                           >
-                              {step}
-                           </span>
-                        ))}
-                     </div>
-                  </div>
-               </div>
-            </section>
 
 
             {/* Privacy and Compliance */}

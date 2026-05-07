@@ -45,15 +45,36 @@ export const LOGO_URL = "/logo.png";
 // --- CLIENT NAVIGATION ---
 export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-  { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
-  { label: 'Meetings', href: '/dashboard/conference', icon: Video },
-  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-  { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
-  { label: 'Documents', href: '/dashboard/submit', icon: FileText },
+  {
+    label: 'Workspace',
+    href: '#',
+    icon: Briefcase,
+    subItems: [
+      { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
+      { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+      { label: 'Meetings', href: '/dashboard/conference', icon: Video },
+    ]
+  },
+  {
+    label: 'Communication',
+    href: '#',
+    icon: MessageSquare,
+    subItems: [
+      { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+    ]
+  },
+  {
+    label: 'Resources',
+    href: '#',
+    icon: FileText,
+    subItems: [
+      { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+      { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
+      { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
+      { label: 'Documents', href: '/dashboard/submit', icon: FileText },
+    ]
+  },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
@@ -103,13 +124,19 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Workspace home', href: '/dashboard', icon: Zap },
 
   {
-    label: 'Acquire and nurture', href: '#', icon: Search,
+    label: 'Lead Operations', href: '#', icon: Search,
     subItems: [
       { label: 'Step 1: Find leads', href: '/dashboard/sales-agent?tab=finder', icon: Search },
       { label: 'Step 2: Capture contacts', href: '/dashboard/contacts', icon: Users },
       { label: 'Step 3: Qualify leads', href: '/dashboard/leads?source=mcp', icon: TrendingUp },
       { label: 'Step 4: Move to deals', href: '/dashboard/deals', icon: TrendingUp },
       { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
+    ]
+  },
+
+  {
+    label: 'Social & Outreach', href: '#', icon: Globe,
+    subItems: [
       { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },
@@ -118,7 +145,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'LinkedIn Manager', href: '/dashboard/business/linkedin', icon: Linkedin },
       { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
       { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
-
     ]
   },
 
