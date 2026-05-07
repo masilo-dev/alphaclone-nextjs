@@ -118,9 +118,28 @@ export async function POST(request: Request) {
       social_links: socialLinks
     });
 
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error(`Deep Crawl Error:`, error);
-    return NextResponse.json({ success: false, error: 'Deep crawl failed', code: 'DEEP_CRAWL_FAILED', emails: [], phone: '', social_links: {} }, { status: 500 });
+    
+    let errorMessage = 'Deep crawl failed';
+    let errorCode = 'DEEP_CRAWL_FAILED';
+    
+    if (error.message?.includes('402') || error.status === 402) {
+      errorMessage = 'Browser Engine Quota Exceeded (402). Static extraction only.';
+      errorCode = 'QUOTA_EXCEEDED';
+    } else if (error.message?.includes('503') || error.message?.includes('CDP')) {
+      errorMessage = 'Browser Engine Temporarily Unavailable (503).';
+      errorCode = 'ENGINE_UNAVAILABLE';
+    }
+
+    return NextResponse.json({ 
+      success: false, 
+      error: errorMessage, 
+      code: errorCode, 
+      emails: [], 
+      phone: '', 
+      social_links: {} 
+    }, { status: (errorCode === 'DEEP_CRAWL_FAILED' ? 500 : 503) });
   } finally {
     if (browserClose) {
       await browserClose().catch(() => {});

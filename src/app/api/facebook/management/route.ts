@@ -380,7 +380,7 @@ async function generateContractContent(params: any) {
 async function generateOptimizedPDF(params: any) {
   const { content, fontSize, lineSpacing, targetPages, format } = params;
   const html = wrapFacebookContractHtml(content, fontSize, lineSpacing);
-  const { page } = await BrowserManager.createPage();
+  const { page, close } = await BrowserManager.createPage();
   try {
     await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
     await page.emulateMedia({ media: 'print' });
@@ -400,7 +400,7 @@ async function generateOptimizedPDF(params: any) {
     });
     return Buffer.from(pdf);
   } finally {
-    await page.context().close().catch(() => undefined);
+    await close().catch(() => undefined);
   }
 }
 

@@ -104,6 +104,15 @@ const LandingPage = () => {
    // Handle contact form submission
    const handleContactSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
+      
+      // Basic client-side validation to match server schema
+      if (contactForm.message.length < 10) {
+         import('react-hot-toast').then(({ toast }) => 
+            toast.error('Message must be at least 10 characters long.')
+         );
+         return;
+      }
+      
       setFormStatus('sending');
       
       try {
@@ -116,17 +125,19 @@ const LandingPage = () => {
          const data = await response.json();
 
          if (!response.ok) {
-            throw new Error(data.error || 'Failed to send message');
+            // Check for validation details in response
+            const errorMsg = data.details?.fieldErrors?.message?.[0] || data.error || 'Failed to send message';
+            throw new Error(errorMsg);
          }
 
          setFormStatus('success');
          setContactForm({ name: '', email: '', subject: '', message: '' });
          setTimeout(() => setFormStatus('idle'), 5000);
-      } catch (error) {
+      } catch (error: any) {
          console.error('Contact form error:', error);
          setFormStatus('error');
          import('react-hot-toast').then(({ toast }) => 
-            toast.error('Failed to send message. Please try again or email us directly.')
+            toast.error(error.message || 'Failed to send message. Please try again.')
          );
          setTimeout(() => setFormStatus('idle'), 3000);
       }

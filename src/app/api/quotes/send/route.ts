@@ -52,7 +52,7 @@ async function renderQuotePdfBuffer(quote: any, items: any[]): Promise<Buffer> {
     </body>
   </html>`;
 
-  const { page } = await BrowserManager.createPage();
+  const { page, close } = await BrowserManager.createPage();
   try {
     await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
     await page.emulateMedia({ media: 'print' });
@@ -63,7 +63,7 @@ async function renderQuotePdfBuffer(quote: any, items: any[]): Promise<Buffer> {
     });
     return Buffer.from(pdf);
   } finally {
-    await page.context().close().catch(() => undefined);
+    await close().catch(() => undefined);
   }
 }
 
