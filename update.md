@@ -12,6 +12,8 @@
     - **Fixed PGRST203 Error**: Explicitly added `DROP FUNCTION` statements to prevent PostgreSQL overloading errors caused by multiple function signatures.
     - Fixed "subscription timed out" errors by adding core operational tables (`leads`, `messages`, `projects`, `business_clients`, `business_invoices`) to the `supabase_realtime` publication.
     - Added explicit `maxDuration = 300` to the `/api/dashboard/stats/route.ts` API route.
+- **Claude/MCP "Access Token Expired"**: Resolved persistent 401 warnings caused by client-side polling with stale tokens.
+    - Implemented a **2-hour grace period** for expired OAuth tokens. This handles clock skew and ensures that long-running AI client sessions remain connected without flooding the Vercel logs with authentication errors.
 
 ## Date: 2026-05-08 (EDGE RUNTIME STABILIZATION & MCP ROUTE OPTIMIZATION)
 
@@ -70,6 +72,8 @@
 - **Dynamic Discovery Library**: Created `@/lib/mcpWellKnown.ts` to provide unified, environment-aware discovery responses for both Authorization Servers and Protected Resources.
 
 ### Fixed
+- **Claude/MCP "Access Token Expired"**: Resolved persistent 401 warnings caused by client-side polling with stale tokens.
+    - Implemented a **2-hour grace period** for expired OAuth tokens. This handles clock skew and ensures that long-running AI client sessions remain connected without flooding the Vercel logs with authentication errors.
 - **MCP Discovery Delivery**: Resolved a "status 0" issue where discovery responses were not delivered in the Edge runtime.
     - Refactored `createProtectedResourceResponse` and `createAuthorizationServerResponse` to use `new Response` with explicit `Content-Type: application/json`.
     - Added aggressive cache-control headers (`no-store, no-cache, must-revalidate`) to prevent stale or interrupted responses.
