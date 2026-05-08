@@ -1,5 +1,26 @@
 # Update Log
 
+## Date: 2026-05-08 (DASHBOARD ANALYTICS & SCRAPER STABILIZATION)
+
+### Fixed
+- **Dashboard Stats Enum Error**: Resolved the critical `invalid input value for enum project_status: 'cancelled'` error.
+    - Added the `'cancelled'` value to the `project_status` PostgreSQL enum.
+    - Updated the `get_consolidated_dashboard_stats` RPC to use explicit text comparison for status filters, preventing future cast errors.
+- **503 Cron Timeouts**: Added high-resolution timing logs to the daily cron job (`/api/cron/daily`) to identify performance bottlenecks in billing and intelligence services.
+- **Client Count Accuracy**: Fixed the dashboard stats RPC to correctly query the `business_clients` table, ensuring users see their active client base instead of zeros.
+
+### Added
+- **Enriched Dashboard Metrics**: Expanded the `get_consolidated_dashboard_stats` RPC and frontend UI with four new KPI areas:
+    - **Active Campaigns**: Real-time count of sending/scheduled outreach.
+    - **Upcoming Meetings**: Count of all meetings scheduled from the current time.
+    - **Unread Messages**: Instant visibility into pending client communication.
+    - **Task Progress**: Visual completion ratio for active workspace tasks.
+- **Lead Discovery Density**: Optimized the multi-source scraper engine (OSM + HERE) by relaxing initial contact-info filters. This allows for higher result density in specific niches, letting the enrichment pipeline handle contact harvesting post-discovery.
+
+### Production Readiness
+- **Vercel Runtime Safety**: Verified that all updated RPCs and API routes respect the 60-second execution limit and include robust error fallbacks.
+- **Schema Synchronization**: Verified that all frontend state management aligns with the updated database enums.
+
 ## Date: 2026-05-05 (MCP WELL-KNOWN ROUTE & CACHE HARDENING)
 
 ### Added
