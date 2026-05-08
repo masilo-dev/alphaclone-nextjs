@@ -1,4 +1,20 @@
 # Update Log
+## Date: 2026-05-08 (MCP AUTH HARDENING, DATABASE SUMMARY & INFRASTRUCTURE OPTIMIZATION)
+
+### Added
+- **Database Engine Summary Widget**: Implemented a high-density, real-time data summary across all dashboard entry points (`EngagingDashboard.tsx` and `HomeTab.tsx`).
+    - Provides a 1x8 grid of core metrics: Leads, Clients, Projects, Overdue Invoices, Campaigns, Tasks, Messages, and recent Events.
+    - Included a "System Optimal" pulse indicator to communicate database connectivity status.
+- **Infrastructure Optimization**: Increased global Vercel execution limits to support heavy-duty background tasks (Scraper/AI Enrichment).
+    - **vercel.json**: Boosted memory to **4GB** and maxDuration to **800s**.
+    - **Scraper API**: Increased `REQUEST_BUDGET_MS` to 780,000 and expanded the enrichment waterfall batch size to 12.
+    - **Stats API**: Synchronized `maxDuration` to 800s to ensure reliable metrics consolidation for complex tenants.
+
+### Fixed
+- **MCP Authentication Handshake**: Resolved persistent 401/406 handshake errors by enforcing `Accept: application/json` headers across all Supabase client initializations (Middleware, Token, and SSE endpoints).
+- **Multi-Tenant RLS Hardening**: Applied comprehensive Row Level Security (RLS) policies on core MCP OAuth tables (`mcp_oauth_tokens`, `mcp_oauth_codes`, `mcp_oauth_clients`).
+- **Dashboard Stats**: Passed raw statistics to the workspace home to enable the new summary widget while maintaining strict tenant-scoped data isolation.
+
 ## Date: 2026-05-08 (VERCEL TIMEOUT & DASHBOARD STABILITY HARDENING)
 
 ### Fixed

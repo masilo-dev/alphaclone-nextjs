@@ -42,7 +42,14 @@ export async function POST(req: NextRequest) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: MCP_CORS_HEADERS });
     }
-    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+      global: {
+        headers: {
+          'Accept': 'application/json',
+          'X-Client-Info': 'mcp-messages-endpoint-v2'
+        }
+      }
+    });
     const { data: session, error: sessionError } = await supabaseAdmin
       .from('mcp_sessions')
       .select('tenant_id, user_id, expires_at')
@@ -132,7 +139,14 @@ export async function POST(req: NextRequest) {
 
     // If it was an initialize request, generate a new session ID for subsequent requests
     if (requestBody.method === 'initialize' && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+      const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+        global: {
+          headers: {
+            'Accept': 'application/json',
+            'X-Client-Info': 'mcp-session-gen-v2'
+          }
+        }
+      });
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
       const { data: sessionRow } = await supabaseAdmin
         .from('mcp_sessions')
