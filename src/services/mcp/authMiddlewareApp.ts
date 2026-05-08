@@ -36,7 +36,11 @@ export async function validateMCPAuthApp(req: NextRequest) {
       return { error: 'Invalid or expired access token', status: 401 };
     }
 
-    if (new Date(tokenData.expires_at) < new Date()) {
+    const expiryDate = new Date(tokenData.expires_at);
+    const now = new Date();
+    const gracePeriodMs = 5 * 60 * 1000; // 5 minute grace period for clock skew
+
+    if (expiryDate.getTime() + gracePeriodMs < now.getTime()) {
       return { error: 'Access token has expired', status: 401 };
     }
 
