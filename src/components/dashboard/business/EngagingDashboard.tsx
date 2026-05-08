@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
-import DailySummarySystem from './DailySummarySystem';
+import { MomentumHUD } from '../MomentumHUD';
 
 // ─── Greeting Helpers ────────────────────────────────────────────────
 function getGreeting(): { text: string; Icon: React.FC<any> } {
@@ -256,14 +256,21 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </div>
             </div>
 
-            {/* Daily Summary System */}
+            {/* Momentum Dashboard */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden"
             >
-                <DailySummarySystem />
+                <MomentumHUD
+                    score={stats?.momentumScore ?? 0}
+                    streak={stats?.loginStreak ?? 1}
+                    activity24h={stats?.activity24h ?? 0}
+                    newLeads={stats?.newLeads24h ?? 0}
+                    actionsCompleted={stats?.activity24h ?? 0}
+                    rewardsUnlocked={0}
+                    variant="full"
+                />
             </motion.div>
 
             {/* Quick Actions */}
