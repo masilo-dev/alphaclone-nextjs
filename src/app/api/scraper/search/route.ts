@@ -5,6 +5,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
 import { scraperSearchSchema } from '@/schemas/validation';
 import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
+import { waitUntil } from '@vercel/functions';
 
 const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
@@ -563,33 +564,34 @@ export async function POST(request: Request) {
           }
         })
     );
-    let dedupedAgainstHistory = 0;
-    const tenantIdForDedupe = tenantId || '';
-    if (tenantIdForDedupe) {
-      const adminForDedupe = getAdminSupabase();
-      if (adminForDedupe) {
-        const dedupeRes = await dedupeLeadsAgainstTenantHistory(adminForDedupe, tenantIdForDedupe, final);
-        final = dedupeRes.deduped as LeadResult[];
-        dedupedAgainstHistory = dedupeRes.removedCount;
-      }
-    }
+      // Run final cleanup and history deduplication in the background via waitUntil
+      // This ensures we return results immediately while still maintaining durable state
+      waitUntil((async () => {
+        const tenantIdForDedupe = tenantId || '';
+        if (tenantIdForDedupe) {
+          const adminForDedupe = getAdminSupabase();
+          if (adminForDedupe) {
+            await dedupeLeadsAgainstTenantHistory(adminForDedupe, tenantIdForDedupe, final);
+          }
+        }
+        // Deduct quota for verified leads found
+        if (tenantId && final.length > 0) {
+            await checkAndDeductQuota(tenantId, final.length);
+        }
+      })());
 
-    // Strip source field from response — never expose data sources to frontend
-    const safeResults = final.map(({ source: _source, ...rest }) => rest);
-
-    return NextResponse.json({
-      success: true,
-      results: safeResults,
-      fallbackUsed: results.length < LEADS_PER_SEARCH,
-      quota: tenantId ? {
-        limit:     DAILY_LEAD_LIMIT,
-        used:      quotaInfo.used,
-        remaining: quotaInfo.remaining,
-      } : undefined,
-      leadsWithContact: final.filter((r) => r.hasContact).length,
-      leadsWithoutContact: final.filter((r) => !r.hasContact).length,
-      dedupedAgainstHistory,
-    });
+      return NextResponse.json({
+        success: true,
+        results: final.map(({ source: _source, ...rest }) => rest),
+        fallbackUsed: results.length < LEADS_PER_SEARCH,
+        quota: tenantId ? {
+          limit: DAILY_LEAD_LIMIT,
+          used: quotaInfo.used,
+          remaining: quotaInfo.remaining,
+        } : undefined,
+        leadsWithContact: final.filter((r) => r.hasContact).length,
+        leadsWithoutContact: final.filter((r) => !r.hasContact).length,
+      });
 
   } catch (error: unknown) {
     if (error instanceof RouteAuthError) {

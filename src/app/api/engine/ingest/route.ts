@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
+import { waitUntil } from '@vercel/functions';
 
 /**
  * INGESTION ENGINE endpoint
@@ -100,16 +101,18 @@ export async function POST(req: NextRequest) {
                 author_name,
             };
 
-            // Fire workflow execution in background via webhook
-            fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/engine/execute`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    trigger_type: lead_id ? 'lead_created' : 'ingestion_event',
-                    tenant_id,
-                    data: contextData,
-                }),
-            }).catch(console.error);
+            // Fire workflow execution in background reliably via waitUntil
+            waitUntil(
+                fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/engine/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-internal-api-key': process.env.INTERNAL_API_KEY || '' },
+                    body: JSON.stringify({
+                        trigger_type: lead_id ? 'lead_created' : 'ingestion_event',
+                        tenant_id,
+                        data: contextData,
+                    }),
+                }).catch(console.error)
+            );
 
             workflowsTriggered = workflows.length;
         }
