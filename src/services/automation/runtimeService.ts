@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { randomUUID } from 'crypto';
 import { getPlaybookDefinition } from './playbookService';
 import { verifyInvoiceSent, verifyLeadCreated, verifyOutreachDelivery, verifySocialPostPublished } from './verificationService';
 
@@ -170,7 +169,7 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
             lead_email: String(inputs.lead_email || ''),
             subject: String(inputs.subject || 'Follow-up from AlphaClone'),
             body_html: String(inputs.body_html || inputs.body || ''),
-            tracking_id: String(inputs.tracking_id || randomUUID()),
+            tracking_id: String(inputs.tracking_id || crypto.randomUUID()),
             pitch_angle: String(inputs.pitch_angle || 'automation_playbook'),
             industry: String(inputs.industry || ''),
             score: Number(inputs.score || 0),

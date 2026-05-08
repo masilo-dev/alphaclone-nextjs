@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     try {
         const codeVerifier = generateCodeVerifier();
-        const codeChallenge = generateCodeChallenge(codeVerifier);
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
         const stateNonce = crypto.randomUUID();
 
         // 2. Store verifier and user_id in oauth_states table

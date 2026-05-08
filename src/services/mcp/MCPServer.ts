@@ -8,7 +8,6 @@ import {
   ListPromptsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCP_TOOLS } from './toolManifest';
-import { randomUUID } from 'crypto';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
 import {
@@ -559,7 +558,7 @@ class AlphaCloneMCPServer {
       const { name, arguments: args } = (request as {
         params: { name: string; arguments?: Record<string, unknown> };
       }).params;
-      const traceId = randomUUID();
+      const traceId = crypto.randomUUID();
       const supabaseAdmin = createSupabaseAdminClient();
       const supabase = supabaseAdmin;
       let result: any;
