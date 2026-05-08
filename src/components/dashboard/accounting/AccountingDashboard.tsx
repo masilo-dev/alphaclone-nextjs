@@ -72,7 +72,8 @@ export default function AccountingDashboard() {
                     .in('status', ['draft', 'sent', 'overdue']);
 
                 const pending = (pendingInvoices || []).reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-                const revenue = statement?.totalRevenue || 0;
+                // User wants to see ALL revenue including pending
+                const revenue = (statement?.totalRevenue || 0) + pending;
                 const totalExp = statement?.totalExpenses || 0;
 
                 const cashBalance = (trialBalance?.accounts || [])

@@ -559,13 +559,13 @@ export const businessClientService = {
                 supabase.from('business_clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
                 supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
                 supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-                supabase.from('invoices').select('id, status, amount').eq('tenant_id', tenantId),
+                supabase.from('business_invoices').select('id, status, total').eq('tenant_id', tenantId),
             ]);
 
             const invoices = invoiceData || [];
             const totalRevenue = Math.round(invoices
                 .filter((i: any) => i.status === 'paid')
-                .reduce((sum: number, i: any) => sum + (i.amount || 0), 0) * 100) / 100;
+                .reduce((sum: number, i: any) => sum + (i.total || 0), 0) * 100) / 100;
             const pendingInvoices = invoices.filter((i: any) => i.status === 'pending').length;
 
             const stats: DashboardStats = {

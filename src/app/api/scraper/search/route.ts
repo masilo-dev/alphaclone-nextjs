@@ -14,8 +14,8 @@ import {
 import { googlePlacesService } from '@/services/googlePlacesService';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
-const REQUEST_BUDGET_MS = 52000;
+export const maxDuration = 300;
+const REQUEST_BUDGET_MS = 280000;
 
 // ─── Per-tenant in-process quota cache ────────────────────────────────────────
 // key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
@@ -547,7 +547,7 @@ export async function POST(request: Request) {
     await Promise.allSettled(
       final
         .filter((r) => r.website && !r.phone && !r.email)
-        .slice(0, 10) // cap at 10 to stay within Vercel 60s
+        .slice(0, 6) // reduced from 10 to ensure we stay within 300s reliably
         .map(async (lead) => {
           if (Date.now() - enrichStart > ENRICH_BUDGET_MS) return;
           try {
