@@ -17,12 +17,17 @@ export async function GET(req: NextRequest) {
         console.log('Daily cron job triggered');
 
         // 1. Contract Maintenance
+        const contractStart = Date.now();
         const contractResults = await contractExpirationService.performDailyMaintenance();
+        console.log(`[Cron] Contracts maintenance took ${Date.now() - contractStart}ms`);
 
         // 2. Renewable Billing
+        const billingStart = Date.now();
         const billingResults = await paymentService.processRecurringBilling();
+        console.log(`[Cron] Billing processing took ${Date.now() - billingStart}ms`);
 
-        // 3. Optional daily summary emails (profiles.email_preferences.digest)
+        // 3. Optional daily summary emails
+        const emailStart = Date.now();
         let digest: { attempted: number; sent: number; failed: number } | null = null;
         try {
             digest = await runUserDigestEmails();
@@ -36,7 +41,9 @@ export async function GET(req: NextRequest) {
         } catch (morningErr) {
             console.error('Morning briefing emails:', morningErr);
         }
+        console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
 
+        const intelligenceStart = Date.now();
         let intelligence: { tenantId: string; score: number } | null = null;
         const intelligenceTenantId = req.nextUrl.searchParams.get('intelligenceTenantId');
         if (intelligenceTenantId) {
@@ -48,6 +55,7 @@ export async function GET(req: NextRequest) {
                 console.error('Daily intelligence snapshot:', intelligenceErr);
             }
         }
+        console.log(`[Cron] Intelligence snapshot took ${Date.now() - intelligenceStart}ms`);
 
         return NextResponse.json({
             success: true,

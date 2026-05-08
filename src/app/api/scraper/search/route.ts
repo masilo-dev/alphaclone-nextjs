@@ -312,14 +312,8 @@ out center ${fetchLimit};
       const res = await postOverpassQuery(q);
       const data = await res.json();
       const all = (data.elements || []).filter((el: any) => el.tags?.name);
-      // Filter to only elements that have phone OR email in OSM tags
-      verifiedElements = all.filter((el: any) => {
-        const p = el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '';
-        const e = el.tags.email || el.tags['contact:email'] || '';
-        const w = el.tags.website || el.tags.url || el.tags['contact:website'] || '';
-        const hasWebsite = String(w).trim().length > 0;
-        return p.trim().length > 0 || e.trim().length > 0 || hasWebsite;
-      });
+      // Keep all elements that have a name and some basic classification
+      verifiedElements = all;
       if (verifiedElements.length >= targetMin) break;
     } catch (err) {
       console.warn('[OSM] Overpass attempt failed, widening bbox:', err);
@@ -345,7 +339,11 @@ out center ${fetchLimit};
     source:   'osm',
     lat:      el.lat  ?? el.center?.lat,
     lng:      el.lon  ?? el.center?.lon,
-    hasContact: true, // already filtered above
+    hasContact: hasContactInfo({
+      phone: el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '',
+      email: el.tags.email || el.tags['contact:email'] || '',
+      website: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
+    }),
   }));
 }
 
