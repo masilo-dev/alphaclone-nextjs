@@ -276,14 +276,6 @@ export function getBusinessOsGuidance(activeTab: string): BusinessOsGuidance {
                 { label: 'Workflows', tab: '/dashboard/business/workflows' },
             ],
         },
-        '/dashboard/business/daily-summary': {
-            mindset: TASK_HINT_MINDSET,
-            outcome: TASK_HINT_OUTCOME,
-            actions: [
-                { label: 'Tasks', tab: '/dashboard/tasks' },
-                { label: 'Dashboard', tab: '/dashboard' },
-            ],
-        },
         '/dashboard/mail': {
             mindset: TASK_HINT_MINDSET,
             outcome: TASK_HINT_OUTCOME,

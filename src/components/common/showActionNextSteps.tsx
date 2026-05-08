@@ -46,12 +46,12 @@ const PACKS: Record<string, NextPack> = {
     after_invoice_sent: {
         headline: 'Logged as sent — now close the money loop',
         detail:
-            'When payment lands, record it in Accounting and move the deal to Closed won if this was the last step. Review revenue in Daily summary.',
+            'When payment lands, record it in Accounting and move the deal to Closed won if this was the last step. Review revenue in Reports.',
         links: [
             { label: 'Billing', path: '/dashboard/business/billing' },
             { label: 'Accounting', path: '/dashboard/accounting' },
             { label: 'Deals', path: '/dashboard/deals' },
-            { label: 'Daily summary', path: '/dashboard/business/daily-summary' },
+            { label: 'Reports', path: '/dashboard/business/reports' },
         ],
     },
     invoice_not_sent_yet: {

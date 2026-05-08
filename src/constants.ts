@@ -164,7 +164,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Active Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
       { label: 'Billing Center', href: '/dashboard/business/billing', icon: DollarSign },
       { label: 'Accounting Hub', href: '/dashboard/accounting', icon: BarChart3 },
-      { label: 'Revenue Analytics', href: '/dashboard/business/daily-summary', icon: TrendingUp },
+      { label: 'Revenue Analytics', href: '/dashboard/business/reports', icon: TrendingUp },
     ]
   },
 
