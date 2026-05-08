@@ -1289,6 +1289,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <HomeTab
             user={user}
             currentStats={currentStats}
+            databaseStats={dashboardStats}
             filteredProjects={filteredProjects}
             isLoadingProjects={isLoadingProjects}
             updateProjectStage={updateProjectStage}

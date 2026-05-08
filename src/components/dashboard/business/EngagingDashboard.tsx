@@ -21,7 +21,10 @@ import {
     TrendingUp,
     Users as UsersIcon,
     DollarSign,
-    Target
+    Target,
+    Database,
+    Layers,
+    Activity
 } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
@@ -235,6 +238,86 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </div>
                 </motion.div>
             </div>
+            
+            {/* Database Engine Summary - High Density Row */}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/20 transition-all group"
+            >
+                <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                            <Database className="w-4 h-4 text-teal-400" />
+                        </div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Database Engine Summary</h3>
+                    </div>
+                    <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-green-500/5 border border-green-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-green-500 uppercase tracking-tighter">System Optimal</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-6">
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{stats?.totalLeads || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <Layers className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Leads</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-blue-400 transition-colors">{stats?.clientCount || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <UsersIcon className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Clients</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-purple-400 transition-colors">{stats?.activeProjects || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <Briefcase className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Projects</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-amber-400 transition-colors">{stats?.overdueInvoices || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <AlertCircle className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Overdue</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{stats?.activeCampaigns || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <Zap className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Campaigns</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-blue-400 transition-colors">{stats?.totalTasks || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <CheckSquare className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tasks</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-indigo-400 transition-colors">{stats?.unreadMessages || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <MessageCircle className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Messages</span>
+                        </div>
+                    </div>
+                    <div className="flex flex-col group/item cursor-default">
+                        <span className="text-2xl font-black text-white group-hover/item:text-rose-400 transition-colors">{stats?.activity24h || 0}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <Activity className="w-3 h-3 text-slate-600" />
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Events</span>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
 
             {/* Detailed Stats Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

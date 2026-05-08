@@ -83,7 +83,14 @@ export async function POST(req: NextRequest) {
       return tokenError('server_error', 'Server configuration error', 500);
     }
 
-    const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+      global: {
+        headers: {
+          'Accept': 'application/json',
+          'X-Client-Info': 'mcp-token-endpoint-v2'
+        }
+      }
+    });
 
     // ── 1. AUTHORIZATION CODE FLOW ─────────────────────────────────────────
     if (grant_type === 'authorization_code') {

@@ -22,7 +22,14 @@ export async function validateMCPAuthApp(req: NextRequest) {
     return { error: 'SERVER_CONFIGURATION_ERROR', status: 500 };
   }
 
-  const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+  const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+    global: {
+      headers: {
+        'Accept': 'application/json',
+        'X-Client-Info': 'mcp-auth-middleware-v2'
+      }
+    }
+  });
 
   // ── 1. Check for OAuth Access Token ──────────────────────────────────────
   if (token.startsWith('mcp_at_')) {
@@ -33,6 +40,12 @@ export async function validateMCPAuthApp(req: NextRequest) {
       .single();
 
     if (tokenError || !tokenData) {
+      console.warn('[MCP Auth] Token lookup failed or token not found:', {
+        error: tokenError?.message,
+        code: tokenError?.code,
+        hint: tokenError?.hint,
+        token_prefix: token.substring(0, 10)
+      });
       return { error: 'Invalid or expired access token', status: 401 };
     }
 

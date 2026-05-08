@@ -15,8 +15,8 @@ import {
 import { googlePlacesService } from '@/services/googlePlacesService';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300;
-const REQUEST_BUDGET_MS = 280000;
+export const maxDuration = 800;
+const REQUEST_BUDGET_MS = 780000;
 
 // ─── Per-tenant in-process quota cache ────────────────────────────────────────
 // key = `${tenantId}:${YYYY-MM-DD}`, value = count of leads already returned today
@@ -548,7 +548,7 @@ export async function POST(request: Request) {
     await Promise.allSettled(
       final
         .filter((r) => r.website && !r.phone && !r.email)
-        .slice(0, 6) // reduced from 10 to ensure we stay within 300s reliably
+        .slice(0, 12) // increased from 6 to utilize the 800s infrastructure
         .map(async (lead) => {
           if (Date.now() - enrichStart > ENRICH_BUDGET_MS) return;
           try {
