@@ -131,13 +131,13 @@ BEGIN
         SELECT 
             COALESCE(SUM(value * (CAST(COALESCE(probability, 0) AS numeric) / 100)), 0),
             COALESCE(SUM(CASE 
-                WHEN stage IN ('won', 'closed_won') THEN value 
+                WHEN stage::text IN ('won', 'closed_won') THEN value 
                 WHEN expected_close_date >= CURRENT_DATE THEN value * (CAST(COALESCE(probability, 0) AS numeric) / 100)
                 ELSE 0 
             END), 0)
         INTO v_weighted_pipeline, v_sales_forecast
         FROM deals
-        WHERE tenant_id = p_tenant_id AND stage NOT IN ('lost', 'closed_lost');
+        WHERE tenant_id = p_tenant_id AND stage::text NOT IN ('lost', 'closed_lost');
     EXCEPTION WHEN OTHERS THEN
         v_weighted_pipeline := 0;
         v_sales_forecast := 0;
