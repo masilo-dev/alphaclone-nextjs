@@ -41,200 +41,367 @@ CREATE OR REPLACE FUNCTION public.get_consolidated_dashboard_stats(p_tenant_id u
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path = public
 AS $function$
 DECLARE
-    v_total_revenue numeric;
-    v_pending_revenue numeric;
-    v_active_projects int;
-    v_total_leads int;
-    v_weighted_pipeline numeric;
-    v_sales_forecast numeric;
-    v_recent_activity jsonb;
-    v_monthly_revenue jsonb;
-    v_pipeline_data jsonb;
+    v_total_revenue numeric := 0;
+    v_pending_revenue numeric := 0;
+    v_active_projects int := 0;
+    v_total_leads int := 0;
+    v_weighted_pipeline numeric := 0;
+    v_sales_forecast numeric := 0;
+    v_recent_activity jsonb := '[]'::jsonb;
+    v_pipeline_data jsonb := '{}'::jsonb;
     v_now timestamp := now();
-    v_client_count int;
-    v_pending_count int;
-    v_overdue_count int;
-    
+    v_client_count int := 0;
+    v_pending_count int := 0;
+    v_overdue_count int := 0;
+    v_total_won_value numeric := 0;
+
     -- Momentum Metrics
     v_activity_24h int := 0;
     v_new_leads_24h int := 0;
     v_stale_leads int := 0;
     v_momentum_score int := 0;
-    v_login_streak int := 0;
-    
+    v_login_streak int := 1;
+
     -- Additional Visual Metrics
     v_active_campaigns int := 0;
     v_upcoming_meetings int := 0;
     v_unread_messages int := 0;
     v_total_tasks int := 0;
     v_completed_tasks int := 0;
+
+    v_has_leads_stage boolean := false;
+    v_has_leads_status boolean := false;
+    v_has_leads_created_at boolean := false;
+    v_has_deals_stage boolean := false;
+    v_has_deals_status boolean := false;
+    v_has_deals_probability boolean := false;
+    v_has_deals_expected_close boolean := false;
+    v_has_messages_read_at boolean := false;
 BEGIN
-    -- 1. Revenue Metrics (Using business_invoices)
-    -- We use business_invoices as the primary source for the dashboard
-    SELECT 
-        COALESCE(SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END), 0),
-        COALESCE(SUM(CASE WHEN status IN ('sent', 'overdue') THEN total ELSE 0 END), 0),
-        COUNT(CASE WHEN status = 'sent' THEN 1 END),
-        COUNT(CASE WHEN status = 'overdue' THEN 1 END)
-    INTO v_total_revenue, v_pending_revenue, v_pending_count, v_overdue_count
-    FROM business_invoices
-    WHERE tenant_id = p_tenant_id;
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'stage'
+    ) INTO v_has_leads_stage;
 
-    -- 2. Project Metrics
-    SELECT COUNT(*)
-    INTO v_active_projects
-    FROM projects
-    WHERE tenant_id = p_tenant_id AND status != 'done';
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'status'
+    ) INTO v_has_leads_status;
 
-    -- 3. Lead Metrics
-    SELECT COUNT(*)
-    INTO v_total_leads
-    FROM leads
-    WHERE tenant_id = p_tenant_id;
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'leads' AND column_name = 'created_at'
+    ) INTO v_has_leads_created_at;
 
-    -- 3a. Client Metrics
-    SELECT COUNT(*)
-    INTO v_client_count
-    FROM business_clients
-    WHERE tenant_id = p_tenant_id;
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'deals' AND column_name = 'stage'
+    ) INTO v_has_deals_stage;
 
-    -- 4. Momentum & Activity (From audit_logs)
-    SELECT COUNT(*)
-    INTO v_activity_24h
-    FROM audit_logs
-    WHERE tenant_id = p_tenant_id 
-      AND created_at >= v_now - INTERVAL '24 hours';
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'deals' AND column_name = 'status'
+    ) INTO v_has_deals_status;
 
-    -- 4b. Recent Activity
-    SELECT JSONB_AGG(activity)
-    INTO v_recent_activity
-    FROM (
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'deals' AND column_name = 'probability'
+    ) INTO v_has_deals_probability;
+
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'deals' AND column_name = 'expected_close_date'
+    ) INTO v_has_deals_expected_close;
+
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'read_at'
+    ) INTO v_has_messages_read_at;
+
+    -- 1. Revenue Metrics
+    IF to_regclass('public.business_invoices') IS NOT NULL THEN
         SELECT 
-            action as type,
-            COALESCE(metadata->>'clientName', action) as title,
-            created_at as date
-        FROM audit_logs
-        WHERE tenant_id = p_tenant_id
-        ORDER BY created_at DESC
-        LIMIT 5
-    ) activity;
-
-    -- New leads in last 24h
-    SELECT COUNT(*)
-    INTO v_new_leads_24h
-    FROM leads
-    WHERE tenant_id = p_tenant_id 
-      AND created_at >= v_now - INTERVAL '24 hours';
-
-    -- Momentum Score (0-100)
-    v_momentum_score := LEAST(100, (v_activity_24h * 5) + (v_new_leads_24h * 10));
-
-    -- 5. Deal Metrics (Weighted Pipeline & Forecast)
-    -- Handles both 'stage' and 'status' column variations if needed via COALESCE in SQL
-    -- But for now we assume modern schema: deals has stage, probability, value
-    BEGIN
-        SELECT 
-            COALESCE(SUM(value * (CAST(COALESCE(probability, 0) AS numeric) / 100)), 0),
-            COALESCE(SUM(CASE 
-                WHEN stage::text IN ('won', 'closed_won') THEN value 
-                WHEN expected_close_date >= CURRENT_DATE THEN value * (CAST(COALESCE(probability, 0) AS numeric) / 100)
-                ELSE 0 
-            END), 0)
-        INTO v_weighted_pipeline, v_sales_forecast
-        FROM deals
-        WHERE tenant_id = p_tenant_id AND stage::text NOT IN ('lost', 'closed_lost');
-    EXCEPTION WHEN OTHERS THEN
-        v_weighted_pipeline := 0;
-        v_sales_forecast := 0;
-    END;
-
-    -- 6. Pipeline Stages (JSON map)
-    -- Uses dynamic column detection to handle 'stage' or 'status' on leads table
-    SELECT jsonb_object_agg(stage_name, count)
-    INTO v_pipeline_data
-    FROM (
-        SELECT 
-            CASE 
-                WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'stage') 
-                THEN stage 
-                ELSE status 
-            END as stage_name, 
-            COUNT(*) as count
-        FROM leads
-        WHERE tenant_id = p_tenant_id
-        GROUP BY 1
-    ) pipeline_counts;
-
-    -- 7. Additional Metrics for Momentum Dashboard
-    -- Active Campaigns
-    SELECT COUNT(*) INTO v_active_campaigns
-    FROM email_campaigns
-    WHERE tenant_id = p_tenant_id AND status IN ('scheduled', 'sending');
-
-    -- Upcoming Meetings
-    SELECT COUNT(*) INTO v_upcoming_meetings
-    FROM calendar_events
-    WHERE tenant_id = p_tenant_id AND start_time > v_now;
-
-    -- Unread Messages
-    SELECT COUNT(*) INTO v_unread_messages
-    FROM messages
-    WHERE tenant_id = p_tenant_id AND read_at IS NULL;
-
-    -- Tasks
-    SELECT 
-        COUNT(*),
-        COUNT(CASE WHEN status = 'completed' THEN 1 END)
-    INTO v_total_tasks, v_completed_tasks
-    FROM tasks
-    WHERE tenant_id = p_tenant_id;
-
-    -- Login Streak (Days with activity in audit_logs for the tenant)
-    IF p_user_id IS NOT NULL THEN
-        WITH daily_activity AS (
-            SELECT DISTINCT date_trunc('day', created_at) as activity_day
-            FROM audit_logs
-            WHERE user_id = p_user_id AND tenant_id = p_tenant_id
-            ORDER BY activity_day DESC
-        ),
-        streaks AS (
-            SELECT 
-                activity_day,
-                activity_day::date - (ROW_NUMBER() OVER (ORDER BY activity_day DESC) * 1) as group_id
-            FROM daily_activity
-        )
-        SELECT COUNT(*)
-        INTO v_login_streak
-        FROM streaks
-        WHERE group_id = (SELECT group_id FROM streaks LIMIT 1);
-    ELSE
-        v_login_streak := 1;
+            COALESCE(SUM(CASE WHEN status = 'paid' THEN total ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN status IN ('sent', 'overdue') THEN total ELSE 0 END), 0),
+            COUNT(*) FILTER (WHERE status = 'sent'),
+            COUNT(*) FILTER (WHERE status = 'overdue')
+        INTO v_total_revenue, v_pending_revenue, v_pending_count, v_overdue_count
+        FROM business_invoices
+        WHERE tenant_id = p_tenant_id;
     END IF;
 
-    -- 8. Return Integrated JSON
+    -- 2. Project Metrics
+    IF to_regclass('public.projects') IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO v_active_projects
+        FROM projects
+        WHERE tenant_id = p_tenant_id
+          AND COALESCE(status, '') != 'done';
+    END IF;
+
+    -- 3. Lead Metrics
+    IF to_regclass('public.leads') IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO v_total_leads
+        FROM leads
+        WHERE tenant_id = p_tenant_id;
+
+        IF v_has_leads_created_at THEN
+            EXECUTE $sql$
+                SELECT COUNT(*)
+                FROM leads
+                WHERE tenant_id = $1
+                  AND created_at >= $2 - INTERVAL '24 hours'
+            $sql$
+            INTO v_new_leads_24h
+            USING p_tenant_id, v_now;
+        END IF;
+
+        IF v_has_leads_status THEN
+            IF v_has_leads_created_at THEN
+                EXECUTE $sql$
+                    SELECT COUNT(*)
+                    FROM leads
+                    WHERE tenant_id = $1
+                      AND created_at < $2 - INTERVAL '7 days'
+                      AND COALESCE(status::text, '') NOT IN ('closed_won', 'closed_lost', 'won', 'lost')
+                $sql$
+                INTO v_stale_leads
+                USING p_tenant_id, v_now;
+            ELSE
+                EXECUTE $sql$
+                    SELECT COUNT(*)
+                    FROM leads
+                    WHERE tenant_id = $1
+                      AND COALESCE(status::text, '') NOT IN ('closed_won', 'closed_lost', 'won', 'lost')
+                $sql$
+                INTO v_stale_leads
+                USING p_tenant_id;
+            END IF;
+        ELSIF v_has_leads_stage THEN
+            IF v_has_leads_created_at THEN
+                EXECUTE $sql$
+                    SELECT COUNT(*)
+                    FROM leads
+                    WHERE tenant_id = $1
+                      AND created_at < $2 - INTERVAL '7 days'
+                      AND COALESCE(stage::text, '') NOT IN ('closed_won', 'closed_lost', 'won', 'lost')
+                $sql$
+                INTO v_stale_leads
+                USING p_tenant_id, v_now;
+            ELSE
+                EXECUTE $sql$
+                    SELECT COUNT(*)
+                    FROM leads
+                    WHERE tenant_id = $1
+                      AND COALESCE(stage::text, '') NOT IN ('closed_won', 'closed_lost', 'won', 'lost')
+                $sql$
+                INTO v_stale_leads
+                USING p_tenant_id;
+            END IF;
+        END IF;
+
+        IF v_has_leads_stage THEN
+            EXECUTE $sql$
+                SELECT COALESCE(jsonb_object_agg(stage_name, stage_count), '{}'::jsonb)
+                FROM (
+                    SELECT COALESCE(stage::text, 'unknown') AS stage_name, COUNT(*) AS stage_count
+                    FROM leads
+                    WHERE tenant_id = $1
+                    GROUP BY 1
+                ) pipeline_counts
+            $sql$
+            INTO v_pipeline_data
+            USING p_tenant_id;
+        ELSIF v_has_leads_status THEN
+            EXECUTE $sql$
+                SELECT COALESCE(jsonb_object_agg(stage_name, stage_count), '{}'::jsonb)
+                FROM (
+                    SELECT COALESCE(status::text, 'unknown') AS stage_name, COUNT(*) AS stage_count
+                    FROM leads
+                    WHERE tenant_id = $1
+                    GROUP BY 1
+                ) pipeline_counts
+            $sql$
+            INTO v_pipeline_data
+            USING p_tenant_id;
+        END IF;
+    END IF;
+
+    -- 3a. Client Metrics
+    IF to_regclass('public.business_clients') IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO v_client_count
+        FROM business_clients
+        WHERE tenant_id = p_tenant_id;
+    END IF;
+
+    -- 4. Momentum & Activity
+    IF to_regclass('public.audit_logs') IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO v_activity_24h
+        FROM audit_logs
+        WHERE tenant_id = p_tenant_id 
+          AND created_at >= v_now - INTERVAL '24 hours';
+
+        SELECT COALESCE(JSONB_AGG(activity), '[]'::jsonb)
+        INTO v_recent_activity
+        FROM (
+            SELECT 
+                action as type,
+                COALESCE(metadata->>'clientName', action) as title,
+                created_at as date
+            FROM audit_logs
+            WHERE tenant_id = p_tenant_id
+            ORDER BY created_at DESC
+            LIMIT 5
+        ) activity;
+
+        IF p_user_id IS NOT NULL THEN
+            WITH daily_activity AS (
+                SELECT DISTINCT date_trunc('day', created_at)::date as activity_day
+                FROM audit_logs
+                WHERE user_id = p_user_id AND tenant_id = p_tenant_id
+            ),
+            streaks AS (
+                SELECT 
+                    activity_day,
+                    activity_day - ROW_NUMBER() OVER (ORDER BY activity_day DESC) AS group_id
+                FROM daily_activity
+            )
+            SELECT COALESCE(COUNT(*), 1)
+            INTO v_login_streak
+            FROM streaks
+            WHERE group_id = (SELECT group_id FROM streaks ORDER BY activity_day DESC LIMIT 1);
+        END IF;
+    END IF;
+
+    v_momentum_score := LEAST(100, (v_activity_24h * 5) + (v_new_leads_24h * 10));
+    IF v_stale_leads > 10 THEN
+        v_momentum_score := GREATEST(0, v_momentum_score - 20);
+    END IF;
+
+    -- 5. Deal Metrics
+    IF to_regclass('public.deals') IS NOT NULL THEN
+        BEGIN
+            EXECUTE format($sql$
+                SELECT
+                    COALESCE(SUM(
+                        COALESCE(value, 0) *
+                        CASE WHEN %1$s THEN COALESCE(probability, 0)::numeric / 100 ELSE 1 END
+                    ), 0),
+                    COALESCE(SUM(
+                        CASE
+                            WHEN %2$s IN ('won', 'closed_won') THEN COALESCE(value, 0)
+                            WHEN %3$s AND expected_close_date >= CURRENT_DATE THEN
+                                COALESCE(value, 0) *
+                                CASE WHEN %1$s THEN COALESCE(probability, 0)::numeric / 100 ELSE 1 END
+                            ELSE 0
+                        END
+                    ), 0),
+                    COALESCE(SUM(
+                        CASE
+                            WHEN %2$s IN ('won', 'closed_won') THEN COALESCE(value, 0)
+                            ELSE 0
+                        END
+                    ), 0)
+                FROM deals
+                WHERE tenant_id = $1
+                  AND %2$s NOT IN ('lost', 'closed_lost')
+            $sql$,
+                CASE WHEN v_has_deals_probability THEN 'true' ELSE 'false' END,
+                CASE
+                    WHEN v_has_deals_stage THEN 'COALESCE(stage::text, '''')'
+                    WHEN v_has_deals_status THEN 'COALESCE(status::text, '''')'
+                    ELSE ''''''
+                END,
+                CASE WHEN v_has_deals_expected_close THEN 'true' ELSE 'false' END
+            )
+            INTO v_weighted_pipeline, v_sales_forecast, v_total_won_value
+            USING p_tenant_id;
+        EXCEPTION WHEN OTHERS THEN
+            v_weighted_pipeline := 0;
+            v_sales_forecast := 0;
+            v_total_won_value := 0;
+        END;
+    END IF;
+
+    -- 6. Additional Metrics for Momentum Dashboard
+    IF to_regclass('public.email_campaigns') IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO v_active_campaigns
+        FROM email_campaigns
+        WHERE tenant_id = p_tenant_id
+          AND COALESCE(status, '') IN ('scheduled', 'sending');
+    END IF;
+
+    IF to_regclass('public.calendar_events') IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO v_upcoming_meetings
+        FROM calendar_events
+        WHERE tenant_id = p_tenant_id
+          AND start_time > v_now;
+    END IF;
+
+    IF to_regclass('public.messages') IS NOT NULL THEN
+        IF v_has_messages_read_at THEN
+            SELECT COUNT(*)
+            INTO v_unread_messages
+            FROM messages
+            WHERE tenant_id = p_tenant_id
+              AND read_at IS NULL;
+        ELSE
+            SELECT COUNT(*)
+            INTO v_unread_messages
+            FROM messages
+            WHERE tenant_id = p_tenant_id;
+        END IF;
+    END IF;
+
+    IF to_regclass('public.tasks') IS NOT NULL THEN
+        SELECT 
+            COUNT(*),
+            COUNT(*) FILTER (WHERE COALESCE(status, '') = 'completed')
+        INTO v_total_tasks, v_completed_tasks
+        FROM tasks
+        WHERE tenant_id = p_tenant_id;
+    END IF;
+
+    -- 7. Return Integrated JSON
     RETURN jsonb_build_object(
-        'totalRevenue', v_total_revenue,
-        'pendingRevenue', v_pending_revenue,
-        'pendingInvoices', v_pending_count,
-        'overdueInvoices', v_overdue_count,
-        'activeProjects', v_active_projects,
-        'totalLeads', v_total_leads,
-        'clientCount', v_client_count,
-        'weightedPipeline', v_weighted_pipeline,
-        'salesForecast', v_sales_forecast,
+        'totalRevenue', COALESCE(v_total_revenue, 0),
+        'pendingRevenue', COALESCE(v_pending_revenue, 0),
+        'pendingInvoices', COALESCE(v_pending_count, 0),
+        'overdueInvoices', COALESCE(v_overdue_count, 0),
+        'activeProjects', COALESCE(v_active_projects, 0),
+        'totalLeads', COALESCE(v_total_leads, 0),
+        'clientCount', COALESCE(v_client_count, 0),
+        'weightedPipeline', COALESCE(v_weighted_pipeline, 0),
+        'salesForecast', COALESCE(v_sales_forecast, 0),
+        'totalWonValue', COALESCE(v_total_won_value, 0),
         'recentActivity', COALESCE(v_recent_activity, '[]'::jsonb),
         'pipeline', COALESCE(v_pipeline_data, '{}'::jsonb),
-        'momentumScore', v_momentum_score,
+        'momentumScore', COALESCE(v_momentum_score, 0),
         'loginStreak', COALESCE(v_login_streak, 1),
-        'activity24h', v_activity_24h,
-        'newLeads24h', v_new_leads_24h,
-        'activeCampaigns', v_active_campaigns,
-        'upcomingMeetings', v_upcoming_meetings,
-        'unreadMessages', v_unread_messages,
-        'totalTasks', v_total_tasks,
-        'completedTasks', v_completed_tasks,
+        'activity24h', COALESCE(v_activity_24h, 0),
+        'newLeads24h', COALESCE(v_new_leads_24h, 0),
+        'staleLeads', COALESCE(v_stale_leads, 0),
+        'activeCampaigns', COALESCE(v_active_campaigns, 0),
+        'upcomingMeetings', COALESCE(v_upcoming_meetings, 0),
+        'unreadMessages', COALESCE(v_unread_messages, 0),
+        'totalTasks', COALESCE(v_total_tasks, 0),
+        'completedTasks', COALESCE(v_completed_tasks, 0),
         'serverTime', v_now
     );
 END;

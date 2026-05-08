@@ -11,6 +11,8 @@ export async function validateMCPAuthApp(req: NextRequest) {
     token = authHeader.substring(7);
   }
 
+  token = token?.trim() || null;
+
   if (!token) {
     return {
       error: 'Authentication required. Provide x-api-key or Authorization Bearer token header.',
@@ -31,13 +33,20 @@ export async function validateMCPAuthApp(req: NextRequest) {
     }
   });
 
+  const isOAuthAccessToken = token.startsWith('mcp_at_');
+  const isStaticApiKey = token.startsWith('ac_mcp_');
+
+  if (!isOAuthAccessToken && !isStaticApiKey) {
+    return { error: 'Unauthorized', status: 401 };
+  }
+
   // ── 1. Check for OAuth Access Token ──────────────────────────────────────
-  if (token.startsWith('mcp_at_')) {
+  if (isOAuthAccessToken) {
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('mcp_oauth_tokens')
       .select('tenant_id, user_id, expires_at, client_id')
       .eq('access_token', token)
-      .single();
+      .maybeSingle();
 
     if (tokenError || !tokenData) {
       console.warn('[MCP Auth] Token lookup failed or token not found:', {
@@ -84,7 +93,7 @@ export async function validateMCPAuthApp(req: NextRequest) {
     .from('mcp_api_keys')
     .select('tenant_id, user_id')
     .eq('api_key', token)
-    .single();
+    .maybeSingle();
 
   if (keyError || !keyData) {
     return { error: 'Unauthorized', status: 401 };
