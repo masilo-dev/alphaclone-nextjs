@@ -33,6 +33,10 @@ END $$;
 
 -- 2. Fix the consolidated stats RPC
 -- Refactored to be robust against schema variations (stage vs status)
+-- IMPORTANT: We drop old versions first to prevent overloading errors
+DROP FUNCTION IF EXISTS public.get_consolidated_dashboard_stats(uuid);
+DROP FUNCTION IF EXISTS public.get_consolidated_dashboard_stats(uuid, uuid);
+
 CREATE OR REPLACE FUNCTION public.get_consolidated_dashboard_stats(p_tenant_id uuid, p_user_id uuid DEFAULT NULL)
  RETURNS jsonb
  LANGUAGE plpgsql

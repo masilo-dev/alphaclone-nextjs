@@ -1,0 +1,32 @@
+﻿node.exe : Fetching projects in borns-projects-bfe09b9f
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Fetching projec...ojects-bfe09b9f:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+> Projects found under borns-projects-bfe09b9f  [2s]
+
+  Project Name            Latest Production URL                                    Updated   Node Version   
+  alphaclone-nextjs2      --                                                       49s       24.x           
+  alphaclone-nextjs-2     https://alphaclonesystems.com                            16m       24.x           
+  alphaclone-nextjs       https://alphaclone-nextjs.vercel.app                     16m       24.x           
+  trae_bed8bxgs           https://traebed8bxgs.vercel.app                          3d        24.x           
+  church-site             https://church-site-kappa.vercel.app                     3d        24.x           
+  edempower               https://edempower.vercel.app                             3d        24.x           
+  suntrek-engineering     https://suntrek-engineering.vercel.app                   3d        24.x           
+  v0-hr                   --                                                       3d        24.x           
+  masaze-premium-szymon   https://www.syzmon.com.pl                                3d        24.x           
+  decorum-services        https://decorum-services.vercel.app                      3d        24.x           
+  amanzi-restaurant       https://amanzi-restaurant.vercel.app                     3d        24.x           
+  dashboard               https://dashboard-psi-dun-12.vercel.app                  3d        24.x           
+  dist                    https://dist-pi-opal.vercel.app                          3d        24.x           
+  massage                 https://massage-one-coral.vercel.app                     3d        24.x           
+  tnz-associates          https://tnz-associates.vercel.app                        3d        24.x           
+  telpro-systems          https://telpro-systems.vercel.app                        3d        24.x           
+  consultaion             https://consultaion-zeta.vercel.app                      3d        24.x           
+  quality-junior-school   https://quality-junior-school.vercel.app                 3d        24.x           
+  msasa-high-schhol       https://msasa-high-schhol.vercel.app                     3d        24.x           
+  vibe-coding             https://vibe-coding-borns-projects-bfe09b9f.vercel.app   3d        22.x           
+
+> To display the next page, run `vercel project ls --next 1777971731915`
