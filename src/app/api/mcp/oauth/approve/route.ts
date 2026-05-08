@@ -54,20 +54,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No workspace found for your account' }, { status: 403 });
         }
 
-        // ── Validate client (if provided) ──────────────────────────────────
+        // ── Ensure client exists (Auto-register dynamic AI agents) ──────────
         if (client_id) {
-            const { data: client } = await supabaseAdmin
+            await supabaseAdmin
                 .from('mcp_oauth_clients')
-                .select('redirect_uris')
-                .eq('client_id', client_id)
-                .single();
-
-            if (client) {
-                const allowed: string[] = client.redirect_uris || [];
-                if (allowed.length > 0 && !allowed.includes(redirect_uri)) {
-                    return NextResponse.json({ error: 'redirect_uri not registered for this client' }, { status: 400 });
-                }
-            }
+                .upsert({
+                    client_id,
+                    client_name: client_id.startsWith('177') ? 'Claude Desktop' : client_id,
+                    client_secret: 'dynamic',
+                    redirect_uris: [redirect_uri],
+                }, { onConflict: 'client_id' });
         }
 
         // ── Generate real single-use authorization code ────────────────────
