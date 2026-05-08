@@ -45,10 +45,10 @@ export function createAuthorizationServerResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
   const data = {
     issuer: baseUrl,
+    // Standard OAuth2 Authorization Endpoint (Human-facing UI)
+    authorization_endpoint: `${baseUrl}/authorize`,
     // Server-side automated endpoint (supports Authorization header for headless flow)
-    authorization_endpoint: `${baseUrl}/api/mcp/authorize`,
-    // Human-facing UI endpoint (for users who prefer browser-based approval)
-    human_authorization_endpoint: `${baseUrl}/authorize`,
+    automated_authorization_endpoint: `${baseUrl}/api/mcp/authorize`,
     token_endpoint: `${baseUrl}/api/mcp/token`,
     registration_endpoint: `${baseUrl}/api/mcp/register`,
     response_types_supported: ['code'],
