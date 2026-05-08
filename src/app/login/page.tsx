@@ -8,6 +8,7 @@ function LoginContent() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
+        if (!searchParams) return;
         const params = searchParams.toString();
         const target = params ? `/auth/login?${params}` : '/auth/login';
         router.replace(target);
