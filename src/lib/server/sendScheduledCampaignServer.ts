@@ -52,7 +52,7 @@ function encodeGmailRawMessage(params: {
     fromName: string;
     replyTo?: string;
 }) {
-    const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
+    const utf8Subject = `=?utf-8?B?${btoa(String.fromCharCode(...new TextEncoder().encode(params.subject)))}?=`;
     const message = [
         `From: ${params.fromName} <${params.fromEmail}>`,
         `To: ${params.to}`,
@@ -66,8 +66,7 @@ function encodeGmailRawMessage(params: {
         .filter(Boolean)
         .join('\n');
 
-    return Buffer.from(message)
-        .toString('base64')
+    return btoa(String.fromCharCode(...new TextEncoder().encode(message)))
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');

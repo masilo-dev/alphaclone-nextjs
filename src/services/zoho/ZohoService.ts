@@ -83,10 +83,10 @@ export class ZohoService {
 
         try {
             if (config.refreshToken && config.refreshToken.includes(':')) {
-                config.refreshToken = decrypt(config.refreshToken, this.encryptionSecret);
+                config.refreshToken = await decrypt(config.refreshToken, this.encryptionSecret);
             }
             if (config.accessToken && config.accessToken.includes(':')) {
-                config.accessToken = decrypt(config.accessToken, this.encryptionSecret);
+                config.accessToken = await decrypt(config.accessToken, this.encryptionSecret);
             }
         } catch (e) {
             console.error('Failed to decrypt Zoho tokens:', e);
@@ -139,10 +139,10 @@ export class ZohoService {
 
         // Encrypt tokens before saving
         if (newConfig.refreshToken && !newConfig.refreshToken.includes(':')) {
-            newConfig.refreshToken = encrypt(newConfig.refreshToken, this.encryptionSecret);
+            newConfig.refreshToken = await encrypt(newConfig.refreshToken, this.encryptionSecret);
         }
         if (newConfig.accessToken && !newConfig.accessToken.includes(':')) {
-            newConfig.accessToken = encrypt(newConfig.accessToken, this.encryptionSecret);
+            newConfig.accessToken = await encrypt(newConfig.accessToken, this.encryptionSecret);
         }
 
         const supabase = this.getSupabaseClient();

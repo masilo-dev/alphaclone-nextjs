@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         const bodyText = await req.text();
         const signature = req.headers.get('x-hub-signature-256');
 
-        if (!verifyFacebookSignature(bodyText, signature, APP_SECRET)) {
+        if (!await verifyFacebookSignature(bodyText, signature, APP_SECRET)) {
             console.warn('[Facebook Messenger Webhook] Rejected: invalid HMAC signature');
             return new NextResponse('Unauthorized', { status: 401 });
         }

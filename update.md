@@ -1,6 +1,20 @@
 # Update Log
 
-## Date: 2026-05-08 (DASHBOARD ANALYTICS & MCP HANDSHAKE HARDENING)
+
+## Date: 2026-05-08 (WEB CRYPTO API MIGRATION & EDGE COMPATIBILITY)
+
+### Fixed
+- **Node.js Crypto Removal**: Resolved critical "Native module not found: node:module" build failures in Edge Runtime by eliminating all Node.js-specific `crypto` imports.
+- **Web Crypto API Migration**: Refactored the core encryption and security libraries to use the universal Web Crypto API (`crypto.subtle`).
+    - **encryption.ts**: Rewrote AES-GCM encryption/decryption as asynchronous functions using standard web APIs.
+    - **pkce.ts**: Migrated SHA-256 hashing and random byte generation to Web Crypto, ensuring compatibility across Edge, browser, and Node.js.
+    - **webhookUtils.ts**: Replaced Node.js HMAC-SHA256 with an Edge-safe implementation for Facebook and Instagram signature verification.
+- **Zoho Token Security**: Updated the `ZohoService` and `ZohoMailService` to support asynchronous encryption, maintaining high-security standards for stored integration tokens while ensuring runtime stability.
+- **Buffer Removal**: Eliminated `Buffer` usage in `sendScheduledCampaignServer.ts`, replacing it with `btoa` and `TextEncoder` to prevent runtime crashes in strict Edge environments.
+
+### Production Readiness
+- **Universal Cryptography**: The platform now uses standard Web APIs for all cryptographic operations, ensuring full compatibility with Vercel's global Edge network.
+- **Build Hardening**: Verified that all core automation and integration services can be safely imported and evaluated during the Next.js production build without triggering dependency errors.
 
 ### Fixed
 - **MCP SSE Handshake Stabilization**: Resolved "Status 0" connection failures for external clients (Claude/Manus/Grok).
