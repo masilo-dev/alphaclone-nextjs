@@ -1,4 +1,16 @@
 # Update Log
+## Date: 2026-05-08 (VERCEL TIMEOUT & DASHBOARD STABILITY HARDENING)
+
+### Fixed
+- **Scraper API Vercel Timeouts**: Resolved 500 runtime timeout errors on the `search` and `enrichment` pipeline.
+    - Explicitly set `export const maxDuration = 300;` on the API route to fully utilize the Vercel Pro Plan execution limits.
+    - Updated `REQUEST_BUDGET_MS` to 280,000 to cleanly cut off heavy background processes before the system hard-kills the function.
+    - Optimized the default enrichment batch size (from 10 to 6) to ensure the slower browser-based tasks always complete within the 300s window.
+- **Dashboard Stats 500 Error**: Fixed the `column "sales_stage" does not exist` error causing the dashboard metrics to crash.
+    - Updated `businessClientService.ts` to properly query the `business_invoices` table instead of the legacy `invoices` table.
+    - Created a database migration to update `get_consolidated_dashboard_stats` to robustly handle unified CRM tables (using `stage` vs `status`).
+    - Fixed "subscription timed out" errors by adding core operational tables (`leads`, `messages`, `projects`, `business_clients`, `business_invoices`) to the `supabase_realtime` publication.
+    - Added explicit `maxDuration = 300` to the `/api/dashboard/stats/route.ts` API route.
 
 ## Date: 2026-05-08 (EDGE RUNTIME STABILIZATION & MCP ROUTE OPTIMIZATION)
 

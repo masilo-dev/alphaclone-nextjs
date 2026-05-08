@@ -585,7 +585,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
         }
     };
 
-    const totalRevenue = pnlData ? pnlData.totalRevenue : displayInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
+    // User requested to see ALL revenue (including pending) from ALL clients
+    const totalRevenue = pnlData ? pnlData.totalRevenue : displayInvoices.reduce((acc, curr) => acc + curr.amount, 0);
     const outstanding = displayInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
 
     // Dynamic from backend accounting
