@@ -9,6 +9,7 @@
 - **Dashboard Stats 500 Error**: Fixed the `column "sales_stage" does not exist` error causing the dashboard metrics to crash.
     - Updated `businessClientService.ts` to properly query the `business_invoices` table instead of the legacy `invoices` table.
     - Created a database migration to update `get_consolidated_dashboard_stats` to robustly handle unified CRM tables (using `stage` vs `status`).
+    - **Fixed PGRST203 Error**: Explicitly added `DROP FUNCTION` statements to prevent PostgreSQL overloading errors caused by multiple function signatures.
     - Fixed "subscription timed out" errors by adding core operational tables (`leads`, `messages`, `projects`, `business_clients`, `business_invoices`) to the `supabase_realtime` publication.
     - Added explicit `maxDuration = 300` to the `/api/dashboard/stats/route.ts` API route.
 
