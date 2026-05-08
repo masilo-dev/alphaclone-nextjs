@@ -34,12 +34,21 @@ async function verifyPKCE(codeVerifier: string, codeChallenge: string): Promise<
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
     const digest = await crypto.subtle.digest('SHA-256', data);
-    const base64url = btoa(String.fromCharCode(...new Uint8Array(digest)))
+    
+    // Standard Base64URL conversion for Node.js/Edge
+    const base64 = Buffer.from(digest).toString('base64');
+    const base64url = base64
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
-    return base64url === codeChallenge;
-  } catch {
+      
+    const match = base64url === codeChallenge;
+    if (!match) {
+        console.warn('[PKCE] Mismatch. Expected:', codeChallenge, 'Got:', base64url);
+    }
+    return match;
+  } catch (err) {
+    console.error('[PKCE] Verification error:', err);
     return false;
   }
 }
