@@ -63,6 +63,13 @@ DECLARE
     v_stale_leads int := 0;
     v_momentum_score int := 0;
     v_login_streak int := 0;
+    
+    -- Additional Visual Metrics
+    v_active_campaigns int := 0;
+    v_upcoming_meetings int := 0;
+    v_unread_messages int := 0;
+    v_total_tasks int := 0;
+    v_completed_tasks int := 0;
 BEGIN
     -- 1. Revenue Metrics (Using business_invoices)
     -- We use business_invoices as the primary source for the dashboard
@@ -160,7 +167,53 @@ BEGIN
         GROUP BY 1
     ) pipeline_counts;
 
-    -- 7. Return Integrated JSON
+    -- 7. Additional Metrics for Momentum Dashboard
+    -- Active Campaigns
+    SELECT COUNT(*) INTO v_active_campaigns
+    FROM email_campaigns
+    WHERE tenant_id = p_tenant_id AND status IN ('scheduled', 'sending');
+
+    -- Upcoming Meetings
+    SELECT COUNT(*) INTO v_upcoming_meetings
+    FROM calendar_events
+    WHERE tenant_id = p_tenant_id AND start_time > v_now;
+
+    -- Unread Messages
+    SELECT COUNT(*) INTO v_unread_messages
+    FROM messages
+    WHERE tenant_id = p_tenant_id AND read_at IS NULL;
+
+    -- Tasks
+    SELECT 
+        COUNT(*),
+        COUNT(CASE WHEN status = 'completed' THEN 1 END)
+    INTO v_total_tasks, v_completed_tasks
+    FROM tasks
+    WHERE tenant_id = p_tenant_id;
+
+    -- Login Streak (Days with activity in audit_logs for the tenant)
+    IF p_user_id IS NOT NULL THEN
+        WITH daily_activity AS (
+            SELECT DISTINCT date_trunc('day', created_at) as activity_day
+            FROM audit_logs
+            WHERE user_id = p_user_id AND tenant_id = p_tenant_id
+            ORDER BY activity_day DESC
+        ),
+        streaks AS (
+            SELECT 
+                activity_day,
+                activity_day::date - (ROW_NUMBER() OVER (ORDER BY activity_day DESC) * 1) as group_id
+            FROM daily_activity
+        )
+        SELECT COUNT(*)
+        INTO v_login_streak
+        FROM streaks
+        WHERE group_id = (SELECT group_id FROM streaks LIMIT 1);
+    ELSE
+        v_login_streak := 1;
+    END IF;
+
+    -- 8. Return Integrated JSON
     RETURN jsonb_build_object(
         'totalRevenue', v_total_revenue,
         'pendingRevenue', v_pending_revenue,
@@ -174,6 +227,14 @@ BEGIN
         'recentActivity', COALESCE(v_recent_activity, '[]'::jsonb),
         'pipeline', COALESCE(v_pipeline_data, '{}'::jsonb),
         'momentumScore', v_momentum_score,
+        'loginStreak', COALESCE(v_login_streak, 1),
+        'activity24h', v_activity_24h,
+        'newLeads24h', v_new_leads_24h,
+        'activeCampaigns', v_active_campaigns,
+        'upcomingMeetings', v_upcoming_meetings,
+        'unreadMessages', v_unread_messages,
+        'totalTasks', v_total_tasks,
+        'completedTasks', v_completed_tasks,
         'serverTime', v_now
     );
 END;

@@ -72,7 +72,7 @@ const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration')
 
 
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
-const DailySummarySystem = React.lazy(() => import('./DailySummarySystem'));
+
 const PagesTab = React.lazy(() => import('@/components/pages/PagesTab'));
 const ContactSubmissionsTab = React.lazy(() => import('../ContactSubmissionsTab'));
 const CampaignBuilder = React.lazy(() => import('./CampaignBuilder'));
@@ -494,12 +494,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
                         <SocialCommandCenter />
-                    </React.Suspense>
-                );
-            case '/dashboard/business/daily-summary':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <DailySummarySystem />
                     </React.Suspense>
                 );
 
