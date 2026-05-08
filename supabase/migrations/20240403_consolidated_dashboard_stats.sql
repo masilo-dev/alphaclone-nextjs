@@ -92,7 +92,7 @@ BEGIN
     INTO v_stale_leads
     FROM leads
     WHERE tenant_id = p_tenant_id 
-      AND updated_at < v_now - INTERVAL '7 days'
+      AND created_at < v_now - INTERVAL '7 days'
       AND status NOT IN ('closed_won', 'closed_lost');
 
     -- Calculate Momentum Score (Scale 0-100)
