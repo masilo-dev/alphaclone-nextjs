@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { User } from '../../../types';
 import {
-    ArrowRight,
+    AlertCircle,
+    Briefcase,
     Calendar,
     BarChart2,
     FileText,
@@ -14,20 +15,18 @@ import {
     Sun,
     Sunset,
     Moon,
-    Rocket,
     Globe,
     Linkedin,
-    Loader2,
     TrendingUp,
     Users as UsersIcon,
     DollarSign,
     Target,
     Database,
     Layers,
-    Activity
+    Activity,
+    CheckSquare,
+    MessageCircle
 } from 'lucide-react';
-import { Button } from '../../ui/UIComponents';
-import toast from 'react-hot-toast';
 import { MomentumHUD } from '../MomentumHUD';
 
 // ─── Greeting Helpers ────────────────────────────────────────────────
@@ -49,16 +48,9 @@ interface QuickAction {
 }
 
 const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats }) => {
-    const [loading, setLoading] = useState(false);
-    const [welcomeMessage, setWelcomeMessage] = useState('');
-    const greeting = getGreeting();
-    const firstName = (user.name || user.email || 'there').split(' ')[0];
-
-    useEffect(() => {
-        generateWelcomeMessage();
-    }, [user.name, user.email]);
-
-    const generateWelcomeMessage = () => {
+    const greeting = useMemo(() => getGreeting(), []);
+    const firstName = useMemo(() => (user.name || user.email || 'there').split(' ')[0], [user.name, user.email]);
+    const welcomeMessage = useMemo(() => {
         const messages = [
             `Welcome back, ${firstName}.`,
             `Ready to build today, ${firstName}?`,
@@ -66,12 +58,18 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             `Time to grow your business, ${firstName}.`,
             `Let's achieve your goals, ${firstName}.`,
         ];
-        setWelcomeMessage(messages[Math.floor(Math.random() * messages.length)]);
-    };
+        const seed = firstName.length + new Date().getDay();
+        return messages[seed % messages.length];
+    }, [firstName]);
 
     const router = useRouter();
 
-    const quickActions: QuickAction[] = [
+    const currencyFormatter = useMemo(
+        () => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
+        []
+    );
+
+    const quickActions: QuickAction[] = useMemo(() => [
         {
             id: 'new-client',
             title: 'Add Client',
@@ -120,15 +118,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             color: 'bg-sky-500',
             action: () => router.push('/dashboard/business/linkedin')
         }
-    ];
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            </div>
-        );
-    }
+    ], [router]);
 
     return (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -172,7 +162,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         <div>
                             <p className="text-sm font-medium text-slate-400">Total Revenue</p>
                             <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(stats?.totalRevenue || 0)}
+                                {currencyFormatter.format(stats?.totalRevenue || 0)}
                             </h3>
                         </div>
                     </div>
@@ -232,7 +222,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                         <div>
                             <p className="text-sm font-medium text-slate-400">Forecast</p>
                             <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(stats?.salesForecast || 0)}
+                                {currencyFormatter.format(stats?.salesForecast || 0)}
                             </h3>
                         </div>
                     </div>

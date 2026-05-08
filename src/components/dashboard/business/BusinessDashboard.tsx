@@ -123,7 +123,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const currentTenant = propTenant || contextTenant;
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [dashboardStats, setDashboardStats] = useState<any>(null);
     const {
         activeMeetingCallId,
         isMeetingMinimized,
@@ -222,6 +221,25 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         enabled: !!user.id && !!currentTenant,
     });
 
+    const {
+        data: dashboardStats,
+        error: dashboardStatsError,
+    } = useQuery({
+        queryKey: ['dashboard-stats', currentTenant?.id, user.id],
+        queryFn: async () => {
+            if (!currentTenant?.id) return null;
+            const result = await getDashboardStats(currentTenant.id, user.id);
+            if (result.error) {
+                throw new Error(result.error);
+            }
+            return result.stats;
+        },
+        enabled: !!currentTenant?.id && !!user.id,
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        placeholderData: (previousData) => previousData,
+    });
+
     const projects = projectData?.projects || [];
 
     // Check for Due Tasks on Load
@@ -249,18 +267,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         };
 
         checkTasks();
+    }, [user, currentTenant]);
 
-        // Fetch consolidated stats
-        if (currentTenant?.id && user?.id && !dashboardStats) {
-            getDashboardStats(currentTenant.id, user.id)
-                .then((result) => {
-                    if (result && result.stats) setDashboardStats(result.stats);
-                })
-                .catch(() => {
-                    toast.error('Could not load workspace summary.');
-                });
+    React.useEffect(() => {
+        if (dashboardStatsError) {
+            toast.error('Could not load workspace summary.');
         }
-    }, [user, currentTenant, dashboardStats, getDashboardStats]);
+    }, [dashboardStatsError]);
 
     const trialInfo = React.useMemo(() => {
         if (!currentTenant?.trial_ends_at || currentTenant.subscription_status !== 'trial') return null;
