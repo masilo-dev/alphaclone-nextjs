@@ -5,13 +5,13 @@ import { ENV } from '../../config/env';
 export async function validateMCPAuthApp(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const url = new URL(req.url);
-  let api_key = req.headers.get('x-api-key') || url.searchParams.get('api_key');
+  let token = req.headers.get('x-api-key') || url.searchParams.get('api_key');
 
-  if (!api_key && authHeader && authHeader.startsWith('Bearer ')) {
-    api_key = authHeader.substring(7);
+  if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
   }
 
-  if (!api_key) {
+  if (!token) {
     return {
       error: 'Authentication required. Provide x-api-key or Authorization Bearer token header.',
       status: 401,
@@ -24,10 +24,35 @@ export async function validateMCPAuthApp(req: NextRequest) {
 
   const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
+  // ── 1. Check for OAuth Access Token ──────────────────────────────────────
+  if (token.startsWith('mcp_at_')) {
+    const { data: tokenData, error: tokenError } = await supabaseAdmin
+      .from('mcp_oauth_tokens')
+      .select('tenant_id, user_id, expires_at')
+      .eq('access_token', token)
+      .single();
+
+    if (tokenError || !tokenData) {
+      return { error: 'Invalid or expired access token', status: 401 };
+    }
+
+    if (new Date(tokenData.expires_at) < new Date()) {
+      return { error: 'Access token has expired', status: 401 };
+    }
+
+    return {
+      tenant_id: tokenData.tenant_id,
+      user_id: tokenData.user_id,
+      apiKey: token,
+      supabaseAdmin,
+    };
+  }
+
+  // ── 2. Fallback to API Key ───────────────────────────────────────────────
   const { data: keyData, error: keyError } = await supabaseAdmin
     .from('mcp_api_keys')
     .select('tenant_id, user_id')
-    .eq('api_key', api_key)
+    .eq('api_key', token)
     .single();
 
   if (keyError || !keyData) {
@@ -37,7 +62,7 @@ export async function validateMCPAuthApp(req: NextRequest) {
   return {
     tenant_id: keyData.tenant_id,
     user_id: keyData.user_id,
-    apiKey: api_key,
+    apiKey: token,
     supabaseAdmin,
   };
 }
