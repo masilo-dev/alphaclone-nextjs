@@ -86,12 +86,12 @@ const SETUP_STEPS = [
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 interface MCPSetupGuideProps {
-  initialType?: 'claude' | 'manus';
+  initialType?: 'claude' | 'manus' | 'grok';
 }
 
 const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
-  const [setupType, setSetupType] = useState<'claude' | 'manus'>(initialType ?? 'claude');
+  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok'>(initialType ?? 'claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
@@ -112,6 +112,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         setSetupType('manus');
       } else if (mcpParam === 'claude') {
         setSetupType('claude');
+      } else if (mcpParam === 'grok') {
+        setSetupType('grok');
       }
     }
   }, [initialType]);
@@ -249,7 +251,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : 'Manus'} AI to Your Account</h1>
+            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} AI to Your Account</h1>
             <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
@@ -268,12 +270,18 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           >
             Manus AI
           </button>
+          <button
+            onClick={() => setSetupType('grok')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'grok' ? 'bg-fuchsia-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Grok AI
+          </button>
         </div>
 
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
           <p className="text-slate-200 text-sm leading-relaxed">
-            <span className="text-white font-semibold">What does this do?</span> When you connect {setupType === 'claude' ? 'Claude' : 'Manus'} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
+            <span className="text-white font-semibold">What does this do?</span> When you connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
           </p>
         </div>
 
@@ -295,7 +303,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe</p>
-            <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : 'Manus'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
+            <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
           </div>
         </div>
       </div>
@@ -310,22 +318,22 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             const isOpen = expandedStep === step.number;
 
             // Adjust title/body/action for Manus
-            const stepTitle = setupType === 'manus'
-              ? step.number === 1 ? 'Open Manus AI'
+            const stepTitle = setupType === 'manus' || setupType === 'grok'
+              ? step.number === 1 ? `Open ${setupType === 'manus' ? 'Manus' : 'Grok'} AI`
               : step.number === 2 ? 'Copy your Connection URL'
-              : step.number === 3 ? 'Add AlphaClone to Manus MCP Settings'
+              : step.number === 3 ? `Add AlphaClone to ${setupType === 'manus' ? 'Manus' : 'Grok'} MCP Settings`
               : 'Test your connection'
               : step.title;
 
-            const stepBody = setupType === 'manus'
-              ? step.number === 1 ? 'Manus AI is a powerful autonomous agent. Open the Manus dashboard to get started — you\'ll need to be logged in.'
-              : step.number === 2 ? 'Copy your unique Connection URL below. This is what tells Manus which AlphaClone account to connect to. Keep it private.'
-              : step.number === 3 ? 'In your Manus dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.'
-              : 'In Manus, start a new conversation and try one of these prompts to verify everything is connected:'
+            const stepBody = setupType === 'manus' || setupType === 'grok'
+              ? step.number === 1 ? `${setupType === 'manus' ? 'Manus' : 'Grok'} AI is a powerful autonomous agent. Open the ${setupType === 'manus' ? 'Manus' : 'Grok'} dashboard to get started — you'll need to be logged in.`
+              : step.number === 2 ? `Copy your unique Connection URL below. This is what tells ${setupType === 'manus' ? 'Manus' : 'Grok'} which AlphaClone account to connect to. Keep it private.`
+              : step.number === 3 ? `In your ${setupType === 'manus' ? 'Manus' : 'Grok'} dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.`
+              : `In ${setupType === 'manus' ? 'Manus' : 'Grok'}, start a new conversation and try one of these prompts to verify everything is connected:`
               : step.body;
 
-            const actionLabel = setupType === 'manus' && step.number === 1 ? 'Open Manus AI' : step.action?.label;
-            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im' : step.action?.url;
+            const actionLabel = (setupType === 'manus' || setupType === 'grok') && step.number === 1 ? `Open ${setupType === 'manus' ? 'Manus' : 'Grok'} AI` : step.action?.label;
+            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im' : setupType === 'grok' && step.number === 1 ? 'https://grok.com' : step.action?.url;
 
             // For Manus: don't show the Claude config JSON or Mac/Windows file paths
             const showSubSteps = setupType === 'claude' && step.subSteps;
@@ -382,7 +390,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             href={actionUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-teal-600 hover:bg-teal-500'}`}
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <Download className="w-4 h-4" />
                             {actionLabel}
@@ -470,22 +478,22 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         )}
 
                         {/* Test prompts */}
-                        {(step.testPrompts || (setupType === 'manus' && step.number === 6)) && (
+                        {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok') && step.number === 6)) && (
                           <div className="mb-4">
                             <p className="text-slate-400 text-xs font-medium mb-3">
-                              Try saying these to {setupType === 'claude' ? 'Claude' : 'Manus'}:
+                              Try saying these to {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'}:
                             </p>
                             <div className="space-y-2">
-                              {(setupType === 'manus' ? [
+                              {(setupType === 'manus' || setupType === 'grok' ? [
                                 '"Show me all my leads"',
                                 '"Add a new lead: Jane Smith, jane@acme.com, Acme Ltd"',
                                 '"What is my outstanding revenue?"',
                                 '"Draft an NDA for client Acme Ltd, 12-month term"',
                                 '"Log a $50 expense for software subscription"',
                               ] : step.testPrompts ?? []).map((prompt: string) => (
-                                <div key={prompt} className={`flex items-center gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
-                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 ${setupType === 'manus' ? 'text-teal-400' : 'text-indigo-400'}`} />
-                                  <span className={`text-sm font-medium ${setupType === 'manus' ? 'text-teal-300' : 'text-indigo-300'}`}>{prompt}</span>
+                                <div key={prompt} className={`flex items-center gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
+                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : 'text-indigo-400'}`} />
+                                  <span className={`text-sm font-medium ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : 'text-indigo-300'}`}>{prompt}</span>
                                 </div>
                               ))}
                             </div>
@@ -496,7 +504,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {!isDone && (
                           <button
                             onClick={() => markDone(step.number)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-all mt-2"
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mt-2 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <CheckCircle className="w-4 h-4" />
                             {step.number === SETUP_STEPS.length ? 'I\'m done!' : 'Done — next step'}
@@ -523,7 +531,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <div className="text-4xl mb-3">🎉</div>
           <h3 className="text-xl font-bold text-white mb-2">You're connected!</h3>
           <p className="text-slate-300 text-sm leading-relaxed max-w-md mx-auto">
-            Claude can now see and update your AlphaClone account. Just open Claude and start talking. No more clicking through menus — just describe what you want!
+            {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
           </p>
         </motion.div>
       )}
