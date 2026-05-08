@@ -48,9 +48,9 @@ export async function encrypt(text: string, secret: string): Promise<string> {
     const data = encoder.encode(text);
 
     const encryptedBuffer = await crypto.subtle.encrypt(
-        { name: ALGORITHM, iv },
+        { name: ALGORITHM, iv: iv as any },
         key,
-        data
+        data as any
     );
 
     const fullArray = new Uint8Array(encryptedBuffer);
@@ -91,9 +91,9 @@ export async function decrypt(encryptedText: string, secret: string): Promise<st
     dataWithTag.set(authTag, ciphertext.length);
 
     const decryptedBuffer = await crypto.subtle.decrypt(
-        { name: ALGORITHM, iv },
+        { name: ALGORITHM, iv: iv as any },
         key,
-        dataWithTag
+        dataWithTag as any
     );
 
     const decoder = new TextDecoder();

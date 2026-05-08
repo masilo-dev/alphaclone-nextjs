@@ -22,7 +22,7 @@ export function generateCodeVerifier(length = 128): string {
 export async function generateCodeChallenge(verifier: string): Promise<string> {
     const encoder = new TextEncoder();
     const data = encoder.encode(verifier);
-    const digest = await crypto.subtle.digest('SHA-256', data);
+    const digest = await crypto.subtle.digest('SHA-256', data as any);
     
     // Base64url encode the digest
     return btoa(String.fromCharCode(...new Uint8Array(digest)))
