@@ -120,9 +120,13 @@ export async function POST(req: NextRequest) {
         return tokenError('invalid_client', 'client_id does not match the authorization code', 401);
       }
 
-      // Verify redirect_uri matches
-      if (authCode.redirect_uri !== redirect_uri) {
-        console.warn('[MCP Token] redirect_uri mismatch');
+      // Verify redirect_uri matches (Relaxed comparison to avoid common OAuth URL issues)
+      const cleanUrl = (u: string) => u.toLowerCase().replace(/\/$/, '').replace(/^http:/, 'https:');
+      const requestRedirect = cleanUrl(redirect_uri);
+      const storedRedirect = cleanUrl(authCode.redirect_uri);
+      
+      if (requestRedirect !== storedRedirect) {
+        console.warn('[MCP Token] redirect_uri mismatch. Expected:', authCode.redirect_uri, 'Request:', redirect_uri);
         return tokenError('invalid_grant', 'redirect_uri does not match', 401);
       }
 
