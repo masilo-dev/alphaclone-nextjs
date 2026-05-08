@@ -75,6 +75,14 @@ function applyRequiredOwaspHeaders(response: NextResponse) {
 
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
+    const host = request.headers.get('host');
+
+    // Canonical redirect: www.alphaclonesystems.com -> alphaclonesystems.com
+    if (host === 'www.alphaclonesystems.com') {
+        const url = request.nextUrl.clone();
+        url.hostname = 'alphaclonesystems.com';
+        return NextResponse.redirect(url, 301);
+    }
 
     // CRITICAL: Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
     // and to eliminate latency from platform policy fetches (prevents handshake timeouts).

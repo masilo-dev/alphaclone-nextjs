@@ -122,8 +122,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
   const tenantId = currentTenant?.id ?? 'your-workspace-id';
 
-  const mcpOrigin =
-    typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com';
+  const mcpOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com')
+    .replace('//www.', '//');
 
   /** Single-query URL: tenant and user are resolved from the key server-side (see /api/mcp/sse). */
   const buildConnectionUrl = (token: string | null) => {
@@ -414,6 +414,45 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 <Copy className="w-4 h-4" />
                               </button>
                             </div>
+
+                            {setupType === 'grok' && (
+                              <div className="mt-6 space-y-4 pt-6 border-t border-slate-700/50">
+                                <p className="text-sm font-bold text-white flex items-center gap-2">
+                                  <Shield className="w-4 h-4 text-teal-400" />
+                                  Grok OAuth Credentials
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Client ID</p>
+                                    <div className="flex items-center gap-2">
+                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">grok-connector</code>
+                                      <button onClick={() => copyText('grok-connector', 'Client ID')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Scopes</p>
+                                    <div className="flex items-center gap-2">
+                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">read write mcp:tools</code>
+                                      <button onClick={() => copyText('read write mcp:tools', 'Scopes')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Authorization Endpoint</p>
+                                    <div className="flex items-center gap-2">
+                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">{`${mcpOrigin}/authorize`}</code>
+                                      <button onClick={() => copyText(`${mcpOrigin}/authorize`, 'Auth Endpoint')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Token Endpoint</p>
+                                    <div className="flex items-center gap-2">
+                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">{`${mcpOrigin}/api/mcp/token`}</code>
+                                      <button onClick={() => copyText(`${mcpOrigin}/api/mcp/token`, 'Token Endpoint')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                             
                             <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
                               <p className="text-xs text-slate-500 leading-relaxed">

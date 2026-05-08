@@ -37,13 +37,13 @@ function LoginContent() {
     const typeParam = searchParams?.get('type');
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     const businessNameParam = searchParams?.get('businessName');
-    const nextParam = searchParams?.get('next') || null;
+    const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
 
     const postLoginRedirect = (() => {
       if (nextParam) {
         try {
           const decoded = decodeURIComponent(nextParam);
-          if (decoded.startsWith('/oauth/')) return decoded;
+          if (decoded.startsWith('/oauth/') || decoded.startsWith('/authorize')) return decoded;
         } catch {
           // ignore malformed next param
         }
