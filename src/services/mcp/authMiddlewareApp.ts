@@ -38,7 +38,7 @@ export async function validateMCPAuthApp(req: NextRequest) {
 
     const expiryDate = new Date(tokenData.expires_at);
     const now = new Date();
-    const gracePeriodMs = 5 * 60 * 1000; // 5 minute grace period for clock skew
+    const gracePeriodMs = 120 * 60 * 1000; // 2 hour grace period to handle inactive client pings
 
     if (expiryDate.getTime() + gracePeriodMs < now.getTime()) {
       return { error: 'Access token has expired', status: 401 };
