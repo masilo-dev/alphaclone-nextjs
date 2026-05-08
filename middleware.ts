@@ -76,6 +76,12 @@ function applyRequiredOwaspHeaders(response: NextResponse) {
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
 
+    // CRITICAL: Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
+    // and to eliminate latency from platform policy fetches (prevents handshake timeouts).
+    if (pathname.startsWith('/api/mcp/')) {
+        return NextResponse.next();
+    }
+
     if (pathname.startsWith('/.well-known')) {
         // MCP Discovery routes should bypass complex OWASP headers (like CSP) to ensure compatibility
         // This includes OAuth metadata and the MCP well-known endpoint itself
@@ -168,11 +174,6 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = '/api/mcp/token';
         return NextResponse.rewrite(url);
-    }
-
-    // Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
-    if (pathname.startsWith('/api/mcp/')) {
-        return NextResponse.next();
     }
 
     const response = await updateSession(request);

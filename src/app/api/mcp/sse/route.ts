@@ -6,6 +6,7 @@ import { ENV } from '@/config/env';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
 
@@ -62,12 +63,11 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return new NextResponse(stream, {
+  return new Response(stream, {
     headers: {
       ...MCP_CORS_HEADERS,
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache, no-transform, must-revalidate',
       'X-Accel-Buffering': 'no',
       'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
     },
