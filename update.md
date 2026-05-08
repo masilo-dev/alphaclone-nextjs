@@ -3,10 +3,13 @@
 ## Date: 2026-05-08 (DASHBOARD ANALYTICS & MCP HANDSHAKE HARDENING)
 
 ### Fixed
-- **MCP SSE Handshake Stabilization**: Resolved "Status 0" connection failures for external clients (Claude/Manus).
+- **MCP SSE Handshake Stabilization**: Resolved "Status 0" connection failures for external clients (Claude/Manus/Grok).
     - **Middleware Latency Bypass**: Moved MCP API bypass to the top of `middleware.ts`, eliminating redundant platform policy fetches and reducing handshake latency by ~400ms.
     - **Native Stream Delivery**: Refactored the SSE handler to use the native `Response` constructor instead of `NextResponse` for better compatibility with streaming protocol.
     - **Edge Runtime Enforcement**: Enforced `export const runtime = 'edge';` for the SSE route to ensure optimal streaming performance on Vercel's global edge network.
+
+### Added
+- **Grok AI (MCP) Integration**: Added xAI Grok to the integration marketplace with a dedicated setup guide and high-performance SSE connection.
 - **Dashboard Stats Enum Error**: Resolved the critical `invalid input value for enum project_status: 'cancelled'` error.
     - Added the `'cancelled'` value to the `project_status` PostgreSQL enum.
     - Updated the `get_consolidated_dashboard_stats` RPC to use explicit text comparison for status filters, preventing future cast errors.
