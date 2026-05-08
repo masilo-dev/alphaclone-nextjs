@@ -44,7 +44,7 @@ export async function verifyFacebookSignature(
         const keyData = encoder.encode(appSecret);
         const key = await crypto.subtle.importKey(
             'raw',
-            keyData,
+            keyData as any,
             { name: 'HMAC', hash: 'SHA-256' },
             false,
             ['sign']
@@ -54,7 +54,7 @@ export async function verifyFacebookSignature(
         const signatureBuffer = await crypto.subtle.sign(
             'HMAC',
             key,
-            bodyData
+            bodyData as any
         );
 
         const expectedSignature = uint8ArrayToHex(new Uint8Array(signatureBuffer));

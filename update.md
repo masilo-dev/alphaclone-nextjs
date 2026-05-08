@@ -6,7 +6,7 @@
 ### Fixed
 - **Node.js Crypto Removal**: Resolved critical "Native module not found: node:module" build failures in Edge Runtime by eliminating all Node.js-specific `crypto` imports.
 - **Web Crypto API Migration**: Refactored the core encryption and security libraries to use the universal Web Crypto API (`crypto.subtle`).
-    - **encryption.ts**: Rewrote AES-GCM encryption/decryption as asynchronous functions using standard web APIs.
+    - **encryption.ts**: Rewrote AES-GCM encryption/decryption as asynchronous functions using standard web APIs. (Resolved TypeScript `BufferSource` type mismatches with `as any` casts).
     - **pkce.ts**: Migrated SHA-256 hashing and random byte generation to Web Crypto, ensuring compatibility across Edge, browser, and Node.js.
     - **webhookUtils.ts**: Replaced Node.js HMAC-SHA256 with an Edge-safe implementation for Facebook and Instagram signature verification.
 - **Zoho Token Security**: Updated the `ZohoService` and `ZohoMailService` to support asynchronous encryption, maintaining high-security standards for stored integration tokens while ensuring runtime stability.
