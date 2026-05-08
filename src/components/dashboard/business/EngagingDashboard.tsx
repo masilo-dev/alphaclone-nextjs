@@ -236,6 +236,26 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </motion.div>
             </div>
 
+            {/* Detailed Stats Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Campaigns</p>
+                    <p className="text-lg font-bold text-white mt-1">{stats?.activeCampaigns || 0}</p>
+                </div>
+                <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Upcoming Meetings</p>
+                    <p className="text-lg font-bold text-white mt-1">{stats?.upcomingMeetings || 0}</p>
+                </div>
+                <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Unread Messages</p>
+                    <p className="text-lg font-bold text-white mt-1">{stats?.unreadMessages || 0}</p>
+                </div>
+                <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Task Progress</p>
+                    <p className="text-lg font-bold text-white mt-1">{stats?.completedTasks || 0} / {stats?.totalTasks || 0}</p>
+                </div>
+            </div>
+
             {/* Daily Summary System */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}

@@ -251,13 +251,7 @@ out center ${fetchLimit};`.trim();
       const res = await postOverpassQuery(q);
       const data = await res.json();
       const all = (data.elements || []).filter((el: any) => el.tags?.name);
-      verifiedElements = all.filter((el: any) => {
-        const p = el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '';
-        const e = el.tags.email || el.tags['contact:email'] || '';
-        const w = el.tags.website || el.tags.url || el.tags['contact:website'] || '';
-        const hasWebsite = String(w).trim().length > 0;
-        return p.trim().length > 0 || e.trim().length > 0 || hasWebsite;
-      });
+      verifiedElements = all;
       if (verifiedElements.length >= targetMin) break;
     } catch (err) {
       if (err instanceof OverpassRequestError && err.status === 429) break;
@@ -276,7 +270,11 @@ out center ${fetchLimit};`.trim();
     source: 'osm',
     lat: el.lat ?? el.center?.lat,
     lng: el.lon ?? el.center?.lon,
-    hasContact: true,
+    hasContact: hasContactInfo({
+      phone: el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '',
+      email: el.tags.email || el.tags['contact:email'] || '',
+      website: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
+    }),
   }));
 }
 
@@ -315,24 +313,20 @@ export async function runLeadStep(input: {
       ]);
 
       if (osmRes.status === 'fulfilled') {
-        const verified = osmRes.value.filter((r) => hasContactInfo(r));
-        partial.push(...enrichWithContactFlag(verified));
-        sourceStats.osm = verified.length;
+        partial.push(...enrichWithContactFlag(osmRes.value));
+        sourceStats.osm = osmRes.value.length;
       }
       if (hereRes.status === 'fulfilled') {
-        const verified = hereRes.value.filter((r) => hasContactInfo(r));
-        partial.push(...enrichWithContactFlag(verified));
-        sourceStats.here = verified.length;
+        partial.push(...enrichWithContactFlag(hereRes.value));
+        sourceStats.here = hereRes.value.length;
       }
       if (firecrawlRes.status === 'fulfilled') {
-        const verified = firecrawlRes.value.filter((r) => hasContactInfo(r));
-        partial.push(...enrichWithContactFlag(verified));
-        sourceStats.firecrawl = verified.length;
+        partial.push(...enrichWithContactFlag(firecrawlRes.value));
+        sourceStats.firecrawl = firecrawlRes.value.length;
       }
       if (browserRes.status === 'fulfilled') {
-        const verified = (browserRes.value as any[]).filter((r) => hasContactInfo(r));
-        partial.push(...enrichWithContactFlag(verified));
-        sourceStats.browser = verified.length;
+        partial.push(...enrichWithContactFlag(browserRes.value as any[]));
+        sourceStats.browser = browserRes.value.length;
       }
     } catch {
       console.warn('[Scraper:Job] Primary sources failed');
@@ -368,9 +362,8 @@ export async function runLeadStep(input: {
     ]);
 
     if (googleRes.status === 'fulfilled') {
-      const verified = googleRes.value.filter((r) => hasContactInfo(r));
-      partial.push(...enrichWithContactFlag(verified));
-      sourceStats.google = verified.length;
+      partial.push(...enrichWithContactFlag(googleRes.value));
+      sourceStats.google = googleRes.value.length;
     } else {
       const msg = googleRes.reason instanceof Error ? googleRes.reason.message : String(googleRes.reason);
       if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
