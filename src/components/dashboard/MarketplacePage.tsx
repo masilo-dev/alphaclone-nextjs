@@ -34,7 +34,7 @@ interface MarketplaceItem {
   developer: string;
   actionUrl?: string;
   isMCP?: boolean;
-  mcpType?: 'claude' | 'manus';
+  mcpType?: 'claude' | 'manus' | 'grok';
   badge?: string;
 }
 
@@ -77,6 +77,24 @@ const ITEMS: MarketplaceItem[] = [
     isMCP: true,
     mcpType: 'manus',
     badge: 'Featured',
+  },
+  {
+    id: 'mcp-grok',
+    name: 'Grok AI (MCP)',
+    description: 'Connect xAI Grok directly to your workspace. Real-time data access, deal creation, and autonomous research via Grok-1.5.',
+    category: 'ai',
+    status: 'free',
+    rating: 5.0,
+    installs: 920,
+    icon: Sparkles,
+    iconBg: 'bg-fuchsia-500/15',
+    iconColor: 'text-fuchsia-400',
+    features: ['Real-time CRM search', 'Autonomous prospecting', 'Deal forecasting', 'Contract drafting', 'Revenue insights'],
+    tags: ['ai', 'mcp', 'grok', 'xai'],
+    developer: 'AlphaClone',
+    isMCP: true,
+    mcpType: 'grok',
+    badge: 'New',
   },
   {
     id: 'sales-agent',
@@ -344,15 +362,15 @@ const MarketplacePage: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
-  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | null>(null);
-  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'sales-agent', 'proposal-template', 'invoice-template']));
+  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | null>(null);
+  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'sales-agent', 'proposal-template', 'invoice-template']));
 
   // Handle ?mcp=claude / ?mcp=manus deep link
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const p = new URLSearchParams(window.location.search);
     const mcp = p.get('mcp');
-    if (mcp === 'claude' || mcp === 'manus') setActiveMcp(mcp);
+    if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok') setActiveMcp(mcp);
   }, []);
 
   const filtered = ITEMS.filter(item => {
@@ -412,6 +430,12 @@ const MarketplacePage: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'manus' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
             >
               Manus AI
+            </button>
+            <button
+              onClick={() => setActiveMcp('grok')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'grok' ? 'bg-fuchsia-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Grok AI
             </button>
           </div>
         </div>
