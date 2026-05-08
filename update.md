@@ -1,5 +1,12 @@
 # Update Log
 
+## Date: 2026-05-08 (EDGE RUNTIME STABILIZATION & MCP ROUTE OPTIMIZATION)
+
+### Fixed
+- **Edge Build Incompatibilities**: Resolved critical `TypeError: Native module not found: node:module` failures in the production build.
+    - **MCP SSE & Messages Routes**: Transitioned `/api/mcp/sse` and `/api/mcp/messages` to the `nodejs` runtime. This ensures compatibility with complex dependencies (like the Workflow SDK and MCP SDK internals) that require Node.js-specific modules, while maintaining full support for SSE streaming.
+    - **Build Hardening**: Updated `next.config.ts` to include `workflow` and `@workflow/core` in `serverExternalPackages`, preventing problematic bundling of these libraries into Edge-targeted chunks.
+- **Production Readiness**: Successfully verified the fix with a complete `npm run build`, confirming that the platform compiles without "Native module" errors and is ready for stable Vercel deployment.
 
 ## Date: 2026-05-08 (WEB CRYPTO API MIGRATION & EDGE COMPATIBILITY)
 

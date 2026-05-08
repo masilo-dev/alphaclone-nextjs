@@ -6,6 +6,7 @@ import { ENV } from '@/config/env';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const MCP_PROTOCOL_VERSION = '2024-11-05';
 
