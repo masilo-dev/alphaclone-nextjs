@@ -4924,8 +4924,169 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        // ── get_projects ──────────────────────────────────────────────────────────
+        case 'get_projects': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { status, limit = 50, offset = 0 } = a;
+          const pageSize = Math.min(Math.max(Number(limit) || 50, 1), 200);
+          const pageOffset = Math.max(Number(offset) || 0, 0);
+
+          let query = supabaseAdmin
+            .from('projects')
+            .select('id, name, description, status, current_stage, progress, due_date, owner_id, owner_name, team, created_at, updated_at')
+            .eq('tenant_id', tenant_id)
+            .order('created_at', { ascending: false })
+            .range(pageOffset, pageOffset + pageSize - 1);
+
+          if (status && typeof status === 'string') {
+            query = query.eq('status', status.trim());
+          }
+
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_projects', error.message);
+
+          const rows = data || [];
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                items: rows,
+                pagination: {
+                  limit: pageSize,
+                  offset: pageOffset,
+                  returned: rows.length,
+                  has_more: rows.length === pageSize,
+                  next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
+                },
+                summary: {
+                  total_returned: rows.length,
+                  active: rows.filter((p: any) => p.status !== 'done' && p.status !== 'cancelled').length,
+                  done: rows.filter((p: any) => p.status === 'done').length,
+                },
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        // ── get_finance_snapshot ──────────────────────────────────────────────────
+        case 'get_finance_snapshot': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+
+          // Run all finance queries in parallel
+          const [
+            invoiceResult,
+            billResult,
+            reconcileResult,
+            contractApprovalResult,
+            contractTemplateResult,
+          ] = await Promise.all([
+            // Invoices: paid, pending, overdue
+            supabaseAdmin
+              .from('business_invoices')
+              .select('id, status, total, due_date, created_at')
+              .eq('tenant_id', tenant_id)
+              .order('created_at', { ascending: false })
+              .limit(200),
+
+            // Vendor bills (AP)
+            supabaseAdmin
+              .from('vendor_bills')
+              .select('id, status, total_amount, amount_paid, due_date')
+              .eq('tenant_id', tenant_id)
+              .in('status', ['open', 'partial', 'overdue'])
+              .limit(100)
+              .catch(() => ({ data: null, error: null })),
+
+            // Reconciliation sessions
+            supabaseAdmin
+              .from('bank_reconciliation_sessions')
+              .select('id, status, statement_end_date, statement_ending_balance')
+              .eq('tenant_id', tenant_id)
+              .in('status', ['draft', 'in_progress'])
+              .limit(10)
+              .catch(() => ({ data: null, error: null })),
+
+            // Pending contract approvals
+            supabaseAdmin
+              .from('contract_approvals')
+              .select('id, status, created_at')
+              .eq('tenant_id', tenant_id)
+              .eq('status', 'pending')
+              .limit(20)
+              .catch(() => ({ data: null, error: null })),
+
+            // Active contract templates
+            supabaseAdmin
+              .from('contract_templates')
+              .select('id, name, category, is_active')
+              .eq('tenant_id', tenant_id)
+              .eq('is_active', true)
+              .limit(20)
+              .catch(() => ({ data: null, error: null })),
+          ]);
+
+          const invoices = invoiceResult.data || [];
+          const paidRevenue = invoices
+            .filter((i: any) => i.status === 'paid')
+            .reduce((sum: number, i: any) => sum + Number(i.total || 0), 0);
+          const pendingRevenue = invoices
+            .filter((i: any) => ['sent', 'draft'].includes(i.status))
+            .reduce((sum: number, i: any) => sum + Number(i.total || 0), 0);
+          const overdueRevenue = invoices
+            .filter((i: any) => i.status === 'overdue')
+            .reduce((sum: number, i: any) => sum + Number(i.total || 0), 0);
+
+          const openBills = (billResult.data || []);
+          const openBillsTotal = openBills
+            .reduce((sum: number, b: any) => sum + Number(b.total_amount || 0) - Number(b.amount_paid || 0), 0);
+
+          const snapshot = {
+            revenue: {
+              collected: paidRevenue,
+              pending: pendingRevenue,
+              overdue: overdueRevenue,
+              invoices_total: invoices.length,
+              invoices_paid: invoices.filter((i: any) => i.status === 'paid').length,
+              invoices_pending: invoices.filter((i: any) => i.status === 'sent').length,
+              invoices_overdue: invoices.filter((i: any) => i.status === 'overdue').length,
+              invoices_draft: invoices.filter((i: any) => i.status === 'draft').length,
+            },
+            payables: {
+              open_bills_count: openBills.length,
+              open_bills_total: openBillsTotal,
+              bills: openBills.map((b: any) => ({
+                id: b.id,
+                status: b.status,
+                owed: Number(b.total_amount || 0) - Number(b.amount_paid || 0),
+                due_date: b.due_date,
+              })),
+            },
+            reconciliation: {
+              unreconciled_sessions: (reconcileResult.data || []).length,
+              sessions: reconcileResult.data || [],
+            },
+            contracts: {
+              pending_approvals: (contractApprovalResult.data || []).length,
+              active_templates: (contractTemplateResult.data || []).length,
+              templates: (contractTemplateResult.data || []).map((t: any) => ({ id: t.id, name: t.name, category: t.category })),
+            },
+            generated_at: new Date().toISOString(),
+          };
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(snapshot, null, 2),
+            }],
+          };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, get_contacts, search_contacts, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, get_contacts, search_contacts, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, get_finance_snapshot, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
