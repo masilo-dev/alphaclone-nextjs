@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { withBotId } from "botid/next/config";
 import { withWorkflow } from "workflow/next";
 
 // PWA worker is opt-in in production: it intercepts /api and /dashboard and has caused
@@ -201,7 +202,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withWorkflow(
+export default withBotId(
+  withWorkflow(
   withSentryConfig(
     withSerwist(nextConfig),
     {
@@ -216,3 +218,5 @@ export default withWorkflow(
     }
   )
 );
+)  
+ 
