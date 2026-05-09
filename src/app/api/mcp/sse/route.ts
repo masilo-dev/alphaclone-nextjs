@@ -4,7 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const maxDuration = 800;
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
