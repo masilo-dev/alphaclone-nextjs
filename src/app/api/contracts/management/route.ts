@@ -45,6 +45,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(await sendContract(tenantId, config, supabase, req.nextUrl.origin, user.id));
       case 'delete_contract':
         return NextResponse.json(await deleteContract(tenantId, config, supabase));
+      case 'get_templates':
+        return NextResponse.json(await getTemplates(tenantId, supabase));
+      case 'create_template':
+        return NextResponse.json(await createTemplate(tenantId, config, supabase, user.id));
+      case 'get_contract_versions':
+        return NextResponse.json(await getContractVersions(tenantId, config, supabase));
+      case 'create_contract_version':
+        return NextResponse.json(await createContractVersion(tenantId, config, supabase, user.id));
+      case 'request_contract_approval':
+        return NextResponse.json(await requestContractApproval(tenantId, config, supabase, user.id));
+      case 'review_contract_approval':
+        return NextResponse.json(await reviewContractApproval(tenantId, config, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
@@ -358,6 +370,170 @@ async function sendContract(tenantId: string, config: any, supabase: any, origin
       signingUrl,
       runId
     };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
+async function getTemplates(tenantId: string, supabase: any) {
+  try {
+    const { data, error } = await supabase
+      .from('contract_templates')
+      .select('*')
+      .or(`tenant_id.eq.${tenantId},tenant_id.is.null`)
+      .eq('is_active', true)
+      .order('is_default', { ascending: false })
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return { success: true, data: { templates: data || [] } };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
+async function createTemplate(tenantId: string, config: any, supabase: any, userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('contract_templates')
+      .insert({
+        tenant_id: tenantId,
+        name: config.name,
+        category: config.category || 'service',
+        description: config.description,
+        content: config.content || '',
+        output_format: config.outputFormat || 'html',
+        approval_required: config.approvalRequired ?? false,
+        is_active: config.isActive ?? true,
+        is_default: config.isDefault ?? false,
+        version_number: config.versionNumber || 1,
+        created_by: userId,
+        updated_by: userId,
+        metadata: config.metadata || {},
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return { success: true, data, message: 'Contract template created successfully' };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
+async function getContractVersions(tenantId: string, config: any, supabase: any) {
+  try {
+    const { contractId } = config;
+    const { data, error } = await supabase
+      .from('contract_versions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('contract_id', contractId)
+      .order('version_number', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data: { versions: data || [] } };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
+async function createContractVersion(tenantId: string, config: any, supabase: any, userId: string) {
+  try {
+    const { contractId, content, changeSummary, status = 'draft' } = config;
+    const { data: latest } = await supabase
+      .from('contract_versions')
+      .select('version_number')
+      .eq('tenant_id', tenantId)
+      .eq('contract_id', contractId)
+      .order('version_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const versionNumber = Number(latest?.version_number || 0) + 1;
+    const { data, error } = await supabase
+      .from('contract_versions')
+      .insert({
+        tenant_id: tenantId,
+        contract_id: contractId,
+        version_number: versionNumber,
+        content,
+        status,
+        change_summary: changeSummary,
+        created_by: userId,
+        metadata: config.metadata || {},
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return { success: true, data, message: 'Contract version created successfully' };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
+async function requestContractApproval(tenantId: string, config: any, supabase: any, userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('contract_approvals')
+      .insert({
+        tenant_id: tenantId,
+        contract_id: config.contractId,
+        contract_version_id: config.contractVersionId || null,
+        requested_by: userId,
+        approver_id: config.approverId || null,
+        request_note: config.requestNote,
+        due_at: config.dueAt || null,
+        status: 'pending',
+        metadata: config.metadata || {},
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    if (config.contractVersionId) {
+      await supabase
+        .from('contract_versions')
+        .update({ status: 'approval_pending' })
+        .eq('id', config.contractVersionId)
+        .eq('tenant_id', tenantId);
+    }
+
+    return { success: true, data, message: 'Approval requested successfully' };
+  } catch (error: any) {
+    return operationFailed('contracts/management', error);
+  }
+}
+
+async function reviewContractApproval(tenantId: string, config: any, supabase: any) {
+  try {
+    const status = config.status === 'approved' ? 'approved' : config.status === 'cancelled' ? 'cancelled' : 'rejected';
+    const { data, error } = await supabase
+      .from('contract_approvals')
+      .update({
+        status,
+        decision_note: config.decisionNote,
+        decided_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', config.approvalId)
+      .eq('tenant_id', tenantId)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    if (data?.contract_version_id) {
+      await supabase
+        .from('contract_versions')
+        .update({ status: status === 'approved' ? 'approved' : 'rejected' })
+        .eq('id', data.contract_version_id)
+        .eq('tenant_id', tenantId);
+    }
+
+    return { success: true, data, message: 'Approval reviewed successfully' };
   } catch (error: any) {
     return operationFailed('contracts/management', error);
   }

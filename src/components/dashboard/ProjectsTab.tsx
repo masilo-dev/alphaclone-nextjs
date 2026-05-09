@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Search, Filter, LayoutGrid, List, Activity, 
   Cpu, Edit2, ListChecks, Share2, MessageSquare, X, 
-  FileCheck, Video, ChevronRight, Layout
+  FileCheck, Video, ChevronRight, Layout, AlertTriangle, CalendarClock, ShieldAlert, Wallet
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -46,6 +46,69 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'gantt'>('grid');
   const [ganttData, setGanttData] = useState<{ nodes: any[], edges: any[] }>({ nodes: [], edges: [] });
   const [isLoadingGantt, setIsLoadingGantt] = useState(false);
+
+  const executionInsights = useMemo(() => {
+    const now = new Date();
+    const activeProjects = filteredProjects.filter((project) => project.status === 'Active');
+    const overdueProjects = activeProjects.filter((project) => project.dueDate && new Date(project.dueDate) < now);
+    const atRiskProjects = activeProjects.filter(
+      (project) => project.health === 'At Risk' || project.health === 'Delayed' || project.risk === 'High'
+    );
+    const missingScope = activeProjects.filter(
+      (project) => !project.dueDate || !project.budget || !project.resources?.length
+    );
+    const stuckExecution = activeProjects.filter(
+      (project) => project.currentStage === 'Execution' && (project.progress ?? 0) < 40
+    );
+
+    const attentionQueue = activeProjects
+      .map((project) => {
+        const reasons: string[] = [];
+        let urgency = 0;
+
+        if (project.dueDate && new Date(project.dueDate) < now) {
+          reasons.push('overdue delivery date');
+          urgency += 4;
+        }
+        if (project.health === 'Delayed') {
+          reasons.push('health marked delayed');
+          urgency += 3;
+        }
+        if (project.health === 'At Risk' || project.risk === 'High') {
+          reasons.push('risk elevated');
+          urgency += 3;
+        }
+        if (!project.dueDate) {
+          reasons.push('missing due date');
+          urgency += 2;
+        }
+        if (!project.budget) {
+          reasons.push('missing budget');
+          urgency += 1;
+        }
+        if (!project.resources?.length) {
+          reasons.push('no resources mapped');
+          urgency += 1;
+        }
+        if (project.currentStage === 'Execution' && (project.progress ?? 0) < 40) {
+          reasons.push('execution progress thin');
+          urgency += 2;
+        }
+
+        return { project, reasons, urgency };
+      })
+      .filter((item) => item.urgency > 0)
+      .sort((a, b) => b.urgency - a.urgency || (a.project.progress ?? 0) - (b.project.progress ?? 0))
+      .slice(0, 5);
+
+    return {
+      overdueProjects,
+      atRiskProjects,
+      missingScope,
+      stuckExecution,
+      attentionQueue,
+    };
+  }, [filteredProjects]);
 
   useEffect(() => {
     if (viewMode === 'gantt' && filteredProjects.length > 0) {
@@ -126,6 +189,144 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
               )}
               <Activity className="relative z-10 w-4 h-4" />
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+        {[
+          {
+            label: 'Delivery Risk',
+            value: executionInsights.atRiskProjects.length,
+            hint: 'Active projects marked delayed, at risk, or high risk.',
+            icon: ShieldAlert,
+            accent: 'text-amber-300',
+          },
+          {
+            label: 'Overdue Projects',
+            value: executionInsights.overdueProjects.length,
+            hint: 'Projects whose due dates already slipped.',
+            icon: CalendarClock,
+            accent: 'text-rose-300',
+          },
+          {
+            label: 'Scoping Gaps',
+            value: executionInsights.missingScope.length,
+            hint: 'Missing due date, budget, or resource mapping.',
+            icon: Wallet,
+            accent: 'text-sky-300',
+          },
+          {
+            label: 'Execution Stall',
+            value: executionInsights.stuckExecution.length,
+            hint: 'Execution-stage work below 40% progress.',
+            icon: AlertTriangle,
+            accent: 'text-teal-300',
+          },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{card.label}</p>
+                  <p className="text-2xl font-black text-white mt-2">{card.value}</p>
+                  <p className="text-xs text-slate-500 mt-2">{card.hint}</p>
+                </div>
+                <div className={`rounded-xl border border-white/10 bg-slate-950/70 p-2 ${card.accent}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wide">Execution Command Queue</h3>
+              <p className="text-xs text-slate-500 mt-1">Projects most likely to become churn, margin loss, or team thrash.</p>
+            </div>
+            <Activity className="w-4 h-4 text-teal-400" />
+          </div>
+
+          <div className="space-y-3">
+            {executionInsights.attentionQueue.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-5 text-sm text-slate-400">
+                No urgent execution gaps in the current project set.
+              </div>
+            ) : (
+              executionInsights.attentionQueue.map(({ project, reasons, urgency }) => (
+                <div key={project.id} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{project.name}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {project.currentStage} • {project.progress}% progress • {project.health || 'Health not set'}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                      P{urgency}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {reasons.map((reason) => (
+                      <span key={reason} className="rounded-full border border-white/10 bg-slate-900/80 px-2 py-1 text-[11px] text-slate-300">
+                        {reason}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-3">
+                    Due: {project.dueDate || 'No due date set'} • Budget: {project.budget ? `$${project.budget.toLocaleString()}` : 'Not scoped'}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wide">Scope Hygiene</h3>
+              <p className="text-xs text-slate-500 mt-1">The gaps that make Asana-style work look busy but stay commercially weak.</p>
+            </div>
+            <Layout className="w-4 h-4 text-teal-400" />
+          </div>
+
+          <div className="space-y-3">
+            {[
+              {
+                label: 'No due date',
+                value: filteredProjects.filter((project) => project.status === 'Active' && !project.dueDate).length,
+                detail: 'Execution without a delivery commitment hides schedule risk.',
+              },
+              {
+                label: 'No budget',
+                value: filteredProjects.filter((project) => project.status === 'Active' && !project.budget).length,
+                detail: 'Delivery can drift without margin visibility.',
+              },
+              {
+                label: 'No resources mapped',
+                value: filteredProjects.filter((project) => project.status === 'Active' && !project.resources?.length).length,
+                detail: 'Projects need named capability coverage, not generic ownership.',
+              },
+              {
+                label: 'Review stage still open',
+                value: filteredProjects.filter((project) => project.status === 'Active' && project.currentStage === 'Review').length,
+                detail: 'Review queues are where client approvals often stall.',
+              },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-slate-200">{item.label}</p>
+                  <span className="text-lg font-semibold text-white">{item.value}</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">{item.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
