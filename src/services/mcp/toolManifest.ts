@@ -479,6 +479,240 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'get_finance_snapshot',
+    description: 'Return a finance operating snapshot with cash, open bills, unreconciled transactions, pending contract approvals, and active templates.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_accounts_receivable_aging',
+    description: 'Return accounts receivable aging buckets for open invoices.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_accounts_payable_aging',
+    description: 'Return accounts payable aging buckets for vendor bills.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_bank_accounts',
+    description: 'List bank accounts connected to this workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'create_bank_account',
+    description: 'Create a bank account record for treasury and reconciliation workflows.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        name: { type: 'string' },
+        account_number_last4: { type: 'string' },
+        bank_name: { type: 'string' },
+        account_type: { type: 'string', description: 'checking | savings | credit_card | loan | investment | other' },
+        currency: { type: 'string' },
+        opening_balance: { type: 'number' },
+        current_balance: { type: 'number' },
+        coa_account_id: { type: 'string', description: 'Optional chart-of-accounts reference' },
+        is_active: { type: 'boolean' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'get_reconciliation_sessions',
+    description: 'List bank reconciliation sessions for this workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        limit: { type: 'number', description: 'Max records (default 25)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'create_reconciliation_session',
+    description: 'Create a reconciliation session for a bank statement period.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        bank_account_id: { type: 'string', description: 'Reference from get_bank_accounts' },
+        statement_start_date: { type: 'string', description: 'YYYY-MM-DD' },
+        statement_end_date: { type: 'string', description: 'YYYY-MM-DD' },
+        statement_ending_balance: { type: 'number' },
+        cleared_balance: { type: 'number' },
+        status: { type: 'string', description: 'draft | in_progress | completed | archived' },
+        notes: { type: 'string' },
+        metadata: { type: 'object' },
+      },
+      required: ['bank_account_id', 'statement_start_date', 'statement_end_date', 'statement_ending_balance'],
+    },
+  },
+  {
+    name: 'get_vendor_bills',
+    description: 'List vendor bills for accounts payable operations.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        status: { type: 'string', description: 'draft | open | partial | paid | void | overdue' },
+        limit: { type: 'number', description: 'Max records (default 100)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'create_vendor_bill',
+    description: 'Create a vendor bill for accounts payable tracking.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        vendor_id: { type: 'string' },
+        company_id: { type: 'string' },
+        reference: { type: 'string' },
+        issue_date: { type: 'string', description: 'YYYY-MM-DD' },
+        due_date: { type: 'string', description: 'YYYY-MM-DD' },
+        status: { type: 'string', description: 'draft | open | partial | paid | void | overdue' },
+        currency: { type: 'string' },
+        amount_paid: { type: 'number' },
+        notes: { type: 'string' },
+        terms: { type: 'string' },
+        line_items: { type: 'array', items: { type: 'object' } },
+        metadata: { type: 'object' },
+      },
+      required: ['issue_date', 'line_items'],
+    },
+  },
+  {
+    name: 'get_contract_templates',
+    description: 'List active contract templates available to this workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'create_contract_template',
+    description: 'Create a reusable contract template for sales and delivery workflows.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        name: { type: 'string' },
+        category: { type: 'string' },
+        description: { type: 'string' },
+        content: { type: 'string' },
+        output_format: { type: 'string', description: 'html | markdown | text' },
+        approval_required: { type: 'boolean' },
+        is_active: { type: 'boolean' },
+        is_default: { type: 'boolean' },
+        version_number: { type: 'number' },
+        metadata: { type: 'object' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'get_contract_versions',
+    description: 'List stored versions for a contract.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        contract_id: { type: 'string', description: 'Contract reference' },
+      },
+      required: ['contract_id'],
+    },
+  },
+  {
+    name: 'create_contract_version',
+    description: 'Create a new version of an existing contract.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        contract_id: { type: 'string', description: 'Contract reference' },
+        content: { type: 'string' },
+        change_summary: { type: 'string' },
+        status: { type: 'string', description: 'draft | approval_pending | approved | rejected | superseded' },
+        metadata: { type: 'object' },
+      },
+      required: ['contract_id', 'content'],
+    },
+  },
+  {
+    name: 'get_contract_approvals',
+    description: 'List contract approval requests, optionally filtered to one contract.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        contract_id: { type: 'string', description: 'Optional contract reference' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'request_contract_approval',
+    description: 'Request approval for a contract or a specific contract version.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        contract_id: { type: 'string', description: 'Contract reference' },
+        contract_version_id: { type: 'string', description: 'Optional contract version reference' },
+        approver_id: { type: 'string', description: 'Optional approver profile reference' },
+        request_note: { type: 'string' },
+        due_at: { type: 'string', description: 'ISO datetime' },
+        metadata: { type: 'object' },
+      },
+      required: ['contract_id'],
+    },
+  },
+  {
+    name: 'review_contract_approval',
+    description: 'Approve, reject, or cancel a contract approval request.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        approval_id: { type: 'string', description: 'Approval reference from get_contract_approvals' },
+        status: { type: 'string', description: 'approved | rejected | cancelled' },
+        decision_note: { type: 'string' },
+      },
+      required: ['approval_id', 'status'],
+    },
+  },
+  {
     name: 'send_receipt',
     description: 'Send a formal payment receipt for a paid invoice using the specified email provider (Brevo, Resend, Zoho, or SendGrid).',
     inputSchema: {

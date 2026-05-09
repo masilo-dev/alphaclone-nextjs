@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { JournalEntryModal } from './JournalEntryModal';
 import ReceiptGeneratorModal from './ReceiptGeneratorModal';
 import { generalLedgerService } from '../../../services/accounting/generalLedgerService';
+import { advancedAccountingService } from '../../../services/accounting/advancedAccountingService';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 type Period = 'week' | 'month' | 'quarter' | 'year';
@@ -36,6 +37,10 @@ export default function AccountingDashboard() {
         totalExpenses: 0,
         pendingInvoices: 0,
         cashBalance: 0,
+        openBills: 0,
+        overdueBills: 0,
+        unreconciledTransactions: 0,
+        activeBankAccounts: 0,
         recentTransactions: [] as any[]
     });
 
@@ -64,6 +69,7 @@ export default function AccountingDashboard() {
 
                 const { statement } = await generalLedgerService.getProfitLossData(startDateStr, endOfToday);
                 const { trialBalance } = await generalLedgerService.getTrialBalance(endOfToday);
+                const { snapshot } = await advancedAccountingService.getOperatingSnapshot();
 
                 const { data: pendingInvoices } = await supabase
                     .from('business_invoices')
@@ -105,6 +111,10 @@ export default function AccountingDashboard() {
                         totalExpenses: totalExp,
                         pendingInvoices: pending,
                         cashBalance: cashBalance,
+                        openBills: Number(snapshot?.openBills || 0),
+                        overdueBills: Number(snapshot?.overdueBills || 0),
+                        unreconciledTransactions: Number(snapshot?.unreconciledTransactions || 0),
+                        activeBankAccounts: Number(snapshot?.activeBankAccounts || 0),
                         recentTransactions: simpleTransactions
                     });
                     const { accounts: fetchedAccounts } = await chartOfAccountsService.getAccounts();
@@ -205,6 +215,20 @@ export default function AccountingDashboard() {
                         </>
                     )}
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                {[
+                    { label: 'Open Bills', value: stats.openBills, accent: 'text-amber-300' },
+                    { label: 'Overdue Bills', value: stats.overdueBills, accent: 'text-rose-300' },
+                    { label: 'Unreconciled', value: stats.unreconciledTransactions, accent: 'text-sky-300' },
+                    { label: 'Bank Accounts', value: stats.activeBankAccounts, accent: 'text-emerald-300' },
+                ].map((item) => (
+                    <Card key={item.label} className="bg-slate-950/70 border border-white/5 rounded-2xl p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">{item.label}</p>
+                        <p className={`mt-2 text-2xl font-black ${item.accent}`}>{item.value}</p>
+                    </Card>
+                ))}
             </div>
 
             {/* Mobile-Friendly Tab Switcher */}

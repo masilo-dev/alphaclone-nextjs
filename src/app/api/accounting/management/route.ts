@@ -38,6 +38,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(await getExpenses(tenantId, config, supabase));
       case 'get_financial_summary':
         return NextResponse.json(await getFinancialSummary(tenantId, config, supabase));
+      case 'create_bill':
+        return NextResponse.json(await createBill(tenantId, config, supabase));
+      case 'get_bills':
+        return NextResponse.json(await getBills(tenantId, config, supabase));
+      case 'create_bank_account':
+        return NextResponse.json(await createBankAccount(tenantId, config, supabase));
+      case 'get_bank_accounts':
+        return NextResponse.json(await getBankAccounts(tenantId, supabase));
+      case 'create_reconciliation_session':
+        return NextResponse.json(await createReconciliationSession(tenantId, config, supabase, user.id));
+      case 'get_reconciliation_sessions':
+        return NextResponse.json(await getReconciliationSessions(tenantId, config, supabase));
+      case 'get_ar_aging':
+        return NextResponse.json(await getAccountsReceivableAging(tenantId, supabase));
+      case 'get_ap_aging':
+        return NextResponse.json(await getAccountsPayableAging(tenantId, supabase));
+      case 'get_finance_snapshot':
+        return NextResponse.json(await getFinanceSnapshot(tenantId, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
@@ -126,6 +144,226 @@ async function createInvoice(tenantId: string, config: any, supabase: any) {
       data: invoice,
       message: 'Invoice created successfully'
     };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function createBill(tenantId: string, config: any, supabase: any) {
+  try {
+    const {
+      vendorId,
+      companyId,
+      reference,
+      issueDate,
+      dueDate,
+      lineItems = [],
+      notes,
+      terms,
+      currency = 'USD',
+      status = 'draft'
+    } = config;
+
+    const subtotal = lineItems.reduce((sum: number, item: any) => sum + (Number(item.quantity || 1) * Number(item.unitPrice || 0)), 0);
+    const taxAmount = lineItems.reduce((sum: number, item: any) => sum + Number(item.taxAmount || 0), 0);
+    const discountAmount = lineItems.reduce((sum: number, item: any) => sum + Number(item.discountAmount || 0), 0);
+    const total = subtotal + taxAmount - discountAmount;
+
+    const { data: billNumber, error: billNumberError } = await supabase.rpc('generate_bill_number', {
+      p_tenant_id: tenantId,
+    });
+    if (billNumberError) throw billNumberError;
+
+    const { data: bill, error } = await supabase
+      .from('vendor_bills')
+      .insert({
+        tenant_id: tenantId,
+        vendor_id: vendorId,
+        company_id: companyId,
+        bill_number: billNumber,
+        reference,
+        issue_date: issueDate,
+        due_date: dueDate,
+        status,
+        subtotal,
+        tax_amount: taxAmount,
+        discount_amount: discountAmount,
+        total,
+        amount_paid: Number(config.amountPaid || 0),
+        currency,
+        line_items: lineItems,
+        notes,
+        terms,
+        metadata: config.metadata || {}
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: bill,
+      message: 'Vendor bill created successfully'
+    };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function getBills(tenantId: string, config: any, supabase: any) {
+  try {
+    const { page = 1, limit = 20, status } = config || {};
+    let query = supabase
+      .from('vendor_bills')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId);
+
+    if (status) query = query.eq('status', status);
+
+    const { data, error, count } = await query
+      .order('issue_date', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      data: {
+        bills: data || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          pages: Math.ceil((count || 0) / limit),
+        }
+      }
+    };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function createBankAccount(tenantId: string, config: any, supabase: any) {
+  try {
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .insert({
+        tenant_id: tenantId,
+        name: config.name,
+        account_number_last4: config.accountNumberLast4,
+        bank_name: config.bankName,
+        account_type: config.accountType || 'checking',
+        currency: config.currency || 'USD',
+        opening_balance: Number(config.openingBalance || 0),
+        current_balance: Number(config.currentBalance ?? config.openingBalance ?? 0),
+        coa_account_id: config.coaAccountId || null,
+        is_active: config.isActive ?? true,
+        metadata: config.metadata || {}
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, data, message: 'Bank account created successfully' };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function getBankAccounts(tenantId: string, supabase: any) {
+  try {
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return { success: true, data: { accounts: data || [] } };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function createReconciliationSession(tenantId: string, config: any, supabase: any, userId: string) {
+  try {
+    const completed = config.status === 'completed';
+    const { data, error } = await supabase
+      .from('reconciliation_sessions')
+      .insert({
+        tenant_id: tenantId,
+        bank_account_id: config.bankAccountId,
+        statement_start_date: config.statementStartDate,
+        statement_end_date: config.statementEndDate,
+        statement_ending_balance: Number(config.statementEndingBalance || 0),
+        cleared_balance: Number(config.clearedBalance || 0),
+        status: config.status || 'draft',
+        notes: config.notes,
+        created_by: userId,
+        completed_by: completed ? userId : null,
+        completed_at: completed ? new Date().toISOString() : null,
+        metadata: config.metadata || {},
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return { success: true, data, message: 'Reconciliation session created successfully' };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function getReconciliationSessions(tenantId: string, config: any, supabase: any) {
+  try {
+    const limit = Number(config?.limit || 25);
+    const { data, error } = await supabase
+      .from('reconciliation_sessions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('statement_end_date', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return { success: true, data: { sessions: data || [] } };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function getAccountsReceivableAging(tenantId: string, supabase: any) {
+  try {
+    const { data, error } = await supabase.rpc('get_accounts_receivable_aging', {
+      p_tenant_id: tenantId,
+    });
+    if (error) throw error;
+    return { success: true, data: { aging: data || [] } };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function getAccountsPayableAging(tenantId: string, supabase: any) {
+  try {
+    const { data, error } = await supabase.rpc('get_accounts_payable_aging', {
+      p_tenant_id: tenantId,
+    });
+    if (error) throw error;
+    return { success: true, data: { aging: data || [] } };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
+async function getFinanceSnapshot(tenantId: string, supabase: any) {
+  try {
+    const { data, error } = await supabase.rpc('get_finance_operating_snapshot', {
+      p_tenant_id: tenantId,
+    });
+    if (error) throw error;
+    return { success: true, data: data || {} };
   } catch (error: any) {
     return operationFailed('accounting/management', error);
   }

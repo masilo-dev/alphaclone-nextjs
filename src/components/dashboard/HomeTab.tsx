@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical, Sparkles, Bot, ArrowRight, Database, Layers, Activity, CheckSquare, MessageCircle } from 'lucide-react';
+import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical, Sparkles, Bot, ArrowRight, Database, Layers, Activity, CheckSquare, MessageCircle, Users as UsersIcon } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';

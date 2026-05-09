@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -11,6 +9,34 @@ export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
+
+function getBaseUrl(req: NextRequest) {
+  const protocol = req.headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https';
+  const host = req.headers.get('x-forwarded-host')?.split(',')[0] ?? req.headers.get('host') ?? '';
+  return `${protocol}://${host}`;
+}
+
+function buildForwardHeaders(req: NextRequest) {
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'MCP-Protocol-Version': req.headers.get('mcp-protocol-version') || req.headers.get('x-mcp-version') || MCP_PROTOCOL_VERSION,
+  });
+
+  const passthroughHeaders = [
+    'authorization',
+    'x-api-key',
+    'mcp-session-id',
+    'x-client-label',
+    'x-mcp-version',
+  ];
+
+  for (const headerName of passthroughHeaders) {
+    const value = req.headers.get(headerName);
+    if (value) headers.set(headerName, value);
+  }
+
+  return headers;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -50,9 +76,7 @@ export async function GET(req: NextRequest) {
         // We continue anyway, as basic SSE might still work for some clients
     }
 
-    const protocol = req.headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https';
-    const host = req.headers.get('host') ?? '';
-    const endpointUrl = `${protocol}://${host}/api/mcp/messages?api_key=${encodeURIComponent(apiKey)}`;
+    const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages?api_key=${encodeURIComponent(apiKey)}`;
 
     const stream = new ReadableStream({
       start(controller) {
@@ -96,6 +120,61 @@ export async function GET(req: NextRequest) {
     console.error('[MCP SSE GET] Fatal handshake error:', err);
     return NextResponse.json({ error: 'Internal connection error' }, { status: 500, headers: MCP_CORS_HEADERS });
   }
+}
+
+export async function POST(req: NextRequest) {
+  const cors = handleCorsApp(req);
+  if (cors) return cors;
+
+  let bodyText = '';
+  try {
+    bodyText = await req.text();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: MCP_CORS_HEADERS });
+  }
+
+  const upstream = await fetch(`${getBaseUrl(req)}/api/mcp/messages${new URL(req.url).search}`, {
+    method: 'POST',
+    headers: buildForwardHeaders(req),
+    body: bodyText,
+  });
+
+  const responseHeaders = new Headers(MCP_CORS_HEADERS);
+  responseHeaders.set('MCP-Protocol-Version', upstream.headers.get('MCP-Protocol-Version') || MCP_PROTOCOL_VERSION);
+
+  const exposedHeaders = ['Mcp-Session-Id', 'Content-Type', 'x-mcp-version'];
+  for (const headerName of exposedHeaders) {
+    const value = upstream.headers.get(headerName);
+    if (value) responseHeaders.set(headerName, value);
+  }
+
+  return new Response(await upstream.text(), {
+    status: upstream.status,
+    headers: responseHeaders,
+  });
+}
+
+export async function DELETE(req: NextRequest) {
+  const cors = handleCorsApp(req);
+  if (cors) return cors;
+
+  const sessionId = req.headers.get('mcp-session-id');
+  if (sessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+      await supabaseAdmin.from('mcp_sessions').delete().eq('id', sessionId);
+    } catch (err) {
+      console.warn('[MCP SSE DELETE] Session cleanup failed:', err);
+    }
+  }
+
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      ...MCP_CORS_HEADERS,
+      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+    },
+  });
 }
 
 export async function OPTIONS(req: NextRequest) {

@@ -137,6 +137,72 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
         );
     }, [tasks, searchQuery, filter]);
 
+    const operationsSnapshot = useMemo(() => {
+        const openTasks = (tasks || []).filter((task) => task.status !== 'completed' && task.status !== 'cancelled');
+        const now = new Date();
+        const blockedTasks = openTasks.filter((task) => {
+            const deps = (task.metadata?.dependencies as string[]) || [];
+            return deps.some((depId) => {
+                const depTask = tasks?.find((candidate) => candidate.id === depId);
+                return depTask && depTask.status !== 'completed';
+            });
+        });
+        const overdueTasks = openTasks.filter((task) => task.dueDate && new Date(task.dueDate) < now);
+        const unassignedTasks = openTasks.filter((task) => !task.assignedTo);
+        const urgentTasks = openTasks.filter((task) => task.priority === 'urgent' || task.priority === 'high');
+        const dueSoonTasks = openTasks.filter((task) => {
+            if (!task.dueDate) return false;
+            const due = new Date(task.dueDate);
+            const diff = due.getTime() - now.getTime();
+            return diff >= 0 && diff <= 1000 * 60 * 60 * 24 * 7;
+        });
+
+        const actionQueue = openTasks
+            .map((task) => {
+                const reasons: string[] = [];
+                let urgency = 0;
+
+                if (blockedTasks.some((blocked) => blocked.id === task.id)) {
+                    reasons.push('blocked by dependency');
+                    urgency += 4;
+                }
+                if (task.dueDate && new Date(task.dueDate) < now) {
+                    reasons.push('overdue');
+                    urgency += 4;
+                }
+                if (!task.assignedTo) {
+                    reasons.push('unassigned');
+                    urgency += 2;
+                }
+                if (task.priority === 'urgent') {
+                    reasons.push('urgent priority');
+                    urgency += 3;
+                } else if (task.priority === 'high') {
+                    reasons.push('high priority');
+                    urgency += 2;
+                }
+                if (!task.relatedToProject && !task.relatedToLead && !task.relatedToDeal) {
+                    reasons.push('not linked to execution context');
+                    urgency += 1;
+                }
+
+                return { task, reasons, urgency };
+            })
+            .filter((item) => item.urgency > 0)
+            .sort((a, b) => b.urgency - a.urgency)
+            .slice(0, 6);
+
+        return {
+            openTasks,
+            blockedTasks,
+            overdueTasks,
+            unassignedTasks,
+            urgentTasks,
+            dueSoonTasks,
+            actionQueue,
+        };
+    }, [tasks]);
+
     // Check if task is blocked by incomplete dependencies
     const isTaskBlocked = (task: Task): boolean => {
         const deps = (task.metadata?.dependencies as string[]) || [];
@@ -552,6 +618,139 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         <Plus className="w-4 h-4 font-bold group-hover:rotate-90 transition-transform duration-500" />
                         <span className="hidden sm:inline font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em]">New Task</span>
                     </motion.button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+                {[
+                    {
+                        label: 'Blocked Tasks',
+                        value: operationsSnapshot.blockedTasks.length,
+                        hint: 'Execution waiting on incomplete dependencies.',
+                        icon: <Link2 className="w-4 h-4 text-red-300" />,
+                    },
+                    {
+                        label: 'Overdue Work',
+                        value: operationsSnapshot.overdueTasks.length,
+                        hint: 'Open tasks whose delivery dates already slipped.',
+                        icon: <AlertCircle className="w-4 h-4 text-amber-300" />,
+                    },
+                    {
+                        label: 'Unassigned',
+                        value: operationsSnapshot.unassignedTasks.length,
+                        hint: 'Tasks without a clear owner create execution drift.',
+                        icon: <User className="w-4 h-4 text-sky-300" />,
+                    },
+                    {
+                        label: 'Due This Week',
+                        value: operationsSnapshot.dueSoonTasks.length,
+                        hint: 'Work that needs proactive follow-through now.',
+                        icon: <Calendar className="w-4 h-4 text-teal-300" />,
+                    },
+                ].map((card) => (
+                    <div key={card.label} className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 backdrop-blur-xl">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{card.label}</p>
+                                <p className="text-2xl font-black text-white mt-2">{card.value}</p>
+                                <p className="text-xs text-slate-500 mt-2">{card.hint}</p>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-slate-950/70 p-2">
+                                {card.icon}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4">
+                <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 backdrop-blur-xl">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h2 className="text-sm font-black text-white uppercase tracking-[0.18em]">Task Command Queue</h2>
+                            <p className="text-xs text-slate-500 mt-1">The work most likely to stall delivery if ignored.</p>
+                        </div>
+                        <Target className="w-4 h-4 text-teal-400" />
+                    </div>
+
+                    <div className="space-y-3">
+                        {operationsSnapshot.actionQueue.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-5 text-sm text-slate-400">
+                                No urgent execution gaps in the current task set.
+                            </div>
+                        ) : (
+                            operationsSnapshot.actionQueue.map(({ task, reasons, urgency }) => (
+                                <button
+                                    key={task.id}
+                                    type="button"
+                                    onClick={() => openEditModal(task)}
+                                    className="w-full rounded-xl border border-white/10 bg-slate-950/50 p-4 text-left hover:border-teal-500/40 hover:bg-slate-900/70 transition-colors"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-white truncate">{task.title}</p>
+                                            <p className="text-xs text-slate-400 mt-1">
+                                                {task.status.replace('_', ' ')} • {task.priority} priority • {task.dueDate || 'No due date'}
+                                            </p>
+                                        </div>
+                                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                                            P{urgency}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {reasons.map((reason) => (
+                                            <span key={reason} className="rounded-full border border-white/10 bg-slate-900/80 px-2 py-1 text-[11px] text-slate-300">
+                                                {reason}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 backdrop-blur-xl">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h2 className="text-sm font-black text-white uppercase tracking-[0.18em]">Execution Hygiene</h2>
+                            <p className="text-xs text-slate-500 mt-1">Weaknesses that usually stay hidden inside generic task apps.</p>
+                        </div>
+                        <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                    </div>
+
+                    <div className="space-y-3">
+                        {[
+                            {
+                                label: 'Urgent/high priority tasks',
+                                value: operationsSnapshot.urgentTasks.length,
+                                detail: 'Signals where workload pressure is concentrating.',
+                            },
+                            {
+                                label: 'Tasks with no project/lead/deal link',
+                                value: operationsSnapshot.openTasks.filter((task) => !task.relatedToProject && !task.relatedToLead && !task.relatedToDeal).length,
+                                detail: 'Work without context is hard to prioritize commercially.',
+                            },
+                            {
+                                label: 'Review-stage tasks',
+                                value: operationsSnapshot.openTasks.filter((task) => task.status === 'review').length,
+                                detail: 'Approval bottlenecks often hide in review queues.',
+                            },
+                            {
+                                label: 'Recurring open tasks',
+                                value: operationsSnapshot.openTasks.filter((task) => Boolean(task.metadata?.recurrence_rule || task.metadata?.recurrence)).length,
+                                detail: 'Recurring work needs periodic cleanup so it does not become clutter.',
+                            },
+                        ].map((item) => (
+                            <div key={item.label} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm text-slate-200">{item.label}</p>
+                                    <span className="text-lg font-semibold text-white">{item.value}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2">{item.detail}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

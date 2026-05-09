@@ -22,6 +22,7 @@ import {
     getPreferredContractProjectTypes,
 } from '../../services/universalServiceCatalog';
 import { generateEmailDraft } from '../../services/unifiedAIService';
+import { contractLifecycleService } from '../../services/contractLifecycleService';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -147,6 +148,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
     const [previewTab, setPreviewTab] = useState<'document' | 'audit'>('document');
+    const [lifecycleStats, setLifecycleStats] = useState({
+        templateCount: 0,
+        pendingApprovals: 0,
+        versionCount: 0,
+    });
 
     const today = format(new Date(), 'MMMM d, yyyy');
     const ninetyDays = format(new Date(Date.now() + 90 * 86400000), 'MMMM d, yyyy');
@@ -186,6 +192,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             supabase.from('contracts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
                 .then(({ data }: { data: any[] | null }) => { setSavedContracts(data || []); setLoadingContracts(false); })
                 .catch(() => setLoadingContracts(false));
+            Promise.all([
+                contractLifecycleService.getTemplates(),
+                contractLifecycleService.getApprovals(),
+                supabase.from('contract_versions').select('id', { count: 'exact', head: true }).eq('tenant_id', currentTenant.id),
+            ]).then(([templatesRes, approvalsRes, versionsRes]) => {
+                setLifecycleStats({
+                    templateCount: templatesRes.templates.length,
+                    pendingApprovals: approvalsRes.approvals.filter((approval) => approval.status === 'pending').length,
+                    versionCount: versionsRes.count || 0,
+                });
+            }).catch(() => {
+                setLifecycleStats({ templateCount: 0, pendingApprovals: 0, versionCount: 0 });
+            });
         }
     }, [currentTenant?.id]);
 
@@ -442,6 +461,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         Saved ({savedContracts.length})
                     </button>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                {[
+                    { label: 'Active Templates', value: lifecycleStats.templateCount, tone: 'text-sky-300' },
+                    { label: 'Pending Approvals', value: lifecycleStats.pendingApprovals, tone: 'text-amber-300' },
+                    { label: 'Stored Versions', value: lifecycleStats.versionCount, tone: 'text-emerald-300' },
+                ].map((item) => (
+                    <div key={item.label} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
+                        <p className={`mt-2 text-2xl font-black ${item.tone}`}>{item.value}</p>
+                    </div>
+                ))}
             </div>
 
             {/* Saved Contracts List */}
