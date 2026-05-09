@@ -17,7 +17,7 @@ import { ENV } from '@/config/env';
  */
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 800;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
