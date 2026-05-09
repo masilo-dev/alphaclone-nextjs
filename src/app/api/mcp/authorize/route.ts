@@ -177,7 +177,7 @@ function serveConsentPage(params: {
     }
   </style>
 </head>
-<body>
+  <body>
   <div class="card">
     <div class="logo">
       <div class="logo-icon">A</div>
@@ -188,15 +188,8 @@ function serveConsentPage(params: {
     <div class="scope-badge">
       <span>●</span> Requested scope: ${params.scope}
     </div>
-    ${errorBlock}
-    <form method="POST" action="/api/mcp/authorize" autocomplete="off">
-      ${hidden('response_type', params.responseType)}
-      ${hidden('client_id', params.clientId)}
-      ${hidden('redirect_uri', params.redirectUri)}
-      ${hidden('state', params.state)}
-      ${hidden('code_challenge', params.codeChallenge)}
-      ${hidden('code_challenge_method', params.codeChallengeMethod)}
-      ${hidden('scope', params.scope)}
+    <div id="error-block">${errorBlock}</div>
+    <form id="auth-form" autocomplete="off">
       <div class="field">
         <label for="api_key">MCP API Key</label>
         <input
@@ -211,9 +204,59 @@ function serveConsentPage(params: {
           Find your key in <a href="/dashboard/marketplace" target="_blank">Dashboard → Marketplace → MCP</a>.
         </p>
       </div>
-      <button type="submit">Authorize Access</button>
+      <button type="submit" id="submit-btn">Authorize Access</button>
     </form>
   </div>
+  <script>
+    // Use fetch() instead of form POST to bypass form-action CSP.
+    // fetch() is governed by connect-src 'self' which is already allowed.
+    document.getElementById('auth-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Authorizing...';
+      var errEl = document.getElementById('error-block');
+      errEl.innerHTML = '';
+
+      var body = new URLSearchParams({
+        response_type: ${JSON.stringify(params.responseType)},
+        client_id: ${JSON.stringify(params.clientId)},
+        redirect_uri: ${JSON.stringify(params.redirectUri)},
+        state: ${JSON.stringify(params.state ?? '')},
+        code_challenge: ${JSON.stringify(params.codeChallenge ?? '')},
+        code_challenge_method: ${JSON.stringify(params.codeChallengeMethod)},
+        scope: ${JSON.stringify(params.scope)},
+        api_key: document.getElementById('api_key').value.trim()
+      });
+
+      try {
+        var res = await fetch('/api/mcp/authorize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          body: body.toString()
+        });
+        var data = await res.json();
+        if (data.redirect) {
+          window.location.href = data.redirect;
+        } else if (data.error) {
+          errEl.innerHTML = '<div class="error">' + data.error_description + '</div>';
+          btn.disabled = false;
+          btn.textContent = 'Authorize Access';
+        } else {
+          errEl.innerHTML = '<div class="error">Unexpected response. Please try again.</div>';
+          btn.disabled = false;
+          btn.textContent = 'Authorize Access';
+        }
+      } catch (err) {
+        errEl.innerHTML = '<div class="error">Network error. Please check your connection and try again.</div>';
+        btn.disabled = false;
+        btn.textContent = 'Authorize Access';
+      }
+    });
+  </script>
 </body>
 </html>`;
 
@@ -313,6 +356,17 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const callbackUrl = new URL(redirectUri);
   callbackUrl.searchParams.set('code', code);
   if (state) callbackUrl.searchParams.set('state', state);
+
+  // If caller accepts JSON (JS fetch from consent page), return redirect URL in JSON body.
+  // This bypasses form-action CSP — fetch() is governed by connect-src 'self' instead.
+  const acceptHeader = req.headers.get('accept') ?? '';
+  if (acceptHeader.includes('application/json')) {
+    return new Response(JSON.stringify({ redirect: callbackUrl.toString() }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    });
+  }
+
   return Response.redirect(callbackUrl.toString(), 302);
 }
 
