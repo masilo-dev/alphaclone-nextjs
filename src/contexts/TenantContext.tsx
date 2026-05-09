@@ -14,7 +14,7 @@ export interface TenantContextType {
   switchTenant: (tenantId: string) => Promise<void>;
   refreshTenants: () => Promise<void>;
   createTenant: (data: CreateTenantData) => Promise<Tenant>;
-  getDashboardStats: (tenantId: string, userId: string) => Promise<{ stats: any | null; error: string | null }>;
+  getDashboardStats: (tenantId: string, userId: string, forceRefresh?: boolean) => Promise<{ stats: any | null; error: string | null }>;
 }
 
 interface CreateTenantData {
@@ -257,7 +257,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return tenant;
   }, [user, refreshTenants, switchTenant]);
 
-  const getDashboardStats = useCallback(async (tenantId: string, userId?: string) => {
+  const getDashboardStats = useCallback(async (tenantId: string, userId?: string, forceRefresh = false) => {
     if (!tenantId) {
       console.warn('[TenantContext] getDashboardStats called with missing tenantId');
       return { stats: null, error: 'Missing tenantId' };
@@ -269,8 +269,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      const stats = await tenantService.getDashboardStats(tenantId, userId);
-      return { stats, error: null };
+      // tenantService.getDashboardStats already returns { stats, error }
+      const result = await tenantService.getDashboardStats(tenantId, userId, forceRefresh);
+      return result; // pass through directly — do NOT double-wrap
     } catch (error) {
       console.error('[TenantContext] getDashboardStats failed:', error);
       return { stats: null, error: 'Failed to fetch stats' };

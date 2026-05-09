@@ -350,29 +350,48 @@ class TenantService {
         return null;
     }
 
-    async getDashboardStats(tenantId: string, userId: string): Promise<{ stats: any | null; error: string | null }> {
+    async getDashboardStats(tenantId: string, userId: string, forceRefresh = false): Promise<{ stats: any | null; error: string | null }> {
         if (!tenantId || !userId) {
             console.warn('getDashboardStats called with missing parameters', { tenantId, userId });
             return { stats: null, error: 'Missing tenant or user ID' };
         }
 
-        // --- Return cached stats immediately if fresh (< 60s old) ---
-        const CACHE_KEY = `dashboard_stats_${tenantId}`;
+        // Version key — bump this whenever the RPC schema changes to bust stale caches
+        const CACHE_VERSION = 'v4';
+        const CACHE_KEY = `dashboard_stats_${tenantId}_${CACHE_VERSION}`;
         const CACHE_TTL = 60_000; // 60 seconds
-        try {
-            if (typeof window !== 'undefined') {
-                const cached = localStorage.getItem(CACHE_KEY);
-                if (cached) {
-                    const { ts, stats } = JSON.parse(cached);
-                    if (Date.now() - ts < CACHE_TTL) {
-                        console.log('[TenantService] Returning cached dashboard stats');
-                        // Refresh in background after returning
-                        setTimeout(() => this.fetchAndCacheStats(tenantId, userId, CACHE_KEY), 0);
-                        return { stats, error: null };
-                    }
+
+        // Purge old versioned cache entries
+        if (typeof window !== 'undefined') {
+            for (const key of Object.keys(localStorage)) {
+                if (key.startsWith(`dashboard_stats_${tenantId}`) && key !== CACHE_KEY) {
+                    localStorage.removeItem(key);
                 }
             }
-        } catch (_) { /* ignore cache read errors */ }
+        }
+
+        if (!forceRefresh) {
+            try {
+                if (typeof window !== 'undefined') {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const { ts, stats } = JSON.parse(cached);
+                        const isAllZero = !stats || (
+                            stats.totalRevenue === 0 &&
+                            stats.totalLeads === 0 &&
+                            stats.clientCount === 0 &&
+                            stats.activeProjects === 0
+                        );
+                        if (Date.now() - ts < CACHE_TTL && !isAllZero) {
+                            console.log('[TenantService] Returning cached dashboard stats');
+                            // Refresh in background after returning
+                            setTimeout(() => this.fetchAndCacheStats(tenantId, userId, CACHE_KEY), 0);
+                            return { stats, error: null };
+                        }
+                    }
+                }
+            } catch (_) { /* ignore cache read errors */ }
+        }
 
         return this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
     }
@@ -399,13 +418,21 @@ class TenantService {
                         ...EMPTY_STATS,
                         ...(payload?.stats || {}),
                     };
-                    try {
-                        if (typeof window !== 'undefined') {
-                            localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
-                        }
-                    } catch (_) { /* ignore cache write errors */ }
+                    // Only cache if we got meaningful data (not all zeros)
+                    const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
+                        stats.clientCount > 0 || stats.activeProjects > 0 ||
+                        stats.totalTasks > 0 || stats.unreadMessages > 0;
+                    if (hasData) {
+                        try {
+                            if (typeof window !== 'undefined') {
+                                localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+                            }
+                        } catch (_) { /* ignore cache write errors */ }
+                    }
                     return { stats, error: null };
                 }
+                // Non-OK response (4xx/5xx) — do NOT write to cache, fall through to direct RPC
+                console.warn('[TenantService] API stats returned', res.status, '— falling back to direct RPC');
             } catch (_) {
                 // Fall back to direct RPC below.
             }
@@ -428,20 +455,27 @@ class TenantService {
 
             // Map and Enrich the stats from the RPC response
             const stats = {
+                ...EMPTY_STATS,
                 ...rpcData,
-                totalMessages: 0, // Not yet in RPC
+                totalMessages: rpcData?.totalMessages ?? 0,
             };
 
-            // Cache the fresh stats
-            try {
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
-                }
-            } catch (_) { /* ignore cache write errors */ }
+            // Cache only non-zero results
+            const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
+                stats.clientCount > 0 || stats.activeProjects > 0 ||
+                stats.totalTasks > 0;
+            if (hasData) {
+                try {
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+                    }
+                } catch (_) { /* ignore cache write errors */ }
+            }
 
             return { stats, error: null };
         } catch (err: any) {
-            console.error('Error fetching dashboard stats:', err?.message);
+            console.error('[TenantService] Error fetching dashboard stats:', err?.message);
+            // Return null stats on error — do NOT cache zeros
             return { stats: EMPTY_STATS, error: err?.message || 'Failed to load stats' };
         }
     }
