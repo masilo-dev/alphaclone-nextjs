@@ -202,20 +202,18 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(
-  withBotId(
-    withWorkflow(
-      withSerwist(nextConfig)
-    )
-  ),
-  {
-    org: process.env.SENTRY_ORG,
-    project: process.env.SENTRY_PROJECT,
-    silent: !process.env.CI,
-    widenClientFileUpload: true,
-    sourcemaps: {
-      deleteSourcemapsAfterUpload: true,
-    },
-    tunnelRoute: "/monitoring",
-  }
-);
+// Apply plugins sequentially to resolve type mismatches between various HOC signatures
+const baseConfig = withSerwist(nextConfig);
+const workflowConfig = withWorkflow(baseConfig as any);
+const botIdConfig = withBotId(workflowConfig as any);
+
+export default withSentryConfig(botIdConfig as any, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+  tunnelRoute: "/monitoring",
+});
