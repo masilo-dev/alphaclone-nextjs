@@ -9,10 +9,6 @@ initBotId({
       method: 'POST',
     },
     {
-      path: '/api/auth/*',
-      method: 'POST',
-    },
-    {
       path: '/api/onboarding/*',
       method: 'POST',
     }
