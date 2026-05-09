@@ -83,14 +83,23 @@ CREATE INDEX IF NOT EXISTS idx_mcp_api_keys_tenant  ON mcp_api_keys(tenant_id);
 ALTER TABLE mcp_api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mcp_oauth_tokens ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "tenant_members_manage_api_keys" ON mcp_api_keys
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM tenant_users
-      WHERE tenant_users.tenant_id = mcp_api_keys.tenant_id
-        AND tenant_users.user_id   = auth.uid()
-    )
-  );
+-- Safe policy creation: ignore if already exists
+DO $$
+BEGIN
+  CREATE POLICY "tenant_members_manage_api_keys" ON mcp_api_keys
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM tenant_users
+        WHERE tenant_users.tenant_id = mcp_api_keys.tenant_id
+          AND tenant_users.user_id   = auth.uid()
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "tenant_members_view_own_tokens" ON mcp_oauth_tokens
-  FOR SELECT USING (user_id = auth.uid());
+DO $$
+BEGIN
+  CREATE POLICY "tenant_members_view_own_tokens" ON mcp_oauth_tokens
+    FOR SELECT USING (user_id = auth.uid());
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
