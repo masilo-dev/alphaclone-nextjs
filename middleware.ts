@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
 
     // CRITICAL: Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
     // and to eliminate latency from platform policy fetches (prevents handshake timeouts).
-    if (pathname.startsWith('/api/mcp/') || pathname === '/token') {
+    if (pathname.startsWith('/api/mcp/')) {
         return NextResponse.next();
     }
 
@@ -203,6 +203,6 @@ export const config = {
          * - favicon.ico (favicon file)
          * - public folder
          */
-        '/((?!_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|workbox-.*\\.js|.well-known/workflow/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js|json|map|txt|xml|webmanifest)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|manifest.json|manifest.webmanifest|robots.txt|sitemap.xml|sw.js|workbox-.*\\.js|.well-known/workflow/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js|json|map|txt|xml|webmanifest)$).*)',
     ],
 };
