@@ -51,6 +51,12 @@ CREATE TABLE IF NOT EXISTS mcp_oauth_clients (
 
 CREATE INDEX IF NOT EXISTS idx_mcp_oauth_clients_client_id ON mcp_oauth_clients(client_id);
 
+-- Add missing columns to pre-existing table (safe no-ops if already present)
+ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS is_active     BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS is_public     BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS client_secret TEXT;
+ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS scopes        TEXT[]  DEFAULT ARRAY['read', 'write'];
+
 -- Pre-register Claude as a known public client
 INSERT INTO mcp_oauth_clients (client_id, client_name, redirect_uris, is_public, scopes)
 VALUES (
@@ -62,8 +68,7 @@ VALUES (
 )
 ON CONFLICT (client_id) DO UPDATE SET
   redirect_uris = EXCLUDED.redirect_uris,
-  scopes        = EXCLUDED.scopes,
-  is_active     = TRUE;
+  scopes        = EXCLUDED.scopes;
 
 -- Pre-register Manus AI
 INSERT INTO mcp_oauth_clients (client_id, client_name, redirect_uris, is_public, scopes)
