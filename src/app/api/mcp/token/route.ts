@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 800;
+
 /**
  * MCP OAuth2 Token Endpoint
  *
@@ -59,12 +63,12 @@ export async function POST(req: NextRequest) {
     let body: Record<string, string> = {};
 
     if (contentType.includes('application/x-www-form-urlencoded')) {
-      const formData = await req.formData();
-      body = Object.fromEntries(
-        Array.from(formData.entries()).map(([k, v]) => [k, String(v)])
-      );
+      // Use req.text() — more reliable than req.formData() in Node.js runtime
+      const text = await req.text();
+      const params = new URLSearchParams(text);
+      params.forEach((v, k) => { body[k] = v; });
     } else {
-      body = await req.json();
+      body = await req.json().catch(() => ({}));
     }
 
     const {
