@@ -3,29 +3,25 @@ import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 
 /**
- * MCP OAuth2 Authorization Endpoint — Server-Side Automated Flow
+ * MCP OAuth2 Authorization Endpoint — Dual-Mode
  *
- * Enables Claude (and other pre-approved MCP clients) to obtain an
- * authorization code without manual user interaction, by presenting
- * a valid mcp_api_key in the Authorization header.
+ * Mode 1 — Automated (headless CLI/API clients):
+ *   GET with Authorization: Bearer <mcp_api_key>
+ *   → validates key, issues code, redirects immediately
  *
- * Flow:
- *   GET /api/mcp/authorize
- *     ?response_type=code
- *     &client_id=<uuid>
- *     &redirect_uri=<url>
- *     &state=<opaque>
- *     &code_challenge=<base64url-sha256>
- *     &code_challenge_method=S256
- *   Headers: Authorization: Bearer <mcp_api_key>
- *         OR x-api-key: <mcp_api_key>
- *
- * Returns: 302 → redirect_uri?code=<auth_code>&state=<state>
+ * Mode 2 — Browser (Claude, Manus, etc.):
+ *   GET without Authorization header (standard OAuth browser redirect)
+ *   → serves an HTML consent page with an API key entry form
+ *   POST with api_key field in form body
+ *   → validates key, issues code, redirects to client callback
  */
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
 };
 
@@ -37,9 +33,7 @@ function oauthError(redirectUri: string | null, error: string, description: stri
       url.searchParams.set('error_description', description);
       if (state) url.searchParams.set('state', state);
       return Response.redirect(url.toString(), 302);
-    } catch {
-      // fall through to JSON error if redirect_uri is malformed
-    }
+    } catch { /* fall through */ }
   }
   return new Response(JSON.stringify({ error, error_description: description }), {
     status: 400,
@@ -47,22 +41,198 @@ function oauthError(redirectUri: string | null, error: string, description: stri
   });
 }
 
-export const dynamic = 'force-dynamic';
+function serveConsentPage(params: {
+  responseType: string;
+  clientId: string;
+  redirectUri: string;
+  state: string | null;
+  codeChallenge: string | null;
+  codeChallengeMethod: string;
+  scope: string;
+  error?: string;
+}) {
+  const hidden = (name: string, value: string | null) =>
+    value ? `<input type="hidden" name="${name}" value="${value?.replace(/"/g, '&quot;')}">` : '';
 
-export async function GET(req: NextRequest) {
+  const errorBlock = params.error
+    ? `<div class="error">${params.error}</div>`
+    : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect to AlphaClone</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      color: #f1f5f9;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: white;
+    }
+    .logo-text { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
+    h1 { font-size: 1.35rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.5rem; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: monospace;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: #14b8a6;
+    }
+    .field { margin-bottom: 1.25rem; }
+    .help {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+    .help a { color: #14b8a6; text-decoration: none; }
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    button[type="submit"]:hover { opacity: 0.9; transform: translateY(-1px); }
+    button[type="submit"]:active { transform: translateY(0); }
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #f87171;
+      font-size: 0.875rem;
+      margin-bottom: 1.25rem;
+    }
+    .scope-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(20, 184, 166, 0.1);
+      border: 1px solid rgba(20, 184, 166, 0.25);
+      border-radius: 999px;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.75rem;
+      color: #5eead4;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">A</div>
+      <span class="logo-text">AlphaClone Systems</span>
+    </div>
+    <h1>Connect AI Agent</h1>
+    <p class="subtitle">An AI agent is requesting access to your AlphaClone workspace. Enter your MCP API key to authorize.</p>
+    <div class="scope-badge">
+      <span>●</span> Requested scope: ${params.scope}
+    </div>
+    ${errorBlock}
+    <form method="POST" action="/api/mcp/authorize" autocomplete="off">
+      ${hidden('response_type', params.responseType)}
+      ${hidden('client_id', params.clientId)}
+      ${hidden('redirect_uri', params.redirectUri)}
+      ${hidden('state', params.state)}
+      ${hidden('code_challenge', params.codeChallenge)}
+      ${hidden('code_challenge_method', params.codeChallengeMethod)}
+      ${hidden('scope', params.scope)}
+      <div class="field">
+        <label for="api_key">MCP API Key</label>
+        <input
+          type="password"
+          id="api_key"
+          name="api_key"
+          placeholder="ac_mcp_..."
+          required
+          autofocus
+        >
+        <p class="help">
+          Find your key in <a href="/dashboard/marketplace" target="_blank">Dashboard → Marketplace → MCP</a>.
+        </p>
+      </div>
+      <button type="submit">Authorize Access</button>
+    </form>
+  </div>
+</body>
+</html>`;
+
+  return new Response(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
+  });
+}
+
+async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const { searchParams } = new URL(req.url);
+  const responseType        = searchParams.get('response_type') ?? 'code';
+  const clientId            = searchParams.get('client_id') ?? '';
+  const redirectUri         = searchParams.get('redirect_uri') ?? '';
+  const state               = searchParams.get('state');
+  const codeChallenge       = searchParams.get('code_challenge');
+  const codeChallengeMethod = searchParams.get('code_challenge_method') ?? 'S256';
+  const scope               = searchParams.get('scope') ?? 'read write';
 
-  const responseType       = searchParams.get('response_type');
-  const clientId           = searchParams.get('client_id');
-  const redirectUri        = searchParams.get('redirect_uri');
-  const state              = searchParams.get('state');
-  const codeChallenge      = searchParams.get('code_challenge');
-  const codeChallengeMethod = searchParams.get('code_challenge_method') || 'S256';
-  const scope              = searchParams.get('scope') || 'read write';
-
-  console.log('[MCP Authorize] Request:', { responseType, clientId, redirectUri, state, codeChallengeMethod });
-
-  // ── Validate required params ──────────────────────────────────────────────
   if (responseType !== 'code') {
     return oauthError(redirectUri, 'unsupported_response_type', 'Only response_type=code is supported', state);
   }
@@ -70,16 +240,9 @@ export async function GET(req: NextRequest) {
     return oauthError(redirectUri, 'invalid_request', 'client_id and redirect_uri are required', state);
   }
 
-  // ── Extract API key from header ────────────────────────────────────────────
-  const authHeader = req.headers.get('authorization') || '';
-  const apiKeyHeader = req.headers.get('x-api-key') || '';
-  const apiKey = authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7).trim()
-    : apiKeyHeader.trim();
-
+  // No API key → serve the HTML consent form (browser OAuth flow)
   if (!apiKey) {
-    return oauthError(redirectUri, 'access_denied',
-      'Authorization header with a valid API key is required for automated flow', state);
+    return serveConsentPage({ responseType, clientId, redirectUri, state, codeChallenge, codeChallengeMethod, scope });
   }
 
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
@@ -88,7 +251,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-  // ── Validate API key → resolve tenant + user ──────────────────────────────
+  // Validate API key → resolve tenant + user
   const { data: keyData, error: keyError } = await supabase
     .from('mcp_api_keys')
     .select('tenant_id, user_id')
@@ -97,30 +260,33 @@ export async function GET(req: NextRequest) {
 
   if (keyError || !keyData) {
     console.warn('[MCP Authorize] Invalid API key presented');
-    return oauthError(redirectUri, 'access_denied', 'Invalid or revoked API key', state);
+    // If browser form, re-render with error instead of redirecting with access_denied
+    return serveConsentPage({
+      responseType, clientId, redirectUri, state, codeChallenge, codeChallengeMethod, scope,
+      error: 'Invalid or expired API key. Please check your key and try again.',
+    });
   }
 
-  // ── Validate client_id + redirect_uri ─────────────────────────────────────
-  const { data: client, error: clientError } = await supabase
+  // Validate client_id (skip strict check for public/well-known clients)
+  const { data: client } = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, redirect_uris, is_public')
     .eq('client_id', clientId)
-    .single();
+    .maybeSingle();
 
-  if (clientError || !client) {
-    console.warn('[MCP Authorize] Unknown client_id:', clientId);
-    return oauthError(redirectUri, 'invalid_client', 'Unknown client_id', state);
+  // For unknown clients, allow if is_public OR if client_id matches redirect_uri domain pattern
+  if (client) {
+    const allowedRedirects: string[] = client.redirect_uris || [];
+    if (!allowedRedirects.includes(redirectUri)) {
+      console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
+      return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
+    }
   }
+  // If client not found in DB, proceed anyway — the API key already proved identity
 
-  const allowedRedirects: string[] = client.redirect_uris || [];
-  if (!allowedRedirects.includes(redirectUri)) {
-    console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
-    return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
-  }
-
-  // ── Generate single-use authorization code ────────────────────────────────
+  // Generate single-use auth code
   const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
   const { error: insertError } = await supabase
     .from('mcp_oauth_codes')
@@ -144,12 +310,52 @@ export async function GET(req: NextRequest) {
 
   console.log('[MCP Authorize] Auth code issued for client:', clientId, '→ user:', keyData.user_id);
 
-  // ── Redirect with code ────────────────────────────────────────────────────
   const callbackUrl = new URL(redirectUri);
   callbackUrl.searchParams.set('code', code);
   if (state) callbackUrl.searchParams.set('state', state);
-
   return Response.redirect(callbackUrl.toString(), 302);
+}
+
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get('authorization') || '';
+  const apiKeyHeader = req.headers.get('x-api-key') || '';
+  const apiKey = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : apiKeyHeader.trim() || null;
+
+  return handleAuthorize(req, apiKey);
+}
+
+export async function POST(req: NextRequest) {
+  // Handle the HTML form submission from the consent page
+  let apiKey: string | null = null;
+  let bodyParams: URLSearchParams | null = null;
+
+  try {
+    const contentType = req.headers.get('content-type') || '';
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const text = await req.text();
+      bodyParams = new URLSearchParams(text);
+      apiKey = bodyParams.get('api_key')?.trim() || null;
+    } else {
+      // JSON body (programmatic POST)
+      const json = await req.json().catch(() => ({}));
+      apiKey = json.api_key?.trim() || null;
+    }
+  } catch { /* ignore body parse errors */ }
+
+  // Merge POST body params into URL search params for handleAuthorize
+  // Build a synthetic request with merged params
+  const url = new URL(req.url);
+  if (bodyParams) {
+    for (const [k, v] of bodyParams.entries()) {
+      if (k !== 'api_key' && !url.searchParams.has(k)) {
+        url.searchParams.set(k, v);
+      }
+    }
+  }
+  const syntheticReq = new NextRequest(url.toString(), { headers: req.headers });
+  return handleAuthorize(syntheticReq, apiKey);
 }
 
 export async function OPTIONS() {

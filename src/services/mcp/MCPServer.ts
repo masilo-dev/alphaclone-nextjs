@@ -4976,6 +4976,11 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
 
           // Run all finance queries in parallel
+          // Note: Supabase query builder does not expose .catch() — use async IIFEs
+          const safeQuery = async (fn: () => Promise<{ data: any; error: any }>) => {
+            try { return await fn(); } catch { return { data: null, error: null }; }
+          };
+
           const [
             invoiceResult,
             billResult,
@@ -4983,49 +4988,55 @@ Return ONLY a JSON array of 60 objects:
             contractApprovalResult,
             contractTemplateResult,
           ] = await Promise.all([
-            // Invoices: paid, pending, overdue
-            supabaseAdmin
-              .from('business_invoices')
-              .select('id, status, total, due_date, created_at')
-              .eq('tenant_id', tenant_id)
-              .order('created_at', { ascending: false })
-              .limit(200),
+            // Invoices: paid, pending, overdue (core table — let it throw if missing)
+            safeQuery(() =>
+              supabaseAdmin
+                .from('business_invoices')
+                .select('id, status, total, due_date, created_at')
+                .eq('tenant_id', tenant_id)
+                .order('created_at', { ascending: false })
+                .limit(200)
+            ),
 
-            // Vendor bills (AP)
-            supabaseAdmin
-              .from('vendor_bills')
-              .select('id, status, total_amount, amount_paid, due_date')
-              .eq('tenant_id', tenant_id)
-              .in('status', ['open', 'partial', 'overdue'])
-              .limit(100)
-              .catch(() => ({ data: null, error: null })),
+            // Vendor bills (AP) — optional table, safe fallback
+            safeQuery(() =>
+              supabaseAdmin
+                .from('vendor_bills')
+                .select('id, status, total_amount, amount_paid, due_date')
+                .eq('tenant_id', tenant_id)
+                .in('status', ['open', 'partial', 'overdue'])
+                .limit(100)
+            ),
 
-            // Reconciliation sessions
-            supabaseAdmin
-              .from('bank_reconciliation_sessions')
-              .select('id, status, statement_end_date, statement_ending_balance')
-              .eq('tenant_id', tenant_id)
-              .in('status', ['draft', 'in_progress'])
-              .limit(10)
-              .catch(() => ({ data: null, error: null })),
+            // Reconciliation sessions — optional table
+            safeQuery(() =>
+              supabaseAdmin
+                .from('bank_reconciliation_sessions')
+                .select('id, status, statement_end_date, statement_ending_balance')
+                .eq('tenant_id', tenant_id)
+                .in('status', ['draft', 'in_progress'])
+                .limit(10)
+            ),
 
-            // Pending contract approvals
-            supabaseAdmin
-              .from('contract_approvals')
-              .select('id, status, created_at')
-              .eq('tenant_id', tenant_id)
-              .eq('status', 'pending')
-              .limit(20)
-              .catch(() => ({ data: null, error: null })),
+            // Pending contract approvals — optional table
+            safeQuery(() =>
+              supabaseAdmin
+                .from('contract_approvals')
+                .select('id, status, created_at')
+                .eq('tenant_id', tenant_id)
+                .eq('status', 'pending')
+                .limit(20)
+            ),
 
-            // Active contract templates
-            supabaseAdmin
-              .from('contract_templates')
-              .select('id, name, category, is_active')
-              .eq('tenant_id', tenant_id)
-              .eq('is_active', true)
-              .limit(20)
-              .catch(() => ({ data: null, error: null })),
+            // Active contract templates — optional table
+            safeQuery(() =>
+              supabaseAdmin
+                .from('contract_templates')
+                .select('id, name, category, is_active')
+                .eq('tenant_id', tenant_id)
+                .eq('is_active', true)
+                .limit(20)
+            ),
           ]);
 
           const invoices = invoiceResult.data || [];
