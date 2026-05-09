@@ -44,8 +44,9 @@ export async function validateMCPAuthApp(req: NextRequest) {
   if (isOAuthAccessToken) {
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('mcp_oauth_tokens')
-      .select('tenant_id, user_id, expires_at, client_id')
+      .select('tenant_id, user_id, expires_at, client_id, revoked')
       .eq('access_token', token)
+      .eq('revoked', false)
       .maybeSingle();
 
     if (tokenError || !tokenData) {
