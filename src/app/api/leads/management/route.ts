@@ -5,18 +5,9 @@ import { leadFindingWorkflow } from '@/workflows/lead-finding';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
-import { googlePlacesService } from '@/services/googlePlacesService';
+import { freePlacesService } from '@/services/freePlacesService';
 import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadsManagementSchema } from '@/schemas/validation';
-
-function resolveGooglePlacesApiKey(): string | null {
-  return (
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    null
-  );
-}
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -274,26 +265,20 @@ async function searchLinkedInLeads(businessType: string, location: string, limit
 
 async function searchGoogleLeads(businessType: string, location: string, radius: number, limit: number, filters: any) {
   try {
-    const apiKey = resolveGooglePlacesApiKey();
-    if (!apiKey) {
-      console.warn('[leads/management] Google Places: set GOOGLE_PLACES_API_KEY or GOOGLE_MAPS_API_KEY');
-      return [];
-    }
-
-    const result = await googlePlacesService.searchPlacesForLeads(businessType, location, apiKey, {
+    const result = await freePlacesService.searchPlacesForLeads(businessType, location, undefined, {
       radiusKm: Math.min(Math.max(radius || 15, 2), 50),
       maxResults: Math.min(Math.max(limit, 5), 20),
     });
 
-    if (result.error) {
-      console.warn('[leads/management] Google Places:', result.error);
+    if (result.error && result.places.length === 0) {
+      console.warn('[leads/management] Free places:', result.error);
       return [];
     }
 
     const leads = result.places.map((p) => ({
-      id: `google_${p.placeId}`,
+      id: `place_${p.placeId}`,
       name: p.businessName,
-      source: 'google',
+      source: p.source || 'free_places',
       type: 'place',
       location: p.formattedAddress || location,
       address: p.formattedAddress,
@@ -316,7 +301,7 @@ async function searchGoogleLeads(businessType: string, location: string, radius:
 
     return leads.filter((lead) => passesFilters(lead, filters));
   } catch (error) {
-    console.error('Google search error:', error);
+    console.error('Free places search error:', error);
     return [];
   }
 }

@@ -1,0 +1,18 @@
+# Python Web Scraping Dependencies
+# Install with: pip install -r scripts/requirements.txt
+# Then run: python -m playwright install chromium
+
+# HTML Parsing
+beautifulsoup4==4.14.3
+lxml==6.1.0
+
+# Full Web Crawling Framework
+scrapy==2.15.2
+
+# Browser Automation
+selenium==4.43.0
+playwright==1.59.0
+
+# HTTP Clients
+requests==2.33.1
+httpx==0.28.1

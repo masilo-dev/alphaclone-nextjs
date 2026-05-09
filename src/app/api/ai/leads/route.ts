@@ -19,7 +19,7 @@ import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { routeAIRequest } from '@/services/aiRouter';
-import { googlePlacesService } from '@/services/googlePlacesService';
+import { freePlacesService } from '@/services/freePlacesService';
 import { ENV } from '@/config/env';
 
 export const runtime = 'nodejs';
@@ -110,28 +110,23 @@ export async function POST(req: Request) {
         let provider = 'auto';
         let model = 'auto';
 
-        let rawMapsData: any[] = [];
 
-        if (googleApiKey) {
-            console.log(`[Lead Gen] Attempting Google Places search for: ${industry} in ${location}`);
-            const { places, rawResults, error: placesError } = await googlePlacesService.searchPlaces(
-                `${industry} in ${location}`,
-                googleApiKey
-            );
+        console.log(`[Lead Gen] Attempting free places search for: ${industry} in ${location}`);
+        const { places, error: placesError } = await freePlacesService.searchPlaces(
+            `${industry} in ${location}`
+        );
 
-            if (!placesError && places && places.length > 0) {
-                console.log(`[Lead Gen] Found ${places.length} real leads from Google (capping at ${capBatch})`);
-                rawMapsData = rawResults || [];
-                leads = places.slice(0, capBatch).map((p) => ({
-                    id: Math.random().toString(36).substring(2, 10),
-                    ...p,
-                    estimatedValue: Math.floor(Math.random() * (50000 - 5000 + 1)) + 5000,
-                    notes: `Real business found via Google Maps. Matches "${industry}" in "${location}".`,
-                }));
-                source = 'Google Maps';
-            } else if (placesError) {
-                console.warn(`[Lead Gen] Google Places error: ${placesError}. Falling back to AI...`);
-            }
+        if (!placesError && places && places.length > 0) {
+            console.log(`[Lead Gen] Found ${places.length} real leads from free sources (capping at ${capBatch})`);
+            leads = places.slice(0, capBatch).map((p) => ({
+                id: Math.random().toString(36).substring(2, 10),
+                ...p,
+                estimatedValue: Math.floor(Math.random() * (50000 - 5000 + 1)) + 5000,
+                notes: `Real business found via ${p.source}. Matches "${industry}" in "${location}".`,
+            }));
+            source = 'Free Places Search';
+        } else if (placesError) {
+            console.warn(`[Lead Gen] Free places error: ${placesError}. Falling back to AI...`);
         }
 
         if (leads.length === 0) {
