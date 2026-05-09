@@ -476,7 +476,7 @@
 - **OAuth Resilience**: Implemented `refresh_token` grant type support for Claude and Manus AI clients to ensure long-term connection stability.
 
 ### Fixed
-- **Next.js Build Failure**: Resolved a TypeScript type mismatch in `next.config.ts` by reordering higher-order wrappers (`withSentryConfig`, `withBotId`, `withWorkflow`). This ensures compatibility between Sentry's internal function signature and other platform wrappers.
+- **Next.js Build Failure**: Resolved a persistent TypeScript type mismatch in `next.config.ts` by sequentially applying higher-order wrappers with explicit type casting. This bypasses incompatible internal function signatures between Sentry, BotID, and Workflow plugins while maintaining full configuration functionality.
 - **MCP Token Exchange**: Resolved `mcp_token_exchange_failed` by hardening the `/api/mcp/token` route with PKCE validation and relaxed redirect URI matching.
 - **Middleware Latency**: Optimized `middleware.ts` to critically bypass all security and maintenance filters for `/api/mcp/*` and `/token` endpoints, eliminating handshake timeouts.
 - **Bot Protection Conflict**: Decoupled machine-to-machine MCP routes from BotID client-side protection in `instrumentation-client.ts`.
