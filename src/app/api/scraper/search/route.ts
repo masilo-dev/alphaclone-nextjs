@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import * as cheerio from 'cheerio';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
@@ -12,7 +13,7 @@ import {
   fetchSerpLeadsViaBrowser,
   hasRemoteBrowserConfigured,
 } from '@/lib/scraper/browserSerpLeads';
-import { googlePlacesService } from '@/services/googlePlacesService';
+import { freePlacesService } from '@/services/freePlacesService';
 
 export const runtime = 'nodejs';
 export const maxDuration = 800;
@@ -65,7 +66,7 @@ function enrichWithContactFlag(leads: Array<Omit<LeadResult, 'hasContact'> & Par
   return leads.map((l) => ({ ...l, hasContact: hasContactInfo(l) }));
 }
 
-// ─── Strategy 2 (Fallback): HERE Maps Places ──────────────────────────────────
+// ─── Strategy 2a: HERE Maps Places (primary when key is set in Vercel) ──────
 async function fetchHERE(niche: string, location: string, limit = 50, radiusKm = 25): Promise<LeadResult[]> {
   const apiKey = process.env.HERE_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) throw new Error('HERE API key not configured');
@@ -79,7 +80,6 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
   const pos = geoData.items?.[0]?.position;
   if (!pos) throw new Error('HERE: could not geocode location');
 
-  // Use circular bias for better local discovery
   const radiusM = Math.min(Math.max(radiusKm * 1000, 1000), 100000);
   const searchRes = await fetch(
     `https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(niche)}&at=${pos.lat},${pos.lng}&in=circle:${pos.lat},${pos.lng};r=${radiusM}&limit=${Math.min(limit, 100)}&apiKey=${apiKey}`,
@@ -106,28 +106,128 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
     }));
 }
 
-// ─── Strategy: Google Places (New) + Geocoding ────────────────────────────────
-function resolveGooglePlacesApiKey(): string | null {
-  return (
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    null
+// ─── Strategy 2b: Foursquare Places API (FREE fallback when HERE key missing) ─
+// Free tier: 1,000 calls/day — foursquare.com/developers
+async function fetchFoursquare(niche: string, location: string, limit = 20, radiusKm = 25): Promise<LeadResult[]> {
+  const apiKey = process.env.FOURSQUARE_API_KEY;
+  if (!apiKey) throw new Error('FOURSQUARE_API_KEY not configured');
+
+  // Geocode with Nominatim (free)
+  const geoRes = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location || 'United States')}&format=json&limit=1`,
+    {
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0 (support@alphaclonesystems.com)' },
+      signal: AbortSignal.timeout(8000),
+    }
   );
+  if (!geoRes.ok) throw new Error(`Foursquare geocode failed: ${geoRes.status}`);
+  const geoData = await geoRes.json();
+  if (!geoData?.[0]) throw new Error(`Foursquare: could not geocode "${location}"`);
+  const lat = parseFloat(geoData[0].lat);
+  const lng = parseFloat(geoData[0].lon);
+
+  const radiusM = Math.min(Math.max(radiusKm * 1000, 100), 100000);
+  const url = new URL('https://api.foursquare.com/v3/places/search');
+  url.searchParams.set('query', niche);
+  url.searchParams.set('ll', `${lat},${lng}`);
+  url.searchParams.set('radius', String(radiusM));
+  url.searchParams.set('limit', String(Math.min(limit, 50)));
+  url.searchParams.set('fields', 'fsq_id,name,location,tel,website,categories,geocodes,rating,stats');
+
+  const searchRes = await fetch(url.toString(), {
+    headers: { Accept: 'application/json', Authorization: apiKey },
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!searchRes.ok) throw new Error(`Foursquare search error ${searchRes.status}`);
+  const data = await searchRes.json();
+
+  return (data.results || []).map((place: any): LeadResult => {
+    const addr = place.location;
+    const addressStr = [addr?.address, addr?.locality, addr?.region, addr?.country].filter(Boolean).join(', ');
+    return {
+      business_name: place.name || 'Unknown',
+      website:       place.website || '',
+      snippet:       place.categories?.[0]?.name || 'Business',
+      phone:         place.tel || '',
+      email:         '',
+      address:       addressStr,
+      rating:        typeof place.rating === 'number' ? place.rating / 2 : undefined,
+      category:      place.categories?.[0]?.name || '',
+      source:        'here' as const, // reuse 'here' source slot for backwards compat
+      lat:           place.geocodes?.main?.latitude ?? lat,
+      lng:           place.geocodes?.main?.longitude ?? lng,
+      hasContact:    false,
+    };
+  });
 }
 
-async function fetchGooglePlaces(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
-  const apiKey = resolveGooglePlacesApiKey();
-  if (!apiKey) {
-    throw new Error('Google Places API key not configured');
-  }
+// ─── Strategy 2b: DuckDuckGo HTML SERP (zero cost, no API key) ────────────────
+// Replaces Firecrawl when its key is not configured
+async function fetchDuckDuckGoLeads(niche: string, location: string, limit = 20): Promise<LeadResult[]> {
+  const query = `${niche} ${location} business contact phone email`;
+  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
 
-  const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
-    radiusKm: Math.min(Math.max(radiusKm, 1), 100),
-    maxResults: Math.min(limit, 20),
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) throw new Error(`DuckDuckGo HTML returned ${res.status}`);
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  const results: LeadResult[] = [];
+  const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const PHONE_RE = /(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?){2,}\d{3,4}/;
+
+  $('.result, .web-result').each((_, el) => {
+    if (results.length >= limit) return false;
+    const titleEl = $(el).find('.result__title, .result__a').first();
+    const name = titleEl.text().replace(/\s+[-|].*$/, '').trim();
+    if (!name || name.length < 2) return;
+
+    const link = $(el).find('a.result__url, a.result__a').attr('href') || '';
+    const snippet = $(el).find('.result__snippet').text().trim();
+    const allText = `${snippet} ${name}`;
+
+    let website = '';
+    try {
+      const parsed = new URL(link.startsWith('//duckduckgo') ? `https:${link}` : link);
+      const uddg = parsed.searchParams.get('uddg');
+      website = uddg ? decodeURIComponent(uddg) : parsed.origin;
+    } catch { website = link; }
+
+    const phone = allText.match(PHONE_RE)?.[0]?.trim() || '';
+    const email = allText.match(EMAIL_RE)?.[0]?.toLowerCase() || '';
+
+    results.push({
+      business_name: name,
+      website,
+      snippet: snippet || 'Found via web search',
+      phone,
+      email,
+      address: '',
+      rating: undefined,
+      category: 'Web result',
+      source: 'firecrawl' as const, // reuse 'firecrawl' source slot
+      hasContact: !!(phone || email || website),
+    });
   });
 
-  if (res.error) {
+  return results;
+}
+
+// ─── Strategy: Free Places Fallback (Foursquare + OSM, zero cost) ─────────────
+async function fetchFreePlacesFallback(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
+  const res = await freePlacesService.searchPlacesForLeads(niche, location || 'United States', undefined, {
+    radiusKm: Math.min(Math.max(radiusKm, 1), 100),
+    maxResults: Math.min(limit, 50),
+  });
+
+  if (res.error && res.places.length === 0) {
     throw new Error(res.error);
   }
 
@@ -135,13 +235,13 @@ async function fetchGooglePlaces(niche: string, location: string, limit = 20, ra
     (p): LeadResult => ({
       business_name: p.businessName,
       website: p.website || '',
-      snippet: p.industry || 'Google Place',
+      snippet: p.industry || 'Business',
       phone: p.phone || '',
       email: '',
       address: p.formattedAddress || '',
       rating: p.rating,
       category: p.industry || '',
-      source: 'google',
+      source: 'google' as const, // reuse 'google' source slot for display
       lat: p.lat,
       lng: p.lng,
       hasContact: false,
@@ -466,12 +566,25 @@ export async function POST(request: Request) {
     const sourceErrors: Record<string, string> = {};
     const sourceCounts: Record<string, number>  = { osm: 0, google: 0, here: 0, firecrawl: 0, browser: 0 };
 
-    // ── Step 1: OSM, HERE, Firecrawl and Browser run together (primary sources) ──
+    // ── Step 1: All sources run in parallel ──────────────────────────────────
+    // OSM:         free, always runs
+    // HERE Maps:   runs when HERE_API_KEY is set (Vercel) → falls back to Foursquare
+    // Firecrawl:   runs when FIRECRAWL_API_KEY is set (Vercel) → falls back to DuckDuckGo
+    // Browser SERP: Browserbase (configured in Vercel), scrapes Bing results
     try {
-      const [osmRes, hereRes, firecrawlRes, browserRes] = await Promise.allSettled([
+      const hereKey      = process.env.HERE_API_KEY;
+      const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+
+      const [osmRes, hereOrFsqRes, searchRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(niche, location, LEADS_PER_SEARCH, radiusKm),
-        fetchHERE(niche, location, LEADS_PER_SEARCH, radiusKm),
-        import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} businesses in ${location} contact info`, LEADS_PER_SEARCH)),
+        // HERE Maps when Vercel key present, Foursquare free tier as local fallback
+        hereKey && !hereKey.startsWith('your_')
+          ? fetchHERE(niche, location, LEADS_PER_SEARCH, radiusKm)
+          : fetchFoursquare(niche, location, LEADS_PER_SEARCH, radiusKm),
+        // Firecrawl when Vercel key present, DuckDuckGo HTML scrape as local fallback
+        firecrawlKey
+          ? import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${niche} businesses in ${location} contact info`, LEADS_PER_SEARCH))
+          : fetchDuckDuckGoLeads(niche, location, LEADS_PER_SEARCH),
         hasRemoteBrowserConfigured() ? fetchSerpLeadsViaBrowser(niche, location, LEADS_PER_SEARCH) : Promise.resolve([])
       ]);
 
@@ -480,45 +593,55 @@ export async function POST(request: Request) {
         results.push(...enriched);
         sourceCounts.osm = enriched.length;
         console.log(`[Scraper] OSM returned ${enriched.length} leads`);
+      } else {
+        console.warn('[Scraper] OSM failed:', osmRes.reason?.message);
       }
-      if (hereRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(hereRes.value);
+      if (hereOrFsqRes.status === 'fulfilled') {
+        const enriched = enrichWithContactFlag(hereOrFsqRes.value);
         results.push(...enriched);
         sourceCounts.here = enriched.length;
-        console.log(`[Scraper] HERE returned ${enriched.length} leads`);
+        console.log(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} returned ${enriched.length} leads`);
+      } else {
+        console.warn(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} failed:`, hereOrFsqRes.reason?.message);
       }
-      if (firecrawlRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(firecrawlRes.value);
+      if (searchRes.status === 'fulfilled') {
+        const enriched = enrichWithContactFlag(searchRes.value);
         results.push(...enriched);
         sourceCounts.firecrawl = enriched.length;
-        console.log(`[Scraper] Firecrawl AI returned ${enriched.length} leads`);
+        console.log(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} returned ${enriched.length} leads`);
+      } else {
+        console.warn(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} failed:`, searchRes.reason?.message);
       }
       if (browserRes.status === 'fulfilled') {
         const enriched = enrichWithContactFlag(browserRes.value);
         results.push(...enriched);
         sourceCounts.browser = enriched.length;
         console.log(`[Scraper] Browser SERP returned ${enriched.length} leads`);
+      } else {
+        console.warn('[Scraper] Browser SERP failed:', browserRes.reason?.message);
       }
     } catch (err: unknown) {
       console.warn('[Scraper] Primary sources failed:', err);
     }
 
-    // ── Step 2: Google Places (FALLBACK) ────────────────────
+    // ── Step 2: Free Places fallback (Foursquare+OSM via freePlacesService) ─────
     const needFallback = results.length < LEADS_PER_SEARCH;
     if (needFallback && !isBudgetExceeded()) {
-      console.log(`[Scraper] After free sources: ${results.length} leads — activating Google fallback…`);
+      console.log(`[Scraper] After primary sources: ${results.length} leads — activating free places fallback…`);
       try {
         const want = LEADS_PER_SEARCH - results.length + 5;
-        const googleRows = await fetchGooglePlaces(niche, location, want, radiusKm).catch(() => []);
+        const fallbackRows = await fetchFreePlacesFallback(niche, location, want, radiusKm).catch(() => []);
 
-        if (googleRows.length > 0) {
-          const enriched = enrichWithContactFlag(googleRows);
+        if (fallbackRows.length > 0) {
+          const existingNames = new Set(results.map(r => r.business_name.toLowerCase()));
+          const newRows = fallbackRows.filter(r => !existingNames.has(r.business_name.toLowerCase()));
+          const enriched = enrichWithContactFlag(newRows);
           results.push(...enriched);
           sourceCounts.google = enriched.length;
-          console.log(`[Scraper] Google Places: ${enriched.length} leads`);
+          console.log(`[Scraper] Free places fallback: ${enriched.length} unique leads`);
         }
       } catch (err: unknown) {
-        console.warn('[Scraper] Google fallback failed:', err);
+        console.warn('[Scraper] Free places fallback failed:', err);
       }
     }
 

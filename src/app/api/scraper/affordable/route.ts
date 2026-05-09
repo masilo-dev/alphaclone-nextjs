@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { googlePlacesService } from '@/services/googlePlacesService';
+import { freePlacesService } from '@/services/freePlacesService';
 import { scraperAffordableSchema } from '@/schemas/validation';
 
 // Affordable Scraping Tools Integration
@@ -158,33 +158,22 @@ async function builtWithLookup(domain: string): Promise<BuiltWithResult | null> 
 }
 
 /**
- * GOOGLE PLACES API - Local Business Data
- * Cost: $200 free tier/month, then pay-per-use (~$17 per 1000 requests)
- * Best for: Local business search with real data
+ * FREE PLACES SEARCH - Foursquare + OSM (zero API cost)
+ * Replaces Google Places API ($200+ free tier, then pay-per-use)
  */
-async function googlePlacesSearch(
-  query: string, 
-  location: string, 
+async function freePlacesSearch(
+  query: string,
+  location: string,
   radius: number = 5000
 ): Promise<GooglePlaceResult[]> {
-  const apiKey =
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (!apiKey) {
-    console.warn('[AffordableScraper] Google Places API key not configured');
-    return [];
-  }
-
   try {
-    const placesResult = await googlePlacesService.searchPlacesForLeads(query, location, apiKey, {
+    const placesResult = await freePlacesService.searchPlacesForLeads(query, location, undefined, {
       radiusKm: Math.min(Math.max(Math.round(radius / 1000), 1), 50),
       maxResults: 10,
     });
 
-    if (placesResult.error) {
-      console.warn('[AffordableScraper] Google Places error:', placesResult.error);
+    if (placesResult.error && placesResult.places.length === 0) {
+      console.warn('[AffordableScraper] Free places error:', placesResult.error);
       return [];
     }
 
@@ -199,7 +188,7 @@ async function googlePlacesSearch(
       maps_url: place.googleMapsUri,
     }));
   } catch (err) {
-    console.error('[AffordableScraper] Google Places error:', err);
+    console.error('[AffordableScraper] Free places error:', err);
     return [];
   }
 }
@@ -268,13 +257,13 @@ export async function POST(request: Request) {
         if (!query || !location) {
           return NextResponse.json({ error: 'Query and location required' }, { status: 400 });
         }
-        const places = await googlePlacesSearch(query, location);
+        const places = await freePlacesSearch(query, location);
         results = {
           success: true,
-          source: 'google.places',
+          source: 'free.places',
           places,
           count: places.length,
-          cost_estimate: `$${(places.length * 0.017).toFixed(2)}`
+          cost_estimate: 'FREE (Foursquare + OSM)'
         };
         break;
       }

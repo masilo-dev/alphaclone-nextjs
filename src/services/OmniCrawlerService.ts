@@ -1,5 +1,5 @@
 import { enhancedMapService } from './enhancedLeadFinderServices';
-import { googlePlacesService } from './googlePlacesService';
+import { freePlacesService } from './freePlacesService';
 import { ENV } from '@/config/env';
 import { leadService, Lead } from './leadService';
 
@@ -26,10 +26,8 @@ export class OmniCrawlerService {
       // Source 1: OpenStreetMap (OSM)
       enhancedMapService.getBusinessData(params.niche, params.location, limit),
       
-      // Source 2: Google Maps (Places API)
-      googleApiKey 
-        ? googlePlacesService.searchPlaces(`${params.niche} in ${params.location}`, googleApiKey)
-        : Promise.resolve({ places: [], error: 'Google API key missing' })
+      // Source 2: Free Places (Foursquare + OSM, no API cost)
+      freePlacesService.searchPlaces(`${params.niche} in ${params.location}`)
     ]);
 
     const allLeads: Partial<Lead>[] = [];
