@@ -1,57 +1,7 @@
 {
-    "headers": [
-        {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "Strict-Transport-Security",
-                    "value": "max-age=63072000; includeSubDomains; preload"
-                },
-                {
-                    "key": "Content-Security-Policy",
-                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: http:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' blob: https: wss:; frame-src 'self' blob: data: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://*.zoom.us https://zoom.us https://vercel.com https://*.vercel.com;"
-                },
-                {
-                    "key": "X-Content-Type-Options",
-                    "value": "nosniff"
-                },
-                {
-                    "key": "Referrer-Policy",
-                    "value": "strict-origin-when-cross-origin"
-                }
-            ]
-        }
-    ],
-    "crons": [
-        {
-            "path": "/api/cron/daily",
-            "schedule": "0 0 * * *"
-        },
-        {
-            "path": "/api/cron/social-publish",
-            "schedule": "0 9 * * *"
-        },
-        {
-            "path": "/api/cron/autonomous-runner",
-            "schedule": "0 8 * * *"
-        },
-        {
-            "path": "/api/cron/process-recurring-invoices",
-            "schedule": "0 0 * * *"
-        },
-        {
-            "path": "/api/cron/process-invoice-overdue-reminders",
-            "schedule": "0 1 * * *"
-        },
-        {
-            "path": "/api/cron/process-task-reminders",
-            "schedule": "0 8 * * *"
-        }
-    ],
-    "functions": {
-        "src/app/api/**/*": {
-            "maxDuration": 800,
-            "memory": 4096
-        }
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 800
     }
+  }
 }

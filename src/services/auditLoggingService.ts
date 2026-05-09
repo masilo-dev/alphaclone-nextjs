@@ -33,7 +33,7 @@ class AuditLoggingService {
       // Note: External IP fetch removed to prevent significant delays in core operations.
       // If IP data is critical, it should be fetched asynchronously or via a server-side handler.
 
-      const logEntry: AuditLogEntry = {
+      const logEntry: Record<string, any> = {
         user_id: user?.id,
         action,
         entity_type: entityType,
@@ -42,8 +42,7 @@ class AuditLoggingService {
         new_value: newValue,
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Environment',
         ip_address: ipBox.ip,
-        city: ipBox.city,
-        country: ipBox.country
+        // city/country omitted — columns not present in audit_logs table
       };
 
 
