@@ -202,20 +202,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBotId(
-  withWorkflow(
-    withSentryConfig(
-      withSerwist(nextConfig),
-      {
-        org: process.env.SENTRY_ORG,
-        project: process.env.SENTRY_PROJECT,
-        silent: !process.env.CI,
-        widenClientFileUpload: true,
-        sourcemaps: {
-          deleteSourcemapsAfterUpload: true,
-        },
-        tunnelRoute: "/monitoring",
-      }
+export default withSentryConfig(
+  withBotId(
+    withWorkflow(
+      withSerwist(nextConfig)
     )
-  )
+  ),
+  {
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    sourcemaps: {
+      deleteSourcemapsAfterUpload: true,
+    },
+    tunnelRoute: "/monitoring",
+  }
 );
