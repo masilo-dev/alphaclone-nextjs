@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
 
     // CRITICAL: Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
     // and to eliminate latency from platform policy fetches (prevents handshake timeouts).
-    if (pathname.startsWith('/api/mcp/')) {
+    if (pathname.startsWith('/api/mcp/') || pathname === '/token') {
         return NextResponse.next();
     }
 

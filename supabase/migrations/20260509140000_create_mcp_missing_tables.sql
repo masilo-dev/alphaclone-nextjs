@@ -5,6 +5,45 @@
 -- All statements are IF NOT EXISTS — safe to re-run.
 -- ============================================================
 
+-- ── mcp_oauth_clients ────────────────────────────────────────
+-- Registered OAuth 2.0 clients (Claude, Manus, custom agents).
+CREATE TABLE IF NOT EXISTS mcp_oauth_clients (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id      TEXT NOT NULL UNIQUE,
+  client_name    TEXT NOT NULL,
+  redirect_uris  TEXT[] NOT NULL DEFAULT '{}',
+  is_public      BOOLEAN NOT NULL DEFAULT TRUE,
+  client_secret  TEXT,
+  scopes         TEXT[] DEFAULT ARRAY['read', 'write'],
+  is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Pre-register Claude as a known public client
+INSERT INTO mcp_oauth_clients (client_id, client_name, redirect_uris, is_public, scopes)
+VALUES (
+  '1778309945386-41bab8272f61',
+  'Claude (Anthropic)',
+  ARRAY['https://claude.ai/api/mcp/auth_callback'],
+  TRUE,
+  ARRAY['read', 'write', 'mcp:tools', 'mcp:resources']
+)
+ON CONFLICT (client_id) DO UPDATE SET
+  redirect_uris = EXCLUDED.redirect_uris,
+  scopes        = EXCLUDED.scopes;
+
+-- Pre-register Manus AI
+INSERT INTO mcp_oauth_clients (client_id, client_name, redirect_uris, is_public, scopes)
+VALUES (
+  'manus-ai',
+  'Manus AI',
+  ARRAY['https://manus.im/api/mcp/auth_callback', 'https://manus.ai/api/mcp/auth_callback'],
+  TRUE,
+  ARRAY['read', 'write', 'mcp:tools', 'mcp:resources']
+)
+ON CONFLICT (client_id) DO NOTHING;
+
+
 -- ── mcp_oauth_tokens ─────────────────────────────────────────
 -- Access + refresh tokens issued at /api/mcp/token.
 CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (

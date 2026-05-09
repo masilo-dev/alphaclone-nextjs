@@ -468,3 +468,17 @@
 - **AI Intelligence Prompts**: Enhanced the intelligence gathering pipeline in `unifiedAIService.ts` to synthesize known emails, social footprints, and tech stacks into outreach summaries.
 - **Infrastructure**: Optimized `tsconfig.json` by excluding temporary scratch directories and refining build-time include patterns.
 - **Redis Cache**: Refactored pattern deletion in `redis.ts` for improved client stability.
+
+## Date: 2026-05-09 (MCP INFRASTRUCTURE STABILIZATION)
+
+### Added
+- **Diagnostic Tooling**: Created a suite of stateless diagnostic scripts (`scripts/check_mcp_db_stateless.js`, `scripts/check_claude_client.js`) for rapid production database verification without environment friction.
+- **OAuth Resilience**: Implemented `refresh_token` grant type support for Claude and Manus AI clients to ensure long-term connection stability.
+
+### Fixed
+- **MCP Token Exchange**: Resolved `mcp_token_exchange_failed` by hardening the `/api/mcp/token` route with PKCE validation and relaxed redirect URI matching.
+- **Middleware Latency**: Optimized `middleware.ts` to critically bypass all security and maintenance filters for `/api/mcp/*` and `/token` endpoints, eliminating handshake timeouts.
+- **Bot Protection Conflict**: Decoupled machine-to-machine MCP routes from BotID client-side protection in `instrumentation-client.ts`.
+
+### Changed
+- **Database Schema**: Hardened the MCP migration `20260509140000_create_mcp_missing_tables.sql` with `IF NOT EXISTS` and `ON CONFLICT` clauses for safe, idempotent re-runs in production.

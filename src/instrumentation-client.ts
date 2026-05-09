@@ -15,10 +15,7 @@ initBotId({
     {
       path: '/api/onboarding/*',
       method: 'POST',
-    },
-    {
-      path: '/api/mcp/*',
-      method: 'POST',
     }
   ],
 });
+
