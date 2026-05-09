@@ -137,26 +137,38 @@ export async function POST(req: NextRequest) {
       const storedRedirect = cleanUrl(authCode.redirect_uri);
       
       if (requestRedirect !== storedRedirect) {
-        console.warn('[MCP Token] redirect_uri mismatch. Expected:', authCode.redirect_uri, 'Request:', redirect_uri);
+        console.warn('[MCP Token] redirect_uri mismatch.', {
+          expected: authCode.redirect_uri,
+          received: redirect_uri,
+          code: authCode.code
+        });
         return tokenError('invalid_grant', 'redirect_uri does not match', 401);
       }
 
       // Verify PKCE if challenge was stored
       if (authCode.code_challenge) {
         if (!code_verifier) {
+          console.warn('[MCP Token] Missing code_verifier for PKCE-enabled code');
           return tokenError('invalid_request', 'code_verifier is required for PKCE');
         }
         if (authCode.code_challenge_method === 'S256') {
           const valid = await verifyPKCE(code_verifier, authCode.code_challenge);
           if (!valid) {
-            console.warn('[MCP Token] PKCE verification failed');
+            console.warn('[MCP Token] PKCE S256 verification failed');
             return tokenError('invalid_grant', 'code_verifier does not match code_challenge', 401);
           }
         }
         // plain method (less secure, but supported)
         if (authCode.code_challenge_method === 'plain' && code_verifier !== authCode.code_challenge) {
+          console.warn('[MCP Token] PKCE plain verification failed');
           return tokenError('invalid_grant', 'code_verifier does not match code_challenge', 401);
         }
+      }
+
+      // Validate tenant context exists
+      if (!authCode.tenant_id) {
+        console.error('[MCP Token] Auth code has no associated tenant_id:', authCode.id);
+        return tokenError('server_error', 'Invalid authorization context (missing tenant)', 500);
       }
 
       // Mark code as used (single-use enforcement)
@@ -183,11 +195,15 @@ export async function POST(req: NextRequest) {
         });
 
       if (tokenInsertError) {
-        console.error('[MCP Token] Failed to store tokens:', tokenInsertError);
-        return tokenError('server_error', 'Failed to issue tokens', 500);
+        console.error('[MCP Token] Failed to store tokens in DB:', {
+          error: tokenInsertError,
+          userId: authCode.user_id,
+          tenantId: authCode.tenant_id
+        });
+        return tokenError('server_error', 'Failed to issue tokens (database error)', 500);
       }
 
-      console.log('[MCP Token] Tokens issued for user:', authCode.user_id, 'tenant:', authCode.tenant_id);
+      console.log('[MCP Token] SUCCESS. Issued for user:', authCode.user_id, 'tenant:', authCode.tenant_id);
 
       return NextResponse.json({
         access_token: accessToken,
