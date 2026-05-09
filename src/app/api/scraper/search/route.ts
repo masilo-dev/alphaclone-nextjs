@@ -594,7 +594,9 @@ export async function POST(request: Request) {
         sourceCounts.osm = enriched.length;
         console.log(`[Scraper] OSM returned ${enriched.length} leads`);
       } else {
-        console.warn('[Scraper] OSM failed:', osmRes.reason?.message);
+        const msg = osmRes.reason?.message || 'OSM failed';
+        console.warn('[Scraper] OSM failed:', msg);
+        sourceErrors.osm = msg;
       }
       if (hereOrFsqRes.status === 'fulfilled') {
         const enriched = enrichWithContactFlag(hereOrFsqRes.value);
@@ -602,7 +604,9 @@ export async function POST(request: Request) {
         sourceCounts.here = enriched.length;
         console.log(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} returned ${enriched.length} leads`);
       } else {
-        console.warn(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} failed:`, hereOrFsqRes.reason?.message);
+        const msg = hereOrFsqRes.reason?.message || 'Places search failed';
+        console.warn(`[Scraper] ${hereKey ? 'HERE Maps' : 'Foursquare'} failed:`, msg);
+        sourceErrors.here = msg;
       }
       if (searchRes.status === 'fulfilled') {
         const enriched = enrichWithContactFlag(searchRes.value);
@@ -610,7 +614,9 @@ export async function POST(request: Request) {
         sourceCounts.firecrawl = enriched.length;
         console.log(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} returned ${enriched.length} leads`);
       } else {
-        console.warn(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} failed:`, searchRes.reason?.message);
+        const msg = searchRes.reason?.message || 'Web search failed';
+        console.warn(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} failed:`, msg);
+        sourceErrors.firecrawl = msg;
       }
       if (browserRes.status === 'fulfilled') {
         const enriched = enrichWithContactFlag(browserRes.value);
@@ -618,7 +624,9 @@ export async function POST(request: Request) {
         sourceCounts.browser = enriched.length;
         console.log(`[Scraper] Browser SERP returned ${enriched.length} leads`);
       } else {
-        console.warn('[Scraper] Browser SERP failed:', browserRes.reason?.message);
+        const msg = browserRes.reason?.message || 'Browser search failed';
+        console.warn('[Scraper] Browser SERP failed:', msg);
+        sourceErrors.browser = msg;
       }
     } catch (err: unknown) {
       console.warn('[Scraper] Primary sources failed:', err);
@@ -641,7 +649,9 @@ export async function POST(request: Request) {
           console.log(`[Scraper] Free places fallback: ${enriched.length} unique leads`);
         }
       } catch (err: unknown) {
-        console.warn('[Scraper] Free places fallback failed:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn('[Scraper] Free places fallback failed:', msg);
+        sourceErrors.google = msg;
       }
     }
 
