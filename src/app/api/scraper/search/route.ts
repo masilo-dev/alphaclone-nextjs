@@ -73,7 +73,10 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
 
   const geoRes = await fetch(
     `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(location || 'New York')}&apiKey=${apiKey}`,
-    { signal: AbortSignal.timeout(8000) }
+    { 
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
+      signal: AbortSignal.timeout(8000) 
+    }
   );
   if (!geoRes.ok) throw new Error(`HERE Geocode error: ${geoRes.status}`);
   const geoData = await geoRes.json();
@@ -83,7 +86,10 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
   const radiusM = Math.min(Math.max(radiusKm * 1000, 1000), 100000);
   const searchRes = await fetch(
     `https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(niche)}&at=${pos.lat},${pos.lng}&in=circle:${pos.lat},${pos.lng};r=${radiusM}&limit=${Math.min(limit, 100)}&apiKey=${apiKey}`,
-    { signal: AbortSignal.timeout(12000) }
+    { 
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
+      signal: AbortSignal.timeout(12000) 
+    }
   );
   if (!searchRes.ok) throw new Error(`HERE Discover error: ${searchRes.status}`);
   const searchData = await searchRes.json();
@@ -276,7 +282,10 @@ async function postOverpassQuery(queryBody: string): Promise<Response> {
         const res = await fetch(endpoint, {
           method: 'POST',
           body: queryBody,
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 
+            'Content-Type': 'text/plain',
+            'User-Agent': 'AlphaClone-LeadFinder/2.0 (support@alphaclonesystems.com)'
+          },
           signal: AbortSignal.timeout(6000),
         });
         if (res.status === 429) {
@@ -332,7 +341,10 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
       if (hereApiKey && !hereApiKey.startsWith('your_')) {
         const hereGeoRes = await fetch(
           `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereApiKey}`,
-          { signal: AbortSignal.timeout(8000) }
+          { 
+            headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
+            signal: AbortSignal.timeout(8000) 
+          }
         );
         if (hereGeoRes.ok) {
           const hereData = await hereGeoRes.json();
@@ -377,7 +389,24 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
 
     // Increase fetch limit for broad searches to ensure density
     const fetchLimit = isBroad ? 200 : Math.max(targetMin * 4, 80);
-    const nicheEscaped = niche.replace(/["\\]/g, '');
+
+    // International Keyword Expansion (e.g. HVAC -> Klimatyzacja, Wentylacja)
+    const getExpandedNiche = (n: string) => {
+      const lower = n.toLowerCase();
+      const map: Record<string, string[]> = {
+        'hvac': ['Klimatyzacja', 'Wentylacja', 'Air Conditioning', 'Heating'],
+        'plumber': ['Hydraulik', 'Plumbing'],
+        'electrician': ['Elektryk', 'Electrician'],
+        'dentist': ['Stomatolog', 'Dentysta', 'Dentist'],
+        'restaurant': ['Restauracja', 'Jedzenie', 'Restaurant'],
+        'lawyer': ['Prawnik', 'Adwokat', 'Kancelaria'],
+      };
+      const extras = map[lower] || [];
+      if (extras.length === 0) return n.replace(/["\\]/g, '');
+      return [n, ...extras].map(s => s.replace(/["\\]/g, '')).join('|');
+    };
+
+    const nicheEscaped = getExpandedNiche(niche);
 
     // Extended Overpass query: match by name OR by shop/amenity/office/craft category
     // We include node, way, and relation.

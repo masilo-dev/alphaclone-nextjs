@@ -106,6 +106,7 @@ async function fetchFoursquare(
     headers: {
       Accept: 'application/json',
       Authorization: apiKey,
+      'User-Agent': 'AlphaClone-LeadFinder/2.0'
     },
     signal: AbortSignal.timeout(15000),
   });
@@ -160,7 +161,23 @@ async function fetchOSMPlaces(
   const north = geo.lat + delta;
   const west = geo.lng - delta;
   const east = geo.lng + delta;
-  const nicheEscaped = niche.replace(/["\\]/g, '');
+  // International Keyword Expansion (e.g. HVAC -> Klimatyzacja, Wentylacja)
+  const getExpandedNiche = (n: string) => {
+    const lower = n.toLowerCase();
+    const map: Record<string, string[]> = {
+      'hvac': ['Klimatyzacja', 'Wentylacja', 'Air Conditioning', 'Heating'],
+      'plumber': ['Hydraulik', 'Plumbing'],
+      'electrician': ['Elektryk', 'Electrician'],
+      'dentist': ['Stomatolog', 'Dentysta', 'Dentist'],
+      'restaurant': ['Restauracja', 'Jedzenie', 'Restaurant'],
+      'lawyer': ['Prawnik', 'Adwokat', 'Kancelaria'],
+    };
+    const extras = map[lower] || [];
+    if (extras.length === 0) return n.replace(/["\\]/g, '');
+    return [n, ...extras].map(s => s.replace(/["\\]/g, '')).join('|');
+  };
+
+  const nicheEscaped = getExpandedNiche(niche);
   const limit = Math.min(maxResults * 3, 150);
 
   const q = `
@@ -181,7 +198,10 @@ out center ${limit};
   const res = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST',
     body: q,
-    headers: { 'Content-Type': 'text/plain' },
+    headers: { 
+      'Content-Type': 'text/plain',
+      'User-Agent': 'AlphaClone-LeadFinder/2.0 (support@alphaclonesystems.com)'
+    },
     signal: AbortSignal.timeout(15000),
   });
 
