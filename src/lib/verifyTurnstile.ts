@@ -4,14 +4,8 @@
  */
 
 export function isTurnstileEnforced(): boolean {
-    const secret = process.env.TURNSTILE_SECRET_KEY;
-    const isProd = process.env.NODE_ENV === 'production';
-    
-    if (isProd && (!secret || secret === 'your_secret_key_here')) {
-        console.error('[CRITICAL] Cloudflare Turnstile is NOT configured in production. Security verification is bypassed.');
-    }
-    
-    return !!(secret && secret !== 'your_secret_key_here');
+    // Cloudflare Turnstile is disabled system-wide as per user request.
+    return false;
 }
 
 export async function verifyTurnstileToken(token: string | undefined): Promise<boolean> {
