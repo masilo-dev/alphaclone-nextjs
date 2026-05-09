@@ -57,13 +57,17 @@ ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS is_public     BOOLEAN NOT
 ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS client_secret TEXT;
 ALTER TABLE mcp_oauth_clients ADD COLUMN IF NOT EXISTS scopes        TEXT[]  DEFAULT ARRAY['read', 'write'];
 
+-- Drop NOT NULL on client_secret — public clients (Claude, Manus) use PKCE and have no secret
+ALTER TABLE mcp_oauth_clients ALTER COLUMN client_secret DROP NOT NULL;
+
 -- Pre-register Claude as a known public client
-INSERT INTO mcp_oauth_clients (client_id, client_name, redirect_uris, is_public, scopes)
+INSERT INTO mcp_oauth_clients (client_id, client_name, redirect_uris, is_public, client_secret, scopes)
 VALUES (
   '1778309945386-41bab8272f61',
   'Claude (Anthropic)',
   ARRAY['https://claude.ai/api/mcp/auth_callback'],
   TRUE,
+  NULL,
   ARRAY['read', 'write', 'mcp:tools', 'mcp:resources']
 )
 ON CONFLICT (client_id) DO UPDATE SET
