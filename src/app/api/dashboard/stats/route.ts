@@ -68,14 +68,14 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
   ] = await Promise.all([
     safeCount('leads', { tenant_id: tenantId }),
     safeCount('business_clients', { tenant_id: tenantId }),
-    // active projects = not done
+    // active projects = not done/cancelled — use .in() to avoid enum empty-string comparison
     (async () => {
       try {
         const { count } = await supabase
           .from('projects')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
-          .neq('status', 'done');
+          .in('status', ['planning', 'active', 'in_progress', 'on_hold', 'review', 'pending']);
         return typeof count === 'number' ? count : 0;
       } catch { return 0; }
     })(),

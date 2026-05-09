@@ -7,6 +7,7 @@ import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 800;
 
 const MCP_PROTOCOL_VERSION = '2024-11-05';
 
