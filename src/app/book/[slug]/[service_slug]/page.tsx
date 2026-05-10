@@ -17,12 +17,8 @@ import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
 import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
 import Image from 'next/image';
-import TurnstileVerification from '@/components/ui/TurnstileVerification';
+import Image from 'next/image';
 
-const TURNSTILE_SITE_CONFIGURED =
-    typeof process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY === 'string' &&
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.length > 0 &&
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY !== 'your_site_key_here';
 
 type Step = 'date' | 'time' | 'form' | 'success';
 
@@ -57,7 +53,6 @@ export default function BookingPage() {
         notes: ''
     });
     const [submitting, setSubmitting] = useState(false);
-    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [bookingSuccess, setBookingSuccess] = useState<{ date: Date; time: string; url: string } | null>(null);
 
     // Logic Settings (Defaults)
@@ -136,11 +131,6 @@ export default function BookingPage() {
         e.preventDefault();
         if (!selectedSlot || !tenant || !service) return;
 
-        if (TURNSTILE_SITE_CONFIGURED && !turnstileToken) {
-            toast.error('Please complete the security check below.');
-            return;
-        }
-
         setSubmitting(true);
         try {
             const { error: bookingError, roomUrl } = await bookingService.createBooking(
@@ -148,13 +138,8 @@ export default function BookingPage() {
                 service.id,
                 selectedSlot.start,
                 selectedSlot.end,
-                {
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    notes: formData.notes
-                },
-                { turnstileToken: TURNSTILE_SITE_CONFIGURED ? turnstileToken : null }
+                { name: formData.name, email: formData.email, phone: formData.phone, notes: formData.notes },
+                { turnstileToken: null }
             );
 
             if (bookingError) throw new Error(bookingError);
@@ -466,33 +451,13 @@ export default function BookingPage() {
                                                     </div>
                                                 </div>
 
-                                                {TURNSTILE_SITE_CONFIGURED && (
-                                                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 px-2 py-3">
-                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 text-center">
-                                                            Quick verification before you confirm
-                                                        </p>
-                                                        <TurnstileVerification
-                                                            theme="auto"
-                                                            onVerify={(t) => setTurnstileToken(t)}
-                                                            onExpire={() => setTurnstileToken(null)}
-                                                            onError={() => setTurnstileToken(null)}
-                                                        />
-                                                    </div>
-                                                )}
 
                                                 <button
                                                     type="submit"
-                                                    disabled={
-                                                        submitting ||
-                                                        (TURNSTILE_SITE_CONFIGURED && !turnstileToken)
-                                                    }
+                                                    disabled={submitting}
                                                     className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                                                 >
-                                                    {submitting
-                                                        ? 'Confirming...'
-                                                        : TURNSTILE_SITE_CONFIGURED && !turnstileToken
-                                                          ? 'Complete verification to continue'
-                                                          : 'Confirm Booking'}
+                                                    {submitting ? 'Confirming...' : 'Confirm Booking'}
                                                 </button>
                                             </form>
                                         </div>

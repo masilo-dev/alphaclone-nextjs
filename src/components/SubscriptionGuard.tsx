@@ -7,7 +7,6 @@ import { AlertCircle, CreditCard, Clock, RefreshCw, ShieldCheck } from 'lucide-r
 import { Button } from './ui/UIComponents';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import TurnstileVerification from './ui/TurnstileVerification';
 
 interface SubscriptionGuardProps {
     children: React.ReactNode;
@@ -18,8 +17,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
     const { user } = useAuth();
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
-    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-    const [turnstileError, setTurnstileError] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     if (isLoading) return <>{children}</>;
 
@@ -50,39 +48,16 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
 
                     <p className="text-slate-600 dark:text-slate-400 mb-6">
                         {isTrialExpired
-                            ? 'Your trial period has ended. Complete the security check below and add a payment method to continue.'
-                            : 'Your subscription is inactive. Complete the security check and update your payment details to restore access.'}
+                            ? 'Your trial period has ended. Add a payment method to continue.'
+                            : 'Your subscription is inactive. Update your payment details to restore access.'}
                     </p>
 
-                    {/* Cloudflare Turnstile */}
-                    <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-2 text-xs text-slate-400">
-                            <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
-                            <span>Security verification required before checkout</span>
-                        </div>
-                        {turnstileError && (
-                            <p className="text-xs text-red-400 mb-2">Verification failed. Please try again.</p>
-                        )}
-                        <TurnstileVerification
-                            theme="dark"
-                            onVerify={(token) => {
-                                setTurnstileToken(token);
-                                setTurnstileError(false);
-                            }}
-                            onExpire={() => setTurnstileToken(null)}
-                            onError={() => setTurnstileError(true)}
-                        />
-                    </div>
 
                     <div className="space-y-4">
                         <Button
                             className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={async () => {
                                 if (!currentTenant || !user) return;
-                                if (!turnstileToken) {
-                                    setTurnstileError(true);
-                                    return;
-                                }
                                 setIsProcessing(true);
                                 try {
                                     const response = await fetch('/api/stripe/create-checkout', {
@@ -92,7 +67,6 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
                                             plan: currentTenant.subscription_plan || 'starter',
                                             tenantId: currentTenant.id,
                                             userId: user.id,
-                                            turnstileToken,
                                         }),
                                     });
                                     const data = await response.json();

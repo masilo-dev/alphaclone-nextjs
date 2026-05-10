@@ -692,7 +692,7 @@ export async function POST(request: Request) {
     }
 
     if (results.length === 0) {
-      const bestError = sourceErrors.google || sourceErrors.osm || sourceErrors.yelp || 'No leads found. Try a different niche or location.';
+      const bestError = sourceErrors.search || sourceErrors.browser || sourceErrors.here || sourceErrors.osm || 'No leads found. Try a different niche or location.';
       return NextResponse.json({
         success: false,
         results: [],
