@@ -17,10 +17,9 @@ import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
 import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
 import Image from 'next/image';
-import Image from 'next/image';
-
 
 type Step = 'date' | 'time' | 'form' | 'success';
+
 
 export default function BookingPage() {
     const params = useParams();

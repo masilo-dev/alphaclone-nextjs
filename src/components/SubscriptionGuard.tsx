@@ -17,9 +17,9 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
     const { user } = useAuth();
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
 
     if (isLoading) return <>{children}</>;
+
 
     if (!currentTenant) return <>{children}</>;
 
@@ -81,11 +81,12 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
                                     setIsProcessing(false);
                                 }
                             }}
-                            disabled={isProcessing || !turnstileToken}
+                            disabled={isProcessing}
                         >
                             <CreditCard className="w-5 h-5" />
-                            {isProcessing ? 'Redirecting to checkout...' : !turnstileToken ? 'Complete verification above' : 'Add Payment Method'}
+                            {isProcessing ? 'Redirecting to checkout...' : 'Add Payment Method'}
                         </Button>
+
 
                         <button
                             className="text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 flex items-center justify-center gap-1 mx-auto"
