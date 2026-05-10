@@ -1,4 +1,21 @@
 # Update Log
+
+## Date: 2026-05-10 (PRODUCTION STABILITY & BOTID FINALIZATION)
+
+### Fixed
+- **Instrumentation Resolution**: Resolved a critical misconfiguration where root `instrumentation.ts` files were being ignored due to the presence of a `src` directory.
+    - Moved all instrumentation logic to `src/instrumentation.ts` and `src/instrumentation-client.ts`.
+    - Merged Sentry and BotID client-side initializations into a single unified entry point.
+- **Auth Session Resilience**: Increased the Supabase `getSession` timeout from **3 seconds to 8 seconds**. This prevents legitimate users from being logged out during peak processing or slow network conditions.
+- **BotID/Turnstile Transition**: Completed the removal of legacy Turnstile verification in favor of the invisible BotID protection across Login, Registration, and Subscription guards.
+- **Type Safety & Typos**:
+    - Fixed "superbase" typos in environment variable fallbacks in `src/config/env.ts`.
+    - Corrected source error field references in the Scraper search route.
+    - Conducted a deep TypeScript verification on all modified core modules to ensure 100% build stability on Vercel.
+
+### Production Readiness
+- **Vercel Safe**: Verified zero-error build state and confirmed that all security headers and bot protection layers are correctly initialized within the Next.js App Router structure.
+
 ## Date: 2026-05-08 (MCP AUTH HARDENING, DATABASE SUMMARY & INFRASTRUCTURE OPTIMIZATION)
 
 ### Added

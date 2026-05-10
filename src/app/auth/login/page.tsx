@@ -13,7 +13,6 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
-import TurnstileVerification, { TurnstileRef } from '@/components/ui/TurnstileVerification';
 import Image from 'next/image';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
@@ -70,11 +69,9 @@ function LoginContent() {
     const [showMfaChallenge, setShowMfaChallenge] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
     const [humanVerified, setHumanVerified] = useState(false);
-    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [registrationOpen, setRegistrationOpen] = useState(true);
     const [policyLoaded, setPolicyLoaded] = useState(false);
     const [passwordResetSentTo, setPasswordResetSentTo] = useState('');
-    const turnstileRef = React.useRef<TurnstileRef>(null);
 
     const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
 
@@ -142,27 +139,6 @@ function LoginContent() {
         setIsLoading(true);
 
         try {
-            if (!turnstileToken) {
-                setError('Please complete the security check to continue.');
-                setIsLoading(false);
-                return;
-            }
-
-            // Verify Turnstile token on server
-            const verifyRes = await fetch('/api/auth/verify-turnstile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: turnstileToken }),
-            });
-
-            const verifyData = await verifyRes.json();
-            if (!verifyData.success) {
-                setError('Security verification failed. Please try again.');
-                turnstileRef.current?.reset();
-                setIsLoading(false);
-                return;
-            }
-
             // 1. REGISTRATION FLOW
             if (isRegistering) {
                 if (!registrationOpen) {
@@ -269,7 +245,6 @@ function LoginContent() {
                     setError(signInError);
                 }
                 setIsLoading(false);
-                turnstileRef.current?.reset();
                 return;
             }
 
@@ -285,7 +260,6 @@ function LoginContent() {
             setIsLoading(false);
         } catch (err) {
             setError('An unexpected error occurred. Please try again.');
-            turnstileRef.current?.reset();
             setIsLoading(false);
         }
     };
@@ -712,21 +686,10 @@ function LoginContent() {
                             </div>
                         )}
 
-                        <TurnstileVerification
-                            ref={turnstileRef}
-                            onVerify={(token) => {
-                                setTurnstileToken(token);
-                                setError('');
-                            }}
-                            onExpire={() => setTurnstileToken(null)}
-                            onError={() => setError('Verification error. Please refresh.')}
-                        />
-
                         <Button
                             type="submit"
                             className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                             isLoading={isLoading}
-                            disabled={!turnstileToken}
                         >
                             {isRegistering ? 'Create Account' : 'Sign In'}
                         </Button>

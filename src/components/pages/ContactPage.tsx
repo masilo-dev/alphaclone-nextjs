@@ -9,7 +9,6 @@ import { contactService } from '../../services/contactFormService';
 import { contactSchema } from '../../schemas/validation';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
-import TurnstileVerification from '../ui/TurnstileVerification';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
@@ -22,36 +21,14 @@ const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [validationError, setValidationError] = useState<string>('');
-    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!turnstileToken) {
-            setValidationError('Please complete the security check.');
-            setStatus('error');
-            setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
-            return;
-        }
 
         setStatus('sending');
         setValidationError('');
 
         try {
-            // Verify Turnstile token on server
-            const verifyRes = await fetch('/api/auth/verify-turnstile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: turnstileToken }),
-            });
-
-            const verifyData = await verifyRes.json();
-            if (!verifyData.success) {
-                setValidationError('Security verification failed. Please try again.');
-                setStatus('error');
-                setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
-                return;
-            }
             contactSchema.parse({
                 name: formData.name,
                 email: formData.email,
@@ -221,14 +198,6 @@ const ContactPage: React.FC = () => {
                                     />
                                 </div>
 
-                                <TurnstileVerification
-                                    onVerify={(token) => {
-                                        setTurnstileToken(token);
-                                        setValidationError('');
-                                    }}
-                                    onExpire={() => setTurnstileToken(null)}
-                                    onError={() => setValidationError('Verification error. Please refresh.')}
-                                />
 
                                 {status === 'success' && (
                                     <div className="flex items-center gap-2 text-green-400 bg-green-400/10 p-4 rounded-lg">
@@ -244,7 +213,7 @@ const ContactPage: React.FC = () => {
                                 )}
                                 <Button
                                     type="submit"
-                                    disabled={status === 'sending' || !turnstileToken}
+                                    disabled={status === 'sending'}
                                     isLoading={status === 'sending'}
                                     size="lg"
                                     className="w-full font-marketing-heading uppercase tracking-tight button-fill-hover bg-teal-500 text-slate-950"
