@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MCP_CORS_HEADERS, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
+import { MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     timestamp: new Date().toISOString(),
   }, {
     headers: {
-      ...MCP_CORS_HEADERS,
+      ...getMcpCorsHeaders(req),
       'MCP-Protocol-Version': '2025-11-25',
       'x-mcp-version': '2025-11-25',
     },
@@ -24,5 +24,5 @@ export async function GET(req: NextRequest) {
 }
 
 export async function OPTIONS(req: NextRequest) {
-  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: MCP_CORS_HEADERS });
+  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
 }

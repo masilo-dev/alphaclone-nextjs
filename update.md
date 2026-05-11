@@ -1,5 +1,14 @@
 # Update Log
 
+## Date: 2026-05-11 (CLAUDE MCP WEB & MULTI-ORIGIN STABILIZATION)
+
+### Fixed
+- **Multi-Origin MCP Support**: Resolved a critical CORS issue that restricted connections only to Claude.ai, which would have broken existing integrations for Manus AI and Grok.
+    - **Dynamic Origin Validation**: Implemented `getMcpCorsHeaders` in `src/services/mcp/authMiddlewareApp.ts` to dynamically validate and allow multiple trusted origins (`https://claude.ai`, `https://manus.ai`, `https://grok.x.ai`).
+    - **Global API Synchronization**: Updated all MCP routes (SSE, Messages, Tools, Resources, Prompts, Health) to use dynamic origin validation instead of static constants.
+    - **Credential Support**: Added `Access-Control-Allow-Credentials: true` to the MCP CORS policy to support authenticated browser-based handshakes.
+- **Production Readiness**: Reverted unnecessary `robots.ts` changes while maintaining secure, explicit origin filtering for all machine-to-machine and web-based AI connections.
+
 ## Date: 2026-05-10 (PRODUCTION STABILITY & BOTID FINALIZATION)
 
 ### Fixed

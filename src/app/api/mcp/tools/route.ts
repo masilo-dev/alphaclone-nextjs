@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
+import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createMCPServer } from '@/services/mcp/MCPServer';
 
 export const dynamic = 'force-dynamic';
@@ -10,31 +10,31 @@ async function handleDiscovery(req: NextRequest, method: string) {
 
   const auth = await validateMCPAuthApp(req);
   if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
+    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
   }
 
   if (req.method !== 'GET') {
-    return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405, headers: MCP_CORS_HEADERS });
+    return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405, headers: getMcpCorsHeaders(req) });
   }
 
   try {
     if (method === 'tools/list') {
       const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-      return NextResponse.json({ tools: MCP_TOOLS }, { headers: { ...MCP_CORS_HEADERS, 'X-MCP-Version': '2.0.0' } });
+      return NextResponse.json({ tools: MCP_TOOLS }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
     }
 
     if (method === 'resources/list') {
-      return NextResponse.json({ resources: [] }, { headers: { ...MCP_CORS_HEADERS, 'X-MCP-Version': '2.0.0' } });
+      return NextResponse.json({ resources: [] }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
     }
 
     if (method === 'prompts/list') {
-      return NextResponse.json({ prompts: [] }, { headers: { ...MCP_CORS_HEADERS, 'X-MCP-Version': '2.0.0' } });
+      return NextResponse.json({ prompts: [] }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
     }
 
-    return NextResponse.json({ error: 'Method Not Supported' }, { status: 400, headers: MCP_CORS_HEADERS });
+    return NextResponse.json({ error: 'Method Not Supported' }, { status: 400, headers: getMcpCorsHeaders(req) });
   } catch (err) {
     console.error(`[MCP Discovery ${method}] Error:`, err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: MCP_CORS_HEADERS });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers: getMcpCorsHeaders(req) });
   }
 }
 
@@ -43,5 +43,5 @@ export async function GET(req: NextRequest) {
 }
 
 export async function OPTIONS(req: NextRequest) {
-  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: MCP_CORS_HEADERS });
+  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
 }

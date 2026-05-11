@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
+import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
       console.warn('[MCP SSE GET] Auth failed:', auth.error);
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
     }
 
     const { tenant_id, user_id, apiKey, supabaseAdmin } = auth;
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
 
     return new Response(stream, {
       headers: {
-        ...MCP_CORS_HEADERS,
+        ...getMcpCorsHeaders(req),
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform, must-revalidate',
         'Connection': 'keep-alive',
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('[MCP SSE GET] Fatal handshake error:', err);
-    return NextResponse.json({ error: 'Internal connection error' }, { status: 500, headers: MCP_CORS_HEADERS });
+    return NextResponse.json({ error: 'Internal connection error' }, { status: 500, headers: getMcpCorsHeaders(req) });
   }
 }
 
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
   try {
     bodyText = await req.text();
   } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: MCP_CORS_HEADERS });
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400, headers: getMcpCorsHeaders(req) });
   }
 
   const upstream = await fetch(`${getBaseUrl(req)}/api/mcp/messages${new URL(req.url).search}`, {
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     body: bodyText,
   });
 
-  const responseHeaders = new Headers(MCP_CORS_HEADERS);
+  const responseHeaders = new Headers(getMcpCorsHeaders(req));
   responseHeaders.set('MCP-Protocol-Version', upstream.headers.get('MCP-Protocol-Version') || MCP_PROTOCOL_VERSION);
 
   const exposedHeaders = ['Mcp-Session-Id', 'Content-Type', 'x-mcp-version'];
@@ -172,12 +172,12 @@ export async function DELETE(req: NextRequest) {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      ...MCP_CORS_HEADERS,
+      ...getMcpCorsHeaders(req),
       'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
     },
   });
 }
 
 export async function OPTIONS(req: NextRequest) {
-  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: MCP_CORS_HEADERS });
+  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
 }
