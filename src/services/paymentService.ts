@@ -101,6 +101,16 @@ export const paymentService = {
                 undefined,
                 data
             ).catch(err => console.error('Failed to log audit:', err));
+
+            // EMIT AUTOMATION EVENT
+            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
+            await emitBusinessEvent(tenantId, 'invoice_created', {
+                invoiceId: data.id,
+                amount: data.amount,
+                currency: data.currency,
+                status: data.status,
+                dueDate: data.due_date
+            }).catch(err => console.error('Failed to emit invoice_created event:', err));
         }
 
         return { invoice: data, error };

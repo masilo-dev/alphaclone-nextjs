@@ -266,7 +266,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             <p className="text-xs text-teal-300">
                                 <span className="font-semibold">Twilio Connected:</span> {twilioIntegration.phone || 'Ready to send'}
                             </p>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
+                            <span className="text-xs px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
                         </div>
                     </div>
                 ) : (
@@ -275,7 +275,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         <div className="text-xs text-amber-300 flex-1">
                             <p className="font-semibold">Twilio Integration Missing or Inactive</p>
                             <p className="mt-1 opacity-80">You need to connect your Twilio credentials in the <span className="underline">Settings → Twilio</span> tab before you can send SMS campaigns.</p>
-                            <p className="mt-2 text-amber-500 text-[10px]">Required: SID · Auth Token · Phone Number</p>
+                            <p className="mt-2 text-amber-500 text-xs">Required: SID · Auth Token · Phone Number</p>
                         </div>
                     </div>
                 )
@@ -613,3 +613,4 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
         </div>
     );
 }
+

@@ -61,11 +61,11 @@ export default function PrivateDocsPage() {
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5">
-                                        <div className="text-[10px] text-slate-600 font-bold mb-1">AUTH</div>
+                                        <div className="text-xs text-slate-600 font-bold mb-1">AUTH</div>
                                         <div className="text-xs text-slate-300">Supabase Auth hooks handles role assignment.</div>
                                     </div>
                                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5">
-                                        <div className="text-[10px] text-slate-600 font-bold mb-1">STORAGE</div>
+                                        <div className="text-xs text-slate-600 font-bold mb-1">STORAGE</div>
                                         <div className="text-xs text-slate-300">S3 protocol via Supabase Buckets.</div>
                                     </div>
                                 </div>
@@ -99,3 +99,4 @@ export default function PrivateDocsPage() {
         </div>
     );
 }
+

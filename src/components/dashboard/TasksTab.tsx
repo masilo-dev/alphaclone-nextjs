@@ -389,7 +389,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const renderTaskList = () => (
         <div className="w-full space-y-6">
             {/* Table header */}
-            <div className="hidden lg:grid grid-cols-12 gap-6 px-8 py-4 bg-slate-900/40 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 font-mono backdrop-blur-md shadow-inner">
+            <div className="hidden lg:grid grid-cols-12 gap-6 px-8 py-4 bg-slate-900/40 border border-white/5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] text-slate-500 font-mono backdrop-blur-md shadow-inner">
                 <div className="col-span-12 lg:col-span-5 flex items-center gap-3">
                     <Target className="w-3 h-3 text-teal-400" />
                     Task Details
@@ -412,7 +412,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             <Target className="w-10 h-10 opacity-20" />
                         </div>
                         <p className="font-black text-sm uppercase tracking-[0.3em] text-slate-600">No Tasks Found</p>
-                        <p className="text-[10px] font-mono text-slate-700 mt-2 uppercase">Create a task to get started</p>
+                        <p className="text-xs font-mono text-slate-700 mt-2 uppercase">Create a task to get started</p>
                     </motion.div>
                 ) : (
                     <AnimatePresence mode="popLayout">
@@ -447,19 +447,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                                 {task.title}
                                             </h4>
                                             {isTaskBlocked(task) && (
-                                                <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-[8px] font-bold uppercase tracking-wider rounded-full shrink-0">
+                                                <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider rounded-full shrink-0">
                                                     Blocked
                                                 </span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1.5">
                                             {task.description && (
-                                                <p className="text-[10px] sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px] font-medium italic">
+                                                <p className="text-xs sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px] font-medium italic">
                                                     {task.description}
                                                 </p>
                                             )}
                                             {(task.metadata?.dependencies as string[])?.length > 0 && (
-                                                <span className="text-[8px] text-slate-600 font-mono flex items-center gap-1">
+                                                <span className="text-xs text-slate-600 font-mono flex items-center gap-1">
                                                     <Link2 className="w-2.5 h-2.5" />
                                                     {(task.metadata?.dependencies as string[])?.length} dep{(task.metadata?.dependencies as string[])?.length === 1 ? '' : 's'}
                                                 </span>
@@ -474,7 +474,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                         <select
                                             value={task.status}
                                             onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                            className={`w-full text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none cursor-pointer text-center appearance-none ${task.status === 'completed' ? 'text-green-400 border-green-500/30' : 'text-teal-400 border-teal-500/30'}`}
+                                            className={`w-full text-xs font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none cursor-pointer text-center appearance-none ${task.status === 'completed' ? 'text-green-400 border-green-500/30' : 'text-teal-400 border-teal-500/30'}`}
                                         >
                                             <option value="ideas">Standby</option>
                                             <option value="todo">Planning</option>
@@ -487,7 +487,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                                 {/* Priority Node */}
                                 <div className="hidden lg:flex col-span-2 justify-center">
-                                    <span className={`px-4 py-2 text-[10px] rounded-xl font-black uppercase tracking-[0.1em] border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-slate-800/40 border-white/5 text-slate-500'}`}>
+                                    <span className={`px-4 py-2 text-xs rounded-xl font-black uppercase tracking-[0.1em] border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-slate-800/40 border-white/5 text-slate-500'}`}>
                                         {task.priority}
                                     </span>
                                 </div>
@@ -499,21 +499,21 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                             <TaskCountdown dueDate={task.dueDate} onOverdue={() => handleStatusChange(task.id, 'review')} />
                                         </div>
                                     ) : (
-                                        <span className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic opacity-40">No Deadline</span>
+                                        <span className="text-xs text-slate-700 font-black uppercase tracking-widest italic opacity-40">No Deadline</span>
                                     )}
                                 </div>
 
                                 {/* Mobile Metadata Row */}
                                 <div className="lg:hidden flex flex-wrap gap-3 mt-2 pt-2 border-t border-white/5 w-full">
-                                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 uppercase">
+                                    <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
                                         <div className={`w-1.5 h-1.5 rounded-full ${task.status === 'completed' ? 'bg-green-500' : 'bg-teal-500'}`} />
                                         {task.status}
                                     </div>
-                                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${task.priority === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}>
+                                    <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${task.priority === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}>
                                         {task.priority}
                                     </span>
                                     {task.dueDate && (
-                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono ml-auto">
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono ml-auto">
                                             <Calendar className="w-3 h-3 text-teal-500/60" />
                                             {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                         </div>
@@ -552,7 +552,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             </h1>
                             <div className="flex items-center gap-2 mt-1 md:mt-1.5">
                                 <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-teal-500 animate-pulse" />
-                                <p className="text-[9px] md:text-[10px] font-mono text-teal-500/60 uppercase tracking-[0.2em] md:tracking-[0.3em] truncate">Live task tracking</p>
+                                <p className="text-xs md:text-xs font-mono text-teal-500/60 uppercase tracking-[0.2em] md:tracking-[0.3em] truncate">Live task tracking</p>
                             </div>
                         </div>
                     </motion.div>
@@ -560,8 +560,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                 <div className="flex flex-wrap items-center gap-3 md:gap-4 relative z-10">
                     <div className="px-3 md:px-4 py-2 border border-white/5 bg-slate-900/50 rounded-xl md:rounded-2xl backdrop-blur-md flex items-center shrink-0">
-                        <span className="text-[9px] md:text-[10px] font-mono text-slate-500 uppercase tracking-widest mr-2 md:mr-3">Status:</span>
-                        <span className="text-[10px] md:text-xs font-black text-teal-400 font-mono">
+                        <span className="text-xs md:text-xs font-mono text-slate-500 uppercase tracking-widest mr-2 md:mr-3">Status:</span>
+                        <span className="text-xs md:text-xs font-black text-teal-400 font-mono">
                             {loading ? 'SYNCING...' : `${filteredAndSearchedTasks.length} TASKS`}
                         </span>
                     </div>
@@ -580,7 +580,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         <button
                             key={btn.id}
                             onClick={() => setFilter(btn.id as any)}
-                            className={`relative whitespace-nowrap px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 md:gap-2.5 group ${filter === btn.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                            className={`relative whitespace-nowrap px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-2xl text-xs md:text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 md:gap-2.5 group ${filter === btn.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
                             {filter === btn.id && (
@@ -606,7 +606,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             placeholder="Search tasks..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full lg:w-72 bg-black/40 border border-white/5 rounded-xl md:rounded-2xl pl-10 md:pl-12 pr-4 md:pr-6 py-2 md:py-3 text-[9px] md:text-[10px] font-mono tracking-widest text-white focus:border-teal-500/40 outline-none transition-all placeholder:text-slate-700 shadow-inner"
+                            className="w-full lg:w-72 bg-black/40 border border-white/5 rounded-xl md:rounded-2xl pl-10 md:pl-12 pr-4 md:pr-6 py-2 md:py-3 text-xs md:text-xs font-mono tracking-widest text-white focus:border-teal-500/40 outline-none transition-all placeholder:text-slate-700 shadow-inner"
                         />
                     </div>
                     <motion.button
@@ -616,7 +616,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         className="bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl md:rounded-2xl h-10 md:h-12 px-4 md:px-8 shadow-[0_10px_30px_rgba(20,184,166,0.3)] transition-all flex items-center justify-center gap-2 md:gap-3 group shrink-0"
                     >
                         <Plus className="w-4 h-4 font-bold group-hover:rotate-90 transition-transform duration-500" />
-                        <span className="hidden sm:inline font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em]">New Task</span>
+                        <span className="hidden sm:inline font-black text-xs md:text-xs uppercase tracking-[0.2em]">New Task</span>
                     </motion.button>
                 </div>
             </div>
@@ -651,7 +651,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     <div key={card.label} className="rounded-2xl border border-white/5 bg-slate-900/50 p-4 backdrop-blur-xl">
                         <div className="flex items-start justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{card.label}</p>
+                                <p className="text-xs font-mono uppercase tracking-widest text-slate-500">{card.label}</p>
                                 <p className="text-2xl font-black text-white mt-2">{card.value}</p>
                                 <p className="text-xs text-slate-500 mt-2">{card.hint}</p>
                             </div>
@@ -693,7 +693,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                                 {task.status.replace('_', ' ')} • {task.priority} priority • {task.dueDate || 'No due date'}
                                             </p>
                                         </div>
-                                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
                                             P{urgency}
                                         </span>
                                     </div>
@@ -762,7 +762,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             <div className="w-16 h-16 border-4 border-teal-500/10 border-t-teal-500 rounded-full animate-spin" />
                             <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full animate-pulse" />
                         </div>
-                        <p className="font-mono text-[10px] text-slate-500 uppercase tracking-[0.4em] animate-pulse">Loading tasks...</p>
+                        <p className="font-mono text-xs text-slate-500 uppercase tracking-[0.4em] animate-pulse">Loading tasks...</p>
                     </div>
                 ) : (
                     <div className="h-full overflow-y-auto pr-2 custom-scrollbar pb-12">
@@ -780,7 +780,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             >
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Task Title</label>
+                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Task Title</label>
                         <Input
                             placeholder="Enter task title..."
                             value={taskForm.title}
@@ -791,7 +791,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Description</label>
+                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Description</label>
                             <textarea
                                 className="w-full bg-slate-950/50 border border-white/10 rounded-2xl p-4 text-slate-300 focus:border-teal-500 outline-none transition-all min-h-[160px] resize-none text-sm placeholder:text-slate-700"
                                 placeholder="Add task details..."
@@ -801,13 +801,13 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                         </div>
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Priority</label>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Priority</label>
                                 <div className="grid grid-cols-3 gap-3">
                                     {(['low', 'medium', 'high'] as const).map(p => (
                                         <button
                                             key={p}
                                             onClick={() => setTaskForm({ ...taskForm, priority: p })}
-                                            className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${taskForm.priority === p
+                                            className={`py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${taskForm.priority === p
                                                 ? 'bg-teal-500 border-teal-400 text-slate-900 shadow-xl shadow-teal-500/20'
                                                 : 'bg-slate-900 border-white/5 text-slate-600 hover:border-white/20'
                                                 }`}
@@ -819,7 +819,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Start Date</label>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Start Date</label>
                                     <Input
                                         type="date"
                                         value={taskForm.startDate}
@@ -828,7 +828,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Due Date</label>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Due Date</label>
                                     <Input
                                         type="date"
                                         value={taskForm.dueDate}
@@ -838,7 +838,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Estimated Hours</label>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Estimated Hours</label>
                                 <Input
                                     type="number"
                                     placeholder="0.0"
@@ -858,7 +858,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                         onChange={(e) => setTaskForm({ ...taskForm, isRecurring: e.target.checked })}
                                         className="w-4 h-4 rounded border-white/10 bg-slate-950/50 text-teal-500 focus:ring-teal-500"
                                     />
-                                    <label htmlFor="isRecurring" className="text-[10px] font-black text-slate-300 uppercase tracking-widest font-mono cursor-pointer">
+                                    <label htmlFor="isRecurring" className="text-xs font-black text-slate-300 uppercase tracking-widest font-mono cursor-pointer">
                                         Recurring task
                                     </label>
                                 </div>
@@ -866,7 +866,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                 {taskForm.isRecurring && (
                                     <div className="grid grid-cols-2 gap-4 animate-fade-in">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Frequency</label>
+                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Frequency</label>
                                             <select
                                                 value={taskForm.recurrenceFrequency}
                                                 onChange={(e) => setTaskForm({ ...taskForm, recurrenceFrequency: e.target.value as any })}
@@ -879,7 +879,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Interval (Every X {taskForm.recurrenceFrequency.slice(0, -2).toLowerCase() + 's'})</label>
+                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Interval (Every X {taskForm.recurrenceFrequency.slice(0, -2).toLowerCase() + 's'})</label>
                                             <Input
                                                 type="number"
                                                 min="1"
@@ -894,7 +894,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                             {/* New Relational Fields */}
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Assigned To</label>
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Assigned To</label>
                                 <select
                                     value={taskForm.assignedTo}
                                     onChange={(e) => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
@@ -909,7 +909,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Linked Project</label>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Linked Project</label>
                                     <select
                                         value={taskForm.relatedToProject}
                                         onChange={(e) => setTaskForm({ ...taskForm, relatedToProject: e.target.value })}
@@ -922,7 +922,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Linked Lead</label>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 font-mono">Linked Lead</label>
                                     <select
                                         value={taskForm.relatedToLead}
                                         onChange={(e) => setTaskForm({ ...taskForm, relatedToLead: e.target.value })}
@@ -938,7 +938,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 
                             {/* Task Dependencies */}
                             <div className="md:col-span-2 pt-4 mt-2 border-t border-white/5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 font-mono flex items-center gap-2">
+                                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 font-mono flex items-center gap-2">
                                     <Link2 className="w-3 h-3" />
                                     Dependencies (tasks that must complete first)
                                 </label>
@@ -964,7 +964,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                                     <span className={`w-1.5 h-1.5 rounded-full ${task.status === 'completed' ? 'bg-green-500' : task.status === 'in_progress' ? 'bg-teal-500' : 'bg-slate-500'}`} />
                                                     {task.title}
                                                 </label>
-                                                <span className="text-[10px] text-slate-500 font-mono">{task.status}</span>
+                                                <span className="text-xs text-slate-500 font-mono">{task.status}</span>
                                             </div>
                                         ))}
                                         {(tasks || []).filter(t => t.id !== editingTask?.id).length === 0 && (
@@ -979,7 +979,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                     <div className="flex justify-end gap-4 pt-8 border-t border-white/5">
                         <button
                             onClick={() => setShowCreateModal(false)}
-                            className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-colors"
+                            className="px-6 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-colors"
                         >
                             Cancel
                         </button>
@@ -1007,7 +1007,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                                     </div>
                                     Task Notes
                                 </h3>
-                                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1">Shared notes and updates</p>
+                                <p className="text-xs text-slate-500 font-mono uppercase tracking-widest mt-1">Shared notes and updates</p>
                             </div>
                             <button onClick={() => setNotesTaskId(null)} className="p-2 hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/10">
                                 <X className="w-6 h-6 text-slate-500 hover:text-white" />
@@ -1024,3 +1024,4 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
 };
 
 export default TasksTab;
+

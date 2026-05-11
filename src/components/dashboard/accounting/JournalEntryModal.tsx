@@ -163,7 +163,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                             </div>
                             <div className="text-center">
                                 <span className={`block font-bold text-sm ${transactionType === 'received' ? 'text-white' : 'text-slate-400'}`}>Money received</span>
-                                <span className="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Income / Revenue</span>
+                                <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">Income / Revenue</span>
                             </div>
                         </button>
 
@@ -182,7 +182,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                             </div>
                             <div className="text-center">
                                 <span className={`block font-bold text-sm ${transactionType === 'spent' ? 'text-white' : 'text-slate-400'}`}>Money spent</span>
-                                <span className="text-[10px] text-slate-500 uppercase tracking-widest font-medium">Expense / Cost</span>
+                                <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">Expense / Cost</span>
                             </div>
                         </button>
                     </div>
@@ -291,7 +291,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                             </span>
                         </div>
                         <div className="text-right">
-                            <span className="text-[10px] block uppercase tracking-widest font-bold opacity-60">Total Value</span>
+                            <span className="text-xs block uppercase tracking-widest font-bold opacity-60">Total Value</span>
                             <span className="text-xl font-mono font-bold text-white">${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
@@ -326,3 +326,4 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
         </Modal>
     );
 }
+

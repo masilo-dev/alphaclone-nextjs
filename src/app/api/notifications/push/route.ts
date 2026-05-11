@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import webPush from 'web-push';
-import { supabase } from '@/lib/supabase'; // Use admin client if possible, but for now use standard
-// Note: In a real app, you should use createClient from @supabase/ssr or supabase-admin with service role key 
-// to fetch all subscriptions, regardless of RLS. 
-// However, assuming this route is called with a user context or we use a service role client.
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 // For this implementation, I'll assume we pass the VAPID keys via env vars directly to webPush.
 
 const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -38,9 +35,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Fetch user's subscriptions
-        // Ideally use a service role client here to bypass RLS if the sender is not the user themselves (usually system)
-        // For now, valid provided the DB access allows it.
+        const supabase = createSupabaseAdminClient();
         const { data: subscriptions, error } = await supabase
             .from('push_subscriptions')
             .select('*')

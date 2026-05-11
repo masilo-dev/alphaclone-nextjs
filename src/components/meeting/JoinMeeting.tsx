@@ -120,7 +120,7 @@ const JoinMeeting: React.FC = () => {
                 <div className="bg-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-white/5 shadow-2xl space-y-8">
                     <div className="space-y-4">
                         <div className="relative group">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest absolute -top-1.5 left-3 px-1 bg-slate-950 z-10 transition-colors group-focus-within:text-blue-400">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest absolute -top-1.5 left-3 px-1 bg-slate-950 z-10 transition-colors group-focus-within:text-blue-400">
                                 Your Identity
                             </label>
                             <div className="relative">
@@ -153,7 +153,7 @@ const JoinMeeting: React.FC = () => {
 
                     <div className="flex items-center gap-4 text-slate-600">
                         <div className="h-px flex-1 bg-slate-800/50" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">End-to-End Encrypted</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">End-to-End Encrypted</span>
                         <div className="h-px flex-1 bg-slate-800/50" />
                     </div>
 
@@ -168,7 +168,7 @@ const JoinMeeting: React.FC = () => {
                 {/* Secure ID Badge */}
                 <div className="mt-8 flex items-center justify-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                         Room Identifier: {roomId?.substring(0, 8)}...
                     </span>
                 </div>
@@ -178,3 +178,4 @@ const JoinMeeting: React.FC = () => {
 };
 
 export default JoinMeeting;
+

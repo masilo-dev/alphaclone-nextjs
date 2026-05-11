@@ -647,7 +647,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             <h2 className="text-xl sm:text-2xl font-bold text-white truncate">{lead.businessName}</h2>
                             <StatusBadge status={lead.status || 'New'} />
                             {lead.isVerified && (
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" />
                                     VERIFIED
                                 </div>
@@ -900,7 +900,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                                 <span className="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-0.5">Address</span>
                                                 <span className="text-sm leading-relaxed whitespace-pre-wrap">{lead.location}</span>
                                                 {lead.isAddressValid && (
-                                                    <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1 font-mono uppercase font-bold">
+                                                    <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1 font-mono uppercase font-bold">
                                                         <CheckSquare className="w-2.5 h-2.5" /> Google Verified
                                                     </span>
                                                 )}
@@ -949,7 +949,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-widest font-bold">
                                             <Zap className="w-3 h-3 text-yellow-500" />
                                             Authenticity Confirmed by AlphaClone Senior SDR
                                         </div>
@@ -965,7 +965,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                             Conversion Intelligence
                                         </h3>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">Response Probability</span>
+                                            <span className="text-xs text-slate-400 uppercase tracking-widest font-black mb-1">Response Probability</span>
                                             <div className="text-3xl font-black text-indigo-400">
                                                 {lead.responseProbability || lead.intelligenceScore || 0}%
                                             </div>
@@ -981,7 +981,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         </div>
                                         
                                         <div className="p-4 bg-black/40 rounded-xl border border-white/5">
-                                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
+                                            <span className="text-xs font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
                                             <p className="text-sm text-slate-300 leading-relaxed">
                                                 {lead.hookAnalysis || "The Sales Agent predicts a high response rate based on industry intent and pain point alignment. Use the pattern-interrupting hook below for maximum conversion."}
                                             </p>
@@ -1014,7 +1014,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         </div>
                                         {lead.strategy && (
                                             <div className="mt-3 flex items-center gap-2">
-                                                <Badge variant="neutral" className="bg-purple-500/20 border-purple-500/30 text-purple-300 text-[10px] py-0">
+                                                <Badge variant="neutral" className="bg-purple-500/20 border-purple-500/30 text-purple-300 text-xs py-0">
                                                     STRATEGY: {lead.strategy.replace('_', ' ')}
                                                 </Badge>
                                             </div>
@@ -1031,17 +1031,17 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         <div className="grid grid-cols-1 gap-5">
                                             {lead.valueProposition && (
                                                 <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg">
-                                                    <span className="text-[10px] text-blue-400 uppercase font-bold tracking-widest block mb-1">Tailored Value Prop</span>
+                                                    <span className="text-xs text-blue-400 uppercase font-bold tracking-widest block mb-1">Tailored Value Prop</span>
                                                     <p className="text-sm text-slate-300 leading-relaxed">{lead.valueProposition}</p>
                                                 </div>
                                             )}
                                             
                                             {lead.techStack && lead.techStack.length > 0 && (
                                                 <div>
-                                                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Tech Stack</span>
+                                                    <span className="text-xs text-slate-500 uppercase font-bold tracking-widest block mb-2">Tech Stack</span>
                                                     <div className="flex flex-wrap gap-2">
                                                         {lead.techStack.map((tech, i) => (
-                                                            <Badge key={i} variant="blue" className="bg-blue-500/10 border-blue-500/20 text-blue-400 font-mono text-[10px]">
+                                                            <Badge key={i} variant="blue" className="bg-blue-500/10 border-blue-500/20 text-blue-400 font-mono text-xs">
                                                                 {tech}
                                                             </Badge>
                                                         ))}
@@ -1051,7 +1051,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                             
                                             {lead.painPoints && lead.painPoints.length > 0 && (
                                                 <div>
-                                                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-2">Pain Points</span>
+                                                    <span className="text-xs text-slate-500 uppercase font-bold tracking-widest block mb-2">Pain Points</span>
                                                     <div className="space-y-2">
                                                         {lead.painPoints.map((point, i) => (
                                                             <div key={i} className="flex items-start gap-2 text-sm text-slate-300 bg-slate-900/50 p-2 rounded border border-white/5">
@@ -1248,9 +1248,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                             </div>
                                             {activity.metadata?.old_stage && (
                                                 <div className="flex items-center gap-2 mt-2 text-xs">
-                                                    <Badge variant="neutral" className="text-[10px] opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
+                                                    <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
                                                     <ArrowRight className="w-3 h-3 text-slate-600" />
-                                                    <Badge variant="blue" className="text-[10px] text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
+                                                    <Badge variant="blue" className="text-xs text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
                                                 </div>
                                             )}
                                         </div>

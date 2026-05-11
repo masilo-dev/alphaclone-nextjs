@@ -569,7 +569,7 @@ function CookieCategoryTable({ cookies }: { cookies: typeof cookieCategories[0][
             <tbody className="divide-y divide-slate-800/30">
                {cookies.map((c, i) => (
                   <tr key={i}>
-                     <td className="py-2 pr-3 font-mono text-teal-400 text-[10px]">{c.name}</td>
+                     <td className="py-2 pr-3 font-mono text-teal-400 text-xs">{c.name}</td>
                      <td className="py-2 pr-3 text-slate-400">{c.purpose}</td>
                      <td className="py-2 pr-3 text-slate-500">{c.duration}</td>
                      <td className="py-2 text-slate-500">{c.party}</td>
@@ -609,7 +609,7 @@ export function CookiePolicy() {
                   <div key={i} className={`p-3 rounded-xl bg-${cat.color}-500/5 border border-${cat.color}-500/15 text-center`}>
                      <cat.icon className={`w-4 h-4 text-${cat.color}-400 mx-auto mb-2`} />
                      <p className={`text-${cat.color}-300 text-xs font-semibold`}>{cat.name}</p>
-                     {cat.required && <p className="text-[10px] text-slate-500 mt-1">Always Active</p>}
+                     {cat.required && <p className="text-xs text-slate-500 mt-1">Always Active</p>}
                   </div>
                ))}
             </div>
@@ -630,7 +630,7 @@ export function CookiePolicy() {
                               <div className="flex items-center gap-2">
                                  <span className="text-white font-semibold text-sm">{cat.name}</span>
                                  {cat.required && (
-                                    <span className="text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full px-2 py-0.5">Always Active</span>
+                                    <span className="text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full px-2 py-0.5">Always Active</span>
                                  )}
                               </div>
                               <p className="text-slate-500 text-xs mt-0.5">{cat.cookies.length} cookie{cat.cookies.length > 1 ? 's' : ''}</p>
@@ -737,3 +737,4 @@ export function DPA() {
         </LegalLayout>
     );
 }
+

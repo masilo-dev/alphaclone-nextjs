@@ -125,14 +125,14 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const HistorySidebar = () => (
         <div className="flex flex-col h-full bg-[#0a0a0a] border-r border-white/5 overflow-y-auto p-4 space-y-4">
             <div className="flex items-center justify-between mb-4 px-2">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Recent Activity</h3>
+                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">Recent Activity</h3>
                 {isMobile && <button onClick={() => setShowHistory(false)}><X size={18} className="text-slate-500" /></button>}
             </div>
             {campaigns.map(campaign => (
                 <div key={campaign.id} className="p-4 rounded-2xl bg-[#141414] border border-white/5 space-y-2">
-                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${statusColors[campaign.status]}`}>{campaign.status}</span>
+                    <span className={`text-xs font-black uppercase px-2 py-0.5 rounded border ${statusColors[campaign.status]}`}>{campaign.status}</span>
                     <h4 className="text-xs font-bold text-white truncate">{campaign.name}</h4>
-                    <p className="text-[9px] text-slate-500 font-medium">Modified {new Date(campaign.updatedAt || campaign.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-slate-500 font-medium">Modified {new Date(campaign.updatedAt || campaign.createdAt).toLocaleDateString()}</p>
                 </div>
             ))}
         </div>
@@ -148,7 +148,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                     </div>
                     <div>
                         <h1 className="text-sm font-black tracking-widest text-white uppercase">Campaigns</h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Marketing Hub</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Marketing Hub</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                 <React.Fragment key={s}>
                                     <div className="flex items-center gap-2">
                                         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-black transition-all ${activeStep === s ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500'}`}>{s}</div>
-                                        <span className={`text-[9px] sm:text-xs font-black uppercase tracking-widest hidden sm:inline ${activeStep === s ? 'text-teal-600' : 'text-slate-500'}`}>
+                                        <span className={`text-xs sm:text-xs font-black uppercase tracking-widest hidden sm:inline ${activeStep === s ? 'text-teal-600' : 'text-slate-500'}`}>
                                             {s === 1 ? 'Message' : s === 2 ? 'Audience' : 'Review'}
                                         </span>
                                     </div>
@@ -196,25 +196,25 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                 <motion.div key="1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Campaign Title</label>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Campaign Title</label>
                                             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full h-14 bg-slate-950 border border-white/5 rounded-2xl px-6 text-sm text-white outline-none focus:border-teal-500/50" placeholder="Internal name" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">Subject Line</label>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Subject Line</label>
                                             <input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} className="w-full h-14 bg-slate-950 border border-white/5 rounded-2xl px-6 text-sm text-white outline-none focus:border-teal-500/50" placeholder="Email subject" />
                                         </div>
                                     </div>
 
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between px-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Personalization Tags</label>
-                                            <button onClick={generateWithAI} disabled={aiGenerating} className="flex items-center gap-2 text-[10px] font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all">
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Personalization Tags</label>
+                                            <button onClick={generateWithAI} disabled={aiGenerating} className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all">
                                                 {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} AI Writer
                                             </button>
                                         </div>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                                             {PERSONALIZATION_BUTTONS.map(btn => (
-                                                <button key={btn.tag} onClick={() => insertVariable(btn.tag)} className="h-10 bg-slate-950 border border-white/5 rounded-xl text-[10px] font-black text-slate-400 uppercase hover:border-teal-500 hover:text-teal-400 transition-all shadow-sm flex items-center justify-center gap-2">
+                                                <button key={btn.tag} onClick={() => insertVariable(btn.tag)} className="h-10 bg-slate-950 border border-white/5 rounded-xl text-xs font-black text-slate-400 uppercase hover:border-teal-500 hover:text-teal-400 transition-all shadow-sm flex items-center justify-center gap-2">
                                                     <Plus size={10} /> {btn.label}
                                                 </button>
                                             ))}
@@ -263,7 +263,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                         className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${contacts.filter(c => c.industry === industry).every(c => selectedContactIds.includes(c.id)) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/10'}`}
                                                     >
                                                         <span className="text-sm font-bold uppercase tracking-tight">{industry}</span>
-                                                        <span className="text-[10px] font-black opacity-50 bg-white/5 px-2 py-1 rounded-lg">{contacts.filter(c => c.industry === industry).length}</span>
+                                                        <span className="text-xs font-black opacity-50 bg-white/5 px-2 py-1 rounded-lg">{contacts.filter(c => c.industry === industry).length}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -295,7 +295,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                     >
                                                         <div>
                                                             <p className="text-sm font-bold text-white uppercase tracking-tight">{contact.name || contact.email}</p>
-                                                            <p className="text-[10px] text-slate-500 font-medium">{contact.company || 'Private Contact'}</p>
+                                                            <p className="text-xs text-slate-500 font-medium">{contact.company || 'Private Contact'}</p>
                                                         </div>
                                                         <CheckCircle2 size={18} className={selectedContactIds.includes(contact.id) ? 'text-teal-400' : 'text-slate-800'} />
                                                     </button>
@@ -307,7 +307,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                     <div className="flex items-center justify-between pt-8 border-t border-white/5">
                                         <button onClick={() => setActiveStep(1)} className="px-8 py-4 text-slate-500 font-black uppercase text-xs hover:text-slate-300">Back</button>
                                         <div className="flex items-center gap-6">
-                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{selectedContactIds.length} Recipients Picked</span>
+                                            <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">{selectedContactIds.length} Recipients Picked</span>
                                             <button onClick={() => setActiveStep(3)} disabled={!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0)} className="px-10 py-5 bg-teal-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-teal-900/20 disabled:opacity-50 disabled:grayscale">Review</button>
                                         </div>
                                     </div>
@@ -318,8 +318,8 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                 <motion.div key="3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                                     <div className="bg-slate-950 rounded-[40px] p-8 sm:p-12 space-y-6 border border-white/5">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                            <div><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Title</span><p className="text-lg font-black text-white">{form.name}</p></div>
-                                            <div><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Subject</span><p className="text-lg font-black text-white">{form.subject}</p></div>
+                                            <div><span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">Title</span><p className="text-lg font-black text-white">{form.name}</p></div>
+                                            <div><span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">Subject</span><p className="text-lg font-black text-white">{form.subject}</p></div>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-8 border-t border-white/5">
@@ -340,7 +340,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                     <div className="flex gap-2">
                         {[1, 2, 3].map(s => <div key={s} className={`w-2 h-2 rounded-full ${activeStep === s ? 'bg-teal-600 w-6' : 'bg-slate-800'} transition-all`} />)}
                     </div>
-                    <button onClick={() => setActiveStep(prev => Math.min(3, prev + 1))} className="text-teal-400 font-black uppercase text-[10px]">Next</button>
+                    <button onClick={() => setActiveStep(prev => Math.min(3, prev + 1))} className="text-teal-400 font-black uppercase text-xs">Next</button>
                 </div>
             )}
         </div>
@@ -348,3 +348,4 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 };
 
 export default CampaignBuilder;
+

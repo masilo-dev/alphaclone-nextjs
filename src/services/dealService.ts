@@ -378,14 +378,14 @@ export const dealService: DealService = {
         try {
             const tenantId = this.getTenantId();
 
-            if (updates.stage) {
-                const { data: existingDeal } = await supabase
-                    .from('deals')
-                    .select('stage')
-                    .eq('id', dealId)
-                    .eq('tenant_id', tenantId)
-                    .single();
+            const { data: existingDeal } = await supabase
+                .from('deals')
+                .select('stage')
+                .eq('id', dealId)
+                .eq('tenant_id', tenantId)
+                .single();
 
+            if (updates.stage) {
                 if (existingDeal) {
                     const check = assertDealStageTransition(existingDeal.stage, updates.stage);
                     if (!check.ok) {
@@ -512,9 +512,17 @@ export const dealService: DealService = {
                 updatedAt: data.updated_at,
             };
 
-            // SYNC TO EXTERNAL CRM
-            UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
-            triggerDealIntelligenceRecompute(tenantId, deal.id);
+            // EMIT AUTOMATION EVENT
+            if (updates.stage) {
+                const { emitBusinessEvent } = await import('../lib/automation/emit-event');
+                await emitBusinessEvent(tenantId, 'deal_stage_changed', {
+                    dealId,
+                    newStage: updates.stage,
+                    oldStage: existingDeal?.stage,
+                    value: data.value,
+                    name: data.name
+                }).catch(err => console.error('Failed to emit deal_stage_changed event:', err));
+            }
 
             return { deal, error: null };
         } catch (err) {

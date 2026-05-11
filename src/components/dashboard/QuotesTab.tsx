@@ -823,8 +823,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                         {/* Storage Usage Indicator */}
                         <div className="hidden sm:flex items-center gap-3 bg-slate-900/50 border border-white/5 px-3 py-1.5 rounded-xl">
                             <div className="text-left min-w-[80px]">
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Storage</div>
-                                <div className={`text-[10px] font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
+                                <div className="text-xs font-black text-slate-500 uppercase tracking-widest leading-none">Storage</div>
+                                <div className={`text-xs font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
                                     {(storageUsage / 1024 / 1024).toFixed(1)}MB
                                 </div>
                             </div>
@@ -854,7 +854,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f as any)}
-                                    className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
                                 >
                                     {f}
                                 </button>
@@ -1031,7 +1031,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                     }`}
                                 >
                                     <div className="font-semibold text-xs mb-1">{template.name}</div>
-                                    <div className="text-[10px] opacity-70 line-clamp-2">{template.description}</div>
+                                    <div className="text-xs opacity-70 line-clamp-2">{template.description}</div>
                                 </button>
                             ))}
                         </div>
@@ -1096,7 +1096,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                                 {showContactDropdown && (
                                     <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                        <div className="p-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
+                                        <div className="p-1 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
                                             Contacts & Leads
                                         </div>
                                         {availableContacts
@@ -1120,8 +1120,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                                     <div className="flex flex-col">
                                                         <span className="font-medium text-slate-200 group-hover:text-teal-400">{contact.businessName || contact.name || 'Unnamed'}</span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
-                                                            <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{contact.email}</span>
+                                                            <span className="text-xs text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
+                                                            <span className="text-xs text-slate-500 truncate max-w-[150px]">{contact.email}</span>
                                                         </div>
                                                     </div>
                                                     {quoteForm.contactId === contact.id && <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
@@ -1271,7 +1271,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                         <div className="flex justify-end pt-2">
                             <div className="text-right">
-                                <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
+                                <div className="text-xs uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
                                 <div className="text-xl font-bold text-teal-400">{formatCurrency(calculateSubtotal(), quoteForm.currency)}</div>
                             </div>
                         </div>
@@ -1355,7 +1355,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                                 {showContactDropdown && (
                                     <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                        <div className="p-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
+                                        <div className="p-1 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
                                             Contacts & Leads
                                         </div>
                                         {availableContacts
@@ -1379,8 +1379,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                                     <div className="flex flex-col">
                                                         <span className="font-medium text-slate-200 group-hover:text-teal-400">{contact.businessName || contact.name || 'Unnamed'}</span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
-                                                            <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{contact.email}</span>
+                                                            <span className="text-xs text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
+                                                            <span className="text-xs text-slate-500 truncate max-w-[150px]">{contact.email}</span>
                                                         </div>
                                                     </div>
                                                     {editForm.contactId === contact.id && <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
@@ -1529,7 +1529,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                         <div className="flex justify-end pt-2">
                             <div className="text-right">
-                                <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
+                                <div className="text-xs uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
                                 <div className="text-xl font-bold text-teal-400">{formatCurrency(calculateSubtotal(), quoteForm.currency)}</div>
                             </div>
                         </div>
@@ -1596,7 +1596,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                             {/* Items Table */}
                             <div className="border border-white/5 rounded-xl overflow-x-auto min-w-0">
                                 <table className="w-full min-w-[480px] text-sm text-left">
-                                    <thead className="bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-white/5">
+                                    <thead className="bg-slate-900/80 text-slate-400 text-xs uppercase font-black tracking-widest border-b border-white/5">
                                         <tr>
                                             <th className="px-4 py-3">Description</th>
                                             <th className="px-4 py-3 text-center">Qty</th>
@@ -1623,7 +1623,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                                             <td className="px-4 py-3 text-right text-white">{formatCurrency(selectedQuote?.subtotal || 0, selectedQuote?.currency || 'USD')}</td>
                                         </tr>
                                         <tr className="border-t border-white/5 bg-teal-500/5">
-                                            <td colSpan={3} className="px-4 py-3 text-right text-teal-400 uppercase text-[10px] tracking-widest font-black">Total Due</td>
+                                            <td colSpan={3} className="px-4 py-3 text-right text-teal-400 uppercase text-xs tracking-widest font-black">Total Due</td>
                                             <td className="px-4 py-3 text-right text-teal-400 text-lg">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</td>
                                         </tr>
                                     </tfoot>
@@ -1632,7 +1632,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 
                             {selectedQuote.notes && (
                                 <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Notes & Terms</label>
+                                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Notes & Terms</label>
                                     <p className="text-slate-300 text-sm italic">"{selectedQuote.notes}"</p>
                                 </div>
                             )}
@@ -1664,7 +1664,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                             {/* Signature Section */}
                             <div className="border border-white/5 rounded-xl p-4 bg-slate-950/40">
                                 <div className="flex items-center justify-between mb-3">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                    <label className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest">
                                         <PenLine className="w-4 h-4 text-teal-400" />
                                         Signature
                                     </label>
@@ -1833,3 +1833,4 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
 }
 
 export default QuotesTab;
+

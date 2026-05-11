@@ -783,7 +783,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="truncate">AlphaClone Admin</span>
-                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                    <span className="text-xs text-slate-400 font-medium">
                                                         {adminPresence === 'online' ? 'Typically replies in minutes' : 'Back soon'}
                                                     </span>
                                                 </div>
@@ -1032,3 +1032,4 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 };
 
 export default MessagesTab;
+

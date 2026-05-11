@@ -261,7 +261,7 @@ export default function SendGridIntegration() {
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Settings' : 'Connect SendGrid'}
                     </Button>
-                    <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
                         <Lock className="w-3 h-3" />
                         Encrypted storage ensures your API keys are private.
                     </p>
@@ -293,3 +293,4 @@ export default function SendGridIntegration() {
         </motion.div>
     );
 }
+

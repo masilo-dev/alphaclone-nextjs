@@ -131,7 +131,7 @@ export const Input: React.FC<InputProps> = ({
       </div>
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
       {!error && hint && (
-        <p className="mt-1 text-[10px] text-slate-500 italic">{hint}</p>
+        <p className="mt-1 text-xs text-slate-500 italic">{hint}</p>
       )}
     </div>
   );
@@ -301,3 +301,4 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     </div>
   );
 };
+

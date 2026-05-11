@@ -90,7 +90,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white tracking-tight">Bulk CRM Selection</h2>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Select multiple recipients for your email</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Select multiple recipients for your email</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -179,3 +179,4 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
         </div>
     );
 }
+

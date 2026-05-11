@@ -99,7 +99,7 @@ const TodayAgendaCard: React.FC<{ projects: Project[]; user: User }> = ({ projec
                         <div className={`text-xl font-black ${color}`}>{value}</div>
                         <div className="flex items-center gap-1 mt-0.5">
                             <Icon className={`w-3 h-3 ${color}`} />
-                            <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold">{label}</span>
+                            <span className="text-xs text-slate-600 uppercase tracking-wider font-bold">{label}</span>
                         </div>
                     </div>
                 ))}
@@ -245,7 +245,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-bold text-indigo-300 leading-tight">Claude AI</p>
-                                            <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
+                                            <p className="text-xs text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
                                         </div>
                                         <ArrowRight className="w-3.5 h-3.5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                                     </button>
@@ -258,7 +258,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-bold text-teal-300 leading-tight">Manus AI</p>
-                                            <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
+                                            <p className="text-xs text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
                                         </div>
                                         <ArrowRight className="w-3.5 h-3.5 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                                     </button>
@@ -294,7 +294,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                     </div>
                                     <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-green-500/5 border border-green-500/20">
                                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-[10px] font-black text-green-500 uppercase tracking-tighter">System Optimal</span>
+                                        <span className="text-xs font-black text-green-500 uppercase tracking-tighter">System Optimal</span>
                                     </div>
                                 </div>
 
@@ -303,56 +303,56 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                         <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{databaseStats?.totalLeads || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <Layers className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Leads</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Leads</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-blue-400 transition-colors">{databaseStats?.clientCount || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <UsersIcon className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Clients</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Clients</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-purple-400 transition-colors">{databaseStats?.activeProjects || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <Briefcase className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Projects</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Projects</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-amber-400 transition-colors">{databaseStats?.overdueInvoices || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <AlertCircle className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Overdue</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Overdue</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{databaseStats?.activeCampaigns || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <Zap className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Campaigns</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Campaigns</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-blue-400 transition-colors">{databaseStats?.totalTasks || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <CheckSquare className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tasks</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Tasks</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-indigo-400 transition-colors">{databaseStats?.unreadMessages || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <MessageCircle className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Messages</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Messages</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col group/item cursor-default">
                                         <span className="text-2xl font-black text-white group-hover/item:text-rose-400 transition-colors">{databaseStats?.activity24h || 0}</span>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <Activity className="w-3 h-3 text-slate-600" />
-                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Events</span>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Events</span>
                                         </div>
                                     </div>
                                 </div>
@@ -429,3 +429,4 @@ const HomeTab: React.FC<HomeTabProps> = ({
 };
 
 export default HomeTab;
+

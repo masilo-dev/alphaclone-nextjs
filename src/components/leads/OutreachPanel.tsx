@@ -255,7 +255,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             </div>
             <div className="min-w-0">
               <h2 className="text-base sm:text-lg font-black text-white truncate">Outreach Automation</h2>
-              <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest truncate">
+              <p className="text-xs sm:text-xs text-slate-500 uppercase tracking-widest truncate">
                 {industry} · {leadsWithRecipient.length} emailable · {leadsWithoutRecipient.length} phone-only
               </p>
             </div>
@@ -272,12 +272,12 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
             {/* Lead summary */}
             <div className="space-y-2">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selected Leads</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Selected Leads</p>
               <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                 {leads.map((l, i) => (
                   <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs ${l.qualification?.bgColor ?? ''} ${l.qualification?.borderColor ?? ''}`}>
                     <span className="font-semibold text-white truncate flex-1">{l.business_name}</span>
-                    <span className={`text-[9px] font-black uppercase ${l.qualification?.color ?? ''}`}>
+                    <span className={`text-xs font-black uppercase ${l.qualification?.color ?? ''}`}>
                       {l.qualification?.label}
                     </span>
                     {!l.qualification?.canAutoSend && (
@@ -289,7 +289,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                 ))}
               </div>
               {leadsWithoutRecipient.length > 0 && (
-                <p className="text-[10px] text-amber-400/80 mt-1">
+                <p className="text-xs text-amber-400/80 mt-1">
                   {leadsWithoutRecipient.length} lead{leadsWithoutRecipient.length > 1 ? 's have' : ' has'} no reachable email. AI will generate phone scripts for these leads.
                 </p>
               )}
@@ -297,7 +297,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
             {/* Tone */}
             <div className="space-y-2">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tone of Voice</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tone of Voice</p>
               <div className="grid grid-cols-2 gap-2">
                 {TONES.map((t) => (
                   <button
@@ -307,7 +307,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                     className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${tone === t.id ? 'bg-teal-500/10 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-400 hover:border-slate-700'}`}
                   >
                     <t.Icon className="w-4 h-4 text-teal-400/90" aria-hidden />
-                    <p className="text-[10px] font-bold uppercase tracking-wider">{t.label}</p>
+                    <p className="text-xs font-bold uppercase tracking-wider">{t.label}</p>
                   </button>
                 ))}
               </div>
@@ -315,7 +315,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 
             {/* Custom context */}
             <div className="space-y-2">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Custom Instructions</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Custom Instructions</p>
               <textarea
                 value={customContext}
                 onChange={e => setCustomContext(e.target.value)}
@@ -327,7 +327,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             {/* From address selector */}
             {senderOptions.length > 0 && (
               <div className="space-y-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Send From</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Send From</p>
                 <select
                   value={fromAddress}
                   onChange={e => setFromAddress(e.target.value)}
@@ -350,12 +350,12 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
               </button>
               <div>
                 <p className="text-xs font-bold text-white">{queueOnly ? 'Queue only' : 'Send immediately'}</p>
-                <p className="text-[10px] text-slate-500">{queueOnly ? 'Review in CRM before sending' : 'Send now using selected providers'}</p>
+                <p className="text-xs text-slate-500">{queueOnly ? 'Review in CRM before sending' : 'Send now using selected providers'}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Outreach Providers</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Outreach Providers</p>
               <div className="grid grid-cols-2 gap-2">
                 {OUTREACH_PROVIDER_OPTIONS.map((provider) => {
                   const checked = selectedProviders.includes(provider.id);
@@ -378,7 +378,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                   );
                 })}
               </div>
-              <label className="flex items-center gap-2 text-[10px] text-slate-400">
+              <label className="flex items-center gap-2 text-xs text-slate-400">
                 <input
                   type="checkbox"
                   checked={balanceByDailyLimit}
@@ -417,13 +417,13 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                 {/* Pitch angle legend */}
                 {leads.length > 0 && (
                   <div className="mt-4 w-full max-w-sm space-y-2 text-left">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Detected pitch angles</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-2">Detected pitch angles</p>
                     {[...new Set(leads.map(l => l.qualification.pitchAngle))].map(pa => (
                       <div key={pa} className="flex items-start gap-2 p-2 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
                         <Zap className="w-3 h-3 text-teal-400 mt-0.5 flex-shrink-0" />
                         <div>
                           <span className="font-bold text-teal-300">{PITCH_ANGLES[pa]?.label || pa}</span>
-                          <p className="text-slate-500 text-[10px] mt-0.5">{PITCH_ANGLES[pa]?.hook}</p>
+                          <p className="text-slate-500 text-xs mt-0.5">{PITCH_ANGLES[pa]?.hook}</p>
                         </div>
                       </div>
                     ))}
@@ -436,7 +436,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
               <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400 py-16">
                 <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
                 <p className="text-sm">AI is writing {leads.length} personalized outreach drafts…</p>
-                <p className="text-[10px] text-slate-600">Industry: {industry} · Tone: {tone}</p>
+                <p className="text-xs text-slate-600">Industry: {industry} · Tone: {tone}</p>
               </div>
             )}
 
@@ -463,12 +463,12 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                       <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-white truncate">{email.business_name}</p>
-                          <p className="text-[10px] text-slate-500 truncate">
+                          <p className="text-xs text-slate-500 truncate">
                             To: {email.recipientEmail || 'No recipient email'}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold ${
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${
                             email.recipientSource === 'lead'
                               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                               : email.recipientSource === 'inferred'
@@ -478,7 +478,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                             {email.recipientSource === 'lead' ? 'Verified recipient' : email.recipientSource === 'inferred' ? 'Inferred recipient' : 'No recipient'}
                           </span>
                           {pa && (
-                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 font-bold">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 font-bold">
                               {pa.label}
                             </span>
                           )}
@@ -548,7 +548,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                   ].map(s => (
                     <div key={s.label} className={`p-3 rounded-xl border text-center ${s.bg}`}>
                       <p className={`text-2xl font-black ${s.color}`}>{s.count}</p>
-                      <p className="text-[10px] text-slate-500 uppercase">{s.label}</p>
+                      <p className="text-xs text-slate-500 uppercase">{s.label}</p>
                     </div>
                   ))}
                 </div>
@@ -565,14 +565,14 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                       {r.status === 'queued' && <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />}
                       {r.status === 'failed' && <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />}
                       <span className="font-semibold text-white flex-1 truncate">{r.name}</span>
-                      <span className={`font-bold uppercase text-[9px] ${
+                      <span className={`font-bold uppercase text-xs ${
                         r.status === 'sent' ? 'text-emerald-400' : r.status === 'queued' ? 'text-amber-400' : 'text-rose-400'
                       }`}>{r.status}</span>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-[10px] text-slate-600 text-center pt-2">
+                <p className="text-xs text-slate-600 text-center pt-2">
                   Open tracking active · View logs in CRM → Outreach tab
                 </p>
               </div>
@@ -585,3 +585,4 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 }
 
 export default OutreachPanel;
+

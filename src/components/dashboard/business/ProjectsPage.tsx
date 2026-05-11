@@ -357,7 +357,7 @@ const ProjectListRow = ({
                                 style={{ width: `${project.progress}%` }}
                             />
                         </div>
-                        <span className="text-[9px] font-bold text-slate-500">{project.progress}%</span>
+                        <span className="text-xs font-bold text-slate-500">{project.progress}%</span>
                     </div>
                     {/* Stage Visualizer */}
                     <div className="mt-3">
@@ -711,7 +711,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                                     style={{ left: `${startPos}%`, width: `${width}%` }}
                                 >
                                     <div className="absolute top-0 bottom-0 left-0 bg-violet-500/20" style={{ width: `${proj.progress}%` }}></div>
-                                    <span className="relative px-3 text-[10px] text-white truncate drop-shadow-md">{proj.name}</span>
+                                    <span className="relative px-3 text-xs text-white truncate drop-shadow-md">{proj.name}</span>
                                 </div>
                             </div>
                         </div>
@@ -723,3 +723,4 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
 };
 
 export default ProjectsPage;
+

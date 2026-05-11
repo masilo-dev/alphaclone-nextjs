@@ -171,7 +171,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
                 {sidebarOpen && (
                     <div className="md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
-                        <label htmlFor="ac-sidebar-jump" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                        <label htmlFor="ac-sidebar-jump" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                             {t('Jump to page')}
                         </label>
                         <select
@@ -214,7 +214,7 @@ const Sidebar = React.memo<SidebarProps>(({
                             <button
                                 type="button"
                                 onClick={() => navigate('/dashboard/admin/operations')}
-                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500`}
+                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500`}
                             >
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Operations')}</span>
                             </button>
@@ -253,7 +253,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
                                         {item.comingSoon && sidebarOpen && (
-                                            <span className="ml-2 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
+                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
                                                 {t('Soon')}
                                             </span>
                                         )}
@@ -301,7 +301,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                                     <span className="whitespace-nowrap">
                                                         {t(sub.label)}
                                                         {sub.comingSoon && (
-                                                            <span className="ml-1.5 px-1 py-0.5 text-[7px] font-black uppercase bg-slate-800 text-teal-400 border border-teal-500/20 rounded">{t('Soon')}</span>
+                                                            <span className="ml-1.5 px-1 py-0.5 text-xs font-black uppercase bg-slate-800 text-teal-400 border border-teal-500/20 rounded">{t('Soon')}</span>
                                                         )}
                                                     </span>
                                                 </button>
@@ -323,9 +323,9 @@ const Sidebar = React.memo<SidebarProps>(({
                             <div className="px-3 py-2 bg-teal-500/10 border-b border-teal-500/20 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Activity className="w-3.5 h-3.5 text-teal-400" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">{t('Operations')}</span>
+                                    <span className="text-xs font-black uppercase tracking-widest text-teal-400">{t('Operations')}</span>
                                 </div>
-                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-[9px] font-bold text-teal-300">
+                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-xs font-bold text-teal-300">
                                     {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
                             </div>
@@ -341,7 +341,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 ) : (
                                                     <Activity className="w-3 h-3 text-rose-400" />
                                                 )}
-                                                <span className="text-[10px] font-bold text-slate-300 truncate">{task.name}</span>
+                                                <span className="text-xs font-bold text-slate-300 truncate">{task.name}</span>
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
                                                 <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
@@ -402,7 +402,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <p className="text-sm font-semibold text-white truncate leading-tight">
                                         {user.name || user.email?.split('@')[0] || t('User')}
                                     </p>
-                                    <p className="text-[10px] text-slate-500 truncate capitalize">{user.role || t('member')}</p>
+                                    <p className="text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</p>
                                 </div>
 
                                 {/* Language switcher - immediate change */}
@@ -415,7 +415,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                         toast.success(`${t('Switched to')} ${nextLang.nativeName}`);
                                     }}
                                     title={t('Switch language')}
-                                    className="text-[10px] font-bold min-w-[2rem] h-8 px-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:border-teal-500/50 transition-colors flex items-center justify-center flex-shrink-0"
+                                    className="text-xs font-bold min-w-[2rem] h-8 px-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:border-teal-500/50 transition-colors flex items-center justify-center flex-shrink-0"
                                 >
                                     {languageCode}
                                 </button>
@@ -441,3 +441,4 @@ const Sidebar = React.memo<SidebarProps>(({
 
 Sidebar.displayName = 'Sidebar';
 export default Sidebar;
+

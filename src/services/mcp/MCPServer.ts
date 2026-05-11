@@ -4590,8 +4590,18 @@ Return ONLY a JSON array of 60 objects:
           // 1. Generate Image if not provided (Permanent Storage)
           if (!imageUrl) {
             if (!image_prompt) throw new Error('image_prompt is required if provided_image_url is omitted');
-            const img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
-            if (!img.success || !img.url) throw new Error(`Image Gen Failed: ${img.error}`);
+            
+            // Try primary provider
+            let img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
+            
+            // If primary fails with billing or generic error, try the other one
+            if (!img.success || !img.url) {
+                const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
+                console.warn(`[MCP] Image Gen failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
+                img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', altProvider as any);
+            }
+
+            if (!img.success || !img.url) throw new Error(`Image Gen Failed (All Providers): ${img.error}`);
             imageUrl = img.url;
           }
 

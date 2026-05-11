@@ -1004,7 +1004,7 @@ Return only the comment text.`;
                                     <div className="flex items-center gap-2">
                                         <Wand2 className="w-4 h-4 text-indigo-400" />
                                         <p className="text-xs font-semibold text-indigo-300">AI Image Generator (DALL-E 3)</p>
-                                        <span className="ml-auto text-[10px] text-slate-500 italic">Images are temporary unless attached</span>
+                                        <span className="ml-auto text-xs text-slate-500 italic">Images are temporary unless attached</span>
                                     </div>
 
                                     <textarea
@@ -1276,7 +1276,7 @@ Return only the comment text.`;
                                     <div className="flex flex-wrap gap-1.5">
                                         {(linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
                                             (linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
-                                                <span key={scope} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
+                                                <span key={scope} className="text-xs px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
                                                     {scope}
                                                 </span>
                                             ))
@@ -1535,3 +1535,4 @@ Return only the comment text.`;
         </div>
     );
 }
+

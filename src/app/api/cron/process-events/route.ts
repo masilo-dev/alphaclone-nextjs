@@ -1,0 +1,122 @@
+import { NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { start } from 'workflow/api';
+
+// Import workflows
+import { dealStageChangedWorkflow } from '@/workflows/deal-flows';
+import { invoiceOverdueWorkflow } from '@/workflows/invoice-flows';
+import { leadCreatedWorkflow } from '@/workflows/lead-flows';
+import { contractSignedWorkflow } from '@/workflows/contract-flows';
+import { taskOverdueWorkflow } from '@/workflows/task-flows';
+
+/**
+ * Main Automation Dispatcher
+ * Polls unprocessed business events and triggers the corresponding workflows.
+ * Run this every 5 minutes via Vercel Cron.
+ */
+export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const ranAt = new Date().toISOString();
+
+  try {
+    // 1. Fetch unprocessed events (limit to prevent timeout)
+    const { data: events, error: fetchError } = await supabase
+      .from('business_automation_events')
+      .select('*')
+      .eq('processed', false)
+      .order('created_at', { ascending: true })
+      .limit(50);
+
+    if (fetchError) throw fetchError;
+
+    if (!events || events.length === 0) {
+      await logCron('process-events', 'success', { message: 'No pending events' }, ranAt);
+      return NextResponse.json({ success: true, message: 'No pending events' });
+    }
+
+    const results = [];
+
+    // 2. Dispatch events to workflows
+    for (const event of events) {
+      try {
+        let workflowToStart: any = null;
+
+        switch (event.event_type) {
+          case 'deal_stage_changed':
+            workflowToStart = dealStageChangedWorkflow;
+            break;
+          case 'invoice_overdue':
+            workflowToStart = invoiceOverdueWorkflow;
+            break;
+          case 'lead_created':
+            workflowToStart = leadCreatedWorkflow;
+            break;
+          case 'contract_signed':
+            workflowToStart = contractSignedWorkflow;
+            break;
+          case 'task_overdue':
+            workflowToStart = taskOverdueWorkflow;
+            break;
+          default:
+            console.warn(`[Automation] No workflow mapping for event type: ${event.event_type}`);
+        }
+
+        if (workflowToStart) {
+          const { runId } = await start(workflowToStart, [
+            { 
+              tenantId: event.tenant_id, 
+              payload: event.payload,
+              eventId: event.id 
+            }
+          ]);
+          
+          // Log the run
+          await supabase.from('automation_runs').insert({
+            id: runId, // Use the workflow engine's runId as primary key if possible
+            workflow_type: event.event_type,
+            tenant_id: event.tenant_id,
+            status: 'running'
+          });
+
+          results.push({ eventId: event.id, status: 'dispatched', runId });
+        } else {
+          results.push({ eventId: event.id, status: 'skipped', reason: 'no_workflow' });
+        }
+
+        // 3. Mark as processed
+        await supabase
+          .from('business_automation_events')
+          .update({ processed: true })
+          .eq('id', event.id);
+
+      } catch (err: any) {
+        console.error(`[Automation] Error processing event ${event.id}:`, err.message);
+        results.push({ eventId: event.id, status: 'failed', error: err.message });
+      }
+    }
+
+    await logCron('process-events', 'success', { results }, ranAt);
+    return NextResponse.json({ success: true, processed_count: events.length, results });
+
+  } catch (error: any) {
+    console.error('[Automation] Cron dispatcher failed:', error.message);
+    await logCron('process-events', 'failed', { error: error.message }, ranAt);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+async function logCron(trigger: string, status: string, payload: any, ranAt: string) {
+  const supabase = createSupabaseAdminClient();
+  await supabase.from('automation_cron_logs').insert({
+    trigger_type: trigger,
+    status,
+    payload,
+    ran_at: ranAt,
+    error_message: status === 'failed' ? payload.error : null
+  });
+}

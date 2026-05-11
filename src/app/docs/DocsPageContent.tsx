@@ -340,7 +340,7 @@ export default function DocsPageContent() {
                                         <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">What you can do:</strong> read full inbox, compose and reply with full formatting, attach documents from Document Hub, view CRM profile alongside any email, create tasks directly from email threads, set email follow-up reminders.</p>
                                         <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">Privacy:</strong> Emails are retrieved in real-time via Google's API. AlphaClone does not store your email content on its servers.</p>
                                     </div>
-                                    <p className="text-[10px] text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
+                                    <p className="text-xs text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
                                 </div>
 
                                 <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col">
@@ -352,7 +352,7 @@ export default function DocsPageContent() {
                                         <p className="text-sm text-slate-400 leading-relaxed">AlphaClone includes a built-in HD video conferencing platform. Start instant calls with clients or join scheduled board meetings directly from the sidebar. No external app or Zoom account required.</p>
                                         <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">Features:</strong> HD video and audio, screen sharing, meeting recording (saved to Document Hub), in-call task creation, shareable meeting links (clients join via browser — no app install), and team internal rooms.</p>
                                     </div>
-                                    <p className="text-[10px] text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
+                                    <p className="text-xs text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
                                 </div>
 
                                 <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col md:col-span-2">
@@ -384,7 +384,7 @@ export default function DocsPageContent() {
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Calendly</p>
+                                    <p className="text-xs text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Calendly</p>
                                 </div>
                             </div>
                         </div>
@@ -456,7 +456,7 @@ export default function DocsPageContent() {
                                         'Finance → Accounting', 'Finance → Reports',
                                         'Finance → Expenses', 'Finance → Settings',
                                     ].map((path, i) => (
-                                        <p key={i} className="text-[10px] text-green-500/70 font-mono">{path}</p>
+                                        <p key={i} className="text-xs text-green-500/70 font-mono">{path}</p>
                                     ))}
                                 </div>
                             </div>
@@ -625,3 +625,4 @@ export default function DocsPageContent() {
         </div>
     );
 }
+

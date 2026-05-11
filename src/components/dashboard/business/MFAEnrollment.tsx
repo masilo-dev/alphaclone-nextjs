@@ -138,7 +138,7 @@ export default function MFAEnrollment() {
                         <h4 className="font-bold text-white flex items-center gap-2">
                             Two-Factor Authentication (2FA)
                             {isEnrolled && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-400 font-bold uppercase tracking-wider">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-400 font-bold uppercase tracking-wider">
                                     Enabled
                                 </span>
                             )}
@@ -226,3 +226,4 @@ export default function MFAEnrollment() {
         </div>
     );
 }
+

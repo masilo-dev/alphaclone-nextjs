@@ -258,7 +258,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-black text-white uppercase tracking-tight">Record Outflow</h2>
-                                    <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">General Ledger · Expense Entry</p>
+                                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">General Ledger · Expense Entry</p>
                                 </div>
                             </div>
                             <button
@@ -281,7 +281,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                     >
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Effective Date</label>
+                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Effective Date</label>
                                                 <input
                                                     type="date"
                                                     value={formData.date}
@@ -290,7 +290,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Amount ({currencyCode})</label>
+                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Amount ({currencyCode})</label>
                                                 <input
                                                     type="number"
                                                     value={formData.amount}
@@ -303,7 +303,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Expense Account (Category)</label>
+                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Expense Account (Category)</label>
                                                 <select
                                                     value={formData.expenseAccountId}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, expenseAccountId: e.target.value }))}
@@ -316,7 +316,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Paid From (Asset Account)</label>
+                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Paid From (Asset Account)</label>
                                                 <select
                                                     value={formData.assetAccountId}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, assetAccountId: e.target.value }))}
@@ -331,7 +331,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         </div>
 
                                         <div className="relative" ref={dropdownRef}>
-                                            <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Vendor / Counterparty</label>
+                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Vendor / Counterparty</label>
                                             <div className="relative group">
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                                     <Users className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-500" />
@@ -353,13 +353,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                             {/* Quick Select Vendors */}
                                             {clients.length > 0 && !formData.vendorName && (
                                                 <div className="mt-4 flex flex-wrap gap-2">
-                                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest w-full mb-1 ml-1 cursor-default">Quick Select</span>
+                                                    <span className="text-xs font-black text-slate-600 uppercase tracking-widest w-full mb-1 ml-1 cursor-default">Quick Select</span>
                                                     {clients.slice(0, 5).map(client => (
                                                         <button
                                                             key={client.id}
                                                             type="button"
                                                             onClick={() => handleVendorSelect(client.name)}
-                                                            className="px-3 py-1.5 rounded-full bg-slate-800/50 border border-white/5 text-[10px] font-bold text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-400 transition-all flex items-center gap-1.5"
+                                                            className="px-3 py-1.5 rounded-full bg-slate-800/50 border border-white/5 text-xs font-bold text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-400 transition-all flex items-center gap-1.5"
                                                         >
                                                             <Plus className="w-3 h-3" /> {client.name}
                                                         </button>
@@ -388,14 +388,14 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                                         </div>
                                                                         <div>
                                                                             <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
-                                                                            <p className="text-[10px] text-slate-500 font-mono">{client.email}</p>
+                                                                            <p className="text-xs text-slate-500 font-mono">{client.email}</p>
                                                                         </div>
                                                                     </div>
                                                                 </button>
                                                             ))
                                                         ) : (
                                                             <div className="p-8 text-center">
-                                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 italic">Press Enter to use manual name</p>
+                                                                <p className="text-xs font-black uppercase tracking-widest text-slate-600 italic">Press Enter to use manual name</p>
                                                             </div>
                                                         )}
                                                     </motion.div>
@@ -404,7 +404,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Description</label>
+                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Description</label>
                                             <input
                                                 type="text"
                                                 value={formData.description}
@@ -415,13 +415,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         </div>
 
                                         <div className="border-t border-white/5 pt-8">
-                                            <label className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-4 px-1">Proof of Transaction (Optional)</label>
+                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-4 px-1">Proof of Transaction (Optional)</label>
                                             <div className="border-2 border-dashed border-white/5 rounded-[2.5rem] p-10 text-center hover:bg-white/2 hover:border-teal-500/20 transition-all cursor-pointer group">
                                                 <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-inner">
                                                     <Receipt className="w-8 h-8 text-slate-500 group-hover:text-teal-500 transition-colors" />
                                                 </div>
                                                 <p className="text-sm text-slate-300 font-bold">Upload Receipt</p>
-                                                <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-mono">PDF, Image · Max 5MB</p>
+                                                <p className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-mono">PDF, Image · Max 5MB</p>
                                             </div>
                                         </div>
                                     </motion.div>
@@ -450,13 +450,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                         {/* Footer */}
                         {step === 'edit' && (
                             <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between">
-                                <div className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
+                                <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
                                     Ledger entry
                                 </div>
                                 <div className="flex items-center gap-4 w-full sm:w-auto">
                                     <button
                                         onClick={handleClose}
-                                        className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
+                                        className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
                                     >
                                         Cancel
                                     </button>
@@ -481,3 +481,4 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
 };
 
 export default AddExpenseModal;
+

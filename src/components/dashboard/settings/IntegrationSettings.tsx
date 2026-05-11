@@ -106,7 +106,7 @@ export function IntegrationSettings() {
               <Icon className="w-4 h-4" />
               {tab.label}
               {tab.id === 'providers' && connected.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-teal-500/20 text-teal-400 rounded-full">
+                <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-teal-500/20 text-teal-400 rounded-full">
                   {connected.length}
                 </span>
               )}
@@ -258,3 +258,4 @@ export function IntegrationSettings() {
     </div>
   );
 }
+

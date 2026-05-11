@@ -84,7 +84,7 @@ export default function GlobalAlpha() {
                         <div className="p-3 border-b border-[#00FFD1]/10 flex items-center justify-between bg-[#001720]">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-3 h-3 text-[#00FFD1] animate-pulse" />
-                                <span className="text-[10px] font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_Beta</span>
+                                <span className="text-xs font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_Beta</span>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="hover:text-red-400 transition-colors">
                                 <X className="w-4 h-4" />
@@ -96,13 +96,13 @@ export default function GlobalAlpha() {
                                 <div className="text-[11px] text-white font-bold tracking-tight mb-1">
                                     GREETINGS, {user.name.toUpperCase()}
                                 </div>
-                                <div className="text-[9px] text-[#00FFD1]/60 flex items-center gap-2">
+                                <div className="text-xs text-[#00FFD1]/60 flex items-center gap-2">
                                     <Terminal className="w-2.5 h-2.5" />
                                     <span>AUTHORIZED_ID: {user.id.slice(0, 8)}</span>
                                 </div>
                             </div>
 
-                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-3 text-[9px] leading-relaxed text-yellow-200">
+                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs leading-relaxed text-yellow-200">
                                 Assisted execution is available. Persistent autonomous mission control is still in beta and may not retain mission history across sessions yet.
                             </div>
 
@@ -126,7 +126,7 @@ export default function GlobalAlpha() {
                                     <button
                                         type="submit"
                                         disabled={isDeploying || !prompt.trim()}
-                                        className="flex-1 py-3 bg-[#00FFD1] text-black text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
+                                        className="flex-1 py-3 bg-[#00FFD1] text-black text-xs font-bold tracking-[0.2em] transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
                                     >
                                         {isDeploying ? 'DISPATCHING...' : 'START BETA TASK'}
                                     </button>
@@ -141,7 +141,7 @@ export default function GlobalAlpha() {
                             </form>
                         </div>
 
-                        <div className="px-6 py-2 bg-[#000508] border-t border-[#00FFD1]/10 flex items-center justify-between text-[8px] text-[#00FFD1]/40">
+                        <div className="px-6 py-2 bg-[#000508] border-t border-[#00FFD1]/10 flex items-center justify-between text-xs text-[#00FFD1]/40">
                             <div className="flex gap-4">
                                 <span>SECURE: YES</span>
                                 <span>SESSION: ACTIVE</span>
@@ -154,3 +154,4 @@ export default function GlobalAlpha() {
         </>
     );
 }
+

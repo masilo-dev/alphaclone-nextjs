@@ -62,7 +62,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                         <div className="flex items-center gap-3 mb-1">
                             <h3 className="text-2xl font-bold text-white leading-tight">{service.title}</h3>
                             {service.isComingSoon && (
-                                <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[10px] font-bold text-teal-400 uppercase tracking-wider">
+                                <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-xs font-bold text-teal-400 uppercase tracking-wider">
                                     Coming Soon
                                 </span>
                             )}
@@ -83,7 +83,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                         className="overflow-hidden"
                     >
                         <div className="pt-6 border-t border-slate-800/50 mt-2 space-y-4">
-                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Specifications</div>
+                            <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Specifications</div>
                             <ul className="space-y-3 pb-4">
                                 {service.details.map((detail, idx) => (
                                     <li key={idx} className="flex items-start text-sm text-slate-300">
@@ -119,3 +119,4 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
         </motion.div>
     );
 };
+

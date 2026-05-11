@@ -72,7 +72,7 @@ const ServicesSection: React.FC = () => {
                                 {service.description}
                             </p>
                             
-                            <div className="mt-8 flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
+                            <div className="mt-8 flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
                                 <span>Learn Protocol</span>
                                 <div className="h-[1px] w-8 bg-slate-800 group-hover:bg-teal-500 transition-all" />
                             </div>
@@ -85,3 +85,4 @@ const ServicesSection: React.FC = () => {
 };
 
 export default ServicesSection;
+

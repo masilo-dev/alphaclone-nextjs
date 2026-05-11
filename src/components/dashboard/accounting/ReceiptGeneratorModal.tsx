@@ -92,7 +92,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                         <User className="w-4 h-4 text-teal-500" />
-                        <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Client</h3>
+                        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Client</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input label="Name" value={receiptData.clientName} onChange={e => setReceiptData({...receiptData, clientName: e.target.value})} />
@@ -102,8 +102,8 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                        <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Items</h3>
-                        <button onClick={handleAddItem} className="text-teal-500 text-[10px] font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
+                        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Items</h3>
+                        <button onClick={handleAddItem} className="text-teal-500 text-xs font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
                     </div>
                     <div className="space-y-3">
                         {receiptData.items.map((item, i) => (
@@ -120,9 +120,9 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 </div>
 
                 <div className="p-6 bg-teal-600/5 border border-teal-500/20 rounded-3xl flex flex-col items-end gap-2">
-                    <div className="flex justify-between w-full text-[10px] font-black text-gray-500 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
+                    <div className="flex justify-between w-full text-xs font-black text-gray-500 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
                     <div className="text-4xl font-black text-white tracking-tighter">${calculateTotal().toLocaleString()}</div>
-                    <p className="text-[10px] font-black text-teal-500 uppercase tracking-widest">Amount Paid</p>
+                    <p className="text-xs font-black text-teal-500 uppercase tracking-widest">Amount Paid</p>
                 </div>
 
                 {/* Footer Actions */}
@@ -142,3 +142,4 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         </Modal>
     );
 }
+

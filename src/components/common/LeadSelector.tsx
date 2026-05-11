@@ -148,13 +148,13 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                                                 </p>
                                             </div>
                                             {lead.industry && (
-                                                <span className="ml-2 px-2 py-1 bg-slate-800 text-slate-400 text-[10px] rounded-full whitespace-nowrap">
+                                                <span className="ml-2 px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-full whitespace-nowrap">
                                                     {lead.industry}
                                                 </span>
                                             )}
                                         </div>
                                         {lead.location && (
-                                            <p className="text-slate-500 text-[10px] mt-1">
+                                            <p className="text-slate-500 text-xs mt-1">
                                                 {lead.location}
                                             </p>
                                         )}
@@ -165,7 +165,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
 
                         {/* Footer */}
                         <div className="p-3 border-t border-slate-800 bg-slate-950">
-                            <p className="text-slate-500 text-[10px] text-center">
+                            <p className="text-slate-500 text-xs text-center">
                                 {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} available
                             </p>
                         </div>
@@ -177,3 +177,4 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
 };
 
 export default LeadSelector;
+

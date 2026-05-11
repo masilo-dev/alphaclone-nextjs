@@ -1419,7 +1419,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Button>
           )}
 
-          <p className="text-center text-[10px] text-slate-500 flex items-center justify-center gap-1">
+          <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1">
             <ShieldCheck className="w-3 h-3" /> Payments processed securely via Global Payment SSL
           </p>
         </div>
@@ -1778,3 +1778,4 @@ const Dashboard: React.FC<DashboardProps> = ({
 };
 
 export default Dashboard;
+

@@ -636,7 +636,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 <button
                                     onClick={() => handleDownloadAsPDF(false)}
                                     disabled={isSaving}
-                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs sm:text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
                                 >
                                     <Download className="w-3.5 h-3.5" />
                                     Save as PDF
@@ -644,7 +644,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 <button
                                     onClick={handleSaveEdits}
                                     disabled={isSaving}
-                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-[10px] sm:text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs sm:text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
                                 >
                                     {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                                     Save Changes
@@ -653,7 +653,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         )}
                         <button
                             onClick={() => handleDownload(selectedFile)}
-                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-[10px] sm:text-xs font-bold transition-all border border-white/5"
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-xs font-bold transition-all border border-white/5"
                         >
                             <Download className="w-4 h-4" /> Download
                         </button>
@@ -757,7 +757,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => { setViewTrash(!viewTrash); }}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-900 text-slate-500 hover:text-white border border-white/5'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-900 text-slate-500 hover:text-white border border-white/5'}`}
                     >
                         <Trash2 className="w-3.5 h-3.5" />
                         {viewTrash ? 'Exit Trash' : 'Trash'}
@@ -766,7 +766,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     {viewTrash ? (
                         <button
                             onClick={handleEmptyTrash}
-                            className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 text-white transition-all flex items-center gap-2"
+                            className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 text-white transition-all flex items-center gap-2"
                         >
                             <Trash2 className="w-3.5 h-3.5" /> Empty Trash
                         </button>
@@ -909,7 +909,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 <div className="min-w-0">
                                     <p className="text-white font-medium text-sm truncate">{file.original_filename}</p>
                                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                                        <span className="text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
+                                        <span className="text-xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
                                             {getFileLabel(file.file_type)}
                                         </span>
                                         <span className="text-xs text-slate-500">{formatBytes(file.file_size)}</span>
@@ -1063,7 +1063,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
                                 Utilizing advanced AI for professional document generation
                             </p>
                         </div>
@@ -1076,3 +1076,4 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 };
 
 export default DocumentHub;
+

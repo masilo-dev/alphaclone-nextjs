@@ -699,7 +699,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                         </div>
                                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                                             <div>
-                                                                <label className="text-[10px] uppercase font-black text-slate-500 tracking-wider block mb-1">Pricing</label>
+                                                                <label className="text-xs uppercase font-black text-slate-500 tracking-wider block mb-1">Pricing</label>
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="relative flex-1">
                                                                         <DollarSign className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -745,7 +745,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                                 </div>
                                                             </div>
                                                             <div>
-                                                                <label className="text-[10px] uppercase font-black text-slate-500 tracking-wider block mb-1">Description</label>
+                                                                <label className="text-xs uppercase font-black text-slate-500 tracking-wider block mb-1">Description</label>
                                                                 <input
                                                                     type="text"
                                                                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-teal-500 text-slate-300"
@@ -1201,3 +1201,4 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 };
 
 export default SettingsPage;
+

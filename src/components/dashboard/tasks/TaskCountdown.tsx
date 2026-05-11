@@ -68,7 +68,7 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
 
     if (timeLeft.isOverdue) {
         return (
-            <div className="flex items-center gap-1.5 text-red-400 animate-pulse font-mono text-[10px] font-black uppercase tracking-wider bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+            <div className="flex items-center gap-1.5 text-red-400 animate-pulse font-mono text-xs font-black uppercase tracking-wider bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
                 <AlertCircle className="w-3 h-3" />
                 Overdue
             </div>
@@ -76,7 +76,7 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
     }
 
     return (
-        <div className="flex items-center gap-1.5 text-teal-400 font-mono text-[10px] font-black uppercase tracking-wider bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20">
+        <div className="flex items-center gap-1.5 text-teal-400 font-mono text-xs font-black uppercase tracking-wider bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20">
             <Clock className="w-3 h-3" />
             {timeLeft.days > 0 && `${timeLeft.days}d `}
             {timeLeft.hours.toString().padStart(2, '0')}:
@@ -85,3 +85,4 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
         </div>
     );
 };
+

@@ -284,7 +284,7 @@ function GrowthTab() {
                   <div key={idx} className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg hover:border-teal-500/30 transition-all">
                     <div className="flex justify-between items-start mb-3">
                       <h4 className="text-white font-bold truncate pr-2">{lead.businessName}</h4>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${lead.leadSource === 'AlphaClone Premium' ? 'bg-teal-500/20 text-teal-400' : 'bg-blue-500/20 text-blue-400'
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${lead.leadSource === 'AlphaClone Premium' ? 'bg-teal-500/20 text-teal-400' : 'bg-blue-500/20 text-blue-400'
                         }`}>
                         {lead.leadSource === 'AlphaClone Premium' ? 'AlphaClone Premium' : lead.leadSource}
                       </span>
@@ -402,7 +402,7 @@ function OverviewTab({ stats }: { stats: any }) {
                   <TrendingUp className="w-3 h-3" />
                   {metric.change}
                 </span>
-                {metric.subValue && <span className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-semibold">{metric.subValue}</span>}
+                {metric.subValue && <span className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">{metric.subValue}</span>}
               </div>
             </div>
 
@@ -491,9 +491,9 @@ function OverviewTab({ stats }: { stats: any }) {
               <div className="flex-1">
                 <div className="text-white text-sm font-semibold">Security audit completion for Tenant {i * 102}</div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px] text-slate-500 uppercase font-black">{i * 2}h ago</span>
+                  <span className="text-xs text-slate-500 uppercase font-black">{i * 2}h ago</span>
                   <span className="w-1 h-1 rounded-full bg-slate-700" />
-                  <span className="text-[10px] text-teal-500/70 font-bold uppercase">Success</span>
+                  <span className="text-xs text-teal-500/70 font-bold uppercase">Success</span>
                 </div>
               </div>
             </div>
@@ -973,5 +973,6 @@ function SecurityTab() {
     </div>
   );
 }
+
 
 

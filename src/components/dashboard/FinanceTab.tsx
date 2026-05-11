@@ -216,7 +216,7 @@ const SubscriptionSection: React.FC<SubscriptionSectionProps> = ({ user, tenantI
 
                             {'badge' in plan && (plan as any).badge && (
                                 <div className="absolute -top-3 right-4">
-                                    <span className="bg-slate-700 text-slate-300 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider uppercase border border-slate-600">
+                                    <span className="bg-slate-700 text-slate-300 text-xs font-bold px-2.5 py-1 rounded-full tracking-wider uppercase border border-slate-600">
                                         {(plan as any).badge}
                                     </span>
                                 </div>
@@ -1168,3 +1168,4 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
 };
 
 export default FinanceTab;
+

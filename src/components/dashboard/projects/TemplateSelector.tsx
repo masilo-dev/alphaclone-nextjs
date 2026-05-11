@@ -98,7 +98,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                                     </div>
                                     <div>
                                         <div className="text-xs text-white font-medium">{phase.name}</div>
-                                        {phase.description && <div className="text-[10px] text-slate-500">{phase.description}</div>}
+                                        {phase.description && <div className="text-xs text-slate-500">{phase.description}</div>}
                                     </div>
                                 </div>
                             ))}
@@ -107,10 +107,11 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
 
                     <div className="mt-4 flex items-center gap-2 p-2 bg-blue-500/5 rounded border border-blue-500/20">
                         <Info className="w-3 h-3 text-blue-400" />
-                        <p className="text-[10px] text-blue-300">Applying this template will automatically create all phases as project milestones.</p>
+                        <p className="text-xs text-blue-300">Applying this template will automatically create all phases as project milestones.</p>
                     </div>
                 </div>
             )}
         </div>
     );
 }
+

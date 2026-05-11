@@ -159,11 +159,11 @@ const TwilioIntegration: React.FC = () => {
                         <div className="flex items-center gap-2 mb-1">
                             <h2 className="text-lg font-bold text-white tracking-tight">Twilio SMS & Voice</h2>
                             {connected ? (
-                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] uppercase font-black tracking-widest text-emerald-400">
+                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-xs uppercase font-black tracking-widest text-emerald-400">
                                     <CheckCircle2 className="w-3 h-3" /> Connected
                                 </span>
                             ) : (
-                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-slate-800 border border-white/5 rounded-full text-[10px] uppercase font-black tracking-widest text-slate-500">
+                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-slate-800 border border-white/5 rounded-full text-xs uppercase font-black tracking-widest text-slate-500">
                                     <AlertCircle className="w-3 h-3" /> Not connected
                                 </span>
                             )}
@@ -212,7 +212,7 @@ const TwilioIntegration: React.FC = () => {
                 <form onSubmit={handleSave} className="space-y-4 pt-4 border-t border-white/5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Account SID</label>
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Account SID</label>
                             <div className="relative">
                                 <input
                                     type="text"
@@ -226,7 +226,7 @@ const TwilioIntegration: React.FC = () => {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Auth Token</label>
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Auth Token</label>
                             <div className="relative">
                                 <input
                                     type={showToken ? 'text' : 'password'}
@@ -246,7 +246,7 @@ const TwilioIntegration: React.FC = () => {
                         </div>
 
                         <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">From Phone Number</label>
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">From Phone Number</label>
                             <input
                                 type="tel"
                                 placeholder="+1234567890"
@@ -267,7 +267,7 @@ const TwilioIntegration: React.FC = () => {
                             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                             {saving ? 'Verifying Connection...' : 'Connect Twilio'}
                         </Button>
-                        <p className="hidden sm:flex items-center gap-1.5 text-[10px] text-slate-600">
+                        <p className="hidden sm:flex items-center gap-1.5 text-xs text-slate-600">
                             <Lock className="w-3 h-3" />
                             Credentials are encrypted at rest and never shared.
                         </p>
@@ -279,3 +279,4 @@ const TwilioIntegration: React.FC = () => {
 };
 
 export default TwilioIntegration;
+

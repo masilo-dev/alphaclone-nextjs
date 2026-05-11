@@ -170,7 +170,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <ExternalLink className="w-5 h-5" />
                                             </button>
                                         </div>
-                                        <p className="text-[10px] text-slate-500 px-1">Tip: Keep your slug short and simple.</p>
+                                        <p className="text-xs text-slate-500 px-1">Tip: Keep your slug short and simple.</p>
                                     </div>
                                 </div>
                             )}
@@ -188,7 +188,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         key={day}
                                         onClick={() => toggleDay(idx)}
                                         className={`
-                                        h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95
+                                        h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all active:scale-95
                                         ${settings.availability.days.includes(idx)
                                                 ? 'bg-white text-slate-950 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]'
                                                 : 'bg-slate-900/50 text-slate-500 border-slate-800 hover:border-slate-600'}
@@ -200,7 +200,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             </div>
                             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-slate-800 p-6 rounded-3xl border border-slate-700">
                                 <div className="flex-1 w-full space-y-2">
-                                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Shift Start</label>
+                                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest px-2">Shift Start</label>
                                     <input
                                         type="time"
                                         value={settings.availability.hours.start}
@@ -221,7 +221,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                     <div className="w-8 h-[2px] bg-slate-800 rounded-full" />
                                 </div>
                                 <div className="flex-1 w-full space-y-2">
-                                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Shift End</label>
+                                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest px-2">Shift End</label>
                                     <input
                                         type="time"
                                         value={settings.availability.hours.end}
@@ -280,7 +280,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     {/* Buffer Time */}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Buffer Time</label>
+                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest px-2">Buffer Time</label>
                                         <div className="relative">
                                             <select
                                                 value={settings.bufferTime || 15}
@@ -296,12 +296,12 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             </select>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs font-bold">MIN</div>
                                         </div>
-                                        <p className="text-[10px] text-slate-500 px-2 leading-tight">Padding between meetings.</p>
+                                        <p className="text-xs text-slate-500 px-2 leading-tight">Padding between meetings.</p>
                                     </div>
 
                                     {/* Min Notice */}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Minimum Notice</label>
+                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest px-2">Minimum Notice</label>
                                         <div className="relative">
                                             <select
                                                 value={settings.minNotice || 4}
@@ -317,12 +317,12 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             </select>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs font-bold">URS</div>
                                         </div>
-                                        <p className="text-[10px] text-slate-500 px-2 leading-tight">Prevent last-minute bookings.</p>
+                                        <p className="text-xs text-slate-500 px-2 leading-tight">Prevent last-minute bookings.</p>
                                     </div>
 
                                     {/* Future Limit */}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2">Booking Limit</label>
+                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest px-2">Booking Limit</label>
                                         <div className="relative">
                                             <select
                                                 value={settings.futureLimit || 60}
@@ -336,7 +336,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             </select>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs font-bold">DYS</div>
                                         </div>
-                                        <p className="text-[10px] text-slate-500 px-2 leading-tight">How far ahead people can book.</p>
+                                        <p className="text-xs text-slate-500 px-2 leading-tight">How far ahead people can book.</p>
                                     </div>
                                 </div>
                             </div>
@@ -355,7 +355,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             { id: Math.random().toString(36).substr(2, 9), name: 'New Meeting', duration: 30, price: 0 }
                                         ]
                                     })}
-                                    className="text-[10px] flex items-center gap-2 bg-slate-800 border border-slate-700 hover:border-slate-600 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
+                                    className="text-xs flex items-center gap-2 bg-slate-800 border border-slate-700 hover:border-slate-600 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
                                 >
                                     <Plus className="w-3 h-3 text-teal-400" /> ADD TYPE
                                 </button>
@@ -391,7 +391,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                     }}
                                                     className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 w-24 text-center text-sm font-black text-teal-400"
                                                 />
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">MIN</span>
+                                                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">MIN</span>
                                             </div>
                                             <button
                                                 onClick={() => {
@@ -414,7 +414,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                 <div className="p-4 md:p-6 border-t border-slate-700 bg-slate-900/50 backdrop-blur-xl flex gap-4 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-4 text-[10px] font-black tracking-widest uppercase text-slate-500 hover:text-white hover:bg-slate-800 rounded-2xl transition-all"
+                        className="flex-1 py-4 text-xs font-black tracking-widest uppercase text-slate-500 hover:text-white hover:bg-slate-800 rounded-2xl transition-all"
                     >
                         DISCARD
                     </button>
@@ -437,3 +437,4 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         </div>
     );
 };
+

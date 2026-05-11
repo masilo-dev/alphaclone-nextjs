@@ -51,6 +51,7 @@ export interface LeadResult {
   lat?:          number;
   lng?:          number;
   hasContact:    boolean;   // true = phone OR email present
+  country_code?: string;
 }
 
 // ─── Contact quality guard ─────────────────────────────────────────────────────
@@ -110,6 +111,7 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
       lat:           item.position?.lat,
       lng:           item.position?.lng,
       hasContact:    false,
+      country_code:  item.address?.countryCode,
     }));
 }
 
@@ -164,6 +166,7 @@ async function fetchFoursquare(niche: string, location: string, limit = 20, radi
       lat:           place.geocodes?.main?.latitude ?? lat,
       lng:           place.geocodes?.main?.longitude ?? lng,
       hasContact:    false,
+      country_code:  place.location?.country,
     };
   });
 }
@@ -252,6 +255,7 @@ async function fetchFreePlacesFallback(niche: string, location: string, limit = 
       lat: p.lat,
       lng: p.lng,
       hasContact: false,
+      country_code: p.countryCode,
     })
   );
 }

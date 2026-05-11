@@ -37,7 +37,7 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                         <span className={`text-3xl font-black ${getScoreColor(audit.accuracyScore)}`}>
                             {audit.accuracyScore}%
                         </span>
-                        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Accuracy Score</span>
+                        <span className="text-xs uppercase tracking-wider text-gray-500 font-bold">Accuracy Score</span>
                     </div>
                 </div>
 
@@ -75,7 +75,7 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h4 className="font-bold text-white tracking-tight">{flag.businessName}</h4>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${flag.type === 'CRITICAL HALLUCINATION' ? 'bg-rose-500/20 text-rose-500' : 'bg-amber-500/20 text-amber-500'
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${flag.type === 'CRITICAL HALLUCINATION' ? 'bg-rose-500/20 text-rose-500' : 'bg-amber-500/20 text-amber-500'
                                                     }`}>
                                                     {flag.type}
                                                 </span>
@@ -110,3 +110,4 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
         </motion.div>
     );
 };
+

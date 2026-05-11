@@ -259,7 +259,7 @@ export default function CreateBusinessOnboarding() {
                         {PLAN_PRICING[plan.id]?.description}
                       </p>
                       {PLAN_PRICING[plan.id]?.isDiscountable && (
-                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-[10px] font-bold text-amber-400 uppercase tracking-tighter">
+                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 uppercase tracking-tighter">
                           35% OFF FOR NEXT 3 MONTHS
                         </div>
                       )}
@@ -334,3 +334,4 @@ function StepIndicator({ number, label, active, completed }: { number: number; l
     </div>
   );
 }
+

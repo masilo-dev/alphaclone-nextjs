@@ -352,12 +352,12 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-slate-300 truncate">{project.name}</span>
-                                                        <span className="text-slate-500 text-[10px] ml-2">{project.progress}%</span>
+                                                        <span className="text-slate-500 text-xs ml-2">{project.progress}%</span>
                                                     </div>
                                                 </div>
                                             ))}
                                             {assignedProjects.length > 3 && (
-                                                <div className="text-[10px] text-slate-500 text-center">
+                                                <div className="text-xs text-slate-500 text-center">
                                                     +{assignedProjects.length - 3} more
                                                 </div>
                                             )}
@@ -374,7 +374,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     {member.skills.slice(0, 3).map(skill => (
                                         <span
                                             key={skill}
-                                            className="px-2 py-1 bg-slate-800 rounded text-[10px] text-slate-300 border border-slate-700"
+                                            className="px-2 py-1 bg-slate-800 rounded text-xs text-slate-300 border border-slate-700"
                                         >
                                             {skill}
                                         </span>
@@ -442,7 +442,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                                                     style={{ width: `${project.progress}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-[10px] text-slate-500">{project.progress}%</span>
+                                                            <span className="text-xs text-slate-500">{project.progress}%</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -495,3 +495,4 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
 };
 
 export default ResourceAllocationView;
+

@@ -342,7 +342,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
-                                className={`flex items-center justify-between w-full gap-3 px-5 py-4 rounded-2xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border group ${activeSection === section.id
+                                className={`flex items-center justify-between w-full gap-3 px-5 py-4 rounded-2xl text-xs lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border group ${activeSection === section.id
                                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-600/20'
                                     : 'bg-slate-900/40 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800/60'
                                     }`}
@@ -365,18 +365,18 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                 <Sparkles className="w-4 h-4 text-teal-400" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-white uppercase tracking-widest">Alphaclone OS</p>
-                                <p className="text-[8px] font-mono text-slate-500 uppercase tracking-tighter">Enterprise Intelligence v2.4.0</p>
+                                <p className="text-xs font-black text-white uppercase tracking-widest">Alphaclone OS</p>
+                                <p className="text-xs font-mono text-slate-500 uppercase tracking-tighter">Enterprise Intelligence v2.4.0</p>
                             </div>
                         </div>
                         <div className="bg-slate-950/40 rounded-xl p-3 border border-white/5">
                             <div className="flex justify-between items-center mb-1">
-                                <span className="text-[8px] font-mono text-slate-600 uppercase">System Status</span>
-                                <span className="text-[8px] font-black text-green-400 uppercase tracking-widest">Operational</span>
+                                <span className="text-xs font-mono text-slate-600 uppercase">System Status</span>
+                                <span className="text-xs font-black text-green-400 uppercase tracking-widest">Operational</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-[8px] font-mono text-slate-600 uppercase">Core Latency</span>
-                                <span className="text-[8px] font-mono text-slate-400 tracking-tighter">14ms</span>
+                                <span className="text-xs font-mono text-slate-600 uppercase">Core Latency</span>
+                                <span className="text-xs font-mono text-slate-400 tracking-tighter">14ms</span>
                             </div>
                         </div>
                     </div>
@@ -387,7 +387,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         <div className="lg:hidden mb-4">
                             <button
                                 onClick={() => setActiveSection(null as any)}
-                                className="flex items-center gap-2 text-teal-400 font-black text-[10px] uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5"
+                                className="flex items-center gap-2 text-teal-400 font-black text-xs uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5"
                             >
                                 <span className="text-lg">←</span> Back to Settings
                             </button>
@@ -450,7 +450,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     <button
                                         onClick={handleSaveProfile}
                                         disabled={isSaving}
-                                        className="w-full lg:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
+                                        className="w-full lg:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         {isSaving ? (
                                             <div className="flex items-center gap-2">
@@ -591,7 +591,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-bold text-white">Subscription Plan</h3>
                                         {currentTenant?.subscription_status === 'active' && (
-                                            <div className="px-3 py-1 bg-teal-500/20 border border-teal-500/30 rounded-full text-[10px] font-black text-teal-400 uppercase tracking-widest">
+                                            <div className="px-3 py-1 bg-teal-500/20 border border-teal-500/30 rounded-full text-xs font-black text-teal-400 uppercase tracking-widest">
                                                 ACTIVE SUBSCRIPTION
                                             </div>
                                         )}
@@ -611,7 +611,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                         }`}
                                                 >
                                                     {isCurrent && (
-                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500 text-slate-900 text-[8px] font-black uppercase tracking-widest rounded-bl-xl">
+                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500 text-slate-900 text-xs font-black uppercase tracking-widest rounded-bl-xl">
                                                             ACTIVE
                                                         </div>
                                                     )}
@@ -625,21 +625,21 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                             {plan.description}
                                                         </p>
                                                         {plan.isDiscountable && (
-                                                            <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-[10px] font-bold text-amber-400 uppercase tracking-tighter w-fit">
+                                                            <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 uppercase tracking-tighter w-fit">
                                                                 35% OFF FOR 3 MONTHS
                                                             </div>
                                                         )}
                                                     </div>
                                                     <ul className="space-y-2 mb-8 min-h-[160px]">
                                                         {plan.featureList.map((feature, idx) => (
-                                                            <li key={idx} className="text-[10px] font-bold text-slate-400 flex items-start gap-2 uppercase tracking-tighter">
+                                                            <li key={idx} className="text-xs font-bold text-slate-400 flex items-start gap-2 uppercase tracking-tighter">
                                                                 <div className="w-1 h-1 bg-teal-500 rounded-full mt-1 flex-shrink-0" />
                                                                 <span>{feature}</span>
                                                             </li>
                                                         ))}
                                                     </ul>
                                                     <button
-                                                        className={`w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${isCurrent
+                                                        className={`w-full py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isCurrent
                                                             ? 'bg-white/5 text-slate-500 border border-white/5'
                                                             : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'
                                                             }`}
@@ -660,7 +660,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                                 </div>
                                                 <div>
                                                     <h4 className="text-sm font-bold text-white uppercase tracking-wider">AI Quota Status</h4>
-                                                    <p className="text-[10px] text-slate-400">Beta tier includes expanded limits</p>
+                                                    <p className="text-xs text-slate-400">Beta tier includes expanded limits</p>
                                                 </div>
                                             </div>
                                             <span className="text-xs font-bold text-teal-400 uppercase">System Optimal</span>
@@ -668,7 +668,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         <div className="w-full bg-slate-700 h-2 rounded-full mb-3">
                                             <div className="bg-teal-500 w-[45%] h-full rounded-full shadow-[0_0_10px_rgba(20,184,166,0.3)]" />
                                         </div>
-                                        <div className="flex justify-between items-center text-[10px]">
+                                        <div className="flex justify-between items-center text-xs">
                                             <p className="text-slate-400">
                                                 Automatic reset in approximately <span className="text-white font-bold">12 hours</span>.
                                             </p>
@@ -691,10 +691,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                     </p>
                                     <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-[10px] text-slate-500 border border-slate-700 flex-shrink-0">CARD</div>
+                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-xs text-slate-500 border border-slate-700 flex-shrink-0">CARD</div>
                                             <div className="min-w-0">
                                                 <p className="text-white text-sm font-medium">STRIPE BILLING PORTAL</p>
-                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Manage cards, invoices, and history</p>
+                                                <p className="text-xs text-slate-500 uppercase tracking-widest">Manage cards, invoices, and history</p>
                                             </div>
                                         </div>
                                         <Button onClick={handleManageBilling} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white">Manage Billing</Button>
@@ -826,3 +826,4 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 };
 
 export default SettingsPage;
+

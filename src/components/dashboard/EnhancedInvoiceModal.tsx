@@ -355,7 +355,7 @@ export default function EnhancedInvoiceModal({
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-slate-200">{c.name}</span>
-                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                        <span className="text-xs text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
                       </div>
                     </button>
                   ))

@@ -132,21 +132,21 @@ export default function ResetPasswordPage() {
                         </div>
 
                         <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                <div className={`flex items-center gap-2 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 text-xs ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     8+ Characters
                                 </div>
-                                <div className={`flex items-center gap-2 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     Uppercase
                                 </div>
-                                <div className={`flex items-center gap-2 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     Number
                                 </div>
-                                <div className={`flex items-center gap-2 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     Special Char
                                 </div>
@@ -169,3 +169,4 @@ export default function ResetPasswordPage() {
         </div>
     );
 }
+

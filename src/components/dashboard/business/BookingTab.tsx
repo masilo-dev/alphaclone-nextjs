@@ -182,7 +182,7 @@ const BookingTab: React.FC = () => {
                                                         <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
                                                             <Calendar className="w-5 h-5" />
                                                         </div>
-                                                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700">
+                                                        <span className="text-xs font-bold px-2 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700">
                                                             Scheduled
                                                         </span>
                                                     </div>
@@ -220,7 +220,7 @@ const BookingTab: React.FC = () => {
                                                             {invitee.reschedule_url && (
                                                                 <button
                                                                     onClick={() => window.open(invitee.reschedule_url, '_blank')}
-                                                                    className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
+                                                                    className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
                                                                 >
                                                                     Reschedule
                                                                 </button>
@@ -228,7 +228,7 @@ const BookingTab: React.FC = () => {
                                                             {invitee.cancel_url && (
                                                                 <button
                                                                     onClick={() => window.open(invitee.cancel_url, '_blank')}
-                                                                    className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
+                                                                    className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
                                                                 >
                                                                     Cancel
                                                                 </button>
@@ -241,11 +241,11 @@ const BookingTab: React.FC = () => {
                                                             <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center">
                                                                 <User className="w-3 h-3 text-slate-500" />
                                                             </div>
-                                                            <span className="text-[10px] text-slate-400">1 Invitee</span>
+                                                            <span className="text-xs text-slate-400">1 Invitee</span>
                                                         </div>
                                                         <button
                                                             onClick={() => window.location.href = '/dashboard/business/calendar'}
-                                                            className="text-[10px] font-bold text-teal-400 hover:underline"
+                                                            className="text-xs font-bold text-teal-400 hover:underline"
                                                         >
                                                             View in Calendar
                                                         </button>
@@ -259,7 +259,7 @@ const BookingTab: React.FC = () => {
                                 <div className="flex flex-col items-center justify-center py-16 bg-slate-900/20 border border-slate-800 border-dashed rounded-3xl">
                                     <Calendar className="w-10 h-10 text-slate-700 mb-4" />
                                     <p className="text-slate-500 font-medium text-sm">No upcoming appointments found.</p>
-                                    <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>
+                                    <p className="text-xs text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>
                                 </div>
                             )}
                         </>
@@ -279,7 +279,7 @@ const BookingTab: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => window.open('https://calendly.com/app', '_blank')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-black uppercase tracking-wider rounded-lg transition-all"
                             >
                                 <ExternalLink className="w-3 h-3" />
                                 Open Calendly Admin
@@ -289,7 +289,7 @@ const BookingTab: React.FC = () => {
                                     navigator.clipboard.writeText(calendlyUrl);
                                     toast.success('Link copied!');
                                 }}
-                                className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                                className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs font-black uppercase tracking-wider rounded-lg transition-all"
                             >
                                 Copy Link
                             </button>
@@ -313,3 +313,4 @@ const BookingTab: React.FC = () => {
 };
 
 export default BookingTab;
+

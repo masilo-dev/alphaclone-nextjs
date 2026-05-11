@@ -43,6 +43,7 @@ interface ScrapedLead {
   category?:     string;
   source?:       'yelp' | 'here' | 'osm' | 'browser' | 'google';
   status:        'pending' | 'saved' | 'failed';
+  country_code?: string;
   lat?:          number;
   lng?:          number;
   qualification?: QualificationResult;  // added by engine post-search
@@ -147,7 +148,7 @@ function StarRating({ rating }: { rating?: number }) {
       {Array.from({ length: full  }).map((_, i) => <Star key={`f${i}`} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
       {half && <Star className="w-3 h-3 fill-amber-400/50 text-amber-400" />}
       {Array.from({ length: empty }).map((_, i) => <Star key={`e${i}`} className="w-3 h-3 text-slate-700" />)}
-      <span className="ml-1 text-[10px] text-slate-400 font-mono">{rating.toFixed(1)}</span>
+      <span className="ml-1 text-xs text-slate-400 font-mono">{rating.toFixed(1)}</span>
     </div>
   );
 }
@@ -206,7 +207,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
                   className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500"
                 />
               </div>
-              <p className="text-[9px] text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries · {Object.keys(INDUSTRY_GROUPS).length} categories</p>
+              <p className="text-xs text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries · {Object.keys(INDUSTRY_GROUPS).length} categories</p>
             </div>
 
             {/* List */}
@@ -223,7 +224,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
                 if (!filtered.length) return null;
                 return (
                   <div key={group}>
-                    <p className="px-3 py-1 text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/60 border-b border-slate-800/40">{group}</p>
+                    <p className="px-3 py-1 text-xs font-black text-slate-500 uppercase tracking-widest bg-slate-900/60 border-b border-slate-800/40">{group}</p>
                     {filtered.map(industry => (
                       <div key={industry}
                            className={`px-4 py-2 text-sm cursor-pointer transition-colors ${value === industry ? 'bg-teal-500/20 text-teal-300 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
@@ -767,7 +768,7 @@ export default function OmniLeadFinder() {
       <div className="p-3 sm:p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-[10px] font-bold tracking-wider uppercase mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 text-xs font-bold tracking-wider uppercase mb-1">
               <Zap className="w-2.5 h-2.5 fill-current shrink-0" /> Enterprise Engine
             </div>
             <h1 className="text-lg sm:text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 break-words">
@@ -781,16 +782,16 @@ export default function OmniLeadFinder() {
           <div className="flex flex-col gap-2 w-full sm:w-auto sm:items-end shrink-0">
             {Object.keys(sourceStats).length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-black px-2 py-1 rounded-full border text-teal-400 border-teal-500/30 bg-teal-500/10">
+                <span className="text-xs font-black px-2 py-1 rounded-full border text-teal-400 border-teal-500/30 bg-teal-500/10">
                   ENGINES ACTIVE: {Object.keys(sourceStats).length}
                 </span>
-                <span className="text-[9px] font-black px-2 py-1 rounded-full border text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+                <span className="text-xs font-black px-2 py-1 rounded-full border text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
                   TOTAL RESULTS: {Object.values(sourceStats).reduce((a, b) => a + b, 0)}
                 </span>
               </div>
             )}
             {dailyQuota && (
-              <div className="flex flex-wrap items-center gap-2 text-[10px] w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex flex-wrap items-center gap-2 text-xs w-full sm:w-auto justify-between sm:justify-end">
                 <span className="text-slate-500 shrink-0">Daily quota:</span>
                 <div className="flex-1 sm:flex-initial min-w-[5rem] sm:w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
                   <div
@@ -838,14 +839,14 @@ export default function OmniLeadFinder() {
                 <Globe className="w-3.5 h-3.5 text-teal-400" />
               </div>
             </div>
-            <p className="text-[9px] text-slate-500 italic pl-1 flex items-center gap-1">
+            <p className="text-xs text-slate-500 italic pl-1 flex items-center gap-1">
               <Zap className="w-2 h-2" /> Supports pinpoint street-level accuracy & worldwide scraping.
             </p>
             {locationNeedsCityRefinement && (
               <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-[11px] font-semibold text-amber-300">Precision Wizard</p>
-                  <p className="text-[10px] text-slate-400">Step {wizardStep} / 4</p>
+                  <p className="text-xs text-slate-400">Step {wizardStep} / 4</p>
                 </div>
                 <div className="grid grid-cols-4 gap-1">
                   {[1, 2, 3, 4].map((step) => (
@@ -853,7 +854,7 @@ export default function OmniLeadFinder() {
                       key={step}
                       type="button"
                       onClick={() => setWizardStep(step as 1 | 2 | 3 | 4)}
-                      className={`text-[10px] rounded-md px-1 py-1 border ${wizardStep === step ? 'border-amber-400 text-amber-300 bg-amber-500/10' : 'border-slate-700 text-slate-500'}`}
+                      className={`text-xs rounded-md px-1 py-1 border ${wizardStep === step ? 'border-amber-400 text-amber-300 bg-amber-500/10' : 'border-slate-700 text-slate-500'}`}
                     >
                       {step}
                     </button>
@@ -881,7 +882,7 @@ export default function OmniLeadFinder() {
                             key={suggestion}
                             type="button"
                             onClick={() => setSpecificCity(suggestion.split(',')[0])}
-                            className="w-full text-left text-[10px] px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:bg-slate-800"
+                            className="w-full text-left text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:bg-slate-800"
                           >
                             {suggestion}
                           </button>
@@ -917,14 +918,14 @@ export default function OmniLeadFinder() {
                   <button
                     type="button"
                     onClick={() => setWizardStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3 | 4) : prev))}
-                    className="text-[10px] px-2 py-1 rounded-md border border-slate-700 text-slate-300"
+                    className="text-xs px-2 py-1 rounded-md border border-slate-700 text-slate-300"
                   >
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={() => setWizardStep((prev) => (prev < 4 ? ((prev + 1) as 1 | 2 | 3 | 4) : prev))}
-                    className="text-[10px] px-2 py-1 rounded-md border border-amber-500/40 text-amber-300"
+                    className="text-xs px-2 py-1 rounded-md border border-amber-500/40 text-amber-300"
                   >
                     Next
                   </button>
@@ -938,7 +939,7 @@ export default function OmniLeadFinder() {
           <div className="flex items-center gap-2 min-w-0 overflow-x-auto pb-0.5 -mx-0.5 px-0.5 [scrollbar-width:thin] sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
             <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Sort</span>
-            <div className="flex rounded-lg overflow-hidden border border-slate-700 text-[10px] sm:text-[11px] font-semibold shrink-0">
+            <div className="flex rounded-lg overflow-hidden border border-slate-700 text-xs sm:text-[11px] font-semibold shrink-0">
               {([['default', 'Default'], ['rating_desc', 'Rating high'], ['rating_asc', 'Rating low']] as [SortMode, string][]).map(([mode, label]) => (
                 <button key={mode} type="button" onClick={() => setSortMode(mode)}
                   className={`px-2 sm:px-2.5 py-1.5 sm:py-1 whitespace-nowrap transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
@@ -987,7 +988,7 @@ export default function OmniLeadFinder() {
                 />
                 <div className="absolute top-1.5 left-0 right-0 h-1 bg-cyan-500/20 rounded-full" />
               </div>
-              <p className="mt-1 text-[10px] text-cyan-300">Mission mode active: scanning territory and building lead route.</p>
+              <p className="mt-1 text-xs text-cyan-300">Mission mode active: scanning territory and building lead route.</p>
             </div>
             <div className="flex justify-between text-[11px] mb-2">
               <span className="text-teal-300 flex items-center gap-1.5"><RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> {progress.message}</span>
@@ -1008,7 +1009,7 @@ export default function OmniLeadFinder() {
               <Filter className="w-3.5 h-3.5 text-teal-400" />
               <span className="text-xs font-bold text-slate-300">Filter Results</span>
               {activeFilterCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-teal-500 text-slate-950 text-[10px] font-black flex items-center justify-center">{activeFilterCount}</span>
+                <span className="w-5 h-5 rounded-full bg-teal-500 text-slate-950 text-xs font-black flex items-center justify-center">{activeFilterCount}</span>
               )}
             </div>
             <div className="flex items-center gap-3 text-[11px] text-slate-500">
@@ -1022,7 +1023,7 @@ export default function OmniLeadFinder() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 min-w-0">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Search results</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Search results</label>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
                 <input type="text" placeholder="Search business name, email, phone, address..."
@@ -1033,11 +1034,11 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Qualification</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Qualification</label>
               <div className="flex flex-wrap gap-1">
                 {(['all','hot','warm','cold','skip'] as const).map(tier => (
                   <button key={tier} onClick={() => setFilterTier(tier)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all border ${
+                    className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all border ${
                       filterTier === tier ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
                     }`}>
                     {tier === 'all' ? 'All' : tier === 'hot' ? 'Hot' : tier === 'warm' ? 'Warm' : tier === 'cold' ? 'Cold' : 'Skip'}
@@ -1047,20 +1048,20 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result Engine Status</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Result Engine Status</label>
               <div className="flex items-center gap-1">
-                <div className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                <div className="px-2 py-1 rounded-lg text-xs font-semibold bg-teal-500/10 border border-teal-500/20 text-teal-400">
                   All Engines Syncing
                 </div>
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Min Rating</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Min Rating</label>
               <div className="flex items-center gap-1">
                 {[0,1,2,3,4,5].map(r => (
                   <button key={r} onClick={() => setFilterRating(r === filterRating ? 0 : r)}
-                    className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all border ${filterRating === r ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                    className={`px-1.5 py-1 rounded text-xs font-bold transition-all border ${filterRating === r ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}>
                     {r === 0 ? 'Any' : `${r}★`}
                   </button>
                 ))}
@@ -1068,7 +1069,7 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Has</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Has</label>
               <div className="flex flex-col gap-1.5">
                 {([['filterPhone', filterPhone, setFilterPhone, <Phone key="p" className="w-3 h-3" />, 'Phone'] as const,
                    ['filterEmail', filterEmail, setFilterEmail, <Mail key="m" className="w-3 h-3" />, 'Email'] as const]).map(([key, val, setter, icon, label]) => (
@@ -1084,11 +1085,11 @@ export default function OmniLeadFinder() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center pt-1 border-t border-slate-800/50 flex-wrap">
             <div className="flex flex-wrap items-center gap-2 min-w-0">
-              <button onClick={selectAll} className="text-[10px] text-teal-400 hover:text-teal-300 font-bold">Select all</button>
+              <button onClick={selectAll} className="text-xs text-teal-400 hover:text-teal-300 font-bold">Select all</button>
               {selectedSet.size > 0 && (
                 <>
                   <span className="text-slate-600">|</span>
-                  <button onClick={clearSelected} className="text-[10px] text-slate-500 hover:text-slate-300">Clear ({selectedSet.size})</button>
+                  <button onClick={clearSelected} className="text-xs text-slate-500 hover:text-slate-300">Clear ({selectedSet.size})</button>
                   <button
                     onClick={() => setShowOutreach(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-lg shadow-teal-500/10"
@@ -1132,7 +1133,7 @@ export default function OmniLeadFinder() {
                   <p className="text-xs text-white font-semibold truncate">
                     {entry.niche} in {entry.location}
                   </p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-xs text-slate-400">
                     {new Date(entry.createdAt).toLocaleString()} | Radius {entry.radiusKm}km | Leads {entry.leadCount} ({entry.mappedLeadCount} mapped)
                   </p>
                 </div>
@@ -1164,7 +1165,7 @@ export default function OmniLeadFinder() {
         <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-slate-300">Geocode preview before search</p>
-            <p className="text-[10px] text-slate-500">{geocodeLoading ? 'Resolving...' : geocodePreview.type || 'location'}</p>
+            <p className="text-xs text-slate-500">{geocodeLoading ? 'Resolving...' : geocodePreview.type || 'location'}</p>
           </div>
           <p className="text-[11px] text-slate-400">{geocodePreview.displayName}</p>
           <LeadMapView
@@ -1193,7 +1194,7 @@ export default function OmniLeadFinder() {
             <>
               <LeadMapView leads={filteredResults} />
               {filteredResults.filter(l => !l.lat).length > 0 && (
-                <p className="text-[10px] text-slate-500 text-center">
+                <p className="text-xs text-slate-500 text-center">
                   {filteredResults.filter(l => !l.lat).length} leads without coordinates hidden from map
                 </p>
               )}
@@ -1228,10 +1229,13 @@ export default function OmniLeadFinder() {
                       <Avatar name={lead.business_name} size={26} shape="rounded" className="rounded-md" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-white font-semibold text-sm leading-tight truncate group-hover:text-teal-300 transition-colors">{lead.business_name}</h3>
+                      <h3 className="text-white font-semibold text-sm leading-tight truncate group-hover:text-teal-300 transition-colors">
+                        {lead.business_name}
+                        {lead.country_code && <span className="ml-1.5 text-[10px] text-slate-500 font-black uppercase bg-slate-800 px-1 rounded">[{lead.country_code}]</span>}
+                      </h3>
                       {domain && (
                         <a href={lead.website} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                           className="text-slate-500 text-[10px] hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
+                           className="text-slate-500 text-xs hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
                           <Globe className="w-2.5 h-2.5 flex-shrink-0" /> {domain}
                         </a>
                       )}
@@ -1239,7 +1243,7 @@ export default function OmniLeadFinder() {
                   </div>
                   <div className="flex flex-col items-end gap-1 ml-1 flex-shrink-0">
                     {qual && (
-                      <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${qual.bgColor} ${qual.borderColor} ${qual.color}`}>
+                      <span className={`text-xs font-black px-1.5 py-0.5 rounded-full border ${qual.bgColor} ${qual.borderColor} ${qual.color}`}>
                         {qual.label} · {qual.score}
                       </span>
                     )}
@@ -1249,7 +1253,7 @@ export default function OmniLeadFinder() {
                 {qual && qual.insights.length > 0 && (
                   <div className="mb-2 space-y-0.5">
                     {qual.insights.slice(0, 2).map((insight, i) => (
-                      <p key={i} className="text-[9px] text-slate-500 flex items-center gap-1">
+                      <p key={i} className="text-xs text-slate-500 flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-slate-600 flex-shrink-0" /> {insight}
                       </p>
                     ))}
@@ -1257,30 +1261,30 @@ export default function OmniLeadFinder() {
                 )}
 
                 {lead.rating && <div className="mb-1.5"><StarRating rating={lead.rating} /></div>}
-                {lead.category && <p className="text-[10px] text-slate-500 truncate mb-1.5">{lead.category}</p>}
+                {lead.category && <p className="text-xs text-slate-500 truncate mb-1.5">{lead.category}</p>}
 
                 <div className="flex-grow space-y-1.5 py-2 border-t border-slate-800/50">
                   <div className="flex items-center gap-1.5">
                     <Mail className="w-3 h-3 text-slate-500 flex-shrink-0" />
                     {email
-                      ? <span className="text-[10px] font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">{email}</span>
-                      : <span className="text-[10px] text-slate-600 italic">No email — phone outreach</span>}
+                      ? <span className="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">{email}</span>
+                      : <span className="text-xs text-slate-600 italic">No email — phone outreach</span>}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                    <span className="text-[10px] text-slate-300 truncate">{lead.phone || <span className="text-slate-600 italic">No phone</span>}</span>
+                    <span className="text-xs text-slate-300 truncate">{lead.phone || <span className="text-slate-600 italic">No phone</span>}</span>
                   </div>
                   {lead.address && (
                     <div className="flex items-start gap-1.5">
                       <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-[10px] text-slate-400 leading-tight line-clamp-2">{lead.address}</span>
+                      <span className="text-xs text-slate-400 leading-tight line-clamp-2">{lead.address}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex gap-1.5 mt-2.5" onClick={e => e.stopPropagation()}>
                   <button onClick={() => saveEnrichedLead(lead, idx)} disabled={isSaved}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium rounded-lg border transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-lg border transition-all ${
                       isSaved
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-default'
                         : 'hover:bg-teal-600/20 text-teal-400 hover:text-teal-300 border-teal-500/20 hover:border-teal-500/40'
@@ -1291,7 +1295,7 @@ export default function OmniLeadFinder() {
                     <button
                       onClick={() => { setSelectedSet(new Set([idx])); setShowOutreach(true); }}
                       title="Quick AI outreach"
-                      className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-bold rounded-lg border border-teal-500/20 text-teal-400 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all"
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs font-bold rounded-lg border border-teal-500/20 text-teal-400 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all"
                     >
                       <Sparkles className="w-3 h-3" />
                     </button>

@@ -621,7 +621,7 @@ function LoginContent() {
                                         }
                                         setIsLoading(false);
                                     }}
-                                    className="absolute right-0 top-0 text-[10px] text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
+                                    className="absolute right-0 top-0 text-xs text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
                                 >
                                     Forgot?
                                 </button>
@@ -636,21 +636,21 @@ function LoginContent() {
 
                         {isRegistering && (
                             <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                    <div className={`flex items-center gap-2 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
                                         <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                         8+ Characters
                                     </div>
-                                    <div className={`flex items-center gap-2 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                         <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                         Uppercase
                                     </div>
-                                    <div className={`flex items-center gap-2 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                         <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                         Number
                                     </div>
-                                    <div className={`flex items-center gap-2 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                         <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                         Special Char
                                     </div>
@@ -816,7 +816,7 @@ function LoginContent() {
                     {!registrationOpen && policyLoaded && (
                         <p className="text-[11px] text-amber-400">Account registration is temporarily closed.</p>
                     )}
-                    <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+                    <p className="text-xs text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>
                 </div>
@@ -824,3 +824,4 @@ function LoginContent() {
         </div>
     );
 }
+

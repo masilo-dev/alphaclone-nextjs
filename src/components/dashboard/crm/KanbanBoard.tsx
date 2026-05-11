@@ -126,13 +126,13 @@ function KanbanCard({
             <div className="min-w-0">
               <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{lead.businessName}</h4>
               {lead.industry && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 truncate mt-0.5 inline-block max-w-full">
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 truncate mt-0.5 inline-block max-w-full">
                   {lead.industry}
                 </span>
               )}
               {lead.source ? (
                 <span
-                  className="text-[10px] text-slate-500 dark:text-slate-400 truncate block mt-0.5"
+                  className="text-xs text-slate-500 dark:text-slate-400 truncate block mt-0.5"
                   title={`Lead source: ${lead.source}`}
                 >
                   Source: {lead.source}
@@ -169,7 +169,7 @@ function KanbanCard({
           <div className="flex items-center gap-2 min-w-0">
             {lead.trustScore ? (
               <div
-                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
                   lead.trustScore >= 80
                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
                     : lead.trustScore >= 50
@@ -223,7 +223,7 @@ function KanbanColumn({
       <div className="p-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-800 flex items-center justify-between sticky top-0 z-10">
         <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
             {column.title}
-            <span className="text-[10px] bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-400 font-medium">
+            <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-400 font-medium">
                 {leads.length}
             </span>
         </h3>
@@ -578,3 +578,4 @@ export default function KanbanBoard() {
     </div>
   );
 }
+

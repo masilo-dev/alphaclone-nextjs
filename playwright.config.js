@@ -49,7 +49,7 @@ module.exports = defineConfig({
         {
             name: 'mobile',
             use: { ...devices['iPhone 12'] },
-            testMatch: /mobile-sanity\.spec\.js/,
+            testMatch: /mobile-.*\.spec\.js/,
         },
     ],
 });

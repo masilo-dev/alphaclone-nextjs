@@ -321,6 +321,15 @@ export const leadService = {
 
             const newLead: Lead = normalizeLeadRecord(data);
 
+            // EMIT AUTOMATION EVENT
+            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
+            await emitBusinessEvent(tenantId, 'lead_created', {
+                leadId: newLead.id,
+                businessName: newLead.businessName,
+                source: newLead.source,
+                stage: newLead.stage
+            }).catch(err => console.error('Failed to emit lead_created event:', err));
+
             // SYNC TO EXTERNAL CRM
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
 

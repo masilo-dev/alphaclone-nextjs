@@ -269,7 +269,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
 
                 <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-2 overflow-hidden">
                     <Sparkles className="w-3 h-3 text-teal-500/50" />
-                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
+                    <span className="text-xs font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
                 </div>
             </div>
         </div>
@@ -277,4 +277,5 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
 };
 
 export default VoiceCaptureFAB;
+
 

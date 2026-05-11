@@ -588,7 +588,7 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
                                     {event.startTime && ` · ${new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                 </p>
                             </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} shrink-0`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} shrink-0`}>
                                 {cfg.label}
                             </span>
                         </button>
@@ -776,7 +776,7 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                                         {date.toLocaleDateString('en-US', { weekday: 'long' })}
                                     </span>
-                                    {isToday && <span className="text-[10px] font-black text-teal-400 uppercase tracking-widest">Today</span>}
+                                    {isToday && <span className="text-xs font-black text-teal-400 uppercase tracking-widest">Today</span>}
                                 </div>
                             </div>
                             <button
@@ -801,7 +801,7 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                                 <h4 className="text-sm font-bold text-white mb-1 truncate">{event.title}</h4>
                                                 <div className="flex items-center gap-2 text-xs text-slate-500">
                                                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                                                    <span className="uppercase tracking-wide text-[10px]">{cfg.label}</span>
+                                                    <span className="uppercase tracking-wide text-xs">{cfg.label}</span>
                                                     {event.startTime && (
                                                         <>
                                                             <div className="w-px h-3 bg-slate-700" />
@@ -947,3 +947,4 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
 };
 
 export default CalendarPage;
+

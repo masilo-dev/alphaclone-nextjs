@@ -199,14 +199,14 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     {cursors.map((cursor, i) => (
                         <div
                             key={i}
-                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-[10px] font-black text-white shadow-xl"
+                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-xs font-black text-white shadow-xl"
                             title={cursor.userName}
                             style={{ borderColor: cursor.color }}
                         >
                             {cursor.userName.charAt(0)}
                         </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center text-[10px] font-black text-white shadow-xl z-10" title="You">
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center text-xs font-black text-white shadow-xl z-10" title="You">
                         {userName.charAt(0)}
                     </div>
                 </div>
@@ -224,3 +224,4 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     );
 };
 export { CollaborativeTaskNotes };
+

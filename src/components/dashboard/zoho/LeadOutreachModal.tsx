@@ -149,7 +149,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white tracking-tight">AI Growth Agent: Lead Discovery</h2>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -165,7 +165,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                 <button
                                     key={provider.id}
                                     onClick={() => setSelectedProvider(provider)}
-                                    className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                    className={`px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
                                         ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
                                         : 'bg-gray-950/50 text-gray-500 border-white/5 hover:border-white/10'
                                         }`}
@@ -234,11 +234,11 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                             <div>
                                                 <h3 className="font-bold text-white text-lg">{lead.businessName}</h3>
                                                 <div className="flex items-center gap-3 mt-0.5">
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-teal-400 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-teal-400 uppercase tracking-widest">
                                                         <Briefcase size={10} />
                                                         <span>{lead.industry}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-widest">
                                                         <MapPin size={10} />
                                                         <span>{lead.location}</span>
                                                     </div>
@@ -250,7 +250,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
 
                                     <div className="flex md:flex-col gap-2 shrink-0">
                                         {syncedIds.has(lead.id!) ? (
-                                            <div className="flex items-center justify-center gap-2 bg-green-500/10 text-green-400 px-6 py-2.5 rounded-xl border border-green-500/20 font-black text-[10px] uppercase tracking-widest">
+                                            <div className="flex items-center justify-center gap-2 bg-green-500/10 text-green-400 px-6 py-2.5 rounded-xl border border-green-500/20 font-black text-xs uppercase tracking-widest">
                                                 <CheckCircle2 size={14} />
                                                 <span>Fully Synced</span>
                                             </div>
@@ -258,7 +258,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                             <button 
                                                 onClick={() => handleSyncAndEngage(lead)}
                                                 disabled={!!syncing}
-                                                className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2"
+                                                className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2"
                                             >
                                                 {syncing === lead.id ? (
                                                     <>
@@ -273,7 +273,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                                 )}
                                             </button>
                                         )}
-                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5 transition-all">
+                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border border-white/5 transition-all">
                                             Quick View
                                         </button>
                                     </div>
@@ -285,12 +285,12 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
 
                 {/* Footer Info */}
                 <div className="p-4 bg-gray-950/80 border-t border-white/5 flex items-center justify-between px-8">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-widest">
                         <CheckCircle2 size={14} className="text-teal-500" />
                         <span>Connected to Zoho CRM & AlphaClone Native Storage</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
                     </div>
                 </div>
             </motion.div>
@@ -310,3 +310,4 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
         </div>
     );
 }
+

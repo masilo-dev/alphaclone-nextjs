@@ -143,7 +143,13 @@ class AIGenerationService {
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error?.message || 'Failed to generate image');
+                    const msg = error.error?.message || 'Failed to generate image';
+                    const code = error.error?.code;
+                    
+                    if (code === 'billing_hard_limit_reached' || msg.toLowerCase().includes('billing')) {
+                        throw new Error(`AI Billing Limit: The platform's OpenAI credits are exhausted. Please try using 'xai' provider or contact support to top up.`);
+                    }
+                    throw new Error(msg);
                 }
 
                 const data = await response.json();

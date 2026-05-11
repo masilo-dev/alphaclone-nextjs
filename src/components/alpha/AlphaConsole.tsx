@@ -95,7 +95,7 @@ export default function AlphaConsole() {
                         <Lock className="w-3 h-3" />
                     </motion.div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-[#00FFD1]/50 leading-none mb-1">SECURE_SHELL</span>
+                        <span className="text-xs text-[#00FFD1]/50 leading-none mb-1">SECURE_SHELL</span>
                         <span className="text-xs font-bold tracking-widest uppercase">{typingText}</span>
                     </div>
                 </div>
@@ -104,19 +104,19 @@ export default function AlphaConsole() {
                     <div className="flex bg-black/40 border border-[#00FFD1]/20 p-1 rounded-sm">
                         <button
                             onClick={() => setView('terminal')}
-                            className={`px-3 py-1 flex items-center gap-2 text-[8px] font-bold transition-all ${view === 'terminal' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
+                            className={`px-3 py-1 flex items-center gap-2 text-xs font-bold transition-all ${view === 'terminal' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
                         >
                             <Terminal className="w-2.5 h-2.5" /> DIRECT_SHELL
                         </button>
                         <button
                             onClick={() => setView('fleet')}
-                            className={`px-3 py-1 flex items-center gap-2 text-[8px] font-bold transition-all ${view === 'fleet' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
+                            className={`px-3 py-1 flex items-center gap-2 text-xs font-bold transition-all ${view === 'fleet' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
                         >
                             <LayoutDashboard className="w-2.5 h-2.5" /> FLEET_CONTROL
                         </button>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-8 text-[10px] tracking-tighter opacity-70">
+                    <div className="hidden md:flex items-center gap-8 text-xs tracking-tighter opacity-70">
                         <div className="flex items-center gap-2">
                             <Activity className="w-3 h-3 text-yellow-400" />
                             <span>NODE_STATUS: STABLE</span>
@@ -133,7 +133,7 @@ export default function AlphaConsole() {
                 {view === 'terminal' ? (
                     <>
                         <div className="md:col-span-4 border-r border-[#00FFD1]/10 p-4 md:p-6 flex flex-col gap-6 bg-[#00080D] min-h-0">
-                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-4 text-[10px] leading-relaxed text-yellow-100">
+                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-4 text-xs leading-relaxed text-yellow-100">
                                 Alpha is usable for assisted task execution and tool-triggered actions, but autonomous mission persistence is still beta.
                                 Mission history is not durable enough yet to present this as a fully production-hardened agent console.
                             </div>
@@ -161,7 +161,7 @@ export default function AlphaConsole() {
                             </div>
 
                             <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar min-h-0">
-                                <h3 className="text-[10px] font-bold text-[#00FFD1]/50 tracking-[0.3em]">CAPABILITY_MATRIX</h3>
+                                <h3 className="text-xs font-bold text-[#00FFD1]/50 tracking-[0.3em]">CAPABILITY_MATRIX</h3>
                                 {[
                                     { icon: Target, label: 'LEAD_PROSPECTOR', status: 'ACTIVE' },
                                     { icon: Send, label: 'OUTREACH_EXECUTIVE', status: 'READY' },
@@ -171,9 +171,9 @@ export default function AlphaConsole() {
                                     <div key={i} className="group p-3 border border-[#00FFD1]/10 bg-[#00121A] hover:border-[#00FFD1]/40 flex items-center justify-between transition-all">
                                         <div className="flex items-center gap-3">
                                             <cap.icon className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                            <span className="text-[10px] font-bold group-hover:text-white">{cap.label}</span>
+                                            <span className="text-xs font-bold group-hover:text-white">{cap.label}</span>
                                         </div>
-                                        <span className={`text-[8px] px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[#00FFD1] bg-[#00FFD1]/10' : 'border-white/10 opacity-30 italic'}`}>
+                                        <span className={`text-xs px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[#00FFD1] bg-[#00FFD1]/10' : 'border-white/10 opacity-30 italic'}`}>
                                             {cap.status}
                                         </span>
                                     </div>
@@ -187,7 +187,7 @@ export default function AlphaConsole() {
                                     <Activity className="w-3 h-3 animate-pulse" />
                                     MISSION_CORE_STREAM
                                 </h2>
-                                <span className="text-[9px] opacity-40 italic">STREAMING_REALTIME_LOGS</span>
+                                <span className="text-xs opacity-40 italic">STREAMING_REALTIME_LOGS</span>
                             </div>
 
                             <div className="flex-1 overflow-y-auto space-y-6 pr-2 md:pr-4 custom-scrollbar min-h-0">
@@ -210,10 +210,10 @@ export default function AlphaConsole() {
                                                         <div className={`w-2 h-2 rounded-full ${mission.status === 'completed' ? 'bg-[#00FFD1]' : 'bg-[#00D1FF] animate-pulse'}`} />
                                                         <span className="text-[11px] font-bold text-white uppercase">{mission.description}</span>
                                                     </div>
-                                                    <span className="text-[9px] font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
+                                                    <span className="text-xs font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
                                                 </div>
 
-                                                <div className="space-y-2 max-h-[300px] overflow-y-auto font-mono text-[10px]">
+                                                <div className="space-y-2 max-h-[300px] overflow-y-auto font-mono text-xs">
                                                     {mission.logs.map((log, li) => (
                                                         <div key={li} className="flex gap-4 group/log">
                                                             <span className="opacity-20 select-none">{li.toString().padStart(3, '0')}</span>
@@ -240,3 +240,4 @@ export default function AlphaConsole() {
         </div>
     );
 }
+

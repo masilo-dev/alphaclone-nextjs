@@ -38,8 +38,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     {!isOwn && showSenderName && (
                         <span className="text-xs text-slate-400 ml-1 mb-1 flex items-center gap-2">
                             {message.role === 'system' || message.senderName === 'Admin' || (message.senderId && message.senderId.includes('admin')) ? 'Admin' : message.senderName}
-                            {isUrgent && <span className="text-red-400 flex items-center text-[10px] font-bold"><Flag size={10} className="mr-0.5 fill-red-400" /> URGENT</span>}
-                            {isHigh && <span className="text-orange-400 flex items-center text-[10px] font-bold"><Flag size={10} className="mr-0.5 fill-orange-400" /> HIGH PRIORITY</span>}
+                            {isUrgent && <span className="text-red-400 flex items-center text-xs font-bold"><Flag size={10} className="mr-0.5 fill-red-400" /> URGENT</span>}
+                            {isHigh && <span className="text-orange-400 flex items-center text-xs font-bold"><Flag size={10} className="mr-0.5 fill-orange-400" /> HIGH PRIORITY</span>}
                         </span>
                     )}
 
@@ -90,7 +90,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-medium truncate">{att.name}</p>
-                                                    <p className="text-[10px] opacity-70">Attachment</p>
+                                                    <p className="text-xs opacity-70">Attachment</p>
                                                 </div>
                                                 <Download size={14} opacity={0.7} />
                                             </a>
@@ -114,7 +114,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         )}
 
                         {/* Timestamp & Status (Inside bubble) */}
-                        <div className={`text-[10px] mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-200 justify-end' : 'text-slate-400'}`}>
+                        <div className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-200 justify-end' : 'text-slate-400'}`}>
                             {format(new Date(message.timestamp), 'h:mm a')}
                             {isOwn && (
                                 <CheckCheck
@@ -130,3 +130,4 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         </div>
     );
 };
+

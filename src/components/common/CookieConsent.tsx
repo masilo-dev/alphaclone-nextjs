@@ -261,7 +261,7 @@ export default function CookieConsent() {
                                                         <cat.icon className="w-5 h-5 text-slate-500" />
                                                         <span className="text-base font-bold text-white">{cat.label}</span>
                                                         {cat.required && (
-                                                            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-lg border border-teal-500/20">Always Active</span>
+                                                            <span className="text-xs uppercase tracking-wider px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-lg border border-teal-500/20">Always Active</span>
                                                         )}
                                                     </div>
                                                     <p className="text-sm text-slate-400 leading-relaxed font-medium">{cat.desc}</p>
@@ -328,3 +328,4 @@ function dispatchConsentEvent(prefs: CookiePreferences) {
         });
     }
 }
+

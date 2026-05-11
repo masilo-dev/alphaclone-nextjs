@@ -766,7 +766,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                             <div key={comment.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="text-teal-400 text-xs font-bold">{comment.userName}</span>
-                                                    <span className="text-slate-500 text-[10px]">
+                                                    <span className="text-slate-500 text-xs">
                                                         {comment.createdAt.toLocaleTimeString()}
                                                     </span>
                                                 </div>
@@ -950,3 +950,4 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 };
 
 export default AlphaCloneContractModal;
+

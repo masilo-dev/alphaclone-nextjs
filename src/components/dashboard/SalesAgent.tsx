@@ -1063,7 +1063,7 @@ const SalesAgent: React.FC = () => {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-[10px] uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
+            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-xs uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
                 {t('Finding Leads & Autonomous SDR System Active')}
             </div>
@@ -1266,3 +1266,4 @@ const SalesAgent: React.FC = () => {
 };
 
 export default SalesAgent;
+

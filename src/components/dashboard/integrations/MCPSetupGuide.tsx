@@ -426,28 +426,28 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Client ID</p>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Client ID</p>
                                     <div className="flex items-center gap-2">
                                       <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">grok-connector</code>
                                       <button onClick={() => copyText('grok-connector', 'Client ID')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
                                     </div>
                                   </div>
                                   <div>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Scopes</p>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Scopes</p>
                                     <div className="flex items-center gap-2">
                                       <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">read write mcp:tools</code>
                                       <button onClick={() => copyText('read write mcp:tools', 'Scopes')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
                                     </div>
                                   </div>
                                   <div className="md:col-span-2">
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Authorization Endpoint</p>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Authorization Endpoint</p>
                                     <div className="flex items-center gap-2">
                                       <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">{`${mcpOrigin}/authorize`}</code>
                                       <button onClick={() => copyText(`${mcpOrigin}/authorize`, 'Auth Endpoint')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
                                     </div>
                                   </div>
                                   <div className="md:col-span-2">
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Token Endpoint</p>
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Token Endpoint</p>
                                     <div className="flex items-center gap-2">
                                       <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">{`${mcpOrigin}/api/mcp/token`}</code>
                                       <button onClick={() => copyText(`${mcpOrigin}/api/mcp/token`, 'Token Endpoint')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
@@ -463,7 +463,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                               </p>
                               <button
                                 onClick={handleRotateToken}
-                                className="text-[10px] uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                                className="text-xs uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
                               >
                                 <Lock className="w-3 h-3" />
                                 Regenerate Key
@@ -595,3 +595,4 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 };
 
 export default MCPSetupGuide;
+

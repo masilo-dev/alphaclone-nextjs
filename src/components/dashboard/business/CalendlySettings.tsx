@@ -269,7 +269,7 @@ const CalendlySettings: React.FC = () => {
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
                                             <h6 className="font-bold text-white truncate pr-2">{et.name}</h6>
-                                            <span className="text-[10px] font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
+                                            <span className="text-xs font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
                                         </div>
                                         <p className="text-xs text-slate-400 line-clamp-2 mb-4 break-words">
                                             {et.description_plain || 'No description provided.'}
@@ -317,7 +317,7 @@ const CalendlySettings: React.FC = () => {
                                     {saving ? 'SAVING...' : 'SAVE LINK'}
                                 </button>
                             </div>
-                            <p className="text-[10px] text-slate-500 italic">
+                            <p className="text-xs text-slate-500 italic">
                                 Note: Manual links enable the booking page but do not sync dashboard meetings automatically.
                             </p>
                         </div>
@@ -368,3 +368,4 @@ const CalendlySettings: React.FC = () => {
 };
 
 export default CalendlySettings;
+

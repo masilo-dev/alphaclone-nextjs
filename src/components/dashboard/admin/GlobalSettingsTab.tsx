@@ -182,7 +182,7 @@ const GlobalSettingsTab: React.FC = () => {
                             key={section.id}
                             onClick={() => setActiveSection(section.id)}
                             aria-current={activeSection === section.id ? 'true' : undefined}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
                                 ? 'bg-indigo-600 border border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
                                 : 'bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                                 }`}
@@ -416,14 +416,14 @@ const IntegrationItem = ({
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h4 className="text-sm font-bold text-white">{name}</h4>
                     <div
-                        className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-400'
+                        className={`px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-400'
                             }`}
                     >
                         {status}
                     </div>
                 </div>
                 <p className="text-xs text-slate-400">{description}</p>
-                <p className="text-[10px] text-slate-600 mt-1 uppercase font-mono break-words">{details}</p>
+                <p className="text-xs text-slate-600 mt-1 uppercase font-mono break-words">{details}</p>
             </div>
             <Button type="button" variant="outline" size="sm" className="w-full md:w-auto shrink-0" disabled title="Configure via environment variables">
                 Configure
@@ -456,3 +456,4 @@ const Toggle = ({
 );
 
 export default GlobalSettingsTab;
+

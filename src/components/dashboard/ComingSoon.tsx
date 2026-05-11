@@ -103,7 +103,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) =>
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
                         </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                        <span className="text-xs font-black uppercase tracking-widest text-slate-300">
                             Development In Progress{dots}
                         </span>
                     </div>
@@ -139,3 +139,4 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) =>
 };
 
 export default ComingSoon;
+

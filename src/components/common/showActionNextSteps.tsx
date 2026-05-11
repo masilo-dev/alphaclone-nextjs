@@ -155,7 +155,7 @@ export function showActionNextSteps(
                 role="status"
                 className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-slate-500 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
-                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide next-step-highlight">
+                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide next-step-highlight">
                     What next
                 </div>
                 <p className="text-sm font-bold text-white leading-snug mt-2">{pack.headline}</p>
@@ -178,7 +178,7 @@ export function showActionNextSteps(
                 <button
                     type="button"
                     onClick={() => toast.dismiss(tid.id)}
-                    className="mt-3 text-[10px] text-slate-500 hover:text-slate-400 uppercase tracking-wide"
+                    className="mt-3 text-xs text-slate-500 hover:text-slate-400 uppercase tracking-wide"
                 >
                     {uiTranslate(lang, 'Dismiss')}
                 </button>
@@ -201,7 +201,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                 aria-labelledby="inv-next-title"
                 className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-teal-500/40 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
-                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide next-step-highlight">
+                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide next-step-highlight">
                     What next
                 </div>
                 <p id="inv-next-title" className="text-sm font-bold text-white leading-snug">
@@ -266,7 +266,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                 <button
                     type="button"
                     onClick={() => toast.dismiss(t.id)}
-                    className="mt-2 text-[10px] text-slate-500 hover:text-slate-400 uppercase tracking-wide"
+                    className="mt-2 text-xs text-slate-500 hover:text-slate-400 uppercase tracking-wide"
                 >
                     {uiTranslate(lang, 'Dismiss')}
                 </button>
@@ -275,3 +275,4 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
         { id, duration: 20000 }
     );
 }
+
