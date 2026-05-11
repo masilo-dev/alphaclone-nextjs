@@ -1,73 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, getMcpCorsHeaders, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
+import { getMcpCorsHeaders, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
-const MCP_PROTOCOL_VERSION = '2025-03-26';
+/**
+ * Unified MCP Endpoint (/api/mcp)
+ * 
+ * This route serves as a single entry point for both:
+ * 1. GET requests (Discovery): Returns the full tool manifest for AI clients.
+ * 2. POST requests (JSON-RPC): Proxies calls to the MCP execution engine.
+ */
 
 export async function POST(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
 
-  const auth = await validateMCPAuthApp(req);
-  if ('error' in auth) {
-    return NextResponse.json(
-      { error: auth.error }, 
-      { status: auth.status, headers: getMcpCorsHeaders(req) }
-    );
-  }
-
-  let body;
+  const url = new URL(req.url);
+  const apiKey = url.searchParams.get('api_key') || '';
+  
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: 'Invalid JSON' }, 
-      { status: 400, headers: getMcpCorsHeaders(req) }
-    );
-  }
+    const body = await req.json();
 
-  // Handle initialize method directly for Streamable HTTP pattern
-  if (body.method === 'initialize') {
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      id: body.id,
-      result: {
-        protocolVersion: MCP_PROTOCOL_VERSION,
-        serverInfo: { name: 'alphaclone', version: '1.0.0' },
-        capabilities: {
-          tools: { listChanged: false },
-        },
-      },
-    }, { headers: getMcpCorsHeaders(req) });
-  }
-
-  // Forward everything else to your existing messages handler
-  // This ensures we reuse the logic in the established messages endpoint
-  const upstream = await fetch(
-    `${req.nextUrl.origin}/api/mcp/messages${new URL(req.url).search}`,
-    {
+    // Forward everything to the messages handler
+    const upstreamUrl = `${url.origin}/api/mcp/messages${url.search}`;
+    const upstream = await fetch(upstreamUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': req.nextUrl.searchParams.get('api_key') || '',
+        'x-api-key': apiKey,
       },
       body: JSON.stringify(body),
+    });
+
+    const data = await upstream.json();
+    const responseHeaders = new Headers(getMcpCorsHeaders(req));
+    
+    // Propagate session ID if present (critical for stateful interactions)
+    const sessionId = upstream.headers.get('Mcp-Session-Id');
+    if (sessionId) {
+      responseHeaders.set('Mcp-Session-Id', sessionId);
     }
-  );
+
+    return NextResponse.json(data, { 
+      status: upstream.status,
+      headers: responseHeaders 
+    });
+  } catch (err) {
+    console.error('[MCP Single Endpoint] POST Upstream error:', err);
+    return NextResponse.json(
+      { error: 'Upstream processing failed' }, 
+      { status: 502, headers: getMcpCorsHeaders(req) }
+    );
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const cors = handleCorsApp(req);
+  if (cors) return cors;
+
+  const url = new URL(req.url);
+  const apiKey = url.searchParams.get('api_key') || '';
+
+  // Forward to discovery handler which returns the full tool list by default
+  const upstreamUrl = `${url.origin}/api/mcp/tools${url.search}`;
 
   try {
+    const upstream = await fetch(upstreamUrl, {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+      },
+    });
+
     const data = await upstream.json();
     return NextResponse.json(data, { 
       status: upstream.status,
       headers: getMcpCorsHeaders(req) 
     });
   } catch (err) {
-    console.error('[MCP Single Endpoint] Upstream error:', err);
+    console.error('[MCP Single Endpoint] GET Upstream error:', err);
     return NextResponse.json(
-      { error: 'Upstream processing failed' }, 
+      { error: 'Discovery fetch failed' }, 
       { status: 502, headers: getMcpCorsHeaders(req) }
     );
   }

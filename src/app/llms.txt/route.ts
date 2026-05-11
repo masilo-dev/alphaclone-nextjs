@@ -165,8 +165,13 @@ The AlphaClone MCP server exposes the following tools at https://www.alphaclones
 | create_lead | Add a new lead to the CRM pipeline |
 | update_lead | Modify an existing lead record |
 | search_leads | Find leads by name, industry, or location |
+| get_leads | Fetch leads from the sales pipeline |
+| create_client | Create a new CRM client/contact record |
+| get_clients | Fetch CRM clients for a tenant |
+| search_clients | Search clients by name, email, or location |
 | create_deal | Create a new deal in the pipeline |
 | update_deal | Update deal stage, amount, or close date |
+| get_deals | Fetch deals/opportunities from the pipeline |
 | get_pipeline | Retrieve all active deals by stage |
 | create_contact | Add a new contact to CRM |
 | search_contacts | Find contacts by name, email, or company |
@@ -174,12 +179,15 @@ The AlphaClone MCP server exposes the following tools at https://www.alphaclones
 | complete_task | Mark a task as completed |
 | get_tasks | Retrieve tasks filtered by status or assignee |
 | create_invoice | Generate a professional invoice |
+| get_invoices | List invoices for the workspace |
 | log_expense | Record an expense with AI category detection |
 | draft_contract | Generate a contract from template |
 | send_email | Send an email to a CRM contact |
 | get_analytics | Retrieve CRM and revenue analytics |
-| create_project | Initiate a new client project |
-| search_documents | Find documents in the document hub |
+| get_finance_snapshot | Return a finance operating snapshot |
+| list_playbooks | List backend automation playbooks |
+| run_playbook | Run a business automation sequence |
+| send_batch_outreach | Autonomous AI-powered batch outreach |
 | schedule_meeting | Create a meeting with calendar sync |
 | get_crm_summary | High-level workspace health summary |
 
