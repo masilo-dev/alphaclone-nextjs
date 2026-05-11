@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMCPServer } from '@/services/mcp/MCPServer';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp } from '@/services/mcp/authMiddlewareApp';
+import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32700, message: 'Parse error' },
       id: null,
-    }, { status: 400, headers: MCP_CORS_HEADERS });
+    }, { status: 400, headers: getMcpCorsHeaders(req) });
   }
 
   if (!requestBody || typeof requestBody !== 'object' || !requestBody.method) {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32600, message: 'Invalid Request' },
       id: requestBody?.id ?? null,
-    }, { status: 400, headers: MCP_CORS_HEADERS });
+    }, { status: 400, headers: getMcpCorsHeaders(req) });
   }
 
   const mcpSessionId = req.headers.get('mcp-session-id');
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   // Handle Authentication for all methods
   if (mcpSessionId) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: MCP_CORS_HEADERS });
+      return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: getMcpCorsHeaders(req) });
     }
     const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
       global: {
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           error: { code: -32001, message: 'MCP session not found and no valid API key provided. Please re-initialize.' },
           id: requestBody.id ?? null,
-        }, { status: 404, headers: MCP_CORS_HEADERS });
+        }, { status: 404, headers: getMcpCorsHeaders(req) });
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
             jsonrpc: '2.0',
             error: { code: -32001, message: 'MCP session expired and no valid API key provided. Please re-initialize.' },
             id: requestBody.id ?? null,
-          }, { status: 404, headers: MCP_CORS_HEADERS });
+          }, { status: 404, headers: getMcpCorsHeaders(req) });
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
     // Stateless fallback using api_key (e.g. for simple HTTP transport clients or initialize method)
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: MCP_CORS_HEADERS });
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32001, message: 'Authentication failed: missing tenant or user context' },
       id: requestBody.id ?? null,
-    }, { status: 401, headers: MCP_CORS_HEADERS });
+    }, { status: 401, headers: getMcpCorsHeaders(req) });
   }
 
   try {
@@ -130,11 +130,11 @@ export async function POST(req: NextRequest) {
 
     if (!responseMessage) {
       // No response generated (e.g. for notifications)
-      return new NextResponse(null, { status: 202, headers: MCP_CORS_HEADERS });
+      return new NextResponse(null, { status: 202, headers: getMcpCorsHeaders(req) });
     }
 
     const headers = new Headers({
-      ...MCP_CORS_HEADERS,
+      ...getMcpCorsHeaders(req),
       'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
     });
 
@@ -175,11 +175,11 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32603, message: 'Internal Server Error' },
       id: requestBody?.id ?? null,
-    }, { status: 500, headers: MCP_CORS_HEADERS });
+    }, { status: 500, headers: getMcpCorsHeaders(req) });
   }
 
 }
 
 export async function OPTIONS(req: NextRequest) {
-  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: MCP_CORS_HEADERS });
+  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
 }

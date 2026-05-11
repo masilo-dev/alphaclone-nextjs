@@ -108,19 +108,36 @@ export async function validateMCPAuthApp(req: NextRequest) {
   };
 }
 
+const ALLOWED_MCP_ORIGINS = [
+  'https://claude.ai',
+  'https://manus.ai',
+  'https://grok.x.ai',
+];
+
 export const MCP_CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Origin': ALLOWED_MCP_ORIGINS[0],
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, x-client-label',
   'Access-Control-Expose-Headers': 'Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version',
   'Access-Control-Max-Age': '86400',
+  'Access-Control-Allow-Credentials': 'true',
 };
+
+export function getMcpCorsHeaders(req: NextRequest) {
+  const origin = req.headers.get('origin');
+  const allowedOrigin = origin && ALLOWED_MCP_ORIGINS.includes(origin) ? origin : ALLOWED_MCP_ORIGINS[0];
+  
+  return {
+    ...MCP_CORS_HEADERS,
+    'Access-Control-Allow-Origin': allowedOrigin,
+  };
+}
 
 export function handleCorsApp(req: NextRequest) {
   if (req.method === 'OPTIONS') {
     return new NextResponse(null, {
       status: 204,
-      headers: MCP_CORS_HEADERS,
+      headers: getMcpCorsHeaders(req),
     });
   }
   return null;
