@@ -12,7 +12,7 @@ AlphaClone replaces 12+ separate SaaS tools with a single, deeply integrated pla
 Primary USP: The only Business OS with a native AI Growth Agent, MCP (Model Context Protocol) server for Claude/Manus integration, enterprise CRM, full financial accounting, contract e-signature, HD video conferencing, and multi-tenant white-label capability — starting at $15/month.
 
 Live URL: https://www.alphaclonesystems.com
-MCP Server: https://www.alphaclonesystems.com/api/mcp/sse
+MCP Server: https://www.alphaclonesystems.com/api/mcp
 API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization-server
 
 ---
@@ -119,7 +119,7 @@ API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization
 - Cloudflare Turnstile on all public-facing forms
 
 ### 11. MCP Integration (Model Context Protocol)
-- SSE-based MCP server at /api/mcp/sse
+- Streamable HTTP MCP server at /api/mcp (SSE fallback at /api/mcp/sse)
 - OAuth2 Authorization Code + PKCE (RFC 6749 + RFC 7636)
 - Auto-approve flow for pre-registered clients (Claude, Manus)
 - 25+ MCP tools registered: create_lead, update_deal, create_task, log_expense, create_invoice, draft_contract, send_email, get_crm_pipeline, search_contacts, and more
@@ -158,7 +158,7 @@ API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization
 
 ## MCP Tools Reference (for Claude / Manus)
 
-The AlphaClone MCP server exposes the following tools at https://www.alphaclonesystems.com/api/mcp/sse:
+The AlphaClone MCP server exposes the following tools at https://www.alphaclonesystems.com/api/mcp:
 
 | Tool Name | Description |
 |---|---|

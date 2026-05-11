@@ -125,12 +125,15 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const mcpOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com')
     .replace('//www.', '//');
 
-  /** Single-query URL: tenant and user are resolved from the key server-side (see /api/mcp/sse). */
+  /** Single-query URL: tenant and user are resolved from the key server-side. */
   const buildConnectionUrl = (token: string | null) => {
     const params = new URLSearchParams({
       api_key: token || 'YOUR_KEY_HERE',
     });
-    return `${mcpOrigin}/api/mcp/sse?${params.toString()}`;
+    // Claude web and Grok expect the modern single-endpoint pattern
+    // Manus still uses the classic SSE 2-endpoint pattern
+    const path = (setupType === 'claude' || setupType === 'grok') ? '/api/mcp' : '/api/mcp/sse';
+    return `${mcpOrigin}${path}?${params.toString()}`;
   };
 
   // Auth + per-user MCP token (reloads when session or workspace changes)
