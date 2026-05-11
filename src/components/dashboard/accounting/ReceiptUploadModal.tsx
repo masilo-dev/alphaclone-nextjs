@@ -4,19 +4,28 @@ import { X, Upload, Loader2, Camera, Receipt } from 'lucide-react';
 import { Card, Button, Input, Modal } from '../../ui/UIComponents';
 import { useTenant } from '../../../contexts/TenantContext';
 
+import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
+import { receiptService } from '../../../services/accounting/receiptService';
+import toast from 'react-hot-toast';
+
 interface ReceiptUploadModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: (data: any) => void;
+    onSuccess: () => void;
+    accounts: ChartOfAccount[];
 }
 
-export default function ReceiptUploadModal({ isOpen, onClose, onSuccess }: ReceiptUploadModalProps) {
+export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, accounts }: ReceiptUploadModalProps) {
     const { currentTenant } = useTenant();
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [extractedData, setExtractedData] = useState<any | null>(null);
+    const [selectedAccountId, setSelectedAccountId] = useState('');
+    const [selectedAssetAccountId, setSelectedAssetAccountId] = useState('');
+    const [isPaid, setIsPaid] = useState(true);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
@@ -73,10 +82,39 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess }: Recei
         }
     };
 
-    const handleConfirm = () => {
-        if (extractedData) {
-            onSuccess(extractedData);
+    const handleConfirm = async () => {
+        if (!extractedData || !currentTenant) return;
+        
+        setIsSaving(true);
+        try {
+            const { receipt, error: createError } = await receiptService.createReceipt({
+                receiptDate: extractedData.date,
+                description: extractedData.description,
+                amount: extractedData.amount,
+                category: extractedData.category,
+                accountId: selectedAccountId || undefined,
+                status: isPaid ? 'paid' : 'pending',
+                assetAccountId: isPaid ? (selectedAssetAccountId || undefined) : undefined,
+                imageUrl: preview || undefined, // In production, this would be a permanent URL
+                rawAiData: extractedData
+            });
+
+            if (createError) throw new Error(createError);
+
+            if (isPaid && receipt && selectedAssetAccountId) {
+                const { error: payError } = await receiptService.markAsPaid(receipt.id, selectedAssetAccountId);
+                if (payError) toast.error(`Linked to ledger failed: ${payError}`);
+                else toast.success('Expense recorded and paid!');
+            } else {
+                toast.success('Receipt saved as pending expense');
+            }
+
+            onSuccess();
             handleClose();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save receipt');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -187,23 +225,63 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess }: Recei
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
-                                        <Input
-                                            value={extractedData.category || ''}
-                                            onChange={(e) => setExtractedData({ ...extractedData, category: e.target.value })}
-                                            placeholder="e.g. Office Supplies, Travel, Software..."
-                                            className="bg-slate-900"
-                                        />
+                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category / Expense Account</label>
+                                        <select
+                                            value={selectedAccountId}
+                                            onChange={(e) => setSelectedAccountId(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                        >
+                                            <option value="">Select account...</option>
+                                            {accounts
+                                                .filter(a => a.accountType === 'expense' || a.accountType === 'other_expense')
+                                                .map(account => (
+                                                <option key={account.id} value={account.id}>
+                                                    {account.accountName}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-800">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-sm font-bold text-white">Already Paid?</span>
+                                            <button 
+                                                onClick={() => setIsPaid(!isPaid)}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${isPaid ? 'bg-teal-500' : 'bg-slate-700'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isPaid ? 'right-1' : 'left-1'}`} />
+                                            </button>
+                                        </div>
+
+                                        {isPaid && (
+                                            <div>
+                                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Paid from account</label>
+                                                <select
+                                                    value={selectedAssetAccountId}
+                                                    onChange={(e) => setSelectedAssetAccountId(e.target.value)}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                                >
+                                                    <option value="">Select cash/bank account...</option>
+                                                    {accounts
+                                                        .filter(a => a.accountType === 'asset' || a.accountType === 'liability')
+                                                        .map(account => (
+                                                        <option key={account.id} value={account.id}>
+                                                            {account.accountName}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                            <Button variant="ghost" onClick={() => setExtractedData(null)}>
+                            <Button variant="ghost" onClick={() => setExtractedData(null)} disabled={isSaving}>
                                 Retry Upload
                             </Button>
-                            <Button onClick={handleConfirm}>
+                            <Button onClick={handleConfirm} isLoading={isSaving} disabled={!selectedAccountId || (isPaid && !selectedAssetAccountId)}>
                                 Confirm & Save Expense
                             </Button>
                         </div>

@@ -106,7 +106,20 @@ export async function POST(req: NextRequest) {
   }
 
   if (requestBody.method === 'resources/list') {
-    return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { resources: [] } }, { headers: getMcpCorsHeaders(req) });
+    return NextResponse.json({ 
+      jsonrpc: '2.0', 
+      id: requestBody.id, 
+      result: { 
+        resources: [
+          {
+            uri: 'mcp://business/snapshot',
+            name: 'Business Snapshot',
+            description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
+            mimeType: 'application/json'
+          }
+        ] 
+      } 
+    }, { headers: getMcpCorsHeaders(req) });
   }
 
   if (requestBody.method === 'prompts/list') {

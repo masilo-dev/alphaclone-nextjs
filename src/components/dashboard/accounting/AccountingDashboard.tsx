@@ -12,6 +12,7 @@ import { supabase } from '../../../lib/supabase';
 import ReceiptUploadModal from './ReceiptUploadModal';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
 import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
+import { receiptService, BusinessReceipt } from '../../../services/accounting/receiptService';
 import toast from 'react-hot-toast';
 import { JournalEntryModal } from './JournalEntryModal';
 import ReceiptGeneratorModal from './ReceiptGeneratorModal';
@@ -26,12 +27,13 @@ export default function AccountingDashboard() {
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
     
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'income' | 'balance'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'income' | 'balance' | 'receipts'>('overview');
     const [period, setPeriod] = useState<Period>('month');
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
     const [isReceiptGeneratorOpen, setIsReceiptGeneratorOpen] = useState(false);
     const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
+    const [receipts, setReceipts] = useState<BusinessReceipt[]>([]);
     const [stats, setStats] = useState({
         totalRevenue: 0,
         totalExpenses: 0,
@@ -118,7 +120,9 @@ export default function AccountingDashboard() {
                         recentTransactions: simpleTransactions
                     });
                     const { accounts: fetchedAccounts } = await chartOfAccountsService.getAccounts();
+                    const { receipts: fetchedReceipts } = await receiptService.getReceipts();
                     setAccounts(fetchedAccounts || []);
+                    setReceipts(fetchedReceipts || []);
                 }
             } finally {
                 if (mounted) setLoading(false);
@@ -142,21 +146,23 @@ export default function AccountingDashboard() {
         }
     };
 
-    const handleReceiptSuccess = async (extractedData: any) => {
+    const handleReceiptSuccess = async () => {
         setIsUploadOpen(false);
-        const loadToast = toast.loading('Logging expense...');
+        setLoading(true);
+    };
+
+    const handleMarkPaid = async (receiptId: string) => {
+        const cashAccount = accounts.find(a => a.accountType === 'asset' && (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash')));
+        if (!cashAccount) {
+            toast.error('No cash account found to pay from');
+            return;
+        }
+
+        const loadToast = toast.loading('Marking as paid...');
         try {
-            const { error } = await journalEntryService.createEntry({
-                entryDate: extractedData.date,
-                description: `Receipt: ${extractedData.description}`,
-                reference: 'AI-VISION',
-                lines: [
-                    { accountId: accounts[0].id, debitAmount: extractedData.amount, creditAmount: 0, description: extractedData.description },
-                    { accountId: accounts[1].id, debitAmount: 0, creditAmount: extractedData.amount, description: 'Cash Out' }
-                ]
-            });
+            const { success, error } = await receiptService.markAsPaid(receiptId, cashAccount.id);
             if (error) throw new Error(error);
-            toast.success('Logged!', { id: loadToast });
+            toast.success('Paid and added to ledger!', { id: loadToast });
             setLoading(true);
         } catch (e: any) {
             toast.error(e.message, { id: loadToast });
@@ -233,13 +239,13 @@ export default function AccountingDashboard() {
 
             {/* Mobile-Friendly Tab Switcher */}
             <div className="flex border-b border-white/5 overflow-x-auto no-scrollbar">
-                {(['overview', 'income', 'balance'] as const).map(tab => (
+                {(['overview', 'income', 'balance', 'receipts'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-6 py-4 text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border-b-2 ${activeTab === tab ? 'border-teal-500 text-white bg-teal-500/5' : 'border-transparent text-gray-500'}`}
                     >
-                        {tab === 'overview' ? 'Overview' : tab === 'income' ? 'Income' : 'Balance'}
+                        {tab === 'overview' ? 'Overview' : tab === 'income' ? 'Income' : tab === 'balance' ? 'Balance' : 'Receipts'}
                     </button>
                 ))}
             </div>
@@ -306,29 +312,55 @@ export default function AccountingDashboard() {
                 </Card>
             )}
 
-            {activeTab === 'balance' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-300">
-                    <Card className="p-6 bg-slate-900/60 border-white/5">
-                        <div className="text-xs font-black text-teal-500 uppercase tracking-widest mb-6 border-b border-teal-500/20 pb-2">Assets</div>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center"><span className="text-sm font-bold text-gray-400">Cash & Equivalents</span><span className="text-sm font-black text-white">${stats.cashBalance.toLocaleString()}</span></div>
-                            <div className="flex justify-between items-center"><span className="text-sm font-bold text-gray-400">Accounts Receivable</span><span className="text-sm font-black text-white">${stats.pendingInvoices.toLocaleString()}</span></div>
+            {activeTab === 'receipts' && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <Card className="bg-slate-900/40 border-white/5 overflow-hidden">
+                        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414]">
+                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-teal-500" /> Pending & Recent Receipts</h3>
+                            <div className="flex gap-2">
+                                <Button size="sm" variant="ghost" className="text-xs text-slate-400"><Filter size={14} className="mr-1" /> Filter</Button>
+                            </div>
                         </div>
-                        <div className="mt-8 pt-4 border-t border-white/5 flex justify-between items-center"><span className="text-xs font-black uppercase text-teal-500">Total Assets</span><span className="text-xl font-black text-white">${(stats.cashBalance + stats.pendingInvoices).toLocaleString()}</span></div>
-                    </Card>
-                    <Card className="p-6 bg-slate-900/60 border-white/5">
-                        <div className="text-xs font-black text-rose-500 uppercase tracking-widest mb-6 border-b border-rose-500/20 pb-2">Liabilities & Equity</div>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center"><span className="text-sm font-bold text-gray-400">Accounts Payable</span><span className="text-sm font-black text-white">$0.00</span></div>
-                            <div className="flex justify-between items-center"><span className="text-sm font-bold text-gray-400">Retained Earnings</span><span className="text-sm font-black text-white">${(stats.totalRevenue - stats.totalExpenses).toLocaleString()}</span></div>
+                        <div className="divide-y divide-white/5">
+                            {receipts.length === 0 ? (
+                                <div className="p-12 text-center text-slate-500 text-sm">No receipts found. Upload your first receipt to start tracking.</div>
+                            ) : (
+                                receipts.map(receipt => (
+                                    <div key={receipt.id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-all">
+                                        <div className="flex items-start gap-4 flex-1">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${receipt.status === 'paid' ? 'bg-teal-500/10 text-teal-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                <Receipt size={20} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-black text-white truncate">{receipt.description}</p>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(receipt.receiptDate).toLocaleDateString()}</span>
+                                                    <div className="w-1 h-1 rounded-full bg-slate-800" />
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${receipt.status === 'paid' ? 'text-teal-500' : 'text-amber-500'}`}>{receipt.status}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                                            <div className="text-right">
+                                                <p className="text-lg font-black text-white">${receipt.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                            </div>
+                                            {receipt.status === 'pending' && (
+                                                <Button size="sm" onClick={() => handleMarkPaid(receipt.id)} className="bg-teal-600/20 text-teal-500 hover:bg-teal-600 hover:text-white border border-teal-500/30">Mark Paid</Button>
+                                            )}
+                                            {receipt.status === 'paid' && (
+                                                <div className="text-teal-500 flex items-center gap-1 text-xs font-black uppercase"><CheckCircle2 size={14} /> Recorded</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
-                        <div className="mt-8 pt-4 border-t border-white/5 flex justify-between items-center"><span className="text-xs font-black uppercase text-rose-500">Total L & E</span><span className="text-xl font-black text-white">${(stats.totalRevenue - stats.totalExpenses).toLocaleString()}</span></div>
                     </Card>
                 </div>
             )}
 
             <JournalEntryModal isOpen={isManualEntryOpen} onClose={() => setIsManualEntryOpen(false)} accounts={accounts} onSuccess={() => setLoading(true)} />
-            <ReceiptUploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} onSuccess={handleReceiptSuccess} />
+            <ReceiptUploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} onSuccess={handleReceiptSuccess} accounts={accounts} />
             <ReceiptGeneratorModal isOpen={isReceiptGeneratorOpen} onClose={() => setIsReceiptGeneratorOpen(false)} />
 
             {/* Mobile Action Bar */}

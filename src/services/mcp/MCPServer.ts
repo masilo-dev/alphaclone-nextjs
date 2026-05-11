@@ -5,6 +5,8 @@ import {
   // @ts-ignore
   ListResourcesRequestSchema,
   // @ts-ignore
+  ReadResourceRequestSchema,
+  // @ts-ignore
   ListPromptsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCP_TOOLS } from './toolManifest';
@@ -58,6 +60,8 @@ import { projectKickoffWorkflow } from '../../workflows/project-kickoff';
 import { videoRoomOrchestrationWorkflow } from '../../workflows/video-room-orchestration';
 import { userOnboardingWorkflow } from '../../workflows/user-onboarding';
 import { mcpAgentWorkflow } from '../../workflows/mcp-agent';
+import { strategicAuditService } from '../StrategicAuditService';
+import { strategicThinkerService } from '../StrategicThinkerService';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -544,8 +548,37 @@ class AlphaCloneMCPServer {
 
   private setupToolHandlers() {
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-      resources: [],
+      resources: [
+        {
+          uri: 'mcp://business/snapshot',
+          name: 'Business Snapshot',
+          description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
+          mimeType: 'application/json'
+        }
+      ],
     }));
+
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request: any) => {
+      const uri = String(request.params.uri);
+      if (uri === 'mcp://business/snapshot') {
+        const tenantId = this.ctx?.tenantId;
+        if (!tenantId) throw new Error('Tenant context missing for resource read. Connect via workspace MCP URL.');
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { snapshot, error } = await strategicAuditService.getSnapshot(tenantId, supabaseAdmin);
+        if (error) throw new Error(error);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify(snapshot, null, 2)
+            }
+          ]
+        };
+      }
+      throw new Error(`Resource not found: ${uri}`);
+    });
+
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => ({
       prompts: [],
     }));
@@ -565,6 +598,26 @@ class AlphaCloneMCPServer {
 
       try {
         switch (name) {
+        case 'get_business_snapshot': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { snapshot, error } = await strategicAuditService.getSnapshot(tenant_id, supabaseAdmin);
+          if (error) throw new Error(error);
+          result = { content: [{ type: 'text', text: JSON.stringify(snapshot, null, 2) }] };
+          break;
+        }
+
+        case 'get_strategic_plan': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { snapshot, error } = await strategicAuditService.getSnapshot(tenant_id, supabaseAdmin);
+          if (error) throw new Error(error);
+          if (!snapshot) throw new Error('Could not generate snapshot for analysis');
+          const plan = strategicThinkerService.analyze(snapshot);
+          result = { content: [{ type: 'text', text: JSON.stringify(plan, null, 2) }] };
+          break;
+        }
+
         // â”€â”€ get_clients â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'get_clients': {
           const a = args as Record<string, any>;

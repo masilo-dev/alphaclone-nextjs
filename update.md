@@ -1,5 +1,22 @@
 # Update Log
 
+## Date: 2026-05-11 (CHIEF OF STAFF & STRATEGIC AUDIT SYSTEM)
+
+### Added
+- **Strategic Audit Service**: Implemented `StrategicAuditService.ts` to aggregate high-impact metrics (overdue invoices, stale leads, overdue tasks, social cadence) across the workspace.
+- **Strategic Thinker Service**: Developed `StrategicThinkerService.ts` to analyze business snapshots and generate "Strategic Themes," friction point analysis, and autonomous next steps.
+- **MCP Strategic Expansion**:
+    - **Tools**: Added `get_business_snapshot` and `get_strategic_plan` to the MCP tool manifest for autonomous agent discovery.
+    - **Resources**: Exposed `mcp://business/snapshot` as a dynamic resource for proactive business intelligence.
+- **Autonomous Reaction Engine**: Integrated the strategic analysis layer with the **Business Automation Engine**. The system now automatically emits `invoice_overdue_batch` events upon session start to trigger recovery playbooks.
+- **Accounting & Receipt Management**:
+    - **Business Receipts Schema**: Created `20260511_business_receipts.sql` for tracking expense status (pending, paid, void) and AI extraction metadata.
+    - **Receipt Upload Modal**: Upgraded `ReceiptUploadModal.tsx` and `AccountingDashboard.tsx` with manual verification workflows and payment status tracking.
+
+### Fixed
+- **MCP API Route Persistence**: Refactored the unified MCP route to support dynamic resource listing and PKCE session persistence.
+- **Vercel Build Stability**: Verified all new TypeScript services and components pass strict `tsc` checks for zero-error production deployment.
+
 ## Date: 2026-05-11 (CLAUDE MCP WEB & MULTI-ORIGIN STABILIZATION)
 
 ### Added

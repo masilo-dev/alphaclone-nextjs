@@ -17,6 +17,9 @@ interface JournalEntryModalProps {
 export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: JournalEntryModalProps) {
     const [loading, setLoading] = useState(false);
     const [transactionType, setTransactionType] = useState<'received' | 'spent'>('spent');
+    const [showAddAccount, setShowAddAccount] = useState(false);
+    const [newAccountName, setNewAccountName] = useState('');
+    const [selectedAssetAccountId, setSelectedAssetAccountId] = useState('');
     const [formData, setFormData] = useState({
         entryDate: new Date().toISOString().split('T')[0],
         description: '',
@@ -27,7 +30,6 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     });
 
     // Reset form when modal opens
-    useEffect(() => {
         if (isOpen) {
             setFormData({
                 entryDate: new Date().toISOString().split('T')[0],
@@ -38,8 +40,15 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                 ],
             });
             setTransactionType('spent');
+            
+            // Auto-select first cash/bank account
+            const defaultAsset = accounts.find(a => 
+                a.accountType === 'asset' && 
+                (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash') || a.accountName.toLowerCase().includes('bank'))
+            );
+            if (defaultAsset) setSelectedAssetAccountId(defaultAsset.id);
         }
-    }, [isOpen]);
+    }, [isOpen, accounts]);
 
     const addLine = () => {
         setFormData({
@@ -63,13 +72,13 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
         setLoading(true);
         try {
             // Find appropriate cash/bank account
-            const cashAccount = accounts.find(a => 
+            const cashAccount = accounts.find(a => a.id === selectedAssetAccountId) || accounts.find(a => 
                 a.accountType === 'asset' && 
                 (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash') || a.accountName.toLowerCase().includes('bank'))
             );
 
             if (!cashAccount) {
-                toast.error('Could not find a cash or bank account in your Chart of Accounts.');
+                toast.error('Please select a cash or bank account for this transaction.');
                 setLoading(false);
                 return;
             }
@@ -133,7 +142,37 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     };
 
     const totalAmount = formData.lines.reduce((sum, line) => sum + (line.amount || 0), 0);
-    const isValid = totalAmount > 0 && formData.lines.every(l => l.accountId);
+    const isValid = totalAmount > 0 && formData.lines.every(l => l.accountId) && selectedAssetAccountId;
+
+    const handleCreateAccount = async () => {
+        if (!newAccountName) return;
+        setLoading(true);
+        try {
+            // Simple logic to determine a code: find max in expenses and add 1
+            const expenseAccounts = accounts.filter(a => a.accountType === 'expense');
+            const maxCode = Math.max(...expenseAccounts.map(a => parseInt(a.accountCode) || 6000), 6000);
+            
+            const { account, error } = await chartOfAccountsService.createAccount({
+                accountName: newAccountName,
+                accountCode: (maxCode + 1).toString(),
+                accountType: transactionType === 'spent' ? 'expense' : 'revenue',
+                normalBalance: transactionType === 'spent' ? 'debit' : 'credit',
+            });
+
+            if (error) {
+                toast.error(`Error: ${error}`);
+            } else {
+                toast.success('Category created!');
+                setNewAccountName('');
+                setShowAddAccount(false);
+                onSuccess(); // Refresh accounts list
+            }
+        } catch (err) {
+            toast.error('Failed to create account');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <Modal
@@ -210,6 +249,26 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         placeholder="e.g., Monthly office rent, Client payment for web design"
                     />
+
+                    <div className="mt-4">
+                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">
+                            {transactionType === 'spent' ? 'Paid from account' : 'Deposit to account'} *
+                        </label>
+                        <select
+                            value={selectedAssetAccountId}
+                            onChange={(e) => setSelectedAssetAccountId(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                        >
+                            <option value="">Select cash/bank account...</option>
+                            {accounts
+                                .filter(a => a.accountType === 'asset' || a.accountType === 'liability') // Include credit cards
+                                .map(account => (
+                                <option key={account.id} value={account.id}>
+                                    {account.accountName} (${account.currentBalance.toLocaleString()})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Entry Lines */}
@@ -244,10 +303,25 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                                 {account.accountName}
                                             </option>
                                         ))}
+                                        <option value="ADD_NEW" className="text-teal-400 font-bold">+ Add new category...</option>
                                         {accounts.filter(a => transactionType === 'received' ? (a.accountType === 'revenue' || a.accountType === 'other_income') : (a.accountType === 'expense' || a.accountType === 'other_expense')).length === 0 && (
                                             <option disabled>No {transactionType === 'received' ? 'revenue' : 'expense'} accounts found.</option>
                                         )}
                                     </select>
+                                    
+                                    {line.accountId === 'ADD_NEW' && (
+                                        <div className="mt-2 p-3 bg-slate-800 rounded-lg border border-teal-500/30 flex gap-2">
+                                            <input 
+                                                autoFocus
+                                                placeholder="Category Name"
+                                                className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-white"
+                                                value={newAccountName}
+                                                onChange={(e) => setNewAccountName(e.target.value)}
+                                            />
+                                            <Button size="sm" onClick={handleCreateAccount} disabled={loading}>Add</Button>
+                                            <Button size="sm" variant="ghost" onClick={() => updateLine(index, 'accountId', '')}>Cancel</Button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex-[2] w-full">
                                     <input
