@@ -106,6 +106,32 @@ export async function POST(req: NextRequest) {
     }, { status: 401, headers: getMcpCorsHeaders(req) });
   }
 
+  // Robust discovery handling for stateless environments
+  if (requestBody.method === 'tools/list') {
+    const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: { tools: MCP_TOOLS }
+    }, { headers: getMcpCorsHeaders(req) });
+  }
+
+  if (requestBody.method === 'resources/list') {
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: { resources: [] }
+    }, { headers: getMcpCorsHeaders(req) });
+  }
+
+  if (requestBody.method === 'prompts/list') {
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: { prompts: [] }
+    }, { headers: getMcpCorsHeaders(req) });
+  }
+
   try {
     const mcpServer = createMCPServer({
       tenantId,
