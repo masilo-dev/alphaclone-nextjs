@@ -25,12 +25,32 @@ export async function POST(req: NextRequest) {
 
     // Forward everything to the messages handler
     const upstreamUrl = `${url.origin}/api/mcp/messages${url.search}`;
+    
+    // Explicitly propagate critical headers
+    const forwardHeaders = new Headers();
+    const headersToForward = [
+      'authorization', 
+      'x-api-key', 
+      'mcp-session-id', 
+      'mcp-protocol-version', 
+      'x-mcp-version', 
+      'x-client-label', 
+      'content-type'
+    ];
+    
+    headersToForward.forEach(h => {
+      const val = req.headers.get(h);
+      if (val) forwardHeaders.set(h, val);
+    });
+
+    // Ensure api_key from URL is also passed if not already in headers
+    if (apiKey && !forwardHeaders.has('x-api-key')) {
+      forwardHeaders.set('x-api-key', apiKey);
+    }
+
     const upstream = await fetch(upstreamUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-      },
+      headers: forwardHeaders,
       body: JSON.stringify(body),
     });
 
@@ -67,11 +87,20 @@ export async function GET(req: NextRequest) {
   const upstreamUrl = `${url.origin}/api/mcp/tools${url.search}`;
 
   try {
+    const forwardHeaders = new Headers();
+    const headersToForward = ['authorization', 'x-api-key', 'mcp-session-id', 'x-client-label'];
+    headersToForward.forEach(h => {
+      const val = req.headers.get(h);
+      if (val) forwardHeaders.set(h, val);
+    });
+
+    if (apiKey && !forwardHeaders.has('x-api-key')) {
+      forwardHeaders.set('x-api-key', apiKey);
+    }
+
     const upstream = await fetch(upstreamUrl, {
       method: 'GET',
-      headers: {
-        'x-api-key': apiKey,
-      },
+      headers: forwardHeaders,
     });
 
     const data = await upstream.json();
