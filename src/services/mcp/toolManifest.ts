@@ -490,6 +490,28 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'get_business_snapshot',
+    description: 'Pull the full business state snapshot including open deals, overdue invoices, stale leads, social activity, and pending tasks. Use this on session start or when a strategic overview is needed.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_strategic_plan',
+    description: 'Analyze the business snapshot and generate a strategic theme, session goals, and prioritized next steps. Use this to shift from reactive tasks to strategic growth.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'get_accounts_receivable_aging',
     description: 'Return accounts receivable aging buckets for open invoices.',
     inputSchema: {
