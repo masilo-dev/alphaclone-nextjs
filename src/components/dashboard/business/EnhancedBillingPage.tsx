@@ -128,7 +128,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
                         <DollarSign className="text-teal-500" /> Billing Hub
                     </h1>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Invoice Management & Collections</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoice Management & Collections</p>
                 </div>
                 <button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto h-12 px-8 bg-teal-600 text-white rounded-xl font-black uppercase text-xs shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2">
                     <Plus size={18} /> New Invoice
@@ -144,7 +144,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
                 ].map(s => (
                     <Card key={s.label} className="p-4 bg-slate-900/40 border-white/5">
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
+                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
                         <p className={`text-lg font-black ${s.color}`}>${s.value.toLocaleString()}</p>
                     </Card>
                 ))}
@@ -191,7 +191,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             <div className="space-y-4">
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                     {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                        <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
+                        <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
                     ))}
                 </div>
 
@@ -203,14 +203,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <div className={`p-2 rounded-lg bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={18} /></div>
                                     <div>
                                         <p className="text-sm font-black text-white">{inv.invoiceNumber}</p>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId] ? clientMap[inv.clientId] : 'Walk-in Client'}</p>
+                                        <p className="text-xs text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId] ? clientMap[inv.clientId] : 'Walk-in Client'}</p>
                                     </div>
                                 </div>
-                                <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-lg border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
+                                <span className={`text-xs font-black uppercase px-2 py-1 rounded-lg border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
                             </div>
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Due Date</p>
+                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Due Date</p>
                                     <p className="text-xs font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
                                 </div>
                                 <p className="text-lg font-black text-white">${inv.total.toLocaleString()}</p>

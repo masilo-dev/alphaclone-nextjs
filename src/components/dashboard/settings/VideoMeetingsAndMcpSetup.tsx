@@ -137,7 +137,7 @@ export function VideoMeetingsAndMcpSetup() {
                 <ol className="space-y-3">
                   {ZOOM_STEPS.map((s) => (
                     <li key={s.n} className="flex gap-3 text-xs text-slate-400 leading-relaxed">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-teal-500/15 border border-teal-500/25 text-teal-400 font-bold flex items-center justify-center text-[10px]">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-teal-500/15 border border-teal-500/25 text-teal-400 font-bold flex items-center justify-center text-xs">
                         {s.n}
                       </span>
                       <div>
@@ -213,7 +213,7 @@ export function VideoMeetingsAndMcpSetup() {
                 <ol className="space-y-3">
                   {MCP_STEPS.map((s) => (
                     <li key={s.n} className="flex gap-3 text-xs text-slate-400 leading-relaxed">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-300 font-bold flex items-center justify-center text-[10px]">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-300 font-bold flex items-center justify-center text-xs">
                         {s.n}
                       </span>
                       <div>
@@ -231,3 +231,4 @@ export function VideoMeetingsAndMcpSetup() {
     </div>
   );
 }
+

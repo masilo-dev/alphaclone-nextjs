@@ -74,12 +74,12 @@ function IntegrationCard({
             <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="font-semibold text-white text-sm">{integration.name}</h3>
               {integration.popular && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-full text-[10px] text-orange-400">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-full text-xs text-orange-400">
                   <Star className="w-2.5 h-2.5" /> Popular
                 </span>
               )}
               {integration.new && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full text-[10px] text-teal-400">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full text-xs text-teal-400">
                   <Zap className="w-2.5 h-2.5" /> New
                 </span>
               )}
@@ -255,3 +255,4 @@ export function IntegrationMarketplaceDashboard() {
     </div>
   );
 }
+

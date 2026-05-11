@@ -77,7 +77,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[10px] font-medium tracking-wide">
+                            <span className="text-xs font-medium tracking-wide">
                                 {t(item.labelKey)}
                             </span>
                         </button>
@@ -90,7 +90,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                     className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-500 hover:text-slate-300 active:scale-95 transition-transform"
                 >
                     <Menu className="w-6 h-6" />
-                    <span className="text-[10px] font-medium tracking-wide">{t('Menu')}</span>
+                    <span className="text-xs font-medium tracking-wide">{t('Menu')}</span>
                 </button>
             </div>
         </div>
@@ -98,3 +98,4 @@ const BottomNav: React.FC<BottomNavProps> = ({
 };
 
 export default BottomNav;
+

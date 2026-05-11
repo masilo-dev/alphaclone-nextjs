@@ -140,7 +140,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <h4 className="font-bold text-white text-base sm:text-lg truncate">{m.title}</h4>
-                                        <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
+                                        <span className="px-2 py-0.5 rounded text-xs sm:text-xs bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
                                             LIVE
                                         </span>
                                     </div>
@@ -202,3 +202,4 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
 };
 
 export default MeetingsListWidget;
+

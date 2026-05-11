@@ -375,7 +375,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-white font-medium">{login.email}</span>
-                                        <Badge variant="error" className="text-[10px]">{login.failure_reason}</Badge>
+                                        <Badge variant="error" className="text-xs">{login.failure_reason}</Badge>
                                     </div>
                                     <div className="flex items-center gap-4 text-xs text-slate-400">
                                         <div className="flex items-center gap-1">
@@ -474,3 +474,4 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
 };
 
 export default SecurityDashboard;
+

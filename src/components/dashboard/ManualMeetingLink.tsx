@@ -63,7 +63,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
 
             <div className="space-y-4">
                 <div>
-                    <label className="block text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 px-1">
+                    <label className="block text-xs font-black text-blue-400 uppercase tracking-widest mb-2 px-1">
                         Secure Room URL
                     </label>
                     <input
@@ -97,7 +97,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
             </div>
 
             <div className="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Protocol Instructions</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">Protocol Instructions</p>
                 <p className="text-xs text-slate-300 leading-relaxed">
                     Enter the full URL provided by your business host. Ensure the meeting link follows the <strong className="text-white">alphaclonesystems.com/meet/</strong> format for optimal security and video performance.
                 </p>
@@ -107,3 +107,4 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
 };
 
 export default ManualMeetingLink;
+

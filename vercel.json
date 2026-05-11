@@ -3,5 +3,15 @@
     "src/app/api/**/*.ts": {
       "maxDuration": 800
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/process-events",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/retry-failed",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

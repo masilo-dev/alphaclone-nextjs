@@ -1024,7 +1024,7 @@ ${parentContext}Return only the comment text.`;
                             <div key={c.commentUrn} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05] space-y-3">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-teal-400">{c.actor || 'LinkedIn User'}</span>
-                                <span className="text-[10px] text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
+                                <span className="text-xs text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
                               </div>
                               <p className="text-sm text-slate-300 leading-relaxed">{c.text}</p>
                               <div className="flex flex-col sm:flex-row gap-2">
@@ -1120,3 +1120,4 @@ ${parentContext}Return only the comment text.`;
     </div>
   );
 }
+

@@ -367,9 +367,9 @@ Return valid JSON with keys "subject" and "body".`;
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-white text-xs font-medium truncate">{contact.name}</p>
-                                                <p className="text-slate-400 text-[10px] truncate">{contact.email}</p>
+                                                <p className="text-slate-400 text-xs truncate">{contact.email}</p>
                                             </div>
-                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
+                                            <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
                                                 contact.salesStage === 'customer' ? 'bg-emerald-500/20 text-emerald-400' :
                                                 contact.salesStage === 'lead' ? 'bg-amber-500/20 text-amber-400' :
                                                 'bg-sky-500/20 text-sky-400'
@@ -447,3 +447,4 @@ Return valid JSON with keys "subject" and "body".`;
         </Modal>
     );
 };
+

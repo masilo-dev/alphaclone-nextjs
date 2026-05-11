@@ -552,7 +552,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 <div className="flex items-center gap-4 pointer-events-auto">
                     <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
                         <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
                             REC • {formatTime(secondsElapsed)}
                         </span>
                     </div>
@@ -565,7 +565,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
-                    <div className={`px-3 py-1 rounded-xl border text-[10px] font-bold uppercase tracking-widest ${
+                    <div className={`px-3 py-1 rounded-xl border text-xs font-bold uppercase tracking-widest ${
                         networkQuality === 'good'
                             ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
                             : networkQuality === 'poor'
@@ -692,3 +692,4 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 };
 
 export default CustomVideoRoom;
+

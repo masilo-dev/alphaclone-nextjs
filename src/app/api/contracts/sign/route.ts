@@ -120,6 +120,17 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        // EMIT AUTOMATION EVENT
+        if (updatedContract && updatedContract.status === 'fully_signed') {
+            const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
+            await emitBusinessEvent(updatedContract.tenant_id, 'contract_signed', {
+                contractId: updatedContract.id,
+                title: updatedContract.title,
+                clientId: updatedContract.client_id,
+                projectId: updatedContract.project_id
+            }).catch(err => console.error('Failed to emit contract_signed event:', err));
+        }
+
         return NextResponse.json({ success: true, contract: updatedContract });
 
     } catch (error: any) {

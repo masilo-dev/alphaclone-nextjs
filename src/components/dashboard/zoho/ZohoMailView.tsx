@@ -8,6 +8,7 @@ import {
     Filter, ChevronRight, Calendar
 } from 'lucide-react';
 import { generateEmailReply, generateEmailDraft } from '@/services/unifiedAIService';
+import { EmailBody } from '../../common/EmailBody';
 import { taskService } from '@/services/taskService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -307,7 +308,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             </div>
 
             <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 custom-scrollbar">
-                <div className="mt-4 mb-3 px-2 text-[10px] font-black text-gray-600 uppercase tracking-widest">Mailboxes</div>
+                <div className="mt-4 mb-3 px-2 text-xs font-black text-gray-600 uppercase tracking-widest">Mailboxes</div>
                 {folders.map(folder => (
                     <button
                         key={folder.folderId}
@@ -319,7 +320,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                             <span className="text-sm font-bold">{folder.folderName}</span>
                         </div>
                         {folder.unreadCount > 0 && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-teal-500 text-white">{folder.unreadCount}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-black bg-teal-500 text-white">{folder.unreadCount}</span>
                         )}
                     </button>
                 ))}
@@ -336,7 +337,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     return (
         <div className={`flex flex-col bg-[#0f0f0f] rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative ${isMobile ? 'h-auto min-h-[calc(100vh-120px)]' : 'h-[calc(100vh-140px)]'}`}>
             {needsReconnect && (
-                <div className="absolute top-0 left-0 right-0 z-[60] bg-red-600 px-6 py-3 flex items-center justify-between text-white font-black text-[10px] uppercase tracking-widest">
+                <div className="absolute top-0 left-0 right-0 z-[60] bg-red-600 px-6 py-3 flex items-center justify-between text-white font-black text-xs uppercase tracking-widest">
                     <div className="flex items-center gap-2">
                         <AlertCircle size={16} /> Zoho connection expired
                     </div>
@@ -389,7 +390,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                         <div className="flex items-center justify-between px-2 py-1">
                             <div className="flex gap-2 overflow-x-auto no-scrollbar">
                                 {['all', 'urgent', 'follow-up', 'newsletter'].map(cat => (
-                                    <button key={cat} onClick={() => setCategoryFilter(cat as any)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${categoryFilter === cat ? 'bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-white/5 border-white/5 text-gray-600'}`}>
+                                    <button key={cat} onClick={() => setCategoryFilter(cat as any)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${categoryFilter === cat ? 'bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-white/5 border-white/5 text-gray-600'}`}>
                                         {cat}
                                     </button>
                                 ))}
@@ -420,7 +421,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                             <span className={`text-xs font-black truncate max-w-[140px] uppercase tracking-wide ${msg.status === 'unread' ? 'text-white' : 'text-gray-500'}`}>
                                                 {msg.sender.split('<')[0].trim()}
                                             </span>
-                                            <span className="text-[10px] font-bold text-gray-600">{formatDate(msg.receivedTime)}</span>
+                                            <span className="text-xs font-bold text-gray-600">{formatDate(msg.receivedTime)}</span>
                                         </div>
                                         <p className={`text-sm font-bold truncate mb-1 ${msg.status === 'unread' ? 'text-teal-400' : 'text-gray-400'}`}>{msg.subject}</p>
                                         <p className="text-[11px] text-gray-600 truncate opacity-60 line-clamp-1">{msg.snippet}</p>
@@ -444,22 +445,22 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center px-2">
-                                                <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Recipient</label>
-                                                <button type="button" onClick={() => setIsContactPickerOpen(true)} className="text-[10px] font-black text-teal-400 uppercase tracking-widest hover:text-teal-300">
+                                                <label className="text-xs font-black text-gray-600 uppercase tracking-widest">Recipient</label>
+                                                <button type="button" onClick={() => setIsContactPickerOpen(true)} className="text-xs font-black text-teal-400 uppercase tracking-widest hover:text-teal-300">
                                                     + Add from CRM
                                                 </button>
                                             </div>
                                             <input type="email" required value={emailData.to} onChange={e => setEmailData({...emailData, to: e.target.value})} className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-5 text-base text-white outline-none focus:border-teal-500/50" placeholder="name@example.com" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">Subject</label>
+                                            <label className="text-xs font-black text-gray-600 uppercase tracking-widest px-2">Subject</label>
                                             <input type="text" required value={emailData.subject} onChange={e => setEmailData({...emailData, subject: e.target.value})} className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-5 text-base text-white outline-none focus:border-teal-500/50" placeholder="Topic" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center px-2">
-                                            <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Message</label>
-                                            <button type="button" onClick={() => setShowAiPrompt(!showAiPrompt)} className="flex items-center gap-2 text-[10px] font-black text-teal-500 uppercase tracking-widest bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20">
+                                            <label className="text-xs font-black text-gray-600 uppercase tracking-widest">Message</label>
+                                            <button type="button" onClick={() => setShowAiPrompt(!showAiPrompt)} className="flex items-center gap-2 text-xs font-black text-teal-500 uppercase tracking-widest bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20">
                                                 <Sparkles size={12} /> AI Assist
                                             </button>
                                         </div>
@@ -479,12 +480,12 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                         <button onClick={() => setSelectedMessage(null)} className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/5 text-gray-400"><ArrowLeft size={20} /></button>
                                         <div className="min-w-0">
                                             <h2 className="text-sm font-black text-white truncate uppercase tracking-tight">{messageContent?.subject || 'No Subject'}</h2>
-                                            <p className="text-[10px] text-teal-400 font-bold truncate lowercase">{messageContent?.sender}</p>
+                                            <p className="text-xs text-teal-400 font-bold truncate lowercase">{messageContent?.sender}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {!isMobile && (
-                                            <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-2 bg-teal-500/10 text-teal-400 px-4 py-2.5 rounded-xl border border-teal-600/20 text-[10px] font-black uppercase tracking-widest">
+                                            <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-2 bg-teal-500/10 text-teal-400 px-4 py-2.5 rounded-xl border border-teal-600/20 text-xs font-black uppercase tracking-widest">
                                                 <Sparkles size={14} /> AI Reply
                                             </button>
                                         )}
@@ -508,7 +509,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                 <button onClick={() => handleAiReply()} className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black uppercase text-xs shadow-lg">AI Reply Assist</button>
                                             )}
                                         </div>
-                                        <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-base email-content" dangerouslySetInnerHTML={{ __html: messageContent?.content || '<div class="text-gray-500 italic py-20 text-center">No content</div>' }} />
+                                         <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-base email-content">
+                                            <EmailBody 
+                                                content={messageContent?.content || '<div class="text-gray-500 italic py-20 text-center">No content</div>'} 
+                                            />
+                                         </div>
                                     </div>
                                 </div>
                                 
@@ -520,7 +525,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                             <button 
                                                 key={i} 
                                                 onClick={() => handleSmartReply(reply)}
-                                                className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-bold text-gray-400 hover:text-teal-400 hover:border-teal-500/30 whitespace-nowrap transition-all"
+                                                className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-400 hover:text-teal-400 hover:border-teal-500/30 whitespace-nowrap transition-all"
                                             >
                                                 {reply}
                                             </button>
@@ -594,3 +599,4 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         </div>
     );
 }
+

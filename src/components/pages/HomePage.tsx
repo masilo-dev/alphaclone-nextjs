@@ -101,7 +101,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLogin }) => {
                         </AnimateIn>
 
                         <AnimateIn type="fadeIn" delay={0.5}>
-                            <div className="mt-16 flex items-center justify-center gap-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                            <div className="mt-16 flex items-center justify-center gap-8 text-xs font-black text-slate-500 uppercase tracking-[0.3em]">
                                 <span className="flex items-center gap-2"><Shield className="w-3 h-3" /> Encrypted</span>
                                 <span>• Multi-Tenant</span>
                                 <span>• AI Integrated</span>
@@ -139,4 +139,5 @@ const HomePage: React.FC<HomePageProps> = ({ onLogin }) => {
 };
 
 export default HomePage;
+
 

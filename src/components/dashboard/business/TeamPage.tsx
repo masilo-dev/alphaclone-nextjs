@@ -276,7 +276,7 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser }: any) => {
             </div>
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/50">
-                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg border ${roleColors[member.role as keyof typeof roleColors] || roleColors.member}`}>
+                <span className={`text-xs font-bold uppercase tracking-widest px-2 py-1 rounded-lg border ${roleColors[member.role as keyof typeof roleColors] || roleColors.member}`}>
                     {member.role?.charAt(0).toUpperCase() + member.role?.slice(1) || 'Member'}
                 </span>
                 {isCurrentUser && (
@@ -368,3 +368,4 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
 };
 
 export default TeamPage;
+

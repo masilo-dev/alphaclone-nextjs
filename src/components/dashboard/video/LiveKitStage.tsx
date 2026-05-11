@@ -223,7 +223,7 @@ export default function LiveKitStage({
                 <div className="flex items-center gap-4 pointer-events-auto">
                     <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
                         <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
                             REC • {formatElapsed(secondsElapsed)}
                         </span>
                     </div>
@@ -277,7 +277,7 @@ export default function LiveKitStage({
                         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 border border-white/10">
                             {micEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                         </span>
-                        <span className="text-[10px] font-medium text-slate-400">Audio</span>
+                        <span className="text-xs font-medium text-slate-400">Audio</span>
                     </button>
                     <button
                         type="button"
@@ -288,7 +288,7 @@ export default function LiveKitStage({
                         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 border border-white/10">
                             {camEnabled ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                         </span>
-                        <span className="text-[10px] font-medium text-slate-400">Video</span>
+                        <span className="text-xs font-medium text-slate-400">Video</span>
                     </button>
                     <button
                         type="button"
@@ -299,10 +299,11 @@ export default function LiveKitStage({
                         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/40">
                             <PhoneOff className="w-5 h-5" />
                         </span>
-                        <span className="text-[10px] font-medium text-slate-400">End</span>
+                        <span className="text-xs font-medium text-slate-400">End</span>
                     </button>
                 </div>
             </div>
         </div>
     );
 }
+

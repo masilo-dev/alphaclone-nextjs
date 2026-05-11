@@ -485,8 +485,8 @@ const MarketplacePage: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-white font-bold">{item.name}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${isActive ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' : 'text-teal-300 bg-teal-500/10 border-teal-500/30'}`}>Featured</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 border border-green-500/20 text-green-400">Free</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${isActive ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' : 'text-teal-300 bg-teal-500/10 border-teal-500/30'}`}>Featured</span>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/10 border border-green-500/20 text-green-400">Free</span>
                   </div>
                   <p className="text-slate-400 text-sm leading-relaxed line-clamp-2">{item.description}</p>
                   <div className="flex items-center gap-4 mt-3">
@@ -586,14 +586,14 @@ const MarketplacePage: React.FC = () => {
                         {item.name}
                       </h3>
                       {item.badge && (
-                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+                        <span className="px-1.5 py-0.5 rounded-md text-xs font-black uppercase tracking-wider bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
                           {item.badge}
                         </span>
                       )}
                     </div>
                     <p className="text-slate-500 text-xs mt-0.5">{item.developer}</p>
                   </div>
-                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusCfg.cls}`}>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold border ${statusCfg.cls}`}>
                     {item.price ? `$${item.price}/mo` : statusCfg.label}
                   </span>
                 </div>
@@ -606,12 +606,12 @@ const MarketplacePage: React.FC = () => {
                 {/* Features (top 3) */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {item.features.slice(0, 3).map(f => (
-                    <span key={f} className="px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] rounded-md">
+                    <span key={f} className="px-2 py-0.5 bg-slate-800 text-slate-400 text-xs rounded-md">
                       {f}
                     </span>
                   ))}
                   {item.features.length > 3 && (
-                    <span className="px-2 py-0.5 bg-slate-800 text-slate-500 text-[10px] rounded-md">
+                    <span className="px-2 py-0.5 bg-slate-800 text-slate-500 text-xs rounded-md">
                       +{item.features.length - 3} more
                     </span>
                   )}
@@ -665,3 +665,4 @@ const MarketplacePage: React.FC = () => {
 };
 
 export default MarketplacePage;
+

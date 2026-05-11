@@ -76,8 +76,8 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                             </div>
                         </div>
                         <div className="text-center">
-                            <p className="text-white font-black uppercase tracking-[0.2em] text-[10px] mb-1">Synchronizing</p>
-                            <p className="text-slate-500 text-[9px] uppercase font-mono tracking-widest animate-pulse">Establishing secure link...</p>
+                            <p className="text-white font-black uppercase tracking-[0.2em] text-xs mb-1">Synchronizing</p>
+                            <p className="text-slate-500 text-xs uppercase font-mono tracking-widest animate-pulse">Establishing secure link...</p>
                         </div>
                     </motion.div>
                 ) : isGmailIntegrated ? (
@@ -137,3 +137,4 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
 };
 
 export default MailTab;
+

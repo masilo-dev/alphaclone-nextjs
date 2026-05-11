@@ -342,7 +342,7 @@ export default function SocialCommandCenter() {
                         <div key={bm.id} className="group p-4 bg-slate-900 border border-slate-800 rounded-2xl hover:border-teal-500/50 transition-all flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-slate-800 rounded-md text-slate-400">
+                                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 bg-slate-800 rounded-md text-slate-400">
                                         {bm.platform}
                                     </span>
                                     <div className="flex items-center gap-1">
@@ -358,7 +358,7 @@ export default function SocialCommandCenter() {
                                 <p className="text-xs text-slate-500 truncate mb-3">{bm.url}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-lg border border-teal-500/20">
+                                <span className="text-xs px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded-lg border border-teal-500/20">
                                     {bm.category}
                                 </span>
                             </div>
@@ -462,7 +462,7 @@ export default function SocialCommandCenter() {
                                     <p className="text-sm text-slate-300 leading-relaxed italic">
                                         "{item.last_post_summary}"
                                     </p>
-                                    <p className="mt-3 text-[10px] text-slate-600">
+                                    <p className="mt-3 text-xs text-slate-600">
                                         Last checked: {item.last_checked_at ? new Date(item.last_checked_at).toLocaleString() : 'Never'}
                                     </p>
                                 </div>
@@ -535,7 +535,7 @@ export default function SocialCommandCenter() {
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="px-2 py-1 bg-rose-500/10 border border-rose-500/30 rounded text-[10px] font-bold text-rose-400 uppercase">
+                                        <div className="px-2 py-1 bg-rose-500/10 border border-rose-500/30 rounded text-xs font-bold text-rose-400 uppercase">
                                             Controversy Score: {videoResult.controversyScore}%
                                         </div>
                                     </div>
@@ -587,3 +587,4 @@ export default function SocialCommandCenter() {
         </div>
     );
 }
+

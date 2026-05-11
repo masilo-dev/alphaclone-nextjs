@@ -92,7 +92,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           <Signal className="w-3.5 h-3.5" />
           <Wifi className="w-3.5 h-3.5" />
           <div className="flex items-center gap-1">
-            <span className="text-[10px]">88%</span>
+            <span className="text-xs">88%</span>
             <Battery className="w-4 h-4 rotate-90" />
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
             <span className="text-sm font-medium">Search Systems</span>
             <div className="hidden sm:flex items-center gap-1 ml-4 py-0.5 px-2 bg-white/5 rounded border border-white/10">
               <Command className="w-2.5 h-2.5" />
-              <span className="text-[10px]">K</span>
+              <span className="text-xs">K</span>
             </div>
           </div>
         </motion.div>
@@ -153,7 +153,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
                 <app.icon className="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-md z-10" />
               </div>
-              <span className="text-[10px] sm:text-[12px] font-bold text-white/90 drop-shadow-md text-center">
+              <span className="text-xs sm:text-[12px] font-bold text-white/90 drop-shadow-md text-center">
                 {app.name}
               </span>
             </motion.div>
@@ -206,7 +206,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
                 />
               </div>
               <div className="p-4 flex flex-col gap-2">
-                <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
+                <p className="text-xs uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
                 {['Launch Dashboard', 'Start Meeting', 'Open Support', 'View Invoices'].map((action) => (
                    <div key={action} className="p-3 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between group transition-colors">
                      <span className="text-sm font-medium">{action}</span>
@@ -221,4 +221,5 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
     </div>
   );
 }
+
 

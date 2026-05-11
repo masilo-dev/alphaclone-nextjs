@@ -137,7 +137,7 @@ const SuperAdminUsersTab: React.FC = () => {
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-x-auto backdrop-blur-md min-w-0">
                 <table className="w-full min-w-[720px] text-left border-collapse">
                     <thead>
-                        <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-500 text-[10px] uppercase tracking-widest font-black">
+                        <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-500 text-xs uppercase tracking-widest font-black">
                             <th className="p-4">User Identity</th>
                             <th className="p-4">Platform Role</th>
                             <th className="p-4">Account Status</th>
@@ -172,7 +172,7 @@ const SuperAdminUsersTab: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                                        <span className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                                                 user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                                                     'bg-slate-800 text-slate-400 border border-white/5'
                                             }`}>
@@ -226,3 +226,4 @@ const SuperAdminUsersTab: React.FC = () => {
 };
 
 export default SuperAdminUsersTab;
+

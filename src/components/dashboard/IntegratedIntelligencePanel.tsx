@@ -137,7 +137,7 @@ export function IntegratedIntelligencePanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {topModules.map((moduleAssessment) => (
           <div key={moduleAssessment.module} className="rounded-lg border border-white/10 bg-slate-950/50 p-2">
-            <div className="text-[10px] uppercase tracking-wide text-slate-400">
+            <div className="text-xs uppercase tracking-wide text-slate-400">
               {MODULE_LABELS[moduleAssessment.module]}
             </div>
             <div className="text-lg font-bold text-white">{moduleAssessment.score.toFixed(0)}</div>
@@ -192,3 +192,4 @@ export function IntegratedIntelligencePanel() {
     </div>
   );
 }
+

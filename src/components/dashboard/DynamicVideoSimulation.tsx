@@ -162,7 +162,7 @@ const DynamicVideoSimulation = () => {
                         >
                             <div className="flex gap-2 items-center mb-2">
                                 <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                                <span className="text-[10px] text-teal-400 font-mono uppercase">AI Agent Active</span>
+                                <span className="text-xs text-teal-400 font-mono uppercase">AI Agent Active</span>
                             </div>
                             <div className="text-xs text-slate-300 font-mono">
                                 {"Generating marketing assets..."}
@@ -202,7 +202,7 @@ const DynamicVideoSimulation = () => {
                 >
                     <div className="flex gap-2 mb-4">
                         {currentScene.tags.map((tag, i) => (
-                            <span key={i} className="px-3 py-1 bg-teal-500/20 text-teal-400 text-[10px] font-bold rounded-full uppercase tracking-widest border border-teal-500/30">
+                            <span key={i} className="px-3 py-1 bg-teal-500/20 text-teal-400 text-xs font-bold rounded-full uppercase tracking-widest border border-teal-500/30">
                                 {tag}
                             </span>
                         ))}
@@ -290,3 +290,4 @@ const DynamicVideoSimulation = () => {
 };
 
 export default DynamicVideoSimulation;
+

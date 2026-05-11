@@ -276,7 +276,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white uppercase tracking-tighter">AI Bulk Outreach</h2>
-                            <p className="text-[9px] text-slate-500 font-medium tracking-wide">MULTI-PROVIDER PERSONALIZATION</p>
+                            <p className="text-xs text-slate-500 font-medium tracking-wide">MULTI-PROVIDER PERSONALIZATION</p>
                         </div>
                     </div>
                     <button
@@ -291,20 +291,20 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     {/* Left Side: Lead Selection */}
                     <div className="w-1/2 border-r border-slate-800 flex flex-col p-6 bg-slate-950/30">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-white text-[10px] font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
+                            <h3 className="text-white text-xs font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
                                 Select Leads ({selectedLeads.length}/20)
                             </h3>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setSelectedLeads(filteredLeads.slice(0, 20).map(l => l.id))}
-                                    className="text-[10px] text-teal-400 hover:text-teal-300 uppercase font-bold tracking-widest transition-colors"
+                                    className="text-xs text-teal-400 hover:text-teal-300 uppercase font-bold tracking-widest transition-colors"
                                 >
                                     Select All
                                 </button>
                                 <button
                                     onClick={() => setSelectedLeads([])}
-                                    className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                    className="text-xs text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
                                 >
                                     Clear All
                                 </button>
@@ -351,9 +351,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-white truncate">{lead.businessName}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[10px] text-slate-500 uppercase tracking-widest">{lead.industry || 'Lead'}</span>
-                                                <span className="text-[10px] text-slate-700">·</span>
-                                                <span className="text-[10px] text-slate-500 truncate">{inferRecipientEmail(lead) || 'No recipient email'}</span>
+                                                <span className="text-xs text-slate-500 uppercase tracking-widest">{lead.industry || 'Lead'}</span>
+                                                <span className="text-xs text-slate-700">·</span>
+                                                <span className="text-xs text-slate-500 truncate">{inferRecipientEmail(lead) || 'No recipient email'}</span>
                                             </div>
                                         </div>
                                     </button>
@@ -383,7 +383,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                     {res.status === 'success' ? 'Sent' : 'Failed'}
                                                 </Badge>
                                             </div>
-                                            {res.error && <p className="text-[10px] text-red-400 mt-1">{res.error}</p>}
+                                            {res.error && <p className="text-xs text-red-400 mt-1">{res.error}</p>}
                                         </div>
                                     ))}
                                 </div>
@@ -398,7 +398,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         ) : (
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
                                         <Mail className="w-3.5 h-3.5" />
                                         Step 1: Outgoing Sender
                                     </h3>
@@ -426,7 +426,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                             <Mail className={`w-5 h-5 ${selectedIntegrationId === integration.id ? 'text-teal-400' : 'text-slate-500'}`} />
                                                         </div>
                                                         <div className="text-left">
-                                                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{integration.name}</p>
+                                                            <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{integration.name}</p>
                                                             <p className="text-white text-sm font-bold truncate max-w-[200px]">
                                                                 {integration.config.fromEmail || integration.config.email || 'Connected Account'}
                                                             </p>
@@ -448,7 +448,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                 variant="outline" 
                                                 size="sm" 
                                                 onClick={() => window.open('/dashboard/settings/integrations', '_blank')}
-                                                className="text-[10px] uppercase tracking-widest font-bold"
+                                                className="text-xs uppercase tracking-widest font-bold"
                                             >
                                                 Connect Provider
                                             </Button>
@@ -458,7 +458,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         Step 2: Tone of Voice
                                     </h3>
@@ -475,14 +475,14 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                 <p className={`text-xs font-black uppercase tracking-widest ${selectedTone === tone.id ? 'text-teal-400' : 'text-slate-400'}`}>
                                                     {tone.label}
                                                 </p>
-                                                <p className="text-[10px] text-slate-500 mt-1">{tone.description}</p>
+                                                <p className="text-xs text-slate-500 mt-1">{tone.description}</p>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
                                         <Zap className="w-3.5 h-3.5" />
                                         Step 3: Custom Instructions
                                     </h3>
@@ -494,7 +494,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[140px] p-2 resize-none"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-slate-600 mt-3 px-2 italic">
+                                    <p className="text-xs text-slate-600 mt-3 px-2 italic">
                                         AlphaClone AI will personalize each email based on lead data.
                                     </p>
                                 </div>
@@ -517,7 +517,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             </div>
                                         )}
                                     </Button>
-                                    <p className="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-[0.2em] font-bold">
+                                    <p className="text-center text-xs text-slate-500 mt-4 uppercase tracking-[0.2em] font-bold">
                                         Powered by AlphaClone Intelligence
                                     </p>
                                 </div>
@@ -531,4 +531,5 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 };
 
 export default AIOutreachModal;
+
 

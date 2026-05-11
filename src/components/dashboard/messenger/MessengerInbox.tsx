@@ -307,7 +307,7 @@ export default function MessengerInbox() {
                             <div className="flex flex-col items-center justify-center py-20 text-gray-600 opacity-60 text-center px-6">
                                 <Inbox size={40} className="mb-4 opacity-20" />
                                 <p className="text-sm font-semibold">No conversations</p>
-                                <p className="text-[10px] uppercase tracking-widest mt-1">Inbox is empty</p>
+                                <p className="text-xs uppercase tracking-widest mt-1">Inbox is empty</p>
                             </div>
                         ) : (
                             filteredConversations.map(conv => (
@@ -330,11 +330,11 @@ export default function MessengerInbox() {
                                                 </h3>
                                                 <div className="flex items-center gap-1">
                                                     <div className={`w-1.5 h-1.5 ${conv.metadata?.platform === 'instagram' ? 'bg-pink-500' : 'bg-green-500'} rounded-full`} />
-                                                    <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
+                                                    <span className="text-xs font-black text-gray-600 uppercase tracking-widest">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <span className="text-[9px] font-black text-gray-600 uppercase">
+                                        <span className="text-xs font-black text-gray-600 uppercase">
                                             {new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
@@ -367,13 +367,13 @@ export default function MessengerInbox() {
                                         <div>
                                             <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-[10px] ${activeConv?.metadata?.platform === 'instagram' ? 'text-pink-400' : 'text-blue-400'} font-black uppercase tracking-[0.1em]`}>
+                                                <span className={`text-xs ${activeConv?.metadata?.platform === 'instagram' ? 'text-pink-400' : 'text-blue-400'} font-black uppercase tracking-[0.1em]`}>
                                                     {activeConv?.metadata?.platform === 'instagram' ? 'Instagram Direct' : 'Facebook Messenger'}
                                                 </span>
                                                 {activeConv?.contact_id && (
                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-500 rounded-md border border-green-500/20">
                                                         <CheckCircle2 size={10} />
-                                                        <span className="text-[8px] font-black uppercase">CRM Linked</span>
+                                                        <span className="text-xs font-black uppercase">CRM Linked</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -394,7 +394,7 @@ export default function MessengerInbox() {
                                 {msgLoading ? (
                                     <div className="flex flex-col items-center justify-center py-40 gap-3 opacity-20">
                                         <Loader2 className="animate-spin text-blue-500" size={32} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Loading Analytics</span>
+                                        <span className="text-xs font-black uppercase tracking-widest">Loading Analytics</span>
                                     </div>
                                 ) : (
                                     <>
@@ -413,7 +413,7 @@ export default function MessengerInbox() {
                                                         : 'bg-white/5 text-gray-200 border border-white/5 rounded-bl-none'
                                                     }`}>
                                                         <p className="leading-relaxed">{msg.text}</p>
-                                                        <div className={`text-[8px] mt-2 font-black uppercase tracking-widest ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
+                                                        <div className={`text-xs mt-2 font-black uppercase tracking-widest ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
@@ -431,7 +431,7 @@ export default function MessengerInbox() {
                                         <button 
                                             onClick={handleAiSuggest}
                                             disabled={aiGenerating || msgLoading}
-                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-black uppercase tracking-widest text-[9px] disabled:opacity-50"
+                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-black uppercase tracking-widest text-xs disabled:opacity-50"
                                         >
                                             {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                             <span>Smart Reply</span>
@@ -467,9 +467,9 @@ export default function MessengerInbox() {
                             <div className="mt-12 p-6 bg-teal-600/5 rounded-2xl border border-teal-500/10 max-w-sm">
                                 <div className="flex items-center gap-2 mb-3 text-teal-400">
                                     <ShieldCheck size={16} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Enterprise Shield</span>
+                                    <span className="text-xs font-black uppercase tracking-widest">Enterprise Shield</span>
                                 </div>
-                                <p className="text-[10px] text-gray-500 text-left leading-relaxed font-bold uppercase tracking-wide">
+                                <p className="text-xs text-gray-500 text-left leading-relaxed font-bold uppercase tracking-wide">
                                     Communication is end-to-end reliable. 
                                     Responses are tracked within the AlphaClone CRM for 360-degree customer intelligence.
                                 </p>
@@ -497,3 +497,4 @@ export default function MessengerInbox() {
         </div>
     );
 }
+

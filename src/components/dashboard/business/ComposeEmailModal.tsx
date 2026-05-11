@@ -293,7 +293,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-white uppercase tracking-tight">Compose Email</h2>
-                                    <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">{selectedProvider?.name || 'Unified'} · AI Assistant</p>
+                                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">{selectedProvider?.name || 'Unified'} · AI Assistant</p>
                                 </div>
                             </div>
                             <button
@@ -320,7 +320,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     <div className="p-2 bg-teal-500 rounded-lg">
                                         <Wand2 className="w-3 h-3 text-white" />
                                     </div>
-                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-400">AI Assistant</span>
+                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-teal-400">AI Assistant</span>
                                 </div>
 
                                 <div className="space-y-4 relative z-10">
@@ -329,7 +329,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             <button
                                                 key={tone.id}
                                                 onClick={() => setSelectedTone(tone.id)}
-                                                className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${selectedTone === tone.id
+                                                className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${selectedTone === tone.id
                                                     ? 'bg-teal-500 text-white border-teal-400 shadow-lg shadow-teal-500/20'
                                                     : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
                                                     }`}
@@ -352,7 +352,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         <Button
                                             onClick={handleAIGenerate}
                                             disabled={generating || !aiPrompt.trim()}
-                                            className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-[9px] font-black uppercase tracking-widest px-5 rounded-2xl shrink-0 shadow-xl shadow-teal-600/20"
+                                            className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest px-5 rounded-2xl shrink-0 shadow-xl shadow-teal-600/20"
                                         >
                                             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write with AI'}
                                         </Button>
@@ -364,13 +364,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 {/* PROVIDER SELECTION */}
                                 {availableProviders.length > 0 && (
                                     <div>
-                                        <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Email Provider</label>
+                                        <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Email Provider</label>
                                         <div className="flex flex-wrap gap-2">
                                             {availableProviders.map(provider => (
                                                 <button
                                                     key={provider.id}
                                                     onClick={() => setSelectedProvider(provider)}
-                                                    className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                                    className={`px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
                                                         ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
                                                         : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
                                                         }`}
@@ -384,7 +384,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 {/* FROM: SENDER */}
                                 <div>
-                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender Address</label>
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender Address</label>
                                     <div className="relative group">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                             <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
@@ -397,12 +397,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
                                         />
                                     </div>
-                                    <p className="mt-2 px-1 text-[8px] text-slate-500 font-mono uppercase tracking-wider">Note: Ensure this address is verified with your selected provider.</p>
+                                    <p className="mt-2 px-1 text-xs text-slate-500 font-mono uppercase tracking-wider">Note: Ensure this address is verified with your selected provider.</p>
                                 </div>
 
                                 {/* TO: RECIPIENT */}
                                 <div className="relative" ref={dropdownRef}>
-                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipient</label>
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipient</label>
                                     <div className="relative group">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                             <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
@@ -421,7 +421,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         />
                                         <button 
                                             onClick={() => setShowCcBcc(!showCcBcc)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 hover:text-teal-400 transition-colors"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-500 hover:text-teal-400 transition-colors"
                                         >
                                             {showCcBcc ? 'HIDE CC' : 'CC/BCC'}
                                         </button>
@@ -437,7 +437,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 className="grid grid-cols-2 gap-4 overflow-hidden mt-4"
                                             >
                                                 <div>
-                                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">CC</label>
+                                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">CC</label>
                                                     <input
                                                         type="text"
                                                         value={cc}
@@ -446,7 +446,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">BCC</label>
+                                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">BCC</label>
                                                     <input
                                                         type="text"
                                                         value={bcc}
@@ -467,8 +467,8 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 className="absolute left-0 right-0 top-full mt-3 bg-slate-900 border border-white/10 rounded-3xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[130] max-h-72 overflow-y-auto p-2 backdrop-blur-2xl"
                                             >
                                                 <div className="px-3 py-2 border-b border-white/5 mb-2 flex items-center justify-between">
-                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Matched Contacts</span>
-                                                    <span className="text-[9px] font-mono text-teal-400">{filteredClients.length} found</span>
+                                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Matched Contacts</span>
+                                                    <span className="text-xs font-mono text-teal-400">{filteredClients.length} found</span>
                                                 </div>
                                                 {filteredClients.length > 0 ? (
                                                     filteredClients.map(client => (
@@ -486,7 +486,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
-                                                                    <p className="text-[10px] text-slate-500 font-mono">{client.email}</p>
+                                                                    <p className="text-xs text-slate-500 font-mono">{client.email}</p>
                                                                 </div>
                                                             </div>
                                                             {to === client.email && (
@@ -499,7 +499,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 ) : (
                                                     <div className="p-8 text-center">
                                                         <Search className="w-8 h-8 mx-auto mb-3 text-slate-700 opacity-20" />
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">No contact matching "{searchQuery}"</p>
+                                                        <p className="text-xs font-black uppercase tracking-widest text-slate-600">No contact matching "{searchQuery}"</p>
                                                     </div>
                                                 )}
                                             </motion.div>
@@ -509,7 +509,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 {/* SUBJECT */}
                                 <div>
-                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Subject</label>
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Subject</label>
                                     <input
                                         type="text"
                                         value={subject}
@@ -521,7 +521,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 {/* MESSAGE BODY */}
                                 <div>
-                                    <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Message Body</label>
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Message Body</label>
                                     <div className="relative">
                                         <textarea
                                             value={body}
@@ -529,7 +529,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             placeholder="Begin data transmission..."
                                             className="w-full bg-slate-950/50 border border-white/10 rounded-[2rem] px-6 py-6 text-sm text-white focus:border-teal-500/40 outline-none transition-all min-h-[200px] resize-none shadow-inner placeholder:text-slate-700 font-medium leading-relaxed custom-scrollbar"
                                         />
-                                        <div className="absolute bottom-4 right-4 text-[10px] font-mono text-slate-600 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
+                                        <div className="absolute bottom-4 right-4 text-xs font-mono text-slate-600 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
                                             SYNS: {body.length} CHARS
                                         </div>
                                     </div>
@@ -538,11 +538,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 {/* ATTACHMENTS */}
                                 <div>
                                     <div className="flex items-center justify-between mb-3 px-1">
-                                        <label className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em]">Payload Attachments</label>
+                                        <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em]">Payload Attachments</label>
                                         <button 
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={uploading}
-                                            className="text-[9px] font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                            className="text-xs font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                                         >
                                             {uploading ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5" />}
                                             {uploading ? 'Uploading...' : 'Attach File'}
@@ -559,7 +559,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         {attachments.map(att => (
                                             <div 
                                                 key={att.id}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[10px] text-slate-300 group/att hover:border-teal-500/30 transition-all"
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 group/att hover:border-teal-500/30 transition-all"
                                             >
                                                 <span className="truncate max-w-[150px]">{att.name}</span>
                                                 <button 
@@ -572,7 +572,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         ))}
                                         {attachments.length === 0 && (
                                             <div className="w-full py-4 border border-dashed border-white/5 rounded-2xl flex items-center justify-center">
-                                                <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest">No local files attached</p>
+                                                <p className="text-xs text-slate-700 font-black uppercase tracking-widest">No local files attached</p>
                                             </div>
                                         )}
                                     </div>
@@ -582,13 +582,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                         {/* Footer */}
                         <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between">
-                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
+                            <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
                                 Encrypted Transmission Status: READY
                             </div>
                             <div className="flex items-center gap-4 w-full sm:w-auto">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
+                                    className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
                                 >
                                     Cancel
                                 </button>
@@ -597,7 +597,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleSend}
                                     disabled={sending}
-                                    className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-500 text-white px-10 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-900/10 disabled:opacity-50 disabled:grayscale"
+                                    className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-500 text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-900/10 disabled:opacity-50 disabled:grayscale"
                                 >
                                     {sending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 stroke-[2.5px]" />}
                                     {sending ? 'Sending...' : 'Send Now'}
@@ -612,4 +612,5 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 };
 
 export default ComposeEmailModal;
+
 

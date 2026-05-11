@@ -426,7 +426,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-[10px] text-slate-500 mt-1">
+                                <p className="text-xs text-slate-500 mt-1">
                                     {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
                                 </p>
                             </div>
@@ -611,3 +611,4 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 };
 
 export default AIStudioTab;
+

@@ -511,7 +511,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     <div className="flex items-center justify-between mb-2">
                         <DollarSign className="w-5 h-5 text-teal-400" />
                         {winRateData && (
-                            <span className="text-[10px] bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded-full">
                                 {winRateData.winRate.toFixed(1)}% Win Rate
                             </span>
                         )}
@@ -523,7 +523,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 <div className="glass-panel p-4 rounded-xl border border-white/5 bg-violet-500/5">
                     <div className="flex items-center justify-between mb-2">
                         <TrendingUp className="w-5 h-5 text-violet-400" />
-                        <span className="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full">Active</span>
+                        <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full">Active</span>
                     </div>
                     <div className="text-2xl font-bold text-white">{deals.length}</div>
                     <div className="text-slate-400 text-xs uppercase tracking-wider">Total Deals</div>
@@ -533,7 +533,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                     <div className="flex items-center justify-between mb-2">
                         <BarChart2 className="w-5 h-5 text-blue-400" />
                         {forecastData.length > 0 && (
-                            <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
                                 Next {forecastData.length} mo.
                             </span>
                         )}
@@ -547,7 +547,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                 <div className="glass-panel p-4 rounded-xl border border-white/5 bg-emerald-500/5">
                     <div className="flex items-center justify-between mb-2">
                         <PieChartIcon className="w-5 h-5 text-emerald-400" />
-                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Avg</span>
+                        <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Avg</span>
                     </div>
                     <div className="text-2xl font-bold text-white">
                         {deals.length > 0 ? (deals.reduce((sum, d) => sum + (d.probability || 0), 0) / deals.length).toFixed(0) : 0}%
@@ -564,7 +564,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                             <h3 className="font-bold text-white flex items-center gap-2">
                                 <BarChart2 className="w-4 h-4 text-teal-400" /> Sales Forecast
                             </h3>
-                            <div className="text-[10px] text-slate-500">Weighted value by month</div>
+                            <div className="text-xs text-slate-500">Weighted value by month</div>
                         </div>
                         <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
                             <ChartContainer className="h-64">
@@ -602,7 +602,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                             <h3 className="font-bold text-white flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-violet-400" /> Win/Loss Trends
                             </h3>
-                            <div className="text-[10px] text-slate-500">Historical performance</div>
+                            <div className="text-xs text-slate-500">Historical performance</div>
                         </div>
                         <div className="h-64 w-full relative" style={{ minHeight: '256px' }}>
                             <ChartContainer className="h-64">
@@ -699,7 +699,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-bold text-white pr-6">{deal.name}</h4>
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${healthColors[health.status]}`}>
+                                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold uppercase border ${healthColors[health.status]}`}>
                                                         <HealthIcon className="w-3 h-3" />
                                                         {health.score}
                                                     </div>
@@ -746,7 +746,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                             </div>
 
                                             {deal.intelligenceState?.superposition && (
-                                                <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 mb-3">
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 mb-3">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <span>Close this quarter</span>
                                                         <span className="text-white/80">
@@ -1024,7 +1024,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                                             </div>
                                             <div className="overflow-hidden">
                                                 <p className="text-white text-sm font-medium truncate">{doc.original_filename}</p>
-                                                <p className="text-slate-500 text-[10px] uppercase">{(doc.file_size / 1024).toFixed(1)} KB</p>
+                                                <p className="text-slate-500 text-xs uppercase">{(doc.file_size / 1024).toFixed(1)} KB</p>
                                             </div>
                                         </div>
                                         <div className="flex gap-1 shrink-0">
@@ -1100,3 +1100,4 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
 };
 
 export default DealsTab;
+

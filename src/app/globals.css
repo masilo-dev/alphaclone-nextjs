@@ -90,7 +90,7 @@ body {
   background-attachment: fixed;
   color: var(--foreground);
   scroll-behavior: smooth;
-  @apply text-sm antialiased;
+  @apply text-base antialiased;
   overflow-x: clip;
 }
 
@@ -159,8 +159,8 @@ html.light .ac-business-scroll .text-slate-300 {
 .marketing-theme {
   font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
   letter-spacing: normal;
   color: #e6edf7;
 }
@@ -514,9 +514,19 @@ body {
   input[type="number"],
   textarea,
   select {
-    font-size: 14px !important;
-    /* Matches base font */
+    font-size: 16px !important;
+    /* Matches accessible base font */
   }
+}
+
+.text-accessible-xs {
+  font-size: 0.75rem !important; /* 12px */
+  line-height: 1rem !important;
+}
+
+.text-accessible-sm {
+  font-size: 0.875rem !important; /* 14px */
+  line-height: 1.25rem !important;
 }
 
 /* Mobile Menu Lock */

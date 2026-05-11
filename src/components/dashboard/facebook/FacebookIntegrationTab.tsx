@@ -113,7 +113,7 @@ const SidebarContent = ({
 }) => (
     <div className="space-y-8">
         <div>
-            <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Content Control</div>
+            <div className="px-3 text-xs font-black text-gray-600 uppercase tracking-widest mb-4">Content Control</div>
             <div className="space-y-1">
                 <button onClick={() => setActiveTab('post')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'post' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
                     <Plus size={20} />
@@ -126,12 +126,12 @@ const SidebarContent = ({
             </div>
         </div>
         <div>
-            <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Direct Response</div>
+            <div className="px-3 text-xs font-black text-gray-600 uppercase tracking-widest mb-4">Direct Response</div>
             <div className="space-y-1">
                 <button onClick={() => setActiveTab('leads')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'leads' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
                     <Users size={20} />
                     <span className="text-sm font-bold">Lead Manager</span>
-                    {leadsCount > 0 && <span className="ml-auto bg-teal-500 text-white text-[10px] px-2 py-1 rounded-full font-black">{leadsCount}</span>}
+                    {leadsCount > 0 && <span className="ml-auto bg-teal-500 text-white text-xs px-2 py-1 rounded-full font-black">{leadsCount}</span>}
                 </button>
                 <button onClick={() => setActiveTab('messenger')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'messenger' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
                     <MessageCircle size={20} />
@@ -140,7 +140,7 @@ const SidebarContent = ({
             </div>
         </div>
         <div>
-            <div className="px-3 text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Settings</div>
+            <div className="px-3 text-xs font-black text-gray-600 uppercase tracking-widest mb-4">Settings</div>
             <div className="space-y-1">
                 <button onClick={() => setActiveTab('pages')} className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all ${activeTab === 'pages' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-lg shadow-teal-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}>
                     <Building2 size={20} />
@@ -694,7 +694,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         <h1 className="text-sm font-black tracking-widest text-white uppercase truncate max-w-[120px] sm:max-w-none">Facebook</h1>
                         <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                            <span className="text-[10px] text-teal-400 font-bold uppercase">{isConnected ? 'Active' : 'Offline'}</span>
+                            <span className="text-xs text-teal-400 font-bold uppercase">{isConnected ? 'Active' : 'Offline'}</span>
                         </div>
                     </div>
                 </div>
@@ -773,7 +773,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             <button 
                                                 key={f}
                                                 onClick={() => setStatusFilter(f)}
-                                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${statusFilter === f ? 'bg-white/10 text-white' : 'text-gray-600'}`}
+                                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest ${statusFilter === f ? 'bg-white/10 text-white' : 'text-gray-600'}`}
                                             >
                                                 {f}
                                             </button>
@@ -794,7 +794,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                                                    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border ${STATUS_COLORS[lead.status] || STATUS_COLORS.new}`}>
+                                                    <span className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase border ${STATUS_COLORS[lead.status] || STATUS_COLORS.new}`}>
                                                         {lead.status}
                                                     </span>
                                                     <button className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/5 text-white sm:opacity-0 group-hover:opacity-100 transition-opacity">
@@ -831,7 +831,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
                                 <div className="space-y-6 bg-[#141414] border border-white/5 rounded-[32px] p-6 sm:p-8">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">Page Selection</label>
+                                        <label className="text-xs font-black text-gray-600 uppercase tracking-widest px-2">Page Selection</label>
                                         <div className="flex flex-wrap gap-2">
                                             {pages.map(p => (
                                                 <button 
@@ -963,7 +963,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                     <button
                                                         key={filter}
                                                         onClick={() => setActiveQueueFilter(filter)}
-                                                        className={`rounded-lg px-3 py-1 text-[10px] font-black uppercase ${
+                                                        className={`rounded-lg px-3 py-1 text-xs font-black uppercase ${
                                                             activeQueueFilter === filter ? 'bg-white/10 text-white' : 'text-gray-500'
                                                         }`}
                                                     >
@@ -988,7 +988,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                 <span className="truncate text-xs font-black uppercase tracking-widest text-white">
                                                                     {post.status}
                                                                 </span>
-                                                                <span className="text-[10px] text-gray-500">
+                                                                <span className="text-xs text-gray-500">
                                                                     {new Date(post.scheduled_at || post.created_at).toLocaleString()}
                                                                 </span>
                                                             </div>
@@ -1041,7 +1041,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                 </p>
                                                             </div>
                                                             {duplicateMap[(post.message || '').trim()] > 1 && (
-                                                                <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-[10px] font-black uppercase text-amber-200">
+                                                                <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-xs font-black uppercase text-amber-200">
                                                                     Duplicate copy
                                                                 </span>
                                                             )}
@@ -1054,13 +1054,13 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                         <div className="flex flex-wrap gap-2">
                                                             <button
                                                                 onClick={() => loadPostComments(post.id)}
-                                                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase text-white"
+                                                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white"
                                                             >
                                                                 Comments
                                                             </button>
                                                             <button
                                                                 onClick={() => loadPostInsights(post.id)}
-                                                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase text-white"
+                                                                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white"
                                                             >
                                                                 Insights
                                                             </button>
@@ -1069,7 +1069,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                     href={post.permalink_url}
                                                                     target="_blank"
                                                                     rel="noreferrer"
-                                                                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase text-white"
+                                                                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white"
                                                                 >
                                                                     Open Post
                                                                 </a>
@@ -1086,7 +1086,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             <div className="mt-3 space-y-2">
                                                                 {commentsByPost[post.id].slice(0, 3).map((comment: any) => (
                                                                     <div key={comment.id} className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-sm text-gray-300">
-                                                                        <div className="mb-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                                                        <div className="mb-1 text-xs font-black uppercase tracking-widest text-gray-500">
                                                                             {comment.from?.name || 'Comment'}
                                                                         </div>
                                                                         {comment.message || 'No comment text returned.'}
@@ -1098,7 +1098,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             <div className="mt-3 grid gap-2 sm:grid-cols-2">
                                                                 {insightsByPost[post.id].rows!.slice(0, 4).map((row) => (
                                                                     <div key={row.name} className="rounded-xl border border-white/5 bg-white/[0.03] p-3">
-                                                                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">{row.name}</div>
+                                                                        <div className="text-xs font-black uppercase tracking-widest text-gray-500">{row.name}</div>
                                                                         <div className="mt-1 text-sm text-white">{row.values?.[0]?.value ?? 0}</div>
                                                                     </div>
                                                                 ))}
@@ -1130,11 +1130,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 <div className="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+64px)] left-0 right-0 bg-[#0a0a0a]/95 border-t border-white/10 px-6 py-4 flex items-center justify-between z-[40] backdrop-blur-xl">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
+                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
                             {pages.find(p => p.page_id === selectedPageId)?.page_name || 'No Page'}
                         </span>
                     </div>
-                    <button onClick={() => setActiveTab('pages')} className="text-[10px] font-black text-teal-400 uppercase tracking-widest py-2 px-4 bg-teal-500/10 rounded-lg border border-teal-500/20">Switch Page</button>
+                    <button onClick={() => setActiveTab('pages')} className="text-xs font-black text-teal-400 uppercase tracking-widest py-2 px-4 bg-teal-500/10 rounded-lg border border-teal-500/20">Switch Page</button>
                 </div>
             )}
 
@@ -1166,7 +1166,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                             </div>
                             <div className="p-6 sm:p-8 space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">Post Topic</label>
+                                    <label className="text-xs font-black text-gray-600 uppercase tracking-widest px-2">Post Topic</label>
                                     <input 
                                         type="text" 
                                         value={aiTopic}
@@ -1177,7 +1177,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">Tone</label>
+                                        <label className="text-xs font-black text-gray-600 uppercase tracking-widest px-2">Tone</label>
                                         <select 
                                             value={aiTone}
                                             onChange={(e) => setAiTone(e.target.value as any)}
@@ -1190,7 +1190,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">Format</label>
+                                        <label className="text-xs font-black text-gray-600 uppercase tracking-widest px-2">Format</label>
                                         <select 
                                             value={aiPostType}
                                             onChange={(e) => setAiPostType(e.target.value as any)}
@@ -1229,3 +1229,4 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         </div>
     );
 }
+

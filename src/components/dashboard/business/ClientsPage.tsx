@@ -498,7 +498,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CRM</p>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">CRM</p>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -617,7 +617,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${stageDot[client.salesStage] || 'bg-slate-500'}`} />
                                     </div>
                                     {/* Name truncated to ~8 chars */}
-                                    <p className="text-[10px] font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
+                                    <p className="text-xs font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
                                         {(client.name || '').split(' ')[0]}
                                     </p>
                                 </button>
@@ -629,7 +629,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 text-[10px] text-slate-500 border-t border-slate-800/50 pt-2">
+                    <div className="flex items-center gap-4 text-xs text-slate-500 border-t border-slate-800/50 pt-2">
                         {[['cyan-400','Lead'],['blue-400','Prospect'],['emerald-400','Customer'],['rose-400','Lost']].map(([color, label]) => (
                             <span key={label} className="flex items-center gap-1">
                                 <span className={`w-2 h-2 rounded-full bg-${color}`} />{label}
@@ -733,12 +733,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         }
                                     }
                                 }}
-                                className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-teal-400 transition-colors"
+                                className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-teal-400 transition-colors"
                             >
                                 {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 20)`}
                             </button>
                             {selectedClientIds.length >= 20 && (
-                                <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">Batch Limit Reached</span>
+                                <span className="text-xs font-black text-amber-500 uppercase tracking-tighter">Batch Limit Reached</span>
                             )}
                         </div>
 
@@ -790,7 +790,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         size="sm"
                                         onClick={handleLoadMore}
                                         isLoading={loading}
-                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-widest text-[10px]"
+                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-widest text-xs"
                                     >
                                         Load More Contacts
                                     </Button>
@@ -1633,3 +1633,4 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
 };
 
 export default ClientsPage;
+

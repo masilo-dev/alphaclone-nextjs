@@ -94,7 +94,7 @@ const GmailTab: React.FC<GmailTabProps> = ({ user }) => {
                     <Link2 className="w-6 h-6 mr-2" /> Connect Gmail
                 </Button>
 
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold mt-8 opacity-50">
+                <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mt-8 opacity-50">
                     Trusted by 2,000+ high-performance organizations
                 </p>
             </motion.div>
@@ -103,3 +103,4 @@ const GmailTab: React.FC<GmailTabProps> = ({ user }) => {
 };
 
 export default GmailTab;
+

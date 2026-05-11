@@ -149,7 +149,7 @@ export default function PricingPageContent() {
                             One clear plan. One clear price. <br className="hidden md:block" />
                             Use the full AlphaClone platform for $15/month.
                         </p>
-                        <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+                        <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">
                             <span>• Zero Setup Fees</span>
                             <span>• Single Pricing</span>
                             <span>• Cancel Anytime</span>
@@ -175,7 +175,7 @@ export default function PricingPageContent() {
                         >
                             <div className="bg-slate-950 rounded-[calc(1.5rem-1px)] p-8 h-full flex flex-col relative overflow-hidden">
                                 {plan.highlight && (
-                                    <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-[10px] font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest">
+                                    <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest">
                                         Most Popular
                                     </div>
                                 )}
@@ -339,3 +339,4 @@ export default function PricingPageContent() {
         </div>
     );
 }
+

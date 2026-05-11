@@ -39,7 +39,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
                     <div className={`p-2.5 rounded-full ${muted ? 'bg-red-500 text-white' : 'bg-slate-800 md:bg-slate-700'}`}>
                         {muted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                     </div>
-                    <span className="text-[10px] font-medium hidden md:block">
+                    <span className="text-xs font-medium hidden md:block">
                         {muted ? 'Unmute' : 'Mute'}
                     </span>
                 </button>
@@ -52,7 +52,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
                     <div className={`p-2.5 rounded-full ${cameraOff ? 'bg-red-500 text-white' : 'bg-slate-800 md:bg-slate-700'}`}>
                         {cameraOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
                     </div>
-                    <span className="text-[10px] font-medium hidden md:block">
+                    <span className="text-xs font-medium hidden md:block">
                         {cameraOff ? 'Start Video' : 'Stop Video'}
                     </span>
                 </button>
@@ -65,7 +65,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
                     <div className={`p-2.5 rounded-full ${screenShareOn ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 md:bg-slate-700'}`}>
                         {screenShareOn ? <MonitorOff className="w-5 h-5" /> : <MonitorUp className="w-5 h-5" />}
                     </div>
-                    <span className="text-[10px] font-medium hidden md:block">
+                    <span className="text-xs font-medium hidden md:block">
                         {screenShareOn ? 'Stop Share' : 'Share'}
                     </span>
                 </button>
@@ -78,7 +78,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
                     <div className="p-2.5 bg-slate-800 rounded-full">
                         <Users className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-medium hidden md:block">People</span>
+                    <span className="text-xs font-medium hidden md:block">People</span>
                 </button>
 
                 {/* End Call (Critical - Always Visible) */}
@@ -90,9 +90,10 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
                         <PhoneOff className="w-5 h-5" />
                         <span className="hidden md:inline font-bold">End Call</span>
                     </div>
-                    <span className="text-[10px] font-medium text-red-500 md:hidden block mt-1">End</span>
+                    <span className="text-xs font-medium text-red-500 md:hidden block mt-1">End</span>
                 </button>
             </div>
         </div>
     );
 };
+

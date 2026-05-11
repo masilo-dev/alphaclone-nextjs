@@ -211,7 +211,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
             </div>
             <div>
               <h3 className="font-semibold text-slate-100 text-sm">Alpha Assistant</h3>
-              <p className="text-[10px] text-slate-400">Powered by Claude & GPT-4</p>
+              <p className="text-xs text-slate-400">Powered by Claude & GPT-4</p>
             </div>
           </div>
           {!embedded && (
@@ -394,3 +394,4 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
 };
 
 export default AIAssistant;
+

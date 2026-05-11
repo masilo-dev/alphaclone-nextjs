@@ -253,7 +253,7 @@ const AnalyticsTab: React.FC = () => {
                         <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
                             <Server className="w-6 h-6" />
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
                             Live
                         </span>
                     </div>
@@ -286,7 +286,7 @@ const AnalyticsTab: React.FC = () => {
                         <div className="p-3 rounded-xl bg-teal-500/10 text-teal-400">
                             <Cpu className="w-6 h-6" />
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                             Online
                         </span>
                     </div>
@@ -403,3 +403,4 @@ const AnalyticsTab: React.FC = () => {
 };
 
 export default AnalyticsTab;
+

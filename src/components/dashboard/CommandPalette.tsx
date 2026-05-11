@@ -219,7 +219,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 text-lg font-medium"
                             />
                             <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-lg border border-slate-700">
-                                <span className="text-[10px] font-black text-slate-400">ESC</span>
+                                <span className="text-xs font-black text-slate-400">ESC</span>
                             </div>
                         </div>
 
@@ -237,7 +237,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     {/* Recent Commands Section - only show when not searching */}
                                     {!search && recentCommands.length > 0 && (
                                         <div className="space-y-1">
-                                            <div className="px-3 py-1 text-[10px] font-black text-teal-500/50 uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <div className="px-3 py-1 text-xs font-black text-teal-500/50 uppercase tracking-[0.2em] flex items-center gap-2">
                                                 <Clock className="w-3 h-3" />
                                                 Recent
                                             </div>
@@ -265,7 +265,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                             <div className="flex items-center gap-2">
                                                                 <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
                                                                 {cmd.shortcut && (
-                                                                    <span className="text-[10px] font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                    <span className="text-xs font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
                                                                         {cmd.shortcut}
                                                                     </span>
                                                                 )}
@@ -288,7 +288,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
                                         return (
                                             <div key={category} className="space-y-1">
-                                                <div className="px-3 py-1 text-[10px] font-black text-teal-500/50 uppercase tracking-[0.2em]">
+                                                <div className="px-3 py-1 text-xs font-black text-teal-500/50 uppercase tracking-[0.2em]">
                                                     {category}
                                                 </div>
                                                 {catCmds.map((cmd) => {
@@ -313,7 +313,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                                 <div className="flex items-center gap-2">
                                                                     <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
                                                                     {cmd.shortcut && (
-                                                                        <span className="text-[10px] font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                        <span className="text-xs font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
                                                                             {cmd.shortcut}
                                                                         </span>
                                                                     )}
@@ -336,15 +336,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-[9px] font-black text-slate-400">↑↓</div>
-                                    <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">Navigate</span>
+                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">↑↓</div>
+                                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Navigate</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-[9px] font-black text-slate-400">ENTER</div>
-                                    <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">Select</span>
+                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">ENTER</div>
+                                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Select</span>
                                 </div>
                             </div>
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                <div className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
                                     <Sparkles className="w-3 h-3 bg-gradient-to-r from-teal-500 to-orange-500 text-transparent bg-clip-text" />
                                     Quick Actions
                                 </div>
@@ -357,3 +357,4 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 };
 
 export default CommandPalette;
+

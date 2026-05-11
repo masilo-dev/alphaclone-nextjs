@@ -117,7 +117,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                                 <TrendingUp className="w-8 h-8 text-teal-400 animate-bounce" />
                                 <div className="flex flex-col items-start translate-y-1">
                                     <span className="text-4xl font-black text-white italic line-height-none">+{currentPoints}</span>
-                                    <span className="text-[10px] font-black text-teal-500/80 uppercase tracking-widest -mt-1">Momentum Points</span>
+                                    <span className="text-xs font-black text-teal-500/80 uppercase tracking-widest -mt-1">Momentum Points</span>
                                 </div>
                             </div>
                         </div>
@@ -139,3 +139,4 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
         </AnimatePresence>
     );
 };
+

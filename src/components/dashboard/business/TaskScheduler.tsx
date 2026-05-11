@@ -581,7 +581,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-white truncate">{task.title}</span>
                     {task.aiEnabled && (
-                      <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/20 text-violet-400 text-[10px]">
+                      <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/20 text-violet-400 text-xs">
                         <Sparkles size={8} /> AI
                       </span>
                     )}
@@ -654,7 +654,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     <Bot size={14} className="text-violet-400" />
                     <span className="text-xs font-medium text-violet-400">AI Output</span>
                     {task.results.executedAt && (
-                      <span className="ml-auto text-[10px] text-slate-600">
+                      <span className="ml-auto text-xs text-slate-600">
                         {new Date(task.results.executedAt).toLocaleString()}
                       </span>
                     )}
@@ -664,7 +664,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   </div>
                   <button
                     onClick={() => { navigator.clipboard.writeText(task.results!.output!); toast.success('Copied!'); }}
-                    className="mt-2 text-[10px] text-slate-500 hover:text-white transition-colors"
+                    className="mt-2 text-xs text-slate-500 hover:text-white transition-colors"
                   >
                     Copy output
                   </button>
@@ -841,7 +841,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     <button
                       type="button"
                       onClick={() => setNewTask(p => ({ ...p, aiPrompt: DEFAULT_AI_PROMPTS[p.type || 'custom'] }))}
-                      className="text-[10px] text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                      className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
                     >
                       <RotateCcw size={9} /> Reset to default
                     </button>
@@ -853,7 +853,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     onChange={e => setNewTask(p => ({ ...p, aiPrompt: e.target.value }))}
                     className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
                   />
-                  <p className="text-[10px] text-slate-600 mt-1">
+                  <p className="text-xs text-slate-600 mt-1">
                     Claude will use this as its instructions when executing the task. Be specific for better results.
                   </p>
                 </div>
@@ -883,3 +883,4 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 };
 
 export default TaskScheduler;
+

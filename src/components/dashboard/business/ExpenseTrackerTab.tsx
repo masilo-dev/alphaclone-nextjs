@@ -494,7 +494,7 @@ export default function ExpenseTrackerTab() {
                                     <td className="px-4 py-3 text-slate-400 text-xs">
                                         <p className="capitalize">{expense.payment_method?.replace('_', ' ')}</p>
                                         {expense.asset_account?.account_name && (
-                                            <p className="text-[10px] text-slate-600 font-mono">
+                                            <p className="text-xs text-slate-600 font-mono">
                                                 {expense.asset_account.account_name}
                                                 {expense.asset_account.account_code ? ` (${expense.asset_account.account_code})` : ''}
                                             </p>
@@ -550,3 +550,4 @@ export default function ExpenseTrackerTab() {
         </div>
     );
 }
+

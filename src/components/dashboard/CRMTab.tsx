@@ -294,7 +294,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                                                 {deal.stage.replace('_', ' ')} • ${(deal.value || 0).toLocaleString()} • {deal.probability || 0}% probability
                                             </p>
                                         </div>
-                                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
                                             P{urgency}
                                         </span>
                                     </div>
@@ -363,3 +363,4 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
         </div>
     );
 }
+

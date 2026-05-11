@@ -70,7 +70,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em] text-white">
                 ALPHA<span className="text-teal-400">CLONE</span>
               </h1>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-teal-400/60 font-medium">
+              <p className="text-xs uppercase tracking-[0.4em] text-teal-400/60 font-medium">
                 Unified Business Operating System
               </p>
             </motion.div>
@@ -117,3 +117,4 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
 };
 
 export default SplashScreen;
+

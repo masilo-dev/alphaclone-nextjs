@@ -263,6 +263,16 @@ export const taskService = {
                 taskTitle: taskData.title,
             }, tenantId);
 
+            // EMIT AUTOMATION EVENT
+            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
+            await emitBusinessEvent(tenantId, 'task_created', {
+                taskId: data.id,
+                title: data.title,
+                priority: data.priority,
+                assignedTo: data.assigned_to,
+                dueDate: data.due_date
+            }).catch(err => console.error('Failed to emit task_created event:', err));
+
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));

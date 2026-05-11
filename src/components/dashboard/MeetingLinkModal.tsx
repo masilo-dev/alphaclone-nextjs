@@ -98,14 +98,14 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
                             <div className="flex items-center gap-1.5 text-gray-400 mb-1">
                                 <Users className="w-3.5 h-3.5" />
-                                <span className="text-[10px] sm:text-xs uppercase tracking-wider">Max</span>
+                                <span className="text-xs sm:text-xs uppercase tracking-wider">Max</span>
                             </div>
                             <p className="text-base sm:text-xl font-bold text-white">10 people</p>
                         </div>
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
                             <div className="flex items-center gap-1.5 text-gray-400 mb-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                <span className="text-[10px] sm:text-xs uppercase tracking-wider">Room ID</span>
+                                <span className="text-xs sm:text-xs uppercase tracking-wider">Room ID</span>
                             </div>
                             <p className="text-xs sm:text-sm font-mono text-white truncate">{roomName}</p>
                         </div>
@@ -146,3 +146,4 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
 };
 
 export default MeetingLinkModal;
+

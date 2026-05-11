@@ -63,7 +63,7 @@ const ActionNode = ({ data }: { data: { label: string; description: string; type
     <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
       <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
       <div className="flex items-center gap-2 font-bold text-sm mb-1 min-w-0">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-[9px] font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-xs font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
           {abbr}
         </span>
         <span className="truncate">{data.label}</span>
@@ -438,7 +438,7 @@ export default function AutomationBuilder() {
             <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
                 <div className="hidden md:block text-right min-w-0">
                     <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">
                         {workflowId ? 'Syncing Cloud' : 'New Draft'}
                     </div>
                 </div>
@@ -497,7 +497,7 @@ export default function AutomationBuilder() {
                                             className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-0 transition"
                                         >
                                             <div className="text-sm font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
+                                            <div className="text-xs text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
                                         </button>
                                     ))
                                 )}
@@ -520,7 +520,7 @@ export default function AutomationBuilder() {
                                     <button
                                         key={cat.id}
                                         onClick={() => setActiveCategory(cat.id)}
-                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                                        className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                             activeCategory === cat.id
                                                 ? 'bg-indigo-500 text-white shadow'
                                                 : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -542,7 +542,7 @@ export default function AutomationBuilder() {
                                         </span>
                                         <div className="min-w-0">
                                             <div className="font-semibold text-xs text-slate-900 dark:text-white truncate">{template.label}</div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
                                         </div>
                                     </button>
                                 ))}
@@ -656,11 +656,11 @@ export default function AutomationBuilder() {
                                         </td>
                                         <td className="px-6 py-5">
                                             {ex.status === 'completed' ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
                                                     <CheckCircle2 className="w-3 h-3" /> Completed
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px] font-black uppercase tracking-wider">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs font-black uppercase tracking-wider">
                                                     <XCircle className="w-3 h-3" /> {ex.status}
                                                 </span>
                                             )}
@@ -703,7 +703,7 @@ export default function AutomationBuilder() {
                                 </span>
                                 <div className="pr-12">
                                     <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{template.name}</h3>
-                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-4">
+                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4">
                                         {template.category}
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
@@ -711,7 +711,7 @@ export default function AutomationBuilder() {
                                     </p>
                                 </div>
                                 <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                                    <span className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                                         {template.definition.steps.length} Steps
                                     </span>
                                     <Plus className="w-5 h-5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -726,3 +726,4 @@ export default function AutomationBuilder() {
     </div>
   );
 }
+

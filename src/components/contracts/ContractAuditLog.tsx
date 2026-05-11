@@ -107,7 +107,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 bg-teal-500/10 rounded-full border border-teal-500/20">
                         <Lock className="w-3.5 h-3.5 text-teal-400" />
-                        <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">ESIGN COMPLIANT</span>
+                        <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">ESIGN COMPLIANT</span>
                     </div>
                 </div>
 
@@ -141,7 +141,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
                                                 <p className="text-sm font-bold text-white uppercase tracking-tight">{event.action.replace(/_/g, ' ')}</p>
-                                                <p className="text-[10px] text-slate-500 font-mono">{format(new Date(event.created_at), 'MMM d, HH:mm:ss')}</p>
+                                                <p className="text-xs text-slate-500 font-mono">{format(new Date(event.created_at), 'MMM d, HH:mm:ss')}</p>
                                             </div>
                                             <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 text-xs">
                                                 <div className="flex items-center gap-2 text-slate-400">
@@ -154,7 +154,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                                                 </div>
                                             </div>
                                             {event.details && Object.keys(event.details).length > 0 && (
-                                                <div className="mt-2 p-2 bg-slate-900/50 rounded-lg text-[10px] font-mono text-slate-500 overflow-x-auto">
+                                                <div className="mt-2 p-2 bg-slate-900/50 rounded-lg text-xs font-mono text-slate-500 overflow-x-auto">
                                                     {JSON.stringify(event.details)}
                                                 </div>
                                             )}
@@ -175,35 +175,35 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                                                 <CheckCircle className="w-4 h-4" />
                                                 <span className="text-sm font-bold uppercase tracking-wider">Verified Signature</span>
                                             </div>
-                                            <span className="text-[10px] text-slate-500 font-mono">{format(new Date(event.timestamp), 'MMM d, yyyy HH:mm:ss')}</span>
+                                            <span className="text-xs text-slate-500 font-mono">{format(new Date(event.timestamp), 'MMM d, yyyy HH:mm:ss')}</span>
                                         </div>
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Signer</label>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Signer</label>
                                                 <div className="text-sm text-white font-medium">{event.signer_name}</div>
                                                 <div className="text-xs text-slate-500">{event.signer_email}</div>
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Location</label>
+                                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Location</label>
                                                 <div className="text-sm text-white font-medium">IP: {event.signer_ip}</div>
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
                                             <div>
-                                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                                                <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
                                                     <Hash className="w-3 h-3" /> Content Hash at Signing
                                                 </label>
-                                                <div className="p-2 bg-slate-950 rounded border border-slate-800 text-[10px] font-mono text-slate-400 break-all leading-relaxed">
+                                                <div className="p-2 bg-slate-950 rounded border border-slate-800 text-xs font-mono text-slate-400 break-all leading-relaxed">
                                                     {event.content_hash_at_signing}
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-teal-500/70 uppercase tracking-widest mb-1">
+                                                <label className="flex items-center gap-1.5 text-xs font-bold text-teal-500/70 uppercase tracking-widest mb-1">
                                                     <Lock className="w-3 h-3" /> Tamper-Proof Cryptographic Seal
                                                 </label>
-                                                <div className="p-2 bg-teal-950/20 rounded border border-teal-500/20 text-[10px] font-mono text-teal-400 break-all leading-relaxed">
+                                                <div className="p-2 bg-teal-950/20 rounded border border-teal-500/20 text-xs font-mono text-teal-400 break-all leading-relaxed">
                                                     {event.tamper_seal}
                                                 </div>
                                             </div>
@@ -230,3 +230,4 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
         </div>
     );
 };
+

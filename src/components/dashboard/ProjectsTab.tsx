@@ -144,7 +144,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
           <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
             {user.role === 'admin' ? 'All Projects' : 'My Projects'}
           </h2>
-          <div className="text-[10px] text-slate-500 font-mono mt-1 uppercase tracking-widest">
+          <div className="text-xs text-slate-500 font-mono mt-1 uppercase tracking-widest">
             {filteredProjects.length} Projects
           </div>
         </div>
@@ -153,7 +153,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
             <Button 
               onClick={() => router.push('/dashboard/submit')} 
               variant="secondary" 
-              className="h-8 md:h-10 px-3 md:px-4 text-[10px] md:text-xs font-black uppercase tracking-widest"
+              className="h-8 md:h-10 px-3 md:px-4 text-xs md:text-xs font-black uppercase tracking-widest"
             >
               Add New Item
             </Button>
@@ -229,7 +229,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
             <div key={card.label} className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{card.label}</p>
+                  <p className="text-xs font-mono uppercase tracking-widest text-slate-500">{card.label}</p>
                   <p className="text-2xl font-black text-white mt-2">{card.value}</p>
                   <p className="text-xs text-slate-500 mt-2">{card.hint}</p>
                 </div>
@@ -267,7 +267,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
                         {project.currentStage} • {project.progress}% progress • {project.health || 'Health not set'}
                       </p>
                     </div>
-                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
                       P{urgency}
                     </span>
                   </div>
@@ -392,7 +392,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
               <div className="h-64 flex items-center justify-center bg-slate-900/40 rounded-2xl border border-white/5">
                 <div className="flex flex-col items-center gap-3">
                   <Activity className="w-8 h-8 text-teal-500 animate-pulse" />
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Building Timeline...</span>
+                  <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Building Timeline...</span>
                 </div>
               </div>
             ) : (
@@ -438,7 +438,7 @@ const ProjectCard = ({ project: p, index, user, onArchitect, onEdit, onMilestone
               className="object-cover transition-transform duration-500 group-hover:scale-105" 
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             />
-            <div className={`absolute top-3 right-3 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-white font-black uppercase tracking-widest border ${p.status === 'Active' ? 'bg-green-500/20 border-green-500/50 text-green-400' : p.status === 'Declined' ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-black/60 border-white/10'}`}>
+            <div className={`absolute top-3 right-3 backdrop-blur-md px-2.5 py-1 rounded-full text-xs text-white font-black uppercase tracking-widest border ${p.status === 'Active' ? 'bg-green-500/20 border-green-500/50 text-green-400' : p.status === 'Declined' ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-black/60 border-white/10'}`}>
               {p.status}
             </div>
           </div>
@@ -452,10 +452,10 @@ const ProjectCard = ({ project: p, index, user, onArchitect, onEdit, onMilestone
                 </div>
               )}
             </div>
-            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mb-4">{p.category}</p>
+            <p className="text-xs text-slate-500 font-mono uppercase tracking-widest mb-4">{p.category}</p>
 
             <div className="mt-auto">
-              <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-widest mb-2 font-mono">
+              <div className="flex justify-between text-xs text-slate-500 uppercase tracking-widest mb-2 font-mono">
                 <span>Stage</span>
                 <span className="text-teal-400 font-black">{p.currentStage}</span>
               </div>
@@ -476,14 +476,14 @@ const ProjectCard = ({ project: p, index, user, onArchitect, onEdit, onMilestone
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => router.push(user.role === 'admin' ? `/dashboard/messages?selectedClientId=${p.ownerId}` : '/dashboard/messages')}
-                  className="px-3 py-2 bg-slate-800/40 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-teal-500/20 transition-all flex items-center justify-center gap-2"
+                  className="px-3 py-2 bg-slate-800/40 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 text-xs font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-teal-500/20 transition-all flex items-center justify-center gap-2"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   Message
                 </button>
                 <button
                   onClick={() => router.push('/dashboard/conference')}
-                  className="px-3 py-2 bg-slate-800/40 hover:bg-blue-500/10 text-slate-400 hover:text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-blue-500/20 transition-all flex items-center justify-center gap-2"
+                  className="px-3 py-2 bg-slate-800/40 hover:bg-blue-500/10 text-slate-400 hover:text-blue-400 text-xs font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-blue-500/20 transition-all flex items-center justify-center gap-2"
                 >
                   <Video className="w-3.5 h-3.5" />
                   Meeting
@@ -495,14 +495,14 @@ const ProjectCard = ({ project: p, index, user, onArchitect, onEdit, onMilestone
                   <div className="flex gap-2">
                     <button
                       onClick={() => onMilestones(p)}
-                      className="flex-1 px-3 py-2 bg-slate-950/50 hover:bg-slate-900 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2"
+                      className="flex-1 px-3 py-2 bg-slate-950/50 hover:bg-slate-900 text-slate-400 text-xs font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2"
                     >
                       <ListChecks className="w-3.5 h-3.5" />
                       Milestones
                     </button>
                     <button
                       onClick={() => onShare(p.id)}
-                      className="px-3 py-2 bg-slate-950/50 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-teal-500/20 transition-all flex items-center justify-center"
+                      className="px-3 py-2 bg-slate-950/50 hover:bg-teal-500/10 text-slate-400 hover:text-teal-400 text-xs font-black uppercase tracking-widest rounded-xl border border-white/5 hover:border-teal-500/20 transition-all flex items-center justify-center"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
@@ -510,7 +510,7 @@ const ProjectCard = ({ project: p, index, user, onArchitect, onEdit, onMilestone
                   {p.status === 'Active' && (
                     <button
                       onClick={() => onContract(p)}
-                      className="w-full px-3 py-2 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl border border-violet-500/20 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-500/5"
+                      className="w-full px-3 py-2 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 text-xs font-black uppercase tracking-widest rounded-xl border border-violet-500/20 transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-500/5"
                     >
                       <FileCheck className="w-3.5 h-3.5" />
                       {p.contractStatus === 'Sent' || p.contractStatus === 'Signed' ? 'Review Contract' : 'Send Contract'}
@@ -518,7 +518,7 @@ const ProjectCard = ({ project: p, index, user, onArchitect, onEdit, onMilestone
                   )}
                   <div className="mt-2">
                     <select
-                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-300 focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all cursor-pointer"
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-widest text-slate-300 focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500/50 outline-none transition-all cursor-pointer"
                       value={p.currentStage || 'Initiation'}
                       onChange={(e) => onUpdateStage(p.id, e.target.value as ProjectStage)}
                     >
@@ -542,10 +542,10 @@ const ProjectList = ({ projects, user, onArchitect, onEdit, onMilestones, onShar
       <table className="hidden md:table w-full text-left border-collapse">
         <thead>
           <tr className="border-b border-white/5 bg-slate-900/60 font-mono">
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Project</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Status</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Stage</th>
-            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
+            <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Project</th>
+            <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Status</th>
+            <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Stage</th>
+            <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
@@ -581,12 +581,12 @@ const ProjectList = ({ projects, user, onArchitect, onEdit, onMilestones, onShar
                     </div>
                     <div className="min-w-0">
                       <span className="text-sm font-bold text-slate-200 block group-hover:text-white transition-colors truncate uppercase tracking-tight">{p.name}</span>
-                      <span className="text-[10px] text-slate-500 uppercase font-mono tracking-widest">{p.category}</span>
+                      <span className="text-xs text-slate-500 uppercase font-mono tracking-widest">{p.category}</span>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 text-[10px] rounded-full font-black uppercase tracking-widest border ${p.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                  <span className={`px-2.5 py-1 text-xs rounded-full font-black uppercase tracking-widest border ${p.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                     p.status === 'Declined' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                       'bg-slate-800/50 text-slate-400 border-white/5'
                     }`}>
@@ -594,7 +594,7 @@ const ProjectList = ({ projects, user, onArchitect, onEdit, onMilestones, onShar
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-[10px] font-black text-teal-400 bg-teal-500/5 px-2.5 py-1 rounded-lg border border-teal-500/20 uppercase tracking-widest">
+                  <span className="text-xs font-black text-teal-400 bg-teal-500/5 px-2.5 py-1 rounded-lg border border-teal-500/20 uppercase tracking-widest">
                     {p.currentStage || 'Initiation'}
                   </span>
                 </td>
@@ -644,14 +644,14 @@ const ProjectList = ({ projects, user, onArchitect, onEdit, onMilestones, onShar
             <div className="flex-1 min-w-0">
               <h4 className="font-bold text-white text-sm truncate uppercase tracking-tight">{p.name}</h4>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${p.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-slate-800/50 text-slate-400 border-white/5'}`}>
+                <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${p.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-slate-800/50 text-slate-400 border-white/5'}`}>
                   {p.status}
                 </span>
-                <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">{p.category}</span>
+                <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">{p.category}</span>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-black text-teal-400 font-mono">{p.progress}%</span>
+              <span className="text-xs font-black text-teal-400 font-mono">{p.progress}%</span>
               <ChevronRight className="w-4 h-4 text-slate-600 block ml-auto mt-1" />
             </div>
           </motion.div>
@@ -660,3 +660,4 @@ const ProjectList = ({ projects, user, onArchitect, onEdit, onMilestones, onShar
     </>
   );
 };
+

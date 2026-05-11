@@ -63,7 +63,7 @@ export default function NotFound() {
                 </div>
 
                 {/* Decorative Footer */}
-                <div className="flex items-center justify-center gap-6 text-[10px] text-slate-500 font-mono pt-12 opacity-50">
+                <div className="flex items-center justify-center gap-6 text-xs text-slate-500 font-mono pt-12 opacity-50">
                     <div className="flex items-center gap-2 italic">
                         <WifiOff className="w-3 h-3" />
                         NO UP-LINK FOUND
@@ -73,3 +73,4 @@ export default function NotFound() {
         </div>
     );
 }
+

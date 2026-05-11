@@ -26,7 +26,7 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
                     <Route className={`text-violet-400 ${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                         Business OS mindset
                     </p>
                     <p
@@ -57,3 +57,4 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
         </aside>
     );
 }
+

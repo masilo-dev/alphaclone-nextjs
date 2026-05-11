@@ -538,7 +538,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <span className="text-sm font-bold text-slate-200">{c.name}</span>
-                                                                    <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                                                                    <span className="text-xs text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
                                                                 </div>
                                                             </button>
                                                         ))
@@ -547,7 +547,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                         <p className="text-xs text-slate-500 font-medium italic">No matches found.</p>
                                                         <button 
                                                             onClick={onClose} // Redirect to clients tab or just keep it simple
-                                                            className="mt-2 text-[10px] font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-all border border-teal-500/30 px-3 py-1.5 rounded-md hover:bg-teal-500/10"
+                                                            className="mt-2 text-xs font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-all border border-teal-500/30 px-3 py-1.5 rounded-md hover:bg-teal-500/10"
                                                         >
                                                             Add New Client
                                                         </button>
@@ -669,7 +669,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             {/* Service Quick Select for empty items */}
                                             {item.description === '' && (
                                                 <div className="mb-4">
-                                                    <label className="block text-[10px] font-bold text-teal-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                    <label className="block text-xs font-bold text-teal-500 uppercase tracking-widest mb-2 flex items-center gap-1">
                                                         <Sparkles className="w-3 h-3" />
                                                         Quick Select Service
                                                     </label>
@@ -877,7 +877,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 style={{ height: '150px' }}
                                             />
                                             <div className="flex justify-between mt-2">
-                                                <p className="text-[10px] text-slate-500 uppercase font-bold">Sign here</p>
+                                                <p className="text-xs text-slate-500 uppercase font-bold">Sign here</p>
                                                 <button 
                                                     type="button"
                                                     onClick={() => {
@@ -1145,3 +1145,4 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 };
 
 export default CreateInvoiceModal;
+

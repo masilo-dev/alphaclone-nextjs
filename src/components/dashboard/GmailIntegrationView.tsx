@@ -16,6 +16,7 @@ import {
     Clock,
     User as UserIcon
 } from 'lucide-react';
+import { EmailBody } from '../common/EmailBody';
 import { Button, Badge } from '../ui/UIComponents';
 import { gmailService, GmailMessage, EmailCategory } from '../../services/gmailService';
 import { toast } from 'react-hot-toast';
@@ -141,7 +142,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                         title={label}
                     >
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                        <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest">
+                        <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest">
                             {label}
                         </span>
                     </button>
@@ -170,7 +171,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                         <button
                             key={filter.id}
                             onClick={() => setCategoryFilter(filter.id)}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                 categoryFilter === filter.id
                                     ? `${filter.color} text-white shadow-lg`
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
@@ -212,11 +213,11 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                         </span>
                                         <div className="flex items-center gap-2">
                                             {category !== 'normal' && (
-                                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${categoryInfo.color} text-white`}>
+                                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${categoryInfo.color} text-white`}>
                                                     {categoryInfo.label}
                                                 </span>
                                             )}
-                                            <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                                            <span className="text-xs text-slate-500 whitespace-nowrap">
                                                 {thread.date ? formatDistanceToNow(new Date(thread.date), { addSuffix: true }) : ''}
                                             </span>
                                         </div>
@@ -248,8 +249,8 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                     {threadMessages[0]?.subject || 'Loading conversation...'}
                                 </h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="neutral" className="text-[10px] px-1.5 py-0">GMAIL</Badge>
-                                    <span className="text-[10px] text-slate-500">{threadMessages.length} messages</span>
+                                    <Badge variant="neutral" className="text-xs px-1.5 py-0">GMAIL</Badge>
+                                    <span className="text-xs text-slate-500">{threadMessages.length} messages</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -283,16 +284,15 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div className="flex flex-col">
                                                         <span className="text-base font-bold text-white tracking-wide">{msg.from}</span>
-                                                        <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{msg.date}</span>
+                                                        <span className="text-xs text-slate-500 uppercase tracking-widest mt-0.5">{msg.date}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <button className="p-2 text-slate-500 hover:text-teal-400 transition-colors bg-slate-900/50 rounded-lg border border-slate-800"><Star className="w-3.5 h-3.5" /></button>
                                                     </div>
                                                 </div>
-                                                <div
-                                                    className="prose prose-invert max-w-none text-slate-200 text-[15px] leading-relaxed overflow-x-auto selection:bg-teal-500/30 font-medium"
-                                                    dangerouslySetInnerHTML={{ __html: cleanEmailBody(msg.body) }}
-                                                />
+                                                    <div className="mt-4">
+                                                        <EmailBody content={cleanEmailBody(msg.body)} />
+                                                    </div>
                                             </div>
                                         </div>
                                         {idx < threadMessages.length - 1 && (
@@ -349,3 +349,4 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
         </div>
     );
 };
+

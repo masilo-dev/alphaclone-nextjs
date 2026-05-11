@@ -109,12 +109,12 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                     <div>
                         <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-3">
                             Outcome Engine
-                            <span className="px-2 py-0.5 bg-teal-500/10 text-[9px] text-teal-400 rounded-full border border-teal-500/20 font-black tracking-widest">PROACTIVE v3.5</span>
+                            <span className="px-2 py-0.5 bg-teal-500/10 text-xs text-teal-400 rounded-full border border-teal-500/20 font-black tracking-widest">PROACTIVE v3.5</span>
                         </h3>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Next Best Action Sequence</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em]">Next Best Action Sequence</p>
                     </div>
                 </div>
-                <Button variant="ghost" size="sm" className="h-9 px-4 text-[10px] uppercase font-black tracking-widest text-slate-500 hover:text-white hover:bg-white/5 border border-white/5 transition-all" onClick={loadInsights}>
+                <Button variant="ghost" size="sm" className="h-9 px-4 text-xs uppercase font-black tracking-widest text-slate-500 hover:text-white hover:bg-white/5 border border-white/5 transition-all" onClick={loadInsights}>
                     Re-Sync Data
                 </Button>
             </div>
@@ -145,7 +145,7 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                                 {insight.type === 'warning' ? <AlertTriangle className="w-4 h-4" /> : 
                                  insight.type === 'opportunity' ? <TrendingUp className="w-4 h-4" /> : 
                                  <Sparkles className="w-4 h-4" />}
-                                <span className="text-[10px] font-black uppercase tracking-wider">{insight.type}</span>
+                                <span className="text-xs font-black uppercase tracking-wider">{insight.type}</span>
                             </div>
                             <div className="flex -space-x-1">
                                 {[1, 2, 3].map(i => (
@@ -172,8 +172,8 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                             {/* Momentum Progress Indicator */}
                             <div className="pt-2">
                                 <div className="flex justify-between items-center mb-1.5">
-                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Grounding Score</span>
-                                    <span className="text-[9px] font-black text-teal-500 uppercase tracking-widest">Critical Path</span>
+                                    <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Grounding Score</span>
+                                    <span className="text-xs font-black text-teal-500 uppercase tracking-widest">Critical Path</span>
                                 </div>
                                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                                     <motion.div 
@@ -235,3 +235,4 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
 };
 
 export default AIPredictiveWidget;
+

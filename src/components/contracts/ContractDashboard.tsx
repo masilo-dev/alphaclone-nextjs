@@ -470,7 +470,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     { label: 'Stored Versions', value: lifecycleStats.versionCount, tone: 'text-emerald-300' },
                 ].map((item) => (
                     <div key={item.label} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
                         <p className={`mt-2 text-2xl font-black ${item.tone}`}>{item.value}</p>
                     </div>
                 ))}
@@ -1572,3 +1572,4 @@ function buildTemplateContract(
 }
 
 export default ContractDashboard;
+

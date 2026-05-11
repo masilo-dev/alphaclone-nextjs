@@ -30,6 +30,7 @@ export type MappedPlaceLead = {
   userRatingCount?: number;
   googleMapsUri?: string;
   source: 'Google Maps';
+  countryCode?: string;
 };
 
 const PLACES_FIELD_MASK =
@@ -77,6 +78,18 @@ export async function validateGeocodeLocation(
 function mapPlace(place: PlaceResult): MappedPlaceLead | null {
   const placeId = place.id || '';
   if (!placeId) return null;
+
+  let countryCode: string | undefined = undefined;
+  if (place.formattedAddress) {
+    const parts = place.formattedAddress.split(',');
+    const lastPart = parts[parts.length - 1].trim();
+    if (lastPart.length === 2) {
+      countryCode = lastPart.toUpperCase();
+    } else if (lastPart.toLowerCase() === 'usa' || lastPart.toLowerCase() === 'united states') {
+      countryCode = 'US';
+    }
+  }
+
   return {
     placeId,
     businessName: place.displayName?.text || 'Unknown Business',
@@ -90,6 +103,7 @@ function mapPlace(place: PlaceResult): MappedPlaceLead | null {
     userRatingCount: typeof place.userRatingCount === 'number' ? place.userRatingCount : undefined,
     googleMapsUri: place.googleMapsUri,
     source: 'Google Maps',
+    countryCode,
   };
 }
 

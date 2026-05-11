@@ -237,9 +237,9 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                                             </div>
                                             {activity.metadata?.old_stage && (
                                                 <div className="flex items-center gap-2 mt-2 text-xs">
-                                                    <Badge variant="neutral" className="text-[10px] opacity-60">{stageLabels[activity.metadata.old_stage as DealStage]}</Badge>
+                                                    <Badge variant="neutral" className="text-xs opacity-60">{stageLabels[activity.metadata.old_stage as DealStage]}</Badge>
                                                     <ArrowRight className="w-3 h-3 text-slate-600" />
-                                                    <Badge variant="blue" className="text-[10px] text-teal-400 border-teal-500/20">{stageLabels[activity.metadata.new_stage as DealStage]}</Badge>
+                                                    <Badge variant="blue" className="text-xs text-teal-400 border-teal-500/20">{stageLabels[activity.metadata.new_stage as DealStage]}</Badge>
                                                 </div>
                                             )}
                                         </div>
@@ -307,12 +307,12 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                                     <div key={note.id} className="p-4 bg-slate-900/40 rounded-xl border border-white/5">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-[10px] text-slate-400">
+                                                <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-400">
                                                     UN
                                                 </div>
                                                 <span className="text-xs font-medium text-slate-300">User</span>
                                             </div>
-                                            <span className="text-[10px] text-slate-500">{format(new Date(note.createdAt), 'MMM d, yyyy h:mm a')}</span>
+                                            <span className="text-xs text-slate-500">{format(new Date(note.createdAt), 'MMM d, yyyy h:mm a')}</span>
                                         </div>
                                         <p className="text-sm text-slate-300 whitespace-pre-wrap">{note.description}</p>
                                     </div>
@@ -325,3 +325,4 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
         </Modal>
     );
 }
+

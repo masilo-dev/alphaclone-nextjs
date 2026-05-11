@@ -418,7 +418,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 <Edit3 className="w-4 h-4 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold text-xs">Invoice Details</h3>
-                                    <p className="text-slate-400 text-[10px] mt-0.5">Fill in the invoice information.</p>
+                                    <p className="text-slate-400 text-xs mt-0.5">Fill in the invoice information.</p>
                                 </div>
                             </div>
 
@@ -648,3 +648,4 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 };
 
 export default CreateInvoiceModal;
+
