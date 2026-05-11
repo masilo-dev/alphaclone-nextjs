@@ -27,7 +27,7 @@ function getDiscoveryHeaders() {
 export function createProtectedResourceResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
   const data = {
-    resource: `${baseUrl}/api/mcp/sse`,
+    resource: `${baseUrl}/api/mcp`,
     authorization_servers: [baseUrl],
     bearer_methods_supported: ['header', 'query'],
     resource_documentation: `${baseUrl}/api/mcp/health`,

@@ -206,9 +206,8 @@ export function VideoMeetingsAndMcpSetup() {
                 <div className="flex items-start gap-2 text-xs text-teal-400/90 bg-teal-500/10 border border-teal-500/20 rounded-lg p-3">
                   <Server className="w-4 h-4 shrink-0 mt-0.5" />
                   <p>
-                    The MCP HTTP endpoint is <code className="text-slate-300">/api/mcp/sse?api_key=...</code> (the setup
-                    guide copies the full URL; workspace and user are resolved from the key). MCP connections use API keys
-                    only, so no OAuth redirect or token exchange is required.
+                    The MCP endpoint is <code className="text-slate-300">/api/mcp?api_key=...</code> for Claude/Grok and <code className="text-slate-300">/api/mcp/sse?api_key=...</code> for Manus. The setup
+                    guide copies the correct URL automatically. Workspace and user are resolved from the key.
                   </p>
                 </div>
                 <ol className="space-y-3">
