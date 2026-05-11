@@ -2,6 +2,11 @@
 
 ## Date: 2026-05-11 (CLAUDE MCP WEB & MULTI-ORIGIN STABILIZATION)
 
+### Added
+- **Streamable HTTP MCP Endpoint**: Deployed a new single-endpoint MCP route at `/api/mcp/route.ts` to support the modern "Streamable HTTP" pattern required by the Claude.ai web interface. 
+    - Handles the `initialize` handshake directly and proxies subsequent JSON-RPC messages to the core messages engine.
+    - Enables a simpler connection URL: `https://alphaclonesystems.com/api/mcp?api_key=...`.
+
 ### Fixed
 - **Multi-Origin MCP Support**: Resolved a critical CORS issue that restricted connections only to Claude.ai, which would have broken existing integrations for Manus AI and Grok.
     - **Dynamic Origin Validation**: Implemented `getMcpCorsHeaders` in `src/services/mcp/authMiddlewareApp.ts` to dynamically validate and allow multiple trusted origins (`https://claude.ai`, `https://manus.ai`, `https://grok.x.ai`).
