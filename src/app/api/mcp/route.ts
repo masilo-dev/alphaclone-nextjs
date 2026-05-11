@@ -54,19 +54,38 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = await upstream.json();
-    const responseHeaders = new Headers(getMcpCorsHeaders(req));
+    // Safe response handling
+    const responseText = await upstream.text();
     
-    // Propagate session ID if present (critical for stateful interactions)
-    const sessionId = upstream.headers.get('Mcp-Session-Id');
-    if (sessionId) {
-      responseHeaders.set('Mcp-Session-Id', sessionId);
+    if (!responseText || responseText.trim() === '') {
+      console.error('[MCP Single Endpoint] Empty response from upstream');
+      return NextResponse.json(
+        { jsonrpc: '2.0', id: body.id, error: { code: -32603, message: 'Empty upstream response' } },
+        { status: 502, headers: getMcpCorsHeaders(req) }
+      );
     }
 
-    return NextResponse.json(data, { 
-      status: upstream.status,
-      headers: responseHeaders 
-    });
+    try {
+      const data = JSON.parse(responseText);
+      const responseHeaders = new Headers(getMcpCorsHeaders(req));
+      
+      // Propagate session ID if present
+      const sessionId = upstream.headers.get('Mcp-Session-Id');
+      if (sessionId) {
+        responseHeaders.set('Mcp-Session-Id', sessionId);
+      }
+
+      return NextResponse.json(data, { 
+        status: upstream.status,
+        headers: responseHeaders 
+      });
+    } catch (err) {
+      console.error('[MCP Single Endpoint] Failed to parse upstream response:', responseText);
+      return NextResponse.json(
+        { jsonrpc: '2.0', id: body.id, error: { code: -32603, message: 'Invalid upstream response' } },
+        { status: 502, headers: getMcpCorsHeaders(req) }
+      );
+    }
   } catch (err) {
     console.error('[MCP Single Endpoint] POST Upstream error:', err);
     return NextResponse.json(
