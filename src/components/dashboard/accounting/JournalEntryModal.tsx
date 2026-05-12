@@ -30,6 +30,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     });
 
     // Reset form when modal opens
+    useEffect(() => {
         if (isOpen) {
             setFormData({
                 entryDate: new Date().toISOString().split('T')[0],
