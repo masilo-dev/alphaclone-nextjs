@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
+import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
 import { Modal, Input, Button } from '../../ui/UIComponents';
 import { Plus, Trash2, CheckCircle2, AlertCircle, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
