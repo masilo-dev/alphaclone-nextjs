@@ -51,6 +51,43 @@ function triggerDealIntelligenceRecompute(tenantId: string, dealId: string) {
     });
 }
 
+/**
+ * AUTO DEAL INTELLIGENCE (Professional)
+ * Fires score_deal and trigger_deal_automation in the background.
+ * Ensures zero UI lag and strictly professional brand voice.
+ */
+function triggerDealIntelligence(tenantId: string, dealId: string, stage: DealStage) {
+    if (typeof window === 'undefined') return;
+    
+    const professionalRules = `STRICT BRAND VOICE: NO EMOJIS. NO INFORMAL JARGON. NO DECORATIVE SYMBOLS (e.g. ££**).`;
+    
+    // 1. Fire score_deal (Fire and forget)
+    void fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            method: 'call_tool',
+            params: {
+                name: 'score_deal',
+                arguments: { deal_id: dealId, tenant_id: tenantId, style_guidance: professionalRules }
+            }
+        })
+    }).catch(err => console.warn('[AutoDealIntel] score_deal failed:', err));
+
+    // 2. Fire trigger_deal_automation (Fire and forget)
+    void fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            method: 'call_tool',
+            params: {
+                name: 'trigger_deal_automation',
+                arguments: { deal_id: dealId, stage, tenant_id: tenantId, style_guidance: professionalRules }
+            }
+        })
+    }).catch(err => console.warn('[AutoDealIntel] trigger_deal_automation failed:', err));
+}
+
 export interface DealActivity {
     id: string;
     dealId: string;
@@ -364,6 +401,9 @@ export const dealService: DealService = {
             // Non-blocking sync to avoid UI delay
             UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
             triggerDealIntelligenceRecompute(tenantId, deal.id);
+            
+            // AUTO DEAL INTELLIGENCE
+            triggerDealIntelligence(tenantId, deal.id, deal.stage);
 
             return { deal, error: null };
         } catch (err) {
@@ -522,6 +562,9 @@ export const dealService: DealService = {
                     value: data.value,
                     name: data.name
                 }).catch(err => console.error('Failed to emit deal_stage_changed event:', err));
+
+                // AUTO DEAL INTELLIGENCE (Stage Change)
+                triggerDealIntelligence(tenantId, dealId, updates.stage);
             }
 
             return { deal, error: null };

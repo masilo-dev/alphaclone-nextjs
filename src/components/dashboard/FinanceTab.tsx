@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
+import { EmptyState } from '../ui/EmptyState';
 import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X, History } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { businessInvoiceService, type BusinessInvoice } from '../../services/businessInvoiceService';
@@ -1002,8 +1003,20 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                 ))}
                                 {!tenantInvoicesLoading && displayInvoices.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                            No invoices found.
+                                        <td colSpan={6} className="px-6 py-12">
+                                            <EmptyState
+                                                icon={DollarSign}
+                                                title="Revenue: $0. Let's fix that."
+                                                description="No invoices found. Time to turn that hustle into cold hard cash."
+                                                action={
+                                                    <Button 
+                                                        onClick={() => onCreateInvoice?.()}
+                                                        className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
+                                                    >
+                                                        Mint Invoice
+                                                    </Button>
+                                                }
+                                            />
                                         </td>
                                     </tr>
                                 )}

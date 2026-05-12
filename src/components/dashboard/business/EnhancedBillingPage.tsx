@@ -95,6 +95,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setRevenueData(sorted.length ? sorted : [{ date: 'Today', revenue: 0 }]);
     };
 
+    const [activeTab, setActiveTab] = useState<'invoices' | 'services'>('invoices');
+
     const filteredInvoices = invoices.filter(inv => {
         const matchesFilter = filter === 'all' || inv.status === filter;
         const matchesSearch = searchTerm === '' || inv.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -120,6 +122,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     if (loading) return <div className="p-8 text-slate-400">Loading Billing Data...</div>;
 
+    const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
+
     return (
         <div className={`space-y-6 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
             {/* Header */}
@@ -130,11 +134,28 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </h1>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoice Management & Collections</p>
                 </div>
-                <button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto h-12 px-8 bg-teal-600 text-white rounded-xl font-black uppercase text-xs shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2">
-                    <Plus size={18} /> New Invoice
-                </button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setActiveTab('invoices')}
+                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
+                  >
+                    Invoices
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('services')}
+                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
+                  >
+                    Services
+                  </button>
+                </div>
             </div>
 
+            {activeTab === 'services' ? (
+                <React.Suspense fallback={<div className="p-12 text-center text-slate-500">Loading Catalog...</div>}>
+                    <ServicesCatalog />
+                </React.Suspense>
+            ) : (
+                <>
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
@@ -189,10 +210,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
             {/* Invoices List */}
             <div className="space-y-4">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                    {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                        <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
-                    ))}
+                <div className="flex justify-between items-center gap-4">
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                        {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
+                            <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
+                        ))}
+                    </div>
+                    <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 h-10 px-6 bg-teal-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2 transition-all hover:bg-teal-500">
+                        <Plus size={16} /> New Invoice
+                    </button>
                 </div>
 
                 <div className="space-y-3">
@@ -238,6 +264,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </AnimatePresence>
 
             <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
+                </>
+            )}
         </div>
     );
 };

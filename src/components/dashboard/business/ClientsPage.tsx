@@ -43,6 +43,9 @@ import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { formatDistanceToNow } from 'date-fns';
+import { BatchOutreachFAB } from './BatchOutreachFAB';
+import { BatchOutreachPanel } from './BatchOutreachPanel';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -112,6 +115,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
     const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
     const [showOutreachModal, setShowOutreachModal] = useState(false);
+    const [showOutreachPanel, setShowOutreachPanel] = useState(false);
     const [page, setPage] = useState(1);
     const [showArchived, setShowArchived] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -962,6 +966,23 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 userId={user.id}
                 initialSelectedLeads={selectedClientIds}
             />
+
+            {/* Batch Outreach FAB and Panel */}
+            <BatchOutreachFAB
+                selectedCount={selectedClientIds.length}
+                onOpen={() => setShowOutreachPanel(true)}
+                onClear={() => setSelectedClientIds([])}
+            />
+
+            <BatchOutreachPanel
+                isOpen={showOutreachPanel}
+                onClose={() => setShowOutreachPanel(false)}
+                selectedIds={selectedClientIds}
+                onSuccess={() => {
+                    setSelectedClientIds([]);
+                    loadClients(true);
+                }}
+            />
         </div>
     );
 };
@@ -1074,6 +1095,12 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                     <div className="flex items-center gap-2 text-sm text-slate-400">
                         <Phone className="w-4 h-4 shrink-0" />
                         <span className="truncate">{client.phone}</span>
+                    </div>
+                )}
+                {client.metadata?.last_contacted_at && (
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-500/70 mt-3">
+                        <MessageSquare className="w-3 h-3" />
+                        <span>Last Contacted: {formatDistanceToNow(new Date(client.metadata.last_contacted_at), { addSuffix: true })}</span>
                     </div>
                 )}
             </div>

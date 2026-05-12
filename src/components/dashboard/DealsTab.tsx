@@ -654,8 +654,16 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
             ) : deals.length === 0 ? (
                 <EmptyState
                     icon={TrendingUp}
-                    title="No Deals Yet"
-                    description="Create your first deal to start tracking your sales pipeline."
+                    title="The pipeline is quiet. Too quiet."
+                    description="Stop waiting for permission. Create a deal and let's go."
+                    action={
+                        <Button 
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
+                        >
+                            Hunt a Deal
+                        </Button>
+                    }
                 />
             ) : (
                 <div

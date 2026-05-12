@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, Button } from '../ui/UIComponents';
 import { CheckCircle, ArrowRight, X } from 'lucide-react';
-import ProductTour from './ProductTour';
 import { User } from '../../types';
+import { useOnboardingBranch } from '../../hooks/useOnboardingBranch';
+import ProductTour from './ProductTour';
 
 interface OnboardingFlowProps {
     user: User;
@@ -25,6 +26,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
     const [currentStep, setCurrentStep] = useState(0);
     const [showTour, setShowTour] = useState(false);
     const router = useRouter();
+    const { shouldSkipStep, getPunchyTitle } = useOnboardingBranch(user);
 
     const markStepComplete = () => {
         // Mark step complete (could be used for tracking)
@@ -33,14 +35,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
     const steps: OnboardingStep[] = [
         {
             id: 'welcome',
-            title: `Welcome, ${user.name}!`,
-            description: 'Let\'s get you set up in just a few steps. This will only take 2 minutes.',
+            title: `Your unfair advantage just loaded, ${user.name}!`,
+            description: 'We\'re about to make you dangerous. Takes 60 seconds.',
             icon: <CheckCircle className="w-12 h-12 text-teal-400" />,
         },
         {
             id: 'profile',
-            title: 'Complete Your Profile',
-            description: 'Add your photo and contact information so your team can reach you easily.',
+            title: 'Let\'s get you dangerous. Takes 60 seconds.',
+            description: 'Add your photo and contact info. First impressions are everything.',
             icon: <CheckCircle className="w-12 h-12 text-blue-400" />,
             action: {
                 label: 'Go to Settings',
@@ -80,7 +82,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                 },
             },
         },
-    ];
+    ].filter(step => !shouldSkipStep(step.id));
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
@@ -113,7 +115,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                     {/* Progress Bar */}
                     <div className="mb-8">
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm text-slate-400">Step {currentStep + 1} of {steps.length}</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-teal-400">Mission Progress: Step {currentStep + 1} of {steps.length}</span>
                             <button
                                 onClick={handleSkip}
                                 className="text-slate-400 hover:text-white transition-colors"
@@ -137,7 +139,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                         </div>
 
                         <div>
-                            <h3 className="text-2xl font-bold text-white mb-3">{currentStepData?.title}</h3>
+                            <h3 className="text-2xl font-bold text-white mb-3">
+                                {getPunchyTitle(currentStepData?.id) || currentStepData?.title}
+                            </h3>
                             <p className="text-slate-400 text-lg max-w-md mx-auto">
                                 {currentStepData?.description}
                             </p>
@@ -163,7 +167,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                             onClick={handleSkip}
                             className="text-slate-400 hover:text-white transition-colors text-sm"
                         >
-                            Skip Onboarding
+                            I\'ll finish this later
                         </button>
 
                         <div className="flex gap-3">
@@ -191,7 +195,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                                     onClick={handleNext}
                                     className="bg-teal-600 hover:bg-teal-500"
                                 >
-                                    {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
+                                    {currentStep === steps.length - 1 ? 'Let\'s get dangerous' : 'Keep going →'}
                                     <ArrowRight className="w-4 h-4 ml-2" />
                                 </Button>
                             )}

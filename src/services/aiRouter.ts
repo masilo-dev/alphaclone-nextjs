@@ -167,8 +167,22 @@ export function cleanProfessionalContent(content: string): string {
     // 1. Remove Emojis and Symbols
     const noEmojis = content.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF])/g, '');
     
-    // 2. Remove "messed up" characters (unusual unicode that often fails in social platforms)
-    const clean = noEmojis.replace(/[^\x20-\x7E\s\u00A0-\u00FF\u2010-\u2022\u20AC]/g, '');
+    // 2. Remove decorative symbols and "messed up" characters (unusual unicode)
+    // We strictly filter to standard alphanumeric, basic punctuation, and specific currencies if needed,
+    // but we remove repetitive decorative characters like ££, **, etc.
+    const noDecorative = noEmojis
+        .replace(/[*]{2,}/g, '') // Remove double asterisks or more
+        .replace(/[£]{2,}/g, '') // Remove double pound signs or more
+        .replace(/[$]{2,}/g, '') // Remove double dollar signs or more
+        .replace(/[#]{2,}/g, '') // Remove double hashes or more
+        .replace(/[-]{3,}/g, '-') // Reduce excessive dashes
+        .replace(/[=]{2,}/g, '') // Remove decorative equals
+        .replace(/[!]{2,}/g, '!') // Reduce excessive exclamation marks
+        .replace(/[?]{2,}/g, '?') // Reduce excessive question marks
+        .replace(/[.]{4,}/g, '...'); // Cap ellipses
+
+    // 3. Final pass: strictly standard printable ASCII + basic Latin-1 professional subset
+    const clean = noDecorative.replace(/[^\x20-\x7E\s\u00A0-\u00FF\u2010-\u2022\u20AC]/g, '');
     
     return clean.trim();
 }

@@ -14,9 +14,11 @@ import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { businessClientService } from '../../services/businessClientService';
 import { leadService } from '../../services/leadService';
+import { useActivationTracking } from '../../hooks/useActivationTracking';
 import { supabase } from '../../lib/supabase';
 import { qualifyLead, QualificationResult } from '../../lib/leadQualification';
 import { OutreachPanel } from './OutreachPanel';
+import { EmptyState } from '../ui/EmptyState';
 
 // Leaflet: window-only
 const LeadMapView = dynamic(() => import('./LeadMapView'), {
@@ -275,6 +277,7 @@ export default function OmniLeadFinder() {
 
   const currentTenant = useCurrentTenantSafe();
   const { startTask } = useBackgroundTasks();
+  const { trackEvent } = useActivationTracking();
 
   // Validate that required functions are available
   useEffect(() => {
@@ -669,6 +672,7 @@ export default function OmniLeadFinder() {
             }
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedImmediate.length} leads`);
+            trackEvent('first_lead_discovery');
             return { leads: immediateLeads, sourceStats: directData?.sources || {} };
           }
           throw new Error(errData.error || 'Failed to create lead search job');
@@ -733,6 +737,7 @@ export default function OmniLeadFinder() {
             }
             setProgress({ percent: 100, message: 'Done' });
             toast.success(`Found ${qualifiedFinal.length} leads`);
+            trackEvent('first_lead_discovery');
             done = true;
           } else if (latestJob?.status === 'failed' || latestJob?.status === 'cancelled') {
             throw new Error(latestJob?.error_message || 'Lead search job failed');
@@ -1308,10 +1313,17 @@ export default function OmniLeadFinder() {
       )}
 
       {!scanning && results.length > 0 && filteredResults.length === 0 && (
-        <div className="text-center py-10 text-slate-500">
-          <SlidersHorizontal className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No results match your filters.</p>
-          <button onClick={clearFilters} className="mt-2 text-xs text-teal-400 hover:underline">Clear all filters</button>
+        <div className="text-center py-16">
+          <EmptyState
+            icon={SlidersHorizontal}
+            title="Nothing here. Aim elsewhere."
+            description="Your filters are too tight. Loosen them up and find your next win."
+            action={
+              <button onClick={clearFilters} className="text-sm font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-colors">
+                Reset Scopes
+              </button>
+            }
+          />
         </div>
       )}
     </div>

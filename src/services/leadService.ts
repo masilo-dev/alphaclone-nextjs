@@ -954,5 +954,57 @@ export const leadService = {
             console.error('Error deleting growth agent target:', err);
             return { error: err.message };
         }
+    },
+
+    /**
+     * Trigger batch outreach via MCP tool
+     */
+    async sendBatchOutreach(options: {
+        leadIds: string[];
+        tone: string;
+        customContext: string;
+        deliveryProvider?: string;
+    }): Promise<{ success: boolean; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Authentication required');
+
+            // 1. Fire-and-forget MCP call
+            // We use the same fetch pattern as deal intelligence to avoid blocking
+            void fetch('/api/mcp-server', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    method: 'call_tool',
+                    params: {
+                        name: 'send_batch_outreach',
+                        arguments: {
+                            tenant_id: tenantId,
+                            lead_ids: options.leadIds,
+                            tone: options.tone,
+                            custom_context: options.customContext,
+                            delivery_provider: options.deliveryProvider || 'sendgrid'
+                        }
+                    }
+                })
+            }).catch(err => console.error('[LeadService] Batch outreach background trigger failed:', err));
+
+            // 2. Update local metadata for visual feedback (last_contacted_at)
+            const now = new Date().toISOString();
+            await Promise.all(options.leadIds.map(id => 
+                this.getLeadById(id).then(({ lead }) => {
+                    if (lead) {
+                        const metadata = { ...lead.metadata, last_contacted_at: now };
+                        return this.updateLead(id, { metadata });
+                    }
+                })
+            ));
+
+            return { success: true, error: null };
+        } catch (err: any) {
+            console.error('Error in sendBatchOutreach:', err);
+            return { success: false, error: err.message };
+        }
     }
 };

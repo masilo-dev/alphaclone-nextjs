@@ -1772,7 +1772,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         onComplete={() => setShowProductTour(false)}
         userRole={user.role}
       />
-      <CelebrationOverlay show={false} onComplete={() => {}} />
+      <CelebrationOverlay 
+        isOpen={false} 
+        onClose={() => {}} 
+        title="Mission Accomplished" 
+        message="Achievement unlocked." 
+      />
     </div>
   );
 };

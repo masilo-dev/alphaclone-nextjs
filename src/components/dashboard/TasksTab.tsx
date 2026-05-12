@@ -403,17 +403,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             {/* List Rows */}
             <div className="space-y-4">
                 {filteredAndSearchedTasks.length === 0 && !loading ? (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="py-24 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-[2.5rem] border border-dashed border-white/5 backdrop-blur-sm"
-                    >
-                        <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
-                            <Target className="w-10 h-10 opacity-20" />
-                        </div>
-                        <p className="font-black text-sm uppercase tracking-[0.3em] text-slate-600">No Tasks Found</p>
-                        <p className="text-xs font-mono text-slate-700 mt-2 uppercase">Create a task to get started</p>
-                    </motion.div>
+                    <EmptyState
+                        icon={Target}
+                        title="All systems clear."
+                        description="Execution is everything. What's next on your roadmap?"
+                        action={
+                            <Button 
+                                onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
+                                className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
+                            >
+                                Deploy Task
+                            </Button>
+                        }
+                    />
                 ) : (
                     <AnimatePresence mode="popLayout">
                         {filteredAndSearchedTasks.map((task, idx) => (

@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow, format } from 'date-fns';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import GhostIntelligence from '@/components/leads/GhostIntelligence';
 
 const ComposeEmailModal = dynamic(
   () => import('@/components/dashboard/business/ComposeEmailModal'),
@@ -390,6 +391,13 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
             
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
+              <div className="p-4 border-b border-slate-800">
+                <GhostIntelligence 
+                  lead={lead} 
+                  onAction={handleSendEmail} 
+                />
+              </div>
+
               {/* Lead Score & Next Action */}
               <div className="p-4 border-b border-slate-800">
                 <div className="flex items-start justify-between mb-4">

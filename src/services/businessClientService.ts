@@ -23,6 +23,7 @@ export interface BusinessClient {
     isActive: boolean; // Added
     industry?: string; // Added
     website?: string; // Added
+    metadata?: Record<string, any>;
 }
 
 export interface ClientsResponse {
@@ -79,7 +80,8 @@ export const businessClientService = {
                 updatedAt: c.updated_at,
                 isActive: c.is_active,
                 industry: c.industry,
-                website: c.website
+                website: c.website,
+                metadata: c.metadata
             }));
 
             return { clients, count: count || 0, error: null };
@@ -118,7 +120,8 @@ export const businessClientService = {
                 updatedAt: data.updated_at,
                 isActive: data.is_active,
                 industry: data.industry,
-                website: data.website
+                website: data.website,
+                metadata: data.metadata
             };
 
             return { client, error: null };

@@ -617,6 +617,35 @@ body {
   box-shadow: 0 0 30px rgba(0, 210, 160, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.4);
 }
 
+/* Activation & Founder Utilities */
+.text-founder-punchy {
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.bg-activation-gradient {
+  background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 50%, #8b5cf6 100%);
+}
+
+.activation-card-premium {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  box-shadow: 0 0 40px rgba(20, 184, 166, 0.1);
+  backdrop-filter: blur(20px);
+}
+
+.onboarding-step-active {
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+  border-color: #14b8a6;
+}
+
+.celebration-overlay {
+  pointer-events: none;
+  z-index: 9999;
+}
+
 .cta-secondary {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);

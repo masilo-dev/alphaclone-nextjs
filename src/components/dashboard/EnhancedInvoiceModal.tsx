@@ -18,12 +18,15 @@ import {
   Settings,
   Save,
   Upload,
+  Package,
+  Plus,
   Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
+import { useServicesCatalog, ServiceItem } from '@/hooks/useServicesCatalog';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 // Removed unused import causing build failure
@@ -80,6 +83,8 @@ export default function EnhancedInvoiceModal({
 }: EnhancedInvoiceModalProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
+  const { services, addService } = useServicesCatalog();
+  const [showServicePicker, setShowServicePicker] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'details' | 'items' | 'payment' | 'preview'>('details');
   const [isLoading, setIsLoading] = useState(false);
@@ -464,20 +469,97 @@ export default function EnhancedInvoiceModal({
             ${item.amount.toFixed(2)}
           </div>
           <button
+            onClick={() => {
+              if (!item.description) {
+                toast.error("Add a description first");
+                return;
+              }
+              addService({
+                name: item.description,
+                description: '',
+                defaultPrice: item.rate,
+                unit: 'flat'
+              });
+              toast.success("Saved to catalog");
+            }}
+            className="p-2 text-slate-500 hover:text-teal-400 hover:bg-teal-400/10 rounded-lg transition-all"
+            title="Save as Service"
+          >
+            <Save className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleRemoveItem(index)}
-            className="p-2 text-red-500 hover:bg-red-900/20 rounded-lg"
+            className="p-2 text-rose-500 hover:bg-rose-900/20 rounded-lg transition-all"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
       ))}
 
-      <button
-        onClick={handleAddItem}
-        className="w-full py-2 border-2 border-dashed border-slate-700 rounded-lg text-slate-400 hover:border-slate-500 hover:text-slate-300"
-      >
-        + Add Item
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={handleAddItem}
+          className="flex-1 py-2 border-2 border-dashed border-slate-700 rounded-lg text-slate-400 hover:border-slate-500 hover:text-slate-300 font-black uppercase text-[10px] tracking-widest"
+        >
+          + Add Custom Item
+        </button>
+        <button
+          onClick={() => setShowServicePicker(true)}
+          className="flex-1 py-2 border-2 border-dashed border-teal-500/30 rounded-lg text-teal-400 hover:border-teal-500 hover:text-teal-300 font-black uppercase text-[10px] tracking-widest bg-teal-500/5"
+        >
+          <Package className="w-3 h-3 inline mr-1" /> Add From Catalog
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showServicePicker && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-white font-black uppercase tracking-tight flex items-center gap-2">
+                  <Package className="text-teal-500 w-4 h-4" /> Services Catalog
+                </h3>
+                <button onClick={() => setShowServicePicker(false)} className="text-slate-500 hover:text-white"><X size={18} /></button>
+              </div>
+              
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {services.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        items: [...prev.items, { description: s.name, quantity: 1, rate: s.defaultPrice, amount: s.defaultPrice }]
+                      }));
+                      setShowServicePicker(false);
+                      toast.success(`Added ${s.name}`);
+                    }}
+                    className="w-full text-left p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-white font-bold">{s.name}</p>
+                        <p className="text-xs text-slate-500 line-clamp-1">{s.description}</p>
+                      </div>
+                      <span className="text-teal-400 font-black">${s.defaultPrice}</span>
+                    </div>
+                  </button>
+                ))}
+                {services.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-slate-500 text-sm italic">Catalog is empty. Add services in the Billing Hub.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="mt-6 p-4 bg-slate-800/50 border border-slate-800 rounded-lg">
         <div className="flex justify-between items-center mb-2">
