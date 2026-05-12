@@ -138,6 +138,27 @@ export const activityService = {
     },
 
     /**
+     * Get recent activity for pulse ticker
+     */
+    async getRecentActivity(userId: string, tenantId: string, hours = 24) {
+        const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+        const { data, error } = await supabase
+            .from('activity_logs')
+            .select('id, action, metadata, created_at')
+            .eq('tenant_id', tenantId)
+            .gte('created_at', since)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+        
+        return (data || []).map((log: any) => ({
+            ...log,
+            description: (log.metadata as any)?.description || log.action
+        }));
+    },
+
+    /**
      * Get user's activity logs
      */
     async getActivityLogs(userId: string, limit = 50) {

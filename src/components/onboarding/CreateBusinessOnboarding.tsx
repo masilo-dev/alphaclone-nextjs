@@ -112,25 +112,25 @@ export default function CreateBusinessOnboarding() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="w-12 h-12 text-teal-400" />
-            <h1 className="text-4xl font-bold text-white">Create Your Business</h1>
+            <h1 className="text-4xl font-bold text-white tracking-tighter">Your unfair advantage just loaded.</h1>
           </div>
           <p className="text-slate-400 text-lg">
-            Set up your business operating system in minutes
+            Let\'s get you dangerous. Takes 60 seconds.
           </p>
         </div>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-12">
-          <StepIndicator number={1} label="Business Info" active={step === 1} completed={step > 1} />
+          <StepIndicator number={1} label="Your Hustle" active={step === 1} completed={step > 1} />
           <div className="w-16 h-0.5 bg-slate-700" />
-          <StepIndicator number={2} label="Choose Plan" active={step === 2} completed={step > 2} />
+          <StepIndicator number={2} label="Pick Your Fuel" active={step === 2} completed={step > 2} />
         </div>
 
         {/* Content */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 backdrop-blur-sm">
           {step === 1 && (
             <div className="max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold text-white mb-6">Tell us about your business</h2>
+              <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter">What\'s your hustle?</h2>
 
               {error && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
@@ -177,12 +177,12 @@ export default function CreateBusinessOnboarding() {
                 {/* Industry (Optional) */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Industry (Optional)
+                    Your Sector
                   </label>
                   <select
                     className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 transition-colors"
                   >
-                    <option value="">Select your industry</option>
+                    <option value="">What\'s your sector?</option>
                     <option value="agency">Agency / Creative Services</option>
                     <option value="consulting">Consulting / Professional Services</option>
                     <option value="restaurant">Restaurant / Food Service</option>
@@ -201,9 +201,9 @@ export default function CreateBusinessOnboarding() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!businessName.trim() || !businessSlug.trim()}
-                className="w-full mt-8 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-8 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
-                Continue to Plan Selection
+                Keep going →
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -290,7 +290,7 @@ export default function CreateBusinessOnboarding() {
                     </>
                   ) : (
                     <>
-                      Create My Business
+                      Lock it in
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}

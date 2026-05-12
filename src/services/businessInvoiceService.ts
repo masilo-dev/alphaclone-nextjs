@@ -384,6 +384,8 @@ export const businessInvoiceService = {
                 // Revenue recognition policy: recognize on payment receipt, not on send.
                 if (newStatus === 'paid' && oldStatus !== 'paid') {
                     await this.postRevenueOnPayment(invoiceId, currentInvoice);
+                    // Fire and forget receipt automation
+                    this.triggerReceiptAutomation(invoiceId, currentInvoice.tenant_id).catch(console.error);
                 }
             }
 
@@ -580,6 +582,9 @@ export const businessInvoiceService = {
 
             // GL INTEGRATION: Revenue is recognized on payment receipt
             await this.postRevenueOnPayment(invoiceId, invoice);
+
+            // Fire and forget receipt automation
+            this.triggerReceiptAutomation(invoiceId, invoice.tenant_id).catch(console.error);
 
             // Log audit
             const { data: { user } } = await supabase.auth.getUser();
@@ -1190,4 +1195,57 @@ export const businessInvoiceService = {
             return { error: err.message };
         }
     },
+
+    /**
+     * Trigger Receipt Automation via MCP tool
+     */
+    async triggerReceiptAutomation(invoiceId: string, tenantId: string) {
+        try {
+            // Call the MCP send_receipt tool
+            const response = await fetch('/api/mcp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: crypto.randomUUID(),
+                    method: 'tools/call',
+                    params: {
+                        name: 'send_receipt',
+                        arguments: {
+                            invoice_id: invoiceId,
+                            tenant_id: tenantId
+                        }
+                    }
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.result && !result.error) {
+                // Successful transmission, append to audit trail in notes
+                const timestamp = new Date().toLocaleString();
+                const auditNote = `\n[System] Receipt sent automatically on ${timestamp}`;
+                
+                // Get current notes
+                const { data: current } = await supabase
+                    .from('business_invoices')
+                    .select('notes')
+                    .eq('id', invoiceId)
+                    .single();
+                
+                const newNotes = (current?.notes || '') + auditNote;
+                
+                await supabase
+                    .from('business_invoices')
+                    .update({ notes: newNotes })
+                    .eq('id', invoiceId);
+                
+                console.log(`Receipt audit trail updated for ${invoiceId}`);
+            } else {
+                console.error('MCP Receipt Error:', result.error);
+            }
+        } catch (err) {
+            console.error('Failed to trigger receipt automation:', err);
+        }
+    }
 };

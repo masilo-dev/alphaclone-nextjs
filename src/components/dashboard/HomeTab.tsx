@@ -10,6 +10,9 @@ import { MomentumHUD } from './MomentumHUD';
 import { IntegratedIntelligencePanel } from './IntegratedIntelligencePanel';
 import { motion } from 'framer-motion';
 import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
+import DailyBrief from './DailyBrief';
+import RevenueMomentumCard from './RevenueMomentumCard';
+import ActivityPulse from '../shared/ActivityPulse';
 
 const DEFAULT_WIDGET_IDS = ['momentum', 'intelligence', 'database-summary', 'agenda', 'ai-widget', 'stats'] as const;
 
@@ -192,12 +195,15 @@ const HomeTab: React.FC<HomeTabProps> = ({
     };
 
     return (
-        <div className="space-y-6 animate-fade-in relative">
+        <div className="space-y-6 animate-fade-in relative pb-16">
+            <DailyBrief />
+            
             {/* Celebration Overlay */}
             <CelebrationOverlay 
-                show={celebration.show} 
+                isOpen={celebration.show} 
+                title="Mission Accomplished"
                 message={celebration.message}
-                onComplete={() => setCelebration(prev => ({ ...prev, show: false }))}
+                onClose={() => setCelebration(prev => ({ ...prev, show: false }))}
             />
 
             {/* Render widgets in custom order */}
@@ -228,12 +234,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                                 transition={{ duration: 0.5 }}
                                 className="space-y-3"
                             >
-                                <MomentumHUD
-                                    score={momentumScore}
-                                    streak={loginStreak}
-                                    activity24h={activity24h}
-                                    newLeads={newLeads24h}
-                                />
+                                <RevenueMomentumCard />
                                 {/* AI Agent Connect Cards */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
@@ -410,20 +411,22 @@ const HomeTab: React.FC<HomeTabProps> = ({
                 ) : (
                     <EmptyState
                         icon={Briefcase}
-                        title="No active projects"
-                        description="Start a new project to track progress."
+                        title="Silence isn't growth."
+                        description="The engine is idling. Put it in gear and start a project."
                         action={
                             <Button 
                                 variant="primary" 
                                 onClick={() => router.push('/dashboard?tab=projects')}
-                                className="bg-teal-600 hover:bg-teal-500"
+                                className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
                             >
-                                Start First Project
+                                Start Your Mission
                             </Button>
                         }
                     />
                 )}
             </div>
+
+            <ActivityPulse />
         </div>
     );
 };

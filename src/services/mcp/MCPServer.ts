@@ -22,7 +22,7 @@ import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
 import Anthropic from '@anthropic-ai/sdk';
-import { routeAutonomousTask } from '../aiRouter';
+import { routeAutonomousTask, cleanProfessionalContent, type AIStrengthTask } from '../aiRouter';
 import { PROFESSIONAL_GUARDRAILS } from '../ai/autonomousGuardrails';
 import { strategyService } from '../ai/strategyService';
 import { aiGenerationService } from '../aiGenerationService';
@@ -62,6 +62,7 @@ import { userOnboardingWorkflow } from '../../workflows/user-onboarding';
 import { mcpAgentWorkflow } from '../../workflows/mcp-agent';
 import { strategicAuditService } from '../StrategicAuditService';
 import { strategicThinkerService } from '../StrategicThinkerService';
+import { xaiVideoGenerationService } from '../ai/xaiVideoGenerationService';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -2230,7 +2231,8 @@ class AlphaCloneMCPServer {
             task_note,
             mark_task_done,
           } = a;
-          if (typeof caption !== 'string' || !caption.trim()) throw new Error('caption is required');
+          const cleanCaption = cleanProfessionalContent(caption || '');
+          if (!cleanCaption) throw new Error('caption is required');
           const normalizedPlatforms = Array.isArray(platforms)
             ? platforms.map((p) => String(p).trim().toLowerCase()).filter(Boolean)
             : ['facebook'];
@@ -2313,13 +2315,13 @@ class AlphaCloneMCPServer {
             if (firstMediaUrl) {
               if (isVideoMedia) {
                 body.set('file_url', firstMediaUrl);
-                body.set('description', caption.trim());
+                body.set('description', cleanCaption);
               } else {
                 body.set('url', firstMediaUrl);
-                body.set('caption', caption.trim());
+                body.set('caption', cleanCaption);
               }
             } else {
-              body.set('message', caption.trim());
+              body.set('message', cleanCaption);
               if (typeof link_url === 'string' && link_url) body.set('link', link_url);
             }
             const resp = await fetch(graph.toString(), {
@@ -2342,7 +2344,7 @@ class AlphaCloneMCPServer {
             .insert({
               tenant_id,
               user_id,
-              caption: caption.trim(),
+              caption: cleanCaption,
               platforms: normalizedPlatforms.length > 0 ? normalizedPlatforms : ['facebook'],
               link_url: typeof link_url === 'string' && link_url ? link_url : null,
               media_urls: mergedMediaUrls,
@@ -4984,6 +4986,39 @@ Return ONLY a JSON array of 60 objects:
           const { prompt } = a;
           const { runId } = await start(mcpAgentWorkflow, [{ prompt, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          break;
+        }
+
+        case 'generate_viral_video_script': {
+          const a = args as Record<string, any>;
+          this.requireTenant(a);
+          const { topic, intensity = 'high' } = a;
+          if (typeof topic !== 'string' || !topic.trim()) throw new Error('topic is required');
+          
+          const script = await xaiVideoGenerationService.generateViralScript(topic, intensity as any);
+          result = { content: [{ type: 'text', text: JSON.stringify(script, null, 2) }] };
+          break;
+        }
+
+        case 'send_batch_outreach': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { lead_ids, tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
+          
+          if (!Array.isArray(lead_ids) || lead_ids.length === 0) {
+            throw new Error('lead_ids must be a non-empty array of UUIDs');
+          }
+
+          // Trigger autonomous task for bulk outreach
+          const prompt = `Perform bulk outreach for the following leads:\nIDs: ${lead_ids.join(', ')}\nTone: ${tone}\nContext: ${custom_context}\nProvider: ${delivery_provider}`;
+          
+          const taskResult = await routeAutonomousTask(
+            'strategy',
+            prompt,
+            'You are a high-performing Business Development Representative. Generate professional outreach messages. No emojis. No decorative symbols.'
+          );
+
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, response: taskResult.content, status: 'completed' }, null, 2) }] };
           break;
         }
 

@@ -491,7 +491,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'get_business_snapshot',
-    description: 'Pull the full business state snapshot including open deals, overdue invoices, stale leads, social activity, and pending tasks. Use this on session start or when a strategic overview is needed.',
+    description: 'The "Chief of Staff" briefing. Returns everything at once — leads, deals, invoices, tasks, posts — in one shot. Use this at session start to get the full state of the business or for a strategic deep-dive.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1953,6 +1953,32 @@ export const MCP_TOOLS = [
         prompt: { type: 'string' }
       },
       required: ['prompt'],
+    },
+  },
+  {
+    name: 'generate_viral_video_script',
+    description: 'Generate a high-engagement, viral business video script with hooks and visual cues.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        topic: { type: 'string', description: 'Core theme of the video' },
+        intensity: { type: 'string', enum: ['normal', 'high', 'extreme'], default: 'high' }
+      },
+      required: ['topic'],
+    },
+  },
+  {
+    name: 'send_batch_outreach',
+    description: 'Trigger personalized outreach to multiple leads simultaneously.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        lead_ids: { type: 'array', items: { type: 'string' }, description: 'List of lead UUIDs' },
+        tone: { type: 'string', description: 'Tone of the message (professional, punchy, etc.)' },
+        custom_context: { type: 'string', description: 'Additional context for personalization' },
+        delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'zoho'], default: 'sendgrid' }
+      },
+      required: ['lead_ids'],
     },
   },
 ];

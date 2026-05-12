@@ -49,11 +49,12 @@ export const strategicThinkerService = {
         }
 
         // 2. Analyze Leads (Funnel Friction)
-        if (snapshot.staleLeads.length > 100 && snapshot.deals.length === 0) {
+        const staleLeads = snapshot.leads.filter(l => l.daysStale > 30);
+        if (staleLeads.length > 100 && snapshot.deals.length === 0) {
             insights.push({
                 type: 'pivot',
                 title: 'Conversion Bottleneck',
-                description: `With over ${snapshot.staleLeads.length} leads and zero active deals, your current strategy is focused too much on lead generation and not enough on qualification.`,
+                description: `With over ${staleLeads.length} leads and zero active deals, your current strategy is focused too much on lead generation and not enough on qualification.`,
                 impact: 'high',
                 actionableStep: 'Stop new lead generation and run a "Re-engagement Blitz" on the top 10% of stale leads.'
             });
@@ -72,7 +73,7 @@ export const strategicThinkerService = {
                 status: 'needs_approval',
                 playbookId: 'invoice-recovery-standard'
             };
-        } else if (snapshot.staleLeads.length > 100) {
+        } else if (staleLeads.length > 100) {
             theme = 'Funnel Optimization';
             autoReaction = {
                 action: 'Initializing AI Lead Qualification for top 20 stale leads.',
