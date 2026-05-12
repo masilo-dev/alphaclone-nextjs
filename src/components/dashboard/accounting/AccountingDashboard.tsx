@@ -6,7 +6,7 @@ import { Card, Button } from '../../ui/UIComponents';
 import { 
     DollarSign, ArrowUpRight, ArrowDownRight, FileText, Activity, Upload, 
     CheckCircle2, Calendar, ShieldCheck, ChevronDown, TrendingUp, Wallet, 
-    ArrowRight, Clock, Plus, Filter, MoreHorizontal
+    ArrowRight, Clock, Plus, Filter, MoreHorizontal, Receipt
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import ReceiptUploadModal from './ReceiptUploadModal';
