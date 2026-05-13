@@ -11,7 +11,7 @@ import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { PastEventPromptModal } from './PastEventPromptModal';
-import { useTenant } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { strategicThinkerService } from '../../services/StrategicThinkerService';
 
 /**
