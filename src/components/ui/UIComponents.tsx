@@ -31,9 +31,9 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: "h-9 px-3 text-xs", // 36px - Compact
-    md: "h-11 px-5 py-2 text-base", // 44px - Native Standard
-    lg: "h-14 px-6 text-lg", // 56px - Prominent
+    sm: "h-8 px-3 text-xs", // 32px - Ultra Compact
+    md: "h-10 px-4 py-2 text-sm", // 40px - Space Efficient
+    lg: "h-12 px-6 text-base", // 48px - Standard
   };
 
   return (
@@ -110,7 +110,7 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   return (
     <div className="w-full">
-      {label && <label className="block text-sm font-medium text-white mb-1.5">{label}</label>}
+      {label && <label className="block text-xs font-semibold text-slate-400 mb-1">{label}</label>}
       <div className="relative group">
         {icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors">
@@ -119,12 +119,12 @@ export const Input: React.FC<InputProps> = ({
         )}
         {textarea ? (
           <textarea
-            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${icon ? 'pl-11' : ''} ${className}`}
+            className={`w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[80px] resize-y ${icon ? 'pl-10' : ''} ${className}`}
             {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
-            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-11' : ''} ${className}`}
+            className={`w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`}
             {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
@@ -169,7 +169,7 @@ export const Modal: React.FC<ModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4 sm:p-6 overflow-y-auto">
+        <div className="p-4 overflow-y-auto">
           {children}
         </div>
       </div>
