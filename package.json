@@ -153,5 +153,10 @@
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "ws": "^8.19.0"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
   }
 }
