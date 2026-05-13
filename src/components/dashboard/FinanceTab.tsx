@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button, Badge } from '../ui/UIComponents';
 import { EmptyState } from '../ui/EmptyState';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X, History } from 'lucide-react';
+import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign, FileDown, Zap, Star, Rocket, Check, ShieldCheck, ExternalLink, Eye, X, History, Send } from 'lucide-react';
 import { User, Invoice } from '../../types';
 import { businessInvoiceService, type BusinessInvoice } from '../../services/businessInvoiceService';
 import { cronService } from '../../services/cronService';
