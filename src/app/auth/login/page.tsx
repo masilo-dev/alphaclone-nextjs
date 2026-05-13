@@ -450,43 +450,43 @@ function LoginContent() {
                 <HeroBackground />
             </div>
 
-            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-6 shadow-2xl relative z-10 flex-shrink-0 ${isRegistering && isBusiness ? 'max-w-4xl' : 'max-w-md'}`}>
-                <div className="mb-5 text-center">
+            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 max-w-md`}>
+                <div className="mb-4 text-center">
                     {isPWA ? (
-                        <div className="mx-auto mb-4 flex justify-center inline-block">
+                        <div className="mx-auto mb-3 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                width={64}
-                                height={64}
+                                width={48}
+                                height={48}
                                 className="object-contain"
                                 priority
                             />
                         </div>
                     ) : (
-                        <Link href="/" className="mx-auto mb-4 flex justify-center inline-block">
+                        <Link href="/" className="mx-auto mb-3 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                width={64}
-                                height={64}
+                                width={48}
+                                height={48}
                                 className="object-contain hover:scale-105 transition-transform"
                                 priority
                             />
                         </Link>
                     )}
-                    <h1 className="text-xl font-bold text-white mb-1.5">AlphaClone Systems</h1>
-                    <p className="text-slate-400 text-sm">
+                    <h1 className="text-lg font-bold text-white mb-1">AlphaClone Systems</h1>
+                    <p className="text-slate-400 text-xs">
                         {isRegistering ? 'Create your Business OS workspace' : 'Sign in to your Business OS dashboard'}
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                     {isRegistering && (
-                        <div className="animate-slide-up space-y-3">
-                            <div className="max-w-md mx-auto rounded-lg border border-teal-500/20 bg-teal-500/10 px-4 py-3 text-center">
-                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
-                                <p className="mt-1 text-sm text-slate-300">New signups create a business workspace. Client account creation is disabled on this screen.</p>
+                        <div className="animate-slide-up space-y-2">
+                            <div className="max-w-md mx-auto rounded-lg border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-center">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
+                                <p className="mt-0.5 text-xs text-slate-300">Business workspace provisioning enabled.</p>
                             </div>
 
                             <div className="max-w-md mx-auto w-full">
@@ -537,7 +537,7 @@ function LoginContent() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
                                 required
-                                className={!isRegistering ? 'pr-28' : 'pr-14'}
+                                className={!isRegistering ? 'pr-20' : 'pr-12'}
                                 autoComplete={isRegistering ? "new-password" : "current-password"}
                             />
                             <button
@@ -584,25 +584,22 @@ function LoginContent() {
                         )}
 
                         {isRegistering && (
-                            <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                    <div className={`flex items-center gap-2 text-xs ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                        <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                        8+ Characters
-                                    </div>
-                                    <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                        <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                        Uppercase
-                                    </div>
-                                    <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                        <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                        Number
-                                    </div>
-                                    <div className={`flex items-center gap-2 text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                        <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                        Special Char
-                                    </div>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 py-1">
+                                <div className={`flex items-center gap-1.5 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                    8+ Chars
+                                </div>
+                                <div className={`flex items-center gap-1.5 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                    Upper
+                                </div>
+                                <div className={`flex items-center gap-1.5 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                    Number
+                                </div>
+                                <div className={`flex items-center gap-1.5 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                    Special
                                 </div>
                             </div>
                         )}
@@ -637,7 +634,7 @@ function LoginContent() {
 
                         <Button
                             type="submit"
-                            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
+                            className="w-full h-10 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                             isLoading={isLoading}
                         >
                             {isRegistering ? 'Create Account' : 'Sign In'}
@@ -674,7 +671,7 @@ function LoginContent() {
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gray-50 rounded-full border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-9 h-9 flex items-center justify-center bg-white hover:bg-gray-50 rounded-full border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -704,7 +701,7 @@ function LoginContent() {
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-10 h-10 flex items-center justify-center bg-[#0A66C2] hover:bg-[#0958A8] text-white rounded-full border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-9 h-9 flex items-center justify-center bg-[#0A66C2] hover:bg-[#0958A8] text-white rounded-full border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
@@ -731,7 +728,7 @@ function LoginContent() {
                                 }
                             }}
                             disabled={isLoading}
-                            className="w-10 h-10 flex items-center justify-center bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-full border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-9 h-9 flex items-center justify-center bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-full border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
@@ -740,7 +737,7 @@ function LoginContent() {
                     </div>
                 </form>
 
-                <div className="mt-6 pt-4 border-t border-slate-800 text-center space-y-3">
+                <div className="mt-4 pt-3 border-t border-slate-800 text-center space-y-2">
                     <button
                         onClick={() => {
                             if (!registrationOpen && !isRegistering) {
