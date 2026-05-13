@@ -199,7 +199,7 @@ export default function PnLStatement() {
               <BarChart data={data?.revenue.by_month || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="month" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
                   itemStyle={{ color: '#2dd4bf' }}
