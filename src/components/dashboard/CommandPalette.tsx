@@ -8,7 +8,7 @@ import {
     Zap, PieChart, Shield, Lock, FileText, Plus,
     ArrowRight, Sparkles, Layout, Database, MessageSquare,
     DollarSign, TrendingUp, BarChart3, Clock, Bell,
-    ArrowUpCircle, CheckCircle, AlertCircle, Circle
+    ArrowUpCircle, CheckCircle, AlertCircle, Circle, Eye
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
