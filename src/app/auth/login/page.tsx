@@ -57,9 +57,7 @@ function LoginContent() {
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState(businessNameParam || '');
     const [isBusiness] = useState(true);
-    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>(
-        planParam && ['starter', 'pro', 'enterprise'].includes(planParam) ? planParam : 'starter'
-    );
+    const [selectedPlan] = useState<SubscriptionPlan>('starter');
     const [legalAccepted, setLegalAccepted] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -95,22 +93,7 @@ function LoginContent() {
         loadPolicy();
     }, []);
 
-    const planDisplayNames: Record<string, string> = {
-        starter: 'Starter',
-        pro: 'Pro',
-        enterprise: 'Enterprise',
-    };
 
-    const plans = PAID_PLANS.map((id) => {
-        const pricing = PLAN_PRICING[id];
-        return {
-            id,
-            name: planDisplayNames[id],
-            price: `$${pricing.monthly}/mo`,
-            description: pricing.description || '',
-            features: (pricing.featureList || []).slice(0, 4),
-        };
-    });
 
     const triggerOnboardingWorkflow = async (tenantId: string) => {
         try {
@@ -166,7 +149,7 @@ function LoginContent() {
 
                 const { authService } = await import('@/services/authService');
                 const role = 'tenant_admin';
-                const { user, error: signUpError } = await authService.signUp(email, password, name, role);
+                const { user: newUser, error: signUpError } = await authService.signUp(email, password, name, role);
 
                 if (signUpError) {
                     console.error("SignUp Error:", signUpError);
@@ -183,19 +166,18 @@ function LoginContent() {
                     return;
                 }
 
-                if (user) {
+                if (newUser) {
                     // 2. TENANT CREATION (If Business selected)
                     if (isBusiness && businessName) {
-                        let newTenant = null;
                         try {
                             const { tenantService } = await import('@/services/tenancy/TenantService');
                             const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
                             // Create Tenant
-                            newTenant = await tenantService.createTenant({
+                            const newTenant = await tenantService.createTenant({
                                 name: businessName,
                                 slug: slug,
-                                adminUserId: user.id
+                                adminUserId: newUser.id
                             });
 
                             // Set Trial and Plan
@@ -208,29 +190,34 @@ function LoginContent() {
                                 subscription_plan: selectedPlan
                             });
 
-                        } catch (tenantErr) {
-                            console.error("Tenant Creation Error:", tenantErr);
-                            // Proceed anyway, user is created
-                        }
+                            // 3. Welcome Email
+                            fetch('/api/email/welcome', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    email: newUser.email,
+                                    name: name,
+                                    trial_ends_at: trialEndDate,
+                                    workspace_name: businessName
+                                })
+                            }).catch(err => console.warn('Welcome email trigger failed:', err));
 
-                        // Redirect to dashboard for new trial users (No card required)
-                        if (newTenant) {
                             void triggerOnboardingWorkflow(newTenant.id);
-                            router.push('/dashboard/business');
-                            return;
+                        } catch (tenantErr) {
+                            console.error('Tenant creation failed:', tenantErr);
                         }
                     }
-
-                    // Redirect to dashboard for normal users or if tenant creation failed
+                    // Redirect to dashboard for all successful registrations
                     router.push('/dashboard/business');
+                    return;
                 }
                 setIsLoading(false);
                 return;
             }
 
             // 2. LOGIN FLOW
-            const { authService } = await import('@/services/authService');
-            const { user, error: signInError, needsMfa } = await authService.signIn(email, password);
+            const { authService: signInAuth } = await import('@/services/authService');
+            const { user: loggedInUser, error: signInError, needsMfa } = await signInAuth.signIn(email, password);
 
             if (signInError) {
                 // Map Supabase raw errors to user-friendly messages
@@ -254,11 +241,12 @@ function LoginContent() {
                 return;
             }
 
-            if (user) {
+            if (loggedInUser) {
                 router.push(postLoginRedirect);
             }
             setIsLoading(false);
         } catch (err) {
+            console.error('Submit Error:', err);
             setError('An unexpected error occurred. Please try again.');
             setIsLoading(false);
         }
@@ -522,46 +510,7 @@ function LoginContent() {
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-3 text-center">Select Your Plan</label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {plans.map((plan) => (
-                                            <button
-                                                key={plan.id}
-                                                type="button"
-                                                onClick={() => setSelectedPlan(plan.id)}
-                                                className={`p-4 rounded-xl border text-left transition-all relative group overflow-hidden ${selectedPlan === plan.id
-                                                    ? 'bg-teal-900/20 border-teal-500 ring-1 ring-teal-500'
-                                                    : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
-                                                    }`}
-                                            >
-                                                {selectedPlan === plan.id && (
-                                                    <div className="absolute top-0 right-0 p-2">
-                                                        <CheckCircle2 className="w-5 h-5 text-teal-400" />
-                                                    </div>
-                                                )}
-                                                <div className="font-bold text-base text-white mb-0.5">{plan.name}</div>
-                                                <div className="text-xl font-bold text-teal-400 mb-1">{plan.price}</div>
-                                                {plan.description && (
-                                                    <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">{plan.description}</p>
-                                                )}
-                                                <ul className="space-y-1.5">
-                                                    {plan.features.map((feat, idx) => (
-                                                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-teal-500/60 flex-shrink-0 mt-1" />
-                                                            {feat}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-teal-400 mt-3 text-center flex items-center justify-center gap-2">
-                                        <span>Includes 14-Day Free Trial</span>
-                                        <span className="w-1 h-1 rounded-full bg-teal-500" />
-                                        <span>No Card Required</span>
-                                    </p>
-                                </div>
+
                             </div>
                         </div>
                     )}
