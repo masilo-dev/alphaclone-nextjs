@@ -338,8 +338,11 @@ export async function POST(req: Request) {
                         'active': 'active',
                         'past_due': 'past_due',
                         'canceled': 'cancelled',
-                        'unpaid': 'suspended',
+                        'unpaid': 'past_due',
                         'trialing': 'trial',
+                        'incomplete': 'past_due',
+                        'incomplete_expired': 'cancelled',
+                        'paused': 'suspended',
                     };
                     await supabaseAdmin
                         .from('tenants')

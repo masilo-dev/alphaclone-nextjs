@@ -107,22 +107,53 @@ export async function updateSession(request: NextRequest) {
             }
         )
 
-        // OPTIMIZATION: Only fetch user if we strictly need it for server-side redirection.
-        // Currently, redirection is handled client-side or commented out, so we skip this to save ~500ms-2s of TTFB.
-        /*
-        const {
-            data: { user },
-        } = await supabase.auth.getUser()
+        // HARD GATE: Enforce trial and subscription status for dashboard routes
+        if (pathname.startsWith('/dashboard')) {
+            const { data: { user } } = await supabase.auth.getUser();
 
-        if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-            return NextResponse.redirect(new URL('/', request.url))
+            if (!user) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('next', pathname);
+                return NextResponse.redirect(url);
+            }
+
+            // Skip gate for the upgrade page itself to avoid redirect loops
+            if (pathname.startsWith('/billing/upgrade')) {
+                return response;
+            }
+
+            const tenantId = user.user_metadata?.tenant_id;
+            if (tenantId) {
+                // Fetch tenant status directly using service-role-like apikey (anon key works if RLS allows, but we need reliability)
+                // In middleware, we use the user's own supabase client which is restricted by RLS.
+                // Assuming RLS allows users to see their own tenant record.
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('subscription_status, trial_ends_at')
+                    .eq('id', tenantId)
+                    .single();
+
+                if (tenant) {
+                    const isTrialExpired = 
+                        tenant.subscription_status === 'trial' && 
+                        tenant.trial_ends_at && 
+                        new Date(tenant.trial_ends_at) < new Date();
+                    
+                    const isInactive = ['suspended', 'cancelled', 'past_due'].includes(tenant.subscription_status);
+
+                    if (isTrialExpired || isInactive) {
+                        console.log(`[Middleware] Hard Gate: Redirecting tenant ${tenantId} (Status: ${tenant.subscription_status}) to upgrade.`);
+                        const url = request.nextUrl.clone();
+                        url.pathname = '/billing/upgrade';
+                        return NextResponse.redirect(url);
+                    }
+                }
+            }
         }
-        */
     } catch (e) {
         // Catch any other errors (e.g. Supabase connection issues) to prevent 500s
         console.error('Middleware Logic Error:', e);
-        // On error, we just return the response as-is, defaulting to "not logged in" behavior implicitly
-        // or letting the page handle the unauth state.
         return response;
     }
 

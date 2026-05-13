@@ -1,5 +1,25 @@
 # Update Log
 
+## Date: 2026-05-13 (HARDENED TRIAL & BILLING SECURITY)
+
+### Added
+- **Server-Side Hard Gate**: Implemented a robust security middleware in `src/lib/middleware.ts` that enforces trial and subscription status for all `/dashboard` routes. Expired or inactive accounts are now automatically redirected to the upgrade page.
+- **Premium Upgrade Experience**: Created a high-conversion `/billing/upgrade` page with multi-tier plan cards, `framer-motion` animations, and integrated Stripe checkout triggers.
+- **Real-Time Trial Banner**: Deployed a reusable `TrialBanner.tsx` component that provides persistent countdown notifications (7, 5, and 2-day thresholds) across both standard and business dashboards.
+- **Automated Tenant Provisioning**: 
+    - **Registration**: Refactored `LoginPage.tsx` to automatically provision a "Starter" plan with a 14-day trial for all new business signups.
+    - **OAuth**: Updated `auth/callback/route.ts` to automatically create workspaces and trials for new social login users (Google/LinkedIn).
+- **Transactional Welcome Sequence**: Launched the `/api/email/welcome` endpoint to trigger personalized onboarding emails immediately upon tenant creation.
+
+### Fixed
+- **Stripe Webhook Resilience**: Expanded the `statusMap` in the Stripe webhook handler to support comprehensive subscription states (`unpaid`, `past_due`, `paused`), preventing out-of-sync account locks.
+- **Login Flow Stability**: Resolved critical syntax and type errors in `LoginPage.tsx` related to nested `try/catch` blocks and variable redeclations.
+- **Access Control Fallback**: Replaced the client-side `SubscriptionGuard` hard-block modal with a non-intrusive soft warning toast, delegating primary enforcement to the server-side middleware.
+
+### Production Readiness
+- **Vercel Safe**: Verified 100% stable build state. Confirmed that middleware redirections and API triggers are compatible with Vercel serverless execution and edge caching rules.
+
+
 ## Date: 2026-05-13 (FINANCE DISPATCH & DOCUMENT STABILIZATION)
 
 ### Added

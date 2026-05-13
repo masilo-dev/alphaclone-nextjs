@@ -102,6 +102,7 @@ const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
+import { TrialBanner } from './dashboard/TrialBanner';
 
 // Zoho Components
 const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
@@ -1586,6 +1587,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950 ac-dashboard-shell-bg">
+        <TrialBanner />
         {/* Header - Visible in all dashboard views */}
         <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header">
           <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">

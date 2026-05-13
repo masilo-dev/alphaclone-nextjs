@@ -87,6 +87,7 @@ const InstagramIntegrationTab = React.lazy(() => import('../social/InstagramInte
 const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCenter'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
+import { TrialBanner } from '../TrialBanner';
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -275,15 +276,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         }
     }, [dashboardStatsError]);
 
-    const trialInfo = React.useMemo(() => {
-        if (!currentTenant?.trial_ends_at || currentTenant.subscription_status !== 'trial') return null;
-        const now = new Date();
-        const trialEnd = new Date(currentTenant.trial_ends_at);
-        const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        return { daysLeft, expired: daysLeft <= 0 };
-    }, [currentTenant]);
 
-    const isTrialExpired = false; // SubscriptionGuard handles full block, here we just show banner
 
     // Map routes to display content
     const renderBusinessContent = () => {
@@ -666,52 +659,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
             <main className="flex-1 flex flex-col min-w-0 bg-slate-950 ac-business-main">
 
-                {/* Trial Countdown Banner */}
-                {trialInfo && !trialInfo.expired && trialInfo.daysLeft <= 7 && (
-                    <div className={`border-b px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20 ${
-                        trialInfo.daysLeft <= 3
-                            ? 'bg-red-600/10 border-red-500/20'
-                            : 'bg-amber-600/10 border-amber-500/20'
-                    }`}>
-                        <div className={`flex items-center gap-2 text-sm font-medium ${
-                            trialInfo.daysLeft <= 3 ? 'text-red-100' : 'text-amber-100'
-                        }`}>
-                            <CreditCard className={`w-4 h-4 ${trialInfo.daysLeft <= 3 ? 'text-red-400' : 'text-amber-400'}`} />
-                            <span>
-                                {trialInfo.daysLeft === 1
-                                    ? 'Trial ends tomorrow — add a payment method to keep access'
-                                    : `Trial ends in ${trialInfo.daysLeft} days — no action needed yet`}
-                            </span>
-                        </div>
-                        <button
-                            className={`text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold ${
-                                trialInfo.daysLeft <= 3
-                                    ? 'bg-red-500 hover:bg-red-600'
-                                    : 'bg-amber-500 hover:bg-amber-600'
-                            }`}
-                            onClick={() => setActiveTab('/dashboard/business/settings')}
-                        >
-                            Manage Billing
-                        </button>
-                    </div>
-                )}
-                {trialInfo && trialInfo.expired && (
-                    <div className="bg-red-600/10 border-b border-red-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
-                        <div className="flex items-center gap-2 text-red-100 text-sm font-medium">
-                            <CreditCard className="w-4 h-4 text-red-400" />
-                            <span>Trial Expired — Add payment method to restore full access</span>
-                        </div>
-                        <button
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold"
-                            onClick={() => setActiveTab('/dashboard/business/settings')}
-                        >
-                            Add Payment
-                        </button>
-                    </div>
-                )}
+                <TrialBanner />
 
                 {/* Task Notification Banner (Ephemeral) */}
-                {notification && !isTrialExpired && (
+                {notification && (
                     <div className="bg-teal-600/10 border-b border-teal-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
                         <div className="flex items-center gap-2 text-teal-100 text-sm font-medium">
                             <CheckSquare className="w-4 h-4 text-teal-400" />
