@@ -718,41 +718,30 @@ export const contractService = {
      */
     async sendContract(id: string, recipientEmail?: string) {
         const tenantId = this.getTenantId();
-        const { AppUrls } = await import('@/lib/urls');
-        const { emailHelpers } = await import('@/services/email/emailService');
+        
+        try {
+            const response = await fetch('/api/contracts/management', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    action: 'send_contract',
+                    config: {
+                        contractId: id,
+                        recipients: recipientEmail,
+                    },
+                }),
+            });
 
-        // 1. Get contract details
-        const { data: contract, error: fetchErr } = await supabase
-            .from('contracts')
-            .select('*, tenant:tenant_id(*), client:client_id(*)')
-            .eq('id', id)
-            .eq('tenant_id', tenantId)
-            .single();
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to send contract');
+            }
 
-        if (fetchErr || !contract) throw new Error('Contract not found.');
-
-        // 2. Ensure token exists
-        let token = contract.signing_token;
-        if (!token) {
-            token = crypto.randomUUID();
-            await supabase.from('contracts').update({ signing_token: token }).eq('id', id);
+            return await response.json();
+        } catch (error: any) {
+            console.error('Send contract error:', error);
+            throw new Error(error.message || 'Failed to send contract');
         }
-
-        // 3. Update status
-        await supabase.from('contracts').update({ status: 'sent' }).eq('id', id);
-
-        // 4. Generate Links
-        const signingUrl = AppUrls.signContract(token);
-
-        // 5. Send Email
-        const to = recipientEmail || contract.client?.email;
-        if (!to) throw new Error('Recipient email is required.');
-
-        return await emailHelpers.sendContract(
-            to,
-            contract.title,
-            signingUrl,
-            contract.tenant?.name || 'AlphaClone Partner'
-        );
     }
 };
