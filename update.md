@@ -1,5 +1,23 @@
 # Update Log
 
+## Date: 2026-05-13 (ACCOUNTING & AI INFRASTRUCTURE STABILIZATION)
+
+### Added
+- **Claude 4.0 (Sonnet) Migration**: Globally migrated the AI orchestration layer to the new `claude-sonnet-4-20250514` architecture.
+- **E-Signature Infrastructure**: 
+    - **Public Signing Portal**: Deployed `/app/sign/[token]` for secure, token-based contract execution with canvas signature support.
+    - **Compliance Engine**: Implemented `contractSigningService.ts` to enforce ESIGN Act requirements and generate cryptographic audit trails.
+- **Centralized URL Builder**: Launched `AppUrls` in `src/lib/urls.ts` to unify application routing and fix broken email links.
+- **Tenant-Scoped Invoicing**: Enforced strict `tenant_id` isolation in `businessInvoiceService.ts` to prevent multi-tenant data leaks and "coerce to single JSON" errors.
+
+### Fixed
+- **Database Schema Hardening**: Deployed migrations for `business_invoices` (sent_at, paid_at) and `contracts` (signing_token, type).
+- **MCP Tool Reliability**: Resolved "Internal Error" in `send_invoice` and `generate_expense_report` by fixing missing tenant filters and stale column references.
+- **Registration & Events**: Hardened `create_tenant` and `publish_event` RPCs to correctly propagate `tenant_id` and fix Event Bus RLS.
+
+### Production Readiness
+- **Vercel Safe**: Verified 100% build stability with updated model aliases and centralized link builders.
+
 ## Date: 2026-05-13 (HARDENED TRIAL & BILLING SECURITY)
 
 ### Added

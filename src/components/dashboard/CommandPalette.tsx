@@ -7,7 +7,8 @@ import {
     CreditCard, Users, Briefcase, Calendar, Mail,
     Zap, PieChart, Shield, Lock, FileText, Plus,
     ArrowRight, Sparkles, Layout, Database, MessageSquare,
-    DollarSign, TrendingUp, BarChart3, Clock, Bell
+    DollarSign, TrendingUp, BarChart3, Clock, Bell,
+    ArrowUpCircle, CheckCircle, AlertCircle, Circle
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
@@ -95,7 +96,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {
             id: 'act-task',
             title: 'Create New Task',
-            description: ' neural capture engine',
+            description: 'Neural capture engine',
             icon: Plus,
             category: 'Actions',
             shortcut: 'T',
@@ -103,7 +104,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         },
         {
             id: 'act-project',
-            title: 'Sumbit New Project',
+            title: 'Submit New Project',
             description: 'Start a new consultation',
             icon: Plus,
             category: 'Actions',
@@ -111,6 +112,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             action: () => onCreateProject ? onCreateProject() : router.push('/dashboard?tab=projects&action=new-project')
         },
         { id: 'act-lead', title: 'Manual Lead Entry', description: 'Add a new prospect', icon: Plus, category: 'Actions', shortcut: 'L', action: () => router.push('/dashboard?tab=crm&action=new-lead') },
+
+        // --- TASK SPECIFIC ACTIONS ---
+        { id: 'task-pri-urgent', title: 'Task: Set Priority to Urgent', description: 'Immediate operational attention', icon: AlertCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setPriority=urgent') },
+        { id: 'task-pri-high', title: 'Task: Set Priority to High', description: 'Strategic priority', icon: ArrowUpCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setPriority=high') },
+        { id: 'task-status-review', title: 'Task: Move to Review', description: 'Pending quality assurance', icon: Eye, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setStatus=review') },
+        { id: 'task-status-done', title: 'Task: Mark as Completed', description: 'Mission success', icon: CheckCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setStatus=completed') },
 
         // --- INTERNAL ---
         { id: 'int-settings', title: 'Platform Settings', description: 'Identity & profile', icon: Settings, category: 'Internal', action: () => router.push('/dashboard?tab=settings') },

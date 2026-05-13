@@ -17,8 +17,10 @@ export interface Expense {
     id: string;
     tenant_id: string;
     category_id?: string;
+    category?: string; // Denormalized category name
     contact_id?: string;
     company_id?: string;
+    client_id?: string; // For billable expenses
     expense_number?: string;
     date: string;
     amount: number;
@@ -34,10 +36,14 @@ export interface Expense {
     notes?: string;
     journal_entry_id?: string;
     zoho_books_id?: string;
+    created_by?: string;
+    approved_by?: string;
+    approved_at?: string;
+    metadata?: Record<string, any>;
     created_at: string;
     updated_at: string;
     // Joined
-    category?: { name: string; color: string; icon: string };
+    expense_categories?: { name: string; color: string; icon: string };
 }
 
 export interface CreateExpenseInput {

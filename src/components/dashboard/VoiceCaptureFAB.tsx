@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, X, Check, Loader2, Sparkles, AlertCircle, PlayCircle, StopCircle } from 'lucide-react';
+import { Mic, X, Check, Loader2, Sparkles, AlertCircle, PlayCircle, StopCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { voiceCommandService } from '../../services/voiceCommandService';
@@ -31,6 +31,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [summary, setSummary] = useState<string | null>(null);
+    const [isContinuous, setIsContinuous] = useState(false);
     const recognitionRef = useRef<any>(null);
 
     // Text-to-Speech ref
@@ -163,8 +164,8 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                 toast.success(result.message);
                 if (onCapture) onCapture(transcript);
                 
-                // Handle Redirect
-                if (result.redirect) {
+                // Handle Redirect (only if not continuous)
+                if (result.redirect && !isContinuous) {
                     router.push(result.redirect);
                     setIsActive(false);
                 }
@@ -173,7 +174,16 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                 if (result.data && result.data.summary) {
                     setSummary(result.data.summary);
                     speak(result.data.summary);
-                } else {
+                    
+                    if (isContinuous) {
+                        // Reset for next command
+                        setTimeout(() => {
+                            setTranscript('');
+                            setSummary(null);
+                            startListening();
+                        }, 2000);
+                    }
+                } else if (!isContinuous) {
                     setIsActive(false);
                 }
                 
@@ -267,9 +277,18 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                     </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-2 overflow-hidden">
-                    <Sparkles className="w-3 h-3 text-teal-500/50" />
-                    <span className="text-xs font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
+                <div className="mt-8 pt-6 border-t border-white/5 flex flex-col items-center gap-4">
+                    <button
+                        onClick={() => setIsContinuous(!isContinuous)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isContinuous ? 'bg-teal-500/20 border-teal-500/50 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-500 hover:text-slate-300'}`}
+                    >
+                        <RefreshCw className={`w-3 h-3 ${isContinuous ? 'animate-spin' : ''}`} />
+                        Continuous Listening: {isContinuous ? 'ON' : 'OFF'}
+                    </button>
+                    <div className="flex items-center justify-center gap-2 overflow-hidden">
+                        <Sparkles className="w-3 h-3 text-teal-500/50" />
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
+                    </div>
                 </div>
             </div>
         </div>

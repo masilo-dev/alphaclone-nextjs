@@ -99,6 +99,7 @@ const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/Operatio
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
+const PnLStatement = React.lazy(() => import('./accounting/PnLStatement'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
@@ -110,6 +111,8 @@ const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMInte
 const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
 const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
 const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
+import { GlobalShortcutListener } from './common/GlobalShortcutListener';
+import { QuickTaskOverlay } from './dashboard/QuickTaskOverlay';
 
 
 // Import UI components
@@ -1251,6 +1254,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/accounting':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <PnLStatement />
+          </React.Suspense>
+        );
+
       case '/dashboard/settings':
         return <SettingsPage user={user} />;
 
@@ -1730,18 +1740,19 @@ const Dashboard: React.FC<DashboardProps> = ({
         userId={user.id}
       />
 
+      <GlobalShortcutListener
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        onOpenQuickTask={() => setCreateTaskOpen(true)}
+        onToggleVoice={() => setIsVoiceActive(prev => !prev)}
+      />
 
-      {createTaskOpen && (
-        <Modal isOpen={createTaskOpen} onClose={() => setCreateTaskOpen(false)} title="Create Task">
-          <div className="p-6 text-center space-y-4">
-            <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto text-teal-400">
-              <Zap className="w-8 h-8 animate-pulse" />
-            </div>
-            <p className="text-slate-300 text-sm">Open the <b>Tasks</b> page to create and manage tasks.</p>
-            <Button onClick={() => { setCreateTaskOpen(false); setActiveTab('/dashboard/tasks'); router.push('/dashboard/tasks'); }} className="w-full bg-teal-500 hover:bg-teal-400">Open Tasks</Button>
-          </div>
-        </Modal>
-      )}
+      <QuickTaskOverlay
+        isOpen={createTaskOpen}
+        onClose={() => setCreateTaskOpen(false)}
+        userId={user.id}
+      />
+
+
       <VoiceCaptureFAB 
         isActive={isVoiceActive} 
         onClose={() => setIsVoiceActive(false)} 
