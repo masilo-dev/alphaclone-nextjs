@@ -134,6 +134,11 @@ class EmailService {
             replyTo: options.replyTo,
             cc: options.cc,
             bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
         });
 
         if (!result.ok) {
@@ -163,6 +168,11 @@ class EmailService {
             replyTo: options.replyTo,
             cc: options.cc,
             bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
         });
 
         if (!result.ok) {
@@ -192,6 +202,11 @@ class EmailService {
             replyTo: options.replyTo,
             cc: options.cc,
             bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
         });
 
         if (!result.ok) {
@@ -471,7 +486,8 @@ export const emailHelpers = {
         amount: string,
         receiptUrl: string,
         provider?: EmailProvider,
-        userId?: string
+        userId?: string,
+        attachment?: EmailAttachment
     ) {
         const template = 'invoice_receipt';
         const variables = {
@@ -492,19 +508,75 @@ export const emailHelpers = {
             subject = subject.replace(placeholder, String(value));
         });
 
-        const options: any = {
+        const options: EmailOptions & { userId?: string } = {
             to: email,
             subject,
             html,
         };
 
+        if (attachment) {
+            options.attachments = [attachment];
+        }
+
         // If a specific provider is requested, temporarily override the singleton's provider
-        // or just pass it through if we update the send method
         if (provider) {
             (options as any).provider = provider;
         }
         if (userId) {
             options.userId = userId;
+        }
+
+        return emailService.send(options);
+    },
+
+    /**
+     * Send invoice email
+     */
+    async sendInvoice(
+        email: string,
+        invoiceNumber: string,
+        amount: string,
+        invoiceUrl: string,
+        attachment?: EmailAttachment
+    ) {
+        const template = EMAIL_TEMPLATES.INVOICE_CREATED;
+        const variables = {
+            invoice_number: invoiceNumber,
+            amount,
+            invoice_url: invoiceUrl,
+        };
+
+        const options: EmailOptions = {
+            to: email,
+            subject: `Invoice ${invoiceNumber} from AlphaClone Systems`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #3B82F6;">New Invoice</h2>
+                    <p>Hi there,</p>
+                    <p>A new invoice has been generated for your account.</p>
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Invoice Number:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${invoiceNumber}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Amount Due:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; color: #3B82F6;">${amount}</td>
+                        </tr>
+                    </table>
+                    <p>You can view and pay your invoice online here:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${invoiceUrl}" style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                            View Invoice
+                        </a>
+                    </div>
+                    <p style="color: #666; font-size: 12px;">Thank you for your business!</p>
+                </div>
+            `,
+        };
+
+        if (attachment) {
+            options.attachments = [attachment];
         }
 
         return emailService.send(options);

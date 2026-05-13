@@ -222,6 +222,7 @@ export default function EnhancedInvoiceModal({
     }
 
     setIsSending(true);
+    const toastId = toast.loading("Finalizing and sending invoice...");
     try {
       // Create or update invoice with sent status
       const invoiceData = {
@@ -246,16 +247,24 @@ export default function EnhancedInvoiceModal({
 
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
-      // Generate payment link if needed (isPublic is true)
-      const paymentUrl = `${window.location.origin}/invoice/${finalInvoice.id}`;
-
-      toast.success("Invoice finalized successfully");
+      // Trigger MCP dispatch
+      try {
+        const { callMcpTool } = await import('@/services/mcp/toolCaller');
+        await callMcpTool('send_invoice', {
+          invoice_id: finalInvoice.id,
+          recipient_email: formData.clientEmail
+        });
+        toast.success("Invoice sent successfully with PDF attachment!", { id: toastId });
+      } catch (dispatchError: any) {
+        console.error('MCP Dispatch Error:', dispatchError);
+        toast.error(`Invoice saved, but email dispatch failed: ${dispatchError.message}`, { id: toastId });
+      }
 
       onSuccess?.(finalInvoice);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending invoice:', error);
-      toast.error("Failed to send invoice");
+      toast.error(`Failed to finalize invoice: ${error.message}`, { id: toastId });
     } finally {
       setIsSending(false);
     }

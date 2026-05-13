@@ -1,5 +1,21 @@
 # Update Log
 
+## Date: 2026-05-13 (FINANCE DISPATCH & DOCUMENT STABILIZATION)
+
+### Added
+- **MCP Document Attachment Support**: Enhanced `MCPServer.ts` with professional PDF generation and attachment capabilities for the `send_invoice` and `send_receipt` tools.
+- **Frontend MCP Bridge**: Implemented `toolCaller.ts` utility to allow seamless JSON-RPC tool execution from React components via the unified `/api/mcp` endpoint.
+- **Finance Dashboard Enhancements**:
+    - **Invoices**: Integrated automated PDF dispatch into the `handleSendInvoice` workflow in `EnhancedInvoiceModal.tsx`.
+    - **Receipts**: Added a "Send" action to the `FinanceTab.tsx` dashboard for paid invoices, enabling manual professional receipt delivery.
+
+### Fixed
+- **Email Service Dispatch**: Upgraded `emailService.ts` to propagate binary attachments to provider SDKs (Brevo, Resend, SendGrid) and implemented base64 conversion for serverless compatibility.
+- **UI Responsiveness**: Resolved a "button not responding" issue in the finance modal by implementing asynchronous orchestration for document persistence and email dispatch.
+
+### Production Readiness
+- **Vercel Safe**: Verified that all core finance services and MCP handlers pass strict TypeScript checks. Confirmed that attachment handling is compatible with serverless execution limits.
+
 ## Date: 2026-05-11 (CHIEF OF STAFF & STRATEGIC AUDIT SYSTEM)
 
 ### Added
