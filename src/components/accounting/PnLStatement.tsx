@@ -343,7 +343,7 @@ export default function PnLStatement() {
         </div>
       </div>
       
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           nav, aside, button, .no-print { display: none !important; }
           .print-only { display: block !important; }
@@ -352,7 +352,7 @@ export default function PnLStatement() {
           .text-white, .text-slate-200 { color: black !important; }
           .text-slate-400, .text-slate-500 { color: #64748b !important; }
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

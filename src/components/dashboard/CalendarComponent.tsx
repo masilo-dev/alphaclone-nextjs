@@ -458,16 +458,16 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     };
 
     const formatEventsForCalendar = () => {
-        return events.map(event => ({
+        const formattedEvents = events.map(event => ({
             id: event.id,
             title: event.title,
             start: event.start_time,
             end: event.end_time,
-            backgroundColor: getEventColor(event.type, event), // Pass full event for logic
+            backgroundColor: getEventColor(event.type, event),
             borderColor: getEventColor(event.type, event),
             allDay: event.is_all_day,
             textColor: '#ffffff',
-            extendedProps: { ...event } // Pass data for click handling
+            extendedProps: { ...event }
         }));
 
         const suggestions = suggestedBlocks.map(s => ({

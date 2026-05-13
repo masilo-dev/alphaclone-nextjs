@@ -295,7 +295,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                 </div>
             </motion.div>
 
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;
                 }
@@ -306,7 +306,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                     background: rgba(255, 255, 255, 0.05);
                     border-radius: 10px;
                 }
-            `}</style>
+            ` }} />
         </div>
     );
 }

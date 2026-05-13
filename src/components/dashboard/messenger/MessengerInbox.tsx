@@ -479,7 +479,7 @@ export default function MessengerInbox() {
                 </div>
             </div>
 
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;
                 }
@@ -493,7 +493,7 @@ export default function MessengerInbox() {
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: rgba(255, 255, 255, 0.1);
                 }
-            `}</style>
+            ` }} />
         </div>
     );
 }
