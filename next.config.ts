@@ -64,7 +64,13 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
 
   },
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      fs: false,
+      path: false,
+      os: false,
+    },
+  },
   async rewrites() {
     return [
       {
