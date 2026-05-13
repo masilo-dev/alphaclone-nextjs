@@ -20,7 +20,7 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core'],
+  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', 'nodemailer'],
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -64,13 +64,7 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
 
   },
-  turbopack: {
-    resolveAlias: {
-      fs: false,
-      path: false,
-      os: false,
-    },
-  },
+  turbopack: {},
   async rewrites() {
     return [
       {
