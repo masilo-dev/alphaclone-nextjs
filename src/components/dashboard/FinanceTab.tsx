@@ -586,6 +586,20 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
         }
     };
 
+    const handleSendReceipt = async (inv: Invoice) => {
+        const toastId = toast.loading(`Sending receipt for ${inv.id}...`);
+        try {
+            const { callMcpTool } = await import('@/services/mcp/toolCaller');
+            await callMcpTool('send_receipt', {
+                invoice_id: inv.id
+            });
+            toast.success("Professional receipt sent with PDF attachment!", { id: toastId });
+        } catch (error: any) {
+            console.error('Failed to send receipt:', error);
+            toast.error(`Dispatch failed: ${error.message}`, { id: toastId });
+        }
+    };
+
     // User requested to see ALL revenue (including pending) from ALL clients
     const totalRevenue = pnlData ? pnlData.totalRevenue : displayInvoices.reduce((acc, curr) => acc + curr.amount, 0);
     const outstanding = displayInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
@@ -994,9 +1008,20 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                                                 </Button>
                                             )}
                                             {inv.status === 'Paid' && (
-                                                <span className="text-green-500 text-xs font-bold flex items-center gap-1">
-                                                    <CheckCircle className="w-3 h-3" /> Paid
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-green-500 text-xs font-bold flex items-center gap-1">
+                                                        <CheckCircle className="w-3 h-3" /> Paid
+                                                    </span>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="ghost" 
+                                                        onClick={() => handleSendReceipt(inv)}
+                                                        title="Send Receipt Email"
+                                                        className="h-8 px-2 text-teal-400 hover:text-teal-300 hover:bg-teal-400/10"
+                                                    >
+                                                        <Send className="w-4 h-4 mr-1" /> Send
+                                                    </Button>
+                                                </div>
                                             )}
                                         </td>
                                     </tr>

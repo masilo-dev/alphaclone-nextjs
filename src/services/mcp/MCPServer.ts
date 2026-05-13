@@ -2965,12 +2965,16 @@ class AlphaCloneMCPServer {
         case 'send_invoice': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { invoice_id } = a;
+          const { invoice_id, recipient_email } = a;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
 
-          const { data, error } = await supabaseAdmin
+          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id);
+          if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
+
+          // Update status in DB
+          const { data, error: updateError } = await supabaseAdmin
             .from('business_invoices')
             .update({
               status: 'sent',
@@ -2981,8 +2985,39 @@ class AlphaCloneMCPServer {
             .eq('id', invoice_id.trim())
             .select('id, invoice_number, status, sent_at')
             .single();
-          if (error) throw supabaseErrorToMcpClientError('send_invoice', error.message);
-          result = { content: [{ type: 'text', text: `Invoice marked as sent: ${JSON.stringify(data)}` }] };
+          
+          if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
+
+          // Generate PDF
+          const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
+          const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
+          const to = recipient_email || invoice.client?.email;
+          if (!to) throw new Error('Recipient email is required (not found on client record)');
+
+          const amount = `${invoice.currency || '$'}${invoice.total}`;
+          const invoiceUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/invoice/${invoice.id}`;
+
+          // Send Email
+          const sendResult = await emailHelpers.sendInvoice(
+            to,
+            invoice.invoice_number,
+            amount,
+            invoiceUrl,
+            {
+              filename: `Invoice_${invoice.invoice_number}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf'
+            }
+          );
+
+          if (!sendResult.success) {
+             console.error('Failed to send invoice email:', sendResult.error);
+             // We still return success for the DB update, but note the email failure
+             result = { content: [{ type: 'text', text: `Invoice marked as sent in DB, but email dispatch failed: ${sendResult.error}` }] };
+          } else {
+             result = { content: [{ type: 'text', text: `Invoice ${invoice.invoice_number} sent successfully to ${to} with PDF attachment.` }] };
+          }
           break;
         }
 
@@ -3005,8 +3040,12 @@ class AlphaCloneMCPServer {
           const to = recipient_email || invoice.client?.email;
           if (!to) throw new Error('Recipient email is required (not found on client record)');
 
+          // Generate PDF
+          const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
+          const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
           const amount = `${invoice.currency || '$'}${invoice.total}`;
-          const receiptUrl = `${process.env.NEXT_PUBLIC_APP_URL}/public/receipt/${invoice.id}`;
+          const receiptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/public/receipt/${invoice.id}`;
 
           const sendResult = await emailHelpers.sendReceipt(
             to,
@@ -3014,7 +3053,12 @@ class AlphaCloneMCPServer {
             amount,
             receiptUrl,
             provider,
-            user_id
+            user_id,
+            {
+              filename: `Receipt_${invoice.invoice_number}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf'
+            }
           );
 
           if (!sendResult.success) throw new Error(`Failed to send receipt: ${sendResult.error}`);
@@ -3022,7 +3066,7 @@ class AlphaCloneMCPServer {
           result = {
             content: [{
               type: 'text',
-              text: `Receipt for invoice ${invoice.invoice_number} sent successfully to ${to} via ${provider || 'default provider'}.`,
+              text: `Receipt for invoice ${invoice.invoice_number} sent successfully to ${to} with PDF attachment.`,
             }],
           };
           break;

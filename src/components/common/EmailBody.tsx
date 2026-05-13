@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 interface EmailBodyProps {
   content: string;
@@ -12,19 +12,11 @@ interface EmailBodyProps {
  * and ensure proper rendering of email HTML (which often has hardcoded styles).
  */
 export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '' }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState('400px');
 
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) return;
-
+  const htmlContent = useMemo(() => {
     // We use a white background by default for emails as most are designed for light mode
-    // but we inject a small script to detect if the content is mostly dark.
-    const htmlContent = `
+    return `
       <!DOCTYPE html>
       <html>
         <head>
@@ -50,23 +42,19 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '' })
             function updateHeight() {
               window.parent.postMessage({ 
                 type: 'setHeight', 
-                height: document.body.scrollHeight + 'px',
-                id: '${content.slice(0, 10).replace(/[^a-z0-9]/gi, '')}'
+                height: document.body.scrollHeight + 'px'
               }, '*');
             }
             window.onload = updateHeight;
             // Also update on resize or any content change
             const observer = new ResizeObserver(updateHeight);
             observer.observe(document.body);
+            // Backup update
+            setTimeout(updateHeight, 1000);
           </script>
         </body>
       </html>
     `;
-
-    doc.open();
-    doc.write(htmlContent);
-    doc.close();
-
   }, [content]);
 
   useEffect(() => {
@@ -83,10 +71,10 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '' })
   return (
     <div className={`w-full overflow-hidden rounded-xl border border-slate-800 bg-white ${className}`}>
       <iframe
-        ref={iframeRef}
         title="Email Content"
         className="w-full border-none"
         style={{ height }}
+        srcDoc={htmlContent}
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       />
     </div>
