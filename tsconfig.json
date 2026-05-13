@@ -46,6 +46,10 @@
     "demo_data_fix.ts",
     "scratch",
     "scripts",
-    "tmp"
+    "tmp",
+    "check_tags.js",
+    "register_clients.js",
+    "find_table.js",
+    "parse_lint.js"
   ]
 }

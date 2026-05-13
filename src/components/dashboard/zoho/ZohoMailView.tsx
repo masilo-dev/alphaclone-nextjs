@@ -590,12 +590,12 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 }}
             />
 
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 .email-content * { max-width: 100% !important; overflow-wrap: break-word !important; }
                 .email-content img { border-radius: 1rem; margin: 1.5rem 0; }
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-            `}</style>
+            ` }} />
         </div>
     );
 }

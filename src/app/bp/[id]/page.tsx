@@ -168,12 +168,12 @@ export default function PublicBusinessProjectPage() {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes shimmer {
                     0% { background-position: 0 0; }
                     100% { background-position: 40px 0; }
                 }
-            `}</style>
+            ` }} />
         </div>
     );
 }
