@@ -490,6 +490,20 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'get_pnl_statement',
+    description: 'Generate a detailed Profit & Loss (P&L) statement including revenue momentum, expense distribution, and net margin analysis.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        period: { type: 'string', enum: ['monthly', 'quarterly', 'yearly'], description: 'Default: monthly' },
+        from_date: { type: 'string', description: 'Optional start date (YYYY-MM-DD)' },
+        to_date: { type: 'string', description: 'Optional end date (YYYY-MM-DD)' },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'get_business_snapshot',
     description: 'The "Chief of Staff" briefing. Returns everything at once — leads, deals, invoices, tasks, posts — in one shot. Use this at session start to get the full state of the business or for a strategic deep-dive.',
     inputSchema: {

@@ -32,7 +32,7 @@ import { Button, Modal, Input } from '../ui/UIComponents';
 import { TaskCountdown } from './tasks/TaskCountdown';
 import { CollaborativeTaskNotes } from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
@@ -42,6 +42,7 @@ import { useQuery } from '@tanstack/react-query';
 import { userService } from '../../services/userService';
 import { projectService } from '../../services/projectService';
 import { leadService } from '../../services/leadService';
+import { KanbanView } from './tasks/KanbanView';
 
 interface TasksTabProps {
     userId: string;
@@ -57,6 +58,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const [selectedProject] = useState<string>('all');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+    const searchParams = useSearchParams();
 
     // Hooks
     const { user } = useAuth();
@@ -202,6 +205,31 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
             actionQueue,
         };
     }, [tasks]);
+
+    // Handle Command Palette deep links
+    useEffect(() => {
+        const statusParam = searchParams.get('setStatus');
+        const priorityParam = searchParams.get('setPriority');
+
+        if (statusParam || priorityParam) {
+            // Find the most recent task to apply changes to, or notify user
+            const targetTask = filteredAndSearchedTasks?.[0]; // Default to most recent for quick actions
+            if (targetTask) {
+                if (statusParam) handleStatusChange(targetTask.id, statusParam as any);
+                if (priorityParam) {
+                    updateTaskMutation.mutate({ taskId: targetTask.id, updates: { priority: priorityParam as any } });
+                    toast.success(`Priority set to ${priorityParam}`);
+                }
+                
+                // Clear params to prevent re-triggering
+                const newParams = new URLSearchParams(searchParams.toString());
+                newParams.delete('setStatus');
+                newParams.delete('setPriority');
+                const newPath = window.location.pathname + (newParams.toString() ? `?${newParams.toString()}` : '');
+                router.replace(newPath as any);
+            }
+        }
+    }, [searchParams, tasks, filteredAndSearchedTasks, router]);
 
     // Check if task is blocked by incomplete dependencies
     const isTaskBlocked = (task: Task): boolean => {
@@ -389,149 +417,174 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
     const renderTaskList = () => (
         <div className="w-full space-y-6">
             {/* Table header */}
-            <div className="hidden lg:grid grid-cols-12 gap-6 px-8 py-4 bg-slate-900/40 border border-white/5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] text-slate-500 font-mono backdrop-blur-md shadow-inner">
-                <div className="col-span-12 lg:col-span-5 flex items-center gap-3">
-                    <Target className="w-3 h-3 text-teal-400" />
-                    Task Details
+            {viewMode === 'list' && (
+                <div className="hidden lg:grid grid-cols-12 gap-6 px-8 py-4 bg-slate-900/40 border border-white/5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] text-slate-500 font-mono backdrop-blur-md shadow-inner">
+                    <div className="col-span-12 lg:col-span-5 flex items-center gap-3">
+                        <Target className="w-3 h-3 text-teal-400" />
+                        Task Details
+                    </div>
+                    <div className="lg:col-span-2 text-center">Status</div>
+                    <div className="lg:col-span-2 text-center">Priority</div>
+                    <div className="lg:col-span-2 text-center">Timeline</div>
+                    <div className="lg:col-span-1 text-right">Actions</div>
                 </div>
-                <div className="lg:col-span-2 text-center">Status</div>
-                <div className="lg:col-span-2 text-center">Priority</div>
-                <div className="lg:col-span-2 text-center">Timeline</div>
-                <div className="lg:col-span-1 text-right">Actions</div>
-            </div>
+            )}
 
             {/* List Rows */}
-            <div className="space-y-4">
-                {filteredAndSearchedTasks.length === 0 && !loading ? (
-                    <EmptyState
-                        icon={Target}
-                        title="All systems clear."
-                        description="Execution is everything. What's next on your roadmap?"
-                        action={
-                            <Button 
-                                onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
-                                className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
-                            >
-                                Deploy Task
-                            </Button>
-                        }
-                    />
+            <AnimatePresence mode="wait">
+                {viewMode === 'list' ? (
+                    <motion.div 
+                        key="list-view"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="space-y-4"
+                    >
+                        {filteredAndSearchedTasks.length === 0 && !loading ? (
+                            <EmptyState
+                                icon={Target}
+                                title="All systems clear."
+                                description="Execution is everything. What's next on your roadmap?"
+                                action={
+                                    <Button 
+                                        onClick={() => { setEditingTask(null); resetTaskForm(); setShowCreateModal(true); }}
+                                        className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
+                                    >
+                                        Deploy Task
+                                    </Button>
+                                }
+                            />
+                        ) : (
+                            <AnimatePresence mode="popLayout">
+                                {filteredAndSearchedTasks.map((task, idx) => (
+                                    <motion.div
+                                        key={task.id}
+                                        layout
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                                        transition={{
+                                            delay: idx * 0.05,
+                                            duration: 0.4,
+                                            ease: [0.23, 1, 0.32, 1]
+                                        }}
+                                        className="group grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-center px-4 md:px-8 py-4 md:py-6 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-teal-500/30 rounded-2xl md:rounded-[2rem] transition-all duration-500 relative overflow-hidden backdrop-blur-xl shadow-2xl hover:shadow-teal-500/5"
+                                    >
+                                        {/* Priority Glow Indicator */}
+                                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 group-hover:w-2 ${task.priority === 'high' ? 'bg-red-500 shadow-[2px_0_15px_rgba(239,68,68,0.5)]' :
+                                            task.priority === 'medium' ? 'bg-orange-500 shadow-[2px_0_15px_rgba(249,115,22,0.5)]' :
+                                                'bg-teal-500/30 group-hover:bg-teal-500 group-hover:shadow-[2px_0_15px_rgba(20,184,166,0.5)]'
+                                            }`} />
+
+                                        {/* Task details */}
+                                        <div className="col-span-1 lg:col-span-5 flex items-center gap-3 sm:gap-6">
+                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner group-hover:scale-110 shrink-0 ${task.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'}`}>
+                                                {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Target className="w-5 h-5 sm:w-6 sm:h-6" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-sm sm:text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
+                                                        {task.title}
+                                                    </h4>
+                                                    {isTaskBlocked(task) && (
+                                                        <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider rounded-full shrink-0">
+                                                            Blocked
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1.5">
+                                                    {task.description && (
+                                                        <p className="text-xs sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px] font-medium italic">
+                                                            {task.description}
+                                                        </p>
+                                                    )}
+                                                    {(task.metadata?.dependencies as string[])?.length > 0 && (
+                                                        <span className="text-xs text-slate-600 font-mono flex items-center gap-1">
+                                                            <Link2 className="w-2.5 h-2.5" />
+                                                            {(task.metadata?.dependencies as string[])?.length} dep{(task.metadata?.dependencies as string[])?.length === 1 ? '' : 's'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Status Intelligence (Hidden on extreme mobile, shown as pill in next row) */}
+                                        <div className="hidden lg:block col-span-2">
+                                            <div className="relative w-full group/status">
+                                                <select
+                                                    value={task.status}
+                                                    onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
+                                                    className={`w-full text-xs font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none cursor-pointer text-center appearance-none ${task.status === 'completed' ? 'text-green-400 border-green-500/30' : 'text-teal-400 border-teal-500/30'}`}
+                                                >
+                                                    <option value="ideas">Standby</option>
+                                                    <option value="todo">Planning</option>
+                                                    <option value="in_progress">Active</option>
+                                                    <option value="review">Review</option>
+                                                    <option value="completed">Success</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Priority Node */}
+                                        <div className="hidden lg:flex col-span-2 justify-center">
+                                            <span className={`px-4 py-2 text-xs rounded-xl font-black uppercase tracking-[0.1em] border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-slate-800/40 border-white/5 text-slate-500'}`}>
+                                                {task.priority}
+                                            </span>
+                                        </div>
+
+                                        {/* Timeline Control */}
+                                        <div className="hidden lg:flex col-span-2 justify-center">
+                                            {task.dueDate ? (
+                                                <div className="bg-slate-950/40 px-4 py-2 rounded-xl border border-white/5">
+                                                    <TaskCountdown dueDate={task.dueDate} onOverdue={() => handleStatusChange(task.id, 'review')} />
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-slate-700 font-black uppercase tracking-widest italic opacity-40">No Deadline</span>
+                                            )}
+                                        </div>
+
+                                        {/* Mobile Metadata Row */}
+                                        <div className="lg:hidden flex flex-wrap gap-3 mt-2 pt-2 border-t border-white/5 w-full">
+                                            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${task.status === 'completed' ? 'bg-green-500' : 'bg-teal-500'}`} />
+                                                {task.status}
+                                            </div>
+                                            <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${task.priority === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}>
+                                                {task.priority}
+                                            </span>
+                                            {task.dueDate && (
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono ml-auto">
+                                                    <Calendar className="w-3 h-3 text-teal-500/60" />
+                                                    {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="col-span-1 lg:col-span-1 flex justify-end gap-2 lg:opacity-0 group-hover:opacity-100 transition-all duration-500 mt-2 md:mt-0">
+                                            <button onClick={() => openEditModal(task)} className="flex-1 md:flex-none p-2 sm:p-3 text-slate-500 hover:text-white rounded-xl md:rounded-2xl border border-white/5 bg-white/5 md:bg-white/2 flex justify-center items-center"><Edit2 className="w-4 h-4" /></button>
+                                            <button onClick={() => setNotesTaskId(task.id)} className="flex-1 md:flex-none p-2 sm:p-3 text-slate-500 hover:text-white rounded-xl md:rounded-2xl border border-white/5 bg-white/5 md:bg-white/2 flex justify-center items-center"><FileText className="w-4 h-4" /></button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        )}
+                    </motion.div>
                 ) : (
-                    <AnimatePresence mode="popLayout">
-                        {filteredAndSearchedTasks.map((task, idx) => (
-                            <motion.div
-                                key={task.id}
-                                layout
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-                                transition={{
-                                    delay: idx * 0.05,
-                                    duration: 0.4,
-                                    ease: [0.23, 1, 0.32, 1]
-                                }}
-                                className="group grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-center px-4 md:px-8 py-4 md:py-6 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-teal-500/30 rounded-2xl md:rounded-[2rem] transition-all duration-500 relative overflow-hidden backdrop-blur-xl shadow-2xl hover:shadow-teal-500/5"
-                            >
-                                {/* Priority Glow Indicator */}
-                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 group-hover:w-2 ${task.priority === 'high' ? 'bg-red-500 shadow-[2px_0_15px_rgba(239,68,68,0.5)]' :
-                                    task.priority === 'medium' ? 'bg-orange-500 shadow-[2px_0_15px_rgba(249,115,22,0.5)]' :
-                                        'bg-teal-500/30 group-hover:bg-teal-500 group-hover:shadow-[2px_0_15px_rgba(20,184,166,0.5)]'
-                                    }`} />
-
-                                {/* Task details */}
-                                <div className="col-span-1 lg:col-span-5 flex items-center gap-3 sm:gap-6">
-                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner group-hover:scale-110 shrink-0 ${task.status === 'completed' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'}`}>
-                                        {task.status === 'completed' ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Target className="w-5 h-5 sm:w-6 sm:h-6" />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-sm sm:text-base font-black text-slate-200 group-hover:text-white transition-colors truncate tracking-tight">
-                                                {task.title}
-                                            </h4>
-                                            {isTaskBlocked(task) && (
-                                                <span className="px-2 py-0.5 bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider rounded-full shrink-0">
-                                                    Blocked
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1.5">
-                                            {task.description && (
-                                                <p className="text-xs sm:text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px] font-medium italic">
-                                                    {task.description}
-                                                </p>
-                                            )}
-                                            {(task.metadata?.dependencies as string[])?.length > 0 && (
-                                                <span className="text-xs text-slate-600 font-mono flex items-center gap-1">
-                                                    <Link2 className="w-2.5 h-2.5" />
-                                                    {(task.metadata?.dependencies as string[])?.length} dep{(task.metadata?.dependencies as string[])?.length === 1 ? '' : 's'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Status Intelligence (Hidden on extreme mobile, shown as pill in next row) */}
-                                <div className="hidden lg:block col-span-2">
-                                    <div className="relative w-full group/status">
-                                        <select
-                                            value={task.status}
-                                            onChange={(e) => handleStatusChange(task.id, e.target.value as any)}
-                                            className={`w-full text-xs font-black uppercase tracking-widest px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 outline-none cursor-pointer text-center appearance-none ${task.status === 'completed' ? 'text-green-400 border-green-500/30' : 'text-teal-400 border-teal-500/30'}`}
-                                        >
-                                            <option value="ideas">Standby</option>
-                                            <option value="todo">Planning</option>
-                                            <option value="in_progress">Active</option>
-                                            <option value="review">Review</option>
-                                            <option value="completed">Success</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Priority Node */}
-                                <div className="hidden lg:flex col-span-2 justify-center">
-                                    <span className={`px-4 py-2 text-xs rounded-xl font-black uppercase tracking-[0.1em] border ${task.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-slate-800/40 border-white/5 text-slate-500'}`}>
-                                        {task.priority}
-                                    </span>
-                                </div>
-
-                                {/* Timeline Control */}
-                                <div className="hidden lg:flex col-span-2 justify-center">
-                                    {task.dueDate ? (
-                                        <div className="bg-slate-950/40 px-4 py-2 rounded-xl border border-white/5">
-                                            <TaskCountdown dueDate={task.dueDate} onOverdue={() => handleStatusChange(task.id, 'review')} />
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-slate-700 font-black uppercase tracking-widest italic opacity-40">No Deadline</span>
-                                    )}
-                                </div>
-
-                                {/* Mobile Metadata Row */}
-                                <div className="lg:hidden flex flex-wrap gap-3 mt-2 pt-2 border-t border-white/5 w-full">
-                                    <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${task.status === 'completed' ? 'bg-green-500' : 'bg-teal-500'}`} />
-                                        {task.status}
-                                    </div>
-                                    <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${task.priority === 'high' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}>
-                                        {task.priority}
-                                    </span>
-                                    {task.dueDate && (
-                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono ml-auto">
-                                            <Calendar className="w-3 h-3 text-teal-500/60" />
-                                            {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="col-span-1 lg:col-span-1 flex justify-end gap-2 lg:opacity-0 group-hover:opacity-100 transition-all duration-500 mt-2 md:mt-0">
-                                    <button onClick={() => openEditModal(task)} className="flex-1 md:flex-none p-2 sm:p-3 text-slate-500 hover:text-white rounded-xl md:rounded-2xl border border-white/5 bg-white/5 md:bg-white/2 flex justify-center items-center"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => setNotesTaskId(task.id)} className="flex-1 md:flex-none p-2 sm:p-3 text-slate-500 hover:text-white rounded-xl md:rounded-2xl border border-white/5 bg-white/5 md:bg-white/2 flex justify-center items-center"><FileText className="w-4 h-4" /></button>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                    <motion.div
+                        key="kanban-view"
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                    >
+                        <KanbanView 
+                            tasks={filteredAndSearchedTasks} 
+                            onUpdateStatus={handleStatusChange}
+                            onEditTask={openEditModal}
+                        />
+                    </motion.div>
                 )}
-            </div>
+            </AnimatePresence>
         </div>
     );
 
@@ -601,6 +654,22 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-4 px-1 md:px-2">
+                    <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 mr-2">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-teal-500 text-slate-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            title="List View"
+                        >
+                            <List className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-teal-500 text-slate-950 shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            title="Kanban Board"
+                        >
+                            <Trello className="w-4 h-4" />
+                        </button>
+                    </div>
                     <div className="relative group flex-1 md:flex-none">
                         <Search className="w-3.5 h-3.5 md:w-4 md:h-4 absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-teal-400 transition-colors" />
                         <input

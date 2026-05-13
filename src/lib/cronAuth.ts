@@ -9,7 +9,7 @@ export function denyIfCronUnauthorized(req: NextRequest): NextResponse | null {
         return null;
     }
 
-    const secret = process.env.CRON_SECRET;
+    const secret = process.env.CRON_SECRET || process.env.INTERNAL_API_KEY;
     if (secret) {
         const auth = req.headers.get('authorization');
         if (auth === `Bearer ${secret}`) {
@@ -23,7 +23,7 @@ export function denyIfCronUnauthorized(req: NextRequest): NextResponse | null {
 
     if (process.env.NODE_ENV === 'production') {
         return NextResponse.json(
-            { error: 'Cron misconfigured: set CRON_SECRET or invoke from Vercel Cron' },
+            { error: 'Cron misconfigured: set CRON_SECRET/INTERNAL_API_KEY or invoke from Vercel Cron' },
             { status: 503 }
         );
     }

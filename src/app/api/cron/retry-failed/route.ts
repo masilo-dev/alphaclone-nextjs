@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+
+export const dynamic = 'force-dynamic';
 
 // Workflow map for retries
 import { dealStageChangedWorkflow } from '@/workflows/deal-flows';
@@ -22,11 +25,9 @@ const WORKFLOW_MAP: Record<string, any> = {
  * Identifies failed automation runs and re-queues them using exponential backoff.
  * Backoff: 1m, 5m, 15m.
  */
-export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const denied = denyIfCronUnauthorized(request);
+  if (denied) return denied;
 
   const supabase = createSupabaseAdminClient();
   const ranAt = new Date().toISOString();

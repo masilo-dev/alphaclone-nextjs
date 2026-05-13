@@ -520,9 +520,9 @@ export const businessInvoiceService = {
     /**
      * Get an invoice with its related tenant and client details
      */
-    async getInvoiceWithDetails(invoiceId: string): Promise<{ invoice: any | null; error: string | null }> {
+    async getInvoiceWithDetails(invoiceId: string, tenantId?: string): Promise<{ invoice: any | null; error: string | null }> {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('business_invoices')
                 .select(`
                     *,
@@ -543,8 +543,13 @@ export const businessInvoiceService = {
                         name
                     )
                 `)
-                .eq('id', invoiceId)
-                .single();
+                .eq('id', invoiceId);
+
+            if (tenantId) {
+                query = query.eq('tenant_id', tenantId);
+            }
+
+            const { data, error } = await query.single();
 
             if (error) throw error;
 

@@ -11,7 +11,8 @@ import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { PastEventPromptModal } from './PastEventPromptModal';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant } from '@/contexts/AuthContext';
+import { strategicThinkerService } from '../../services/StrategicThinkerService';
 
 /**
  * Helper to parse Calendly Q&A JSON
@@ -52,6 +53,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     const [showEventModal, setShowEventModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [suggestedBlocks, setSuggestedBlocks] = useState<any[]>([]);
     const [newEvent, setNewEvent] = useState<{
         title: string;
         description: string;
@@ -142,6 +144,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             setEvents([]);
         }
         setIsLoading(false);
+
+        // Fetch AI suggestions
+        const { tasks } = await taskService.getTasks({ assignedTo: user.id });
+        const suggestions = strategicThinkerService.suggestTimeBlocks(tasks || [], fetchedEvents || []);
+        setSuggestedBlocks(suggestions);
     };
 
     // Check for overlapping events
@@ -408,6 +415,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'reminder': return '#f59e0b'; // Orange
             case 'deadline': return '#ef4444'; // Red
             case 'invoice': return '#ef4444'; // Red (Money Owed)
+            case 'suggestion': return '#6366f1'; // Indigo (AI Suggestion)
             default: return '#3b82f6';
         }
     };
@@ -461,6 +469,21 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             textColor: '#ffffff',
             extendedProps: { ...event } // Pass data for click handling
         }));
+
+        const suggestions = suggestedBlocks.map(s => ({
+            id: `sug_${s.title}`,
+            title: `[AI Suggestion] ${s.title}`,
+            start: s.start,
+            end: s.end,
+            backgroundColor: 'transparent',
+            borderColor: '#6366f1',
+            borderStyle: 'dashed',
+            textColor: '#818cf8',
+            className: 'ai-suggestion-event',
+            extendedProps: { ...s, isSuggestion: true }
+        }));
+
+        return [...formattedEvents, ...suggestions];
     };
 
     if (isLoading) {

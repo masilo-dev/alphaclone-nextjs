@@ -47,13 +47,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 // Migration files in order
-const migrations = [
-    '20260209_user_security_2fa.sql',
-    '20260209_stripe_webhook_idempotency.sql',
-    '20260209_esign_compliance.sql',
-    '20260209_quota_enforcement.sql',
-    '20260209_gdpr_compliance.sql',
-];
+const migrations = fs.readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.sql'))
+    .sort();
 
 interface MigrationResult {
     filename: string;

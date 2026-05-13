@@ -146,6 +146,8 @@ export const contractService = {
                 client_id: contract.client_id, // Link to Client profile
                 owner_id: userData.user?.id,   // Link to Admin user
                 status: contract.status || 'draft',
+                type: contract.type || 'Service',
+                signing_token: contract.signing_token || crypto.randomUUID(),
                 admin_signature: contract.admin_signature,
                 admin_signed_at: contract.admin_signed_at,
                 payment_due_date: contract.payment_due_date,
@@ -709,5 +711,48 @@ export const contractService = {
         } catch (err) {
             console.error('Auto-draft trigger failed:', err);
         }
+    },
+
+    /**
+     * Send contract to client with public signing link
+     */
+    async sendContract(id: string, recipientEmail?: string) {
+        const tenantId = this.getTenantId();
+        const { AppUrls } = await import('@/lib/urls');
+        const { emailHelpers } = await import('@/services/email/emailService');
+
+        // 1. Get contract details
+        const { data: contract, error: fetchErr } = await supabase
+            .from('contracts')
+            .select('*, tenant:tenant_id(*), client:client_id(*)')
+            .eq('id', id)
+            .eq('tenant_id', tenantId)
+            .single();
+
+        if (fetchErr || !contract) throw new Error('Contract not found.');
+
+        // 2. Ensure token exists
+        let token = contract.signing_token;
+        if (!token) {
+            token = crypto.randomUUID();
+            await supabase.from('contracts').update({ signing_token: token }).eq('id', id);
+        }
+
+        // 3. Update status
+        await supabase.from('contracts').update({ status: 'sent' }).eq('id', id);
+
+        // 4. Generate Links
+        const signingUrl = AppUrls.signContract(token);
+
+        // 5. Send Email
+        const to = recipientEmail || contract.client?.email;
+        if (!to) throw new Error('Recipient email is required.');
+
+        return await emailHelpers.sendContract(
+            to,
+            contract.title,
+            signingUrl,
+            contract.tenant?.name || 'AlphaClone Partner'
+        );
     }
 };

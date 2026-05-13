@@ -47,6 +47,7 @@ import { getAutomationFailureReport, getAutomationHealth, getAutomationThroughpu
 import { listBuiltInPlaybooks } from '../automation/playbookService';
 import { emailHelpers } from '../email/emailService';
 import { businessInvoiceService } from '../businessInvoiceService';
+import { AppUrls } from '../../lib/urls';
 import { fileUploadService } from '../fileUploadService';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '../../workflows/invoice-lifecycle';
@@ -63,6 +64,7 @@ import { mcpAgentWorkflow } from '../../workflows/mcp-agent';
 import { strategicAuditService } from '../StrategicAuditService';
 import { strategicThinkerService } from '../StrategicThinkerService';
 import { xaiVideoGenerationService } from '../ai/xaiVideoGenerationService';
+import { generatePnLStatement } from '../../lib/accounting/pnl';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -2970,7 +2972,7 @@ class AlphaCloneMCPServer {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
 
-          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id);
+          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id, tenant_id);
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
           // Update status in DB
@@ -2996,7 +2998,7 @@ class AlphaCloneMCPServer {
           if (!to) throw new Error('Recipient email is required (not found on client record)');
 
           const amount = `${invoice.currency || '$'}${invoice.total}`;
-          const invoiceUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/invoice/${invoice.id}`;
+          const invoiceUrl = AppUrls.payInvoice(invoice.id);
 
           // Send Email
           const sendResult = await emailHelpers.sendInvoice(
@@ -3030,7 +3032,7 @@ class AlphaCloneMCPServer {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
 
-          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id);
+          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id, tenant_id);
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
           if (invoice.status !== 'paid') {
@@ -3045,7 +3047,7 @@ class AlphaCloneMCPServer {
           const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
           const amount = `${invoice.currency || '$'}${invoice.total}`;
-          const receiptUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/public/receipt/${invoice.id}`;
+          const receiptUrl = AppUrls.viewReceipt(invoice.id);
 
           const sendResult = await emailHelpers.sendReceipt(
             to,
@@ -3715,7 +3717,7 @@ class AlphaCloneMCPServer {
 
           const anthropic = new Anthropic({ apiKey });
           const aiResponse = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-sonnet-4-20250514',
             max_tokens: 2048,
             messages: [{
               role: 'user',
@@ -4061,26 +4063,127 @@ class AlphaCloneMCPServer {
         }
 
         case 'generate_expense_report': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          let query = supabaseAdmin.from('expenses').select('id,category,status,amount,date,created_at').eq('tenant_id', tenant_id).limit(5000);
-          if (a.from_date) query = query.gte('date', String(a.from_date));
-          if (a.to_date) query = query.lte('date', String(a.to_date));
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('generate_expense_report', error.message);
-          const rows = (data || []) as Array<Record<string, any>>;
-          const byCategory: Record<string, number> = {};
-          const byStatus: Record<string, number> = {};
-          let total = 0;
-          rows.forEach((r) => {
-            const cat = String(r.category || 'uncategorized');
-            const st = String(r.status || 'unknown');
-            const amount = Number(r.amount || 0);
-            byCategory[cat] = (byCategory[cat] || 0) + amount;
-            byStatus[st] = (byStatus[st] || 0) + amount;
-            total += amount;
-          });
-          result = { content: [{ type: 'text', text: JSON.stringify({ total, count: rows.length, by_category: byCategory, by_status: byStatus }, null, 2) }] };
+          try {
+            const a = args as Record<string, any>;
+            const tenant_id = this.requireTenant(a);
+            const from_date = a.from_date ? String(a.from_date) : null;
+            const to_date = a.to_date ? String(a.to_date) : null;
+
+            // Fix: Join expense_categories to get the category name. 
+            // Also select 'category' in case it was added to the schema.
+            let query = supabaseAdmin
+              .from('expenses')
+              .select('id, category, status, amount, date, created_at, expense_categories(name)')
+              .eq('tenant_id', tenant_id)
+              .order('date', { ascending: false })
+              .limit(5000);
+
+            if (from_date) query = query.gte('date', from_date);
+            if (to_date) query = query.lte('date', to_date);
+
+            const { data, error } = await query;
+            if (error) {
+              console.error('[MCP generate_expense_report] DB Error:', error);
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    status: 'failed',
+                    code: 'EXPENSE_QUERY_ERROR',
+                    message: error.message,
+                    hint: 'Check expenses table schema matches query columns'
+                  }, null, 2)
+                }],
+                isError: true
+              };
+            }
+
+            const rows = (data || []) as Array<any>;
+            const reportRowsMap = new Map<string, any>();
+            let grandTotal = 0;
+
+            rows.forEach((r) => {
+              // Priority: explicitly set 'category' field > joined category name > 'Uncategorized'
+              const catName = String(r.category || r.expense_categories?.name || 'Uncategorized');
+              const status = String(r.status || 'pending');
+              const amount = Number(r.amount || 0);
+              const key = `${catName}|${status}`;
+
+              if (!reportRowsMap.has(key)) {
+                reportRowsMap.set(key, {
+                  category: catName,
+                  status: status,
+                  total_amount: 0,
+                  count: 0,
+                  expenses: []
+                });
+              }
+
+              const row = reportRowsMap.get(key);
+              row.total_amount += amount;
+              row.count += 1;
+              row.expenses.push({
+                id: r.id,
+                date: r.date,
+                amount: r.amount,
+                status: r.status,
+                category: catName,
+                created_at: r.created_at
+              });
+
+              grandTotal += amount;
+            });
+
+            const report: any = {
+              rows: Array.from(reportRowsMap.values()),
+              grand_total: Number(grandTotal.toFixed(2)),
+              generated_at: new Date().toISOString(),
+              period: { from: from_date, to: to_date }
+            };
+
+            result = { content: [{ type: 'text', text: JSON.stringify(report, null, 2) }] };
+          } catch (err: any) {
+            console.error('[MCP generate_expense_report] Unexpected Error:', err);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  status: 'failed',
+                  code: 'INTERNAL_ERROR',
+                  message: err.message
+                }, null, 2)
+              }],
+              isError: true
+            };
+          }
+          break;
+        }
+
+        case 'get_pnl_statement': {
+          try {
+            const a = args as Record<string, any>;
+            const tenant_id = this.requireTenant(a);
+            const period = (a.period || 'monthly') as 'monthly' | 'quarterly' | 'yearly';
+            const from_date = a.from_date ? String(a.from_date) : undefined;
+            const to_date = a.to_date ? String(a.to_date) : undefined;
+
+            const statement = await generatePnLStatement(tenant_id, period, from_date, to_date);
+            
+            result = { content: [{ type: 'text', text: JSON.stringify(statement, null, 2) }] };
+          } catch (err: any) {
+            console.error('[MCP get_pnl_statement] Error:', err);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  status: 'failed',
+                  code: 'PNL_GENERATION_ERROR',
+                  message: err.message
+                }, null, 2)
+              }],
+              isError: true
+            };
+          }
           break;
         }
 

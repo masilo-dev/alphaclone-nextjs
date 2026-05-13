@@ -20,6 +20,12 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
         isFuturistic: false // Now current
     },
     { 
+        id: 'claude-sonnet-4-20250514', 
+        name: 'Claude 4 Sonnet', 
+        description: 'High-performance standard model with advanced reasoning.',
+        isFuturistic: false
+    },
+    { 
         id: 'claude-sonnet-4-5-20250929', 
         name: 'Claude 4.5 Sonnet', 
         description: 'Next-gen intelligence with 1M+ context window capacity.',

@@ -16,14 +16,15 @@ import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL } from '@/con
 
 const CLAUDE_ALLOWED_MODELS = new Set<string>([
   'claude-sonnet-4-6-20260217',
+  'claude-sonnet-4-20250514',
   'claude-sonnet-4-5-20250929',
 ]);
 
 const CLAUDE_MODEL_ALIASES: Record<string, string> = {
   // Keep compatibility for older callers, but route only to allowed Claude 4.x models.
-  'claude-haiku-4-5-20251015': 'claude-sonnet-4-5-20250929',
-  'claude-3-5-sonnet-20241022': 'claude-sonnet-4-5-20250929',
-  'claude-3-5-haiku-20241022': 'claude-sonnet-4-5-20250929',
+  'claude-haiku-4-5-20251015': 'claude-sonnet-4-20250514',
+  'claude-3-5-sonnet-20241022': 'claude-sonnet-4-20250514',
+  'claude-3-5-haiku-20241022': 'claude-sonnet-4-20250514',
 };
 
 function normalizeClaudeModel(model?: string): string {
@@ -33,7 +34,7 @@ function normalizeClaudeModel(model?: string): string {
     return candidate;
   }
   // Hard guard: never call other Claude models.
-  return 'claude-sonnet-4-5-20250929';
+  return 'claude-sonnet-4-20250514';
 }
 
 function isAnthropicModelNotFound(error: any): boolean {
@@ -112,6 +113,7 @@ export const MODEL_PRICING = {
 
   // Anthropic (per 1M tokens) - 2025/2026 pricing
   'claude-sonnet-4-6-20260217': { input: 3, output: 15 },
+  'claude-sonnet-4-20250514': { input: 3, output: 15 },
   'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
 };
 
@@ -152,7 +154,7 @@ export type AIStrengthTask = 'legal' | 'strategy' | 'social_article' | 'social_c
  * - creative_media -> OpenAI
  */
 const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'anthropic' | 'xai' | 'openai'; model: string }> = {
-  'legal': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+  'legal': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
   'strategy': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
   'social_article': { provider: 'xai', model: 'grok-4.3' },
   'social_caption': { provider: 'xai', model: 'grok-4.3' },
@@ -404,9 +406,9 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
       ],
     });
   } catch (error: any) {
-    if (model !== 'claude-sonnet-4-5-20250929' && isAnthropicModelNotFound(error)) {
+    if (model !== 'claude-sonnet-4-20250514' && isAnthropicModelNotFound(error)) {
       message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: options.maxTokens || 8192,
         temperature: options.temperature || 0.7,
         system: options.systemPrompt,
@@ -659,9 +661,9 @@ async function chatWithAnthropic(
       ],
     });
   } catch (error: any) {
-    if (selectedModel !== 'claude-sonnet-4-5-20250929' && isAnthropicModelNotFound(error)) {
+    if (selectedModel !== 'claude-sonnet-4-20250514' && isAnthropicModelNotFound(error)) {
       response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 8192,
         system: systemPrompt,
         messages: [

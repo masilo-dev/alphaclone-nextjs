@@ -96,5 +96,35 @@ export const strategicThinkerService = {
             },
             autoReaction
         };
+    },
+
+    /**
+     * Suggests optimal time blocks for the current user based on task priority.
+     */
+    suggestTimeBlocks(tasks: any[], events: any[]): Array<{ title: string; start: string; end: string; type: 'deep_work' | 'recovery' | 'strategy' }> {
+        const suggestions: Array<{ title: string; start: string; end: string; type: 'deep_work' | 'recovery' | 'strategy' }> = [];
+        const now = new Date();
+        
+        // Find high priority uncompleted tasks
+        const urgentTasks = tasks.filter(t => t.status !== 'completed' && (t.priority === 'urgent' || t.priority === 'high'));
+        
+        if (urgentTasks.length > 0) {
+            // Suggest a deep work block tomorrow morning if possible
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(9, 0, 0, 0);
+            
+            const end = new Date(tomorrow);
+            end.setHours(11, 0, 0, 0);
+
+            suggestions.push({
+                title: `Deep Work: ${urgentTasks[0].title}`,
+                start: tomorrow.toISOString(),
+                end: end.toISOString(),
+                type: 'deep_work'
+            });
+        }
+
+        return suggestions;
     }
 };

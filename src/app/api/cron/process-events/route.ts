@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
 // Import workflows
 import { dealStageChangedWorkflow } from '@/workflows/deal-flows';
@@ -9,16 +10,16 @@ import { leadCreatedWorkflow } from '@/workflows/lead-flows';
 import { contractSignedWorkflow } from '@/workflows/contract-flows';
 import { taskOverdueWorkflow } from '@/workflows/task-flows';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Main Automation Dispatcher
  * Polls unprocessed business events and triggers the corresponding workflows.
  * Run this every 5 minutes via Vercel Cron.
  */
-export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const denied = denyIfCronUnauthorized(request);
+  if (denied) return denied;
 
   const supabase = createSupabaseAdminClient();
   const ranAt = new Date().toISOString();
