@@ -462,7 +462,7 @@ const MarketplacePage: React.FC = () => {
 
       {/* AI Agents hero banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {ITEMS.filter(i => i.isMCP).map(item => {
+        {ITEMS.filter(i => i.isMCP).map((item: any) => {
           const Icon = item.icon;
           const isActive = item.mcpType === 'claude';
           return (

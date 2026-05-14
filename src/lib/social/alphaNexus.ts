@@ -127,11 +127,11 @@ export class AlphaNexus {
 
         return {
             systemAction: 'Nexus Scanning: High-intent signals detected...',
-            suggestedLeads: (watchlist || []).map(item => ({
+            suggestedLeads: (watchlist || []).map((item: any) => ({
                 ...item,
                 relevanceScore: Math.floor(Math.random() * 40) + 60,
                 suggestedAction: 'Engage with recent post about "AI agents"'
-            })).sort((a, b) => b.relevanceScore - a.relevanceScore)
+            })).sort((a: any, b: any) => b.relevanceScore - a.relevanceScore)
         };
     }
 

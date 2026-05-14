@@ -178,7 +178,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             const project = projects.find(p => p.id === selectedProjectId);
             const finalClientId = selectedClientId || project?.clientId || undefined;
 
-            const formattedLineItems = lineItems.map(item => ({
+            const formattedLineItems = lineItems.map((item: any) => ({
                 description: item.description,
                 quantity: item.quantity,
                 rate: item.rate,
@@ -317,7 +317,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             }
 
             // Draft PDF
-            const formattedLineItems = lineItems.map(item => ({
+            const formattedLineItems = lineItems.map((item: any) => ({
                 description: item.description,
                 quantity: item.quantity,
                 rate: item.rate,
