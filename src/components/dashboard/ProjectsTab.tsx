@@ -14,6 +14,7 @@ import { Button } from '../ui/UIComponents';
 import CustomContextMenu from '../common/CustomContextMenu';
 import { GanttChart } from './projects/GanttChart';
 import { taskDependencyService } from '../../services/taskDependencyService';
+import toast from 'react-hot-toast';
 
 interface ProjectsTabProps {
   user: User;
@@ -149,15 +150,34 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
           </div>
         </div>
         <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2 sm:gap-4 mt-2 sm:mt-0">
-          {user.role === 'client' && (
+          <div className="flex gap-2">
             <Button 
-              onClick={() => router.push('/dashboard/submit')} 
+              onClick={async () => {
+                toast.loading('Nexus: Architecting project structure...', { id: 'nexus-projects' });
+                const res = await fetch('/api/social/command-center', { 
+                  method: 'POST', 
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ tenantId: user.tenantId, mode: 'nexus_system_action', systemKey: 'project_architect' })
+                });
+                const data = await res.json();
+                toast.success(data.result.message, { id: 'nexus-projects' });
+              }}
               variant="secondary" 
-              className="h-8 md:h-10 px-3 md:px-4 text-xs md:text-xs font-black uppercase tracking-widest"
+              className="h-8 md:h-10 px-3 md:px-4 text-xs md:text-xs font-black uppercase tracking-widest bg-slate-900 border-white/5 text-violet-400"
             >
-              Add New Item
+              <Cpu className="w-4 h-4 mr-2" />
+              Nexus Architect
             </Button>
-          )}
+            {user.role === 'client' && (
+              <Button 
+                onClick={() => router.push('/dashboard/submit')} 
+                variant="secondary" 
+                className="h-8 md:h-10 px-3 md:px-4 text-xs md:text-xs font-black uppercase tracking-widest"
+              >
+                Add New Item
+              </Button>
+            )}
+          </div>
           <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-xl border border-white/5 shadow-inner">
             <button
               onClick={() => setViewMode('list')}

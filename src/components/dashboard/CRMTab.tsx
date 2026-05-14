@@ -191,7 +191,45 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                         Focus on one next action.
                     </p>
                 </div>
+
+                {/* NEXUS CRM INTELLIGENCE INTEGRATED */}
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            const toastId = toast.loading('Nexus: Enriching pipeline leads...', { id: 'nexus-crm' });
+                            const tenantId = tenantService.getCurrentTenantId();
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId, mode: 'nexus_system_action', systemKey: 'lead_enrichment' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-crm' });
+                        }}
+                        className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-violet-600/10 hover:bg-violet-600/20 text-violet-400 border border-violet-500/30 rounded-xl transition-all font-bold text-xs sm:text-sm h-10 shadow-lg shadow-violet-900/10"
+                    >
+                        <Radar className="w-4 h-4" />
+                        Enrich Leads
+                    </button>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            const toastId = toast.loading('Nexus: Launching sales campaign...', { id: 'nexus-sales' });
+                            const tenantId = tenantService.getCurrentTenantId();
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId, mode: 'nexus_system_action', systemKey: 'sales_campaign' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-sales' });
+                        }}
+                        className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-violet-600/10 hover:bg-violet-600/20 text-violet-400 border border-violet-500/30 rounded-xl transition-all font-bold text-xs sm:text-sm h-10 shadow-lg shadow-violet-900/10"
+                    >
+                        <Target className="w-4 h-4" />
+                        Sales Campaign
+                    </button>
                     <button
                         type="button"
                         onClick={() => router.push('/dashboard/deals')}

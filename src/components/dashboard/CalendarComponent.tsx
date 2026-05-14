@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { format, isBefore, addMinutes } from 'date-fns'; // Added addMinutes
-import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle, Sparkles } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
 import { taskService } from '../../services/taskService'; // Added taskService
@@ -507,9 +507,27 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     </h2>
                     <p className="text-slate-400 mt-1">Manage your schedule and meetings</p>
                 </div>
-                <Button onClick={() => setShowEventModal(true)} className="bg-teal-600 hover:bg-teal-500">
-                    + New Event
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Optimizing schedule...', { id: 'nexus-calendar' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: null, mode: 'nexus_system_action', systemKey: 'calendar_nexus' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-calendar' });
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Nexus Schedule
+                    </Button>
+                    <Button onClick={() => setShowEventModal(true)} className="bg-teal-600 hover:bg-teal-500">
+                        + New Event
+                    </Button>
+                </div>
             </div>
 
             {/* Calendar with Dark Theme */}

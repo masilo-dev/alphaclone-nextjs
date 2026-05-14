@@ -66,6 +66,7 @@ import { strategicThinkerService } from '../StrategicThinkerService';
 import { xaiVideoGenerationService } from '../ai/xaiVideoGenerationService';
 import { xService } from '../xService';
 import { generatePnLStatement } from '../../lib/accounting/pnl';
+import { AlphaNexus } from '../../lib/social/alphaNexus';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -5421,8 +5422,33 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        // ── AlphaClone Nexus Intelligence ──────────────────────────────────
+        case 'nexus_payroll_sync':
+        case 'nexus_invoice_chasing':
+        case 'nexus_month_end_close':
+        case 'nexus_lead_enrichment':
+        case 'nexus_sales_campaign':
+        case 'nexus_contract_drafter':
+        case 'nexus_content_synthesis':
+        case 'nexus_market_pulse':
+        case 'nexus_design_audit':
+        case 'nexus_project_architect':
+        case 'nexus_calendar_nexus':
+        case 'nexus_email_triage':
+        case 'nexus_support_triage':
+        case 'nexus_onboarding_flow':
+        case 'nexus_meeting_intelligence': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const systemKey = name.replace('nexus_', '');
+          const nexus = new AlphaNexus(tenant_id);
+          const response = await nexus.executeSystemAction(systemKey, {});
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, get_contacts, search_contacts, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, get_finance_snapshot, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, get_contacts, search_contacts, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, get_finance_snapshot, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

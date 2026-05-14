@@ -865,6 +865,23 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
                             <div className="flex gap-2">
                                 <Button
                                     variant="secondary"
+                                    onClick={async () => {
+                                        toast.loading('Nexus: Drafting legal contract...', { id: 'nexus-legal' });
+                                        const res = await fetch('/api/social/command-center', { 
+                                            method: 'POST', 
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'contract_drafter' })
+                                        });
+                                        const data = await res.json();
+                                        toast.success(data.result.message, { id: 'nexus-legal' });
+                                    }}
+                                    className="h-10 px-4 bg-slate-900 border-white/5 text-violet-400"
+                                    icon={<PenLine className="w-4 h-4" />}
+                                >
+                                    Nexus Draft
+                                </Button>
+                                <Button
+                                    variant="secondary"
                                     onClick={() => exportToCSV(quotes, 'Quotes')}
                                     className="h-10 px-4"
                                     icon={<Download className="w-4 h-4" />}

@@ -791,6 +791,24 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                         )}
                                     </h3>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={async () => {
+                                            toast.loading('Nexus: Triaging support messages...', { id: 'nexus-support' });
+                                            const res = await fetch('/api/social/command-center', { 
+                                                method: 'POST', 
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'support_triage' })
+                                            });
+                                            const data = await res.json();
+                                            toast.success(data.result.message, { id: 'nexus-support' });
+                                        }}
+                                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-lg text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
+                                    >
+                                        <Bot className="w-3.5 h-3.5" />
+                                        Nexus Triage
+                                    </button>
+                                </div>
 
                                 {/* Admin Auto-Pilot Toggle */}
                                 {isAdmin && !isMobile && (

@@ -23,7 +23,10 @@ import {
     Twitter,
     MessageSquare,
     Users,
-    Activity as ActivityIcon
+    Activity as ActivityIcon,
+    Sparkles,
+    Brain,
+    Bot
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -83,6 +86,12 @@ export default function SocialCommandCenter() {
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
     const [videoResult, setVideoResult] = useState<VideoScriptOutput | null>(null);
     const [videoIntensity, setVideoIntensity] = useState<'standard' | 'high'>('high');
+
+    // Nexus Intelligence State
+    const [isHunting, setIsHunting] = useState(false);
+    const [isIntelligenceRunning, setIsIntelligenceRunning] = useState(false);
+    const [nexusLog, setNexusLog] = useState<any>(null);
+    const [suggestedLeads, setSuggestedLeads] = useState<any[]>([]);
 
     const loadData = async () => {
         if (!currentTenant?.id) return;
@@ -242,6 +251,48 @@ export default function SocialCommandCenter() {
         }
     };
 
+    const handleStartLeadHunt = async () => {
+        if (!currentTenant?.id) return;
+        setIsHunting(true);
+        try {
+            const res = await fetch('/api/social/command-center', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id, mode: 'start_lead_hunt' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSuggestedLeads(data.suggestedLeads);
+                toast.success('AlphaClone Nexus has identified new lead opportunities!');
+            }
+        } catch (error) {
+            toast.error('Lead hunt failed');
+        } finally {
+            setIsHunting(false);
+        }
+    };
+
+    const handleTriggerNexusIntelligence = async () => {
+        if (!currentTenant?.id) return;
+        setIsIntelligenceRunning(true);
+        try {
+            const res = await fetch('/api/social/command-center', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id, mode: 'trigger_nexus_intelligence' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setNexusLog(data.nexusLog);
+                toast.success('Nexus Intelligence session complete.');
+            }
+        } catch (error) {
+            toast.error('Intelligence session failed');
+        } finally {
+            setIsIntelligenceRunning(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -264,20 +315,30 @@ export default function SocialCommandCenter() {
                         </h2>
                         <p className="text-sm text-slate-400">Manage your connected X account and track automated interactions.</p>
                     </div>
-                    {xIntegration ? (
-                        <div className="flex items-center gap-3 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-sm font-bold text-white">@{xIntegration.x_username}</span>
-                        </div>
-                    ) : (
+                    <div className="flex items-center gap-2">
                         <button 
-                            onClick={() => window.location.href = '/api/auth/x'}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#1DA1F2]/20"
+                            onClick={handleTriggerNexusIntelligence}
+                            disabled={isIntelligenceRunning}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-lg text-xs font-bold border border-slate-800 transition-all"
                         >
-                            <Twitter className="w-4 h-4" />
-                            Connect X Account
+                            {isIntelligenceRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Brain className="w-3 h-3 text-violet-400" />}
+                            Optimize Strategy
                         </button>
-                    )}
+                        {xIntegration ? (
+                            <div className="flex items-center gap-3 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-sm font-bold text-white">@{xIntegration.x_username}</span>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={() => window.location.href = '/api/auth/x'}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#1DA1F2]/20"
+                            >
+                                <Twitter className="w-4 h-4" />
+                                Connect X Account
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -471,13 +532,23 @@ export default function SocialCommandCenter() {
                         </h2>
                         <p className="text-sm text-slate-400">AI monitors these profiles and alerts you when they post.</p>
                     </div>
-                    <button 
-                        onClick={() => setIsAddingWatchlist(!isAddingWatchlist)}
-                        className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-900/20"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Watch Profile
-                    </button>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={handleStartLeadHunt}
+                            disabled={isHunting}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-teal-400 rounded-xl text-sm font-bold border border-slate-800 transition-all shadow-lg shadow-teal-900/10"
+                        >
+                            {isHunting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                            Discover Leads
+                        </button>
+                        <button 
+                            onClick={() => setIsAddingWatchlist(!isAddingWatchlist)}
+                            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-900/20"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Watch Profile
+                        </button>
+                    </div>
                 </div>
 
                 {isAddingWatchlist && (
