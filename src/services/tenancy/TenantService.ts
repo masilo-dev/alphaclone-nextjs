@@ -24,9 +24,15 @@ class TenantService {
         adminUserId: string;
         plan?: SubscriptionPlan;
     }): Promise<Tenant> {
+        const slugBase = data.slug
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 72) || `org-${data.adminUserId.slice(0, 8)}`;
+
         const { data: tenantId, error } = await supabase.rpc('create_tenant', {
             p_name: data.name,
-            p_slug: data.slug,
+            p_slug: slugBase,
             p_admin_user_id: data.adminUserId,
             p_plan: data.plan || 'free'
         });
@@ -114,7 +120,26 @@ class TenantService {
             });
 
             if (!error && data && data.length > 0) {
-                return data;
+                const normalized = data
+                    .map((row: any) => {
+                        const id = row.id || row.tenant_id;
+                        const name = row.name || row.tenant_name;
+                        const slug = row.slug || row.tenant_slug;
+                        const role = row.role || row.user_role;
+                        if (!id || !name || !slug) return null;
+
+                        return {
+                            ...row,
+                            id,
+                            name,
+                            slug,
+                            role: role as TenantRole,
+                            joined_at: row.joined_at,
+                        };
+                    })
+                    .filter(Boolean) as Array<Tenant & { role: TenantRole }>;
+
+                if (normalized.length > 0) return normalized;
             }
 
             if (error) {
@@ -502,6 +527,7 @@ class TenantService {
         this.currentTenantId = null;
         if (typeof window !== 'undefined') {
             localStorage.removeItem('currentTenantId');
+            localStorage.removeItem('currentTenant');
         }
     }
 

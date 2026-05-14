@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Room, RoomEvent, Track, type LocalTrack, type RemoteTrack } from 'livekit-client';
-import { Mic, MicOff, PhoneOff, Video as VideoIcon, VideoOff } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, ShieldCheck, Video as VideoIcon, VideoOff, Wifi } from 'lucide-react';
 
 type VideoTile = { key: string; track: LocalTrack | RemoteTrack; label: string };
 
@@ -62,6 +62,8 @@ export default function LiveKitStage({
     const leavingRef = useRef(false);
     const bridgeOnceRef = useRef(false);
     const [showConnectionLayer, setShowConnectionLayer] = useState(true);
+    const [connectionState, setConnectionState] = useState('connecting');
+    const [connectionQuality, setConnectionQuality] = useState('unknown');
 
     const rebuildTiles = useCallback(
         (room: Room) => {
@@ -126,18 +128,31 @@ export default function LiveKitStage({
             onAny();
         };
 
+        const onConnectionStateChanged = (state: unknown) => {
+            setConnectionState(String(state || 'connected'));
+        };
+
+        const onConnectionQualityChanged = (quality: unknown, participant: { identity?: string } | undefined) => {
+            if (participant?.identity === room.localParticipant.identity) {
+                setConnectionQuality(String(quality || 'unknown'));
+            }
+        };
+
         room
             .on(RoomEvent.TrackSubscribed, onSubscribed)
             .on(RoomEvent.TrackUnsubscribed, onAny)
             .on(RoomEvent.LocalTrackPublished, onAny)
             .on(RoomEvent.LocalTrackUnpublished, onAny)
             .on(RoomEvent.ParticipantConnected, onAny)
-            .on(RoomEvent.ParticipantDisconnected, onAny);
+            .on(RoomEvent.ParticipantDisconnected, onAny)
+            .on(RoomEvent.ConnectionStateChanged, onConnectionStateChanged)
+            .on(RoomEvent.ConnectionQualityChanged, onConnectionQualityChanged);
 
         void (async () => {
             try {
                 await room.connect(url, token);
                 if (cancelled) return;
+                setConnectionState('connected');
                 await room.localParticipant.setCameraEnabled(true);
                 await room.localParticipant.setMicrophoneEnabled(true);
                 setMicEnabled(room.localParticipant.isMicrophoneEnabled);
@@ -233,6 +248,18 @@ export default function LiveKitStage({
                         <div className="w-0.5 h-3/5 bg-teal-500 rounded-full" />
                     </div>
                 </div>
+                <div className="hidden sm:flex items-center gap-2 pointer-events-auto">
+                    <div className="flex items-center gap-2 bg-emerald-500/10 backdrop-blur-md border border-emerald-400/20 px-3 py-2 rounded-2xl">
+                        <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                        <span className="text-xs font-black uppercase text-emerald-100">Secure Alpha Room</span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-2xl">
+                        <Wifi className="w-4 h-4 text-teal-300" />
+                        <span className="text-xs font-semibold text-white/80 capitalize">
+                            {connectionState} · {connectionQuality}
+                        </span>
+                    </div>
+                </div>
             </header>
 
             <main className="flex-1 relative mt-16 mb-28 overflow-hidden p-4 sm:p-6">
@@ -306,4 +333,3 @@ export default function LiveKitStage({
         </div>
     );
 }
-

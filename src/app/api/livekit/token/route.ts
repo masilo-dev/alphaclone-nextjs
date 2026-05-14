@@ -5,10 +5,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { AccessToken } from 'livekit-server-sdk';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { readLiveKitEnv } from '@/services/video/liveKitBridge';
 
-const LIVEKIT_URL = process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL;
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
+const LIVEKIT = readLiveKitEnv();
 
 function isUuid(value: string): boolean {
     return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
@@ -106,7 +105,7 @@ async function verifyPublicMeetingAccess(callId: string, meetingAccessPin: strin
 }
 
 export async function POST(req: Request) {
-    if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
+    if (!LIVEKIT.url || !LIVEKIT.apiKey || !LIVEKIT.apiSecret) {
         return NextResponse.json({ error: 'LiveKit is not configured on the server' }, { status: 503 });
     }
 
@@ -145,7 +144,7 @@ export async function POST(req: Request) {
     const identity = authUser ? authUser.id : `guest-${callId}-${Math.random().toString(36).slice(2, 10)}`;
     const displayName = authUser ? authUser.name : 'Guest';
 
-    const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+    const token = new AccessToken(LIVEKIT.apiKey, LIVEKIT.apiSecret, {
         identity,
         name: displayName,
         ttl: '1h',
@@ -160,7 +159,7 @@ export async function POST(req: Request) {
 
     try {
         const jwt = await token.toJwt();
-        return NextResponse.json({ token: jwt, url: LIVEKIT_URL, roomName });
+        return NextResponse.json({ token: jwt, url: LIVEKIT.url, roomName });
     } catch (e) {
         console.error('[livekit/token] JWT error', e);
         return NextResponse.json({ error: 'Failed to issue LiveKit token' }, { status: 500 });

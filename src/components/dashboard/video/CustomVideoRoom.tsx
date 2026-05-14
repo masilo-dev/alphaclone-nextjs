@@ -10,6 +10,7 @@ import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-re
 import { supabase } from '../../../lib/supabase';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
+import LiveKitStage from './LiveKitStage';
 
 interface CustomVideoRoomProps {
     user: User;
@@ -43,6 +44,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     onToggleMinimize,
 }) => {
     const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
+    const [liveKitSession, setLiveKitSession] = useState<{ url: string; token: string; roomName: string } | null>(null);
+    const [liveKitError, setLiveKitError] = useState<string | null>(null);
     const {
         isJoined,
         isJoining,
@@ -171,29 +174,62 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         }
     }, [startCamera]);
 
-    // Resolve Room URL if not provided
     useEffect(() => {
-        if (resolvedRoomUrl) return;
+        if (!preJoinAccepted || liveKitSession || liveKitError || !callId) return;
 
-        const resolveUrl = async () => {
+        let cancelled = false;
+        const connectLiveKit = async () => {
             try {
-                const { call, error } = await dailyService.getVideoCall(callId);
-                if (error || !call?.daily_room_url) {
-                    throw new Error(error || 'Failed to resolve meeting URL');
+                const response = await fetch('/api/livekit/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ callId }),
+                });
+
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload?.error || 'Failed to create secure meeting token');
                 }
-                setResolvedRoomUrl(call.daily_room_url);
+
+                if (cancelled) return;
+                setLiveKitSession({
+                    url: payload.url,
+                    token: payload.token,
+                    roomName: payload.roomName,
+                });
+                setCallStartTime(new Date());
+
+                if (callId && isUserAdmin(user)) {
+                    await dailyService.startVideoCall(callId).catch(err => {
+                        console.error('Failed to mark call as active:', err);
+                    });
+                }
+
+                import('@/services/activityService').then(({ activityService }) => {
+                    activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
+                        callId,
+                        transport: 'secure_realtime',
+                    }).catch(() => undefined);
+                }).catch(() => undefined);
             } catch (err) {
-                console.error('Error resolving video URL:', err);
-                toast.error('Failed to connect to the secure meeting channel');
-                setTimeout(onLeave, 2000);
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Failed to connect to secure meeting';
+                    setLiveKitError(message);
+                    toast.error(message);
+                }
             }
         };
 
-        resolveUrl();
-    }, [callId, resolvedRoomUrl, onLeave]);
+        void connectLiveKit();
+        return () => {
+            cancelled = true;
+        };
+    }, [preJoinAccepted, liveKitSession, liveKitError, callId, user]);
 
-    // Join meeting on mount or when URL is resolved
+    // Legacy room-url join remains disabled; secure meetings are brokered by /api/livekit/token.
     useEffect(() => {
+        if (liveKitSession || preJoinAccepted) return;
         if (!preJoinAccepted || joinAttemptedRef.current || isJoining || isJoined || !resolvedRoomUrl) return;
         joinAttemptedRef.current = true;
 
@@ -445,6 +481,25 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    if (liveKitSession) {
+        return (
+            <LiveKitStage
+                url={liveKitSession.url}
+                token={liveKitSession.token}
+                displayName={user.name || 'Guest'}
+                secondsElapsed={secondsElapsed}
+                formatElapsed={formatTime}
+                requestHardStop={false}
+                onHardStopConsumed={() => undefined}
+                onLeave={() => void finalizeMeetingDb()}
+                onFatalError={(message) => {
+                    setLiveKitError(message);
+                    toast.error('Secure video connection failed. Please retry.');
+                }}
+            />
+        );
+    }
+
     if (!isJoined) {
         if (!preJoinAccepted) {
             return (
@@ -692,4 +747,3 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 };
 
 export default CustomVideoRoom;
-
