@@ -1,2 +1,8 @@
 # Ignore mobile app from Vercel deployment
 mobile/
+playwright-report/
+test-results/
+*.md
+!README.md
+!update.md
+supabase/
