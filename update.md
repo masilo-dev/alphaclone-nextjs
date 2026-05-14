@@ -15,6 +15,26 @@
 
 ### Production Readiness
 - **Vercel Safe**: Verified build stability for core UI and accounting services. Confirmed that all recent TypeScript fixes align with Vercel's strict production build requirements.
+- **Vercel Deployment Hardening**: Created `.vercelignore` to exclude the `mobile` directory from Vercel deployments, preventing unnecessary build overhead and potential failures for the Next.js app.
+
+## Date: 2026-05-14 (X/TWITTER INTEGRATION & DEPLOYMENT HARDENING)
+
+### Added
+- **X (Twitter) Integration**:
+    - **OAuth 2.0 Infrastructure**: Deployed `/api/auth/x` and `/api/auth/callback/x` to support the full PKCE-based OAuth 2.0 flow for X.
+    - **X Service Layer**: Implemented `xService.ts` for automated interaction with X API v2, supporting `tweet.read`, `tweet.write`, and `direct_messages` (read/write).
+    - **Database Schema**: Created the `x_integrations` table with tenant isolation and RLS policies to securely store encrypted tokens.
+- **Developer Portal Requirements**:
+    - **Website URL**: `https://alphaclonesystems.com`
+    - **Callback URL**: `https://alphaclonesystems.com/api/auth/callback/x`
+    - **ToS URL**: `https://alphaclonesystems.com/terms-of-service`
+    - **Privacy Policy**: `https://alphaclonesystems.com/privacy-policy`
+
+### Fixed
+- **Mobile Deployment Leak**: Resolved a critical Vercel deployment issue where the `mobile` (Expo) directory was being processed by the Vercel builder. Added `mobile/` to `.vercelignore` to ensure clean Next.js deployments.
+
+### Production Readiness
+- **Vercel Safe**: Verified that all new API routes and service layers pass strict TypeScript checks. Confirmed that the `mobile` exclusion is active.
 
 
 ## Date: 2026-05-13 (ACCOUNTING & AI INFRASTRUCTURE STABILIZATION)
