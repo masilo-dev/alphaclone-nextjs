@@ -64,6 +64,7 @@ import { mcpAgentWorkflow } from '../../workflows/mcp-agent';
 import { strategicAuditService } from '../StrategicAuditService';
 import { strategicThinkerService } from '../StrategicThinkerService';
 import { xaiVideoGenerationService } from '../ai/xaiVideoGenerationService';
+import { xService } from '../xService';
 import { generatePnLStatement } from '../../lib/accounting/pnl';
 
 const UUID_RE =
@@ -5144,6 +5145,85 @@ Return ONLY a JSON array of 60 objects:
           
           const script = await xaiVideoGenerationService.generateViralScript(topic, intensity as any);
           result = { content: [{ type: 'text', text: JSON.stringify(script, null, 2) }] };
+          break;
+        }
+
+        case 'get_x_profile': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { username } = a;
+          const profile = await xService.getProfile(tenant_id, username);
+          result = { content: [{ type: 'text', text: JSON.stringify(profile, null, 2) }] };
+          break;
+        }
+
+        case 'search_x_tweets': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { query, limit = 10 } = a;
+          const searchResults = await xService.searchTweets(tenant_id, query, limit);
+          result = { content: [{ type: 'text', text: JSON.stringify(searchResults, null, 2) }] };
+          break;
+        }
+
+        case 'post_x_tweet': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { text } = a;
+          if (typeof text !== 'string' || !text.trim()) throw new Error('text is required');
+          
+          // Content Guideline Check (Basic Professionalism)
+          const profCheck = await routeAutonomousTask(
+            'strategy',
+            `Review this tweet for professional/business guidelines (no vulgarity, non-offensive, strictly business): "${text}"`,
+            'Respond ONLY with "APPROVED" or "REJECTED: [REASON]".'
+          );
+          
+          if (profCheck.content.includes('REJECTED')) {
+            throw new Error(`Tweet rejected by professional guidelines: ${profCheck.content}`);
+          }
+
+          const tweet = await xService.postTweet(tenant_id, { text });
+          result = { content: [{ type: 'text', text: JSON.stringify(tweet, null, 2) }] };
+          break;
+        }
+
+        case 'reply_to_x_tweet': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { tweet_id, text } = a;
+          if (!tweet_id || typeof text !== 'string' || !text.trim()) throw new Error('tweet_id and text are required');
+
+          const reply = await xService.replyToTweet(tenant_id, tweet_id, text);
+          result = { content: [{ type: 'text', text: JSON.stringify(reply, null, 2) }] };
+          break;
+        }
+
+        case 'send_x_dm': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { recipient_id, text } = a;
+          if (!recipient_id || typeof text !== 'string' || !text.trim()) throw new Error('recipient_id and text are required');
+
+          const dm = await xService.sendDirectMessage(tenant_id, recipient_id, text);
+          result = { content: [{ type: 'text', text: JSON.stringify(dm, null, 2) }] };
+          break;
+        }
+
+        case 'get_x_timeline': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const timeline = await xService.getUserTweets(tenant_id);
+          result = { content: [{ type: 'text', text: JSON.stringify(timeline, null, 2) }] };
+          break;
+        }
+
+        case 'search_x_users': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { query, limit = 10 } = a;
+          const userResults = await xService.searchUsers(tenant_id, query, limit);
+          result = { content: [{ type: 'text', text: JSON.stringify(userResults, null, 2) }] };
           break;
         }
 

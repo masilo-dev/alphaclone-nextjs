@@ -1995,4 +1995,91 @@ export const MCP_TOOLS = [
       required: ['lead_ids'],
     },
   },
+  {
+    name: 'get_x_profile',
+    description: 'Fetch an X (Twitter) user profile by username or ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        username: { type: 'string', description: 'X username (without @)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'search_x_tweets',
+    description: 'Search for recent tweets on X. Highly effective for lead hunting and market research.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        query: { type: 'string', description: 'Search query (supports operators like from:, has:media, etc.)' },
+        limit: { type: 'number', description: 'Max results (default 10, max 100)' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'post_x_tweet',
+    description: 'Post a new tweet to the connected X account. strictly for business/professional content.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        text: { type: 'string', description: 'Tweet content (max 280 chars)' },
+      },
+      required: ['text'],
+    },
+  },
+  {
+    name: 'reply_to_x_tweet',
+    description: 'Reply to a specific tweet on X. Used for engagement and lead nurturing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tweet_id: { type: 'string', description: 'The ID of the tweet to reply to' },
+        text: { type: 'string', description: 'Reply content' },
+      },
+      required: ['tweet_id', 'text'],
+    },
+  },
+  {
+    name: 'send_x_dm',
+    description: 'Send a direct message to an X user.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        recipient_id: { type: 'string', description: 'X user ID of the recipient' },
+        text: { type: 'string', description: 'Message content' },
+      },
+      required: ['recipient_id', 'text'],
+    },
+  },
+  {
+    name: 'get_x_timeline',
+    description: 'Fetch the latest tweets from the connected X account timeline.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'search_x_users',
+    description: 'Search for X users by their bio, name, or interests. Ideal for finding high-value leads.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        query: { type: 'string', description: 'Search query for user bios/profiles' },
+        limit: { type: 'number', description: 'Max results (default 10, max 50)' },
+      },
+      required: ['query'],
+    },
+  },
 ];

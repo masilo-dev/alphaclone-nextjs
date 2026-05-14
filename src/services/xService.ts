@@ -140,13 +140,127 @@ export const xService = {
     },
 
     /**
-     * Read Direct Messages (v2)
+     * Reply to a tweet (v2)
      */
-    async getDirectMessages(tenantId: string) {
+    async replyToTweet(tenantId: string, tweetId: string, text: string) {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-        const response = await fetch('https://api.twitter.com/2/dm_events', {
+        const response = await fetch('https://api.twitter.com/2/tweets', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${integration.access_token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: text,
+                reply: {
+                    in_reply_to_tweet_id: tweetId
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`X API error: ${JSON.stringify(error)}`);
+        }
+
+        return await response.json();
+    },
+
+    /**
+     * Search tweets (v2) - Useful for lead hunting
+     */
+    async searchTweets(tenantId: string, query: string, maxResults: number = 10) {
+        const integration = await this.getXIntegration(tenantId);
+        if (!integration) throw new Error('X integration not found');
+
+        const url = new URL('https://api.twitter.com/2/tweets/search/recent');
+        url.searchParams.append('query', query);
+        url.searchParams.append('max_results', maxResults.toString());
+        url.searchParams.append('tweet.fields', 'created_at,author_id,public_metrics,entities');
+        url.searchParams.append('expansions', 'author_id');
+        url.searchParams.append('user.fields', 'username,name,description,profile_image_url');
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${integration.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`X API error: ${JSON.stringify(error)}`);
+        }
+
+        return await response.json();
+    },
+
+    /**
+     * Get mentions (v2)
+     */
+    async getMentions(tenantId: string) {
+        const integration = await this.getXIntegration(tenantId);
+        if (!integration) throw new Error('X integration not found');
+
+        const response = await fetch(`https://api.twitter.com/2/users/${integration.x_user_id}/mentions`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${integration.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`X API error: ${JSON.stringify(error)}`);
+        }
+
+        return await response.json();
+    },
+
+    /**
+     * Get user profile (v2)
+     */
+    async getProfile(tenantId: string, usernameOrId?: string) {
+        const integration = await this.getXIntegration(tenantId);
+        if (!integration) throw new Error('X integration not found');
+
+        const identifier = usernameOrId || integration.x_user_id;
+        const url = usernameOrId && isNaN(Number(usernameOrId))
+            ? `https://api.twitter.com/2/users/by/username/${usernameOrId}`
+            : `https://api.twitter.com/2/users/${identifier}`;
+
+        const response = await fetch(`${url}?user.fields=description,public_metrics,profile_image_url,location`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${integration.access_token}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`X API error: ${JSON.stringify(error)}`);
+        }
+
+        return await response.json();
+    },
+
+    /**
+     * Search users (v2) - Useful for finding leads by bio/location
+     */
+    async searchUsers(tenantId: string, query: string, maxResults: number = 10) {
+        const integration = await this.getXIntegration(tenantId);
+        if (!integration) throw new Error('X integration not found');
+
+        // Note: User search in v2 is currently limited to certain access levels or specific endpoints.
+        // If not available, we can fallback to searching tweets and extracting users.
+        const url = new URL('https://api.twitter.com/2/users/search');
+        url.searchParams.append('query', query);
+        url.searchParams.append('max_results', maxResults.toString());
+        url.searchParams.append('user.fields', 'username,name,description,profile_image_url,location,public_metrics');
+
+        const response = await fetch(url.toString(), {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`
