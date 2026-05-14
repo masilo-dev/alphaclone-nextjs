@@ -37,10 +37,18 @@ class TenantService {
             p_plan: data.plan || 'free'
         });
 
-        if (error) throw error;
+        if (error) {
+            console.error('[TenantService] create_tenant RPC failed:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+            });
+            throw error;
+        }
 
         const tenant = await this.getTenant(tenantId);
-        if (!tenant) throw new Error('Failed to create tenant');
+        if (!tenant) throw new Error('Failed to retrieve tenant after creation');
 
         return tenant;
     }
@@ -49,6 +57,7 @@ class TenantService {
      * Get tenant by ID
      */
     async getTenant(tenantId: string): Promise<Tenant | null> {
+        // Try with deletion_pending_at filter first (post-migration)
         const { data, error } = await supabase
             .from('tenants')
             .select('*')
@@ -56,8 +65,19 @@ class TenantService {
             .is('deletion_pending_at', null)
             .single();
 
-        if (error) return null;
-        return data as Tenant;
+        if (!error) return data as Tenant;
+
+        // If the column doesn't exist yet (migration not applied), fall back
+        if (error.code === '42703' || error.message?.includes('deletion_pending_at')) {
+            const { data: fallback } = await supabase
+                .from('tenants')
+                .select('*')
+                .eq('id', tenantId)
+                .single();
+            return fallback as Tenant | null;
+        }
+
+        return null;
     }
 
     /**
@@ -71,8 +91,19 @@ class TenantService {
             .is('deletion_pending_at', null)
             .maybeSingle();
 
-        if (error) return null;
-        return data as Tenant;
+        if (!error) return data as Tenant;
+
+        // Column not yet migrated — fall back without the filter
+        if (error.code === '42703' || error.message?.includes('deletion_pending_at')) {
+            const { data: fallback } = await supabase
+                .from('tenants')
+                .select('*')
+                .eq('slug', slug)
+                .maybeSingle();
+            return fallback as Tenant | null;
+        }
+
+        return null;
     }
 
     /**

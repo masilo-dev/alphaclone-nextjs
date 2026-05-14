@@ -1,38 +1,36 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { getProjects } from '../services/mobileData';
+import type { MobileProject } from '../types';
 
-export default function ProjectsScreen() {
-  const projects = [
-    {
-      id: 1,
-      title: 'Website Redesign',
-      client: 'Tech Corp',
-      status: 'in-progress',
-      progress: 75,
-      deadline: '2024-02-15',
-      budget: '$5,000',
-    },
-    {
-      id: 2,
-      title: 'Mobile App Development',
-      client: 'StartupXYZ',
-      status: 'planning',
-      progress: 25,
-      deadline: '2024-03-01',
-      budget: '$12,000',
-    },
-    {
-      id: 3,
-      title: 'Brand Identity',
-      client: 'Fashion Brand',
-      status: 'completed',
-      progress: 100,
-      deadline: '2024-01-30',
-      budget: '$3,500',
-    },
-  ];
+export default function ProjectsScreen({ navigation }: { navigation: any }) {
+  const { activeTenant } = useAuth();
+  const [projects, setProjects] = useState<MobileProject[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadProjects = async () => {
+      if (!activeTenant) return;
+      setLoading(true);
+      try {
+        const rows = await getProjects(activeTenant.id);
+        if (mounted) setProjects(rows);
+      } catch (error) {
+        console.error('Projects load error:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadProjects();
+    return () => {
+      mounted = false;
+    };
+  }, [activeTenant]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -78,7 +76,7 @@ export default function ProjectsScreen() {
           {/* Projects List */}
           <View style={styles.projectsList}>
             {projects.map((project) => (
-              <TouchableOpacity key={project.id} style={styles.projectCard}>
+              <TouchableOpacity key={project.id} style={styles.projectCard} onPress={() => navigation.navigate('ProjectDetail', { project })}>
                 <View style={styles.projectHeader}>
                   <View style={styles.projectInfo}>
                     <Text style={styles.projectTitle}>{project.title}</Text>
@@ -99,7 +97,7 @@ export default function ProjectsScreen() {
                   </View>
                   <View style={styles.detailRow}>
                     <Ionicons name="cash" size={16} color="#94A3B8" />
-                    <Text style={styles.detailText}>{project.budget}</Text>
+                    <Text style={styles.detailText}>${Math.round(project.budget || 0).toLocaleString()}</Text>
                   </View>
                 </View>
 
@@ -119,6 +117,8 @@ export default function ProjectsScreen() {
                 </View>
               </TouchableOpacity>
             ))}
+            {loading && <ActivityIndicator color="#00D2A0" />}
+            {!loading && projects.length === 0 && <Text style={styles.emptyText}>No projects yet.</Text>}
           </View>
         </ScrollView>
       </LinearGradient>
@@ -232,5 +232,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     fontWeight: '600',
+  },
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
   },
 });
