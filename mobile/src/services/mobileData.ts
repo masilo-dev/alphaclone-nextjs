@@ -128,7 +128,7 @@ export async function getLeads(tenantId: string): Promise<MobileLead[]> {
 export async function getInvoices(tenantId: string): Promise<MobileInvoice[]> {
   const { data, error } = await supabase
     .from('business_invoices')
-    .select('id,invoice_number,status,total,due_date,issue_date,line_items,created_at,business_clients(name)')
+    .select('id,invoice_number,status,total,due_date,issue_date,line_items,created_at')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -140,7 +140,7 @@ export async function getInvoices(tenantId: string): Promise<MobileInvoice[]> {
     return {
       id: invoice.id,
       number: invoice.invoice_number || 'Draft invoice',
-      client: invoice.business_clients?.name || 'Client',
+      client: 'Client',
       amount: currency(invoice.total),
       status: normalizeStage(invoice.status),
       dueDate: invoice.due_date,
