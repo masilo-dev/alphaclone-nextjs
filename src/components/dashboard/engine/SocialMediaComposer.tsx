@@ -5,7 +5,7 @@ import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
     Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye, Scissors,
     RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink, Linkedin,
-    Mic, MicOff, Wand2
+    Mic, MicOff, Wand2, Twitter
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -83,9 +83,10 @@ const STATUS_STYLE: Record<string, string> = {
     failed:      'bg-red-500/15 text-red-400 border-red-500/30',
 };
 
-const PLATFORM_ICONS: Record<string, React.ReactNode> = {
     facebook: <Facebook className="w-3.5 h-3.5" />,
     linkedin: <Linkedin className="w-3.5 h-3.5" />,
+    twitter: <Twitter className="w-3.5 h-3.5" />,
+    x: <Twitter className="w-3.5 h-3.5" />,
     platform: <Globe className="w-3.5 h-3.5" />,
 };
 
@@ -98,6 +99,7 @@ export default function SocialMediaComposer() {
     const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
     const [linkedinIntegrations, setLinkedinIntegrations] = useState<LinkedInIntegration[]>([]);
+    const [xIntegration, setXIntegration] = useState<any>(null);
     const [selectedLinkedInMemberId, setSelectedLinkedInMemberId] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'compose' | 'posts' | 'media'>('compose');
@@ -192,6 +194,7 @@ export default function SocialMediaComposer() {
                 .eq('tenant_id', tenant.id)
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false }),
+            supabase.from('x_integrations').select('id, x_username, x_user_id').eq('tenant_id', tenant.id).single(),
         ]);
         if (!postsRes.error) setPosts(postsRes.data || []);
         if (!mediaRes.error) setMediaAssets(mediaRes.data || []);
@@ -200,9 +203,11 @@ export default function SocialMediaComposer() {
             if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
         }
         if (!linkedinRes.error) {
-            const rows = (linkedinRes.data || []) as LinkedInIntegration[];
             setLinkedinIntegrations(rows);
             if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
+        }
+        if (!xRes.error) {
+            setXIntegration(xRes.data || null);
         }
         const hasIntegration = (pagesRes.data || []).length > 0 || (linkedinRes.data || []).length > 0;
         if (hasIntegration && user?.id) {
@@ -1193,6 +1198,7 @@ Return only the comment text.`;
                             {[
                                 { id: 'facebook', label: 'Facebook Page', icon: <Facebook className="w-4 h-4 text-blue-400" /> },
                                 { id: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="w-4 h-4 text-sky-400" /> },
+                                { id: 'twitter', label: 'X (Twitter)', icon: <Twitter className="w-4 h-4 text-[#1DA1F2]" /> },
                                 { id: 'platform', label: 'AlphaClone Platform', icon: <Globe className="w-4 h-4 text-teal-400" /> },
                             ].map(p => (
                                 <label key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 cursor-pointer mb-1">
@@ -1202,6 +1208,29 @@ Return only the comment text.`;
                                     <span className="text-sm text-slate-300">{p.label}</span>
                                 </label>
                             ))}
+
+                            {platforms.includes('twitter') && !xIntegration && (
+                                <div className="mt-3 space-y-2">
+                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" /> Connect X Account first
+                                    </p>
+                                    <button
+                                        onClick={() => window.location.href = '/api/auth/x'}
+                                        className="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition-colors"
+                                    >
+                                        Connect X
+                                    </button>
+                                </div>
+                            )}
+
+                            {platforms.includes('twitter') && xIntegration && (
+                                <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-emerald-400 font-bold">X Connected</span>
+                                        <span className="text-xs text-slate-400">@{xIntegration.x_username}</span>
+                                    </div>
+                                </div>
+                            )}
 
                             {platforms.includes('facebook') && fbPages.length > 0 && (
                                 <div className="mt-3">

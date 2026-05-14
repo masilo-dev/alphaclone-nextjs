@@ -19,7 +19,11 @@ import {
     Video,
     Zap,
     Copy,
-    ChevronRight
+    ChevronRight,
+    Twitter,
+    MessageSquare,
+    Users,
+    Activity as ActivityIcon
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -49,6 +53,8 @@ export default function SocialCommandCenter() {
     const { currentTenant } = useTenant();
     const [bookmarks, setBookmarks] = useState<BookmarkRow[]>([]);
     const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+    const [xIntegration, setXIntegration] = useState<any>(null);
+    const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
     // Form state for Boookmark
@@ -88,6 +94,8 @@ export default function SocialCommandCenter() {
             if (!res.ok) throw new Error(payload.error || 'Failed to load social workspace');
             setBookmarks(payload.bookmarks || []);
             setWatchlist(payload.watchlist || []);
+            setXIntegration(payload.xIntegration || null);
+            setRecentInteractions(payload.recentInteractions || []);
             if (payload.warning) {
                 setFeatureWarning('Social workspace is being prepared. Core business areas remain fully available.');
             }
@@ -245,6 +253,92 @@ export default function SocialCommandCenter() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <ModuleIntelligenceCard moduleKey="socialMedia" title="Social Intelligence" />
+            
+            {/* X (TWITTER) ENGAGEMENT SECTION */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Twitter className="w-5 h-5 text-[#1DA1F2]" />
+                            X (Twitter) Engagement
+                        </h2>
+                        <p className="text-sm text-slate-400">Manage your connected X account and track automated interactions.</p>
+                    </div>
+                    {xIntegration ? (
+                        <div className="flex items-center gap-3 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-sm font-bold text-white">@{xIntegration.x_username}</span>
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={() => window.location.href = '/api/auth/x'}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#1DA1F2]/20"
+                        >
+                            <Twitter className="w-4 h-4" />
+                            Connect X Account
+                        </button>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Stats / Status Card */}
+                    <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
+                        <div className="flex items-center gap-3 text-slate-400">
+                            <ActivityIcon className="w-4 h-4" />
+                            <span className="text-xs font-bold uppercase tracking-widest">Automation Status</span>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-slate-500">Lead Hunting</span>
+                                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">ACTIVE</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-slate-500">Auto-Responder</span>
+                                <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-0.5 rounded-md">STANDBY</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Interactions Card */}
+                    <div className="md:col-span-2 p-6 bg-slate-900 border border-slate-800 rounded-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3 text-slate-400">
+                                <MessageSquare className="w-4 h-4" />
+                                <span className="text-xs font-bold uppercase tracking-widest">Recent Interactions</span>
+                            </div>
+                            <button onClick={loadData} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+                                <RefreshCw className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            {recentInteractions.length === 0 ? (
+                                <div className="py-4 text-center border border-dashed border-slate-800 rounded-xl">
+                                    <p className="text-xs text-slate-600 italic">No recent interactions logged.</p>
+                                </div>
+                            ) : (
+                                recentInteractions.map((si, idx) => (
+                                    <div key={si.id || idx} className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-700 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${si.interaction_type === 'direct_message' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                                                {si.interaction_type === 'direct_message' ? <MessageSquare className="w-3.5 h-3.5" /> : <Twitter className="w-3.5 h-3.5" />}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-white capitalize">{si.interaction_type.replace('_', ' ')}</p>
+                                                <p className="text-[10px] text-slate-500">{new Date(si.created_at).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">SUCCESS</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* BOOKMARKS SECTION */}
             <section className="space-y-4">
                 {featureWarning && (

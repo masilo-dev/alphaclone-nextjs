@@ -32,9 +32,11 @@ export async function GET(request: NextRequest) {
         await requireTenantAccess(tenantId);
         const admin = createSupabaseAdminClient();
 
-        const [bmRes, wlRes] = await Promise.all([
+        const [bmRes, wlRes, xRes, siRes] = await Promise.all([
             admin.from('social_bookmarks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             admin.from('social_watchlist').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            admin.from('x_integrations').select('id, x_username, x_user_id, created_at').eq('tenant_id', tenantId).single(),
+            admin.from('social_interactions').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(5),
         ]);
 
         if (bmRes.error || wlRes.error) {
@@ -47,7 +49,14 @@ export async function GET(request: NextRequest) {
 
         if (bmRes.error) return NextResponse.json({ error: bmRes.error.message }, { status: 500 });
         if (wlRes.error) return NextResponse.json({ error: wlRes.error.message }, { status: 500 });
-        return NextResponse.json({ success: true, bookmarks: bmRes.data || [], watchlist: wlRes.data || [] });
+        
+        return NextResponse.json({ 
+            success: true, 
+            bookmarks: bmRes.data || [], 
+            watchlist: wlRes.data || [],
+            xIntegration: xRes.data || null,
+            recentInteractions: siRes.data || []
+        });
     } catch (error) {
         if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
             return socialWorkspaceUnavailableResponse();

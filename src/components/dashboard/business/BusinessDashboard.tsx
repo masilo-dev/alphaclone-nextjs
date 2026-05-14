@@ -83,6 +83,7 @@ const SMSCampaignTab = React.lazy(() => import('../engine/SMSCampaignTab'));
 const SocialMediaComposer = React.lazy(() => import('../engine/SocialMediaComposer'));
 const LinkedInManagementTab = React.lazy(() => import('../social/LinkedInManagementTab'));
 const InstagramIntegrationTab = React.lazy(() => import('../social/InstagramIntegrationTab'));
+const XIntegrationTab = React.lazy(() => import('../social/XIntegrationTab'));
 
 const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCenter'));
@@ -489,6 +490,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <InstagramIntegrationTab />
                     </React.Suspense>
                 );
+            case '/dashboard/business/x':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <XIntegrationTab />
+                    </React.Suspense>
+                );
 
             case '/dashboard/business/ingestion':
                 return (
@@ -582,6 +589,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social': return t('Social Media');
             case '/dashboard/business/linkedin': return t('LinkedIn Manager');
             case '/dashboard/business/instagram': return t('Instagram');
+            case '/dashboard/business/x': return t('X (Twitter) Manager');
 
             case '/dashboard/business/ingestion': return t('Lead Ingestion');
             case '/dashboard/business/quotes': return t('Quotes & Proposals');
