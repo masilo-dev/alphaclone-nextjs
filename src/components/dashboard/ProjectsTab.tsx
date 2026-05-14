@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useTenant } from '@/contexts/TenantContext';
 import { Project, User, STAGES, ProjectStage } from '../../types';
 import { Button } from '../ui/UIComponents';
 import CustomContextMenu from '../common/CustomContextMenu';
@@ -44,6 +45,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
   setMilestoneModalOpen,
 }) => {
   const router = useRouter();
+  const { currentTenant } = useTenant();
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'gantt'>('grid');
   const [ganttData, setGanttData] = useState<{ nodes: any[], edges: any[] }>({ nodes: [], edges: [] });
   const [isLoadingGantt, setIsLoadingGantt] = useState(false);
@@ -157,7 +159,7 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({
                 const res = await fetch('/api/social/command-center', { 
                   method: 'POST', 
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ tenantId: user.tenantId, mode: 'nexus_system_action', systemKey: 'project_architect' })
+                  body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'project_architect' })
                 });
                 const data = await res.json();
                 toast.success(data.result.message, { id: 'nexus-projects' });

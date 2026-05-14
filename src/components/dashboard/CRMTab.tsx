@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTenant } from '@/contexts/TenantContext';
 import { dealService, Deal } from '../../services/dealService';
 import { UnifiedCRMService } from '../../services/crm/UnifiedCRMService';
 import { RefreshCw, Bell, AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Radar, Target } from 'lucide-react';
@@ -10,6 +11,7 @@ import { tenantService } from '../../services/tenancy/TenantService';
 
 export default function CRMTab({ userId, userRole }: { userId: string; userRole?: string }) {
     const router = useRouter();
+    const { currentTenant } = useTenant();
     const canManagePipeline =
         userRole === 'admin' || userRole === 'tenant_admin' || userRole === 'business_dashboard';
     const [deals, setDeals] = useState<Deal[]>([]);
@@ -24,7 +26,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
 
     const loadCrmIntelligence = async () => {
         try {
-            const tenantId = tenantService.getCurrentTenantId();
+            const tenantId = currentTenant?.id;
             if (!tenantId) return;
             const response = await fetch(`/api/intelligence/system?tenantId=${encodeURIComponent(tenantId)}`);
             const payload = await response.json();
@@ -198,7 +200,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                         type="button"
                         onClick={async () => {
                             const toastId = toast.loading('Nexus: Enriching pipeline leads...', { id: 'nexus-crm' });
-                            const tenantId = tenantService.getCurrentTenantId();
+                            const tenantId = currentTenant?.id;
                             const res = await fetch('/api/social/command-center', { 
                                 method: 'POST', 
                                 headers: { 'Content-Type': 'application/json' },
@@ -216,7 +218,7 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                         type="button"
                         onClick={async () => {
                             const toastId = toast.loading('Nexus: Launching sales campaign...', { id: 'nexus-sales' });
-                            const tenantId = tenantService.getCurrentTenantId();
+                            const tenantId = currentTenant?.id;
                             const res = await fetch('/api/social/command-center', { 
                                 method: 'POST', 
                                 headers: { 'Content-Type': 'application/json' },
