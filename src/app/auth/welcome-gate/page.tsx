@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Lock, CheckCircle, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { LOGO_URL } from '@/constants';
 import { Button } from '@/components/ui/UIComponents';
 
-export default function WelcomeGatePage() {
+function WelcomeGateContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams?.get('token');
@@ -28,13 +28,11 @@ export default function WelcomeGatePage() {
         const verify = async () => {
             const supabase = createSupabaseBrowserClient();
             
-            // Artificial progress for premium feel
             const interval = setInterval(() => {
                 setProgress(prev => (prev < 90 ? prev + 15 : prev));
             }, 300);
 
             try {
-                // Call the verification (we'll implement the API route next)
                 const response = await fetch(`/api/auth/verify-token?token=${token}`);
                 const result = await response.json();
 
@@ -45,11 +43,7 @@ export default function WelcomeGatePage() {
                     setStatus('error');
                     setError(result.error || 'Verification failed');
                 } else {
-                    // Verification success
                     setStatus('success');
-                    // We don't sign in here, the link just verified their existence/access
-                    // If we want to auto-login, the API should have returned a session or we use the userId
-                    // But usually, the user is already signed up, they just need to enter the dash.
                     setTimeout(() => {
                         router.push('/dashboard/business');
                     }, 2000);
@@ -160,5 +154,17 @@ export default function WelcomeGatePage() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function WelcomeGatePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+            </div>
+        }>
+            <WelcomeGateContent />
+        </Suspense>
     );
 }
