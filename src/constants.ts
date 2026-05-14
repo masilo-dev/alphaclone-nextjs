@@ -31,7 +31,8 @@ import {
 
   Bot,
   Search,
-  Star
+  Star,
+  Twitter
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -143,6 +144,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
       { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
       { label: 'LinkedIn Manager', href: '/dashboard/business/linkedin', icon: Linkedin },
+      { label: 'X (Twitter) Manager', href: '/dashboard/business/x', icon: Twitter },
       { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
       { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
     ]
