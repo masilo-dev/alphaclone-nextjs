@@ -462,7 +462,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
             if (itemsError) throw new Error(itemsError);
 
             // 2. Map to Invoice Line Items
-            const lineItems = (items || []).map(item => ({
+            const lineItems = (items || []).map((item: any) => ({
                 description: item.productName + (item.description ? ` - ${item.description}` : ''),
                 quantity: item.quantity,
                 rate: item.unitPrice,

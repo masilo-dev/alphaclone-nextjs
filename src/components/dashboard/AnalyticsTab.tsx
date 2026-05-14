@@ -142,13 +142,13 @@ const AnalyticsTab: React.FC = () => {
     const userGrowth = analytics.users.growth >= 0;
 
     // Format chart data
-    const revenueChartData = analytics.revenue.byPeriod.map(item => ({
+    const revenueChartData = analytics.revenue.byPeriod.map((item: any) => ({
         date: format(new Date(item.date), 'MMM dd'),
         revenue: item.revenue,
         projects: item.projects,
     }));
 
-    const projectStatusData = analytics.projects.byStatus.map(item => ({
+    const projectStatusData = analytics.projects.byStatus.map((item: any) => ({
         name: item.status,
         value: item.count,
     }));

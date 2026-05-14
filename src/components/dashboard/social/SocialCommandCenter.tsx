@@ -591,7 +591,7 @@ export default function SocialCommandCenter() {
                             <p className="text-slate-500">Add targets to have AI monitor their public activity.</p>
                         </div>
                     )}
-                    {watchlist.map(item => (
+                    {watchlist.map((item: any) => (
                         <div key={item.id} className="p-5 bg-slate-900 border border-slate-800 rounded-2xl hover:border-violet-500/30 transition-all">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-4">

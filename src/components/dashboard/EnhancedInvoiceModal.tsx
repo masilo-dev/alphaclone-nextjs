@@ -293,7 +293,7 @@ export default function EnhancedInvoiceModal({
           issue_date: invoice?.issue_date || invoice?.issueDate || new Date().toISOString(),
           due_date: formData.dueDate || invoice?.due_date || invoice?.dueDate,
           currency: 'USD',
-          line_items: formData.items.map(item => ({
+          line_items: formData.items.map((item: any) => ({
             description: item.description,
             quantity: item.quantity,
             rate: item.rate,
