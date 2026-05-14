@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { AlphaNexus } from '@/lib/social/alphaNexus';
+import { runNexusIntelligenceSession } from '@/lib/automation/nexusIntelligenceTask';
 
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
     if (!error || typeof error !== 'object') return false;
@@ -99,6 +101,31 @@ export async function POST(request: NextRequest) {
             const { data, error } = await admin.from('social_watchlist').insert(payload).select('*').single();
             if (error) return NextResponse.json({ error: error.message }, { status: 500 });
             return NextResponse.json({ success: true, watchlistItem: data });
+        }
+
+        if (mode === 'start_lead_hunt') {
+            const nexus = new AlphaNexus(tenantId);
+            const result = await nexus.huntLeads();
+            return NextResponse.json({ success: true, ...result });
+        }
+
+        if (mode === 'evaluate_outcome') {
+            const nexus = new AlphaNexus(tenantId);
+            const { content, platform } = body;
+            const result = await nexus.evaluateInteraction(content, platform);
+            return NextResponse.json({ success: true, evaluation: result });
+        }
+
+        if (mode === 'trigger_nexus_intelligence') {
+            const result = await runNexusIntelligenceSession(tenantId);
+            return NextResponse.json({ success: true, nexusLog: result });
+        }
+
+        if (mode === 'nexus_system_action') {
+            const nexus = new AlphaNexus(tenantId);
+            const { systemKey, params } = body;
+            const result = await nexus.executeSystemAction(systemKey, params);
+            return NextResponse.json({ success: true, result });
         }
 
         return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });

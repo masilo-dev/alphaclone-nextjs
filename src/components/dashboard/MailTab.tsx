@@ -87,6 +87,25 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="h-[calc(100vh-120px)]"
                     >
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white">Gmail Integration</h2>
+                            <Button 
+                                onClick={async () => {
+                                    toast.loading('Nexus: Triaging inbox...', { id: 'nexus-mail' });
+                                    const res = await fetch('/api/social/command-center', { 
+                                        method: 'POST', 
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ tenantId: user.tenantId, mode: 'nexus_system_action', systemKey: 'email_triage' })
+                                    });
+                                    const data = await res.json();
+                                    toast.success(data.result.message, { id: 'nexus-mail' });
+                                }}
+                                className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5 h-10 px-4"
+                            >
+                                <Zap className="w-4 h-4 mr-2" />
+                                Nexus Triage
+                            </Button>
+                        </div>
                         <GmailIntegrationView userId={user.id} />
                     </motion.div>
                 ) : (

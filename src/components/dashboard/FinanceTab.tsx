@@ -642,6 +642,44 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handleP
                 </h2>
                 {subTab !== 'subscription' && (
                     <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                        {isAdmin && (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    onClick={async () => {
+                                        toast.loading('Nexus: Reconciling ledgers...', { id: 'nexus-reconcile' });
+                                        const res = await fetch('/api/social/command-center', { 
+                                            method: 'POST', 
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ tenantId: tenant?.id, mode: 'nexus_system_action', systemKey: 'month_end_close' })
+                                        });
+                                        const data = await res.json();
+                                        toast.success(data.result.message, { id: 'nexus-reconcile' });
+                                    }}
+                                    icon={<RefreshCw className="w-4 h-4" />}
+                                    className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10 border-teal-500/30 bg-teal-500/5 text-teal-400"
+                                >
+                                    Sync Ledgers
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    onClick={async () => {
+                                        toast.loading('Nexus: Processing payroll...', { id: 'nexus-payroll' });
+                                        const res = await fetch('/api/social/command-center', { 
+                                            method: 'POST', 
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ tenantId: tenant?.id, mode: 'nexus_system_action', systemKey: 'payroll_automation' })
+                                        });
+                                        const data = await res.json();
+                                        toast.success(data.result.message, { id: 'nexus-payroll' });
+                                    }}
+                                    icon={<CheckCircle className="w-4 h-4" />}
+                                    className="flex-1 sm:flex-none text-xs sm:text-sm py-1.5 px-3 h-10 border-violet-500/30 bg-violet-500/5 text-violet-400"
+                                >
+                                    Run Payroll
+                                </Button>
+                            </>
+                        )}
                         <Button
                             variant="secondary"
                             onClick={() => handleExport('pdf', 'revenue')}

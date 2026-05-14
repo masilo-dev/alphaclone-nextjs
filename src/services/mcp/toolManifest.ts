@@ -2082,4 +2082,170 @@ export const MCP_TOOLS = [
       required: ['query'],
     },
   },
+  // ── AlphaClone Nexus Intelligence ──────────────────────────────────
+  {
+    name: 'nexus_payroll_sync',
+    description: 'AlphaClone Nexus: Sync and reconcile payroll across systems.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_invoice_chasing',
+    description: 'AlphaClone Nexus: Automate invoice follow-ups and payment reminders.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_month_end_close',
+    description: 'AlphaClone Nexus: Orchestrate financial month-end closing procedures.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_lead_enrichment',
+    description: 'AlphaClone Nexus: Enrich CRM leads with behavioral and market data.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_sales_campaign',
+    description: 'AlphaClone Nexus: Launch and monitor autonomous sales campaigns.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_contract_drafter',
+    description: 'AlphaClone Nexus: Draft legal and business contracts based on deal context.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_content_synthesis',
+    description: 'AlphaClone Nexus: Synthesize cross-platform content for brand consistency.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_market_pulse',
+    description: 'AlphaClone Nexus: Analyze real-time market trends and competitor signals.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_design_audit',
+    description: 'AlphaClone Nexus: Perform AI-driven design and brand consistency audits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_project_architect',
+    description: 'AlphaClone Nexus: Architect project structures and dependency maps.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_calendar_nexus',
+    description: 'AlphaClone Nexus: Optimize scheduling and calendar intelligence.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_email_triage',
+    description: 'AlphaClone Nexus: Triage and prioritize high-volume email inboxes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_support_triage',
+    description: 'AlphaClone Nexus: Triage customer support tickets and escalate critical issues.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_onboarding_flow',
+    description: 'AlphaClone Nexus: Optimize customer and user onboarding sequences.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'nexus_meeting_intelligence',
+    description: 'AlphaClone Nexus: Extract and synthesize intelligence from meeting transcripts.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+      },
+      required: [],
+    },
+  },
 ];

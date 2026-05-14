@@ -11,7 +11,8 @@ import {
     ExternalLink,
     MessageSquare,
     Zap,
-    Search
+    Search,
+    Activity
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';

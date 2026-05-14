@@ -800,9 +800,27 @@ Return only the comment text.`;
                     <h2 className="text-xl font-bold text-white">Social Media Composer</h2>
                     <p className="text-sm text-slate-400">Create, schedule and publish posts with images & video</p>
                 </div>
-                <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white">
-                    <RefreshCw className="w-3 h-3" /> Refresh
-                </button>
+                <div className="flex gap-2">
+                    <button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Auditing content design...', { id: 'nexus-social' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: tenant?.id, mode: 'nexus_system_action', systemKey: 'design_audit' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-social' });
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-xl text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        Nexus Audit
+                    </button>
+                    <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white">
+                        <RefreshCw className="w-3 h-3" /> Refresh
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
