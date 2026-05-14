@@ -83,6 +83,7 @@ const STATUS_STYLE: Record<string, string> = {
     failed:      'bg-red-500/15 text-red-400 border-red-500/30',
 };
 
+const PLATFORM_ICONS: Record<string, React.ReactNode> = {
     facebook: <Facebook className="w-3.5 h-3.5" />,
     linkedin: <Linkedin className="w-3.5 h-3.5" />,
     twitter: <Twitter className="w-3.5 h-3.5" />,
@@ -184,7 +185,7 @@ export default function SocialMediaComposer() {
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
         setLoading(true);
-        const [postsRes, mediaRes, pagesRes, linkedinRes] = await Promise.all([
+        const [postsRes, mediaRes, pagesRes, linkedinRes, xRes] = await Promise.all([
             supabase.from('social_posts').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(50),
             supabase.from('media_assets').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user.id).eq('is_active', true),
@@ -203,6 +204,7 @@ export default function SocialMediaComposer() {
             if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
         }
         if (!linkedinRes.error) {
+            const rows = (linkedinRes.data || []) as LinkedInIntegration[];
             setLinkedinIntegrations(rows);
             if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
         }
