@@ -514,7 +514,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             const res = await fetch('/api/social/command-center', { 
                                 method: 'POST', 
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ tenantId: null, mode: 'nexus_system_action', systemKey: 'calendar_nexus' })
+                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'calendar_nexus' })
                             });
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-calendar' });

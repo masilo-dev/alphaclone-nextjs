@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 import { Brain, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tenantService } from '../../services/tenancy/TenantService';
@@ -19,6 +20,7 @@ interface Props {
  * Delegates video rendering to parent Dashboard for persistence
  */
 const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSidebar, showSidebar, onJoinRoom }) => {
+    const { currentTenant } = useTenant();
 
     const handleJoin = useCallback((callId: string) => {
         if (onJoinRoom) {
@@ -40,7 +42,7 @@ const ConferenceTab: React.FC<Props> = ({ user, onCallStateChange, onToggleSideb
                 <button 
                     onClick={async () => {
                         toast.loading('Nexus: Synthesizing meeting intelligence...', { id: 'nexus-video' });
-                        const tenantId = tenantService.getCurrentTenantId();
+                        const tenantId = currentTenant?.id;
                         const res = await fetch('/api/social/command-center', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/json' },

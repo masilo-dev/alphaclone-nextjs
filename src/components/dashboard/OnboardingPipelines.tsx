@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X, Loader2, Sparkles } from 'lucide-react';
 import { Button, Card, Modal, Input } from '../ui/UIComponents';
 import { User } from '../../types';
@@ -18,6 +19,7 @@ interface OnboardingPipelinesProps {
  * - Proper error handling
  */
 const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
+    const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -238,7 +240,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             const res = await fetch('/api/social/command-center', { 
                                 method: 'POST', 
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ tenantId: null, mode: 'nexus_system_action', systemKey: 'onboarding_flow' })
+                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'onboarding_flow' })
                             });
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-onboarding' });

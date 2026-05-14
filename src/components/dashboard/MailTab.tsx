@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Zap, Server } from 'lucide-react';
+import { useTenant } from '@/contexts/TenantContext';
 import { GmailIntegrationView } from './GmailIntegrationView';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/UIComponents';
@@ -14,6 +15,7 @@ interface MailTabProps {
 }
 
 const MailTab: React.FC<MailTabProps> = ({ user }) => {
+    const { currentTenant } = useTenant();
     const searchParams = useSearchParams();
     const [isGmailIntegrated, setIsGmailIntegrated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -95,7 +97,7 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                                     const res = await fetch('/api/social/command-center', { 
                                         method: 'POST', 
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ tenantId: user.tenantId, mode: 'nexus_system_action', systemKey: 'email_triage' })
+                                        body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'email_triage' })
                                     });
                                     const data = await res.json();
                                     toast.success(data.result.message, { id: 'nexus-mail' });
