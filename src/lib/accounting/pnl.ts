@@ -56,19 +56,19 @@ export async function generatePnLStatement(
     .select('paid_amount, total_amount, status, created_at')
     .eq('tenant_id', tenantId)
     .gte('created_at', from)
-    .lte('created_at', to);
+    .lte('created_at', to) as { data: any[] | null, error: any };
 
   if (invError) throw new Error(`Revenue query failed: ${invError.message}`);
 
-  const paidInvoices = invoices.filter(i => i.status === 'paid');
-  const totalRevenue = paidInvoices.reduce((sum, i) => sum + (Number(i.paid_amount) || 0), 0);
+  const paidInvoices = (invoices || []).filter((i: any) => i.status === 'paid');
+  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + (Number(i.paid_amount) || 0), 0);
   
-  const outstandingInvoices = invoices.filter(i => ['sent', 'overdue'].includes(i.status || ''));
-  const outstandingTotal = outstandingInvoices.reduce((sum, i) => sum + (Number(i.total_amount) - (Number(i.paid_amount) || 0)), 0);
+  const outstandingInvoices = (invoices || []).filter((i: any) => ['sent', 'overdue'].includes(i.status || ''));
+  const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + (Number(i.total_amount) - (Number(i.paid_amount) || 0)), 0);
 
   // Group revenue by month
   const revenueByMonthMap = new Map<string, number>();
-  paidInvoices.forEach(i => {
+  paidInvoices.forEach((i: any) => {
     const month = i.created_at.substring(0, 7); // YYYY-MM
     revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + (Number(i.paid_amount) || 0));
   });
@@ -81,18 +81,18 @@ export async function generatePnLStatement(
     .from('expenses')
     .select('amount, status, category, expense_categories(name)')
     .eq('tenant_id', tenantId)
-    .gte('date', from.split('T')[0])
-    .lte('date', to.split('T')[0]);
+    .gte('date', (from as string).split('T')[0])
+    .lte('date', (to as string).split('T')[0]) as { data: any[] | null, error: any };
 
   if (expError) throw new Error(`Expenses query failed: ${expError.message}`);
 
   // Include approved or all if no status exists (though our schema has status)
-  const approvedExpenses = expenses.filter(e => e.status === 'approved' || !e.status);
-  const totalExpenses = approvedExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const approvedExpenses = (expenses || []).filter((e: any) => e.status === 'approved' || !e.status);
+  const totalExpenses = approvedExpenses.reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
 
   // Group expenses by category
   const expenseByCatMap = new Map<string, number>();
-  approvedExpenses.forEach(e => {
+  approvedExpenses.forEach((e: any) => {
     const cat = e.category || e.expense_categories?.name || 'Uncategorized';
     expenseByCatMap.set(cat, (expenseByCatMap.get(cat) || 0) + (Number(e.amount) || 0));
   });
