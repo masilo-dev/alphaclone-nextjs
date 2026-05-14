@@ -22,6 +22,7 @@ export interface Contract {
     payment_due_date?: string; // ISO Date
     payment_amount?: number;
     payment_status?: 'pending' | 'paid' | 'overdue';
+    signing_token?: string;
     metadata?: {
         signer_ip?: string;
         content_hash?: string;

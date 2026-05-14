@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MoreVertical, Clock, AlertCircle, CheckCircle2, 
   Circle, PlayCircle, Eye, MessageSquare, Link2,
-  Zap
+  Zap, User as UserIcon
 } from 'lucide-react';
 import { Task } from '../../../services/taskService';
 

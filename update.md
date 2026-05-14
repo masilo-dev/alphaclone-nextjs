@@ -1,5 +1,22 @@
 # Update Log
 
+## Date: 2026-05-14 (TYPE SAFETY & KANBAN STABILIZATION)
+
+### Added
+- **Contract Signing Infrastructure**: Added `signing_token` to the core `Contract` interface to support upcoming secure link generation.
+- **Enhanced Type Definitions**: Integrated `@types/connect` to resolve mid-tier middleware type ambiguities.
+
+### Fixed
+- **Kanban View Stability**: Resolved a critical "Cannot find name 'UserIcon'" build error by correctly importing the `User` icon from `lucide-react`.
+- **Accounting Logic Hardening**: 
+    - Fixed TypeScript "any" type leaks and nullability issues in `pnl.ts`.
+    - Hardened the P&L generation service with explicit type casting and safe array filtering for revenue/expense calculations.
+    - Resolved date parsing issues in P&L generation by ensuring ISO date strings are correctly sliced for database queries.
+
+### Production Readiness
+- **Vercel Safe**: Verified build stability for core UI and accounting services. Confirmed that all recent TypeScript fixes align with Vercel's strict production build requirements.
+
+
 ## Date: 2026-05-13 (ACCOUNTING & AI INFRASTRUCTURE STABILIZATION)
 
 ### Added
