@@ -14,20 +14,31 @@ export async function POST(req: Request) {
         const normalizedEmail = email.toLowerCase().trim();
         const displayName = name || normalizedEmail.split('@')[0] || 'there';
 
-        // Trigger the platform template email
-        // This service already handles deduping via 'welcome_email_sent_at' in user_metadata
+        // 1. Resolve Auth User ID (needed for the access link)
+        const { data: userData } = await admin.auth.admin.listUsers();
+        const authUser = userData.users.find(u => u.email?.toLowerCase() === normalizedEmail);
+        
+        let secureDashboardUrl = defaultDashboardUrl();
+        if (authUser) {
+            const { accessLinkService } = await import('@/services/accessLinkService');
+            const { link } = await accessLinkService.createAccessLink(admin, authUser.id, 'welcome');
+            secureDashboardUrl = link;
+        }
+
+        // 2. Trigger the platform template email
         const { error } = await sendPlatformTemplateEmail(admin, {
             templateName: 'Welcome Email',
             to: normalizedEmail,
             variables: {
                 name: displayName,
                 email: normalizedEmail,
-                dashboardUrl: defaultDashboardUrl(),
+                dashboardUrl: secureDashboardUrl, // Now points to the Welcome Gate
                 trial_ends_at: trial_ends_at ? new Date(trial_ends_at).toLocaleDateString() : '14 days',
                 workspace_name: workspace_name || 'Your Workspace'
             },
             templateAllowlist: SYSTEM_PLATFORM_TEMPLATES,
-            skipIfWelcomeAlreadySent: true
+            skipIfWelcomeAlreadySent: true,
+            authUserId: authUser?.id
         });
 
         if (error) {
