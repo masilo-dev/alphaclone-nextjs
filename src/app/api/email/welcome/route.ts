@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
         // 1. Resolve Auth User ID (needed for the access link)
         const { data: userData } = await admin.auth.admin.listUsers();
-        const authUser = userData.users.find(u => u.email?.toLowerCase() === normalizedEmail);
+        const authUser = userData.users.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
         
         let secureDashboardUrl = defaultDashboardUrl();
         if (authUser) {
