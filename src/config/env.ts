@@ -32,6 +32,11 @@ const envSchema = z.object({
     VITE_DAILY_DOMAIN: z.string().optional(),
     DAILY_API_KEY: z.string().optional(),
 
+    // LiveKit (server-side token broker)
+    LIVEKIT_URL: z.string().url().optional(),
+    LIVEKIT_API_KEY: z.string().optional(),
+    LIVEKIT_API_SECRET: z.string().optional(),
+
     // Stripe
     VITE_STRIPE_PUBLIC_KEY: z.string().optional().or(z.literal('')),
     STRIPE_SECRET_KEY: z.string().optional(),
@@ -151,6 +156,9 @@ function validateEnv() {
 
         VITE_DAILY_DOMAIN: process.env.NEXT_PUBLIC_DAILY_DOMAIN || process.env.VITE_DAILY_DOMAIN,
         DAILY_API_KEY: process.env.DAILY_API_KEY,
+        LIVEKIT_URL: process.env.LIVEKIT_URL,
+        LIVEKIT_API_KEY: process.env.LIVEKIT_API_KEY,
+        LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
         VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
         VITE_CALENDLY_CLIENT_ID: process.env.NEXT_PUBLIC_CALENDLY_CLIENT_ID || process.env.VITE_CALENDLY_CLIENT_ID || process.env.CALENDLY_CLIENT_ID,

@@ -42,53 +42,23 @@ export async function POST(req: NextRequest) {
 
         const supabase = createAdminSupabaseClientOrThrow();
 
-        // Step 1: Create Daily.co room
-        const roomName = `room-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-        const DAILY_API_KEY = process.env.DAILY_API_KEY;
-
-        if (!DAILY_API_KEY) {
-            return NextResponse.json({ error: 'Server configuration error: Missing Daily API Key' }, { status: 500 });
-        }
-
-        const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${DAILY_API_KEY}`
-            },
-            body: JSON.stringify({
-                name: roomName,
-                properties: {
-                    enable_screenshare: true,
-                    enable_chat: true,
-                    max_participants: maxParticipants,
-                    start_video_off: false,
-                    start_audio_off: false,
-                    enable_prejoin_ui: true,
-                    enable_network_ui: true,
-                    enable_advanced_chat: true,
-                    // Set expiry for X minutes from now
-                    exp: Math.floor(Date.now() / 1000) + (actualDuration * 60)
-                }
-            })
-        });
-
-        if (!dailyResponse.ok) {
-            const errorData = await dailyResponse.json();
-            return NextResponse.json({
-                error: errorData.error || 'Failed to create Daily.co room'
-            }, { status: dailyResponse.status });
-        }
-
-        const dailyRoom = await dailyResponse.json();
+        const { data: tenantUser } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+        const tenantId = tenantUser?.tenant_id || null;
+        const roomName = `alphaclone-${crypto.randomUUID()}`;
 
         // Step 2: Create video_call in database
         const { data: videoCall, error: videoCallError } = await supabase
             .from('video_calls')
             .insert({
-                room_id: dailyRoom.name,
-                daily_room_url: dailyRoom.url,
-                daily_room_name: dailyRoom.name,
+                room_id: roomName,
+                daily_room_url: null,
+                daily_room_name: null,
+                tenant_id: tenantId,
                 host_id: hostId,
                 calendar_event_id: calendarEventId,
                 title: title,
@@ -100,7 +70,11 @@ export async function POST(req: NextRequest) {
                 chat_enabled: true,
                 duration_limit_minutes: actualDuration,
                 cancellation_policy_hours: 3,
-                allow_client_cancellation: true
+                allow_client_cancellation: true,
+                metadata: {
+                    provider: 'livekit',
+                    provider_room_name: roomName,
+                },
             })
             .select()
             .single();
@@ -138,7 +112,7 @@ export async function POST(req: NextRequest) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         const meetingUrl = `${baseUrl}/meet/${linkToken}`;
 
-        const { runId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId: user.id }]); // Assuming tenantId is user.id for now or fetch from context
+        const { runId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId }]);
 
         return NextResponse.json({
             meetingId: videoCall.id,

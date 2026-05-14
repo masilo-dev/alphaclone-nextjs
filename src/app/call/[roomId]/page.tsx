@@ -11,7 +11,6 @@ export default function CallPage() {
     const params = useParams();
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    const [roomUrl, setRoomUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -36,7 +35,6 @@ export default function CallPage() {
                     return;
                 }
 
-                setRoomUrl(call.daily_room_url || null);
                 setLoading(false);
 
             } catch (err) {
@@ -78,10 +76,9 @@ export default function CallPage() {
 
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden overscroll-none touch-none">
-            {roomUrl && user && (
+            {user && (
                 <CustomVideoRoom
                     user={user}
-                    roomUrl={roomUrl}
                     callId={callId}
                     onLeave={() => router.push(user ? '/dashboard' : '/')}
                     showSidebar={false}

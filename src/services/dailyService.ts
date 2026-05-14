@@ -240,28 +240,19 @@ class DailyService {
                 ? (data.duration || 1440)
                 : Math.min(data.duration || 1440, planFeatures.maxVideoMinutesPerMeeting);
 
-            // Create Daily room
-            const { room, error: roomError } = await this.createRoom({
-                title: data.title,
-                maxParticipants: data.maxParticipants,
-                enableScreenshare: data.screenShareEnabled,
-                enableChat: data.chatEnabled,
-                enableRecording: data.recordingEnabled,
-                duration: durationLimit
-            });
-
-            if (roomError || !room) {
-                return { call: null, error: roomError || 'Failed to create room' };
-            }
+            const roomName =
+                typeof crypto !== 'undefined' && 'randomUUID' in crypto
+                    ? `alphaclone-${crypto.randomUUID()}`
+                    : `alphaclone-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
             // Insert into database
             const { data: dbData, error: dbError } = await supabase
                 .from('video_calls')
                 .insert({
-                    room_id: room.name,
+                    room_id: roomName,
                     tenant_id: data.tenantId || tenantId,
-                    daily_room_url: room.url,
-                    daily_room_name: room.name,
+                    daily_room_url: null,
+                    daily_room_name: null,
                     host_id: data.hostId,
                     calendar_event_id: data.calendarEventId,
                     title: data.title,
@@ -274,6 +265,11 @@ class DailyService {
                     cancellation_policy_hours: data.cancellationPolicyHours || 3,
                     allow_client_cancellation: data.allowClientCancellation !== false,
                     is_public: data.isPublic || false,
+                    duration_limit_minutes: durationLimit,
+                    metadata: {
+                        provider: 'livekit',
+                        provider_room_name: roomName,
+                    },
                 })
                 .select()
                 .single();
