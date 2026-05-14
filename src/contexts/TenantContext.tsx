@@ -77,7 +77,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     window.location.reload();
   }, [userTenants]);
 
-  const loadUserTenants = useCallback(async function loadUserTenantsImpl(timeoutId?: NodeJS.Timeout) {
+  const loadUserTenants = useCallback(async function loadUserTenantsImpl(timeoutId?: NodeJS.Timeout, retryCount = 0) {
     if (!user?.id) return;
 
     try {
@@ -91,12 +91,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Clear timeout on successful load
       if (timeoutId) clearTimeout(timeoutId);
 
-      if (tenants.length === 0 && !timeoutId) {
-        // If no tenants found, and this is the first attempt, try once more with a small delay
-        // This handles replication lag or transient database issues during rapid redirects
-        console.log('[TenantContext] No tenants found on first attempt, retrying in 1s...');
-        await new Promise(r => setTimeout(r, 1000));
-        return await loadUserTenantsImpl(undefined); // undefined to mark it as the retry
+      if (tenants.length === 0 && retryCount < 3) {
+        // Back-off retry: handles replication lag during rapid post-signup redirects
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 8000);
+        console.log(`[TenantContext] No tenants found (attempt ${retryCount + 1}/3), retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        return await loadUserTenantsImpl(timeoutId, retryCount + 1);
       }
 
       if (tenants.length > 0) {

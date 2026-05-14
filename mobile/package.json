@@ -58,6 +58,8 @@
     "date-fns": "^2.30.0",
     "react-native-toast-message": "^2.1.7",
     "react-native-paper": "^5.11.0"
+    ,
+    "@expo/vector-icons": "^14.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
