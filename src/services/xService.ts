@@ -86,7 +86,20 @@ export const xService = {
             throw new Error(`X API error: ${JSON.stringify(error)}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+
+        // Log interaction
+        const supabase = createSupabaseAdminClient();
+        await supabase.from('social_interactions').insert({
+            tenant_id: tenantId,
+            user_id: integration.user_id,
+            platform: 'x',
+            interaction_type: 'post',
+            external_id: data.data.id,
+            content: tweet.text
+        });
+
+        return data;
     },
 
     /**
@@ -114,7 +127,21 @@ export const xService = {
             throw new Error(`X API error: ${JSON.stringify(error)}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+
+        // Log interaction
+        const supabase = createSupabaseAdminClient();
+        await supabase.from('social_interactions').insert({
+            tenant_id: tenantId,
+            user_id: integration.user_id,
+            platform: 'x',
+            interaction_type: 'dm',
+            external_id: data.data.id,
+            recipient_id: recipientId,
+            content: text
+        });
+
+        return data;
     },
 
     /**
@@ -165,7 +192,21 @@ export const xService = {
             throw new Error(`X API error: ${JSON.stringify(error)}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+
+        // Log interaction
+        const supabase = createSupabaseAdminClient();
+        await supabase.from('social_interactions').insert({
+            tenant_id: tenantId,
+            user_id: integration.user_id,
+            platform: 'x',
+            interaction_type: 'reply',
+            external_id: data.data.id,
+            metadata: { in_reply_to_tweet_id: tweetId },
+            content: text
+        });
+
+        return data;
     },
 
     /**
@@ -194,7 +235,43 @@ export const xService = {
             throw new Error(`X API error: ${JSON.stringify(error)}`);
         }
 
-        return await response.json();
+        const data = await response.json();
+
+        // Persist captured content and authors
+        const supabase = createSupabaseAdminClient();
+        if (data.data && Array.isArray(data.data)) {
+            for (const tweet of data.data) {
+                const author = data.includes?.users?.find((u: any) => u.id === tweet.author_id);
+                
+                await supabase.from('captured_content').upsert({
+                    tenant_id: tenantId,
+                    platform: 'x',
+                    external_id: tweet.id,
+                    author_id: tweet.author_id,
+                    author_username: author?.username,
+                    content: tweet.text,
+                    published_at: tweet.created_at,
+                    metadata: { metrics: tweet.public_metrics }
+                }, { onConflict: 'tenant_id,platform,external_id' });
+
+                if (author) {
+                    await supabase.from('social_leads').upsert({
+                        tenant_id: tenantId,
+                        platform: 'x',
+                        external_user_id: author.id,
+                        username: author.username,
+                        display_name: author.name,
+                        bio: author.description,
+                        location: author.location,
+                        profile_image_url: author.profile_image_url,
+                        follower_count: author.public_metrics?.followers_count,
+                        metadata: { source: 'search', query }
+                    }, { onConflict: 'tenant_id,platform,external_user_id' });
+                }
+            }
+        }
+
+        return data;
     },
 
     /**

@@ -9,7 +9,7 @@ export async function GET() {
         return NextResponse.json({ error: 'X_CLIENT_ID not configured' }, { status: 500 });
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
