@@ -35,6 +35,20 @@
 
 ### Production Readiness
 - **Vercel Safe**: Verified that all new API routes and service layers pass strict TypeScript checks. Confirmed that the `mobile` exclusion is active.
+- **Node.js Compatibility**: Ensured the project is aligned with Next.js 15/16 requirements (Node 20+).
+- **Deployment Hardening**: Expanded `.vercelignore` to exclude `playwright-report`, `test-results`, and `supabase/` migrations from the Vercel build, reducing build time and preventing non-web assets from leaking into the production bundle.
+
+## Date: 2026-05-14 (CRITICAL BUILD FIXES & TYPE SAFETY)
+
+### Fixed
+- **Supabase Server Client**: Resolved `Property 'auth' does not exist on type 'Promise<any>'` by correctly awaiting `createSupabaseServerClient()` in X authentication routes.
+- **Supabase Browser Client**: Restored the missing `@/lib/supabase-browser` module to resolve build-time resolution errors in client components.
+- **Implicit Any Types**: Fixed TypeScript "implicitly has an any type" errors in `src/app/api/email/welcome/route.ts` by adding explicit types to the `listUsers()` callback.
+- **Mobile Build Leak**: Hardened the exclusion of the `mobile/` directory to prevent Vercel from incorrectly attempting to build the Expo project.
+
+### Added
+- **Social Engagement Persistence**: Implemented `social_leads`, `captured_content`, and `social_interactions` tables with strict RLS and `ON DELETE CASCADE` to ensure all X integration data is saved and secure.
+- **X Service Enhancements**: Updated `xService.ts` to automatically log all interactions (Posts, DMs, Replies) and persist lead discovery results.
 
 
 ## Date: 2026-05-13 (ACCOUNTING & AI INFRASTRUCTURE STABILIZATION)
