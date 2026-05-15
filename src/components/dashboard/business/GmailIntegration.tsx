@@ -1,128 +1,321 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, CheckCircle2, AlertCircle, RefreshCw, XCircle } from 'lucide-react';
-import { gmailService } from '../../../services/gmailService';
-import { useAuth } from '../../../contexts/AuthContext';
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+    CheckCircle2,
+    Unplug,
+    Save,
+    Lock,
+    Send,
+    Loader2,
+    Mail,
+    ExternalLink,
+    AlertCircle
+} from 'lucide-react';
+import { Button } from '@/components/ui/UIComponents';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
-import { supabase } from '../../../lib/supabase';
 
-interface GmailIntegrationProps {
-    user: any; // Using any to avoid import cycles for now, or import UserType
-}
-
-const GmailIntegration: React.FC<GmailIntegrationProps> = ({ user }) => {
-    // const { user } = useAuth(); // Removed useAuth usage for user
-    const [isConnected, setIsConnected] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [connecting, setConnecting] = useState(false);
+export default function GmailIntegration() {
+    const { user } = useAuth();
+    const { currentTenant } = useTenant();
+    const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDisconnecting, setIsDisconnecting] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
+    const [testRecipient, setTestRecipient] = useState('');
+    const [savedApiKey, setSavedApiKey] = useState('');
+    
+    const [config, setConfig] = useState({
+        appPassword: '',
+        fromEmail: '',
+        fromName: '',
+    });
 
     useEffect(() => {
-        if (user) {
-            checkConnection();
-        } else {
-            setLoading(false); // Stop loading if no user
+        if (user?.id && currentTenant?.id) {
+            void checkIntegrationStatus();
         }
-    }, [user]);
+    }, [user?.id, currentTenant?.id]);
 
-    const checkConnection = async () => {
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
+    const checkIntegrationStatus = async () => {
+        if (!user?.id || !currentTenant?.id) return;
+
+        setStatus('loading');
         try {
-            const connected = await gmailService.checkIntegration(user.id);
-            setIsConnected(connected);
+            const res = await fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(currentTenant.id)}&provider=gmail`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load Gmail status');
+
+            if (data.connected) {
+                const storedApiKey = data.config?.appPassword || data.config?.app_password || data.config?.apiKey || '';
+                const storedFromEmail = data.config?.fromEmail || data.config?.from_email || '';
+                const storedFromName = data.config?.fromName || data.config?.from_name || '';
+                setSavedApiKey(storedApiKey);
+                setStatus('connected');
+                setConfig({
+                    appPassword: '••••••••••••••••', // Masked for UI
+                    fromEmail: storedFromEmail,
+                    fromName: storedFromName,
+                });
+            } else {
+                setStatus('idle');
+            }
         } catch (err) {
-            console.error('Check email connection error:', err);
-        } finally {
-            setLoading(false);
+            console.error('Error checking Gmail status:', err);
+            setStatus('error');
         }
     };
 
-    const handleConnect = () => {
-        if (!user) return;
-        setConnecting(true);
-        const returnTo = encodeURIComponent('/dashboard/business/settings?tab=integrations');
-        window.location.href = `/api/auth/google/gmail/connect?userId=${user.id}&returnTo=${returnTo}`;
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user?.id || !currentTenant?.id) return;
+
+        setIsSaving(true);
+        try {
+            if (!config.fromEmail || !config.fromName) {
+                throw new Error('All fields are required');
+            }
+            const payloadApiKey = config.appPassword === '••••••••••••••••' ? savedApiKey : config.appPassword.replace(/\s/g, '');
+            if (!payloadApiKey || payloadApiKey.length < 16) {
+                throw new Error('Valid 16-character Google App Password is required');
+            }
+
+            const res = await fetch('/api/integrations/email-providers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'gmail',
+                    appPassword: payloadApiKey,
+                    fromEmail: config.fromEmail,
+                    fromName: config.fromName,
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to save Gmail integration');
+            }
+
+            toast.success('Gmail SMTP/IMAP connected successfully');
+            setSavedApiKey(payloadApiKey);
+            setStatus('connected');
+        } catch (err: any) {
+            console.error('Error saving Gmail integration:', err);
+            toast.error(err.message || 'Failed to save Gmail integration');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleDisconnect = async () => {
-        if (!user || !window.confirm('Are you sure you want to disconnect your email? You will no longer be able to read or send emails from AlphaClone.')) return;
+        if (!user?.id || !currentTenant?.id) return;
 
+        setIsDisconnecting(true);
         try {
-            const { error } = await supabase
-                .from('gmail_sync_tokens')
-                .delete()
-                .eq('user_id', user.id);
+            const res = await fetch('/api/integrations/email-providers', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'gmail'
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to disconnect');
+            }
 
-            if (error) throw error;
-            setIsConnected(false);
-            toast.success('Email disconnected successfully.');
+            setStatus('idle');
+            setConfig({ appPassword: '', fromEmail: '', fromName: '' });
+            toast.success('Gmail disconnected');
         } catch (err: any) {
-            console.error('Disconnect error:', err);
-            toast.error('Failed to disconnect email');
+            console.error('Error disconnecting Gmail:', err);
+            toast.error(err.message || 'Failed to disconnect');
+        } finally {
+            setIsDisconnecting(false);
         }
     };
 
-    return (
-        <div className="space-y-6">
-            <div>
-                <h3 className="text-xl font-bold mb-4">Email Integration</h3>
-                <p className="text-slate-400 mb-6">
-                    Connect your individual email account to manage your communications directly within the AlphaClone Business OS.
-                </p>
+    const handleSendTest = async () => {
+        if (!currentTenant?.id) {
+            toast.error('Select a workspace first');
+            return;
+        }
+        if (!testRecipient.trim()) {
+            toast.error('Enter a test recipient email');
+            return;
+        }
+        setIsTesting(true);
+        try {
+            const res = await fetch('/api/email/providers/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    provider: 'gmail',
+                    to: testRecipient.trim(),
+                    subject: 'Gmail SMTP connection test',
+                    message: 'Your Gmail integration is ready for autonomous messaging and outreach.',
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Gmail test failed');
+            }
+            toast.success('Gmail test email sent successfully');
+        } catch (err: any) {
+            toast.error(err.message || 'Gmail test failed');
+        } finally {
+            setIsTesting(false);
+        }
+    };
+
+    if (status === 'loading') {
+        return (
+            <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
+                <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
+                <p className="text-sm text-slate-400">Verifying Gmail connection...</p>
             </div>
+        );
+    }
 
-            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'} relative overflow-hidden`}>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-start gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : 'bg-slate-800 text-slate-500'}`}>
-                            <Mail className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-bold text-white">
-                                    Email Integration
-                                </h4>
-                                {isConnected ? (
-                                    <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                                ) : (
-                                    <AlertCircle className="w-4 h-4 text-slate-500" />
-                                )}
-                            </div>
-                            <p className="text-sm text-slate-400 max-w-md">
-                                {isConnected
-                                    ? "Your email account is connected. You can now manage your emails directly from the dashboard."
-                                    : "Link your email account to read and send emails directly within the AlphaClone Business OS."
-                                }
-                            </p>
-                        </div>
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+        >
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                        <Mail className="w-6 h-6 text-teal-400" />
                     </div>
-
-                    <div className="flex flex-wrap gap-3">
-                        {isConnected ? (
-                            <button
-                                onClick={handleDisconnect}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black text-sm uppercase tracking-widest rounded-xl border border-red-500/20 transition-all"
-                            >
-                                <XCircle className="w-4 h-4" />
-                                Disconnect
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleConnect}
-                                disabled={connecting}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
-                            >
-                                {connecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                                {connecting ? 'CONNECTING...' : 'CONNECT EMAIL'}
-                            </button>
-                        )}
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-white">Gmail Integration</h2>
+                            {status === 'connected' && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-400 border border-emerald-500/20">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Active
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm text-slate-400">Connect via SMTP/IMAP using a Google App Password.</p>
                     </div>
                 </div>
+                {status === 'connected' && (
+                    <Button
+                        variant="outline"
+                        onClick={handleDisconnect}
+                        disabled={isDisconnecting}
+                        className="border-slate-700 text-rose-300 hover:bg-rose-500/10"
+                    >
+                        <Unplug className="w-4 h-4 mr-2" />
+                        Disconnect
+                    </Button>
+                )}
             </div>
-        </div>
+
+            <form onSubmit={handleSave} className="p-6 space-y-6">
+                {status !== 'connected' && (
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                        <div className="text-xs text-amber-200/80 space-y-1">
+                            <p className="font-bold text-amber-400 uppercase tracking-wider">Setup Required</p>
+                            <p>You must enable 2-Step Verification and generate a 16-character <strong>App Password</strong> in your Google Account settings to use this integration.</p>
+                            <a 
+                                href="https://myaccount.google.com/apppasswords" 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-amber-400 hover:underline font-bold mt-1"
+                            >
+                                Generate App Password <ExternalLink className="w-3 h-3" />
+                            </a>
+                        </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Gmail Address</label>
+                        <input
+                            type="email"
+                            value={config.fromEmail}
+                            onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
+                            placeholder="your-email@gmail.com"
+                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Google App Password</label>
+                        <div className="relative">
+                            <input
+                                type="password"
+                                value={config.appPassword}
+                                onChange={(e) => setConfig({ ...config, appPassword: e.target.value })}
+                                placeholder="xxxx xxxx xxxx xxxx"
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 text-sm text-white outline-none focus:border-teal-500/40"
+                            />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Sender Display Name</label>
+                        <input
+                            type="text"
+                            value={config.fromName}
+                            onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
+                            placeholder="Your Name or Company"
+                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                    <Button 
+                        type="submit" 
+                        disabled={isSaving}
+                        className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-8 shadow-lg shadow-teal-600/20"
+                    >
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                        {status === 'connected' ? 'Update Integration' : 'Connect Gmail'}
+                    </Button>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        Credentials are encrypted and stored locally per tenant.
+                    </p>
+                </div>
+
+                {status === 'connected' && (
+                    <div className="pt-2 border-t border-white/5">
+                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Test Connectivity</p>
+                        <div className="flex flex-col md:flex-row gap-3">
+                            <input
+                                type="email"
+                                value={testRecipient}
+                                onChange={(e) => setTestRecipient(e.target.value)}
+                                placeholder="recipient@domain.com"
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
+                            />
+                            <Button
+                                type="button"
+                                onClick={handleSendTest}
+                                disabled={isTesting}
+                                className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6"
+                            >
+                                {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                                Send Test
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </form>
+        </motion.div>
     );
-};
+}
+
 
 export default GmailIntegration;

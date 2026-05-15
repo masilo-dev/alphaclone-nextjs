@@ -67,6 +67,7 @@ import { xaiVideoGenerationService } from '../ai/xaiVideoGenerationService';
 import { xService } from '../xService';
 import { generatePnLStatement } from '../../lib/accounting/pnl';
 import { AlphaNexus } from '../../lib/social/alphaNexus';
+import { gmailServerService } from '../server/gmailServerService';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -4232,6 +4233,90 @@ class AlphaCloneMCPServer {
           }
           break;
         }
+
+        // ── Direct Gmail Operations ──────────────────────────────────────
+        case 'gmail_list_threads': {
+          try {
+            const a = args as Record<string, any>;
+            const tenant_id = this.requireTenant(a);
+            const user_id = this.requireProfileUser(a);
+            const limit = Number(a.limit) || 20;
+            const data = await gmailServerService.listThreads(user_id, limit);
+            result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          } catch (err: any) {
+            console.error('[MCP gmail_list_threads] Error:', err);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  status: 'failed',
+                  code: 'GMAIL_LIST_ERROR',
+                  message: err.message
+                }, null, 2)
+              }],
+              isError: true
+            };
+          }
+          break;
+        }
+
+        case 'gmail_get_thread': {
+          try {
+            const a = args as Record<string, any>;
+            const tenant_id = this.requireTenant(a);
+            const user_id = this.requireProfileUser(a);
+            const { thread_id } = a;
+            const data = await gmailServerService.getThread(user_id, thread_id);
+            result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          } catch (err: any) {
+            console.error('[MCP gmail_get_thread] Error:', err);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  status: 'failed',
+                  code: 'GMAIL_READ_ERROR',
+                  message: err.message
+                }, null, 2)
+              }],
+              isError: true
+            };
+          }
+          break;
+        }
+
+        case 'gmail_send_email': {
+          try {
+            const a = args as Record<string, any>;
+            const tenant_id = this.requireTenant(a);
+            const user_id = this.requireProfileUser(a);
+            const { to, subject, body, thread_id, cc, bcc } = a;
+            const data = await gmailServerService.sendEmail(user_id, {
+              to,
+              subject,
+              messageBody: body,
+              threadId: thread_id,
+              cc,
+              bcc,
+            });
+            result = { content: [{ type: 'text', text: `✅ Email sent successfully. ID: ${data.id}` }] };
+          } catch (err: any) {
+            console.error('[MCP gmail_send_email] Error:', err);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  status: 'failed',
+                  code: 'GMAIL_SEND_ERROR',
+                  message: err.message
+                }, null, 2)
+              }],
+              isError: true
+            };
+          }
+          break;
+        }
+
 
         case 'subscribe_events': {
           const a = args as Record<string, any>;

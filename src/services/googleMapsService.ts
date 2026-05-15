@@ -23,7 +23,12 @@ export const googleMapsService = {
      * DISABLED: System transitioned to HERE Maps and OSM.
      */
     async validateAddress(_address: string, _apiKey: string) {
-        return { valid: false, error: 'Google Maps Service is disabled. System is now powered by HERE Maps and OpenStreetMap (SOM).' };
+        return { 
+            valid: false, 
+            formattedAddress: undefined as string | undefined,
+            location: undefined as { lat: number; lng: number } | undefined,
+            error: 'Google Maps Service is disabled. System is now powered by HERE Maps and OpenStreetMap (SOM).' 
+        };
     },
 
     /**

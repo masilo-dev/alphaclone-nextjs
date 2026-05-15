@@ -124,6 +124,49 @@ export const MCP_TOOLS = [
       required: ['query'],
     },
   },
+  // ── Direct Gmail Operations (App Password) ───────────────────────
+  {
+    name: 'gmail_list_threads',
+    description: 'List recent Gmail conversations via IMAP. Returns a list of threads with subjects, senders, and dates.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        limit: { type: 'number', description: 'Max threads to fetch (default 20)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'gmail_get_thread',
+    description: 'Fetch all messages in a specific Gmail thread by threadId.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        thread_id: { type: 'string', description: 'The thread identifier from gmail_list_threads' },
+      },
+      required: ['thread_id'],
+    },
+  },
+  {
+    name: 'gmail_send_email',
+    description: 'Send a new email or reply to an existing thread via Gmail SMTP.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Email subject' },
+        body: { type: 'string', description: 'HTML or text body of the email' },
+        thread_id: { type: 'string', description: 'Optional: threadId to reply to' },
+        cc: { type: 'string' },
+        bcc: { type: 'string' },
+      },
+      required: ['to', 'subject', 'body'],
+    },
+  },
+
   // ── Leads Pipeline ─────────────────────────────────────────────────
   {
     name: 'get_leads',
