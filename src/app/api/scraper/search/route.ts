@@ -649,7 +649,7 @@ export async function POST(request: Request) {
         sourceErrors.here = msg;
       }
       if (searchRes.status === 'fulfilled') {
-        const enriched = enrichWithContactFlag(searchRes.value);
+        const enriched = enrichWithContactFlag(searchRes.value as any[]);
         results.push(...enriched);
         sourceCounts.firecrawl = enriched.length;
         console.log(`[Scraper] ${firecrawlKey ? 'Firecrawl' : 'DuckDuckGo'} returned ${enriched.length} leads`);
