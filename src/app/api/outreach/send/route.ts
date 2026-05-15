@@ -10,6 +10,8 @@ import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import sanitizeHtml from 'sanitize-html';
+import { validateRecipient } from '@/lib/email/validateRecipient';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
@@ -188,10 +190,33 @@ export async function POST(request: Request) {
     if (!normalizedSubject) {
       return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
     }
-    const bodyWithFooter = ensureFooter(emailBody);
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
+
+    // 0. Recipient Validation
+    const { allowed, reason } = await validateRecipient(admin, tenantId, leadEmail);
+    if (!allowed) {
+      await admin.from('email_audit_log').insert({
+        tenant_id: tenantId,
+        user_id: tenantCtx.user.id,
+        to_email: leadEmail,
+        subject: normalizedSubject,
+        allowed: false,
+        blocked_reason: reason,
+      });
+      return NextResponse.json({ error: reason }, { status: 403 });
+    }
+
+    // 0.1 HTML Sanitization
+    const sanitizedBody = sanitizeHtml(emailBody, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        '*': ['style', 'class'],
+      }
+    });
+    const bodyWithFooter = ensureFooter(sanitizedBody);
     if (await isEmailSuppressed(tenantId, leadEmail)) {
       return NextResponse.json({ success: false, status: 'suppressed', error: 'Recipient is suppressed' }, { status: 409 });
     }
