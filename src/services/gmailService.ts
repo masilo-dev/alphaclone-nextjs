@@ -211,13 +211,15 @@ export const gmailService = {
     },
 
     /**
-     * Check if user has Gmail integrated
+     * Check if user has Gmail integrated (using App Password)
      */
     async checkIntegration(userId: string): Promise<boolean> {
         const { data, error } = await supabase
-            .from('gmail_sync_tokens')
+            .from('integrations')
             .select('id')
             .eq('user_id', userId)
+            .eq('type', 'gmail')
+            .eq('enabled', true)
             .maybeSingle();
 
         return !!data && !error;
