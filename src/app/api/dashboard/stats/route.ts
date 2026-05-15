@@ -101,7 +101,40 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
         return typeof count === 'number' ? count : 0;
       } catch { return 0; }
     })(),
-    safeSum('business_invoices', 'total', { status: 'paid' }),
+    // 1. Paid Revenue (from General Ledger)
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('journal_entry_lines')
+          .select(`
+            debit_amount,
+            credit_amount,
+            account:account_id (
+              account_type,
+              normal_balance
+            )
+          `)
+          .eq('tenant_id', tenantId)
+          .innerJoin('journal_entries', 'entry_id', 'id')
+          .filter('journal_entries.status', 'eq', 'posted')
+          .filter('journal_entries.voided_at', 'is', null)
+          .in('account.account_type', ['revenue', 'other_income']);
+
+        if (error || !data) return 0;
+        
+        return data.reduce((acc: number, row: any) => {
+          const isDebit = row.account.normal_balance === 'debit';
+          const amount = isDebit 
+            ? (row.debit_amount - row.credit_amount)
+            : (row.credit_amount - row.debit_amount);
+          return acc + amount;
+        }, 0);
+      } catch {
+        // Fallback to business_invoices if accounting tables fail
+        return safeSum('business_invoices', 'total', { status: 'paid' });
+      }
+    })(),
+    // 2. Pending Revenue (from Invoices)
     (async () => {
       try {
         const { data } = await supabase

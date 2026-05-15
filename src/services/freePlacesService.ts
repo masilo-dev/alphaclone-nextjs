@@ -14,16 +14,6 @@ import { BrowserManager } from '@/lib/scraper/browserManager';
 import * as cheerio from 'cheerio';
 import { googlePlacesService as realGoogleService } from './googlePlacesService';
 
-function resolveGoogleKey(): string | null {
-  return (
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    process.env.Google_Places_API ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    null
-  );
-}
 
 // ─── Shared output type (matches MappedPlaceLead from googlePlacesService) ───
 export type MappedPlaceLead = {
@@ -38,7 +28,7 @@ export type MappedPlaceLead = {
   rating?: number;
   userRatingCount?: number;
   googleMapsUri?: string;
-  source: 'Foursquare' | 'OpenStreetMap' | 'Google Maps Scrape' | 'Google Maps';
+  source: 'Foursquare' | 'OpenStreetMap' | 'Google Maps Scrape';
   countryCode?: string;
 };
 
@@ -378,19 +368,6 @@ export const freePlacesService = {
     // Validate location via Nominatim
     const geo = await geocodeLocation(location);
 
-    // ── Source 0: Real Google Places API (if key available) ────────────────
-    const googleKey = resolveGoogleKey();
-    if (googleKey && !googleKey.startsWith('your_')) {
-      try {
-        const res = await realGoogleService.searchPlacesForLeads(niche, location, googleKey, options);
-        if (res.places.length > 0) {
-          allPlaces.push(...res.places);
-          console.log(`[FreePlaces] Real Google Places: ${res.places.length} results`);
-        }
-      } catch (err) {
-        console.warn('[FreePlaces] Real Google Places failed, falling back to free sources:', err);
-      }
-    }
 
     // ── Source 1: Foursquare (best data quality, free 1k/day) ──────────────
     try {
