@@ -1,5 +1,21 @@
 # Update Log
 
+## Date: 2026-05-15 (SECURITY HARDENING & MULTI-TENANT ISOLATION)
+
+### Added
+- **Security Infrastructure Migration**: Deployed `20260515130000_security_infrastructure.sql` to harden database security and enforce strict multi-tenant isolation.
+- **Contract Versioning Support**: Implemented authorized versioning gates for contract management to prevent unauthorized injections.
+- **Payment Reconciliation Workflow**: Added a secure reconciliation endpoint for invoice payments.
+
+### Fixed
+- **Invoicing Security**: Implemented server-side Zod validation and state guards for invoice updates in `/api/invoices/[id]`.
+- **Email Outreach Hardening**: Established recipient allowlists and HTML sanitization for outreach and email routes to prevent SSRF and injection attacks.
+- **Type Safety**: Resolved various TypeScript build errors across invoicing and outreach modules.
+
+### Production Readiness
+- **Vercel Safe**: Verified that all new security gates and validation layers pass strict TypeScript checks.
+
+
 ## Date: 2026-05-14 (TYPE SAFETY & KANBAN STABILIZATION)
 
 ### Added
