@@ -19,6 +19,21 @@ function pickProvider(
   for (const provider of order) {
     const hit = rows.find((row) => row.type === provider);
     const cfg = (hit?.config || {}) as Record<string, unknown>;
+
+    if (provider === 'gmail') {
+      // Gmail uses App Password (SMTP) — no OAuth, no global env vars.
+      // Config stored in Supabase: { fromEmail: '...@gmail.com', appPassword: 'xxxx xxxx xxxx xxxx' }
+      const fromEmail = String(cfg.fromEmail || cfg.from_email || cfg.email || '').trim();
+      const appPassword = String(cfg.appPassword || cfg.app_password || cfg.password || '').trim();
+      if (!fromEmail || !appPassword) continue;
+      return {
+        provider: 'gmail',
+        apiKey: appPassword,  // apiKey carries the App Password for Gmail
+        fromEmail,
+        fromName: String(cfg.fromName || cfg.from_name || '').trim() || undefined,
+      };
+    }
+
     const apiKey = String(cfg.apiKey || cfg.api_key || '').trim();
     const requiresApiKey = provider === 'brevo' || provider === 'sendgrid' || provider === 'resend';
     if (requiresApiKey && !apiKey) continue;

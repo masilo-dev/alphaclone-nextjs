@@ -1,13 +1,13 @@
+import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import sgMail from '@sendgrid/mail';
-import { gmailServerService } from '@/services/server/gmailServerService';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 
 export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow';
 
 export type EmailSendInput = {
-    apiKey: string;
-    fromEmail: string;
+    apiKey: string;          // For Gmail: App Password (stored in Supabase per-tenant, never global env)
+    fromEmail: string;       // For Gmail: the Gmail address (also used as SMTP username)
     fromName?: string;
     to: string | string[];
     subject: string;
@@ -19,7 +19,7 @@ export type EmailSendInput = {
     listUnsubscribeUrl?: string;
     attachments?: Array<{
         filename: string;
-        content: string; // base64 content
+        content: string | Buffer; // base64 string or raw Buffer
         contentType?: string;
     }>;
     userId?: string;
@@ -34,38 +34,6 @@ export type EmailSendResult = {
 
 function normalizeRecipients(to: string | string[]): string[] {
     return Array.isArray(to) ? to : [to];
-}
-
-function encodeGmailRawMessage(params: {
-    to: string;
-    subject: string;
-    html?: string;
-    text?: string;
-    fromEmail: string;
-    fromName?: string;
-    replyTo?: string;
-}) {
-    const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
-    const body = params.html || params.text || '';
-    const mimeType = params.html ? 'text/html' : 'text/plain';
-    const message = [
-        `From: ${(params.fromName || 'AlphaClone Systems').trim()} <${params.fromEmail}>`,
-        `To: ${params.to}`,
-        params.replyTo ? `Reply-To: ${params.replyTo}` : null,
-        `Subject: ${utf8Subject}`,
-        'MIME-Version: 1.0',
-        `Content-Type: ${mimeType}; charset="UTF-8"`,
-        '',
-        body,
-    ]
-        .filter(Boolean)
-        .join('\n');
-
-    return Buffer.from(message)
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
 }
 
 async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
@@ -128,7 +96,10 @@ async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> 
                 : undefined,
             attachments: input.attachments?.map((attachment) => ({
                 filename: attachment.filename,
-                content: attachment.content,
+                // SendGrid requires base64 string content, not Buffer
+                content: attachment.content instanceof Buffer
+                    ? attachment.content.toString('base64')
+                    : String(attachment.content),
                 type: attachment.contentType || 'application/octet-stream',
                 disposition: 'attachment',
             })),
@@ -260,41 +231,83 @@ async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
     }
 }
 
+/**
+ * Send via Gmail using SMTP + App Password (nodemailer).
+ * No OAuth — authenticate with a Gmail App Password generated at:
+ * https://myaccount.google.com/apppasswords
+ *
+ * Credentials are fetched from the tenant's Supabase integrations row:
+ *   { type: 'gmail', config: { fromEmail: '...', appPassword: '...' } }
+ * They are NEVER read from global environment variables.
+ *
+ * apiKey  = App Password (16-char Google App Password)
+ * fromEmail = the Gmail address (used as both SMTP username and From address)
+ */
 async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
     try {
-        if (!input.userId) {
-            return { ok: false, provider: 'gmail', error: 'Gmail send requires user context' };
-        }
         const recipients = normalizeRecipients(input.to);
         if (!recipients.length) {
             return { ok: false, provider: 'gmail', error: 'Recipient is required' };
         }
 
-        const raw = encodeGmailRawMessage({
-            to: recipients[0],
+        if (!input.fromEmail) {
+            return { ok: false, provider: 'gmail', error: 'Gmail requires fromEmail (your Gmail address)' };
+        }
+
+        if (!input.apiKey) {
+            return { ok: false, provider: 'gmail', error: 'Gmail requires an App Password. Generate one at myaccount.google.com/apppasswords' };
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false, // STARTTLS
+            auth: {
+                user: input.fromEmail,   // Gmail address
+                pass: input.apiKey,      // App Password (never OAuth)
+            },
+        });
+
+        const mailOptions: nodemailer.SendMailOptions = {
+            from: input.fromName
+                ? `"${input.fromName}" <${input.fromEmail}>`
+                : input.fromEmail,
+            to: recipients.join(', '),
             subject: input.subject,
             html: input.html,
             text: input.text,
-            fromEmail: input.fromEmail,
-            fromName: input.fromName,
-            replyTo: input.replyTo,
-        });
+        };
 
-        const result = await gmailServerService.proxyRequest(input.userId, 'messages/send', {
-            method: 'POST',
-            body: JSON.stringify({ raw }),
-        });
+        if (input.replyTo) mailOptions.replyTo = input.replyTo;
+        if (input.cc?.length) mailOptions.cc = input.cc.join(', ');
+        if (input.bcc?.length) mailOptions.bcc = input.bcc.join(', ');
+
+        if (input.attachments?.length) {
+            mailOptions.attachments = input.attachments.map((att) => {
+                // Normalise to Buffer for nodemailer
+                const buf: Buffer = att.content instanceof Buffer
+                    ? att.content
+                    : Buffer.from(String(att.content), 'base64');
+                return {
+                    filename: att.filename,
+                    content: buf,
+                    contentType: att.contentType || 'application/octet-stream',
+                };
+            });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
 
         return {
             ok: true,
             provider: 'gmail',
-            emailId: String(result?.id || ''),
+            emailId: info.messageId,
         };
     } catch (error) {
         return {
             ok: false,
             provider: 'gmail',
-            error: error instanceof Error ? error.message : 'Gmail send failed',
+            error: error instanceof Error ? error.message : 'Gmail SMTP send failed',
         };
     }
 }
