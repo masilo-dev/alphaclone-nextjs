@@ -47,7 +47,7 @@ export interface LeadResult {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source:        'firecrawl' | 'here' | 'osm' | 'browser' | 'google';
+  source:        'firecrawl' | 'here' | 'osm' | 'browser';
   lat?:          number;
   lng?:          number;
   hasContact:    boolean;   // true = phone OR email present
@@ -251,7 +251,7 @@ async function fetchFreePlacesFallback(niche: string, location: string, limit = 
       address: p.formattedAddress || '',
       rating: p.rating,
       category: p.industry || '',
-      source: 'google' as const, // reuse 'google' source slot for display
+      source: 'osm' as const, // reuse 'osm' source slot for display
       lat: p.lat,
       lng: p.lng,
       hasContact: false,
@@ -604,7 +604,7 @@ export async function POST(request: Request) {
 
     const results: LeadResult[] = [];
     const sourceErrors: Record<string, string> = {};
-    const sourceCounts: Record<string, number>  = { osm: 0, google: 0, here: 0, firecrawl: 0, browser: 0 };
+    const sourceCounts: Record<string, number>  = { osm: 0, here: 0, firecrawl: 0, browser: 0 };
 
     // ── Step 1: All sources run in parallel ──────────────────────────────────
     // OSM:         free, always runs
@@ -685,13 +685,13 @@ export async function POST(request: Request) {
           const newRows = fallbackRows.filter(r => !existingNames.has(r.business_name.toLowerCase()));
           const enriched = enrichWithContactFlag(newRows);
           results.push(...enriched);
-          sourceCounts.google = enriched.length;
+          sourceCounts.osm += enriched.length;
           console.log(`[Scraper] Free places fallback: ${enriched.length} unique leads`);
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn('[Scraper] Free places fallback failed:', msg);
-        sourceErrors.google = msg;
+        sourceErrors.osm_fallback = msg;
       }
     }
 

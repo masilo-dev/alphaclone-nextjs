@@ -43,7 +43,7 @@ interface ScrapedLead {
   address?:      string;
   rating?:       number;
   category?:     string;
-  source?:       'yelp' | 'here' | 'osm' | 'browser' | 'google';
+  source?:       'yelp' | 'here' | 'osm' | 'browser';
   status:        'pending' | 'saved' | 'failed';
   country_code?: string;
   lat?:          number;
@@ -69,7 +69,7 @@ interface GeocodePreview {
   type: string;
 }
 
-type SourceFilter = 'all' | 'yelp' | 'here' | 'osm' | 'browser' | 'google';
+type SourceFilter = 'all' | 'yelp' | 'here' | 'osm' | 'browser';
 type SortMode     = 'default' | 'rating_desc' | 'rating_asc';
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -77,7 +77,6 @@ const SOURCE_COLORS: Record<string, string> = {
   here: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
   osm:  'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
   browser: 'text-violet-400 border-violet-500/30 bg-violet-500/10',
-  google: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10',
 };
 
 // ── Industry Groups ──────────────────────────────────────
@@ -472,7 +471,7 @@ export default function OmniLeadFinder() {
       return 'No leads found. Try a broader location or a different industry.';
     }
 
-    return `No leads found. Some sources reported errors: ${failedSources.join(', ')}. Please check your API configurations.`;
+    return `No leads found. Some sources (HERE/OSM) reported errors: ${failedSources.join(', ')}. Please check your API configurations.`;
   };
 
   const persistSearchHistory = (searchLeads: ScrapedLead[]) => {
