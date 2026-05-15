@@ -2969,7 +2969,8 @@ class AlphaCloneMCPServer {
         case 'send_invoice': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { invoice_id, recipient_email } = a;
+          const { invoice_id, recipient_email, provider: preferredProvider } = a;
+          const user_id = this.ctx?.userId || null;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
@@ -2978,7 +2979,7 @@ class AlphaCloneMCPServer {
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
           // Update status in DB
-          const { data, error: updateError } = await supabaseAdmin
+          const { error: updateError } = await supabaseAdmin
             .from('business_invoices')
             .update({
               status: 'sent',
@@ -2986,41 +2987,84 @@ class AlphaCloneMCPServer {
               updated_at: new Date().toISOString(),
             })
             .eq('tenant_id', tenant_id)
-            .eq('id', invoice_id.trim())
-            .select('id, invoice_number, status, sent_at')
-            .single();
+            .eq('id', invoice_id.trim());
           
           if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
 
           // Generate PDF
           const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
           const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+          const pdfBase64 = pdfBuffer.toString('base64');
 
           const to = recipient_email || invoice.client?.email;
           if (!to) throw new Error('Recipient email is required (not found on client record)');
 
-          const amount = `${invoice.currency || '$'}${invoice.total}`;
-          const invoiceUrl = AppUrls.payInvoice(invoice.id);
+          const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
+          const pdfUrl = AppUrls.payInvoice(invoice.id);
 
-          // Send Email
-          const sendResult = await emailHelpers.sendInvoice(
-            to,
-            invoice.invoice_number,
-            amount,
-            invoiceUrl,
-            {
-              filename: `Invoice_${invoice.invoice_number}.pdf`,
-              content: pdfBuffer,
-              contentType: 'application/pdf'
-            }
-          );
+          // Resolve tenant's configured email provider — never use global env vars
+          const providerConfig = await resolveEmailProviderConfig({
+            tenantId: tenant_id,
+            preferredUserId: user_id,
+            preferredProvider: preferredProvider as EmailProvider | undefined,
+            fallbackToEnv: false,
+          });
 
-          if (!sendResult.success) {
-             console.error('Failed to send invoice email:', sendResult.error);
-             // We still return success for the DB update, but note the email failure
-             result = { content: [{ type: 'text', text: `Invoice marked as sent in DB, but email dispatch failed: ${sendResult.error}` }] };
+          let dispatchOk = false;
+          let dispatchProvider = 'platform';
+          let dispatchEmailId: string | undefined;
+          let dispatchError: string | undefined;
+
+          if (providerConfig) {
+            // Send via tenant's own provider (Resend/SendGrid/Brevo/Zoho/Gmail SMTP)
+            const sdkResult = await sendWithProviderSdk(providerConfig.provider as EmailProvider, {
+              apiKey: providerConfig.apiKey,
+              fromEmail: providerConfig.fromEmail || '',
+              fromName: providerConfig.fromName || invoice.tenant?.name || 'AlphaClone',
+              to,
+              subject: `Invoice ${invoice.invoice_number} — ${amount}`,
+              html: `<p>Please find your invoice <strong>${invoice.invoice_number}</strong> attached.</p><p>Amount due: <strong>${amount}</strong></p><p><a href="${pdfUrl}">View &amp; Pay Online</a></p>`,
+              attachments: [{
+                filename: `Invoice_${invoice.invoice_number}.pdf`,
+                content: pdfBase64,
+                contentType: 'application/pdf',
+              }],
+              userId: providerConfig.ownerUserId || user_id || undefined,
+            });
+            dispatchOk = sdkResult.ok;
+            dispatchProvider = sdkResult.provider;
+            dispatchEmailId = sdkResult.emailId;
+            dispatchError = sdkResult.error;
           } else {
-             result = { content: [{ type: 'text', text: `Invoice ${invoice.invoice_number} sent successfully to ${to} with PDF attachment.` }] };
+            // Fallback to platform emailHelpers if no tenant provider configured
+            const helpers = await emailHelpers.sendInvoice(
+              to, invoice.invoice_number, amount, pdfUrl,
+              { filename: `Invoice_${invoice.invoice_number}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }
+            );
+            dispatchOk = helpers.success;
+            dispatchError = helpers.error || undefined;
+          }
+
+          if (!dispatchOk) {
+            console.error('[send_invoice] Email delivery failed:', dispatchError);
+            result = { content: [{ type: 'text', text: JSON.stringify({
+              status: 'partial',
+              message: 'Invoice marked as sent in DB, but email delivery failed.',
+              invoice_number: invoice.invoice_number,
+              pdf_url: pdfUrl,
+              email_error: dispatchError,
+            }, null, 2) }] };
+          } else {
+            result = { content: [{ type: 'text', text: JSON.stringify({
+              status: 'sent',
+              message: `Invoice ${invoice.invoice_number} sent successfully.`,
+              sent_to: to,
+              invoice_number: invoice.invoice_number,
+              amount,
+              provider_used: dispatchProvider,
+              email_id: dispatchEmailId,
+              pdf_url: pdfUrl,
+            }, null, 2) }] };
           }
           break;
         }
@@ -5250,7 +5294,7 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
-        // ── get_projects ──────────────────────────────────────────────────────────
+
         case 'get_projects': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -5447,8 +5491,171 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        // ── Advanced DMS ────────────────────────────────────────────────────
+        case 'get_documents': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { category, entity_type, entity_id, limit: docLimit = 50 } = a;
+          const docPageSize = Math.min(Math.max(Number(docLimit) || 50, 1), 200);
+          let docQuery = supabaseAdmin
+            .from('file_uploads')
+            .select('id, original_filename, file_type, file_size, category, tags, entity_type, entity_id, scan_status, storage_path, created_at')
+            .eq('tenant_id', tenant_id)
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false })
+            .limit(docPageSize);
+          if (category && typeof category === 'string') docQuery = docQuery.eq('category', category.trim());
+          if (entity_type && typeof entity_type === 'string') docQuery = docQuery.eq('entity_type', entity_type.trim());
+          if (entity_id && typeof entity_id === 'string') docQuery = docQuery.eq('entity_id', entity_id.trim());
+          const { data: docData, error: docError } = await docQuery;
+          if (docError) throw supabaseErrorToMcpClientError('get_documents', docError.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ total: (docData || []).length, documents: docData || [] }, null, 2) }] };
+          break;
+        }
+
+        case 'search_documents': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { query: searchQuery } = a;
+          if (!searchQuery || typeof searchQuery !== 'string') throw new Error('query is required');
+          const { data: searchData, error: searchError } = await supabaseAdmin
+            .from('file_uploads')
+            .select('id, original_filename, file_type, file_size, category, tags, entity_type, entity_id, created_at')
+            .eq('tenant_id', tenant_id)
+            .is('deleted_at', null)
+            .or(`original_filename.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          if (searchError) throw supabaseErrorToMcpClientError('search_documents', searchError.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ query: searchQuery, total: (searchData || []).length, documents: searchData || [] }, null, 2) }] };
+          break;
+        }
+
+        // ── Advanced Accounting ─────────────────────────────────────────────
+        case 'get_balance_sheet': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const asOf = a.as_of_date ? new Date(a.as_of_date).toISOString() : new Date().toISOString();
+          const [bsInvRes, bsExpRes] = await Promise.all([
+            supabaseAdmin.from('business_invoices').select('total_amount, status').eq('tenant_id', tenant_id).lte('created_at', asOf),
+            supabaseAdmin.from('expenses').select('amount, status').eq('tenant_id', tenant_id),
+          ]);
+          const bsInvoices = bsInvRes.data || [];
+          const bsExpenses = bsExpRes.data || [];
+          const bsTotalRevenue = bsInvoices.filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + (Number(i.total_amount) || 0), 0);
+          const bsAR = bsInvoices.filter((i: any) => ['sent', 'overdue'].includes(i.status)).reduce((s: number, i: any) => s + (Number(i.total_amount) || 0), 0);
+          const bsTotalExp = bsExpenses.filter((e: any) => e.status === 'approved').reduce((s: number, e: any) => s + (Number(e.amount) || 0), 0);
+          const bsPendingExp = bsExpenses.filter((e: any) => e.status === 'pending').reduce((s: number, e: any) => s + (Number(e.amount) || 0), 0);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                as_of: asOf,
+                assets: { cash_and_equivalents: bsTotalRevenue - bsTotalExp, accounts_receivable: bsAR, total_assets: bsTotalRevenue - bsTotalExp + bsAR },
+                liabilities: { accounts_payable: bsPendingExp, total_liabilities: bsPendingExp },
+                equity: { retained_earnings: bsTotalRevenue - bsTotalExp - bsPendingExp, total_equity: bsTotalRevenue - bsTotalExp - bsPendingExp },
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'get_cash_flow_statement': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const cfFrom = a.from_date || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          const cfTo = a.to_date || new Date().toISOString().split('T')[0];
+          const [cfInvRes, cfExpRes] = await Promise.all([
+            supabaseAdmin.from('business_invoices').select('total_amount').eq('tenant_id', tenant_id).eq('status', 'paid').gte('created_at', cfFrom).lte('created_at', cfTo + 'T23:59:59Z'),
+            supabaseAdmin.from('expenses').select('amount, category').eq('tenant_id', tenant_id).eq('status', 'approved').gte('date', cfFrom).lte('date', cfTo),
+          ]);
+          const cfCashIn = (cfInvRes.data || []).reduce((s: number, i: any) => s + (Number(i.total_amount) || 0), 0);
+          const cfExpenses = cfExpRes.data || [];
+          const cfCashOut = cfExpenses.reduce((s: number, e: any) => s + (Number(e.amount) || 0), 0);
+          const cfByCategory: Record<string, number> = {};
+          for (const e of cfExpenses) { const c = (e.category as string) || 'Other'; cfByCategory[c] = (cfByCategory[c] || 0) + (Number(e.amount) || 0); }
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                period: { from: cfFrom, to: cfTo },
+                operating_activities: { cash_inflows: { invoice_payments: cfCashIn }, cash_outflows: { expenses: cfCashOut, by_category: cfByCategory }, net_operating_cash_flow: cfCashIn - cfCashOut },
+                net_cash_flow: cfCashIn - cfCashOut,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'create_journal_entry': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { description: jeDesc, lines: jeLines, date: jeDate } = a;
+          if (!jeDesc) throw new Error('description is required');
+          if (!Array.isArray(jeLines) || jeLines.length < 2) throw new Error('At least 2 journal entry lines are required');
+          const jeTotalDebits = jeLines.reduce((s: number, l: any) => s + (Number(l.debit) || 0), 0);
+          const jeTotalCredits = jeLines.reduce((s: number, l: any) => s + (Number(l.credit) || 0), 0);
+          if (Math.abs(jeTotalDebits - jeTotalCredits) > 0.01) throw new Error(`Journal entry is unbalanced: debits (${jeTotalDebits}) ≠ credits (${jeTotalCredits})`);
+          const { data: jeData, error: jeError } = await supabaseAdmin
+            .from('journal_entries')
+            .insert({ tenant_id, date: jeDate || new Date().toISOString().split('T')[0], description: jeDesc, lines: jeLines, total_amount: jeTotalDebits, status: 'posted' })
+            .select('id, date, description, total_amount, status')
+            .single();
+          if (jeError) {
+            result = { content: [{ type: 'text', text: JSON.stringify({ success: false, note: 'journal_entries table not found — run the accounting migration first.', preview: { description: jeDesc, lines: jeLines, total_debits: jeTotalDebits } }, null, 2) }] };
+          } else {
+            result = { content: [{ type: 'text', text: JSON.stringify({ success: true, journal_entry: jeData }, null, 2) }] };
+          }
+          break;
+        }
+
+        // ── Advanced Project Architecture ───────────────────────────────────
+        case 'get_project_details': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { project_id: pdId } = a;
+          if (!pdId) throw new Error('project_id is required');
+          const [pdProjRes, pdTasksRes, pdMilesRes] = await Promise.all([
+            supabaseAdmin.from('projects').select('id, name, description, status, current_stage, progress, due_date, owner_id, owner_name, team, created_at, updated_at').eq('id', pdId).eq('tenant_id', tenant_id).single(),
+            supabaseAdmin.from('tasks').select('id, title, status, priority, assigned_to, due_date, completed_at').eq('related_to_project', pdId).eq('tenant_id', tenant_id).order('due_date', { ascending: true }),
+            supabaseAdmin.from('project_milestones').select('id, title, due_date, status, description').eq('project_id', pdId).order('due_date', { ascending: true }),
+          ]);
+          if (pdProjRes.error) throw supabaseErrorToMcpClientError('get_project_details', pdProjRes.error.message);
+          const pdTasks = pdTasksRes.data || [];
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                project: pdProjRes.data,
+                task_summary: { total: pdTasks.length, completed: pdTasks.filter((t: any) => t.status === 'completed').length, in_progress: pdTasks.filter((t: any) => t.status === 'in_progress').length, overdue: pdTasks.filter((t: any) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length },
+                tasks: pdTasks,
+                milestones: pdMilesRes.data || [],
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'get_project_timeline': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { project_id: ptId } = a;
+          if (!ptId) throw new Error('project_id is required');
+          const [ptTasksRes, ptMilesRes] = await Promise.all([
+            supabaseAdmin.from('tasks').select('id, title, status, priority, due_date, created_at').eq('related_to_project', ptId).eq('tenant_id', tenant_id),
+            supabaseAdmin.from('project_milestones').select('id, title, due_date, status').eq('project_id', ptId),
+          ]);
+          const ptEvents: any[] = [
+            ...(ptTasksRes.data || []).map((t: any) => ({ type: 'task', date: t.due_date || t.created_at, title: t.title, status: t.status, priority: t.priority, id: t.id })),
+            ...(ptMilesRes.data || []).map((m: any) => ({ type: 'milestone', date: m.due_date, title: m.title, status: m.status, id: m.id })),
+          ];
+          ptEvents.sort((x, y) => new Date(x.date || 0).getTime() - new Date(y.date || 0).getTime());
+          result = { content: [{ type: 'text', text: JSON.stringify({ project_id: ptId, total_events: ptEvents.length, timeline: ptEvents }, null, 2) }] };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, list_playbooks, run_playbook, get_run_status, retry_run_step, cancel_run, verify_lead_created, verify_outreach_delivery, verify_social_post_published, verify_invoice_sent, get_automation_health, get_failure_report, get_throughput_report, reconcile_outreach_vs_logs, get_clients, get_contacts, search_contacts, create_client, get_leads, create_lead, auto_create_lead_from_message, update_lead_status, get_deals, create_deal, score_deal, create_project, get_projects, get_finance_snapshot, update_project_status, create_task, update_task, write_task_note, get_tasks, upload_media_asset, get_facebook_identities, get_linkedin_identities, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_quote, create_invoice, send_invoice, voice_action_router, send_message, and more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, and many more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
