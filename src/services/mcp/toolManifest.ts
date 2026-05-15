@@ -467,13 +467,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_invoice',
-    description: 'Mark an invoice as sent and queue email delivery metadata for follow-up tracking.',
+    description: 'Generate a PDF invoice and send it to the client via the tenant-configured email provider (Resend, SendGrid, Brevo, Zoho, or Gmail SMTP). Returns sent_to, pdf_url, provider_used, and email_id. Works as a single stateless POST from Claude chat.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'Business Account Context' },
         invoice_id: { type: 'string', description: 'Reference from create_invoice or invoice list' },
-        recipient_email: { type: 'string', description: 'Optional override email for recipient' },
+        recipient_email: { type: 'string', description: 'Optional override email. Defaults to the email on the client record.' },
+        provider: { type: 'string', enum: ['resend', 'sendgrid', 'brevo', 'zoho', 'gmail'], description: 'Optional: force a specific email provider. Defaults to the tenant-configured provider.' },
       },
       required: ['invoice_id'],
     },
@@ -1231,7 +1232,7 @@ export const MCP_TOOLS = [
   {
     name: 'get_revenue_summary',
     description:
-      'Read-only: Totals plus paid/outstanding split by calendar month and by client_id (from invoices).',
+      'Returns monthly revenue totals, paid vs outstanding split, and per-client breakdown (from business_invoices). Works as a single stateless POST from Claude chat — no artifact wrapper needed.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2246,6 +2247,110 @@ export const MCP_TOOLS = [
         tenant_id: { type: 'string', description: 'Business Account Context' },
       },
       required: [],
+    },
+  },
+  // ── Advanced DMS ───────────────────────────────────────────────────
+  {
+    name: 'get_documents',
+    description: 'List all workspace documents with optional category and entity filtering.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        category: { type: 'string', description: 'e.g. Invoice, Contract, ID, Receipt' },
+        entity_type: { type: 'string' },
+        entity_id: { type: 'string' },
+        limit: { type: 'number' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'search_documents',
+    description: 'Search documents by filename, tags, or content metadata.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        query: { type: 'string', description: 'Search term' },
+      },
+      required: ['query'],
+    },
+  },
+  // ── Advanced Accounting ─────────────────────────────────────────────
+  {
+    name: 'get_balance_sheet',
+    description: 'Generate a Point-in-Time Balance Sheet (Assets, Liabilities, Equity).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        as_of_date: { type: 'string', description: 'YYYY-MM-DD' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_cash_flow_statement',
+    description: 'Analyze cash inflows and outflows for a specific period.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        from_date: { type: 'string' },
+        to_date: { type: 'string' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'create_journal_entry',
+    description: 'Manually record a double-entry journal entry in the general ledger.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        date: { type: 'string' },
+        description: { type: 'string' },
+        lines: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              account_id: { type: 'string' },
+              debit: { type: 'number' },
+              credit: { type: 'number' },
+            },
+            required: ['account_id'],
+          },
+        },
+      },
+      required: ['description', 'lines'],
+    },
+  },
+  // ── Advanced Project Architecture ──────────────────────────────────
+  {
+    name: 'get_project_details',
+    description: 'Comprehensive project status including tasks, milestones, and financial progress.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        project_id: { type: 'string' },
+      },
+      required: ['project_id'],
+    },
+  },
+  {
+    name: 'get_project_timeline',
+    description: 'Flat timeline of all project events, status changes, and upcoming deadlines.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'Business Account Context' },
+        project_id: { type: 'string' },
+      },
+      required: ['project_id'],
     },
   },
 ];
