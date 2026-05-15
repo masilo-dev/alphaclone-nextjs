@@ -521,6 +521,31 @@ const LandingPage = () => {
                </motion.div>
             </section>
 
+            {/* Run your business from Claude Image Section */}
+            <section className="py-12 bg-[#020617] border-y border-slate-800">
+               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                  <h3 className="text-2xl md:text-3xl font-black text-white mb-4">
+                     Do your business while in <span className="text-cyan-400">Claude</span>
+                  </h3>
+                  <p className="text-slate-300 mb-8 max-w-2xl mx-auto">
+                     Manage leads, automation, and deals seamlessly without breaking focus.
+                  </p>
+                  <motion.div 
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     className="relative w-full aspect-video max-w-5xl mx-auto rounded-xl overflow-hidden border border-cyan-500/30 shadow-[0_0_50px_-10px_rgba(0,255,255,0.15)]"
+                  >
+                     <Image
+                        src="/cat-claude-business.png"
+                        alt="Cat doing business in Claude and AlphaClone"
+                        fill
+                        className="object-cover"
+                     />
+                  </motion.div>
+               </div>
+            </section>
+
             {/* Workflow and Product Preview */}
             <section className="py-16 border-y border-slate-800 bg-[#050B14]/80">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -701,8 +726,8 @@ const LandingPage = () => {
                >
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                      {[
-                        { value: '10,000+', label: 'Businesses Trust AlphaClone' },
-                        { value: '$2.5M+', label: 'Saved on Software Costs' },
+                        { value: '500', label: 'Businesses Trust AlphaClone' },
+                        { value: '15+', label: 'Countries Supported' },
                         { value: '500K+', label: 'Projects Managed' },
                         { value: '99.9%', label: 'Uptime SLA' },
                      ].map((stat, idx) => (

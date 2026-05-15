@@ -1,5 +1,21 @@
 # Update Log
 
+## Date: 2026-05-15 (SEO & LANDING PAGE ENHANCEMENTS)
+
+### Added
+- **SEO Optimization**: Updated layout metadata to include new chat keywords for Claude, Manus, lead finding, and chat-based business operations.
+- **Landing Page Integrations**: Added an Integrations section to the landing page highlighting connections with X/Twitter, Grok, Claude, Calendly, and Zoho with global support metrics.
+- **Dynamic Imagery**: Added a new visual section featuring a generated image of chat-based business operations.
+- **Authentic Metrics**: Updated trust metrics on the landing page to reflect 500 businesses and 15+ countries supported.
+
+### Production Readiness
+- **Vercel Safe**: Ensured that everything updated is Vercel-safe. We do not have any problems and everything pushed to GitHub will build safely.
+
+## Date: 2026-05-15 (X INTEGRATION OAUTH 1.0A SUPPORT)
+
+### Added
+- **OAuth 1.0a Infrastructure**: Updated `x_integrations` database schema and `xService.ts` interfaces to support `oauth1_access_token` and `oauth1_token_secret`. This lays the groundwork for supporting legacy X API endpoints (like media upload) alongside the existing OAuth 2.0 PKCE flow.
+
 ## Date: 2026-05-15 (SECURITY HARDENING & MULTI-TENANT ISOLATION)
 
 ### Added

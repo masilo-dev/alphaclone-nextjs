@@ -10,6 +10,8 @@ export interface XIntegration {
     refresh_token?: string;
     expires_at?: string;
     scopes?: string[];
+    oauth1_access_token?: string;
+    oauth1_token_secret?: string;
 }
 
 export interface XTweet {
