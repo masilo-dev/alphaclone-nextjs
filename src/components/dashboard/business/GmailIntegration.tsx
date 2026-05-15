@@ -150,6 +150,8 @@ export default function GmailIntegration() {
         }
         setIsTesting(true);
         try {
+            if (!currentTenant?.id) throw new Error('No active workspace selected');
+
             const res = await fetch('/api/email/providers/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -316,6 +318,3 @@ export default function GmailIntegration() {
         </motion.div>
     );
 }
-
-
-export default GmailIntegration;

@@ -437,7 +437,7 @@ export async function POST(request: Request) {
           const sendResult = await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
             method: 'POST',
             body: JSON.stringify({ raw }),
-          });
+          }) as any;
           providerMessageId = sendResult?.id || null;
         } else if (selectedProvider.provider === 'brevo') {
           if (!selectedProvider.fromEmail) throw new Error('Brevo sender email missing. Set a verified From Email in Brevo integration.');
