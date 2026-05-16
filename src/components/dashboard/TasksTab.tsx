@@ -29,6 +29,7 @@ import { taskRecurrenceService, RecurrenceFrequency } from '../../services/taskR
 import { taskDependencyService } from '../../services/taskDependencyService';
 import { notificationService } from '../../services/dashboardService';
 import { Button, Modal, Input } from '../ui/UIComponents';
+import { AIIntelligencePanel } from './AIIntelligencePanel';
 import { TaskCountdown } from './tasks/TaskCountdown';
 import { CollaborativeTaskNotes } from './projects/CollaborativeTaskNotes';
 import { useAuth } from '@/contexts/AuthContext';
@@ -614,13 +615,12 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 md:gap-4 relative z-10">
-                    <div className="px-3 md:px-4 py-2 border border-white/5 bg-slate-900/50 rounded-xl md:rounded-2xl backdrop-blur-md flex items-center shrink-0">
-                        <span className="text-xs md:text-xs font-mono text-slate-500 uppercase tracking-widest mr-2 md:mr-3">Status:</span>
-                        <span className="text-xs md:text-xs font-black text-teal-400 font-mono">
-                            {loading ? 'SYNCING...' : `${filteredAndSearchedTasks.length} TASKS`}
-                        </span>
                     </div>
                 </div>
+            </div>
+
+            <div className="mb-8">
+                <AIIntelligencePanel moduleKey="taskManagement" title="Operations Intelligence" />
             </div>
 
             {/* Filter and actions */}

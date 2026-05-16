@@ -235,7 +235,8 @@ export const leadService = {
             const { data, error } = await supabase
                 .from('leads')
                 .select('*')
-                .eq('tenant_id', tenantId) // ← TENANT FILTER
+                .eq('tenant_id', tenantId)
+                .eq('is_test_data', false)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

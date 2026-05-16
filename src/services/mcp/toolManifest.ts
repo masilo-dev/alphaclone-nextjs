@@ -559,6 +559,20 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'generate_business_report',
+    description: 'Executive Performance Reporting: Generate a comprehensive business performance report including revenue trends, conversion rates, automation throughput, and strategic insights.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        start_date: { type: 'string', description: 'Optional start date (YYYY-MM-DD)' },
+        end_date: { type: 'string', description: 'Optional end date (YYYY-MM-DD)' },
+        format: { type: 'string', enum: ['summary', 'detailed', 'executive'], description: 'Report depth and detail level.' },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'get_strategic_plan',
     description: 'Autonomous Strategic Orchestrator: Analyze the organizational snapshot to derive a mission-critical theme, session objectives, and a prioritized growth roadmap.',
     inputSchema: {

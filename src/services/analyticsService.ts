@@ -30,6 +30,17 @@ export interface AnalyticsData {
         onTimeDelivery: number; // percentage
         clientSatisfaction: number; // 1-5 scale
     };
+    businessOS: {
+        pipeline: {
+            stats: any[];
+            weightedValue: number;
+        };
+        automation: {
+            totalRuns: number;
+            successRate: number;
+            statusCounts: Record<string, number>;
+        };
+    };
 }
 
 export const analyticsService = {
@@ -340,6 +351,37 @@ export const analyticsService = {
             avgProjectDuration: Math.round(averageProjectDuration),
             onTimeDelivery: Math.round(onTimeDelivery),
             clientSatisfaction,
+        };
+    },
+
+    /**
+     * Get Business OS specific metrics
+     */
+    async getBusinessOSData() {
+        const { dealService } = await import('./dealService');
+        const { getAutomationHealth } = await import('./automation/observabilityService');
+        const tenantId = tenantService.getCurrentTenantId();
+
+        const [pipelineStatsRes, weightedValueRes, automationHealth] = await Promise.all([
+            dealService.getPipelineStats(),
+            dealService.getWeightedPipelineValue(),
+            getAutomationHealth(tenantId || ''),
+        ]);
+
+        const totalRuns = automationHealth.total_runs || 0;
+        const completedRuns = (automationHealth as any).status_counts?.completed || 0;
+        const successRate = totalRuns > 0 ? (completedRuns / totalRuns) * 100 : 0;
+
+        return {
+            pipeline: {
+                stats: pipelineStatsRes.stats || [],
+                weightedValue: weightedValueRes.value || 0,
+            },
+            automation: {
+                totalRuns,
+                successRate,
+                statusCounts: (automationHealth as any).status_counts || {},
+            },
         };
     },
 };

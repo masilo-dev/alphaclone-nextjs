@@ -13,6 +13,7 @@ import { EmptyState } from '../ui/EmptyState';
 import LeadSelector from '../common/LeadSelector';
 import LeadDetailModal from './leads/LeadDetailModal';
 import DealDetailModal from './deals/DealDetailModal';
+import { AIIntelligencePanel } from './AIIntelligencePanel';
 import { fileUploadService } from '../../services/fileUploadService';
 import toast from 'react-hot-toast';
 import { FileText, Download, Trash2, Eye } from 'lucide-react';
@@ -495,6 +496,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ userId, userRole }) => {
                         </Button>
                     </div>
                 )}
+            </div>
+
+            <div className="mb-8">
+                <AIIntelligencePanel moduleKey="crm" title="Deal Intelligence" />
             </div>
 
             {!loading && (

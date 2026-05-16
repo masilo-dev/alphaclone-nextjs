@@ -284,7 +284,7 @@ export const contactService = {
             companyName?: string;
             contactName?: string; // NEW PARAMETER
         }
-    ): Promise<{ contactId: string | null; error: string | null }> {
+    ): Promise<{ contactId: string | null; clientId?: string; error: string | null }> {
         try {
             const { data, error } = await supabase.rpc('convert_lead_to_contact', {
                 lead_id: leadId,
@@ -295,7 +295,12 @@ export const contactService = {
 
             if (error) throw error;
 
-            return { contactId: data, error: null };
+            // RPC now returns a JSONB object with contact_id and client_id
+            return { 
+                contactId: data?.contact_id || null, 
+                clientId: data?.client_id || null,
+                error: null 
+            };
         } catch (err: any) {
             console.error('Error converting lead to contact:', JSON.stringify(err, null, 2), err);
             return { contactId: null, error: err.message || 'Unknown error occurred during conversion' };

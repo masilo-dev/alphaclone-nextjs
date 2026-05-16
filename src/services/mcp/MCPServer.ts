@@ -614,6 +614,15 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'generate_business_report': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { businessReportService } = await import('../businessReportService');
+          const report = await businessReportService.generateExecutiveReport(tenant_id);
+          result = { content: [{ type: 'text', text: report }] };
+          break;
+        }
+
         case 'get_strategic_plan': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
