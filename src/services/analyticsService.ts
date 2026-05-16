@@ -54,11 +54,12 @@ export const analyticsService = {
             const endDate = endOfDay(new Date());
 
             // Fetch all data in parallel
-            const [revenueData, projectsData, usersData, performanceData] = await Promise.all([
+            const [revenueData, projectsData, usersData, performanceData, businessOSData] = await Promise.all([
                 this.getRevenueData(startDate, endDate),
                 this.getProjectsData(startDate, endDate),
                 this.getUsersData(),
                 this.getPerformanceData(),
+                this.getBusinessOSData(),
             ]);
 
             return {
@@ -67,6 +68,7 @@ export const analyticsService = {
                     projects: projectsData,
                     users: usersData,
                     performance: performanceData,
+                    businessOS: businessOSData,
                 },
                 error: null,
             };
