@@ -127,3 +127,39 @@ async function runAgentsStep() {
     "use step";
     console.log("Running AI agents...");
 }
+
+/**
+ * AI Task Automation Runner
+ */
+export async function processScheduledAiTasks() {
+    "use workflow";
+
+    const { tasks } = await fetchDueAiTasks();
+
+    for (const task of tasks) {
+        await executeAiTaskStep(task);
+    }
+}
+
+async function fetchDueAiTasks() {
+    "use step";
+    const admin = createSupabaseAdminClient();
+    const nowIso = new Date().toISOString();
+
+    const { data, error } = await admin
+        .from('scheduled_ai_tasks')
+        .select('*')
+        .eq('status', 'active')
+        .lte('next_run_at', nowIso)
+        .order('next_run_at', { ascending: true })
+        .limit(20);
+
+    if (error) throw error;
+    return { tasks: data || [] };
+}
+
+async function executeAiTaskStep(task: any) {
+    "use step";
+    const { taskAutomationService } = await import("@/services/automation/taskAutomationService");
+    return taskAutomationService.executeTask(task);
+}

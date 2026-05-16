@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { facebookService } from '@/services/facebookService';
 
 export const runtime = 'nodejs';
+
+export async function POST(req: NextRequest) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const { pageId, message, mediaUrl, mediaType, tenantId } = await req.json();
+
+    if (!pageId || !message) {
+      return NextResponse.json({ error: 'pageId and message are required' }, { status: 400 });
+    }
+
+    const result = await facebookService.publishPost(
+      tenantId,
+      pageId,
+      message,
+      mediaUrl,
+      mediaType || 'image'
+    );
+
+    return NextResponse.json({ success: true, result });
+  } catch (err: unknown) {
+    return clientErrorResponse(err, { request: req, scope: 'facebook/posts.POST' });
+  }
+}
 
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
   let lastError: unknown = null;

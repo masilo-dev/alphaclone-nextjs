@@ -56,6 +56,11 @@ export async function startPlaybookRun(params: RuntimeContext & { playbookId: st
     return { success: false, error: runError?.message || 'Failed to create automation run' };
   }
 
+  // Trigger background execution
+  executeRun(run.id, params.tenantId, params.autoHighRisk).catch((err) => {
+    console.error(`[Automation] Background execution failed for run ${run.id}:`, err);
+  });
+
   for (const step of playbook.steps) {
     await supabase.from('automation_run_steps').insert({
       tenant_id: params.tenantId,

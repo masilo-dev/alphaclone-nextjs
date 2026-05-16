@@ -68,6 +68,7 @@ import { xService } from '../xService';
 import { generatePnLStatement } from '../../lib/accounting/pnl';
 import { AlphaNexus } from '../../lib/social/alphaNexus';
 import { gmailServerService } from '../server/gmailServerService';
+import { taskAutomationService } from '../automation/taskAutomationService';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -84,7 +85,7 @@ const INVOICE_STATUSES = new Set(['draft', 'sent', 'paid', 'overdue', 'cancelled
 const LINKEDIN_REACTIONS = new Set(['LIKE', 'PRAISE', 'MAYBE', 'EMPATHY', 'INTEREST', 'APPRECIATION']);
 
 const MCP_GENERIC_OPERATION_ERROR =
-  'This action could not be completed right now. Please try again in a few minutes. If the issue continues, contact support.';
+  'AlphaClone encountered an operational delay while processing this business request. Please retry the orchestration shortly.';
 
 const MCP_ERROR_SUGGESTIONS: Record<string, { retryable: boolean; suggested_fix: string; docs_slug: string }> = {
   VALIDATION_ERROR: {
@@ -256,7 +257,7 @@ function appendContractDisclaimer(body: string, attribution: string): string {
 
 function supabaseErrorToMcpClientError(toolName: string, message: string): Error {
   const m = message.toLowerCase();
-  console.error(`[MCP ${toolName}]`, message);
+  console.error(`[Nexus Operational Delay - ${toolName}]`, message);
   
   if (
     m.includes('does not exist') ||
@@ -268,11 +269,11 @@ function supabaseErrorToMcpClientError(toolName: string, message: string): Error
   ) {
     const isSchemaDesync = m.includes('schema cache') || m.includes('does not exist') || m.includes('42p01');
     const helpText = isSchemaDesync 
-      ? 'Database schema desync detected. Please refresh the workspace connection or contact your administrator to reload the API schema.'
-      : 'Workspace data could not be loaded (database or schema error on our side).';
+      ? 'The workspace operational matrix is currently resyncing. Strategic records are temporarily unavailable.'
+      : 'A requested business record could not be localized within the secure workspace vault.';
       
     return new Error(
-      `${helpText} Retry shortly. If it persists, contact support with your workspace ID and the MCP tool name (${toolName}) you used.`
+      `${helpText} Please re-initiate the orchestration. If this persists across multiple fiscal periods, contact the AlphaClone Infrastructure Team.`
     );
   }
   return new Error(MCP_GENERIC_OPERATION_ERROR);
@@ -1256,6 +1257,69 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        // ── AI Task Automation ─────────────────────────────────────────────
+        case 'task_create': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.ctx?.userId;
+          const { name: taskName, prompt, schedule, timezone, notification_preference } = a;
+          const task = await taskAutomationService.createTask({
+            tenantId: tenant_id,
+            userId: user_id,
+            name: taskName,
+            prompt,
+            schedule,
+            timezone,
+            notificationPreference: notification_preference
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify(task, null, 2) }] };
+          break;
+        }
+
+        case 'task_list': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const tasks = await taskAutomationService.listTasks(tenant_id);
+          result = { content: [{ type: 'text', text: JSON.stringify(tasks, null, 2) }] };
+          break;
+        }
+
+        case 'task_get_results': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { task_id, limit } = a;
+          const results = await taskAutomationService.getTaskResults(tenant_id, task_id, limit);
+          result = { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+          break;
+        }
+
+        case 'task_pause': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { task_id } = a;
+          const task = await taskAutomationService.updateTaskStatus(tenant_id, task_id, 'paused');
+          result = { content: [{ type: 'text', text: JSON.stringify(task, null, 2) }] };
+          break;
+        }
+
+        case 'task_resume': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { task_id } = a;
+          const task = await taskAutomationService.updateTaskStatus(tenant_id, task_id, 'active');
+          result = { content: [{ type: 'text', text: JSON.stringify(task, null, 2) }] };
+          break;
+        }
+
+        case 'task_delete': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { task_id } = a;
+          const delRes = await taskAutomationService.deleteTask(tenant_id, task_id);
+          result = { content: [{ type: 'text', text: JSON.stringify(delRes, null, 2) }] };
+          break;
+        }
+
         // â”€â”€ create_lead â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'create_lead': {
           const a = args as Record<string, any>;
@@ -1307,6 +1371,11 @@ class AlphaCloneMCPServer {
           }
 
           if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
+
+          // Verify visibility to ensure it's not a silent failure
+          const { data: verified } = await supabaseAdmin.from('leads').select('id').eq('id', data?.id).single();
+          if (!verified) throw new Error('Lead creation failed: Record not found in database after insertion.');
+
           await enqueueMcpEvent(
             supabaseAdmin,
             tenant_id,
@@ -1318,7 +1387,7 @@ class AlphaCloneMCPServer {
             content: [
               {
                 type: 'text',
-                text: `Lead added to CRM: ${JSON.stringify(data)}. Next for the business: in AlphaClone open Leads pipeline to qualify, then create a Deal with amount and expected close; source is stored on the lead for attribution.`,
+                text: `SUCCESS: Lead "${data?.business_name || primaryName}" (ID: ${data?.id}) has been added to the AlphaClone CRM and is now visible in your Leads pipeline. I have initialized the pursuit strategy for this lead.`,
               },
             ],
           };
@@ -5572,6 +5641,26 @@ Return ONLY a JSON array of 60 objects:
           const systemKey = name.replace('nexus_', '');
           const nexus = new AlphaNexus(tenant_id);
           const response = await nexus.executeSystemAction(systemKey, {});
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
+        case 'nexus_strategic_orchestrator': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { objective } = a;
+          if (!objective) throw new Error('Strategic objective is required for orchestration.');
+          const nexus = new AlphaNexus(tenant_id);
+          const response = await nexus.strategicOrchestrator(objective);
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
+          break;
+        }
+
+        case 'generate_market_authority_report': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const nexus = new AlphaNexus(tenant_id);
+          const response = await nexus.generateMarketAuthorityReport();
           result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
           break;
         }

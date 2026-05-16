@@ -119,5 +119,53 @@ export const facebookService = {
         }
 
         return result;
+    },
+
+    /**
+     * Publish a post to a Facebook Page (supports text, images, and videos)
+     */
+    async publishPost(tenantId: string, pageId: string, message: string, mediaUrl?: string, mediaType: 'image' | 'video' = 'image') {
+        const supabase = createSupabaseAdminClient();
+        const integration = await this.validateAndRefreshIntegration(tenantId, pageId);
+
+        if (!integration.page_access_token) {
+            throw new Error('Missing page access token. Please reconnect Facebook.');
+        }
+
+        let endpoint = `https://graph.facebook.com/v19.0/${pageId}/feed`;
+        let body: any = { message, access_token: integration.page_access_token };
+
+        if (mediaUrl) {
+            if (mediaType === 'video') {
+                endpoint = `https://graph.facebook.com/v19.0/${pageId}/videos`;
+                body = {
+                    description: message,
+                    file_url: mediaUrl,
+                    access_token: integration.page_access_token
+                };
+            } else {
+                endpoint = `https://graph.facebook.com/v19.0/${pageId}/photos`;
+                body = {
+                    message,
+                    url: mediaUrl,
+                    access_token: integration.page_access_token
+                };
+            }
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Facebook Publish API error:', result);
+            throw new Error(result.error?.message || 'Failed to publish to Facebook');
+        }
+
+        return result;
     }
 };

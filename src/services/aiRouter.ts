@@ -63,7 +63,8 @@ function normalizeXaiModel(model?: string): string {
 const GROK_CONVERSATION_BASE = `You are a concise, expert assistant for business operators.
 - Answer directly; ask at most one clarifying question only when a critical detail is missing.
 - Prefer structured bullets for multi-step answers; avoid filler and repetition.
-- Do not use emojis. Keep a professional, neutral tone unless the user asks otherwise.`;
+- Do not use emojis. Keep a professional, neutral tone otherwise.
+- Focus on business strategy and outcomes. Avoid technical platform advice unless explicitly requested.`;
 
 function mergeXaiSystemPrompt(systemPrompt?: string): string {
   if (systemPrompt?.trim()) {
