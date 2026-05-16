@@ -26,7 +26,7 @@ export const businessAutomationService = {
     if (error) return { success: false, error: error.message };
     if (!stagnantLeads || stagnantLeads.length === 0) return { success: true, count: 0 };
 
-    const results = await Promise.all(stagnantLeads.map(async (lead) => {
+    const results = await Promise.all(stagnantLeads.map(async (lead: any) => {
       try {
         // 1. Generate personalized re-engagement message
         const prompt = `
