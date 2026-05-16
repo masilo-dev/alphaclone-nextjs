@@ -24,7 +24,7 @@ export const firecrawlService = {
           lang: 'en',
           location: 'United States', // Can be customized
           scrapeOptions: {
-            formats: ['json'],
+            formats: ['markdown'],
             // Extract structured data if possible
           }
         }),
@@ -75,7 +75,7 @@ export const firecrawlService = {
         },
         body: JSON.stringify({
           url: url,
-          formats: ['json'],
+          formats: ['extract'],
           extract: {
             schema: {
               type: 'object',
