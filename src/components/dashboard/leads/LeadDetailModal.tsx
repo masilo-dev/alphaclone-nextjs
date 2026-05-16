@@ -698,6 +698,21 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                             Research
                         </Button>
 
+                        {lead.status !== 'converted' && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    const name = window.prompt('Enter Deal Name:', lead.businessName);
+                                    if (name) handleConvert(name);
+                                }}
+                                className="bg-amber-600 hover:bg-amber-500 shadow-amber-500/10 border-amber-500/20"
+                            >
+                                <Zap className="w-4 h-4 mr-2" />
+                                Convert
+                            </Button>
+                        )}
+
                         <Dropdown
                             trigger={
                                 <Button variant="outline" size="sm" className="px-2">

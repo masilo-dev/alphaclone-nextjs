@@ -100,6 +100,7 @@ const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'))
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
 const PnLStatement = React.lazy(() => import('./accounting/PnLStatement'));
+const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/business/BusinessPerformanceDashboard'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
@@ -1155,6 +1156,13 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div data-tour="analytics">
               <AnalyticsTab />
             </div>
+          </React.Suspense>
+        );
+
+      case '/dashboard/performance':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <BusinessPerformanceDashboard />
           </React.Suspense>
         );
 

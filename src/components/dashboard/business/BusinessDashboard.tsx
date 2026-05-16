@@ -69,6 +69,7 @@ const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const ZohoMailView = React.lazy(() => import('../zoho/ZohoMailView'));
 const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
+const BusinessPerformanceDashboard = React.lazy(() => import('./BusinessPerformanceDashboard'));
 
 
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
@@ -341,6 +342,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <ReportsPage user={user} />
                     </React.Suspense>
                 );
+            case '/dashboard/performance':
+                return (
+                    <React.Suspense fallback={<TableSkeleton />}>
+                        <BusinessPerformanceDashboard />
+                    </React.Suspense>
+                );
             case '/dashboard/business/settings':
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
@@ -575,6 +582,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/calendar': return t('Calendar');
             case '/dashboard/business/billing': return t('Billing');
             case '/dashboard/business/reports': return t('Analytics & Reports');
+            case '/dashboard/performance': return t('Business OS Performance');
             case '/dashboard/business/settings': return t('Settings');
             case '/dashboard/business/contracts': return t('Contracts');
             case '/dashboard/business/documents': return t('Document Hub');

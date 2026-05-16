@@ -8,6 +8,7 @@ import { UnifiedCRMService } from '../../services/crm/UnifiedCRMService';
 import { RefreshCw, Bell, AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Radar, Target } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tenantService } from '../../services/tenancy/TenantService';
+import { AIIntelligencePanel } from './AIIntelligencePanel';
 
 export default function CRMTab({ userId, userRole }: { userId: string; userRole?: string }) {
     const router = useRouter();
@@ -246,42 +247,11 @@ export default function CRMTab({ userId, userRole }: { userId: string; userRole?
                     >
                         MCP Leads
                     </button>
-                    {canManagePipeline && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={handleSync}
-                                disabled={syncing}
-                                className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-white/10 disabled:opacity-50 text-xs sm:text-sm h-10"
-                            >
-                                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                                {syncing ? 'Syncing...' : 'Sync CRM'}
-                            </button>
-                        </>
-                    )}
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3 min-w-0">
-                        <Bell className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" />
-                        <p className="text-sm text-slate-200 leading-snug">{compactNotification}</p>
-                    </div>
-                    <div className="flex items-center justify-between gap-3 sm:gap-4 sm:justify-end">
-                        <div className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-400">Open deals</p>
-                            <p className="text-lg font-semibold text-white">{totalOpenDeals}</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => router.push('/dashboard/deals')}
-                            className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200"
-                        >
-                            Open deals
-                        </button>
-                    </div>
-                </div>
+            <div className="mb-6">
+                <AIIntelligencePanel moduleKey="crm" title="CRM Intelligence" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">

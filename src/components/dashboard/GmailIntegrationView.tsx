@@ -14,11 +14,15 @@ import {
     MoreVertical,
     CheckCircle2,
     Clock,
-    User as UserIcon
+    User as UserIcon,
+    Sparkles,
+    BrainCircuit,
+    Wand2
 } from 'lucide-react';
 import { EmailBody } from '../common/EmailBody';
 import { Button, Badge } from '../ui/UIComponents';
 import { gmailService, GmailMessage, EmailCategory } from '../../services/gmailService';
+import { UnifiedEmailService } from '../../services/email/UnifiedEmailService';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -52,6 +56,8 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
     const [isSending, setIsSending] = useState(false);
     const [activeLabel, setActiveLabel] = useState('INBOX');
     const [categoryFilter, setCategoryFilter] = useState<EmailCategory | 'all'>('all');
+    const [threadSummary, setThreadSummary] = useState<string | null>(null);
+    const [isSummarizing, setIsSummarizing] = useState(false);
 
     // Simplified content cleaner for "Coming Soon" phase
     const cleanEmailBody = (html?: string) => {
@@ -88,11 +94,52 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
         try {
             const messages = await gmailService.getThread(userId, threadId);
             setThreadMessages(messages);
+            setThreadSummary(null);
+            
+            // Automatically trigger summary for long threads
+            if (messages.length >= 2) {
+                handleSummarize(threadId, messages);
+            }
         } catch (err: any) {
             console.error('Failed to fetch thread messages:', err);
             toast.error('Failed to load conversation');
         } finally {
             setIsThreadLoading(false);
+        }
+    };
+
+    const handleSummarize = async (threadId: string, messages: any[]) => {
+        setIsSummarizing(true);
+        try {
+            const res = await UnifiedEmailService.summarizeThread(threadId, messages);
+            if (res.success) {
+                setThreadSummary(res.summary);
+            }
+        } catch (err) {
+            console.error('Summarization failed:', err);
+        } finally {
+            setIsSummarizing(false);
+        }
+    };
+
+    const handleAIDraft = async () => {
+        if (!selectedThreadId) return;
+        setIsSending(true);
+        const toastId = toast.loading('AI drafting response...', { id: 'ai-draft' });
+        try {
+            const lastMsg = threadMessages[threadMessages.length - 1];
+            const context = threadSummary ? `Summary: ${threadSummary}` : `Subject: ${lastMsg.subject}`;
+            const res = await UnifiedEmailService.generateDraft(lastMsg.id, 'gmail', context);
+            if (res.success) {
+                setReplyBody(res.result);
+                toast.success('AI draft generated', { id: 'ai-draft' });
+            } else {
+                toast.error('AI draft failed', { id: 'ai-draft' });
+            }
+        } catch (err) {
+            toast.error('AI draft failed', { id: 'ai-draft' });
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -254,11 +301,47 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handleSummarize(selectedThreadId, threadMessages)}
+                                    isLoading={isSummarizing}
+                                    className="border-violet-500/30 text-violet-400 hover:bg-violet-500/10 h-8"
+                                >
+                                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                    Summarize
+                                </Button>
                                 <button className="p-2 text-slate-400 hover:text-white transition-colors"><Archive className="w-4 h-4" /></button>
                                 <button className="p-2 text-slate-400 hover:text-white transition-colors"><Trash2 className="w-4 h-4" /></button>
                                 <button className="p-2 text-slate-400 hover:text-white transition-colors"><MoreVertical className="w-4 h-4" /></button>
                             </div>
                         </div>
+
+                        {/* AI Summary Banner */}
+                        <AnimatePresence>
+                            {threadSummary && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="p-6 bg-violet-600/10 border-b border-violet-500/20 relative">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-violet-600/20 flex items-center justify-center shrink-0 border border-violet-500/30">
+                                                <BrainCircuit className="w-5 h-5 text-violet-400" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-xs font-black text-violet-400 uppercase tracking-widest mb-2">Nexus Thread Intelligence</h4>
+                                                <p className="text-sm text-slate-200 leading-relaxed italic">
+                                                    "{threadSummary}"
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Messages List - Increased padding and removed recessed backgrounds */}
                         <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-12 custom-scrollbar bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/10">
@@ -314,7 +397,16 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                                 />
                                 <div className="flex items-center justify-between p-2 border-t border-slate-900 mt-2">
                                     <div className="flex items-center gap-2">
-                                        <Button variant="secondary" size="sm" className="opacity-50 hover:opacity-100">AI Draft</Button>
+                                        <Button 
+                                            variant="secondary" 
+                                            size="sm" 
+                                            onClick={handleAIDraft}
+                                            disabled={isSending}
+                                            className="bg-violet-600/20 border-violet-600/30 text-violet-400 hover:bg-violet-600/30 font-bold"
+                                        >
+                                            <Wand2 className="w-3.5 h-3.5 mr-2" />
+                                            AI Draft
+                                        </Button>
                                     </div>
                                     <Button
                                         onClick={handleSendReply}

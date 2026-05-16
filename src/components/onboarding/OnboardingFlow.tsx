@@ -35,54 +35,59 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
     const steps: OnboardingStep[] = [
         {
             id: 'welcome',
-            title: `Your unfair advantage just loaded, ${user.name}!`,
-            description: 'We\'re about to make you dangerous. Takes 60 seconds.',
-            icon: <CheckCircle className="w-12 h-12 text-teal-400" />,
+            title: 'Mission Control Initialized.',
+            description: 'Your unfair advantage is ready to deploy. Takes 60 seconds.',
+            icon: <CheckCircle className="w-16 h-16 text-teal-400" />,
         },
         {
             id: 'profile',
-            title: 'Let\'s get you dangerous. Takes 60 seconds.',
-            description: 'Add your photo and contact info. First impressions are everything.',
-            icon: <CheckCircle className="w-12 h-12 text-blue-400" />,
+            title: 'Identity Secure.',
+            description: 'Upload your photo so we know who is in charge here.',
+            icon: <CheckCircle className="w-16 h-16 text-blue-400" />,
             action: {
-                label: 'Go to Settings',
+                label: 'Polish Profile',
                 onClick: () => {
-                    handleComplete();
-                    router.push('/dashboard/settings');
-                    markStepComplete();
+                    router.push('/dashboard/settings?tab=profile');
+                },
+            },
+        },
+        {
+            id: 'integrations',
+            title: 'Connect Your Stack.',
+            description: 'Hook up Gmail and Stripe to automate the daily grind.',
+            icon: <CheckCircle className="w-16 h-16 text-orange-400" />,
+            action: {
+                label: 'Link Accounts',
+                onClick: () => {
+                    router.push('/dashboard/settings?tab=integrations');
                 },
             },
         },
         {
             id: 'tour',
-            title: 'Take a Product Tour',
-            description: 'Let us show you around. You can skip this and explore on your own if you prefer.',
-            icon: <CheckCircle className="w-12 h-12 text-purple-400" />,
+            title: 'The Grand Tour.',
+            description: '60 seconds to master your new Business OS.',
+            icon: <CheckCircle className="w-16 h-16 text-purple-400" />,
             action: {
-                label: 'Start Tour',
+                label: 'Show Me',
                 onClick: () => {
                     setShowTour(true);
-                    markStepComplete();
                 },
             },
         },
         {
-            id: 'first-project',
-            title: user.role === 'client' ? 'Your Dashboard Awaits' : 'Ready to Get Started',
-            description: user.role === 'client'
-                ? 'Your dashboard is ready. You can explore projects, messages, and more.'
-                : 'Everything is set up. Start managing projects and clients from your dashboard.',
-            icon: <CheckCircle className="w-12 h-12 text-green-400" />,
+            id: 'finish',
+            title: 'Let\'s Get Dangerous.',
+            description: 'Execution starts now. Go get them.',
+            icon: <CheckCircle className="w-16 h-16 text-green-400" />,
             action: {
-                label: 'Go to Dashboard',
+                label: 'Ignite Dashboard',
                 onClick: () => {
                     handleComplete();
-                    router.push('/dashboard');
-                    markStepComplete();
                 },
             },
         },
-    ].filter(step => !shouldSkipStep(step.id));
+    ];
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
@@ -139,10 +144,10 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                         </div>
 
                         <div>
-                            <h3 className="text-2xl font-bold text-white mb-3">
-                                {getPunchyTitle(currentStepData?.id) || currentStepData?.title}
+                            <h3 className="text-3xl font-black text-white mb-4 tracking-tight">
+                                {currentStepData?.title}
                             </h3>
-                            <p className="text-slate-400 text-lg max-w-md mx-auto">
+                            <p className="text-slate-400 text-xl max-w-md mx-auto leading-relaxed">
                                 {currentStepData?.description}
                             </p>
                         </div>
@@ -183,20 +188,21 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                                 <Button
                                     onClick={() => {
                                         currentStepData.action?.onClick();
-                                        handleNext();
+                                        if (currentStepData.id !== 'finish') {
+                                            handleNext();
+                                        }
                                     }}
-                                    className="bg-teal-600 hover:bg-teal-500"
+                                    className="bg-white text-black hover:bg-slate-200 px-8 py-6 text-lg font-black rounded-full"
                                 >
                                     {currentStepData.action?.label}
-                                    <ArrowRight className="w-4 h-4 ml-2" />
+                                    <ArrowRight className="w-5 h-5 ml-2" />
                                 </Button>
                             ) : (
                                 <Button
                                     onClick={handleNext}
-                                    className="bg-teal-600 hover:bg-teal-500"
+                                    className="bg-white text-black hover:bg-slate-200 px-8 py-6 text-lg font-black rounded-full"
                                 >
-                                    {currentStep === steps.length - 1 ? 'Let\'s get dangerous' : 'Keep going →'}
-                                    <ArrowRight className="w-4 h-4 ml-2" />
+                                    {currentStep === steps.length - 1 ? 'Get Started' : 'Next →'}
                                 </Button>
                             )}
                         </div>

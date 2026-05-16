@@ -76,7 +76,10 @@ export const businessInvoiceService = {
         try {
             const { data, error } = await supabase
                 .from('business_invoices')
-                .select('*')
+                .select(`
+                    *,
+                    invoice_line_items(*)
+                `)
                 .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
@@ -96,7 +99,12 @@ export const businessInvoiceService = {
                 tax: parseFloat(inv.tax || 0),
                 discountAmount: parseFloat(inv.discount_amount || 0),
                 total: parseFloat(inv.total || 0),
-                lineItems: inv.line_items || [],
+                lineItems: (inv.invoice_line_items || []).map((li: any) => ({
+                    description: li.description,
+                    quantity: parseFloat(li.quantity),
+                    rate: parseFloat(li.unit_price),
+                    amount: parseFloat(li.amount)
+                })),
                 notes: inv.notes,
                 isPublic: inv.is_public || false,
                 senderName: inv.sender_name,
@@ -199,6 +207,27 @@ export const businessInvoiceService = {
             }
 
             const data = finalData;
+
+            // NEW: Insert line items into relational table
+            if (invoice.lineItems && invoice.lineItems.length > 0) {
+                const lineItemsPayload = invoice.lineItems.map(item => ({
+                    invoice_id: data.id,
+                    tenant_id: tenantId,
+                    description: item.description,
+                    quantity: item.quantity,
+                    unit_price: item.rate
+                }));
+
+                const { error: lineItemsError } = await supabase
+                    .from('invoice_line_items')
+                    .insert(lineItemsPayload);
+
+                if (lineItemsError) {
+                    console.error('Error inserting relational line items:', lineItemsError);
+                    // We don't throw here to avoid failing the whole invoice creation,
+                    // but ideally we should use a transaction.
+                }
+            }
 
             const newInvoice: BusinessInvoice = {
                 id: data.id,
@@ -320,6 +349,34 @@ export const businessInvoiceService = {
                 .eq('id', invoiceId);
 
             if (error) throw error;
+
+            // NEW: Update relational line items
+            if (updates.lineItems !== undefined) {
+                // Delete existing items
+                await supabase
+                    .from('invoice_line_items')
+                    .delete()
+                    .eq('invoice_id', invoiceId);
+
+                // Insert new ones
+                if (updates.lineItems.length > 0) {
+                    const lineItemsPayload = updates.lineItems.map(item => ({
+                        invoice_id: invoiceId,
+                        tenant_id: currentInvoice.tenant_id,
+                        description: item.description,
+                        quantity: item.quantity,
+                        unit_price: item.rate
+                    }));
+
+                    const { error: lineItemsError } = await supabase
+                        .from('invoice_line_items')
+                        .insert(lineItemsPayload);
+
+                    if (lineItemsError) {
+                        console.error('Error updating relational line items:', lineItemsError);
+                    }
+                }
+            }
 
             // Log activity with diff
             const { data: { user } } = await supabase.auth.getUser();

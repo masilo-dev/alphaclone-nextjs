@@ -9,6 +9,8 @@ import { GmailIntegrationView } from './GmailIntegrationView';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/UIComponents';
 import { toast } from 'react-hot-toast';
+import { UnifiedEmailService, UnifiedMessage } from '../../services/email/UnifiedEmailService';
+import { AIIntelligencePanel } from './AIIntelligencePanel';
 
 interface MailTabProps {
     user: any;
@@ -20,28 +22,24 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
     const [isGmailIntegrated, setIsGmailIntegrated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [messages, setMessages] = useState<UnifiedMessage[]>([]);
+    const [providers, setProviders] = useState<any>({ gmail: false, zoho: false });
 
     const checkStatus = async () => {
         if (!user?.id) return;
         setIsLoading(true);
         try {
-            // Check Gmail
-            let connectedGmail = false;
-            try {
-                const { data: integrations } = await supabase
-                    .from('integrations')
-                    .select('type')
-                    .eq('user_id', user.id);
-                connectedGmail = integrations?.some((i: any) => i.type === 'gmail') || false;
-            } catch (gErr) {
-                console.error('Failed to check Gmail integration:', gErr);
-            }
-            setIsGmailIntegrated(connectedGmail);
+            const connectedProviders = await UnifiedEmailService.getConnectedProviders(user.id);
+            setProviders(connectedProviders);
+            setIsGmailIntegrated(connectedProviders.gmail);
 
-            if (connectedGmail && searchParams?.get('gmail') === 'connected') {
-                toast.success('Gmail connected successfully.', {
-                    duration: 5000,
-                });
+            if (connectedProviders.gmail) {
+                const msgs = await UnifiedEmailService.listMessages(user.id);
+                setMessages(msgs);
+            }
+
+            if (connectedProviders.gmail && searchParams?.get('gmail') === 'connected') {
+                toast.success('Gmail connected successfully.');
             }
         } catch (err) {
             console.error('Failed to check integrations:', err);
@@ -87,28 +85,41 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                         key="integrated-gmail"
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="h-[calc(100vh-120px)]"
+                        className="space-y-6"
                     >
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">Gmail Integration</h2>
-                            <Button 
-                                onClick={async () => {
-                                    toast.loading('Nexus: Triaging inbox...', { id: 'nexus-mail' });
-                                    const res = await fetch('/api/social/command-center', { 
-                                        method: 'POST', 
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'email_triage' })
-                                    });
-                                    const data = await res.json();
-                                    toast.success(data.result.message, { id: 'nexus-mail' });
-                                }}
-                                className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5 h-10 px-4"
-                            >
-                                <Zap className="w-4 h-4 mr-2" />
-                                Nexus Triage
-                            </Button>
+                        <AIIntelligencePanel moduleKey="emailInbox" title="Email Intelligence" />
+                        
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-white">Inbox Activity</h2>
+                            <div className="flex gap-2">
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => checkStatus()}
+                                    className="h-10 px-4"
+                                >
+                                    Refresh
+                                </Button>
+                                <Button 
+                                    onClick={async () => {
+                                        toast.loading('AI: Triaging inbox...', { id: 'nexus-mail' });
+                                        const res = await UnifiedEmailService.triageInbox(currentTenant?.id || '');
+                                        if (res.success) {
+                                            toast.success(res.result?.message || 'Inbox triaged', { id: 'nexus-mail' });
+                                        } else {
+                                            toast.error(res.error || 'Triage failed', { id: 'nexus-mail' });
+                                        }
+                                    }}
+                                    className="bg-violet-600 hover:bg-violet-500 text-white font-bold h-10 px-4"
+                                >
+                                    <Zap className="w-4 h-4 mr-2" />
+                                    AI Triage
+                                </Button>
+                            </div>
                         </div>
-                        <GmailIntegrationView userId={user.id} />
+
+                        <div className="bg-slate-900/50 border border-white/10 rounded-[2rem] overflow-hidden">
+                            <GmailIntegrationView userId={user.id} />
+                        </div>
                     </motion.div>
                 ) : (
                     <motion.div
