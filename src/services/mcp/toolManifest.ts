@@ -6,14 +6,14 @@ export const MCP_TOOLS = [
   // ── CRM & Clients ──────────────────────────────────────────────────
   {
     name: 'get_clients',
-    description: 'Fetch CRM clients for a tenant. Use to look up existing clients or filter by status.',
+    description: 'Access High-Value Client Roster: Retrieve comprehensive client profiles, business account data, and relationship history for strategic management.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: {
           type: 'string',
           description:
-            'Business Account Context. Omit when your connection already includes the workspace through its access key.',
+            'AlphaClone Workspace ID. Identifies the secure business environment for this operation.',
         },
         status: { type: 'string', description: 'lead | prospect | active | churned' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
@@ -28,7 +28,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string' },
         email: { type: 'string' },
         phone: { type: 'string' },
@@ -54,7 +54,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string', description: 'Reference from get_clients or search_clients' },
       },
       required: ['client_id'],
@@ -66,7 +66,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         query: { type: 'string', description: 'Free-text search query' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
       },
@@ -79,7 +79,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string', description: 'Reference from get_clients/get_client_by_id' },
         search_email: { type: 'string', description: 'Smart Lookup: Find client by email if client_id is unknown.' },
         search_name: { type: 'string', description: 'Smart Lookup: Find client by name if client_id is unknown.' },
@@ -104,7 +104,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
         offset: { type: 'number', description: 'Pagination offset (default 0)' },
       },
@@ -117,7 +117,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         query: { type: 'string', description: 'Free-text search query' },
         limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
       },
@@ -131,7 +131,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number', description: 'Max threads to fetch (default 20)' },
       },
       required: [],
@@ -143,7 +143,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         thread_id: { type: 'string', description: 'The thread identifier from gmail_list_threads' },
       },
       required: ['thread_id'],
@@ -155,7 +155,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         to: { type: 'string', description: 'Recipient email address' },
         subject: { type: 'string', description: 'Email subject' },
         body: { type: 'string', description: 'HTML or text body of the email' },
@@ -170,11 +170,11 @@ export const MCP_TOOLS = [
   // ── Leads Pipeline ─────────────────────────────────────────────────
   {
     name: 'get_leads',
-    description: 'Fetch leads from the sales pipeline. Use to review, qualify, or prioritize leads.',
+    description: 'Retrieve High-Intent Pipeline Intelligence: Access the latest prospective business opportunities and lead scoring signals from the growth engine.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
         stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
         limit: { type: 'number', description: 'Max records (default 20, max 100)' },
@@ -190,7 +190,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         dry_run: { type: 'boolean', description: 'If true, only report changes without writing updates (default true).' },
         default_country_code: { type: 'string', description: 'Default country code used for local 10-digit numbers (default 1).' },
         limit: { type: 'number', description: 'Max rows scanned per table (default 5000, max 20000).' },
@@ -209,7 +209,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         playbook_id: { type: 'string' },
         inputs: { type: 'object' },
         auto_high_risk: { type: 'boolean', description: 'If true, high-risk steps execute automatically.' },
@@ -224,7 +224,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         run_id: { type: 'string', description: 'Execution reference' },
       },
       required: ['run_id'],
@@ -236,7 +236,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         run_id: { type: 'string' },
         step_id: { type: 'string' },
         auto_high_risk: { type: 'boolean' },
@@ -250,7 +250,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         run_id: { type: 'string' },
       },
       required: ['run_id'],
@@ -262,7 +262,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         lead_id: { type: 'string' },
       },
       required: ['lead_id'],
@@ -274,7 +274,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         log_id: { type: 'string' },
         tracking_id: { type: 'string' },
       },
@@ -287,7 +287,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         social_post_id: { type: 'string' },
       },
       required: ['social_post_id'],
@@ -299,7 +299,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string' },
       },
       required: ['invoice_id'],
@@ -311,7 +311,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -322,7 +322,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number' },
       },
       required: [],
@@ -334,7 +334,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         hours: { type: 'number' },
       },
       required: [],
@@ -346,7 +346,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number' },
       },
       required: [],
@@ -358,7 +358,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         business_name: { type: 'string' },
         contact_name: { type: 'string', description: 'Full name of the contact' },
         email: { type: 'string' },
@@ -377,7 +377,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         lead_id: { type: 'string', description: 'Reference of the lead to update' },
         status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
         stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
@@ -392,7 +392,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         lead_id: { type: 'string', description: 'Reference of the lead to update' },
         search_email: { type: 'string', description: 'Smart Lookup: Find lead by email if lead_id is unknown.' },
         search_business_name: { type: 'string', description: 'Smart Lookup: Find lead by business name if lead_id is unknown.' },
@@ -416,7 +416,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost' },
         limit: { type: 'number' },
       },
@@ -429,7 +429,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string', description: 'Deal name/title' },
         value: { type: 'number', description: 'Estimated deal value in USD' },
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
@@ -444,7 +444,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         deal_id: { type: 'string', description: 'Reference from get_deals' },
         name: { type: 'string' },
         value: { type: 'number' },
@@ -462,7 +462,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string', description: 'Reference from get_clients' },
         issue_date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
         due_date: { type: 'string', description: 'YYYY-MM-DD' },
@@ -481,7 +481,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         status: { type: 'string', description: 'draft | sent | paid | overdue | cancelled | void' },
         client_id: { type: 'string', description: 'Optional client reference' },
         limit: { type: 'number', description: 'Max records (default 20, max 100)' },
@@ -495,7 +495,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string', description: 'Reference from create_invoice or get_invoices' },
         due_date: { type: 'string' },
         subtotal: { type: 'number' },
@@ -514,7 +514,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string', description: 'Reference from create_invoice or invoice list' },
         recipient_email: { type: 'string', description: 'Optional override email. Defaults to the email on the client record.' },
         provider: { type: 'string', enum: ['resend', 'sendgrid', 'brevo', 'zoho', 'gmail'], description: 'Optional: force a specific email provider. Defaults to the tenant-configured provider.' },
@@ -524,11 +524,11 @@ export const MCP_TOOLS = [
   },
   {
     name: 'get_finance_snapshot',
-    description: 'Return a finance operating snapshot with cash, open bills, unreconciled transactions, pending contract approvals, and active templates.',
+    description: 'Generate Executive Fiscal Health Briefing: A comprehensive reconciliation of cash position, revenue momentum, and pending fiscal obligations.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -539,7 +539,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         period: { type: 'string', enum: ['monthly', 'quarterly', 'yearly'], description: 'Default: monthly' },
         from_date: { type: 'string', description: 'Optional start date (YYYY-MM-DD)' },
         to_date: { type: 'string', description: 'Optional end date (YYYY-MM-DD)' },
@@ -549,22 +549,22 @@ export const MCP_TOOLS = [
   },
   {
     name: 'get_business_snapshot',
-    description: 'The "Chief of Staff" briefing. Returns everything at once — leads, deals, invoices, tasks, posts — in one shot. Use this at session start to get the full state of the business or for a strategic deep-dive.',
+    description: 'Autonomous Chief of Staff Briefing: Synthesize the current operational state across pipeline, fiscal health, and strategic execution into a single executive dashboard.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'get_strategic_plan',
-    description: 'Analyze the business snapshot and generate a strategic theme, session goals, and prioritized next steps. Use this to shift from reactive tasks to strategic growth.',
+    description: 'Autonomous Strategic Orchestrator: Analyze the organizational snapshot to derive a mission-critical theme, session objectives, and a prioritized growth roadmap.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -575,7 +575,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -586,7 +586,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -597,7 +597,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -608,7 +608,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string' },
         account_number_last4: { type: 'string' },
         bank_name: { type: 'string' },
@@ -628,7 +628,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number', description: 'Max records (default 25)' },
       },
       required: [],
@@ -640,7 +640,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         bank_account_id: { type: 'string', description: 'Reference from get_bank_accounts' },
         statement_start_date: { type: 'string', description: 'YYYY-MM-DD' },
         statement_end_date: { type: 'string', description: 'YYYY-MM-DD' },
@@ -659,7 +659,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         status: { type: 'string', description: 'draft | open | partial | paid | void | overdue' },
         limit: { type: 'number', description: 'Max records (default 100)' },
       },
@@ -672,7 +672,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         vendor_id: { type: 'string' },
         company_id: { type: 'string' },
         reference: { type: 'string' },
@@ -695,7 +695,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -706,7 +706,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string' },
         category: { type: 'string' },
         description: { type: 'string' },
@@ -727,7 +727,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         contract_id: { type: 'string', description: 'Contract reference' },
       },
       required: ['contract_id'],
@@ -739,7 +739,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         contract_id: { type: 'string', description: 'Contract reference' },
         content: { type: 'string' },
         change_summary: { type: 'string' },
@@ -755,7 +755,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         contract_id: { type: 'string', description: 'Optional contract reference' },
       },
       required: [],
@@ -767,7 +767,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         contract_id: { type: 'string', description: 'Contract reference' },
         contract_version_id: { type: 'string', description: 'Optional contract version reference' },
         approver_id: { type: 'string', description: 'Optional approver profile reference' },
@@ -784,7 +784,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         approval_id: { type: 'string', description: 'Approval reference from get_contract_approvals' },
         status: { type: 'string', description: 'approved | rejected | cancelled' },
         decision_note: { type: 'string' },
@@ -798,7 +798,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string', description: 'Reference of the PAID invoice' },
         recipient_email: { type: 'string', description: 'Optional override email for recipient' },
         provider: { type: 'string', enum: ['brevo', 'resend', 'zoho', 'sendgrid'], description: 'Preferred email provider for this send' }
@@ -812,7 +812,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string', description: 'Internal name of the campaign' },
         subject: { type: 'string', description: 'Subject line of the email' },
         body_html: { type: 'string', description: 'Full HTML body of the email. You may use {{name}}, {{firstName}}, {{lastName}}, {{company}}, {{fromName}} variables.' },
@@ -835,15 +835,15 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_batch_outreach',
-    description: 'Autonomous Outreach: Generates personalized AI messages and sends them to a specific batch of leads or clients in parallel (max 20).',
+    description: 'Autonomous Strategic Outreach: Orchestrate personalized high-fidelity communications to a cohort of leads or clients using AI-driven relationship intelligence.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         lead_ids: { type: 'array', items: { type: 'string' }, description: 'References of leads from get_leads' },
         client_ids: { type: 'array', items: { type: 'string' }, description: 'References of clients from get_clients' },
         tone: { type: 'string', description: 'professional | friendly | direct | creative' },
-        custom_context: { type: 'string', description: 'Specific instructions for personalization (e.g. "Mention the new product feature")' },
+        custom_context: { type: 'string', description: 'Specific strategic instructions for relationship personalization.' },
         delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' }
       },
       required: [],
@@ -855,7 +855,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         recipient_id: { type: 'string', description: 'Optional user reference recipient' },
         group_id: { type: 'string', description: 'Optional group/thread reference' },
         text: { type: 'string' },
@@ -871,7 +871,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         file_name: { type: 'string', description: 'Original file name with extension' },
         mime_type: { type: 'string', description: 'MIME type such as image/png or video/mp4' },
         file_base64: { type: 'string', description: 'File data encoded as string (data:*;base64,...)' },
@@ -887,7 +887,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         filename: { type: 'string', description: 'Original file name with extension' },
         mime_type: { type: 'string', description: 'MIME type such as application/pdf' },
         file_base64: { type: 'string', description: 'File data encoded as string (data:*;base64,...)' },
@@ -905,18 +905,18 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'create_social_post',
-    description: 'Create and optionally publish a social post. Facebook supports immediate publish; LinkedIn, Instagram, X, and TikTok are stored/scheduled for downstream publishing.',
+    description: 'Autonomous Brand Distribution: Deploy professional content across the global social matrix (Facebook, LinkedIn, Instagram, X, TikTok).',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin | instagram | x | tiktok (default: facebook)' },
         page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
         caption: { type: 'string' },
@@ -940,7 +940,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin | instagram | x | tiktok (default: facebook)' },
         page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
         caption: { type: 'string' },
@@ -960,7 +960,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -971,7 +971,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         text: { type: 'string', description: 'Post text content' },
         post_as: { type: 'string', description: 'personal | company | all_pages (default: personal)' },
         media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs for scheduled publishing' },
@@ -993,7 +993,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number' },
       },
       required: [],
@@ -1005,7 +1005,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
         linkedin_organization_id: { type: 'string', description: 'Optional organization ID for organization analytics lookup' },
       },
@@ -1018,7 +1018,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_urn: { type: 'string', description: 'Optional specific LinkedIn post URN to scan' },
         limit_posts: { type: 'number', description: 'How many recent LinkedIn posts to scan (default 10, max 30)' },
         limit_comments_per_post: { type: 'number', description: 'How many comments per post to inspect (default 30, max 100)' },
@@ -1033,7 +1033,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
         text: { type: 'string' },
       },
@@ -1046,7 +1046,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
         reaction_type: { type: 'string', description: 'LIKE | PRAISE | MAYBE | EMPATHY | INTEREST | APPRECIATION' },
       },
@@ -1059,7 +1059,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string', description: 'Event title' },
         description: { type: 'string' },
         start_time: { type: 'string', description: 'ISO datetime' },
@@ -1078,7 +1078,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -1089,7 +1089,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         ad_account_id: { type: 'string', description: 'The LinkedIn ad account URN or ID' },
         status: { type: 'string', description: 'ACTIVE | PAUSED | ARCHIVED | CANCELED' },
       },
@@ -1102,7 +1102,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -1110,12 +1110,11 @@ export const MCP_TOOLS = [
   // ── Projects ───────────────────────────────────────────────────────
   {
     name: 'get_projects',
-    description:
-      'List business projects for the workspace. tenant_id must be the workspace reference from your connection (never a name or slug).',
+    description: 'Access Strategic Project Portfolio: Retrieve the status, progress, and financial standing of all active business initiatives.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         status: { type: 'string' },
       },
       required: [],
@@ -1128,7 +1127,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string', description: 'Project name/title' },
         description: { type: 'string', description: 'Optional project brief' },
         status: { type: 'string', description: 'planning | active | on_hold | completed | cancelled' },
@@ -1144,7 +1143,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         project_id: { type: 'string', description: 'Reference from get_projects' },
         status: { type: 'string' },
         notes: { type: 'string' },
@@ -1159,7 +1158,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         project_id: {
           type: 'string',
           description: 'Optional. Reference of the linked business project (same as tasks.related_to_project).',
@@ -1184,7 +1183,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         title: { type: 'string' },
         description: { type: 'string' },
         project_id: {
@@ -1204,7 +1203,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         task_id: { type: 'string', description: 'Task reference from get_tasks' },
         title: { type: 'string' },
         description: { type: 'string' },
@@ -1223,7 +1222,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         task_id: { type: 'string', description: 'Task reference from get_tasks' },
         note: { type: 'string', description: 'Plain text note to append' },
       },
@@ -1237,7 +1236,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         status: { type: 'string', description: 'pending | approved | rejected' },
         from_date: { type: 'string', description: 'YYYY-MM-DD' },
         to_date: { type: 'string', description: 'YYYY-MM-DD' },
@@ -1251,7 +1250,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         description: { type: 'string', description: 'What was purchased / vendor name' },
         amount: { type: 'number', description: 'Amount in USD' },
         category: { type: 'string', description: 'Office Supplies | Travel | Software | Marketing | Meals | Utilities | Other' },
@@ -1266,7 +1265,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         raw_data: { type: 'string', description: 'Raw text from a receipt, email, or user description of a purchase.' },
       },
       required: ['raw_data'],
@@ -1279,7 +1278,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         period: { type: 'string', description: 'Optional hint: monthly | quarterly | yearly (grouping uses invoice created_at month).' },
       },
       required: [],
@@ -1292,7 +1291,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         contract_type: { type: 'string', description: 'NDA | MSA | SOW | Service Agreement | Consulting Agreement | Freelance Contract' },
         client_name: { type: 'string', description: 'Name of the client or counterparty' },
         key_terms: { type: 'string', description: 'Describe the scope, payment terms, duration, deliverables, and any special conditions' },
@@ -1306,7 +1305,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string', description: 'Optional reference of the client from get_clients' },
         title: { type: 'string', description: 'Document Title' },
         content: { type: 'string', description: 'The full Markdown or HTML content of the contract' },
@@ -1347,7 +1346,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number' },
       },
       required: [],
@@ -1359,7 +1358,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string', description: 'Client reference from get_clients.' },
         client_email: { type: 'string', description: 'Optional email fallback when client_id is unknown.' },
         limit: { type: 'number', description: 'Max records (default 50, max 200).' },
@@ -1373,7 +1372,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         user_id: { type: 'string', description: 'Optional user reference. Defaults to connection user.' },
         folder_id: { type: 'string', description: 'Zoho folderId. Omit to return folders.' },
         search_query: { type: 'string', description: 'If provided, perform Zoho mailbox search.' },
@@ -1389,7 +1388,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         user_id: { type: 'string' },
         to: { type: 'string' },
         subject: { type: 'string' },
@@ -1406,7 +1405,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         user_id: { type: 'string' },
         from_date: { type: 'string', description: 'ISO date/datetime lower bound.' },
         to_date: { type: 'string', description: 'ISO date/datetime upper bound.' },
@@ -1420,7 +1419,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string' },
         limit: { type: 'number' },
       },
@@ -1433,7 +1432,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         industry: { type: 'string' },
         location: { type: 'string' },
         sales_stage: { type: 'string' },
@@ -1452,7 +1451,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_id: { type: 'string' },
         metadata: { type: 'object' },
       },
@@ -1465,7 +1464,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         task_id: { type: 'string' },
         depends_on_task_id: { type: 'string' },
       },
@@ -1478,7 +1477,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         task_id: { type: 'string' },
         frequency: { type: 'string', description: 'Daily | Weekly | Monthly | Yearly' },
         interval: { type: 'number' },
@@ -1495,7 +1494,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         project_id: { type: 'string' },
       },
       required: ['project_id'],
@@ -1507,7 +1506,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string' },
       },
       required: ['invoice_id'],
@@ -1519,7 +1518,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string' },
         amount: { type: 'number' },
         paid_at: { type: 'string' },
@@ -1534,7 +1533,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         from_date: { type: 'string' },
         to_date: { type: 'string' },
       },
@@ -1547,7 +1546,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         event_name: { type: 'string' },
         target: { type: 'string', description: 'playbook or webhook target identifier.' },
         config: { type: 'object' },
@@ -1579,7 +1578,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_ids: { type: 'array', items: { type: 'string' } },
         sales_stage: { type: 'string' },
         dry_run: { type: 'boolean' },
@@ -1593,7 +1592,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         tasks: { type: 'array', items: { type: 'object' } },
         dry_run: { type: 'boolean' },
       },
@@ -1606,7 +1605,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         client_ids: { type: 'array', items: { type: 'string' } },
         subject: { type: 'string' },
         html: { type: 'string' },
@@ -1622,7 +1621,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         status: { type: 'string', description: 'draft | sent | accepted | declined' },
       },
       required: [],
@@ -1634,7 +1633,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         name: { type: 'string', description: 'Quote title' },
         contact_id: { type: 'string', description: 'Optional contact/client reference' },
         deal_id: { type: 'string', description: 'Optional deal reference' },
@@ -1653,7 +1652,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         quote_id: { type: 'string', description: 'Reference from get_quotes' },
         name: { type: 'string' },
         status: { type: 'string', description: 'draft | sent | viewed | accepted | rejected | expired | converted' },
@@ -1671,7 +1670,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         message_id: { type: 'string', description: 'Message reference from inbox/history' },
         business_name: { type: 'string', description: 'Optional override business/contact name' },
         source: { type: 'string', description: 'Default Inbound Message' },
@@ -1685,7 +1684,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         deal_id: { type: 'string', description: 'Deal reference from get_deals' },
       },
       required: ['deal_id'],
@@ -1697,7 +1696,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         command: { type: 'string', description: 'Natural language command captured from voice' },
       },
       required: ['command'],
@@ -1710,7 +1709,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         action: { type: 'string', description: 'Short action key, e.g. mcp_note | integration_sync | user_request' },
         entity_type: { type: 'string', description: 'Category, e.g. mcp | lead | integration' },
         entity_id: { type: 'string', description: 'Optional reference of related entity' },
@@ -1729,7 +1728,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         monthly_goal: { type: 'string', description: 'The strategic objective for this month (e.g. "Lead gen for SaaS product")' },
         topics: { type: 'array', items: { type: 'string' }, description: 'Optional list of specific topics to cover. If omitted, the AI will decide based on the goal.' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin (default: both)' }
@@ -1743,7 +1742,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         topic: { type: 'string' },
         image_prompt: { type: 'string', description: 'Visual style for the AI image.' },
         image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
@@ -1760,7 +1759,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number' }
       },
       required: [],
@@ -1772,7 +1771,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         entity_id: { type: 'string', description: 'The reference of the message or thread' },
         platform: { type: 'string', description: 'email | facebook | linkedin' },
         draft_only: { type: 'boolean', description: 'If true, saves as a draft for your review. If false, sends immediately.' }
@@ -1786,7 +1785,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         booking_type_id: { type: 'string' },
         start_time: { type: 'string', description: 'ISO datetime' },
         end_time: { type: 'string', description: 'ISO datetime' },
@@ -1805,7 +1804,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         plan_id: { type: 'string', description: 'starter | pro | enterprise' },
         price_id: { type: 'string' },
         admin_email: { type: 'string' },
@@ -1821,7 +1820,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         event_type: { type: 'string' },
         project_id: { type: 'string' },
         client_id: { type: 'string' },
@@ -1839,7 +1838,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         title: { type: 'string' },
         description: { type: 'string' },
         start_time: { type: 'string', description: 'ISO datetime' },
@@ -1856,7 +1855,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         event_type: { type: 'string' },
         from_time: { type: 'string', description: 'ISO datetime lower bound for start_time' },
         to_time: { type: 'string', description: 'ISO datetime upper bound for start_time' },
@@ -1871,7 +1870,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         document_url: { type: 'string' },
         document_text: { type: 'string' },
         document_type: { type: 'string', description: 'contract | proposal | invoice | nda | other' },
@@ -1885,7 +1884,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         invoice_id: { type: 'string' }
       },
       required: ['invoice_id'],
@@ -1897,7 +1896,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         contract_id: { type: 'string' }
       },
       required: ['contract_id'],
@@ -1909,7 +1908,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         query: { type: 'string' },
         location: { type: 'string' }
       },
@@ -1922,7 +1921,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         lead_id: { type: 'string' }
       },
       required: ['lead_id'],
@@ -1934,7 +1933,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         deal_id: { type: 'string' },
         stage: { type: 'string' }
       },
@@ -1947,7 +1946,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_id: { type: 'string' }
       },
       required: ['post_id'],
@@ -1959,7 +1958,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         campaign_id: { type: 'string' }
       },
       required: ['campaign_id'],
@@ -1971,7 +1970,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         project_id: { type: 'string' }
       },
       required: ['project_id'],
@@ -1983,7 +1982,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         meeting_id: { type: 'string' }
       },
       required: ['meeting_id'],
@@ -1995,7 +1994,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         user_id: { type: 'string' }
       },
       required: ['user_id'],
@@ -2045,7 +2044,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         username: { type: 'string', description: 'X username (without @)' },
       },
       required: [],
@@ -2057,7 +2056,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         query: { type: 'string', description: 'Search query (supports operators like from:, has:media, etc.)' },
         limit: { type: 'number', description: 'Max results (default 10, max 100)' },
       },
@@ -2070,7 +2069,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         text: { type: 'string', description: 'Tweet content (max 280 chars)' },
       },
       required: ['text'],
@@ -2082,7 +2081,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         tweet_id: { type: 'string', description: 'The ID of the tweet to reply to' },
         text: { type: 'string', description: 'Reply content' },
       },
@@ -2095,7 +2094,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         recipient_id: { type: 'string', description: 'X user ID of the recipient' },
         text: { type: 'string', description: 'Message content' },
       },
@@ -2104,157 +2103,156 @@ export const MCP_TOOLS = [
   },
   {
     name: 'get_x_timeline',
-    description: 'Fetch the latest tweets from the connected X account timeline.',
+    description: 'Autonomous Social Intelligence: Access the latest signals and sentiment from the connected X account timeline.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'search_x_users',
-    description: 'Search for X users by their bio, name, or interests. Ideal for finding high-value leads.',
+    description: 'High-Value Signal Discovery: Search for X users by biography, reputation, or interests to identify strategic engagement opportunities.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
-        query: { type: 'string', description: 'Search query for user bios/profiles' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        query: { type: 'string', description: 'Strategic search query' },
         limit: { type: 'number', description: 'Max results (default 10, max 50)' },
       },
       required: ['query'],
     },
   },
-  // ── AlphaClone Nexus Intelligence ──────────────────────────────────
   {
     name: 'nexus_payroll_sync',
-    description: 'AlphaClone Nexus: Sync and reconcile payroll across systems.',
+    description: 'AlphaClone Nexus: Autonomous Payroll Orchestration and disbursement reconciliation.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_invoice_chasing',
-    description: 'AlphaClone Nexus: Automate invoice follow-ups and payment reminders.',
+    description: 'AlphaClone Nexus: Autonomous Revenue Collection and systematic payment follow-up.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_month_end_close',
-    description: 'AlphaClone Nexus: Orchestrate financial month-end closing procedures.',
+    description: 'AlphaClone Nexus: Fiscal Period Finalization and Month-End Reconciliation.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_lead_enrichment',
-    description: 'AlphaClone Nexus: Enrich CRM leads with behavioral and market data.',
+    description: 'AlphaClone Nexus: Strategic Lead Intelligence and CRM Data Augmentation.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_sales_campaign',
-    description: 'AlphaClone Nexus: Launch and monitor autonomous sales campaigns.',
+    description: 'AlphaClone Nexus: Autonomous Growth Engineering and Sales Pipeline Activation.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_contract_drafter',
-    description: 'AlphaClone Nexus: Draft legal and business contracts based on deal context.',
+    description: 'AlphaClone Nexus: Autonomous Legal Instrument Drafting and Deal Architecting.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_content_synthesis',
-    description: 'AlphaClone Nexus: Synthesize cross-platform content for brand consistency.',
+    description: 'AlphaClone Nexus: Brand Continuity Engine and Autonomous Content Orchestration.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_market_pulse',
-    description: 'AlphaClone Nexus: Analyze real-time market trends and competitor signals.',
+    description: 'AlphaClone Nexus: Real-Time Market Intelligence and Competitor Signal Analysis.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_design_audit',
-    description: 'AlphaClone Nexus: Perform AI-driven design and brand consistency audits.',
+    description: 'AlphaClone Nexus: Autonomous Aesthetic Audit and Brand Identity Verification.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_project_architect',
-    description: 'AlphaClone Nexus: Architect project structures and dependency maps.',
+    description: 'AlphaClone Nexus: Strategic Project Architecting and Operational Dependency Mapping.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_calendar_nexus',
-    description: 'AlphaClone Nexus: Optimize scheduling and calendar intelligence.',
+    description: 'AlphaClone Nexus: Temporal Optimization and Executive Schedule Orchestration.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
   },
   {
     name: 'nexus_email_triage',
-    description: 'AlphaClone Nexus: Triage and prioritize high-volume email inboxes.',
+    description: 'AlphaClone Nexus: Intelligent Communication Triage and Priority Inbox Management.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -2265,7 +2263,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -2276,7 +2274,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -2287,7 +2285,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
@@ -2295,11 +2293,11 @@ export const MCP_TOOLS = [
   // ── Advanced DMS ───────────────────────────────────────────────────
   {
     name: 'get_documents',
-    description: 'List all workspace documents with optional category and entity filtering.',
+    description: 'Access Permanent Business Records: Retrieve workspace documents, legal filings, and fiscal records with strategic filtering.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         category: { type: 'string', description: 'e.g. Invoice, Contract, ID, Receipt' },
         entity_type: { type: 'string' },
         entity_id: { type: 'string' },
@@ -2314,7 +2312,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         query: { type: 'string', description: 'Search term' },
       },
       required: ['query'],
@@ -2323,11 +2321,11 @@ export const MCP_TOOLS = [
   // ── Advanced Accounting ─────────────────────────────────────────────
   {
     name: 'get_balance_sheet',
-    description: 'Generate a Point-in-Time Balance Sheet (Assets, Liabilities, Equity).',
+    description: 'Generate Strategic Balance Sheet: A point-in-time analysis of Assets, Liabilities, and Equity to assess organizational solvency.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         as_of_date: { type: 'string', description: 'YYYY-MM-DD' },
       },
       required: [],
@@ -2339,7 +2337,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         from_date: { type: 'string' },
         to_date: { type: 'string' },
       },
@@ -2352,7 +2350,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         date: { type: 'string' },
         description: { type: 'string' },
         lines: {
@@ -2378,7 +2376,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         project_id: { type: 'string' },
       },
       required: ['project_id'],
@@ -2390,10 +2388,109 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'Business Account Context' },
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         project_id: { type: 'string' },
       },
       required: ['project_id'],
+    },
+  },
+  {
+    name: 'task_create',
+    description: 'Autonomous Scheduler: Create a recurring or one-time AI prompt task. e.g. "Check Bitcoin price every morning"',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        name: { type: 'string', description: 'Name for the task' },
+        prompt: { type: 'string', description: 'What the AI should do each time the task runs' },
+        schedule: { type: 'string', description: 'Cron expression or natural language (e.g. "every day at 8am")' },
+        timezone: { type: 'string', description: 'Default: UTC' },
+        notification_preference: { type: 'object', description: 'e.g. {"email": true}' }
+      },
+      required: ['name', 'prompt', 'schedule'],
+    },
+  },
+  {
+    name: 'task_list',
+    description: 'Autonomous Assistant: List all scheduled AI tasks and their current status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'task_get_results',
+    description: 'Autonomous Assistant: Retrieve the latest outputs from a specific AI task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        task_id: { type: 'string', description: 'Task reference from task_list' },
+        limit: { type: 'number', description: 'Max results to pull (default 5)' }
+      },
+      required: ['task_id'],
+    },
+  },
+  {
+    name: 'task_pause',
+    description: 'Autonomous Assistant: Temporarily stop a scheduled task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        task_id: { type: 'string', description: 'Task reference' }
+      },
+      required: ['task_id'],
+    },
+  },
+  {
+    name: 'task_resume',
+    description: 'Autonomous Assistant: Resume a paused scheduled task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        task_id: { type: 'string', description: 'Task reference' }
+      },
+      required: ['task_id'],
+    },
+  },
+  {
+    name: 'task_delete',
+    description: 'Autonomous Assistant: Permanently remove a scheduled task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        task_id: { type: 'string', description: 'Task reference' }
+      },
+      required: ['task_id'],
+    },
+  },
+  {
+    name: 'nexus_strategic_orchestrator',
+    description: 'AlphaClone Nexus: High-Level Strategic Orchestrator. Triggers multiple autonomous systems to achieve a complex business objective.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        objective: { type: 'string', description: 'The high-level business goal (e.g. "Maximize Q3 collection", "Aggressive growth scan")' },
+      },
+      required: ['objective'],
+    },
+  },
+  {
+    name: 'generate_market_authority_report',
+    description: 'AlphaClone Nexus: Generate a Market Authority Report. Synthesizes real-time market signals with autonomous content strategy to solidify brand dominance.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
     },
   },
 ];

@@ -452,6 +452,35 @@ export const paymentService = {
                 paymentIntentId: paymentIntentId
             }, data.tenant_id).catch(err => console.error('Failed to log activity:', err));
 
+            // RECORD JOURNAL ENTRY IN GENERAL LEDGER
+            import('./accounting/journalEntryService').then(({ journalEntryService }) => {
+                journalEntryService.createEntry({
+                    entryDate: new Date().toISOString().split('T')[0],
+                    description: `Payment received for Invoice ${data.invoice_number || data.id.substring(0, 8)}`,
+                    reference: data.id,
+                    sourceType: 'invoice',
+                    sourceId: data.id,
+                    lines: [
+                        {
+                            accountCode: '1000', // Cash / Bank
+                            debitAmount: data.amount,
+                            description: `Cash receipt for invoice ${data.id.substring(0, 8)}`
+                        },
+                        {
+                            accountCode: '4000', // Operating Revenue
+                            creditAmount: data.amount,
+                            description: `Revenue recognition for invoice ${data.id.substring(0, 8)}`
+                        }
+                    ]
+                }).then(({ entry, error: jeError }) => {
+                    if (entry) {
+                        journalEntryService.postEntry(entry.id).catch(err => console.error('[Accounting Sync] Failed to post entry:', err));
+                    } else if (jeError) {
+                        console.error('[Accounting Sync] Failed to create journal entry:', jeError);
+                    }
+                }).catch(err => console.error('[Accounting Sync] Fatal error:', err));
+            }).catch(err => console.error('[Accounting Sync] Import error:', err));
+
             // Audit log
             auditLoggingService.logAction(
                 'invoice_paid',

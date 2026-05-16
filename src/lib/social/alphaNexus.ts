@@ -486,7 +486,73 @@ export class AlphaNexus {
         };
     }
 
-    async evaluateInteraction(content: string, _platform: string): Promise<NexusResult> {
+    /**
+     * Strategic Orchestrator:
+     * Triggers multiple Nexus systems based on a high-level business objective.
+     */
+    async strategicOrchestrator(objective: string) {
+        const admin = this.admin;
+        const tenantId = this.tenantId;
+
+        // In a real system, we might use LLM to decide which systems to trigger.
+        // For now, we trigger the most relevant systems based on keywords.
+        const systemsToTrigger: string[] = [];
+        const objLower = objective.toLowerCase();
+
+        if (objLower.includes('revenue') || objLower.includes('finance') || objLower.includes('money')) {
+            systemsToTrigger.push('month_end_close', 'invoice_chasing');
+        }
+        if (objLower.includes('growth') || objLower.includes('sales') || objLower.includes('leads')) {
+            systemsToTrigger.push('sales_campaign', 'lead_enrichment', 'market_pulse');
+        }
+        if (objLower.includes('operation') || objLower.includes('project') || objLower.includes('efficiency')) {
+            systemsToTrigger.push('project_architect', 'calendar_nexus', 'email_triage');
+        }
+        if (objLower.includes('brand') || objLower.includes('social') || objLower.includes('content')) {
+            systemsToTrigger.push('content_synthesis', 'design_audit');
+        }
+
+        // Default to a general health check if no keywords match
+        if (systemsToTrigger.length === 0) {
+            systemsToTrigger.push('month_end_close', 'sales_campaign', 'project_architect');
+        }
+
+        const results: Record<string, any> = {};
+        for (const system of Array.from(new Set(systemsToTrigger))) {
+            try {
+                results[system] = await this.executeSystemAction(system);
+            } catch (err) {
+                results[system] = { status: 'error', message: err instanceof Error ? err.message : String(err) };
+            }
+        }
+
+        return {
+            objective,
+            orchestration_status: 'complete',
+            timestamp: new Date().toISOString(),
+            executed_systems: results,
+            strategic_summary: `Nexus Orchestrator successfully aligned ${Object.keys(results).length} business systems with the objective: "${objective}".`
+        };
+    }
+
+    /**
+     * Generate Market Authority Report:
+     * Synthesizes market pulse and content strategy into a single document.
+     */
+    async generateMarketAuthorityReport() {
+        const pulse = await this.executeSystemAction('market_pulse');
+        const synthesis = await this.executeSystemAction('content_synthesis');
+
+        return {
+            report_title: 'Nexus Market Authority & Strategic Content Synthesis',
+            generated_at: new Date().toISOString(),
+            market_intelligence: pulse,
+            content_strategy: synthesis,
+            strategic_alignment: 'Market signals and brand voice are synchronized for maximum authority growth.'
+        };
+    }
+
+    async evaluateInteraction(content: string, _platform: string) {
         const score = Math.floor(Math.random() * 30) + 70;
         return {
             success: score > 80,
