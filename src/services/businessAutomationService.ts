@@ -104,7 +104,7 @@ export const businessAutomationService = {
     if (error) return { success: false, error: error.message };
     if (!stagnantDeals || stagnantDeals.length === 0) return { success: true, count: 0 };
 
-    const results = await Promise.all(stagnantDeals.map(async (deal) => {
+    const results = await Promise.all(stagnantDeals.map(async (deal: any) => {
       try {
         const prompt = `
           REVENUE ACTIVATION: High-priority follow-up for deal "${deal.name}".
