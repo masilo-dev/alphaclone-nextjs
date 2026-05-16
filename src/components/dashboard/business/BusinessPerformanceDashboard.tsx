@@ -270,7 +270,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
                     dataKey="date" 
                     stroke="#475569" 
                     fontSize={12} 
-                    tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    tickFormatter={(val: any) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -279,7 +279,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
                     fontSize={12} 
                     axisLine={false} 
                     tickLine={false}
-                    tickFormatter={(val) => `$${val > 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
+                    tickFormatter={(val: any) => `$${val > 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                   />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
