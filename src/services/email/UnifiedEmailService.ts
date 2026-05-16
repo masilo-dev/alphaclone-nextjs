@@ -27,7 +27,7 @@ export const UnifiedEmailService = {
             .eq('user_id', userId);
         
         const providers = {
-            gmail: integrations?.some(i => i.type === 'gmail') || false,
+            gmail: integrations?.some((i: any) => i.type === 'gmail') || false,
             zoho: !!(process.env.NEXT_PUBLIC_ZOHO_CLIENT_ID), // Simplistic check
         };
         
