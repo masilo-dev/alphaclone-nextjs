@@ -435,7 +435,7 @@ export const leadService = {
             if (existingLead) {
                 const check = assertLeadStageTransition(existingLead.stage, updates.stage);
                 if (!check.ok) {
-                    const { message } = check;
+                    const message = (check as any).message || 'Invalid stage transition';
                     return { error: message };
                 }
             }

@@ -615,7 +615,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ userId, userRole }) => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 md:gap-4 relative z-10">
-                    </div>
                 </div>
             </div>
 
