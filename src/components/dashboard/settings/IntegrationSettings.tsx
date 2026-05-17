@@ -14,6 +14,9 @@ import {
 import BusinessSendGridIntegration from '../business/SendGridIntegration';
 import BusinessResendIntegration from '../business/ResendIntegration';
 import BusinessBrevoIntegration from '../business/BrevoIntegration';
+import CustomEmailIntegration from '../business/CustomEmailIntegration';
+import WhatsAppIntegration from '../business/WhatsAppIntegration';
+import { MessageCircle } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
@@ -76,6 +79,7 @@ export function IntegrationSettings() {
 
   const tabs = [
     { id: 'providers',   label: 'Email Providers', icon: Settings  },
+    { id: 'whatsapp',    label: 'WhatsApp Accounts', icon: MessageCircle },
     { id: 'preferences', label: 'Preferences',  icon: Settings     },
     { id: 'activity',    label: 'Activity',     icon: TrendingUp   },
   ];
@@ -128,9 +132,17 @@ export function IntegrationSettings() {
               </p>
             </div>
 
+            <CustomEmailIntegration />
             <BusinessSendGridIntegration />
             <BusinessResendIntegration />
             <BusinessBrevoIntegration />
+          </div>
+        )}
+
+        {/* ── WhatsApp ── */}
+        {activeTab === 'whatsapp' && (
+          <div className="space-y-6">
+            <WhatsAppIntegration />
           </div>
         )}
 

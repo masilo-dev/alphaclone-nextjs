@@ -2536,4 +2536,121 @@ export const MCP_TOOLS = [
       required: [],
     },
   },
+  // ── WhatsApp Chatbot & Outreach ─────────────────────────────────────
+  {
+    name: 'enable_whatsapp_chatbot',
+    description: 'Turn on auto-reply for tenant\'s WhatsApp integration.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'disable_whatsapp_chatbot',
+    description: 'Turn off auto-reply for tenant\'s WhatsApp integration (tenant handles manually).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'train_chatbot',
+    description: 'Manually trigger training refresh from latest conversations and CRM data.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_chatbot_persona',
+    description: 'View the current persona prompt for review/edit.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'update_chatbot_persona',
+    description: 'Override or update specific persona instructions for the WhatsApp Chatbot.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        persona_prompt: { type: 'string' },
+      },
+      required: ['persona_prompt'],
+    },
+  },
+  {
+    name: 'get_chatbot_conversations',
+    description: 'View all chatbot-handled conversations.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'set_chatbot_handoff_rules',
+    description: 'Define triggers for when the chatbot escalates to a human.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        handoff_rules: { type: 'object' },
+      },
+      required: ['handoff_rules'],
+    },
+  },
+  {
+    name: 'enable_lead_auto_outreach',
+    description: 'Automatically message new leads on WhatsApp when added to CRM.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        enabled: { type: 'boolean' },
+      },
+      required: ['enabled'],
+    },
+  },
+  {
+    name: 'set_outreach_limits',
+    description: 'Set max messages per day and delay between sends for WhatsApp outreach.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        outreach_limit_per_day: { type: 'number' },
+        outreach_delay_seconds: { type: 'number' },
+      },
+      required: ['outreach_limit_per_day', 'outreach_delay_seconds'],
+    },
+  },
+  {
+    name: 'get_chatbot_performance',
+    description: 'Stats: messages handled, replies sent, leads qualified, handoffs triggered.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
 ];
