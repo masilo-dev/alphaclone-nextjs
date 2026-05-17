@@ -32,7 +32,8 @@ import {
   Bot,
   Search,
   Star,
-  Twitter
+  Twitter,
+  MessageCircle
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -139,7 +140,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   {
     label: 'Social & Outreach', href: '#', icon: Globe,
     subItems: [
-      { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Gmail / SMTP Mail', href: '/dashboard/mail', icon: Mail },
+      { label: 'WhatsApp Accounts', href: '/dashboard/business/whatsapp', icon: MessageCircle },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },
       { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
