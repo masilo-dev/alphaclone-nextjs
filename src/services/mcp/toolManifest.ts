@@ -367,6 +367,8 @@ export const MCP_TOOLS = [
         location: { type: 'string', description: 'Physical address or location' },
         source: { type: 'string', description: 'Where this lead came from (e.g. AI Agent, Referral, LinkedIn)' },
         notes: { type: 'string', description: 'Qualifying notes about this lead' },
+        linkedin_url: { type: 'string', description: 'LinkedIn profile URL of the decision maker or company' },
+        decision_maker_name: { type: 'string', description: 'Name of the key decision maker at this company' },
       },
       required: ['contact_name'],
     },
@@ -405,6 +407,8 @@ export const MCP_TOOLS = [
         notes: { type: 'string' },
         status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
         stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
+        linkedin_url: { type: 'string', description: 'LinkedIn profile URL of the decision maker or company' },
+        decision_maker_name: { type: 'string', description: 'Name of the key decision maker at this company' },
       },
       required: [],
     },
@@ -1398,7 +1402,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_transactional_email',
-    description: 'Send a transactional email using the caller user scoped provider configuration.',
+    description: 'Send a transactional email using the caller user scoped provider configuration. Supports base64 file attachments for sending PDFs and documents.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1409,6 +1413,19 @@ export const MCP_TOOLS = [
         html: { type: 'string' },
         text: { type: 'string' },
         from_name: { type: 'string' },
+        attachments: {
+          type: 'array',
+          description: 'Optional file attachments to include in the email.',
+          items: {
+            type: 'object',
+            properties: {
+              filename: { type: 'string', description: 'The filename as it will appear to the recipient (e.g. Invoice_001.pdf)' },
+              content: { type: 'string', description: 'Base64-encoded file content' },
+              content_type: { type: 'string', description: 'MIME type of the file (e.g. application/pdf, image/png)' },
+            },
+            required: ['filename', 'content'],
+          },
+        },
       },
       required: ['to', 'subject'],
     },
@@ -2503,6 +2520,18 @@ export const MCP_TOOLS = [
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  // ── Identity & Session ─────────────────────────────────────────────
+  {
+    name: 'get_current_user',
+    description: 'Get the authenticated user\'s internal AlphaClone profile ID, email, display name, and workspace (tenant) ID from the current MCP session. Use this before calling tools that require a user_id (e.g. get_momentum_score) when the internal ID is not already known.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID (optional — resolved from session if omitted)' },
       },
       required: [],
     },

@@ -1334,10 +1334,16 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const owner_id = this.requireProfileUser(a);
-          const { business_name, contact_name, email, phone, industry, location, source, notes } = a;
+          const { business_name, contact_name, email, phone, industry, location, source, notes, linkedin_url, decision_maker_name } = a;
           const resolvedSource = inferMcpLeadSource(source, this.ctx);
           const primaryName = (business_name || contact_name || '').trim();
           if (!primaryName) throw new Error('create_lead requires contact_name or business_name');
+
+          // Build enriched notes if extra contact intel is provided
+          const enrichmentLines: string[] = [];
+          if (decision_maker_name) enrichmentLines.push(`Decision Maker: ${decision_maker_name}`);
+          if (linkedin_url) enrichmentLines.push(`LinkedIn: ${linkedin_url}`);
+          const enrichedNotes = [notes, ...enrichmentLines].filter(Boolean).join('\n') || null;
 
           const primaryInsert = await supabaseAdmin
             .from('leads')
@@ -1352,7 +1358,9 @@ class AlphaCloneMCPServer {
               status: 'new',
               stage: 'lead',
               source: resolvedSource,
-              notes: notes || null,
+              notes: enrichedNotes,
+              linkedin_url: linkedin_url || null,
+              decision_maker_name: decision_maker_name || null,
             }))
             .select('id, business_name, email, status')
             .single();
@@ -3992,6 +4000,17 @@ class AlphaCloneMCPServer {
           if (!resolved?.provider || !resolved?.apiKey) {
             throw new Error('No provider configured for this user. Connect Resend/SendGrid/Brevo first.');
           }
+
+          // Normalise attachments from the MCP schema (content_type -> contentType)
+          const rawAttachments = Array.isArray(a.attachments) ? a.attachments : [];
+          const attachments = rawAttachments
+            .filter((att: any) => att && typeof att.filename === 'string' && typeof att.content === 'string')
+            .map((att: any) => ({
+              filename: String(att.filename),
+              content: String(att.content),
+              contentType: String(att.content_type || att.contentType || 'application/octet-stream'),
+            }));
+
           const sendResult = await sendWithProviderSdk(resolved.provider as EmailProvider, {
             apiKey: resolved.apiKey,
             fromEmail: resolved.fromEmail || String(a.from_email || ''),
@@ -4000,9 +4019,14 @@ class AlphaCloneMCPServer {
             subject,
             html: a.html ? String(a.html) : undefined,
             text: a.text ? String(a.text) : undefined,
+            attachments: attachments.length > 0 ? attachments : undefined,
           });
           if (!sendResult.ok) throw new Error(sendResult.error || 'Transactional email failed');
-          result = { content: [{ type: 'text', text: JSON.stringify({ provider: sendResult.provider, id: sendResult.emailId }, null, 2) }] };
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            provider: sendResult.provider,
+            id: sendResult.emailId,
+            attachments_sent: attachments.length,
+          }, null, 2) }] };
           break;
         }
 
@@ -5837,8 +5861,78 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        // ── get_contract_versions ─────────────────────────────────────────────
+        case 'get_contract_versions': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const contract_id = String(a.contract_id || '').trim();
+          if (!isUuidString(contract_id)) throw new Error('contract_id must be a valid UUID');
+          const { data, error } = await supabaseAdmin
+            .from('contract_versions')
+            .select('id, contract_id, version_number, status, change_summary, created_at, updated_at')
+            .eq('tenant_id', tenant_id)
+            .eq('contract_id', contract_id)
+            .order('version_number', { ascending: false });
+          if (error) throw supabaseErrorToMcpClientError('get_contract_versions', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          break;
+        }
+
+        // ── get_contract_approvals ────────────────────────────────────────────
+        case 'get_contract_approvals': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const contract_id = typeof a.contract_id === 'string' && a.contract_id.trim() ? a.contract_id.trim() : null;
+          let query = supabaseAdmin
+            .from('contract_approvals')
+            .select('id, contract_id, contract_version_id, approver_id, status, request_note, due_at, reviewed_at, review_note, created_at, updated_at')
+            .eq('tenant_id', tenant_id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          if (contract_id && isUuidString(contract_id)) query = query.eq('contract_id', contract_id);
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_contract_approvals', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || [], null, 2) }] };
+          break;
+        }
+
+        // ── get_current_user ──────────────────────────────────────────────────
+        case 'get_current_user': {
+          const a = args as Record<string, any>;
+          // Prefer session context (bound at server creation) over args
+          const sessionTenantId = this.ctx?.tenantId || (a.tenant_id ? String(a.tenant_id).trim() : null);
+          const sessionUserId = this.ctx?.userId || null;
+
+          if (!sessionUserId) {
+            throw new Error('No authenticated user found in MCP session. Ensure you are connected with a valid API key or OAuth token.');
+          }
+
+          const { data: profile, error: profileError } = await supabaseAdmin
+            .from('user_profiles')
+            .select('id, email, display_name, full_name, avatar_url, created_at')
+            .eq('id', sessionUserId)
+            .maybeSingle();
+
+          if (profileError) throw supabaseErrorToMcpClientError('get_current_user', profileError.message);
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                user_id: sessionUserId,
+                tenant_id: sessionTenantId,
+                email: profile?.email || null,
+                display_name: profile?.display_name || profile?.full_name || null,
+                avatar_url: profile?.avatar_url || null,
+                note: 'Use user_id in tools that require an internal AlphaClone user reference (e.g. get_momentum_score).',
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, and many more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, and many more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
