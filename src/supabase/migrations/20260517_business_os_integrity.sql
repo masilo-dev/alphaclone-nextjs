@@ -211,3 +211,41 @@ BEGIN
     -- Mark existing $0 invoices as test data/cleanup
     UPDATE public.business_invoices SET is_test_data = TRUE WHERE total = 0 OR total IS NULL;
 END $$;
+
+-- ============================================================================
+-- PART 7: INVOICE SENT_AT SAFETY RE-APPLY (Fix for send_invoice NOT_FOUND bug)
+-- The 20260513 migration added these columns but may not have been applied.
+-- This is idempotent — safe to run multiple times.
+-- ============================================================================
+
+DO $$
+BEGIN
+    -- Critical: sent_at is written by send_invoice MCP tool on every send
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'business_invoices' AND column_name = 'sent_at') THEN
+        ALTER TABLE public.business_invoices ADD COLUMN sent_at TIMESTAMPTZ;
+    END IF;
+
+    -- paid_at is written by reconcile_payment and payment webhooks
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'business_invoices' AND column_name = 'paid_at') THEN
+        ALTER TABLE public.business_invoices ADD COLUMN paid_at TIMESTAMPTZ;
+    END IF;
+END $$;
+
+-- ============================================================================
+-- PART 8: LEAD ENRICHMENT COLUMNS (Issue 5 — contact data gaps)
+-- Adds linkedin_url and decision_maker_name to enable richer lead records
+-- ============================================================================
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'linkedin_url') THEN
+        ALTER TABLE public.leads ADD COLUMN linkedin_url TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'decision_maker_name') THEN
+        ALTER TABLE public.leads ADD COLUMN decision_maker_name TEXT;
+    END IF;
+END $$;
+
+-- Reload PostgREST schema cache so all new columns are immediately queryable
+NOTIFY pgrst, 'reload schema';
