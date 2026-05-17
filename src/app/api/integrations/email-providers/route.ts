@@ -3,11 +3,12 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { integrationEmailProviderDeleteSchema, integrationEmailProviderSchema } from '@/schemas/validation';
 
-type ProviderType = 'sendgrid' | 'resend' | 'brevo';
+type ProviderType = 'sendgrid' | 'resend' | 'brevo' | 'custom_smtp';
 
 function getProviderName(provider: ProviderType) {
   if (provider === 'sendgrid') return 'SendGrid';
   if (provider === 'resend') return 'Resend';
+  if (provider === 'custom_smtp') return 'Custom SMTP/IMAP';
   return 'Brevo';
 }
 
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
     const tenantId = searchParams.get('tenantId') || '';
     const provider = (searchParams.get('provider') || '') as ProviderType;
 
-    if (!tenantId || !['sendgrid', 'resend', 'brevo'].includes(provider)) {
+    if (!tenantId || !['sendgrid', 'resend', 'brevo', 'custom_smtp'].includes(provider)) {
       return NextResponse.json({ error: 'tenantId and valid provider are required', code: 'VALIDATION_ERROR' }, { status: 400 });
     }
 
@@ -67,11 +68,21 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
-    const tenantId = parsed.data.tenantId;
-    const provider = parsed.data.provider;
-    const apiKey = parsed.data.apiKey;
-    const fromEmail = parsed.data.fromEmail;
-    const fromName = parsed.data.fromName || 'AlphaClone Systems';
+    const {
+      tenantId,
+      provider,
+      apiKey,
+      fromEmail,
+      fromName = 'AlphaClone Systems',
+      smtpHost,
+      smtpPort,
+      smtpUser,
+      smtpPass,
+      imapHost,
+      imapPort,
+      imapUser,
+      imapPass
+    } = parsed.data as any;
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
@@ -102,6 +113,16 @@ export async function POST(request: NextRequest) {
         fromName,
         from_name: fromName,
         webhookToken,
+        ...(provider === 'custom_smtp' ? {
+          smtpHost,
+          smtpPort,
+          smtpUser,
+          smtpPass,
+          imapHost,
+          imapPort,
+          imapUser,
+          imapPass
+        } : {})
       },
     };
 

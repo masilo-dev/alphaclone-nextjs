@@ -62,6 +62,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [isAIGenerating, setIsAIGenerating] = useState(false);
     const { currentTenant } = useTenant();
     const { clients: crmClients, isLoading: isLoadingCRM } = useClients(currentTenant?.id, { limit: 100 });
+    const [unifiedMessages, setUnifiedMessages] = useState<ChatMessage[]>([]);
 
 
     // Mobile Detection
@@ -278,10 +279,70 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         };
     }, [user.id, currentTenant?.id]);
 
+    // Fetch Unified Messages (WhatsApp, etc.)
+    useEffect(() => {
+        if (!selectedClient || !currentTenant?.id) return;
+        
+        const fetchUnified = async () => {
+            const { data, error } = await supabase
+                .from('unified_messages')
+                .select('*')
+                .eq('tenant_id', currentTenant.id)
+                .eq('contact_id', selectedClient.id)
+                .order('created_at', { ascending: true });
+                
+            if (error) {
+                console.error('Failed to fetch unified messages', error);
+                return;
+            }
+            
+            if (data) {
+                const mapped: ChatMessage[] = data.map((um: any) => ({
+                    id: um.id,
+                    role: um.direction === 'inbound' ? 'user' : 'model',
+                    senderId: um.direction === 'inbound' ? selectedClient.id : user.id,
+                    senderName: um.direction === 'inbound' ? selectedClient.name : user.name,
+                    recipientId: um.direction === 'inbound' ? user.id : selectedClient.id,
+                    text: um.body || '',
+                    timestamp: new Date(um.received_at || um.sent_at || um.created_at),
+                    source: um.source,
+                    readAt: um.read_at ? new Date(um.read_at) : null
+                }));
+                setUnifiedMessages(mapped);
+            }
+        };
+        
+        fetchUnified();
+        
+        // Setup realtime listener for unified messages
+        const channelName = `unified_msg_${currentTenant.id}_${selectedClient.id}`;
+        const channel = supabase.channel(channelName)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'unified_messages', filter: `contact_id=eq.${selectedClient.id}` }, (payload: any) => {
+                const um = payload.new as any;
+                const newMsg: ChatMessage = {
+                    id: um.id,
+                    role: um.direction === 'inbound' ? 'user' : 'model',
+                    senderId: um.direction === 'inbound' ? selectedClient.id : user.id,
+                    senderName: um.direction === 'inbound' ? selectedClient.name : user.name,
+                    recipientId: um.direction === 'inbound' ? user.id : selectedClient.id,
+                    text: um.body || '',
+                    timestamp: new Date(um.received_at || um.sent_at || um.created_at),
+                    source: um.source,
+                    readAt: um.read_at ? new Date(um.read_at) : null
+                };
+                setUnifiedMessages(prev => [...prev.filter(m => m.id !== newMsg.id), newMsg]);
+            })
+            .subscribe();
+            
+        return () => {
+            supabase.removeChannel(channel).catch(() => {});
+        };
+    }, [selectedClient, currentTenant?.id, user.id, user.name]);
+
     // Scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [filteredMessages, selectedClient, pendingAttachments, typingUsers]);
+    }, [filteredMessages, unifiedMessages, selectedClient, pendingAttachments, typingUsers]);
 
     const handleEmojiClick = (emojiData: EmojiClickData) => {
         setNewMessage(newMessage + emojiData.emoji);
@@ -321,15 +382,21 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
     // Filter messages based on view - Use useMemo to prevent re-initialization issues
     const visibleMessages = useMemo(() => {
+        let internal: ChatMessage[] = [];
         if (isAdmin) {
             if (!selectedClient) return [];
-            return filteredMessages.filter(m =>
+            internal = filteredMessages.filter(m =>
                 (m.senderId === user.id && m.recipientId === selectedClient.id) ||
                 (m.senderId === selectedClient.id)
             );
+        } else {
+            internal = filteredMessages;
         }
-        return filteredMessages;
-    }, [user.role, selectedClient, filteredMessages, user.id]);
+        
+        // Merge with unified messages and sort by timestamp
+        const combined = [...internal, ...unifiedMessages];
+        return combined.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    }, [user.role, selectedClient, filteredMessages, user.id, unifiedMessages, isAdmin]);
 
     /**
      * AUTO-PILOT & READ STATUS LOGIC

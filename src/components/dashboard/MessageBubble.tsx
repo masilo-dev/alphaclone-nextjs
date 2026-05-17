@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChatMessage } from '../../types';
 import { format } from 'date-fns';
-import { Loader2, FileIcon, Download, CheckCheck, Flag } from 'lucide-react';
+import { Loader2, FileIcon, Download, CheckCheck, Flag, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface MessageBubbleProps {
@@ -37,6 +37,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     {/* Sender Name */}
                     {!isOwn && showSenderName && (
                         <span className="text-xs text-slate-400 ml-1 mb-1 flex items-center gap-2">
+                            {message.source === 'whatsapp' && (
+                                <MessageCircle className="w-3.5 h-3.5 text-green-500 fill-green-500/20" />
+                            )}
                             {message.role === 'system' || message.senderName === 'Admin' || (message.senderId && message.senderId.includes('admin')) ? 'Admin' : message.senderName}
                             {isUrgent && <span className="text-red-400 flex items-center text-xs font-bold"><Flag size={10} className="mr-0.5 fill-red-400" /> URGENT</span>}
                             {isHigh && <span className="text-orange-400 flex items-center text-xs font-bold"><Flag size={10} className="mr-0.5 fill-orange-400" /> HIGH PRIORITY</span>}

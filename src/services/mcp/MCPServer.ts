@@ -5931,8 +5931,129 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        // ── WhatsApp Chatbot & Outreach ─────────────────────────────────────
+        case 'enable_whatsapp_chatbot': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { error } = await supabaseAdmin.from('whatsapp_chatbot_settings').upsert(
+            { tenant_id, chatbot_enabled: true },
+            { onConflict: 'tenant_id' }
+          );
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ status: 'enabled' }, null, 2) }] };
+          break;
+        }
+
+        case 'disable_whatsapp_chatbot': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { error } = await supabaseAdmin.from('whatsapp_chatbot_settings').upsert(
+            { tenant_id, chatbot_enabled: false },
+            { onConflict: 'tenant_id' }
+          );
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ status: 'disabled' }, null, 2) }] };
+          break;
+        }
+
+        case 'train_chatbot': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { chatbotTrainingService } = await import('../whatsapp/ChatbotTrainingService');
+          const success = await chatbotTrainingService.refreshPersona(tenant_id);
+          result = { content: [{ type: 'text', text: JSON.stringify({ success }, null, 2) }] };
+          break;
+        }
+
+        case 'get_chatbot_persona': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { data, error } = await supabaseAdmin
+            .from('whatsapp_chatbot_settings')
+            .select('persona_prompt')
+            .eq('tenant_id', tenant_id)
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify(data || { persona_prompt: null }, null, 2) }] };
+          break;
+        }
+
+        case 'update_chatbot_persona': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { persona_prompt } = a;
+          const { error } = await supabaseAdmin.from('whatsapp_chatbot_settings').upsert(
+            { tenant_id, persona_prompt },
+            { onConflict: 'tenant_id' }
+          );
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ status: 'updated' }, null, 2) }] };
+          break;
+        }
+
+        case 'get_chatbot_conversations': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          // Currently mapped to general unified messages or simple return
+          result = { content: [{ type: 'text', text: JSON.stringify({ note: 'Conversation retrieval uses the general unified_messages table filtered by source=whatsapp' }, null, 2) }] };
+          break;
+        }
+
+        case 'set_chatbot_handoff_rules': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { handoff_rules } = a;
+          const { error } = await supabaseAdmin.from('whatsapp_chatbot_settings').upsert(
+            { tenant_id, handoff_rules },
+            { onConflict: 'tenant_id' }
+          );
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ status: 'updated' }, null, 2) }] };
+          break;
+        }
+
+        case 'enable_lead_auto_outreach': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { enabled } = a;
+          const { error } = await supabaseAdmin.from('whatsapp_chatbot_settings').upsert(
+            { tenant_id, auto_outreach_enabled: enabled },
+            { onConflict: 'tenant_id' }
+          );
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ status: 'updated', enabled }, null, 2) }] };
+          break;
+        }
+
+        case 'set_outreach_limits': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { outreach_limit_per_day, outreach_delay_seconds } = a;
+          const { error } = await supabaseAdmin.from('whatsapp_chatbot_settings').upsert(
+            { tenant_id, outreach_limit_per_day, outreach_delay_seconds },
+            { onConflict: 'tenant_id' }
+          );
+          if (error) throw new Error(error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ status: 'updated' }, null, 2) }] };
+          break;
+        }
+
+        case 'get_chatbot_performance': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { data, error } = await supabaseAdmin
+            .from('whatsapp_outreach_logs')
+            .select('status, created_at')
+            .eq('tenant_id', tenant_id);
+          if (error) throw new Error(error.message);
+          const total = data?.length || 0;
+          const sent = data?.filter((l: any) => l.status === 'sent').length || 0;
+          result = { content: [{ type: 'text', text: JSON.stringify({ total_outreach: total, sent_outreach: sent }, null, 2) }] };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, and many more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, enable_whatsapp_chatbot, disable_whatsapp_chatbot, train_chatbot, get_chatbot_persona, update_chatbot_persona, get_chatbot_conversations, set_chatbot_handoff_rules, enable_lead_auto_outreach, set_outreach_limits, get_chatbot_performance, and many more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

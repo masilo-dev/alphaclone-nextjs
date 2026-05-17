@@ -152,15 +152,15 @@ export const providerSendSchema = z.object({
 
 export const integrationEmailProviderSchema = z.object({
     tenantId: tenantIdSchema,
-    provider: z.enum(['sendgrid', 'resend', 'brevo']),
-    apiKey: z.string().min(10),
+    provider: z.enum(['sendgrid', 'resend', 'brevo', 'custom_smtp']),
+    apiKey: z.string().optional(),
     fromEmail: emailSchema,
     fromName: z.string().min(1).max(200).optional(),
-});
+}).passthrough();
 
 export const integrationEmailProviderDeleteSchema = z.object({
     tenantId: tenantIdSchema,
-    provider: z.enum(['sendgrid', 'resend', 'brevo']),
+    provider: z.enum(['sendgrid', 'resend', 'brevo', 'custom_smtp']),
 });
 
 export const resendConnectSchema = z.object({

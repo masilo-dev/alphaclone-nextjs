@@ -63,6 +63,7 @@ export interface ChatMessage {
   reply_to?: string;
   edited_at?: string;
   group_id?: string;
+  source?: string; // 'internal', 'whatsapp', etc.
 }
 
 export type ProjectStage = 'Initiation' | 'Planning' | 'Execution' | 'Review' | 'Closure';
