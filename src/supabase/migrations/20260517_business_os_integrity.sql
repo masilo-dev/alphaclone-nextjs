@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS public.invoice_line_items (
 -- Enable RLS
 ALTER TABLE public.invoice_line_items ENABLE ROW LEVEL SECURITY;
 
--- RLS Policy: Users can only see/edit items for their tenant
+-- RLS Policy: Users can only see/edit items for their tenant (idempotent)
+DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.invoice_line_items;
 CREATE POLICY "tenant_isolation_policy" ON public.invoice_line_items FOR ALL USING (
     tenant_id IN (
         SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid()
