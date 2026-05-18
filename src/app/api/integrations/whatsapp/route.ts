@@ -24,7 +24,51 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, integrations: data });
+    // Enrich integrations with real-time Green API details
+    const enrichedIntegrations = await Promise.all((data || []).map(async (item: any) => {
+      const apiToken = item.metadata?.apiTokenInstance;
+      if (apiToken && item.waba_id) {
+        try {
+          // Fetch settings for phone number (wid)
+          const settingsUrl = `https://api.green-api.com/waInstance${item.waba_id}/getSettings/${apiToken}`;
+          const settingsResp = await fetch(settingsUrl, { signal: AbortSignal.timeout(1500) });
+          let phoneNumber = null;
+          let country = null;
+
+          if (settingsResp.ok) {
+            const settingsData = await settingsResp.json();
+            if (settingsData && settingsData.wid) {
+              phoneNumber = settingsData.wid.split('@')[0];
+              country = settingsData.countryTelegram || null;
+            }
+          }
+
+          // Fetch state (authorized, etc.)
+          const stateUrl = `https://api.green-api.com/waInstance${item.waba_id}/getStateInstance/${apiToken}`;
+          const stateResp = await fetch(stateUrl, { signal: AbortSignal.timeout(1500) });
+          let state = 'unknown';
+
+          if (stateResp.ok) {
+            const stateData = await stateResp.json();
+            if (stateData && stateData.stateInstance) {
+              state = stateData.stateInstance;
+            }
+          }
+
+          return {
+            ...item,
+            phone_number: phoneNumber,
+            state: state,
+            country: country
+          };
+        } catch (err) {
+          console.error(`Failed to fetch Green API details for ${item.waba_id}:`, err);
+        }
+      }
+      return item;
+    }));
+
+    return NextResponse.json({ success: true, integrations: enrichedIntegrations });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to fetch WhatsApp integrations', request);
   }

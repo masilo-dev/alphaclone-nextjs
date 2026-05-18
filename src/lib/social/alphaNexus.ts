@@ -154,7 +154,7 @@ export class AlphaNexus {
         };
     }
 
-    private async handleSalesCampaign(_params: Record<string, unknown>) {
+    private async handleSalesCampaign(params: Record<string, unknown>) {
         const { data: leads } = await this.admin
             .from('leads')
             .select('id, business_name, email, status, stage, industry')
@@ -170,19 +170,94 @@ export class AlphaNexus {
             .limit(50);
 
         const dealPipeline = (deals || []).reduce((s: number, d: any) => s + Number(d.value || 0), 0);
+        const campaignTargets = (leads || []).filter((l: any) => l.email).slice(0, 20).map((l: any) => ({
+            id: l.id,
+            name: l.business_name,
+            email: l.email,
+            stage: l.stage,
+        }));
+
+        // ── Auto-send outreach emails if requested ────────────────────────────
+        const autoSend      = params.auto_send_outreach === true;
+        const outreachCtx   = typeof params.outreach_context === 'string' ? params.outreach_context : '';
+        const userId        = typeof params.user_id === 'string' ? params.user_id : null;
+        let emailsSent      = 0;
+        const emailErrors: string[] = [];
+
+        if (autoSend && campaignTargets.length > 0) {
+            const { resolveEmailProviderConfig } = await import('../email/providerIntegrationResolver').catch(() => ({ resolveEmailProviderConfig: null }));
+            const { sendWithProviderSdk } = await import('../email/providerSdk').catch(() => ({ sendWithProviderSdk: null }));
+
+            if (resolveEmailProviderConfig && sendWithProviderSdk) {
+                // Use dynamic import to avoid circular deps at module init time
+                const providerResolver = await import('../email/providerIntegrationResolver')
+                    .then(m => m.resolveEmailProviderConfig)
+                    .catch(() => null);
+                const sdkSender = await import('../email/providerSdk')
+                    .then(m => m.sendWithProviderSdk)
+                    .catch(() => null);
+
+                if (providerResolver && sdkSender) {
+                    const providerConfig = await providerResolver({
+                        tenantId: this.tenantId,
+                        preferredUserId: userId || undefined,
+                        fallbackToEnv: true,
+                    }).catch(() => null);
+
+                    if (providerConfig?.provider && providerConfig?.apiKey) {
+                        for (const target of campaignTargets.slice(0, 10)) {
+                            try {
+                                const emailHtml = `<p>Hi ${target.name},</p>
+<p>I wanted to reach out regarding how AlphaClone Systems can help your business. ${outreachCtx ? `${outreachCtx} ` : ''}We specialize in AI-powered business automation that helps founders like you save time and grow faster.</p>
+<p>Would you be open to a quick 15-minute call this week?</p>
+<p>Best regards,<br>AlphaClone Systems</p>`;
+
+                                await sdkSender(providerConfig.provider as any, {
+                                    apiKey: providerConfig.apiKey,
+                                    fromEmail: providerConfig.fromEmail || '',
+                                    fromName: providerConfig.fromName || 'AlphaClone Systems',
+                                    to: target.email,
+                                    subject: `Quick question about ${target.name}`,
+                                    html: emailHtml,
+                                });
+
+                                // Log to outreach table
+                                await this.admin.from('lead_outreach_log').insert({
+                                    tenant_id: this.tenantId,
+                                    user_id: userId,
+                                    lead_name: target.name,
+                                    lead_email: target.email,
+                                    subject: `Quick question about ${target.name}`,
+                                    body_html: emailHtml,
+                                    status: 'sent',
+                                    provider: providerConfig.provider,
+                                }).catch(() => {/* non-fatal log error */});
+
+                                emailsSent++;
+                            } catch (err: any) {
+                                emailErrors.push(`${target.name}: ${err.message}`);
+                            }
+                        }
+                    } else {
+                        emailErrors.push('No email provider configured for this workspace. Connect Resend/SendGrid/Brevo from Settings → Integrations to enable auto-send.');
+                    }
+                }
+            }
+        }
+
         return {
             system: 'nexus_sales_campaign',
             status: 'complete',
             actionable_leads: leads?.length ?? 0,
             open_deals: deals?.length ?? 0,
             pipeline_value: dealPipeline,
-            campaign_targets: (leads || []).filter((l: any) => l.email).slice(0, 20).map((l: any) => ({
-                id: l.id,
-                name: l.business_name,
-                email: l.email,
-                stage: l.stage,
-            })),
-            message: `${leads?.length ?? 0} leads ready for outreach. ${deals?.length ?? 0} active deals worth $${dealPipeline.toFixed(2)}. Use send_batch_outreach to engage.`,
+            campaign_targets: campaignTargets,
+            auto_send_enabled: autoSend,
+            emails_sent: emailsSent,
+            email_errors: emailErrors.length > 0 ? emailErrors : undefined,
+            message: autoSend
+                ? `${leads?.length ?? 0} leads ready. ${emailsSent} outreach emails sent${emailErrors.length > 0 ? ` (${emailErrors.length} failed)` : ''}. ${deals?.length ?? 0} active deals worth $${dealPipeline.toFixed(2)}.`
+                : `${leads?.length ?? 0} leads ready for outreach. ${deals?.length ?? 0} active deals worth $${dealPipeline.toFixed(2)}. Use auto_send_outreach=true or send_batch_outreach to engage.`,
         };
     }
 

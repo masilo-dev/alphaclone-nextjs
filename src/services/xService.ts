@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import crypto from 'crypto';
 
 export interface XIntegration {
     id: string;
@@ -18,6 +19,50 @@ export interface XTweet {
     text: string;
     media_ids?: string[];
     reply_settings?: 'everyone' | 'following' | 'mentionedUsers';
+}
+
+// ── OAuth 1.0a helpers (required for v1.1 media upload) ──────────────────────
+const X_API_KEY    = process.env.X_API_KEY    || process.env.TWITTER_API_KEY    || '';
+const X_API_SECRET = process.env.X_API_SECRET || process.env.TWITTER_API_SECRET || '';
+
+function buildOAuth1Header(
+    method: string,
+    url: string,
+    oauthToken: string,
+    oauthTokenSecret: string,
+    extraParams: Record<string, string> = {}
+): string {
+    const oauthParams: Record<string, string> = {
+        oauth_consumer_key:     X_API_KEY,
+        oauth_nonce:            crypto.randomBytes(16).toString('hex'),
+        oauth_signature_method: 'HMAC-SHA1',
+        oauth_timestamp:        Math.floor(Date.now() / 1000).toString(),
+        oauth_token:            oauthToken,
+        oauth_version:          '1.0',
+    };
+
+    const allParams: Record<string, string> = { ...oauthParams, ...extraParams };
+    const paramString = Object.keys(allParams)
+        .sort()
+        .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`)
+        .join('&');
+
+    const sigBase = [
+        method.toUpperCase(),
+        encodeURIComponent(url),
+        encodeURIComponent(paramString),
+    ].join('&');
+
+    const sigKey = `${encodeURIComponent(X_API_SECRET)}&${encodeURIComponent(oauthTokenSecret)}`;
+    const signature = crypto.createHmac('sha1', sigKey).update(sigBase).digest('base64');
+
+    oauthParams.oauth_signature = signature;
+    const headerValue = 'OAuth ' + Object.keys(oauthParams)
+        .sort()
+        .map(k => `${encodeURIComponent(k)}="${encodeURIComponent(oauthParams[k])}"`)
+        .join(', ');
+
+    return headerValue;
 }
 
 export const xService = {
@@ -65,11 +110,72 @@ export const xService = {
     },
 
     /**
-     * Post a tweet (v2)
+     * Upload media to X using v1.1 API (requires OAuth 1.0a).
+     * Returns the media_id_string to attach to a tweet.
+     */
+    async uploadMedia(tenantId: string, imageBuffer: Buffer, mimeType: string): Promise<string> {
+        const integration = await this.getXIntegration(tenantId);
+        if (!integration) throw new Error('X integration not found for media upload');
+
+        const oauth1Token  = integration.oauth1_access_token;
+        const oauth1Secret = integration.oauth1_token_secret;
+
+        if (!oauth1Token || !oauth1Secret) {
+            throw new Error(
+                'X image posting requires OAuth 1.0a credentials. Please reconnect your X account from Settings → Integrations and ensure OAuth 1.0a is enabled.'
+            );
+        }
+
+        const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+        const authHeader = buildOAuth1Header('POST', uploadUrl, oauth1Token, oauth1Secret);
+
+        const formData = new FormData();
+        formData.append('media_data', imageBuffer.toString('base64'));
+        formData.append('media_type', mimeType);
+
+        const uploadResp = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: { 'Authorization': authHeader },
+            body: formData,
+        });
+
+        if (!uploadResp.ok) {
+            const errBody = await uploadResp.text();
+            throw new Error(`X media upload failed: ${errBody}`);
+        }
+
+        const uploadData = await uploadResp.json();
+        const mediaId = uploadData?.media_id_string;
+        if (!mediaId) throw new Error('X media upload returned no media_id_string');
+        return mediaId;
+    },
+
+    /**
+     * Convenience: fetch an image from a URL and upload it to X.
+     */
+    async uploadMediaFromUrl(tenantId: string, imageUrl: string): Promise<string> {
+        const resp = await fetch(imageUrl);
+        if (!resp.ok) throw new Error(`Failed to fetch image from URL: ${imageUrl}`);
+        const contentType = resp.headers.get('content-type') || 'image/jpeg';
+        const arrayBuffer = await resp.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        return this.uploadMedia(tenantId, buffer, contentType);
+    },
+
+    /**
+     * Post a tweet (v2) — now supports media_ids for image/video attachments.
      */
     async postTweet(tenantId: string, tweet: XTweet) {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
+
+        const body: Record<string, unknown> = {
+            text: tweet.text,
+            ...(tweet.reply_settings && { reply_settings: tweet.reply_settings }),
+            ...(tweet.media_ids && tweet.media_ids.length > 0 && {
+                media: { media_ids: tweet.media_ids }
+            }),
+        };
 
         const response = await fetch('https://api.twitter.com/2/tweets', {
             method: 'POST',
@@ -77,10 +183,7 @@ export const xService = {
                 'Authorization': `Bearer ${integration.access_token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                text: tweet.text,
-                ...(tweet.reply_settings && { reply_settings: tweet.reply_settings })
-            })
+            body: JSON.stringify(body)
         });
 
         if (!response.ok) {
