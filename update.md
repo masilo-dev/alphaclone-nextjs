@@ -1,5 +1,15 @@
 # Update Log
 
+## Date: 2026-05-18 (WHATSAPP & GMAIL COMING SOON ALIGNMENT)
+
+### Added
+- **Unified Coming Soon Architecture**: Enhanced `ComingSoon.tsx` to support a polymorphic `icon` prop, maintaining backwards compatibility while allowing customizable visual indicators.
+- **WhatsApp Suite Alignment**: Transitioned the WhatsApp Management Page to render the dynamic Coming Soon screen as requested by the founder, signaling development of next-generation omnichannel and AI features.
+- **Gmail & SMTP Mail Alignment**: Transitioned Gmail inbox integrations (`MailTab` and `MessagesPage`) to the Coming Soon screen, ensuring consistent platform communication and preparation for secure API triage services.
+
+### Production Readiness
+- **Vercel Safe**: Confirmed zero compilation/build issues with strict type checking. All files are ready for production deployment on Vercel without interruption.
+
 ## Date: 2026-05-15 (SEO & LANDING PAGE ENHANCEMENTS)
 
 ### Added

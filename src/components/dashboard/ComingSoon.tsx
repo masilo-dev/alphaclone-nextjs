@@ -10,9 +10,10 @@ interface ComingSoonProps {
     title: string;
     subtitle: string;
     videoUrl?: string; // Optional custom video or animation URL
+    icon?: React.ComponentType<any>;
 }
 
-const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) => {
+const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl, icon: Icon = Mail }) => {
     const router = useRouter();
     const [dots, setDots] = useState('');
 
@@ -86,7 +87,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl }) =>
                                 }}
                                 transition={{ duration: 4, repeat: Infinity }}
                             >
-                                <Mail className="w-10 h-10 text-teal-400" />
+                                <Icon className="w-10 h-10 text-teal-400" />
                             </motion.div>
                         </div>
                         <div className="absolute -top-2 -right-2 bg-purple-600 rounded-lg p-1.5 shadow-lg border border-white/20">
