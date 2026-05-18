@@ -5020,24 +5020,51 @@ Return ONLY a JSON array of 60 objects:
           const userId = this.requireProfileUser(a);
           const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at } = a;
 
-          let imageUrl = provided_image_url;
+          let imageUrl: string | null = provided_image_url || null;
+          let imageStatus = provided_image_url ? 'provided' : 'not_generated';
 
-          // 1. Generate Image if not provided (Permanent Storage)
+          // 1. Generate Image if not provided
           if (!imageUrl) {
             if (!image_prompt) throw new Error('image_prompt is required if provided_image_url is omitted');
-            
-            // Try primary provider
-            let img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
-            
-            // If primary fails with billing or generic error, try the other one
-            if (!img.success || !img.url) {
-                const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
-                console.warn(`[MCP] Image Gen failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
-                img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', altProvider as any);
-            }
+            try {
+              // Try primary provider
+              let img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
+              
+              // If primary fails, try the other one
+              if (!img.success || !img.url) {
+                  const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
+                  console.warn(`[MCP] Image Gen failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
+                  img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', altProvider as any);
+              }
 
-            if (!img.success || !img.url) throw new Error(`Image Gen Failed (All Providers): ${img.error}`);
-            imageUrl = img.url;
+              if (!img.success || !img.url) {
+                result = {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify({
+                      error: 'IMAGE_GENERATION_FAILED',
+                      message: `Could not generate an image for this post. Both AI image providers failed. Reason: ${img.error || 'Unknown'}. Please retry with a different image_prompt, or provide a provided_image_url instead.`,
+                      action_required: true,
+                    }, null, 2),
+                  }],
+                };
+                break;
+              }
+              imageUrl = img.url;
+              imageStatus = 'generated';
+            } catch (imgErr: any) {
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    error: 'IMAGE_GENERATION_EXCEPTION',
+                    message: `Image generation threw an error: ${imgErr.message}. Please retry or provide a provided_image_url.`,
+                    action_required: true,
+                  }, null, 2),
+                }],
+              };
+              break;
+            }
           }
 
           // 2. Generate Professional Article (Grok)
@@ -5073,7 +5100,21 @@ Return ONLY a JSON array of 60 objects:
           }).select('id').single();
 
           if (error) throw supabaseErrorToMcpClientError('create_post_with_ai_image', error.message);
-          result = { content: [{ type: 'text', text: `Autonomous Creation complete. Post scheduled with AI-generated image: ${imageUrl}. Content length: ${multiPass.content.length} characters.` }] };
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                post_id: data?.id,
+                scheduled_at: publishTime,
+                image_url: imageUrl,
+                image_status: imageStatus,
+                content_length: multiPass.content.length,
+                confidence_score: multiPass.confidenceScore,
+                message: `Autonomous content creation complete. Post scheduled for ${publishTime} with ${imageStatus} image.`,
+              }, null, 2),
+            }],
+          };
           break;
         }
 
@@ -5401,7 +5442,7 @@ Return ONLY a JSON array of 60 objects:
         case 'post_x_tweet': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { text } = a;
+          const { text, image_url, image_base64, image_mime_type } = a;
           if (typeof text !== 'string' || !text.trim()) throw new Error('text is required');
           
           // Content Guideline Check (Basic Professionalism)
@@ -5415,8 +5456,50 @@ Return ONLY a JSON array of 60 objects:
             throw new Error(`Tweet rejected by professional guidelines: ${profCheck.content}`);
           }
 
-          const tweet = await xService.postTweet(tenant_id, { text });
-          result = { content: [{ type: 'text', text: JSON.stringify(tweet, null, 2) }] };
+          // Handle image upload if provided
+          let mediaIds: string[] | undefined;
+          if (image_url || image_base64) {
+            try {
+              let mediaId: string;
+              if (image_base64) {
+                const mimeType = typeof image_mime_type === 'string' && image_mime_type
+                  ? image_mime_type
+                  : 'image/jpeg';
+                const normalizedBase64 = String(image_base64).includes('base64,')
+                  ? String(image_base64).split('base64,')[1]
+                  : String(image_base64);
+                const buffer = Buffer.from(normalizedBase64, 'base64');
+                mediaId = await xService.uploadMedia(tenant_id, buffer, mimeType);
+              } else {
+                mediaId = await xService.uploadMediaFromUrl(tenant_id, String(image_url));
+              }
+              mediaIds = [mediaId];
+            } catch (imgErr: any) {
+              // Non-fatal: post without image but warn Grok
+              console.warn('[MCP post_x_tweet] Image upload failed, posting text-only:', imgErr.message);
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    warning: `Image could not be uploaded: ${imgErr.message}. The tweet was NOT posted. Please reconnect your X account with OAuth 1.0a enabled or provide a valid image, then retry.`,
+                    action_required: true,
+                  }, null, 2),
+                }],
+              };
+              break;
+            }
+          }
+
+          const tweet = await xService.postTweet(tenant_id, { text, media_ids: mediaIds });
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                ...tweet,
+                image_attached: !!(mediaIds && mediaIds.length > 0),
+              }, null, 2),
+            }],
+          };
           break;
         }
 
@@ -5673,7 +5756,13 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
           const systemKey = name.replace('nexus_', '');
           const nexus = new AlphaNexus(tenant_id);
-          const response = await nexus.executeSystemAction(systemKey, {});
+          // Pass through any extra params (e.g. auto_send_outreach, outreach_context, user_id)
+          const nexusParams: Record<string, unknown> = {};
+          if (a.auto_send_outreach !== undefined) nexusParams.auto_send_outreach = a.auto_send_outreach;
+          if (a.outreach_context !== undefined) nexusParams.outreach_context = a.outreach_context;
+          if (a.user_id !== undefined) nexusParams.user_id = a.user_id;
+          else if (this.ctx?.userId) nexusParams.user_id = this.ctx.userId;
+          const response = await nexus.executeSystemAction(systemKey, nexusParams);
           result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
           break;
         }

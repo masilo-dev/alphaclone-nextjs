@@ -2096,12 +2096,15 @@ export const MCP_TOOLS = [
   },
   {
     name: 'post_x_tweet',
-    description: 'Post a new tweet to the connected X account. strictly for business/professional content.',
+    description: 'Post a new tweet to the connected X account with optional image. Strictly for business/professional content. To include an image, provide image_url (a public URL to an image) or image_base64 (base64-encoded image data).',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         text: { type: 'string', description: 'Tweet content (max 280 chars)' },
+        image_url: { type: 'string', description: 'Optional: public URL of an image to attach to the tweet' },
+        image_base64: { type: 'string', description: 'Optional: base64-encoded image data to attach (alternative to image_url)' },
+        image_mime_type: { type: 'string', description: 'MIME type of the image (e.g. image/png, image/jpeg) — required when using image_base64' },
       },
       required: ['text'],
     },
@@ -2202,11 +2205,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'nexus_sales_campaign',
-    description: 'AlphaClone Nexus: Autonomous Growth Engineering and Sales Pipeline Activation.',
+    description: 'AlphaClone Nexus: Autonomous Growth Engineering and Sales Pipeline Activation. Can automatically send outreach emails to leads when auto_send_outreach=true.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        auto_send_outreach: { type: 'boolean', description: 'Set to true to automatically send outreach emails to the top campaign targets. Requires an email provider configured in Settings.' },
+        outreach_context: { type: 'string', description: 'Optional context or message to personalise the outreach email (e.g. "We can help you with payroll automation").' },
+        user_id: { type: 'string', description: 'Optional: user profile ID to use for email provider resolution' },
       },
       required: [],
     },
