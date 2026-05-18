@@ -948,6 +948,21 @@ export const MCP_TOOLS = [
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
         mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
+        executing_agent: { type: 'string', description: 'The AI agent executing the tool: claude | grok | manus (default: auto)' },
+        media_base64_data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              file_name: { type: 'string' },
+              file_type: { type: 'string', description: 'e.g. image/png or video/mp4' },
+              base64: { type: 'string', description: 'Base64 encoded file content. MCP automatically uploads this to sovereign Supabase storage.' }
+            },
+            required: ['file_name', 'file_type', 'base64']
+          },
+          description: 'Direct base64 media payload to solve uploading issues for Claude/Grok/Manus.'
+        },
+        auto_refine_with_context: { type: 'boolean', description: 'Automatically read workspace files (e.g. DESIGN.md) and enrich post with corporate safety, OSM maps, and solopreneur trial pricing alignment.' }
       },
       required: ['caption'],
     },
@@ -968,6 +983,20 @@ export const MCP_TOOLS = [
         hashtags: { type: 'array', items: { type: 'string' } },
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
+        executing_agent: { type: 'string', description: 'The AI agent executing the tool: claude | grok | manus (default: auto)' },
+        media_base64_data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              file_name: { type: 'string' },
+              file_type: { type: 'string' },
+              base64: { type: 'string' }
+            },
+            required: ['file_name', 'file_type', 'base64']
+          }
+        },
+        auto_refine_with_context: { type: 'boolean' }
       },
       required: ['caption'],
     },
