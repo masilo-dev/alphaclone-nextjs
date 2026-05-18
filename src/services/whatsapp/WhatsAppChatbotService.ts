@@ -12,21 +12,38 @@ export class WhatsAppChatbotService {
     }
 
     const typeWebhook = payload.typeWebhook;
-    // We only care about incoming messages
-    if (typeWebhook !== 'incomingMessageReceived') return;
+    const isIncoming = typeWebhook === 'incomingMessageReceived';
+    const isOutgoing = typeWebhook === 'outgoingMessageReceived' || typeWebhook === 'outgoingAPIMessageReceived';
+
+    if (!isIncoming && !isOutgoing) {
+      console.log(`[WhatsAppChatbot] Skip unhandled webhook type: ${typeWebhook}`);
+      return;
+    }
 
     const messageData = payload.messageData;
     if (!messageData || !messageData.textMessageData || !messageData.textMessageData.textMessage) return;
 
-    const senderPhone = payload.senderData?.sender?.replace('@c.us', '');
     const messageText = messageData.textMessageData.textMessage;
     const idInstance = payload.idInstance;
 
-    console.log(`[WhatsAppChatbot] Incoming from ${senderPhone}: ${messageText}`);
+    // Resolve client/customer phone number
+    let customerPhone = '';
+    if (isIncoming) {
+      customerPhone = payload.senderData?.sender?.replace('@c.us', '') || '';
+    } else {
+      customerPhone = payload.recipientData?.recipient?.replace('@c.us', '') || '';
+    }
+
+    if (!customerPhone) {
+      console.log('[WhatsAppChatbot] Skip: No customer phone resolved from payload');
+      return;
+    }
+
+    console.log(`[WhatsAppChatbot] Process ${isIncoming ? 'Incoming' : 'Outgoing'} chat for ${customerPhone}: ${messageText}`);
 
     const supabase = createSupabaseAdminClient();
 
-    // 1. Find Tenant by Green API instance (waba_id or stored in metadata)
+    // 1. Find Tenant by Green API instance (waba_id)
     const { data: integration, error: intError } = await supabase
       .from('whatsapp_integrations')
       .select('tenant_id, metadata')
@@ -41,7 +58,47 @@ export class WhatsAppChatbotService {
 
     const tenantId = integration.tenant_id;
 
-    // 2. Check if Chatbot is Enabled
+    // 2. Get CRM Contact/Client context
+    const { data: client } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .or(`phone.ilike.%${customerPhone}%,mobile.ilike.%${customerPhone}%`)
+      .maybeSingle();
+
+    // 3. Save Message to Unified Messages
+    const externalId = payload.receiptId || `${isIncoming ? 'wa_in' : 'wa_out'}_${Date.now()}`;
+    await supabase.from('unified_messages').insert({
+      tenant_id: tenantId,
+      source: 'whatsapp',
+      external_id: externalId,
+      direction: isIncoming ? 'inbound' : 'outbound',
+      channel: 'chat',
+      body: messageText,
+      from_address: isIncoming ? customerPhone : idInstance,
+      to_address: isIncoming ? idInstance : customerPhone,
+      contact_id: client?.id || null,
+      read: isMeOutbound(isIncoming),
+      replied: isMeOutbound(isIncoming),
+      starred: false,
+      archived: false,
+      folder: isIncoming ? 'inbox' : 'sent',
+      priority: 'normal',
+      needs_response: isIncoming,
+      auto_replied: false,
+      received_at: isIncoming ? new Date().toISOString() : null,
+      sent_at: isIncoming ? null : new Date().toISOString()
+    });
+
+    // Helper helper
+    function isMeOutbound(inbound: boolean) {
+      return !inbound;
+    }
+
+    // 4. Trigger AI chatbot auto-reply ONLY for inbound messages
+    if (!isIncoming) return;
+
+    // Check if Chatbot is Enabled for this tenant
     const { data: settings } = await supabase
       .from('whatsapp_chatbot_settings')
       .select('*')
@@ -49,56 +106,21 @@ export class WhatsAppChatbotService {
       .maybeSingle();
 
     if (!settings || !settings.chatbot_enabled) {
-      console.log(`[WhatsAppChatbot] Chatbot is disabled for tenant ${tenantId}`);
+      console.log(`[WhatsAppChatbot] AI Auto-Reply chatbot is disabled for tenant ${tenantId}`);
       return;
     }
-
-    // 3. Check for Handoff status
-    // To simplify, if there's an active "human" escalation, we skip.
-    // For now, let's just generate a reply and send it.
-
-    // 4. Get Client Context
-    const { data: client } = await supabase
-      .from('business_clients')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('phone', `+${senderPhone}`) // Assuming stored with +
-      .maybeSingle();
-
-    // 4.5 Save Inbound Message to Unified Messages
-    const externalId = payload.receiptId || `wa_in_${Date.now()}`;
-    await supabase.from('unified_messages').insert({
-      tenant_id: tenantId,
-      source: 'whatsapp',
-      external_id: externalId,
-      direction: 'inbound',
-      channel: 'chat',
-      body: messageText,
-      from_address: senderPhone,
-      to_address: idInstance,
-      contact_id: client?.id || null,
-      read: false,
-      replied: false,
-      starred: false,
-      archived: false,
-      folder: 'inbox',
-      priority: 'normal',
-      needs_response: true,
-      auto_replied: true,
-      received_at: new Date().toISOString()
-    });
 
     // 5. Generate AI Reply
     const replyText = await this.generateReply(
       tenantId,
-      senderPhone,
+      customerPhone,
       messageText,
       settings.persona_prompt,
       client
     );
 
     if (!replyText) {
-       console.log(`[WhatsAppChatbot] AI returned empty reply, skipping.`);
+       console.log(`[WhatsAppChatbot] AI returned empty reply, skipping auto-reply.`);
        return;
     }
 
@@ -106,20 +128,20 @@ export class WhatsAppChatbotService {
     await this.sendReply(
         idInstance, 
         integration.metadata?.apiTokenInstance || '', 
-        senderPhone, 
+        customerPhone, 
         replyText
     );
 
-    // 7. Save Outbound Message to Unified Messages
+    // 7. Save AI Outbound Message to Unified Messages
     await supabase.from('unified_messages').insert({
       tenant_id: tenantId,
       source: 'whatsapp',
-      external_id: `wa_out_${Date.now()}`,
+      external_id: `wa_out_ai_${Date.now()}`,
       direction: 'outbound',
       channel: 'chat',
       body: replyText,
       from_address: idInstance,
-      to_address: senderPhone,
+      to_address: customerPhone,
       contact_id: client?.id || null,
       read: true,
       replied: true,
