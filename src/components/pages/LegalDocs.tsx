@@ -40,7 +40,7 @@ function LegalLayout({
             <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-slate-800">
                <span className="text-xs text-slate-500">Last updated: {lastUpdated}</span>
                <span className="text-xs text-slate-500">•</span>
-               <span className="text-xs text-slate-500">AlphaClone Systems (Pty) Ltd</span>
+               <span className="text-xs text-slate-500">AlphaClone Systems LLC</span>
                <span className="text-xs text-slate-500">•</span>
                <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
                   <Mail className="w-3 h-3" /> legal@alphaclonesystems.com
@@ -130,9 +130,9 @@ export function PrivacyPolicy() {
                The data controller responsible for your personal information is:
             </p>
             <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
-               <p><strong className="text-white">AlphaClone Systems (Pty) Ltd</strong></p>
+               <p><strong className="text-white">AlphaClone Systems LLC</strong></p>
                <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
-               <p>Data Protection Contact: <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
+               <p>Data Protection Officer (DPO): <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                <p>Website: <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">https://alphaclonesystems.com</a></p>
             </div>
          </Section>
@@ -263,18 +263,18 @@ export function PrivacyPolicy() {
             ]} />
          </Section>
 
-         <Section id="your-rights" title="7. Your Rights (GDPR & POPIA)">
+         <Section id="your-rights" title="7. Your Rights (GDPR, POPIA, CCPA)">
             <p>Depending on your jurisdiction, you have the following rights regarding your personal data. To exercise any of these rights, email <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>. We will respond within 30 days.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 mb-6">
                {[
-                  { right: 'Right of Access', desc: 'Request a copy of all personal data we hold about you.' },
+                  { right: 'Right of Access / Right to Know', desc: 'Request a copy of all personal data we hold about you (GDPR, CCPA).' },
                   { right: 'Right to Rectification', desc: 'Request correction of inaccurate or incomplete data.' },
-                  { right: 'Right to Erasure', desc: 'Request deletion of your data ("right to be forgotten").' },
+                  { right: 'Right to Erasure / Right to Delete', desc: 'Request deletion of your data ("right to be forgotten").' },
                   { right: 'Right to Portability', desc: 'Receive your data in a structured, machine-readable format.' },
                   { right: 'Right to Restrict Processing', desc: 'Request that we limit processing of your data in certain circumstances.' },
                   { right: 'Right to Object', desc: 'Object to processing based on legitimate interests or for direct marketing.' },
-                  { right: 'Right to Withdraw Consent', desc: 'Withdraw consent for any consent-based processing at any time.' },
-                  { right: 'Right to Lodge a Complaint', desc: 'Lodge a complaint with your local data protection authority.' },
+                  { right: 'Right to Opt-Out of Sale or Sharing', desc: 'California residents can opt out of the sale or sharing of their personal information (CCPA). AlphaClone does not sell personal data.' },
+                  { right: 'Right to Non-Discrimination', desc: 'You will not receive discriminatory treatment for exercising your privacy rights (CCPA).' },
                ].map((item, i) => (
                   <div key={i} className="p-3 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
                      <p className="text-white font-semibold text-xs mb-1">{item.right}</p>
@@ -284,7 +284,7 @@ export function PrivacyPolicy() {
             </div>
          </Section>
 
-         <Section id="security" title="8. Security Measures">
+         <Section id="security" title="8. Security Measures & Data Breach Notification">
             <p>We implement enterprise-grade security to protect your data:</p>
             <BulletList items={[
                'AES-256 encryption at rest for all database records',
@@ -297,6 +297,12 @@ export function PrivacyPolicy() {
                'Regular automated security audits and penetration testing',
                'Zero-knowledge architecture for financial data (your accountant sees only what you grant)',
             ]} />
+            <div className="mt-4 p-4 border border-teal-500/20 bg-teal-500/5 rounded-xl">
+               <h4 className="text-teal-300 text-sm font-semibold mb-2">Data Breach Notification Policy</h4>
+               <p className="text-slate-400 text-xs leading-relaxed">
+                  In the event of a security breach that poses a high risk to the rights and freedoms of individuals (e.g., unauthorized access to unencrypted personal data), AlphaClone Systems will notify all affected users and relevant supervisory authorities without undue delay, and in any event within 72 hours of becoming aware of the breach. Notifications will include the nature of the breach, potential consequences, and the mitigation measures taken.
+               </p>
+            </div>
          </Section>
 
          <Section id="cookies" title="9. Cookies">
@@ -408,7 +414,7 @@ export function TermsOfService() {
                <p>You retain full ownership of all data, content, and intellectual property you upload, create, or store within the Platform ("Your Data"). AlphaClone claims no ownership of Your Data. By using the Platform, you grant AlphaClone a limited, non-exclusive, royalty-free license to store, process, and display Your Data solely for the purpose of providing the service to you.</p>
             </Sub>
             <Sub title="6.2 Platform IP">
-               <p>The AlphaClone Platform, including its software, design, trademarks, logos, documentation, and all associated intellectual property, is owned by AlphaClone Systems (Pty) Ltd and is protected by copyright, trademark, and other applicable laws. You may not use our trademarks or branding without prior written consent.</p>
+               <p>The AlphaClone Platform, including its software, design, trademarks, logos, documentation, and all associated intellectual property, is owned by AlphaClone Systems LLC and is protected by copyright, trademark, and other applicable laws. You may not use our trademarks or branding without prior written consent.</p>
             </Sub>
          </Section>
 
@@ -465,32 +471,46 @@ export function TermsOfService() {
          </Section>
 
          <Section id="uptime" title="10. Service Availability & SLA">
-            <Sub title="9.1 Uptime Target">
+            <Sub title="10.1 Uptime Target">
                <p>AlphaClone targets 99.9% monthly uptime for core platform features. Scheduled maintenance will be announced at least 48 hours in advance via email and the platform dashboard. Emergency maintenance may occur without advance notice.</p>
             </Sub>
-            <Sub title="9.2 Service Credits">
+            <Sub title="10.2 Service Credits">
                <p>If monthly uptime falls below 99.5%, you may request a service credit equal to a pro-rated refund for the downtime period. Credits must be requested within 30 days of the incident. Credits are the sole remedy for service availability issues.</p>
             </Sub>
          </Section>
 
-         <Section id="limitation" title="11. Limitation of Liability">
+         <Section id="warranties" title="11. Disclaimer of Warranties (AS IS)">
+            <p>The Platform is provided on an "AS IS" and "AS AVAILABLE" basis. To the maximum extent permitted by law, AlphaClone expressly disclaims all warranties, whether express, implied, statutory, or otherwise, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement. We do not warrant that the Platform will be uninterrupted, error-free, completely secure, or free of viruses or other harmful components.</p>
+         </Section>
+
+         <Section id="limitation" title="12. Limitation of Liability">
             <p>To the maximum extent permitted by applicable law, AlphaClone's total liability for any claim arising out of or relating to these Terms or the Platform shall not exceed the total fees you paid in the three (3) months immediately preceding the event giving rise to the claim.</p>
-            <p>AlphaClone is not liable for: indirect, incidental, special, consequential, or punitive damages; loss of revenue, profit, or business opportunity; data loss caused by your own actions; third-party service failures (Google, Stripe, Calendly, etc.); or force majeure events.</p>
+            <p>AlphaClone is not liable for: indirect, incidental, special, consequential, or punitive damages; loss of revenue, profit, or business opportunity; data loss caused by your own actions; third-party service failures (Google, Stripe, Calendly, etc.); or any events beyond our reasonable control.</p>
          </Section>
 
-         <Section id="termination" title="12. Termination">
-            <p>Either party may terminate the relationship at any time. You may cancel your subscription as described in Section 4.5. AlphaClone may suspend or terminate your account immediately if: (a) you breach these Terms; (b) you engage in fraudulent or illegal activity; (c) required by law; or (d) continued operation poses a security risk. Upon termination, access to the Platform ceases immediately, and data deletion follows the retention policy in Section 8 of our Privacy Policy.</p>
+         <Section id="indemnification" title="13. Indemnification">
+            <p>You agree to indemnify, defend, and hold harmless AlphaClone Systems, its officers, directors, employees, and affiliates, from and against any and all claims, liabilities, damages, losses, costs, expenses, or fees (including reasonable attorneys' fees) arising from: (a) your use of or access to the Platform; (b) your violation of these Terms or the Acceptable Use Policy; (c) any AI-generated content or outreach sent from your account; or (d) your violation of any applicable law or third-party right.</p>
          </Section>
 
-         <Section id="governing-law" title="13. Governing Law & Disputes">
-            <p>These Terms are governed by the laws of South Africa. Any dispute arising from these Terms shall first be subject to good-faith negotiation between the parties. If unresolved within 30 days, disputes shall be submitted to binding arbitration in accordance with the Arbitration Foundation of Southern Africa (AFSA) rules before any court proceedings commence. Nothing in this clause prevents either party from seeking urgent or interim injunctive relief from a competent court.</p>
+         <Section id="termination" title="14. Termination">
+            <p>Either party may terminate the relationship at any time. You may cancel your subscription as described in Section 4.5. AlphaClone may suspend or terminate your account immediately if: (a) you breach these Terms; (b) you engage in fraudulent or illegal activity; (c) required by law; or (d) continued operation poses a security risk. Upon termination, access to the Platform ceases immediately, and data deletion follows the retention policy in our Privacy Policy.</p>
          </Section>
 
-         <Section id="changes-terms" title="14. Changes to Terms">
+         <Section id="governing-law" title="15. Governing Law, Arbitration, & Class Action Waiver">
+            <p>These Terms are governed by the laws of the State of Wyoming, USA. Any dispute arising from these Terms shall first be subject to good-faith negotiation between the parties. If unresolved within 30 days, disputes shall be submitted to binding arbitration in accordance with the American Arbitration Association (AAA) rules before any court proceedings commence.</p>
+            <p className="mt-2 font-semibold">Class Action Waiver:</p>
+            <p>You agree that any arbitration or legal proceeding shall be conducted in your individual capacity only, and not as a class action or other representative action. You expressly waive your right to file a class action or seek relief on a class basis.</p>
+         </Section>
+         
+         <Section id="force-majeure" title="16. Force Majeure">
+            <p>AlphaClone shall not be liable for any failure or delay in performance due to circumstances beyond our reasonable control, including but not limited to acts of God, natural disasters, war, terrorism, civil unrest, labor disputes, internet service provider failures or delays, or governmental action.</p>
+         </Section>
+
+         <Section id="changes-terms" title="17. Changes to Terms">
             <p>AlphaClone reserves the right to modify these Terms at any time. Material changes will be communicated by email and in-platform notification at least 14 days before they take effect. Your continued use of the Platform after the effective date constitutes your acceptance of the updated Terms.</p>
          </Section>
 
-         <Section id="contact-legal" title="15. Contact">
+         <Section id="contact-legal" title="18. Contact">
             <p>For legal enquiries, contract disputes, or formal notices:</p>
             <p><strong className="text-white">Email:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
          </Section>
