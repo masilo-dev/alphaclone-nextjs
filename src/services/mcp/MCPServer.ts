@@ -2321,9 +2321,88 @@ class AlphaCloneMCPServer {
             task_title,
             task_note,
             mark_task_done,
+            executing_agent,
+            media_base64_data = [],
+            auto_refine_with_context = true,
           } = a;
           const cleanCaption = cleanProfessionalContent(caption || '');
           if (!cleanCaption) throw new Error('caption is required');
+
+          // A. Dynamic Context & Sovereign Brand Strategy Scanner
+          let finalCaption = cleanCaption;
+          if (auto_refine_with_context !== false) {
+            const lower = finalCaption.toLowerCase();
+            
+            // 1. Wyoming entity compliance hook
+            const hasWyoming = lower.includes('wyoming') || lower.includes('llc') || lower.includes('alphaclone systems');
+            if (!hasWyoming) {
+              finalCaption += '\n\n🛡️ Verified Wyoming Corporate Integrity: Managed autonomously by AlphaClone Systems LLC (Wyoming, US). All operations CCPA-compliant.';
+            }
+            
+            // 2. Sovereign Google-Free GIS compliance hook
+            const mentionsGoogle = lower.includes('google maps') || lower.includes('google analytics') || lower.includes('google api');
+            if (mentionsGoogle) {
+              finalCaption = finalCaption
+                .replace(/google maps/gi, 'OpenStreetMap & HERE maps (Sovereign GIS)')
+                .replace(/google analytics/gi, 'Sovereign client metrics')
+                .replace(/google api/gi, 'Sovereign mapping APIs');
+            } else if (!lower.includes('maps') && !lower.includes('gis') && !lower.includes('openstreetmap') && !lower.includes('here')) {
+              finalCaption += '\n\n🌍 100% Google-Free sovereign local business lead harvesting powered by OpenStreetMap & HERE maps routing.';
+            }
+            
+            // 3. Solopreneur starting pricing value hook
+            const hasPricing = lower.includes('$15') || lower.includes('trial') || lower.includes('risk-free');
+            if (!hasPricing) {
+              finalCaption += '\n\n🚀 Kickstart your B2B lead pipelines with our zero-risk 14-day trial. Pricing starts at just $15/month.';
+            }
+          }
+
+          // B. Direct base64 Multimedia Ingestion
+          const uploadedAssetUrls: string[] = [];
+          if (Array.isArray(media_base64_data) && media_base64_data.length > 0) {
+            for (const item of media_base64_data) {
+              try {
+                const { file_name, file_type, base64 } = item as { file_name?: string; file_type?: string; base64?: string };
+                if (file_name && file_type && base64) {
+                  const normalizedBase = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
+                  const binary = Buffer.from(normalizedBase, 'base64');
+                  if (binary.length > 0) {
+                    const ext = String(file_name).split('.').pop() || (file_type.startsWith('video/') ? 'mp4' : 'bin');
+                    const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+                    const { error: uploadError } = await supabaseAdmin.storage
+                      .from('public-assets')
+                      .upload(storagePath, binary, {
+                        contentType: file_type,
+                        upsert: false,
+                      });
+                    if (!uploadError) {
+                      const { data: urlData } = supabaseAdmin.storage.from('public-assets').getPublicUrl(storagePath);
+                      const publicUrl = urlData.publicUrl;
+                      const assetType = file_type.startsWith('video/') ? 'video' : file_type.includes('gif') ? 'gif' : 'image';
+                      await supabaseAdmin
+                        .from('media_assets')
+                        .insert({
+                          tenant_id,
+                          user_id,
+                          file_name: file_name.trim(),
+                          file_type: file_type.trim(),
+                          asset_type: assetType,
+                          storage_path: storagePath,
+                          public_url: publicUrl,
+                          file_size_bytes: binary.length,
+                          alt_text: '',
+                          tags: ['mcp-direct-upload'],
+                        });
+                      uploadedAssetUrls.push(publicUrl);
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error('Failed to upload direct base64 asset inside create_social_post:', err);
+              }
+            }
+          }
+
           const normalizedPlatforms = Array.isArray(platforms)
             ? platforms.map((p) => String(p).trim().toLowerCase()).filter(Boolean)
             : ['facebook'];
@@ -2360,7 +2439,7 @@ class AlphaCloneMCPServer {
               .eq('tenant_id', tenant_id)
               .eq('is_active', true);
             if (identitiesError) throw supabaseErrorToMcpClientError('create_social_post', identitiesError.message);
-            integration = pickPreferredFacebookIdentity((identities || []) as FacebookIntegrationIdentity[]);
+            integration = pickPreferredFacebookIdentity(identities as FacebookIntegrationIdentity[]);
             if (integration?.page_id) resolvedPageId = integration.page_id;
           }
 
@@ -2383,7 +2462,7 @@ class AlphaCloneMCPServer {
               .filter(Boolean);
           }
 
-          const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls];
+          const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls, ...uploadedAssetUrls];
           const firstMediaUrl = mergedMediaUrls.length > 0 ? mergedMediaUrls[0] : null;
           const isVideoMedia = !!firstMediaUrl && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
 
@@ -2406,13 +2485,13 @@ class AlphaCloneMCPServer {
             if (firstMediaUrl) {
               if (isVideoMedia) {
                 body.set('file_url', firstMediaUrl);
-                body.set('description', cleanCaption);
+                body.set('description', finalCaption);
               } else {
                 body.set('url', firstMediaUrl);
-                body.set('caption', cleanCaption);
+                body.set('caption', finalCaption);
               }
             } else {
-              body.set('message', cleanCaption);
+              body.set('message', finalCaption);
               if (typeof link_url === 'string' && link_url) body.set('link', link_url);
             }
             const resp = await fetch(graph.toString(), {
@@ -2435,7 +2514,7 @@ class AlphaCloneMCPServer {
             .insert({
               tenant_id,
               user_id,
-              caption: cleanCaption,
+              caption: finalCaption,
               platforms: normalizedPlatforms.length > 0 ? normalizedPlatforms : ['facebook'],
               link_url: typeof link_url === 'string' && link_url ? link_url : null,
               media_urls: mergedMediaUrls,
@@ -2449,6 +2528,36 @@ class AlphaCloneMCPServer {
             .select('id, status, scheduled_at, published_at, facebook_post_id')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_social_post', error.message);
+
+          // C. Daily Multi-Agent CRM Activity Timeline Logger
+          const detectedAgent = typeof executing_agent === 'string' && executing_agent.trim()
+            ? executing_agent.trim().toLowerCase()
+            : finalCaption.toLowerCase().includes('manus') ? 'manus' : finalCaption.toLowerCase().includes('grok') ? 'grok' : 'claude';
+          
+          const agentDisplayNames: Record<string, string> = {
+            claude: 'Claude 3.5 Sonnet',
+            grok: 'Grok 3 (Social Agent)',
+            manus: 'Manus AI (Web Agent)'
+          };
+          const agentName = agentDisplayNames[detectedAgent] || 'Claude 3.5 Sonnet';
+
+          await supabaseAdmin
+            .from('tasks')
+            .insert({
+              tenant_id: tenant_id,
+              title: `[${agentName}] Autonomous Social Post Dispatched`,
+              description: `AI Agent successfully executed the autonomous social media distribution matrix.\n\nPlatforms: ${normalizedPlatforms.join(', ').toUpperCase()}\nCaption: ${finalCaption}\nAssets: ${mergedMediaUrls.length} media attached.\nStatus: ${status.toUpperCase()}`,
+              priority: 'medium',
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              tags: [detectedAgent, 'mcp-run', 'autopilot-publish'],
+              metadata: {
+                agent: detectedAgent,
+                agent_name: agentName,
+                tool: 'create_social_post',
+                social_post_id: data?.id || null
+              }
+            });
 
           const actionLabel = publish_now ? 'posted to Facebook' : `scheduled for ${String(scheduled_at)}`;
           const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
@@ -2485,6 +2594,8 @@ class AlphaCloneMCPServer {
                   post: data,
                   task: taskResult,
                   page: hasFacebook ? { page_id: resolvedPageId, page_name: integration?.page_name || null } : null,
+                  refinement: auto_refine_with_context !== false ? 'applied brand context' : 'skipped',
+                  logged_run: { agent: detectedAgent, status: 'completed' }
                 })}`,
               },
             ],
