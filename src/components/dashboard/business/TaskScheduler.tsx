@@ -737,7 +737,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   <select
                     value={newTask.target?.criteria || 'facebook'}
                     onChange={e => setNewTask(p => ({ ...p, target: { ...p.target, criteria: e.target.value } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
                   >
                     <option value="facebook">Facebook</option>
                     <option value="facebook,instagram">Facebook + Instagram</option>
@@ -760,7 +760,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                         ? DEFAULT_AI_PROMPTS[e.target.value]
                         : p.aiPrompt,
                     }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-violet-500/50 transition-colors"
                   >
                     {TASK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
@@ -770,7 +770,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                   <select
                     value={newTask.schedule?.type || 'daily'}
                     onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, type: e.target.value as Task['schedule']['type'] } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-violet-500/50 transition-colors"
                   >
                     {SCHEDULE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
@@ -794,7 +794,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     <select
                       value={newTask.schedule?.day ?? 1}
                       onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, day: parseInt(e.target.value) } }))}
-                      className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-violet-500/50 transition-colors"
                     >
                       {DAYS_OF_WEEK.map((d, i) => <option key={d} value={i}>{d}</option>)}
                     </select>

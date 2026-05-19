@@ -77,14 +77,14 @@ export default {
             },
             // STRICT APP TYPOGRAPHY SCALE
             fontSize: {
-                xs: ['12px', '16px'],
-                sm: ['12.5px', '18px'], // Gmail-like small
-                base: ['14px', '21px'], // Gmail standard body (1.5 line-height)
-                md: ['16px', '24px'],
-                lg: ['18px', '28px'],
-                xl: ['22px', '30px'], // Section headers
-                '2xl': ['24px', '32px'],
-                '3xl': ['32px', '40px'], // Hero headers
+                xs: ['0.75rem', '1rem'],       // 12px / 16px - For captions, tiny details
+                sm: ['0.781rem', '1.125rem'],  // ~12.5px / 18px - Small text
+                base: ['0.875rem', '1.3125rem'],// 14px / 21px - Your compact Gmail-like body standard
+                md: ['1rem', '1.5rem'],        // 16px / 24px - Standard input/form text (Prevents iOS zoom)
+                lg: ['1.125rem', '1.75rem'],   // 18px / 28px
+                xl: ['1.375rem', '1.875rem'],  // 22px / 30px - Section headers
+                '2xl': ['1.5rem', '2rem'],     // 24px / 32px
+                '3xl': ['2rem', '2.5rem'],     // 32px / 40px - Hero headers
             },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-out',

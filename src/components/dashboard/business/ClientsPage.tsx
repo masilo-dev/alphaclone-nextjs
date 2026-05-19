@@ -585,7 +585,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             />
                         </div>
                         <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-teal-500">
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-md focus:outline-none focus:border-teal-500">
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -660,7 +660,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <select
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm"
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-md"
                         >
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
@@ -714,7 +714,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <select
                                 value={selectedStage}
                                 onChange={(e) => setSelectedStage(e.target.value)}
-                                className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all font-medium"
+                                className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-md font-medium"
                             >
                                 <option value="all">All Stages</option>
                                 <option value="lead">Leads</option>
@@ -1184,7 +1184,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-medium"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-medium"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1280,7 +1280,7 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1501,7 +1501,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
                         >
                             <option value="Web">Web Development</option>
                             <option value="Mobile">Mobile App</option>
