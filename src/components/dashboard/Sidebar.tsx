@@ -176,7 +176,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         </label>
                         <select
                             id="ac-sidebar-jump"
-                            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                             defaultValue=""
                             onChange={(e) => {
                                 const href = e.target.value;

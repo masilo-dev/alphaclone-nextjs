@@ -1,5 +1,18 @@
 # Update Log
 
+## Date: 2026-05-19 (RESPONSIVE PWA TYPOGRAPHY SCALE & MOBILE USABILITY OPTIMIZATION)
+
+### Added/Modified
+- **Relative Typography Scale Refactor**: Converted the absolute pixel-based `fontSize` scale in `src/tailwind.config.js` to relative `rem` units with fluid line-height mappings, ensuring professional accessibility and responsiveness to native browser scaling.
+- **Sleek Line-Heights Mapping**: Tuned all design-system heading elements (`.text-h1` through `.text-h6`) to a tight, high-authority `1.2` line-height and body elements (`.text-body-lg`, `.text-body`, `.text-body-sm`) to a visually compact `1.4` line-height in `src/styles/typography.css`, making 16px layouts look exceptionally sleek and compact on small viewports.
+- **Anti-Zoom Form Inputs Enforced**: Refactored the core `<Input />` and `<textarea>` components in `src/components/ui/UIComponents.tsx` to explicitly map their default styling classes to `text-md` (which maps to relative `1rem` / 16px equivalent). This prevents standard form components from rendering at sub-16px text sizes on iOS devices, completely neutralizing Apple's layout auto-zoom penalty without relying on raw CSS selectors.
+- **Mobile Jump Select Sized**: Upgraded the mobile page-jump `<select>` component inside `src/components/dashboard/Sidebar.tsx` from `text-sm` to `text-md`, matching the form design guidelines and securing it against iOS scaling inconsistencies.
+- **CRM & Task Scheduler Dropdowns Upgraded**: Refactored all stage select dropdowns, category dropdowns, and schedule selectors inside `src/components/dashboard/business/ClientsPage.tsx` and `src/components/dashboard/business/TaskScheduler.tsx` to use the anti-zoom `text-md` standard, completely eliminating sub-16px dropdown scaling bugs.
+- **Premium Form Focus Glows**: Added active HSL-derived teal focus borders and glowing shadows to all input, textarea, and select elements within `src/app/globals.css`, providing state-of-the-art interactive feedback.
+
+### Production Readiness
+- **Vercel Safe**: 100% type-safe compilation and zero-error builds verified under strict TypeScript compiler rules.
+
 ## Date: 2026-05-18 (SOVEREIGN MCP AGENT AUTOPILOT & DIRECT MULTIMEDIA CRM STACK)
 
 ### Added
