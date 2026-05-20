@@ -2333,12 +2333,6 @@ class AlphaCloneMCPServer {
           if (auto_refine_with_context !== false) {
             const lower = finalCaption.toLowerCase();
             
-            // 1. Wyoming entity compliance hook
-            const hasWyoming = lower.includes('wyoming') || lower.includes('llc') || lower.includes('alphaclone systems');
-            if (!hasWyoming) {
-              finalCaption += '\n\n🛡️ Verified Wyoming Corporate Integrity: Managed autonomously by AlphaClone Systems LLC (Wyoming, US). All operations CCPA-compliant.';
-            }
-            
             // 2. Sovereign Google-Free GIS compliance hook
             const mentionsGoogle = lower.includes('google maps') || lower.includes('google analytics') || lower.includes('google api');
             if (mentionsGoogle) {
@@ -6249,6 +6243,144 @@ Return ONLY a JSON array of 60 objects:
           const total = data?.length || 0;
           const sent = data?.filter((l: any) => l.status === 'sent').length || 0;
           result = { content: [{ type: 'text', text: JSON.stringify({ total_outreach: total, sent_outreach: sent }, null, 2) }] };
+          break;
+        }
+
+        case 'execute_strategic_intelligence': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { module_name, parameters = {} } = a;
+          if (!module_name) throw new Error('module_name is required');
+
+          let moduleResult: any = { status: 'unknown_module' };
+
+          try {
+            switch (module_name) {
+              case 'pricing_elasticity': {
+                const { pricingElasticityService } = await import('../intelligence/pricingElasticityService');
+                moduleResult = await pricingElasticityService.calculateOptimalDiscount(supabaseAdmin, tenant_id, parameters.deal_id);
+                break;
+              }
+              case 'churn_propensity': {
+                const { churnPropensityService } = await import('../intelligence/churnPropensityService');
+                moduleResult = await churnPropensityService.calculateChurnRisk(supabaseAdmin, tenant_id, parameters.client_id);
+                break;
+              }
+              case 'proposal_generator': {
+                const { proposalGeneratorService } = await import('../intelligence/proposalGeneratorService');
+                moduleResult = await proposalGeneratorService.generateProposal(supabaseAdmin, tenant_id, parameters.deal_id);
+                break;
+              }
+              case 'ivr_agent': {
+                const { ivrAgentService } = await import('../intelligence/ivrAgentService');
+                moduleResult = await ivrAgentService.processCallTranscript(supabaseAdmin, tenant_id, parameters.caller_number, parameters.transcript);
+                break;
+              }
+              case 'network_graph': {
+                const { networkGraphService } = await import('../intelligence/networkGraphService');
+                moduleResult = await networkGraphService.buildAccountNetwork(supabaseAdmin, tenant_id, parameters.company_id);
+                break;
+              }
+              case 'data_enrichment': {
+                const { dataEnrichmentService } = await import('../intelligence/dataEnrichmentService');
+                moduleResult = await dataEnrichmentService.enrichCompanyProfile(supabaseAdmin, tenant_id, parameters.company_name, parameters.website);
+                break;
+              }
+              case 'revenue_recognition': {
+                const { revenueRecognitionService } = await import('../intelligence/revenueRecognitionService');
+                moduleResult = await revenueRecognitionService.buildRecognitionSchedule(supabaseAdmin, tenant_id, parameters.invoice_id, parameters.service_months || 12);
+                break;
+              }
+              case 'invoice_factoring': {
+                const { invoiceFactoringService } = await import('../intelligence/invoiceFactoringService');
+                moduleResult = await invoiceFactoringService.evaluateInvoiceForFactoring(supabaseAdmin, tenant_id, parameters.invoice_id);
+                break;
+              }
+              case 'objection_handling': {
+                const { objectionHandlingService } = await import('../intelligence/objectionHandlingService');
+                moduleResult = await objectionHandlingService.generateRebuttal(supabaseAdmin, tenant_id, parameters.deal_id, parameters.buyer_objection);
+                break;
+              }
+              case 'narrative_reports': {
+                const { narrativeReportingService } = await import('../intelligence/narrativeReportingService');
+                moduleResult = await narrativeReportingService.generateExecutiveSummary(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'anomaly_alert': {
+                const { anomalyAlertingService } = await import('../intelligence/anomalyAlertingService');
+                moduleResult = await anomalyAlertingService.scanForAnomalies(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'sql_query': {
+                const { naturalLanguageSqlService } = await import('../intelligence/naturalLanguageSqlService');
+                moduleResult = await naturalLanguageSqlService.executeQuery(supabaseAdmin, tenant_id, parameters.query);
+                break;
+              }
+              case 'communication_risk': {
+                const { communicationRiskService } = await import('../intelligence/communicationRiskService');
+                moduleResult = await communicationRiskService.analyzeDealRisk(supabaseAdmin, tenant_id, parameters.deal_id);
+                break;
+              }
+              case 'payment_risk_score': {
+                const { paymentRiskScoringService } = await import('../intelligence/paymentRiskScoringService');
+                moduleResult = await paymentRiskScoringService.computeRiskScore(supabaseAdmin, tenant_id, parameters.client_id);
+                break;
+              }
+              case 'monte_carlo_simulation': {
+                const { monteCarloSimulationService } = await import('../intelligence/monteCarloSimulationService');
+                moduleResult = await monteCarloSimulationService.runPipelineSimulation(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'outreach_bandit_strategy': {
+                const { outreachBanditService } = await import('../intelligence/outreachBanditService');
+                moduleResult = await outreachBanditService.selectBestStrategy(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'sentiment_arc': {
+                const { sentimentArcService } = await import('../intelligence/sentimentArcService');
+                moduleResult = await sentimentArcService.analyzeSentimentArc(supabaseAdmin, tenant_id, parameters.deal_id);
+                break;
+              }
+              case 'crm_intelligence': {
+                const { crmIntelligenceService } = await import('../intelligence/crmIntelligenceService');
+                if (parameters.action === 'attribution') moduleResult = await crmIntelligenceService.computeMarketingAttribution(supabaseAdmin, tenant_id);
+                else if (parameters.action === 'buyer_journey') moduleResult = await crmIntelligenceService.analyzeBuyerJourney(supabaseAdmin, tenant_id, parameters.contact_id);
+                else if (parameters.action === 'competitive') moduleResult = await crmIntelligenceService.generateCompetitiveStrategy(parameters.competitor_name);
+                break;
+              }
+              case 'playbooks': {
+                const { playbookBuilderService } = await import('../intelligence/playbookBuilderService');
+                moduleResult = await playbookBuilderService.executeActivePlaybooks(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'semantic_resolution': {
+                const { semanticResolutionService } = await import('../intelligence/semanticResolutionService');
+                moduleResult = await semanticResolutionService.scanForDuplicates(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'revenue_root_cause': {
+                const { revenueRootCauseService } = await import('../intelligence/revenueRootCauseService');
+                moduleResult = await revenueRootCauseService.analyze(supabaseAdmin, tenant_id);
+                break;
+              }
+              case 'customer_360': {
+                const { customer360Service } = await import('../intelligence/customer360Service');
+                moduleResult = await customer360Service.buildProfile(supabaseAdmin, tenant_id, parameters.client_id);
+                break;
+              }
+              case 'cash_flow_prediction': {
+                const { cashFlowPredictionService } = await import('../intelligence/cashFlowPredictionService');
+                moduleResult = await cashFlowPredictionService.forecast(supabaseAdmin, tenant_id, parameters.days || 90);
+                break;
+              }
+              default:
+                throw new Error(`Unknown strategic module: ${module_name}`);
+            }
+          } catch (modErr: any) {
+            moduleResult = { success: false, error: modErr.message };
+          }
+          
+          result = { content: [{ type: 'text', text: JSON.stringify(moduleResult, null, 2) }] };
           break;
         }
 
