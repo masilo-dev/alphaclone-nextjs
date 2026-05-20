@@ -119,7 +119,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [page, setPage] = useState(1);
     const [showArchived, setShowArchived] = useState(false);
     const [hasMore, setHasMore] = useState(true);
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 500;
 
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
@@ -514,7 +514,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">CRM</p>
                     </div>
                 </div>
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
                     <Button
                         variant="outline"
                         onClick={handleExportExcel}
@@ -749,19 +749,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     if (selectedClientIds.length > 0) {
                                         setSelectedClientIds([]);
                                     } else {
-                                        const batch = filteredClients.slice(0, 20).map(c => c.id);
+                                        const batch = filteredClients.slice(0, 500).map(c => c.id);
                                         setSelectedClientIds(batch);
-                                        if (filteredClients.length > 20) {
-                                            toast.success('Selected first 20 contacts for bulk outreach.');
+                                        if (filteredClients.length > 500) {
+                                            toast.success('Selected first 500 contacts for bulk outreach.');
                                         }
                                     }
                                 }}
                                 className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-teal-400 transition-colors"
                             >
-                                {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 20)`}
+                                {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 500)`}
                             </button>
-                            {selectedClientIds.length >= 20 && (
-                                <span className="text-xs font-black text-amber-500 uppercase tracking-tighter">Batch Limit Reached</span>
+                            {selectedClientIds.length >= 500 && (
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
                             )}
                         </div>
 
@@ -780,8 +780,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onChange={(e) => {
                                                 e.stopPropagation();
                                                 if (e.target.checked) {
-                                                    if (selectedClientIds.length >= 20) {
-                                                        toast.error('Maximum 20 contacts for bulk outreach.');
+                                                    if (selectedClientIds.length >= 500) {
+                                                        toast.error('Maximum 500 contacts for bulk outreach.');
                                                         return;
                                                     }
                                                     setSelectedClientIds([...selectedClientIds, client.id]);
