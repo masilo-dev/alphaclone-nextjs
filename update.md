@@ -1,5 +1,21 @@
 # Update Log
 
+## Date: 2026-05-20 (DEFAULT EMAIL PROVIDER: ZOHO PREFERENCE & USER SPECIFIED PRIORITY ORDER)
+
+### Added/Modified
+- **Default Provider Resolution** ([providerIntegrationResolver.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/email/providerIntegrationResolver.ts)): Set default provider lookup fallback priority to: Zoho -> Brevo -> Resend -> SendGrid -> Gmail.
+- **Compose Email Modal** ([ComposeEmailModal.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/ComposeEmailModal.tsx)): Updated the default provider selection logic to search and prefer Zoho first, followed by Brevo, Resend, SendGrid, and Gmail.
+- **CRM Communication Modal** ([CommunicationModal.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/crm/CommunicationModal.tsx)): Reordered the `availableProviders` array to prioritize Zoho and follow the new sequence.
+- **AI Outreach Modal** ([AIOutreachModal.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/AIOutreachModal.tsx)): Configured the initial component state and the fallback provider lookup to prefer Zoho and follow the specified priority order.
+- **Outreach Panel** ([OutreachPanel.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/leads/OutreachPanel.tsx)): Set the default selected providers array to Zoho.
+- **Campaign Builder** ([CampaignBuilder.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/CampaignBuilder.tsx)): Changed the default selected email provider to Zoho.
+- **Batch Outreach Panel** ([BatchOutreachPanel.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/BatchOutreachPanel.tsx)): Set the default selected outreach provider to Zoho.
+
+### Production Readiness
+- **Vercel Safe**: Verified TypeScript compilation compiles without any errors (`npx tsc --noEmit` returns code 0).
+
+---
+
 ## Date: 2026-05-20 (NEXUS SYSTEM DYNAMIC PIPELINES & RUNNER TRIGGERS)
 
 ### Added/Modified

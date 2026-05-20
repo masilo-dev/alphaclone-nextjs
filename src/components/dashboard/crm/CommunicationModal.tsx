@@ -44,7 +44,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
-    const availableProviders: EmailProvider[] = ['sendgrid', 'resend', 'brevo', 'gmail', 'zoho'];
+    const availableProviders: EmailProvider[] = ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
 
     const providerLabels: Record<Exclude<EmailProvider, null>, string> = {
         sendgrid: 'SendGrid',

@@ -15,7 +15,7 @@ function pickProvider(
 ): ResolvedEmailProviderConfig | null {
   const order: EmailProvider[] = preferredProvider
     ? [preferredProvider]
-    : ['brevo', 'sendgrid', 'resend', 'zoho', 'gmail'];
+    : ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
   for (const provider of order) {
     const hit = rows.find((row) => row.type === provider);
     const cfg = (hit?.config || {}) as Record<string, unknown>;

@@ -11,21 +11,6 @@ export default function ActivityPulse() {
   const [activities, setActivities] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    fetchActivity();
-    const interval = setInterval(fetchActivity, 60000); // Refresh every minute
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (activities.length > 1) {
-      const timer = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % activities.length);
-      }, 8000); // Cycle every 8 seconds
-      return () => clearInterval(timer);
-    }
-  }, [activities]);
-
   const fetchActivity = async () => {
     const tenantId = tenantService.getCurrentTenantId();
     const { data: { user } } = await supabase.auth.getUser();
@@ -47,6 +32,21 @@ export default function ActivityPulse() {
       console.error('Failed to fetch pulse activity:', err);
     }
   };
+
+  useEffect(() => {
+    fetchActivity();
+    const interval = setInterval(fetchActivity, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (activities.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % activities.length);
+      }, 8000); // Cycle every 8 seconds
+      return () => clearInterval(timer);
+    }
+  }, [activities]);
 
   if (activities.length === 0) return null;
 

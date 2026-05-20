@@ -72,9 +72,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
                 setAvailableProviders(filtered);
                 
-                // Set default provider (prefer Gmail if available, otherwise first one)
+                // Set default provider (prefer Zoho, then Brevo, then Resend, then SendGrid, then Gmail, otherwise first one)
+                const zoho = filtered.find(p => p.type === 'zoho');
+                const brevo = filtered.find(p => p.type === 'brevo');
+                const resend = filtered.find(p => p.type === 'resend');
+                const sendgrid = filtered.find(p => p.type === 'sendgrid');
                 const gmail = filtered.find(p => p.type === 'gmail');
-                setSelectedProvider(gmail || filtered[0] || null);
+                setSelectedProvider(zoho || brevo || resend || sendgrid || gmail || filtered[0] || null);
             });
 
             // Fetch user's email for the fallback From field

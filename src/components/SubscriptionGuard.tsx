@@ -16,10 +16,8 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
     const { currentTenant, isLoading } = useTenant();
     const { user } = useAuth();
     const router = useRouter();
-    if (isLoading || !currentTenant) return <>{children}</>;
-
-    const status = currentTenant.subscription_status;
-    const trialEndsAt = currentTenant.trial_ends_at ? new Date(currentTenant.trial_ends_at) : null;
+    const status = currentTenant?.subscription_status;
+    const trialEndsAt = currentTenant?.trial_ends_at ? new Date(currentTenant.trial_ends_at) : null;
     const isTrialExpired = status === 'trial' && trialEndsAt && trialEndsAt < new Date();
 
     // Inactive states that should block the dashboard
@@ -27,13 +25,13 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
 
     // Soft warning logic (for edge cases client-side)
     React.useEffect(() => {
-        if (isInactive) {
+        if (!isLoading && currentTenant && isInactive) {
             toast.error(isTrialExpired ? 'Your trial has expired. Please upgrade.' : 'Your subscription is inactive.', {
                 id: 'subscription-warning',
                 duration: 5000,
             });
         }
-    }, [isInactive, isTrialExpired]);
+    }, [isInactive, isTrialExpired, isLoading, currentTenant]);
 
-    return <>{children}</>;
+    if (isLoading || !currentTenant) return <>{children}</>;
 };

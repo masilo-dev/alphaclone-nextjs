@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface Task {
@@ -26,6 +26,7 @@ const ROW_HEIGHT = 50;
 const HEADER_HEIGHT = 40;
 
 export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
+  const [now] = useState(() => Date.now());
   // 1. Calculate time range
   const { minDate, maxDate, dates } = useMemo(() => {
     const allDates = tasks
@@ -33,16 +34,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
       .filter((d): d is number => d !== null);
     
     if (allDates.length === 0) {
-      const now = new Date();
       return { 
-        minDate: now.getTime(), 
-        maxDate: now.getTime() + 7 * 24 * 60 * 60 * 1000,
-        dates: Array.from({ length: 8 }, (_, i) => new Date(now.getTime() + i * 24 * 60 * 60 * 1000))
+        minDate: now, 
+        maxDate: now + 7 * 24 * 60 * 60 * 1000,
+        dates: Array.from({ length: 8 }, (_, i) => new Date(now + i * 24 * 60 * 60 * 1000))
       };
     }
 
-    const min = Math.min(...allDates, Date.now()) - 2 * 24 * 60 * 60 * 1000;
-    const max = Math.max(...allDates, Date.now()) + 5 * 24 * 60 * 60 * 1000;
+    const min = Math.min(...allDates, now) - 2 * 24 * 60 * 60 * 1000;
+    const max = Math.max(...allDates, now) + 5 * 24 * 60 * 60 * 1000;
     
     const d: Date[] = [];
     let current = new Date(min);
@@ -52,7 +52,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
     }
 
     return { minDate: min, maxDate: max, dates: d };
-  }, [tasks]);
+  }, [tasks, now]);
 
   const getX = (date: string | null) => {
     if (!date) return 0;

@@ -687,6 +687,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 : 'from-teal-500 to-cyan-600';
                             return (
                                     <ClientCard
+                                        key={client.id}
                                         client={client}
                                         onEdit={(c) => { setEditingClient(c); setShowEditModal(true); }}
                                         onDelete={handleArchiveClient}

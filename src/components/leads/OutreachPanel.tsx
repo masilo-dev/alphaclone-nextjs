@@ -71,7 +71,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [editingIdx,    setEditingIdx   ] = useState<number | null>(null);
   const [sendResults,   setSendResults  ] = useState<Array<{ name: string; status: 'sent' | 'queued' | 'failed'; error?: string }>>([]);
   const [queueOnly,     setQueueOnly    ] = useState(false);
-  const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['brevo']);
+  const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['zoho']);
   const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(false);
 
   const inferLeadRecipient = (lead: OutreachLead): string | null => {
