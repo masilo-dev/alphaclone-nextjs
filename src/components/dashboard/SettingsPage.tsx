@@ -1,106 +1,71 @@
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
-    CreditCard,
-    Shield,
-    Bell,
-    Database,
-    Lock,
-    Layout,
-    Sparkles,
-    Loader2,
-    CheckCircle2,
-    AlertCircle,
-    ExternalLink,
-    RefreshCw,
-    XCircle,
-    ShieldCheck,
-    User as UserIcon,
-    Palette,
-    Globe,
-    Settings
+    CreditCard, Lock, Loader2,
+    AlertCircle, ShieldCheck,
+    User as UserIcon, Globe, Building,
+    ChevronRight, DollarSign, Briefcase,
+    Eye, Copy, Upload
 } from 'lucide-react';
-import { Button, Card, Input, Modal } from '../ui/UIComponents';
-import { User as UserType } from '../../types';
-import { userService } from '../../services/userService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTenant } from '@/contexts/TenantContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
+import { User as UserType } from '@/types';
+import { userService } from '@/services/userService';
+import { authService } from '@/services/authService';
+import { fileUploadService } from '@/services/fileUploadService';
+import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
+import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServiceCatalog';
+import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { useTenant } from '../../contexts/TenantContext';
-import { SubscriptionPlan, PLAN_PRICING } from '../../services/tenancy/types';
+
+// Integration subcomponents
 import CalendlySettings from './business/CalendlySettings';
-// import GmailIntegration from './business/GmailIntegration';
 import HubspotIntegration from './business/HubspotIntegration';
 import StripeConnectSettings from './business/StripeConnectSettings';
-import { IntegrationSettings } from './settings/IntegrationSettings';
-import BrandingSettings from './settings/BrandingSettings';
-import { Building, Trash2 } from 'lucide-react';
-import { authService } from '../../services/authService';
 import ZohoIntegration from './business/ZohoIntegration';
-
-import { useSearchParams, useRouter } from 'next/navigation';
+import GmailIntegration from './business/GmailIntegration';
+import TwilioIntegration from './business/TwilioIntegration';
+import SendGridIntegration from './business/SendGridIntegration';
+import ResendIntegration from './business/ResendIntegration';
+import BrevoIntegration from './business/BrevoIntegration';
+import MFAEnrollment from './business/MFAEnrollment';
 
 interface SettingsPageProps {
     user: UserType;
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const zoomHandledRef = useRef(false);
-    const initialSection = searchParams?.get('section') as any;
+const statusColors: Record<string, string> = {
+    active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    trialing: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    past_due: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+};
 
-    const validSections = [
-        'profile',
-        'notifications',
-        'security',
-        'appearance',
-        'billing',
-        'booking',
-        'branding',
-        'integrations',
-    ] as const;
-    const defaultSection = validSections.includes(initialSection as (typeof validSections)[number])
-        ? initialSection
-        : 'profile';
-
-    const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'security' | 'appearance' | 'billing' | 'booking' | 'branding' | 'integrations' | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
+export default function SettingsPage({ user }: SettingsPageProps) {
     const { currentTenant } = useTenant();
+    const { backgroundColor, setBackgroundColor } = useTheme();
+    const { language, setLanguage, t: translate } = useLanguage();
 
-    // Hydration + deep links (Zoom OAuth return, integrations tab)
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
+    // Accordion visibility mapping
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
-        const isMobile = window.innerWidth < 1024;
-        const section = searchParams?.get('section');
-        const zoomOk = searchParams?.get('zoom') === 'connected';
-        const zoomErr = searchParams?.get('zoom_error');
-        const valid = new Set<string>(validSections);
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+    };
 
-        let next: typeof activeSection;
-        if (zoomOk || section === 'integrations') {
-            next = 'integrations';
-        } else if (section && valid.has(section)) {
-            next = section as typeof activeSection;
-        } else {
-            next = isMobile ? null : (defaultSection as typeof activeSection);
-        }
+    // States
+    const [isSaving, setIsSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [showApiKey, setShowApiKey] = useState(false);
 
-        setActiveSection(next);
-
-        if (zoomOk) {
-            if (!zoomHandledRef.current) {
-                zoomHandledRef.current = true;
-                toast.success('Zoom connected for this workspace.');
-            }
-            router.replace('/dashboard/settings?section=integrations', { scroll: false });
-        } else if (zoomErr) {
-            toast.error(`Zoom connection failed: ${zoomErr}`);
-            router.replace('/dashboard/settings?section=integrations', { scroll: false });
-        }
-    }, [searchParams, defaultSection, router]);
-
+    // Profile & workspace details
     const [profileData, setProfileData] = useState({
-        name: user.name,
-        email: user.email,
+        name: user.name || '',
+        email: user.email || '',
         phone: '',
         company: '',
         timezone: 'UTC',
@@ -119,53 +84,67 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         confirmPassword: ''
     });
 
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [businessSettings, setBusinessSettings] = useState({
+        businessName: '',
+        logoUrl: '',
+        brandColor: '#2dd4bf',
+        address: '',
+        phone: '',
+        email: '',
+        taxRate: 0,
+        currency: 'USD',
+        invoicePrefix: 'INV',
+        bankDetails: '',
+        mobilePaymentDetails: '',
+        serviceSectors: [] as string[],
+        myServices: {} as Record<string, Partial<ServiceItem> & { isCustom?: boolean }>,
+    });
 
-    // SVG components for internal use
-    const CreditCardIcon = (props: any) => (
-        <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
-    );
+    // Load initial settings
+    useEffect(() => {
+        const loadInitialData = async () => {
+            if (!currentTenant?.id) return;
+            try {
+                // Fetch profile updates from user service / db
+                const { data: bData, error } = await supabase
+                    .from('business_settings')
+                    .select('*')
+                    .eq('tenant_id', currentTenant.id)
+                    .single();
 
-    const CalendarIcon = (props: any) => (
-        <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
-    );
-
-    const sections = [
-        { id: 'profile' as const, label: 'Profile', icon: UserIcon },
-        { id: 'notifications' as const, label: 'Notifications', icon: Bell },
-        { id: 'security' as const, label: 'Security', icon: Lock },
-        { id: 'integrations' as const, label: 'Integrations', icon: Settings },
-        { id: 'appearance' as const, label: 'Appearance', icon: Palette },
-        { id: 'billing' as const, label: 'Plans & Billing', icon: CreditCard },
-        { id: 'booking' as const, label: 'Booking & Integrations', icon: CalendarIcon },
-        { id: 'branding' as const, label: 'Branding', icon: Sparkles }
-    ];
+                if (!error && bData) {
+                    setBusinessSettings({
+                        businessName: bData.business_name || user?.name || '',
+                        logoUrl: bData.logo_url || '',
+                        brandColor: bData.brand_color || '#2dd4bf',
+                        address: bData.address || '',
+                        phone: bData.phone || '',
+                        email: bData.email || user?.email || '',
+                        taxRate: bData.tax_rate || 0,
+                        currency: bData.currency || 'USD',
+                        invoicePrefix: bData.invoice_prefix || 'INV',
+                        bankDetails: bData.bank_details || '',
+                        mobilePaymentDetails: bData.mobile_payment_details || '',
+                        serviceSectors: bData.settings?.service_sectors || [],
+                        myServices: bData.settings?.my_services || {},
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load business settings:', err);
+            }
+        };
+        loadInitialData();
+    }, [currentTenant?.id]);
 
     const handleSaveProfile = async () => {
-        if (!profileData.name.trim()) {
-            toast.error('Name is required');
-            return;
-        }
-
+        if (!profileData.name.trim()) return toast.error('Name is required');
         setIsSaving(true);
-
         try {
-            const { error } = await userService.updateProfile(user.id, {
-                name: profileData.name,
-                email: profileData.email,
-                phone: profileData.phone,
-                company: profileData.company,
-                timezone: profileData.timezone
-            });
-
-            if (error) {
-                toast.error(`Failed to save: ${error}`);
-            } else {
-                toast.success('Profile updated successfully!');
-            }
-        } catch (err) {
-            toast.error('Failed to save profile');
+            const { error } = await userService.updateProfile(user.id, profileData);
+            if (error) throw new Error(error);
+            toast.success('Profile updated successfully!');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update profile');
         } finally {
             setIsSaving(false);
         }
@@ -173,7 +152,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
     const handleSaveNotifications = async () => {
         setIsSaving(true);
-
         try {
             const { error } = await userService.updateNotificationSettings(user.id, {
                 email_notifications: notificationSettings.emailNotifications,
@@ -181,14 +159,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 message_alerts: notificationSettings.messageAlerts,
                 weekly_reports: notificationSettings.weeklyReports
             });
-
-            if (error) {
-                toast.error(`Failed to save: ${error}`);
-            } else {
-                toast.success('Notification preferences updated!');
-            }
-        } catch (err) {
-            toast.error('Failed to save preferences');
+            if (error) throw new Error(error);
+            toast.success('Notification preferences updated!');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save preferences');
         } finally {
             setIsSaving(false);
         }
@@ -196,69 +170,104 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
     const handleChangePassword = async () => {
         if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-            toast.error('All password fields are required');
-            return;
+            return toast.error('All password fields are required');
         }
-
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error('New passwords do not match');
-            return;
+            return toast.error('New passwords do not match');
         }
-
-        if (passwordData.newPassword.length < 8) {
-            toast.error('Password must be at least 8 characters');
-            return;
-        }
-
         setIsSaving(true);
-
         try {
-            const { error } = await userService.changePassword(
-                passwordData.currentPassword,
-                passwordData.newPassword
-            );
-
-            if (error) {
-                toast.error(error);
-            } else {
-                toast.success('Password updated successfully!');
-                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            }
-        } catch (err) {
-            toast.error('Failed to update password');
+            const { error } = await userService.changePassword(passwordData.currentPassword, passwordData.newPassword);
+            if (error) throw new Error(error);
+            toast.success('Password updated successfully!');
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update password');
         } finally {
             setIsSaving(false);
         }
     };
 
-    const handleEnable2FA = () => {
-        toast.success('2FA verification email sent');
+    const handleSaveBusiness = async () => {
+        if (!currentTenant) return;
+        setIsSaving(true);
+        try {
+            const { error } = await supabase
+                .from('business_settings')
+                .upsert({
+                    tenant_id: currentTenant.id,
+                    business_name: businessSettings.businessName,
+                    logo_url: businessSettings.logoUrl,
+                    brand_color: businessSettings.brandColor,
+                    address: businessSettings.address,
+                    phone: businessSettings.phone,
+                    email: businessSettings.email,
+                    tax_rate: businessSettings.taxRate,
+                    currency: businessSettings.currency,
+                    invoice_prefix: businessSettings.invoicePrefix,
+                    bank_details: businessSettings.bankDetails,
+                    mobile_payment_details: businessSettings.mobilePaymentDetails,
+                    settings: {
+                        service_sectors: businessSettings.serviceSectors,
+                        my_services: businessSettings.myServices
+                    },
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'tenant_id' });
+
+            if (error) throw error;
+            toast.success('Workspace business profile saved!');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save business settings');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleSaveAppearance = () => {
-        toast.success('Appearance preferences saved!');
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !currentTenant?.id) return;
+        setUploading(true);
+        try {
+            const result = await fileUploadService.uploadFile(file, 'tenant_logo', currentTenant.id);
+            if (result.success && result.url) {
+                setBusinessSettings(prev => ({ ...prev, logoUrl: result.url! }));
+                toast.success('Logo uploaded!');
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Logo upload failed');
+        } finally {
+            setUploading(false);
+        }
     };
 
-    const [isToppingUp, setIsToppingUp] = useState(false);
-
-    const handleTopUp = async () => {
-        if (!currentTenant?.id) return;
-        setIsToppingUp(true);
-        // During Beta (until March), we'll just show a notification
-        toast('AI credit purchasing is not enabled for this deployment. Beta limits apply.');
-        setIsToppingUp(false);
+    const handleManageBilling = async () => {
+        if (!currentTenant) return;
+        const toastId = toast.loading('Opening Stripe customer portal...');
+        try {
+            const response = await fetch('/api/stripe/create-portal-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id }),
+            });
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to open billing portal', { id: toastId });
+        }
     };
 
     const handleUpgrade = async (planId: string) => {
         if (!currentTenant) return;
-
+        const plan = PLAN_PRICING[planId as SubscriptionPlan];
+        if (!plan?.stripePriceId) return toast.error('Invalid plan selected');
+        
         try {
-            const plan = PLAN_PRICING[planId as SubscriptionPlan];
-            if (!plan.stripePriceId) {
-                toast.error("Invalid plan selected");
-                return;
-            }
-
             const response = await fetch('/api/stripe/create-checkout-session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -269,40 +278,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                     adminEmail: user.email,
                 }),
             });
-
             const data = await response.json();
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                throw new Error(data.error || 'Failed to create checkout session');
+                throw new Error(data.error);
             }
-        } catch (error: any) {
-            console.error('Upgrade Error:', error);
-            toast.error(error.message || 'Failed to initiate upgrade');
-        }
-    };
-
-    const handleManageBilling = async () => {
-        if (!currentTenant) return;
-
-        try {
-            const response = await fetch('/api/stripe/create-portal-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tenantId: currentTenant.id,
-                }),
-            });
-
-            const data = await response.json();
-            if (data.url) {
-                window.location.href = data.url;
-            } else {
-                throw new Error(data.error || 'Failed to create portal session');
-            }
-        } catch (error: any) {
-            console.error('Portal Error:', error);
-            toast.error(error.message || 'Failed to open billing portal');
+        } catch (err: any) {
+            toast.error(err.message || 'Checkout failed');
         }
     };
 
@@ -310,520 +293,613 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         setIsDeleting(true);
         try {
             const { error } = await authService.requestAccountDeletion();
-            if (error) {
-                toast.error(error);
-                return;
-            }
-            toast.success('Account deletion scheduled. You will be logged out.');
-            setDeleteModalOpen(false);
-            // Re-fetch or wait for state change to show overlay
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } catch (err) {
-            toast.error('Failed to request account deletion');
+            if (error) throw new Error(error);
+            toast.success('Account deletion scheduled. Logging out...');
+            setTimeout(() => { window.location.reload(); }, 1500);
+        } catch (err: any) {
+            toast.error(err.message || 'Deletion failed');
         } finally {
             setIsDeleting(false);
         }
     };
 
+    const handleCopyApiKey = () => {
+        navigator.clipboard.writeText('sk_live_alpha_7f8392bcdefa028457283bc891');
+        toast.success('API key copied');
+    };
+
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div>
-                <h2 className="text-2xl font-bold text-white">Settings</h2>
-                <p className="text-slate-400 mt-1">Manage your account preferences and settings</p>
+        <div className="max-w-4xl mx-auto space-y-10 pb-32 px-4 sm:px-6">
+            
+            {/* Header Profile Summary */}
+            <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-slate-900 border border-white/5 rounded-3xl relative overflow-hidden">
+                <div className="relative group cursor-pointer">
+                    <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-teal-500 overflow-hidden flex items-center justify-center">
+                        {businessSettings.logoUrl ? (
+                            <img src={businessSettings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                            <span className="text-2xl font-black text-white">{user.name?.[0]?.toUpperCase()}</span>
+                        )}
+                    </div>
+                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-full flex items-center justify-center transition-all cursor-pointer">
+                        <Upload className="w-5 h-5 text-white" />
+                        <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                    </label>
+                </div>
+                <div className="text-center sm:text-left space-y-1 flex-1">
+                    <h2 className="text-lg font-black text-white">{user.name}</h2>
+                    <p className="text-xs text-slate-400 font-mono">{user.email}</p>
+                    <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
+                        <span className="px-2.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[10px] font-black uppercase rounded-lg">
+                            {currentTenant?.subscription_plan || 'free'} tier
+                        </span>
+                        <span className="px-2.5 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase rounded-lg">
+                            WS: {currentTenant?.name}
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            <div className={`grid grid-cols-1 lg:grid-cols-4 gap-6 ${!activeSection ? 'block' : 'hidden lg:grid'}`}>
-                {/* Sidebar / Navigation Menu */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="flex flex-col gap-2">
-                        {sections.map((section) => (
-                            <button
-                                key={section.id}
-                                onClick={() => setActiveSection(section.id)}
-                                className={`flex items-center justify-between w-full gap-3 px-5 py-4 rounded-2xl text-xs lg:text-xs font-black uppercase tracking-widest transition-all duration-300 border group ${activeSection === section.id
-                                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-600/20'
-                                    : 'bg-slate-900/40 border-white/5 text-slate-400 hover:text-white hover:bg-slate-800/60'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-xl transition-colors ${activeSection === section.id ? 'bg-white/20' : 'bg-white/5 group-hover:bg-teal-500/20'}`}>
-                                        <section.icon className={`w-4 h-4 ${activeSection === section.id ? 'text-white' : 'text-slate-500 group-hover:text-teal-400'}`} />
-                                    </div>
-                                    <span className="whitespace-nowrap">{section.label}</span>
+            {/* 1. ACCOUNT GROUP */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Account Preferences</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    
+                    {/* Row 1: Profile Details */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('profile')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                    <UserIcon className="w-4 h-4 text-blue-400" />
                                 </div>
-                                <div className={`text-lg transition-transform ${activeSection === section.id ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100'}`}>→</div>
-                            </button>
-                        ))}
+                                <span className="text-[13px] font-bold text-slate-200">Profile Details</span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['profile'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                            {expandedRows['profile'] && (
+                                <motion.div 
+                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                                    className="overflow-hidden bg-slate-950/40"
+                                >
+                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-slate-500 uppercase font-black">Full Name</label>
+                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-slate-500 uppercase font-black">Phone Number</label>
+                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" placeholder="+1 (555) 000-0000" />
+                                            </div>
+                                        </div>
+                                        <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save Profile</button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
-                    {/* Platform Information */}
-                    <div className="mt-8 pt-8 border-t border-white/5 space-y-4 px-2">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                                <Sparkles className="w-4 h-4 text-teal-400" />
+                    {/* Row 2: Security & password */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('security')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                                    <Lock className="w-4 h-4 text-orange-400" />
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-200">Security & Credentials</span>
                             </div>
-                            <div>
-                                <p className="text-xs font-black text-white uppercase tracking-widest">Alphaclone OS</p>
-                                <p className="text-xs font-mono text-slate-500 uppercase tracking-tighter">Enterprise Intelligence v2.4.0</p>
-                            </div>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['security'] ? 'rotate-90' : ''}`} />
                         </div>
-                        <div className="bg-slate-950/40 rounded-xl p-3 border border-white/5">
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs font-mono text-slate-600 uppercase">System Status</span>
-                                <span className="text-xs font-black text-green-400 uppercase tracking-widest">Operational</span>
+                        <AnimatePresence>
+                            {expandedRows['security'] && (
+                                <motion.div 
+                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                                    className="overflow-hidden bg-slate-950/40"
+                                >
+                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                        <div className="space-y-3">
+                                            <input type="password" placeholder="Current Password" value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <input type="password" placeholder="New Password" value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <input type="password" placeholder="Confirm New Password" value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                        </div>
+                                        <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Update Password</button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Row 3: MFA / 2FA toggle */}
+                    <div>
+                        <div className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-200">Two-Factor Authentication (2FA)</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-mono text-slate-600 uppercase">Core Latency</span>
-                                <span className="text-xs font-mono text-slate-400 tracking-tighter">14ms</span>
-                            </div>
+                            <button onClick={() => window.location.href = '/dashboard/security/2fa'} className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-black uppercase">Enable</button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div className={`lg:col-span-3 ${activeSection ? 'block' : 'hidden lg:block'}`}>
-                    {activeSection && (
-                        <div className="lg:hidden mb-4">
-                            <button
-                                onClick={() => setActiveSection(null as any)}
-                                className="flex items-center gap-2 text-teal-400 font-black text-xs uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5"
-                            >
-                                <span className="text-lg">←</span> Back to Settings
-                            </button>
+            {/* 2. WORKSPACE & BUSINESS GROUP */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Workspace Settings</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    
+                    {/* Row 1: Brand Info */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('business_profile')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                                    <Building className="w-4 h-4 text-pink-400" />
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-200">Business Profile & Invoices</span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['business_profile'] ? 'rotate-90' : ''}`} />
                         </div>
-                    )}
+                        <AnimatePresence>
+                            {expandedRows['business_profile'] && (
+                                <motion.div 
+                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                                    className="overflow-hidden bg-slate-950/40"
+                                >
+                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                        <div className="space-y-3">
+                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder="Official Company Name" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder="Business Email" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder="Business Address" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
+                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder="Bank transfer account details" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
+                                        </div>
+                                        <button onClick={handleSaveBusiness} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save Details</button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-                    <Card className="relative overflow-hidden">
-                        {activeSection === 'profile' && (
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Profile Information</h3>
-                                    <div className="space-y-4">
-                                        <Input
-                                            label="Full Name *"
-                                            value={profileData.name}
-                                            onChange={(e: any) => setProfileData({ ...profileData, name: e.target.value })}
-                                            required
-                                        />
-                                        <Input
-                                            label="Email Address"
-                                            type="email"
-                                            value={profileData.email}
-                                            onChange={(e: any) => setProfileData({ ...profileData, email: e.target.value })}
-                                            disabled
-                                        />
-                                        <Input
-                                            label="Phone Number"
-                                            type="tel"
-                                            value={profileData.phone}
-                                            onChange={(e: any) => setProfileData({ ...profileData, phone: e.target.value })}
-                                            placeholder="+1 (555) 000-0000"
-                                        />
-                                        <Input
-                                            label="Company Name"
-                                            value={profileData.company}
-                                            onChange={(e: any) => setProfileData({ ...profileData, company: e.target.value })}
-                                            placeholder="Your company name"
-                                            disabled={!!user.company}
-                                            hint={user.company ? "Company name is locked after registration." : "Set your official business name."}
-                                        />
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Timezone</label>
-                                            <select
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-teal-500"
-                                                value={profileData.timezone}
-                                                onChange={(e) => setProfileData({ ...profileData, timezone: e.target.value })}
-                                            >
-                                                <option value="UTC">UTC (GMT+0)</option>
-                                                <option value="America/New_York">Eastern Time (GMT-5)</option>
-                                                <option value="America/Chicago">Central Time (GMT-6)</option>
-                                                <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
-                                                <option value="Europe/London">London (GMT+0)</option>
-                                                <option value="Europe/Paris">Paris (GMT+1)</option>
-                                            </select>
+                    {/* Row 2: Regional format */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('regional')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                                    <Globe className="w-4 h-4 text-violet-400" />
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-200">Regional & Language</span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['regional'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                            {expandedRows['regional'] && (
+                                <motion.div 
+                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                                    className="overflow-hidden bg-slate-950/40"
+                                >
+                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-slate-500 uppercase font-black">Currency</label>
+                                                <select 
+                                                    value={businessSettings.currency} 
+                                                    onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
+                                                    className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                                >
+                                                    <option value="USD">USD ($)</option>
+                                                    <option value="EUR">EUR (€)</option>
+                                                    <option value="GBP">GBP (£)</option>
+                                                    <option value="KES">KES (Ksh)</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-slate-500 uppercase font-black">System Language</label>
+                                                <select 
+                                                    value={language} 
+                                                    onChange={e => setLanguage(e.target.value as any)}
+                                                    className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                                >
+                                                    {LANGUAGES.map(lang => (
+                                                        <option key={lang.code} value={lang.code}>{lang.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-                                <div className="pt-6 border-t border-white/5">
-                                    <button
-                                        onClick={handleSaveProfile}
-                                        disabled={isSaving}
-                                        className="w-full lg:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
-                                    >
-                                        {isSaving ? (
-                                            <div className="flex items-center gap-2">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>SYNCING...</span>
-                                            </div>
-                                        ) : (
-                                            'CONFIRM CHANGES'
-                                        )}
-                                    </button>
+                    {/* Row 3: Industry sectors */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('sectors')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                                    <Briefcase className="w-4 h-4 text-teal-400" />
                                 </div>
+                                <span className="text-[13px] font-bold text-slate-200">Sectors & Expertise</span>
                             </div>
-                        )}
-
-                        {activeSection === 'notifications' && (
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Notification Preferences</h3>
-                                    <div className="space-y-4">
-                                        {[
-                                            { key: 'emailNotifications', label: 'Email Notifications', description: 'Receive email updates about your account' },
-                                            { key: 'projectUpdates', label: 'Project Updates', description: 'Get notified when projects change status' },
-                                            { key: 'messageAlerts', label: 'Message Alerts', description: 'Receive alerts for new messages' },
-                                            { key: 'weeklyReports', label: 'Weekly Reports', description: 'Get a weekly summary of your activity' },
-                                        ].map((setting) => (
-                                            <div key={setting.key} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                                <div>
-                                                    <h4 className="text-white font-medium">{setting.label}</h4>
-                                                    <p className="text-sm text-slate-400">{setting.description}</p>
-                                                </div>
-                                                <label className="relative inline-flex items-center cursor-pointer">
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['sectors'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                            {expandedRows['sectors'] && (
+                                <motion.div 
+                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                                    className="overflow-hidden bg-slate-950/40"
+                                >
+                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {UNIVERSAL_SERVICE_CATALOG.map(category => (
+                                                <label
+                                                    key={category.name}
+                                                    className={`flex items-start gap-2.5 p-3 rounded-xl border transition-all cursor-pointer ${businessSettings.serviceSectors.includes(category.name)
+                                                        ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
+                                                        : 'bg-slate-900 border-white/5 text-slate-500'
+                                                    }`}
+                                                >
                                                     <input
                                                         type="checkbox"
-                                                        checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
-                                                        onChange={(e) =>
-                                                            setNotificationSettings({
-                                                                ...notificationSettings,
-                                                                [setting.key]: e.target.checked,
-                                                            })
-                                                        }
-                                                        className="sr-only peer"
+                                                        className="mt-0.5 accent-teal-500"
+                                                        checked={businessSettings.serviceSectors.includes(category.name)}
+                                                        onChange={(e) => {
+                                                            const newSectors = e.target.checked
+                                                                ? [...businessSettings.serviceSectors, category.name]
+                                                                : businessSettings.serviceSectors.filter(s => s !== category.name);
+                                                            setBusinessSettings({ ...businessSettings, serviceSectors: newSectors });
+                                                        }}
                                                     />
-                                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-800">
-                                    <Button
-                                        onClick={handleSaveNotifications}
-                                        disabled={isSaving}
-                                        className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto"
-                                    >
-                                        {isSaving ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                Saving...
-                                            </>
-                                        ) : (
-                                            'Save Preferences'
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeSection === 'security' && (
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Security Settings</h3>
-                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                        <h4 className="text-white font-medium mb-3">Change Password</h4>
-                                        <div className="space-y-4">
-                                            <Input
-                                                label="Current Password"
-                                                type="password"
-                                                placeholder="Enter current password"
-                                                value={passwordData.currentPassword}
-                                                onChange={(e: any) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                            />
-                                            <Input
-                                                label="New Password"
-                                                type="password"
-                                                placeholder="Enter new password (min 8 characters)"
-                                                value={passwordData.newPassword}
-                                                onChange={(e: any) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                            />
-                                            <Input
-                                                label="Confirm New Password"
-                                                type="password"
-                                                placeholder="Confirm new password"
-                                                value={passwordData.confirmPassword}
-                                                onChange={(e: any) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                            />
-                                            <Button
-                                                size="sm"
-                                                onClick={handleChangePassword}
-                                                disabled={isSaving}
-                                                className="bg-teal-600 hover:bg-teal-500"
-                                            >
-                                                {isSaving ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                        Updating...
-                                                    </>
-                                                ) : (
-                                                    'Update Password'
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                        <h4 className="text-white font-medium mb-2">Two-Factor Authentication</h4>
-                                        <p className="text-sm text-slate-400 mb-3">Add an extra layer of security to your account</p>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => window.location.href = '/dashboard/security/2fa'}
-                                            className="w-full sm:w-auto"
-                                        >
-                                            Enable 2FA
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeSection === 'integrations' && (
-                            <IntegrationSettings />
-                        )}
-
-                        {activeSection === 'billing' && (
-                            <div className="space-y-6">
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-bold text-white">Subscription Plan</h3>
-                                        {currentTenant?.subscription_status === 'active' && (
-                                            <div className="px-3 py-1 bg-teal-500/20 border border-teal-500/30 rounded-full text-xs font-black text-teal-400 uppercase tracking-widest">
-                                                ACTIVE SUBSCRIPTION
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {(['starter', 'pro', 'enterprise'] as SubscriptionPlan[]).map((planId) => {
-                                            const plan = PLAN_PRICING[planId];
-                                            const isCurrent = currentTenant?.subscription_plan === planId;
-
-                                            return (
-                                                <div
-                                                    key={planId}
-                                                    className={`p-6 rounded-3xl border-2 transition-all duration-500 relative overflow-hidden group ${isCurrent
-                                                        ? 'border-teal-500 bg-teal-500/5'
-                                                        : 'border-white/5 bg-slate-900/40 hover:border-white/10'
-                                                        }`}
-                                                >
-                                                    {isCurrent && (
-                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500 text-slate-900 text-xs font-black uppercase tracking-widest rounded-bl-xl">
-                                                            ACTIVE
-                                                        </div>
-                                                    )}
-                                                    <div className="mb-6">
-                                                        <h4 className="text-white text-lg font-black tracking-tighter capitalize">{planId}</h4>
-                                                        <div className="flex items-baseline gap-1 mb-1">
-                                                            <span className="text-3xl font-black text-white">${plan.monthly}</span>
-                                                            <span className="text-slate-500 font-bold text-sm uppercase tracking-widest">/mo</span>
-                                                        </div>
-                                                        <p className="text-xs text-slate-400 mt-2 min-h-[40px]">
-                                                            {plan.description}
-                                                        </p>
-                                                        {plan.isDiscountable && (
-                                                            <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 uppercase tracking-tighter w-fit">
-                                                                35% OFF FOR 3 MONTHS
-                                                            </div>
-                                                        )}
+                                                    <div className="min-w-0">
+                                                        <span className="font-bold text-xs block truncate">{category.name}</span>
+                                                        <span className="text-[9px] opacity-60 block">{category.services.length} catalog options</span>
                                                     </div>
-                                                    <ul className="space-y-2 mb-8 min-h-[160px]">
-                                                        {plan.featureList.map((feature, idx) => (
-                                                            <li key={idx} className="text-xs font-bold text-slate-400 flex items-start gap-2 uppercase tracking-tighter">
-                                                                <div className="w-1 h-1 bg-teal-500 rounded-full mt-1 flex-shrink-0" />
-                                                                <span>{feature}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                    <button
-                                                        className={`w-full py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isCurrent
-                                                            ? 'bg-white/5 text-slate-500 border border-white/5'
-                                                            : 'bg-teal-500 text-slate-900 shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95'
-                                                            }`}
-                                                        onClick={() => !isCurrent && handleUpgrade(planId)}
-                                                    >
-                                                        {isCurrent ? 'ACTIVE PROTOCOL' : 'SELECT PLAN'}
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <button onClick={handleSaveBusiness} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save sectors</button>
                                     </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-                                    <div className="mt-8 p-4 bg-slate-900/50 border border-slate-700 rounded-xl">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-amber-500/10 rounded-lg">
-                                                    <Sparkles className="w-5 h-5 text-amber-500" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">AI Quota Status</h4>
-                                                    <p className="text-xs text-slate-400">Beta tier includes expanded limits</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-xs font-bold text-teal-400 uppercase">System Optimal</span>
-                                        </div>
-                                        <div className="w-full bg-slate-700 h-2 rounded-full mb-3">
-                                            <div className="bg-teal-500 w-[45%] h-full rounded-full shadow-[0_0_10px_rgba(20,184,166,0.3)]" />
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs">
-                                            <p className="text-slate-400">
-                                                Automatic reset in approximately <span className="text-white font-bold">12 hours</span>.
-                                            </p>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleTopUp}
-                                                className="text-teal-400 hover:text-teal-300 h-auto py-1 px-2 font-black"
-                                            >
-                                                BOOST QUOTA
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 border-t border-slate-800">
-                                    <h3 className="text-lg font-bold text-white mb-4">Payment Methods</h3>
-                                    <p className="text-xs text-slate-400 mb-6">
-                                        Manage your billing information and payment methods securely via Stripe.
-                                    </p>
-                                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                                            <div className="w-12 h-8 bg-slate-800 rounded flex items-center justify-center font-bold text-xs text-slate-500 border border-slate-700 flex-shrink-0">CARD</div>
-                                            <div className="min-w-0">
-                                                <p className="text-white text-sm font-medium">STRIPE BILLING PORTAL</p>
-                                                <p className="text-xs text-slate-500 uppercase tracking-widest">Manage cards, invoices, and history</p>
-                                            </div>
-                                        </div>
-                                        <Button onClick={handleManageBilling} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white">Manage Billing</Button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeSection === 'appearance' && (
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white mb-4">Appearance Settings</h3>
-                                    <div className="space-y-4">
-                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                            <h4 className="text-white font-medium mb-3">Theme</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                                {['Dark', 'Light', 'Auto'].map((theme) => (
-                                                    <button
-                                                        key={theme}
-                                                        className={`p-4 rounded-lg border-2 transition-all ${theme === 'Dark'
-                                                            ? 'border-teal-500 bg-slate-800'
-                                                            : 'border-slate-700 bg-slate-800 hover:border-slate-600'
-                                                            }`}
-                                                    >
-                                                        <div className="text-sm font-medium text-white">{theme}</div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
-                                            <h4 className="text-white font-medium mb-2">Compact Mode</h4>
-                                            <p className="text-sm text-slate-400 mb-3">Reduce spacing for a more compact interface</p>
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" />
-                                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-800">
-                                    <Button
-                                        onClick={() => toast.success('Notification preferences saved')}
-                                        className="bg-teal-600 hover:bg-teal-500 w-full sm:w-auto"
-                                    >
-                                        Save Preferences
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </Card>
-
-                    {activeSection === 'integrations' && (
-                        <IntegrationSettings />
-                    )}
-
-                    {activeSection === 'booking' && (
-                        <div className="space-y-12">
-                            <div className="border-b border-slate-800 pb-12">
-                                <HubspotIntegration />
-                            </div>
-                            {/* <div className="border-b border-slate-800 pb-12">
-                                <GmailIntegration user={user} />
-                            </div> */}
-                            <div className="border-b border-slate-800 pb-12">
-                                <ZohoIntegration user={user} />
-                            </div>
-                            <div className="border-b border-slate-800 pb-12">
-                                <StripeConnectSettings />
-                            </div>
-                            <CalendlySettings />
-                        </div>
-                    )}
-
-                    {activeSection === 'branding' && (
-                        <BrandingSettings />
-                    )}
-
-                    {/* Account Deletion Confirmation Modal */}
-                    <Modal
-                        isOpen={deleteModalOpen}
-                        onClose={() => setDeleteModalOpen(false)}
-                        title="Schedule Account Deletion"
-                    >
-                        <div className="space-y-4">
-                            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex gap-3 text-amber-500 text-sm">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                <p>
-                                    Warning: This will schedule your account for permanent deletion in 30 days.
-                                    You will be logged out and access to the dashboard will be restricted.
-                                </p>
-                            </div>
-
-                            <p className="text-slate-400 text-sm">
-                                Are you sure you want to proceed? You can restore your account by cancelling this request
-                                within the 30-day grace period.
-                            </p>
-
-                            <div className="flex gap-3 pt-2">
-                                <Button
-                                    onClick={handleDeleteAccount}
-                                    disabled={isDeleting}
-                                    className="flex-1 bg-red-600 hover:bg-red-500"
-                                >
-                                    {isDeleting ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        'Confirm Deletion'
-                                    )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setDeleteModalOpen(false)}
-                                    className="flex-1"
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
-                        </div>
-                    </Modal>
                 </div>
             </div>
+
+            {/* 3. INTEGRATIONS GROUP */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">System Integrations</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    
+                    {/* Zoho */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('integ_zoho')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">Zoho Mail Client</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_zoho'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['integ_zoho'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5"><ZohoIntegration user={user} /></div>
+                        )}
+                    </div>
+
+                    {/* Resend */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('integ_resend')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">Resend.com Email API</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_resend'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['integ_resend'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5"><ResendIntegration /></div>
+                        )}
+                    </div>
+
+                    {/* SendGrid */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('integ_sendgrid')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">SendGrid Email Delivery</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_sendgrid'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['integ_sendgrid'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5"><SendGridIntegration /></div>
+                        )}
+                    </div>
+
+                    {/* Stripe Connect */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('integ_stripe')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">Stripe Connect payouts</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_stripe'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['integ_stripe'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5"><StripeConnectSettings /></div>
+                        )}
+                    </div>
+
+                    {/* Calendly */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('integ_calendly')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">Calendly Booking Schedule</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_calendly'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['integ_calendly'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5"><CalendlySettings /></div>
+                        )}
+                    </div>
+
+                </div>
+            </div>
+
+            {/* 4. NOTIFICATIONS GROUP */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Notification alerts</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    {[
+                        { key: 'emailNotifications', label: 'Email Outreach Logs', desc: 'Get updates on active campaign statuses' },
+                        { key: 'projectUpdates', label: 'Project Status Sync', desc: 'Alert when client updates their requirements' },
+                        { key: 'messageAlerts', label: 'Inbound chat warnings', desc: 'Notify immediately when leads send chat messages' }
+                    ].map((setting) => (
+                        <div key={setting.key} className="flex items-center justify-between p-4">
+                            <div>
+                                <h4 className="text-[13px] font-bold text-white">{setting.label}</h4>
+                                <p className="text-[10px] text-slate-500">{setting.desc}</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setNotificationSettings(prev => {
+                                        const next = { ...prev, [setting.key]: !prev[setting.key as keyof typeof notificationSettings] };
+                                        setTimeout(handleSaveNotifications, 100);
+                                        return next;
+                                    });
+                                }}
+                                className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 focus:outline-none ${
+                                    notificationSettings[setting.key as keyof typeof notificationSettings] ? 'bg-teal-600' : 'bg-slate-800'
+                                }`}
+                            >
+                                <div className={`w-5 h-5 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                                    notificationSettings[setting.key as keyof typeof notificationSettings] ? 'translate-x-5' : 'translate-x-0'
+                                }`} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 5. APPEARANCE GROUP */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Appearance Theme</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden p-4 space-y-4">
+                    
+                    {/* Theme Mode Segment switcher */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-500 uppercase font-black">Interface Theme</label>
+                        <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
+                            {['dark', 'light', 'system'].map((theme) => (
+                                <button
+                                    key={theme}
+                                    onClick={() => {
+                                        toast.success(`Theme mode updated to ${theme}`);
+                                    }}
+                                    className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg uppercase transition-all ${
+                                        theme === 'dark' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
+                                    }`}
+                                >
+                                    {theme}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Color palette dot pickers */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 uppercase font-black block">Accent Brand Theme</label>
+                        <div className="flex gap-3 pt-1">
+                            {[
+                                { color: '#0d9488', name: 'teal' },
+                                { color: '#7c3aed', name: 'violet' },
+                                { color: '#db2777', name: 'rose' },
+                                { color: '#0284c7', name: 'sky' },
+                                { color: '#d97706', name: 'amber' }
+                            ].map((preset) => (
+                                <button
+                                    key={preset.name}
+                                    onClick={() => {
+                                        setBusinessSettings(prev => ({ ...prev, brandColor: preset.color }));
+                                        setTimeout(handleSaveBusiness, 100);
+                                    }}
+                                    className="w-7 h-7 rounded-full border border-white/10 relative transition-transform active:scale-90"
+                                    style={{ backgroundColor: preset.color }}
+                                >
+                                    {businessSettings.brandColor === preset.color && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {/* 6. BILLING GROUP */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Plans & billing</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    
+                    {/* Subscription tier summary */}
+                    <div className="p-4 flex justify-between items-center bg-slate-950/30">
+                        <div>
+                            <span className="text-[9px] text-slate-500 font-bold uppercase">Current active tier</span>
+                            <h4 className="text-sm font-black text-white capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
+                        </div>
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 border rounded-lg ${statusColors[currentTenant?.subscription_status || ''] || 'bg-slate-800 text-slate-400 border-transparent'}`}>
+                            {currentTenant?.subscription_status || 'active'}
+                        </span>
+                    </div>
+
+                    {/* Pricing Grid */}
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/10">
+                        {(['starter', 'pro', 'enterprise'] as SubscriptionPlan[]).map((planId) => {
+                            const plan = PLAN_PRICING[planId];
+                            const isCurrent = currentTenant?.subscription_plan === planId;
+                            return (
+                                <div key={planId} className={`p-4 rounded-xl border flex flex-col justify-between ${isCurrent ? 'bg-teal-500/5 border-teal-500/30' : 'bg-slate-950 border-white/5'}`}>
+                                    <div>
+                                        <span className="text-xs font-black uppercase text-white tracking-wide block">{planId}</span>
+                                        <span className="text-lg font-black text-white mt-1 block">${plan.monthly} <span className="text-[9px] text-slate-500 font-bold uppercase">/mo</span></span>
+                                    </div>
+                                    <button 
+                                        onClick={() => !isCurrent && handleUpgrade(planId)}
+                                        disabled={isCurrent}
+                                        className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase mt-4 border transition-all ${
+                                            isCurrent ? 'bg-slate-900 border-transparent text-slate-500' : 'bg-teal-600 border-teal-500 text-white'
+                                        }`}
+                                    >
+                                        {isCurrent ? 'Active' : 'Upgrade'}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Stripe portal */}
+                    <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Payment credentials & portals</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Manage details, history, and invoices safely on Stripe</p>
+                        </div>
+                        <button onClick={handleManageBilling} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-xl border border-white/5">Open portal</button>
+                    </div>
+
+                    {/* AI Quotas */}
+                    <div className="p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-slate-400">AI Tokens usage</span>
+                            <span className="text-[10px] font-black uppercase text-teal-400">Optimal 45% used</span>
+                        </div>
+                        <div className="h-2 bg-slate-950 border border-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-teal-500 rounded-full" style={{ width: '45%' }} />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {/* 7. DEVELOPER MCP & API KEYS */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Developer MCP & API</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
+                    <span className="text-[10px] text-slate-500 uppercase font-black block">Publish credential keys</span>
+                    <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
+                        <span className="font-mono text-xs text-slate-400 select-all">
+                            {showApiKey ? 'sk_live_alpha_7f8392bcdefa028457283bc891' : 'sk_live_alpha_••••••••••••••••••••••••'}
+                        </span>
+                        <div className="flex items-center gap-1.5 ml-2">
+                            <button 
+                                onClick={() => setShowApiKey(!showApiKey)}
+                                className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
+                            >
+                                <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button 
+                                onClick={handleCopyApiKey}
+                                className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
+                            >
+                                <Copy className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 8. DANGER ZONE */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-rose-500 px-2 block">Danger Zone</span>
+                <div className="bg-slate-900/40 border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
+                    <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h4 className="text-[13px] font-bold text-rose-400">Request Account Deletion</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Schedules your user profile and all data for wipe in 30 days</p>
+                        </div>
+                        <button 
+                            onClick={() => setDeleteModalOpen(true)}
+                            className="px-4 py-2 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 text-xs font-black uppercase tracking-wider rounded-xl border border-rose-500/20"
+                        >
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Deletion Dialog Modal */}
+            <AnimatePresence>
+                {deleteModalOpen && (
+                    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-sm bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4"
+                        >
+                            <div className="flex items-center gap-2 text-amber-500">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <h3 className="text-sm font-black uppercase tracking-wider">Warning Action</h3>
+                            </div>
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                                This will schedule your profile for deletion. All custom templates, contact lists, and scheduled posts will be wiped at the end of the 30-day grace window.
+                            </p>
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                                <button 
+                                    onClick={handleDeleteAccount}
+                                    disabled={isDeleting}
+                                    className="py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black uppercase rounded-xl flex items-center justify-center"
+                                >
+                                    {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Deletion'}
+                                </button>
+                                <button 
+                                    onClick={() => setDeleteModalOpen(false)}
+                                    className="py-2.5 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl border border-white/5"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
-};
-
-export default SettingsPage;
-
+}
