@@ -17,11 +17,11 @@ ALTER TABLE custom_playbooks ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Enable read access for custom_playbooks by tenant_id"
   ON custom_playbooks FOR SELECT
-  USING (tenant_id = auth.jwt() ->> 'tenant_id'::text::uuid);
+  USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Enable write access for custom_playbooks by tenant_id"
   ON custom_playbooks FOR ALL
-  USING (tenant_id = auth.jwt() ->> 'tenant_id'::text::uuid);
+  USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 -- 2. Create outreach_campaign_stats table if it does not exist
 CREATE TABLE IF NOT EXISTS outreach_campaign_stats (
@@ -38,11 +38,11 @@ ALTER TABLE outreach_campaign_stats ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Enable read access for outreach_campaign_stats by tenant_id"
   ON outreach_campaign_stats FOR SELECT
-  USING (tenant_id = auth.jwt() ->> 'tenant_id'::text::uuid);
+  USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Enable write access for outreach_campaign_stats by tenant_id"
   ON outreach_campaign_stats FOR ALL
-  USING (tenant_id = auth.jwt() ->> 'tenant_id'::text::uuid);
+  USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 -- 3. Create secure read-only SQL querying RPC
 CREATE OR REPLACE FUNCTION secure_read_only_query(query_string text)
