@@ -705,14 +705,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header">
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            aria-label={sidebarOpen ? 'Close menu' : 'Menu'}
-                            title={sidebarOpen ? 'Close menu' : 'Open menu'}
-                            className="lg:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
-                        >
-                            <Menu className="w-6 h-6" />
-                        </button>
+                        {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
                         <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                             <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden relative flex-shrink-0">
