@@ -34,12 +34,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 
 // Define the columns/stages based on the database
 const KANBAN_STAGES = [
-  { id: 'lead', title: 'Discovered', color: 'bg-slate-100 dark:bg-slate-800' },
-  { id: 'qualified', title: 'Qualified', color: 'bg-blue-50 dark:bg-blue-900/20' },
-  { id: 'proposal', title: 'Proposal', color: 'bg-indigo-50 dark:bg-indigo-900/20' },
-  { id: 'negotiation', title: 'Negotiation', color: 'bg-amber-50 dark:bg-amber-900/20' },
-  { id: 'won', title: 'Closed Won', color: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  { id: 'lost', title: 'Closed Lost', color: 'bg-rose-50 dark:bg-rose-900/20' },
+  { id: 'lead', title: 'Discovered', color: 'bg-slate-800' },
+  { id: 'qualified', title: 'Qualified', color: 'bg-blue-900/20' },
+  { id: 'proposal', title: 'Proposal', color: 'bg-indigo-900/20' },
+  { id: 'negotiation', title: 'Negotiation', color: 'bg-amber-900/20' },
+  { id: 'won', title: 'Closed Won', color: 'bg-emerald-900/20' },
+  { id: 'lost', title: 'Closed Lost', color: 'bg-rose-900/20' },
 ];
 
 /** ------------------------------------------------------------------
@@ -73,15 +73,15 @@ function KanbanCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative flex gap-1.5 p-2 sm:p-3 bg-white dark:bg-slate-900 border ${
-        isDragging ? 'border-teal-500 shadow-xl z-50' : 'border-slate-200 dark:border-slate-800'
+      className={`relative flex gap-1.5 p-2 sm:p-3 bg-slate-900 border ${
+        isDragging ? 'border-teal-500 shadow-xl z-50' : 'border-slate-800'
       } rounded-xl shadow-sm hover:shadow-md transition-shadow group
       ${isOverlay ? 'scale-105 shadow-2xl rotate-2 z-50 border-teal-500' : ''}`}
     >
       <div className="flex flex-col gap-2 shrink-0 pt-0.5">
         <button
           type="button"
-          className="p-1 rounded-md text-slate-400 hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-grab active:cursor-grabbing"
+          className="p-1 rounded-md text-slate-400 hover:text-teal-400 hover:bg-slate-800 cursor-grab active:cursor-grabbing"
           aria-label="Drag to move lead"
           {...listeners}
           {...attributes}
@@ -95,7 +95,7 @@ function KanbanCard({
               e.stopPropagation();
               onToggleSelect?.(lead.id);
             }}
-            className={`p-1 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-teal-500 border-teal-500' : 'border-slate-300 dark:border-slate-700 hover:border-teal-500'}`}
+            className={`p-1 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-teal-500'}`}
           >
             {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
           </button>
@@ -122,11 +122,11 @@ function KanbanCard({
               {(lead.businessName || '?').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{lead.businessName}</h4>
+              <h4 className="font-bold text-sm text-white truncate">{lead.businessName}</h4>
               
               <div className="flex flex-wrap items-center gap-1 mt-0.5">
                 {lead.industry && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 truncate max-w-full">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 truncate max-w-full">
                     {lead.industry}
                   </span>
                 )}
@@ -153,7 +153,7 @@ function KanbanCard({
         </div>
 
         {(lead.email || lead.phone || lead.location) && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
             {lead.location && (
               <div className="flex items-center gap-1 min-w-0">
                 <MapPin className="w-3 h-3 shrink-0" />{' '}
@@ -175,16 +175,16 @@ function KanbanCard({
           </div>
         )}
 
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+        <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {lead.trustScore ? (
               <div
                 className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
                   lead.trustScore >= 80
-                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                    ? 'bg-emerald-900/20 text-emerald-400'
                     : lead.trustScore >= 50
-                      ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
-                      : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                      ? 'bg-amber-900/20 text-amber-400'
+                      : 'bg-red-900/20 text-red-400'
                 }`}
               >
                 {lead.trustScore >= 80 ? <ShieldCheck className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
@@ -195,7 +195,7 @@ function KanbanCard({
             )}
           </div>
           {lead.sdrInsight && (
-            <div title="AI Analyzed" className="w-5 h-5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+            <div title="AI Analyzed" className="w-5 h-5 rounded-full bg-indigo-900/30 flex items-center justify-center shrink-0">
               <Sparkles className="w-3 h-3 text-indigo-500" />
             </div>
           )}
@@ -228,13 +228,13 @@ function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col w-[min(88vw,300px)] shrink-0 snap-center rounded-2xl md:w-auto md:min-w-0 md:max-w-none md:shrink md:snap-none ${column.color} border border-slate-200/50 dark:border-slate-700/30 overflow-hidden`}
+      className={`flex flex-col w-[min(88vw,300px)] shrink-0 snap-center rounded-2xl md:w-auto md:min-w-0 md:max-w-none md:shrink md:snap-none ${column.color} border border-slate-700/30 overflow-hidden`}
     >
-      <div className="p-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-800 flex items-center justify-between sticky top-0 z-10">
-        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
+      <div className="p-3 bg-slate-900/50 backdrop-blur-sm border-b border-slate-800 flex items-center justify-between sticky top-0 z-10">
+        <h3 className="font-bold text-sm text-slate-200 flex items-center gap-2">
             {column.title}
-            <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-400 font-medium">
-                {leads.length}
+            <span className="text-xs bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-medium">
+                {leads?.length || 0}
             </span>
         </h3>
       </div>
@@ -252,7 +252,7 @@ function KanbanColumn({
           ))}
         </SortableContext>
         {leads.length === 0 && (
-            <div className="pointer-events-none absolute inset-0 m-4 border-2 border-dashed border-slate-300/50 dark:border-slate-600/30 rounded-xl flex items-center justify-center text-xs text-slate-400 font-medium text-center px-4">
+            <div className="pointer-events-none absolute inset-0 m-4 border-2 border-dashed border-slate-600/30 rounded-xl flex items-center justify-center text-xs text-slate-400 font-medium text-center px-4">
                 Drag leads here to update pipeline
             </div>
         )}
@@ -517,7 +517,7 @@ export default function KanbanBoard() {
         toast.error('Failed to load CRM pipeline');
     } else {
         // Map any unknown/legacy stages to the first column so they remain visible.
-        const mappedLeads = dbLeads.map(l => {
+        const mappedLeads = (dbLeads || []).map(l => {
             if (!KANBAN_STAGES.find(c => c.id === l.stage)) {
                 return { ...l, stage: 'lead' }; // Default to first column if unknown
             }
@@ -559,8 +559,8 @@ export default function KanbanBoard() {
   }, [searchParams]);
 
   const visibleLeads = useMemo(() => {
-    if (sourceFilter === 'all') return leads;
-    return leads.filter((lead) => sourceBucket(lead) === sourceFilter);
+    if (sourceFilter === 'all') return leads || [];
+    return (leads || []).filter((lead) => sourceBucket(lead) === sourceFilter);
   }, [leads, sourceFilter, sourceBucket]);
 
   const stageCounts = useMemo(() => {
