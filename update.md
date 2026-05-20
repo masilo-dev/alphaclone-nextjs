@@ -1,5 +1,71 @@
 # Update Log
 
+## Date: 2026-05-20 (SETTINGS PAGE — iOS-STYLE UNIFIED REDESIGN)
+
+### Added/Modified
+- **Global `SettingsPage.tsx`** — Full redesign as a single-scrollable iOS preferences-style panel:
+  - **Profile header** — Avatar/logo upload circle (36×36px), name, email, workspace badge.
+  - **Account group** — Profile Details accordion (name + phone), Security & Credentials accordion (change password), Two-Factor Authentication (2FA) deep-link row.
+  - **Workspace group** — Business Profile & Invoices accordion (company name, email, address, bank details), Regional & Language accordion (currency select + language select), Sectors & Expertise accordion (full UNIVERSAL_SERVICE_CATALOG checklist).
+  - **Integrations group** — Zoho Mail, Resend, SendGrid, Stripe Connect, Calendly — each rendered as an accordion row wrapping their respective sub-components.
+  - **Notifications group** — Three toggle rows (Email Outreach Logs, Project Status Sync, Inbound Chat Warnings) with native iOS-style toggle switches.
+  - **Appearance group** — Dark/Light/System theme segmented switcher + five preset accent colour dot pickers.
+  - **Billing group** — Current plan badge, Starter/Pro/Enterprise plan cards with Stripe checkout integration, Stripe Customer Portal button, AI Token usage quota bar.
+  - **Developer MCP & API group** — Masked API key with reveal/copy actions.
+  - **Danger Zone** — Delete account row with confirmation modal (Framer Motion animated).
+- **`business/SettingsPage.tsx`** — Replaced 1205-line duplicate with a 7-line proxy re-export (`export { default } from '../SettingsPage'`).
+
+### Production Readiness
+- **Vercel Safe**: TypeScript strict-mode compilation passes with zero errors after fixes.
+
+---
+
+## Date: 2026-05-20 (ZOHO MAIL CLIENT & INTEGRATION SETTINGS)
+
+### Added/Modified
+- **Zoho Mail client view (`ZohoMailView.tsx`)**: Replaced with a fully responsive native-emulating PWA layout conforming to module requirements:
+  - Flat list row items (minimum height 44px) featuring 36x36px initials, stacked no-wrap labels, right timestamp, and unread dots.
+  - Framer-motion `drag` swipe gesture wrappers for Archive and Delete.
+  - Horizontal pill-shaped folder selectors sticky below the top bar on mobile viewports.
+  - Floating action button (FAB) for composing, fixed at the bottom right.
+  - Full-screen composition view on mobile viewports with tag recipient pills, auto-growing textarea, toolbar, and provider badge.
+  - Sandboxed email body rendering using secure `EmailBody` iframe structure, and skeletal rows for loading feedback.
+  - Inline yellow expired session banner and full-page disconnected empty states.
+  - Integrated `LeadOutreachModal` with `onEmailDrafted` draft callback to compose view state.
+- **Zoho integration settings (`ZohoIntegration.tsx`)**: Updated settings view to:
+  - Fetch configured region/datacenter from `/api/auth/zoho/status` and display it dynamically when connected (US, EU, IN, AU, JP, CA).
+  - Add clear yellow warning tooltip under the region select: `"Must match your Zoho account region"` to prevent connection mismatch failures.
+
+### Production Readiness
+- **Vercel Safe**: 100% type-safe compilation and zero-error Next.js production builds verified under strict TypeScript compiler rules.
+
+## Date: 2026-05-20 (PWA PUSH NOTIFICATIONS IMPLEMENTATION)
+
+### Added/Modified
+- **Database Schema Migration**: Created a migration file `20260520100000_pwa_push_subscriptions.sql` establishing the `push_subscriptions` table with tenant isolation and strict RLS policies ensuring users only read and write their own data.
+- **Service Worker Event Listeners**: Created `public/sw.js` and updated `src/app/sw.ts` to implement custom push event parsing (with JSON handling and default fallbacks) and notification click handlers to focus or open relevant dashboard frames.
+- **PWA custom hook (`usePushNotifications.ts`)**: Built a client-side hook managing service worker registration, user notification permissions, VAPID key conversion, and API post request synchronization.
+- **API routes**:
+  - `POST /api/push/subscribe`: Authenticates sessions and upserts subscriptions based on active user endpoints.
+  - `POST /api/push/send`: Fetches user subscriptions and dispatches notifications via `web-push` with VAPID signatures. Cleans up 410/404 stale endpoints.
+- **Config & Environment transition**: Migrated `next.config.ts` from Serwist to `next-pwa` with disabled development settings and manual registration flags. Declared typescript modules for bundler type safety.
+
+### Production Readiness
+- **Vercel Safe**: 100% type-safe compilation and zero-error builds verified under strict TypeScript compiler rules.
+
+## Date: 2026-05-19 (PROJECT & TASK MANAGEMENT UPGRADES: JIRA STRENGTH + RELEVANCE CONTEXT)
+
+### Added/Modified
+- **Five-Column Kanban Board Extension**: Added the missing `ideas` status column to the Kanban board as the primary backlog stage, importing the `Lightbulb` icon from `lucide-react` and adjusting the grid container to fit a gorgeous 5-column layout smoothly.
+- **Visual Subtasks Progress Tracker**: Implemented a micro-progress bar and completed fraction badge (`X/Y`) inside `KanbanCard` using a premium-designed teal tracker line that dynamically updates based on the task's subtasks state.
+- **Relational Context Badges**: Exposed associated Leads, Deals, and Projects directly on each Kanban card using elegant, high-context color-coded badges to let developers and account managers see the commercial relevance of every task at a glance.
+- **Fully Interactive Subtasks Checklist Modal**: Refactored `TasksTab.tsx`'s form state and edit modal to render an interactive glassmorphic subtasks builder checklist. Users can dynamically add, toggle, and delete subtask checklist items, writing directly back to the database schema.
+- **Direct Relevance Quicklinks**: Integrated automatic relevance quicklinks inside the Task modal, giving users direct 1-click navigation buttons to go immediately to the associated Lead, Project, or Deal workspace.
+- **Work Hours Logging Tracker**: Upgraded the hours tracking interface to support logging both `Estimated Hours` and `Actual Hours` in a responsive grid, enabling precise execution auditing.
+
+### Production Readiness
+- **Vercel Safe**: 100% type-safe compilation and zero-error builds verified under strict TypeScript compiler rules.
+
 ## Date: 2026-05-19 (RESPONSIVE PWA TYPOGRAPHY SCALE & MOBILE USABILITY OPTIMIZATION)
 
 ### Added/Modified
