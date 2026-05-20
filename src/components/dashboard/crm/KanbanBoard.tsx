@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   DndContext, 
   DragOverlay, 
@@ -23,13 +24,13 @@ import { Lead, leadService } from '@/services/leadService';
 import { CrmNextStepsPanel } from './CrmNextStepsPanel';
 import { buildLeadKanbanNextSteps } from '@/lib/crmNextSteps';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
-import { Mail, Phone, MapPin, Sparkles, AlertCircle, ShieldCheck, GripVertical, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Sparkles, AlertCircle, ShieldCheck, GripVertical, CheckCircle2, Plus, X } from 'lucide-react';
 import AIOutreachModal from '../business/AIOutreachModal';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { Avatar } from '@/components/ui/Avatar';
 import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 // Define the columns/stages based on the database
 const KANBAN_STAGES = [
@@ -116,28 +117,37 @@ function KanbanCard({
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <Avatar
-              name={lead.businessName}
-              email={lead.email}
-              size={32}
-              shape="rounded"
-              className="flex-shrink-0"
-            />
+            {/* 36px Circular Initials */}
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-indigo-600 flex items-center justify-center font-bold text-white text-[13px] shrink-0 shadow-sm">
+              {(lead.businessName || '?').charAt(0).toUpperCase()}
+            </div>
             <div className="min-w-0">
               <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">{lead.businessName}</h4>
-              {lead.industry && (
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 truncate mt-0.5 inline-block max-w-full">
-                  {lead.industry}
+              
+              <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                {lead.industry && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 truncate max-w-full">
+                    {lead.industry}
+                  </span>
+                )}
+                
+                {/* Leads source/status badge */}
+                {lead.source && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 uppercase">
+                    {lead.source}
+                  </span>
+                )}
+                {lead.status && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
+                    {lead.status}
+                  </span>
+                )}
+
+                {/* Client stage pill */}
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-slate-400 uppercase tracking-wider">
+                  {lead.stage}
                 </span>
-              )}
-              {lead.source ? (
-                <span
-                  className="text-xs text-slate-500 dark:text-slate-400 truncate block mt-0.5"
-                  title={`Lead source: ${lead.source}`}
-                >
-                  Source: {lead.source}
-                </span>
-              ) : null}
+              </div>
             </div>
           </div>
         </div>
@@ -251,6 +261,186 @@ function KanbanColumn({
   );
 }
 
+const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenFullDetails }: any) => {
+  if (!lead) return null;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.7 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm md:hidden"
+          />
+          {/* Drawer container */}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden md:hidden"
+          >
+            {/* Grab Handle */}
+            <div className="flex justify-center py-3 shrink-0 bg-slate-900/40 border-b border-white/5">
+              <div className="w-12 h-1 bg-white/20 rounded-full" />
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-12 space-y-6">
+              {/* Header: Circle Initials & Name */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-indigo-600 flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-teal-500/10 shrink-0">
+                  {(lead.businessName || '?').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                    {lead.industry || 'Unknown Industry'}
+                  </span>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight truncate mt-0.5">
+                    {lead.businessName}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                    <span className="text-xs text-slate-400">Trust Score: <span className="text-teal-400 font-bold">{lead.trustScore || 'N/A'}</span></span>
+                  </div>
+                </div>
+                <button onClick={onClose} className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Status Dot Selectors */}
+              <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono mb-3 text-center">
+                  Stage Pipeline Controller
+                </p>
+                <div className="flex items-center justify-between px-2">
+                  {KANBAN_STAGES.map((stage) => {
+                    const isActive = lead.stage === stage.id;
+                    let dotColor = 'bg-slate-600';
+                    if (stage.id === 'lead') dotColor = 'bg-slate-400';
+                    else if (stage.id === 'qualified') dotColor = 'bg-blue-400';
+                    else if (stage.id === 'proposal') dotColor = 'bg-indigo-400';
+                    else if (stage.id === 'negotiation') dotColor = 'bg-amber-400';
+                    else if (stage.id === 'won') dotColor = 'bg-emerald-400';
+                    else if (stage.id === 'lost') dotColor = 'bg-rose-400';
+
+                    return (
+                      <button
+                        key={stage.id}
+                        onClick={() => onStageSelect(lead.id, stage.id)}
+                        className="flex flex-col items-center gap-1.5 focus:outline-none relative group"
+                        title={`Move to ${stage.title}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          isActive 
+                            ? 'scale-110 ring-2 ring-teal-500 ring-offset-2 ring-offset-slate-950 bg-white/10' 
+                            : 'hover:bg-white/5'
+                        }`}>
+                          <span className={`w-3.5 h-3.5 rounded-full ${dotColor} ${isActive ? 'scale-110 shadow-lg shadow-current' : 'opacity-60'}`} />
+                        </div>
+                        <span className={`text-[9px] font-mono uppercase tracking-wider ${isActive ? 'text-white font-bold' : 'text-slate-500'}`}>
+                          {stage.title.split(' ')[0]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Quick Contact Actions (Call, Email, Map) */}
+              <div className="grid grid-cols-3 gap-3">
+                {lead.phone ? (
+                  <a
+                    href={`tel:${lead.phone}`}
+                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
+                  >
+                    <div className="p-2 bg-teal-500/10 rounded-xl">
+                      <Phone className="w-5 h-5 text-teal-400" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono">Call</span>
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
+                    <Phone className="w-5 h-5 text-slate-600" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 font-mono">No Phone</span>
+                  </div>
+                )}
+
+                {lead.email ? (
+                  <a
+                    href={`mailto:${lead.email}`}
+                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
+                  >
+                    <div className="p-2 bg-indigo-500/10 rounded-xl">
+                      <Mail className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono">Email</span>
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
+                    <Mail className="w-5 h-5 text-slate-600" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 font-mono">No Email</span>
+                  </div>
+                )}
+
+                {lead.location ? (
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(lead.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
+                  >
+                    <div className="p-2 bg-amber-500/10 rounded-xl">
+                      <MapPin className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono">Locate</span>
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
+                    <MapPin className="w-5 h-5 text-slate-600" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 font-mono">No Map</span>
+                  </div>
+                )}
+              </div>
+
+              {/* SDR Insights Section */}
+              {lead.sdrInsight && (
+                <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1 bg-indigo-500/10 rounded-lg">
+                      <Sparkles className="w-4 h-4 text-indigo-400" />
+                    </div>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-white font-mono">AI Outreach Strategy</h4>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed font-sans bg-slate-950/40 p-3.5 rounded-2xl border border-white/5">
+                    {lead.sdrInsight}
+                  </p>
+                </div>
+              )}
+
+              {/* Full Details Trigger */}
+              <button
+                onClick={() => {
+                  onOpenFullDetails();
+                  onClose();
+                }}
+                className="w-full py-4 bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10 rounded-2xl text-center text-xs font-black uppercase tracking-widest text-white transition-all"
+              >
+                Open Full Conversation Hub
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
 /** ------------------------------------------------------------------
  * MAIN BOARD COMPONENT
  * ------------------------------------------------------------------- */
@@ -259,12 +449,60 @@ export default function KanbanBoard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileDrawerLead, setMobileDrawerLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleOpenLead = (lead: Lead) => {
+    if (window.innerWidth < 768) {
+      setMobileDrawerLead(lead);
+      setMobileDrawerOpen(true);
+    } else {
+      setDetailLead(lead);
+    }
+  };
+
+  const handleStageUpdate = async (leadId: string, newStage: string) => {
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+    const originStage = lead.stage;
+    const check = assertLeadStageTransition(originStage, newStage);
+    if (!check.ok) {
+      toast.error(check.message);
+      return;
+    }
+    
+    // Optimistically update local states
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
+    if (mobileDrawerLead && mobileDrawerLead.id === leadId) {
+      setMobileDrawerLead(prev => prev ? { ...prev, stage: newStage } : null);
+    }
+    if (detailLead && detailLead.id === leadId) {
+      setDetailLead(prev => prev ? { ...prev, stage: newStage } : null);
+    }
+
+    try {
+      const { error } = await leadService.updateLead(leadId, { stage: newStage });
+      if (error) throw new Error(error);
+      toast.success(`Moved to ${KANBAN_STAGES.find(s => s.id === newStage)?.title}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update stage');
+      // Rollback
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: originStage } : l));
+      if (mobileDrawerLead && mobileDrawerLead.id === leadId) {
+        setMobileDrawerLead(prev => prev ? { ...prev, stage: originStage } : null);
+      }
+      if (detailLead && detailLead.id === leadId) {
+        setDetailLead(prev => prev ? { ...prev, stage: originStage } : null);
+      }
+    }
+  };
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [showOutreachModal, setShowOutreachModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const dragOriginStageRef = useRef<string | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [sourceFilter, setSourceFilter] = useState<'all' | 'ai_mcp' | 'manual'>('all');
 
   const sensors = useSensors(
@@ -465,46 +703,50 @@ export default function KanbanBoard() {
             items={leadNextSteps}
         />
         <div className="mb-4 p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Lead source view</span>
-            <button
-              onClick={() => setSourceFilter('all')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${sourceFilter === 'all' ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-300 border-slate-700'}`}
-            >
-              All ({sourceCounts.all})
-            </button>
-            <button
-              onClick={() => setSourceFilter('ai_mcp')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${sourceFilter === 'ai_mcp' ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-300 border-slate-700'}`}
-            >
-              Claude/MCP ({sourceCounts.ai_mcp})
-            </button>
-            <button
-              onClick={() => setSourceFilter('manual')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${sourceFilter === 'manual' ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-300 border-slate-700'}`}
-            >
-              Manual ({sourceCounts.manual})
-            </button>
-            <button
-              onClick={() => {
-                if (selectedLeadIds.length > 0) {
-                  setSelectedLeadIds([]);
-                } else {
-                  const batch = visibleLeads.slice(0, 20).map(l => l.id);
-                  setSelectedLeadIds(batch);
-                  if (visibleLeads.length > 20) {
-                    toast.success('Selected first 20 leads for bulk outreach.');
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
+              <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap mr-1">Lead source view</span>
+              {[
+                { value: 'all', label: `All (${sourceCounts.all})` },
+                { value: 'ai_mcp', label: `Claude/MCP (${sourceCounts.ai_mcp})` },
+                { value: 'manual', label: `Manual (${sourceCounts.manual})` }
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => setSourceFilter(filter.value as any)}
+                  className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                    sourceFilter === filter.value
+                      ? 'bg-teal-600 text-white border-teal-600 shadow-sm shadow-teal-600/10'
+                      : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-white hover:bg-slate-800'
+                  }`}
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {filter.label}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  if (selectedLeadIds.length > 0) {
+                    setSelectedLeadIds([]);
+                  } else {
+                    const batch = visibleLeads.slice(0, 20).map(l => l.id);
+                    setSelectedLeadIds(batch);
+                    if (visibleLeads.length > 20) {
+                      toast.success('Selected first 20 leads for bulk outreach.');
+                    }
                   }
-                }
-              }}
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold border bg-slate-900 text-slate-300 border-slate-700 hover:text-teal-400 transition-colors"
-            >
-              {selectedLeadIds.length > 0 ? 'Deselect All' : 'Select All (Max 20)'}
-            </button>
+                }}
+                className="h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-slate-900 text-slate-400 border-slate-750 hover:text-teal-400 hover:bg-slate-800"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                {selectedLeadIds.length > 0 ? 'Deselect All' : 'Select All (Max 20)'}
+              </button>
+            </div>
             {selectedLeadIds.length > 0 && (
               <button
                 onClick={() => setShowOutreachModal(true)}
-                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-lg shadow-teal-500/20"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-lg shadow-teal-500/20 h-8 self-start sm:self-auto"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 <Sparkles className="w-3.5 h-3.5" /> Bulk Outreach ({selectedLeadIds.length})
               </button>
@@ -533,7 +775,7 @@ export default function KanbanBoard() {
                             key={col.id}
                             column={col}
                             leads={visibleLeads.filter((l) => l.stage === col.id)}
-                            onOpenLead={setDetailLead}
+                            onOpenLead={handleOpenLead}
                             selectedLeadIds={selectedLeadIds}
                             onToggleSelect={(id) => {
                                 setSelectedLeadIds(prev => {
@@ -569,12 +811,35 @@ export default function KanbanBoard() {
           />
         )}
 
+        <MobileLeadContactDrawer
+            isOpen={mobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+            lead={mobileDrawerLead}
+            onStageSelect={handleStageUpdate}
+            onOpenFullDetails={() => {
+                if (mobileDrawerLead) {
+                    setDetailLead(mobileDrawerLead);
+                }
+            }}
+        />
+
         <AIOutreachModal
             isOpen={showOutreachModal}
             onClose={() => setShowOutreachModal(false)}
             userId={currentUserId}
             initialSelectedLeads={selectedLeadIds}
         />
+
+        {/* FAB for Mobile */}
+        <button
+          onClick={() => {
+            router.push(window.location.pathname + '?add=true');
+          }}
+          className="fixed bottom-20 right-4 z-50 md:hidden w-14 h-14 rounded-full bg-teal-600 hover:bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-600/35 cursor-pointer active:scale-95 transition-transform"
+          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+        >
+          <Plus className="w-6 h-6" />
+        </button>
     </div>
   );
 }

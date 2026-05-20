@@ -88,13 +88,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
     { media: "(prefers-color-scheme: dark)", color: "#020617" },
   ],
 };
+
 
 const organizationSchema = {
   "@context": "https://schema.org",

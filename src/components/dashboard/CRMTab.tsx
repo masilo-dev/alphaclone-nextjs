@@ -1,376 +1,308 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useTenant } from '@/contexts/TenantContext';
-import { dealService, Deal } from '../../services/dealService';
-import { UnifiedCRMService } from '../../services/crm/UnifiedCRMService';
-import { RefreshCw, Bell, AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Radar, Target } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  UserPlus, Search, ChevronRight, X, Phone, Mail, Building, Globe,
+  MessageCircle, Briefcase, CheckSquare, Clock, MoreVertical, Filter,
+  UserCheck, Users, ArrowLeft, Star, MapPin, Tag, AlertCircle, Plus
+} from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { supabase } from '../../lib/supabase';
+import { useTenant } from '../../contexts/TenantContext';
+import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { tenantService } from '../../services/tenancy/TenantService';
-import { AIIntelligencePanel } from './AIIntelligencePanel';
+import { useRouter } from 'next/navigation';
 
-export default function CRMTab({ userId, userRole }: { userId: string; userRole?: string }) {
-    const router = useRouter();
-    const { currentTenant } = useTenant();
-    const canManagePipeline =
-        userRole === 'admin' || userRole === 'tenant_admin' || userRole === 'business_dashboard';
-    const [deals, setDeals] = useState<Deal[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [syncing, setSyncing] = useState(false);
-    const [crmIntelligenceActions, setCrmIntelligenceActions] = useState<string[]>([]);
+// ── Types ──────────────────────────────────────────────────────────────────────
+type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
+type SubView = 'leads' | 'clients' | 'contacts';
 
-    useEffect(() => {
-        loadDeals();
-        void loadCrmIntelligence();
-    }, []);
-
-    const loadCrmIntelligence = async () => {
-        try {
-            const tenantId = currentTenant?.id;
-            if (!tenantId) return;
-            const response = await fetch(`/api/intelligence/system?tenantId=${encodeURIComponent(tenantId)}`);
-            const payload = await response.json();
-            if (!response.ok) return;
-            const modules = payload?.data?.modules || [];
-            const crmModule = modules.find((moduleRow: any) => moduleRow.module === 'crm');
-            const actions = Array.isArray(crmModule?.recommendations) ? crmModule.recommendations : [];
-            setCrmIntelligenceActions(actions.slice(0, 3));
-        } catch {
-            setCrmIntelligenceActions([]);
-        }
-    };
-
-    const loadDeals = async () => {
-        setLoading(true);
-        const { deals, error } = await dealService.getDeals();
-        if (error) toast.error('Failed to load deals');
-        setDeals(deals || []);
-        setLoading(false);
-    };
-
-    const handleSync = async () => {
-        setSyncing(true);
-        const toastId = toast.loading('Syncing with external CRM (HubSpot)...');
-        try {
-            const res = await UnifiedCRMService.pullDeals();
-            if (res?.success) {
-                toast.success(`Synced ${res.syncedCount} deals successfully`, { id: toastId });
-                loadDeals();
-            } else {
-                toast.error(`Sync failed: ${res?.error || 'Unknown error'}`, { id: toastId });
-            }
-        } catch (e) {
-            toast.error('Sync failed', { id: toastId });
-        } finally {
-            setSyncing(false);
-        }
-    };
-
-    const compactNotification = useMemo(() => {
-        const overdueOpenDeals = deals.filter((deal) => {
-            if (!deal.expectedCloseDate) return false;
-            const isClosed = deal.stage === 'closed_won' || deal.stage === 'closed_lost';
-            return !isClosed && new Date(deal.expectedCloseDate).getTime() < Date.now();
-        }).length;
-
-        const lateStageWithoutDate = deals.filter(
-            (deal) => (deal.stage === 'proposal' || deal.stage === 'negotiation') && !deal.expectedCloseDate
-        ).length;
-
-        if (overdueOpenDeals > 0) return `${overdueOpenDeals} open deal(s) past expected close date`;
-        if (lateStageWithoutDate > 0) return `${lateStageWithoutDate} late-stage deal(s) missing close date`;
-        if (crmIntelligenceActions.length > 0) return crmIntelligenceActions[0];
-        return 'Pipeline is stable. No urgent CRM alerts.';
-    }, [deals, crmIntelligenceActions]);
-
-    const totalOpenDeals = useMemo(() => {
-        return deals.filter((deal) => deal.stage !== 'closed_won' && deal.stage !== 'closed_lost').length;
-    }, [deals]);
-
-    const crmMetrics = useMemo(() => {
-        const now = new Date();
-        const openDeals = deals.filter((deal) => deal.stage !== 'closed_won' && deal.stage !== 'closed_lost');
-        const weightedPipeline = openDeals.reduce(
-            (sum, deal) => sum + ((deal.value || 0) * (deal.probability || 0)) / 100,
-            0
-        );
-        const overdueDeals = openDeals.filter((deal) => deal.expectedCloseDate && new Date(deal.expectedCloseDate) < now);
-        const lateStageWithoutDate = openDeals.filter(
-            (deal) => (deal.stage === 'proposal' || deal.stage === 'negotiation') && !deal.expectedCloseDate
-        );
-        const missingNextStep = openDeals.filter((deal) => !deal.nextStep?.trim());
-        const unthreadedLateStage = openDeals.filter(
-            (deal) => (deal.stage === 'proposal' || deal.stage === 'negotiation') && !deal.contactId
-        );
-
-        const actionQueue = openDeals
-            .map((deal) => {
-                const reasons: string[] = [];
-                let urgency = 0;
-
-                if (deal.expectedCloseDate && new Date(deal.expectedCloseDate) < now) {
-                    reasons.push('close date slipped');
-                    urgency += 4;
-                }
-                if ((deal.stage === 'proposal' || deal.stage === 'negotiation') && !deal.expectedCloseDate) {
-                    reasons.push('missing close date');
-                    urgency += 3;
-                }
-                if (!deal.nextStep?.trim()) {
-                    reasons.push('missing next step');
-                    urgency += 3;
-                }
-                if ((deal.intelligenceScore ?? 100) < 55) {
-                    reasons.push('low confidence');
-                    urgency += 2;
-                }
-                if ((deal.probability ?? 0) < 40 && (deal.stage === 'proposal' || deal.stage === 'negotiation')) {
-                    reasons.push('weak conversion odds');
-                    urgency += 2;
-                }
-                if (!deal.contactId && (deal.stage === 'proposal' || deal.stage === 'negotiation')) {
-                    reasons.push('no contact attached');
-                    urgency += 1;
-                }
-
-                return { deal, reasons, urgency };
-            })
-            .filter((item) => item.urgency > 0)
-            .sort((a, b) => b.urgency - a.urgency || (b.deal.value || 0) - (a.deal.value || 0))
-            .slice(0, 5);
-
-        return {
-            openDeals,
-            overdueDeals,
-            lateStageWithoutDate,
-            missingNextStep,
-            unthreadedLateStage,
-            weightedPipeline,
-            actionQueue,
-        };
-    }, [deals]);
-
-    const metricCards = useMemo(() => {
-        return [
-            {
-                label: 'Weighted Pipeline',
-                value: `$${Math.round(crmMetrics.weightedPipeline).toLocaleString()}`,
-                hint: 'Revenue adjusted by probability',
-                icon: CircleDollarSign,
-                accent: 'text-emerald-300',
-            },
-            {
-                label: 'Deals At Risk',
-                value: crmMetrics.overdueDeals.length,
-                hint: 'Open deals past expected close',
-                icon: AlertTriangle,
-                accent: 'text-amber-300',
-            },
-            {
-                label: 'Missing Next Step',
-                value: crmMetrics.missingNextStep.length,
-                hint: 'Open deals without a clear action',
-                icon: Target,
-                accent: 'text-rose-300',
-            },
-            {
-                label: 'Late Stage Gaps',
-                value: crmMetrics.lateStageWithoutDate.length,
-                hint: 'Proposal/negotiation deals with no date',
-                icon: CalendarClock,
-                accent: 'text-sky-300',
-            },
-        ];
-    }, [crmMetrics]);
-
-    return (
-        <div className="w-full min-w-0 flex flex-col text-white pb-8">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-white">CRM</h1>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                        Focus on one next action.
-                    </p>
-                </div>
-
-                {/* NEXUS CRM INTELLIGENCE INTEGRATED */}
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            const toastId = toast.loading('Nexus: Enriching pipeline leads...', { id: 'nexus-crm' });
-                            const tenantId = currentTenant?.id;
-                            const res = await fetch('/api/social/command-center', { 
-                                method: 'POST', 
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ tenantId, mode: 'nexus_system_action', systemKey: 'lead_enrichment' })
-                            });
-                            const data = await res.json();
-                            toast.success(data.result.message, { id: 'nexus-crm' });
-                        }}
-                        className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-violet-600/10 hover:bg-violet-600/20 text-violet-400 border border-violet-500/30 rounded-xl transition-all font-bold text-xs sm:text-sm h-10 shadow-lg shadow-violet-900/10"
-                    >
-                        <Radar className="w-4 h-4" />
-                        Enrich Leads
-                    </button>
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            const toastId = toast.loading('Nexus: Launching sales campaign...', { id: 'nexus-sales' });
-                            const tenantId = currentTenant?.id;
-                            const res = await fetch('/api/social/command-center', { 
-                                method: 'POST', 
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ tenantId, mode: 'nexus_system_action', systemKey: 'sales_campaign' })
-                            });
-                            const data = await res.json();
-                            toast.success(data.result.message, { id: 'nexus-sales' });
-                        }}
-                        className="flex-1 min-w-[140px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-violet-600/10 hover:bg-violet-600/20 text-violet-400 border border-violet-500/30 rounded-xl transition-all font-bold text-xs sm:text-sm h-10 shadow-lg shadow-violet-900/10"
-                    >
-                        <Target className="w-4 h-4" />
-                        Sales Campaign
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/dashboard/deals')}
-                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                    >
-                        Open Deals
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/dashboard/leads?source=mcp')}
-                        className="flex-1 min-w-[120px] sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-xl transition-colors font-medium text-xs sm:text-sm h-10"
-                    >
-                        MCP Leads
-                    </button>
-                </div>
-            </div>
-
-            <div className="mb-6">
-                <AIIntelligencePanel moduleKey="crm" title="CRM Intelligence" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
-                {metricCards.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                        <div key={card.label} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <p className="text-[11px] uppercase tracking-wide text-slate-400">{card.label}</p>
-                                    <p className="text-2xl font-semibold text-white mt-2">{card.value}</p>
-                                    <p className="text-xs text-slate-500 mt-2">{card.hint}</p>
-                                </div>
-                                <div className={`rounded-xl border border-white/10 bg-slate-900/80 p-2 ${card.accent}`}>
-                                    <Icon className="w-4 h-4" />
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-[1.45fr_1fr] gap-4 mt-4">
-                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h2 className="text-sm font-semibold text-white">Revenue Command Queue</h2>
-                            <p className="text-xs text-slate-500 mt-1">Deals that need an immediate operator decision.</p>
-                        </div>
-                        <Radar className="w-4 h-4 text-teal-400" />
-                    </div>
-
-                    <div className="space-y-3">
-                        {crmMetrics.actionQueue.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-5 text-sm text-slate-400">
-                                No urgent deal hygiene gaps right now.
-                            </div>
-                        ) : (
-                            crmMetrics.actionQueue.map(({ deal, reasons, urgency }) => (
-                                <button
-                                    key={deal.id}
-                                    type="button"
-                                    onClick={() => router.push(`/dashboard/deals?highlight=${deal.id}`)}
-                                    className="w-full rounded-xl border border-white/10 bg-slate-950/50 p-4 text-left hover:border-teal-500/40 hover:bg-slate-900/70 transition-colors"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-white truncate">{deal.name}</p>
-                                            <p className="text-xs text-slate-400 mt-1">
-                                                {deal.stage.replace('_', ' ')} • ${(deal.value || 0).toLocaleString()} • {deal.probability || 0}% probability
-                                            </p>
-                                        </div>
-                                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
-                                            P{urgency}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2 mt-3">
-                                        {reasons.map((reason) => (
-                                            <span
-                                                key={reason}
-                                                className="rounded-full border border-white/10 bg-slate-900/80 px-2 py-1 text-[11px] text-slate-300"
-                                            >
-                                                {reason}
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-3">
-                                        Next step: {deal.nextStep?.trim() || 'No next step captured yet'}
-                                    </p>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h2 className="text-sm font-semibold text-white">Pipeline Weaknesses</h2>
-                            <p className="text-xs text-slate-500 mt-1">The pain points competitors usually hide in separate tools.</p>
-                        </div>
-                        <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                    </div>
-
-                    <div className="space-y-3">
-                        {[
-                            {
-                                label: 'Overdue expected closes',
-                                value: crmMetrics.overdueDeals.length,
-                                detail: 'Deals slipping without being requalified.',
-                            },
-                            {
-                                label: 'Late-stage deals without close dates',
-                                value: crmMetrics.lateStageWithoutDate.length,
-                                detail: 'Proposal and negotiation records with weak forecasting discipline.',
-                            },
-                            {
-                                label: 'Late-stage deals without contact linkage',
-                                value: crmMetrics.unthreadedLateStage.length,
-                                detail: 'Revenue is exposed when no accountable buyer thread is attached.',
-                            },
-                            {
-                                label: 'Open deals without next step',
-                                value: crmMetrics.missingNextStep.length,
-                                detail: 'Pipeline volume without action ownership turns into false confidence.',
-                            },
-                        ].map((item) => (
-                            <div key={item.label} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
-                                <div className="flex items-center justify-between gap-3">
-                                    <p className="text-sm text-slate-200">{item.label}</p>
-                                    <span className="text-lg font-semibold text-white">{item.value}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-2">{item.detail}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+interface Lead {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  source?: string;
+  status: LeadStatus;
+  created_at: string;
 }
 
+interface CRMTabProps {
+  user: User;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+const hashColor = (name: string) => {
+  const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-orange-500', 'bg-pink-500', 'bg-teal-500', 'bg-indigo-500'];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % colors.length;
+  return colors[h];
+};
+
+const sourceColors: Record<string, string> = {
+  linkedin: 'bg-blue-500/15 text-blue-400',
+  manual:   'bg-slate-500/15 text-slate-400',
+  whatsapp: 'bg-green-500/15 text-green-400',
+  referral: 'bg-purple-500/15 text-purple-400',
+  website:  'bg-teal-500/15 text-teal-400',
+};
+
+const statusColors: Record<LeadStatus, string> = {
+  new:           'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  contacted:     'bg-amber-500/15 text-amber-400 border-amber-500/20',
+  qualified:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+  disqualified:  'bg-red-500/15 text-red-400 border-red-500/20',
+};
+
+// ── Swipeable Row ──────────────────────────────────────────────────────────────
+const SwipeableRow: React.FC<{
+  lead: Lead;
+  onMarkContacted: (id: string) => void;
+  onDisqualify: (id: string) => void;
+  onTap: (lead: Lead) => void;
+}> = ({ lead, onMarkContacted, onDisqualify, onTap }) => {
+  const x = useMotionValue(0);
+  const leftOpacity  = useTransform(x, [0, 80],  [0, 1]);
+  const rightOpacity = useTransform(x, [-80, 0], [1, 0]);
+
+  const handleDragEnd = (_: any, info: any) => {
+    if (info.offset.x > 80)  { onMarkContacted(lead.id); x.set(0); }
+    else if (info.offset.x < -80) { onDisqualify(lead.id); x.set(0); }
+    else x.set(0);
+  };
+
+  return (
+    <div className="relative overflow-hidden">
+      {/* Left action (green) */}
+      <motion.div style={{ opacity: leftOpacity }} className="absolute inset-y-0 left-0 w-20 bg-emerald-500 flex items-center justify-center z-0">
+        <UserCheck className="w-5 h-5 text-white" />
+      </motion.div>
+      {/* Right action (red) */}
+      <motion.div style={{ opacity: rightOpacity }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center z-0">
+        <X className="w-5 h-5 text-white" />
+      </motion.div>
+
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -100, right: 100 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        style={{ x }}
+        className="relative z-10 bg-slate-950 flex items-center gap-3 px-4 min-h-[56px] cursor-pointer active:bg-white/5"
+        onClick={() => onTap(lead)}
+      >
+        {/* Avatar */}
+        <div className={`w-9 h-9 rounded-full ${hashColor(lead.name)} flex items-center justify-center flex-shrink-0`}>
+          <span className="text-[12px] font-black text-white">{getInitials(lead.name)}</span>
+        </div>
+
+        {/* Center */}
+        <div className="flex-1 min-w-0 py-2.5">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[15px] font-semibold text-white truncate">{lead.name}</span>
+            {lead.source && (
+              <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${sourceColors[lead.source.toLowerCase()] || 'bg-slate-500/15 text-slate-400'}`}>
+                {lead.source}
+              </span>
+            )}
+          </div>
+          <span className="text-[13px] text-slate-500 truncate block">{lead.email || lead.phone || '—'}</span>
+        </div>
+
+        {/* Right */}
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${statusColors[lead.status]}`}>
+            {lead.status}
+          </span>
+          <span className="text-[11px] text-slate-500 opacity-55">
+            {new Date(lead.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ── Lead Detail ────────────────────────────────────────────────────────────────
+const LeadDetail: React.FC<{ lead: Lead; onBack: () => void; onUpdate: (id: string, status: LeadStatus) => void }> = ({ lead, onBack, onUpdate }) => {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-3 p-4 border-b border-white/5">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800">
+          <ArrowLeft className="w-4 h-4 text-slate-300" />
+        </button>
+        <span className="text-[15px] font-bold text-white">Lead Detail</span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
+        {/* Header */}
+        <div className="flex flex-col items-center gap-2 py-4">
+          <div className={`w-16 h-16 rounded-full ${hashColor(lead.name)} flex items-center justify-center`}>
+            <span className="text-xl font-black text-white">{getInitials(lead.name)}</span>
+          </div>
+          <h2 className="text-[20px] font-bold text-white">{lead.name}</h2>
+          <span className={`text-[11px] font-bold px-3 py-1 rounded-full border ${statusColors[lead.status]}`}>{lead.status}</span>
+        </div>
+
+        {/* Contact Info */}
+        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
+          {[
+            { icon: Mail, label: 'Email', value: lead.email },
+            { icon: Phone, label: 'Phone', value: lead.phone },
+            { icon: Building, label: 'Company', value: lead.company },
+            { icon: Tag, label: 'Source', value: lead.source },
+          ].filter(r => r.value).map(row => (
+            <div key={row.label} className="flex items-center gap-3 p-4">
+              <row.icon className="w-5 h-5 text-slate-500 flex-shrink-0" />
+              <span className="text-[15px] text-slate-300">{row.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Fixed action bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex gap-0 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+        {[
+          { label: 'Message', icon: MessageCircle, color: 'text-sky-400' },
+          { label: 'Create Deal', icon: Briefcase, color: 'text-emerald-400', fn: () => onUpdate(lead.id, 'qualified') },
+          { label: 'Convert', icon: UserCheck, color: 'text-teal-400', fn: () => onUpdate(lead.id, 'qualified') },
+        ].map(btn => (
+          <button key={btn.label} onClick={btn.fn} className="flex-1 flex flex-col items-center justify-center h-[52px] gap-1 hover:bg-white/5 transition-colors">
+            <btn.icon className={`w-5 h-5 ${btn.color}`} />
+            <span className="text-[11px] text-slate-400">{btn.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── Main CRMTab ────────────────────────────────────────────────────────────────
+const STATUS_FILTERS: { label: string; value: LeadStatus | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'New', value: 'new' },
+  { label: 'Contacted', value: 'contacted' },
+  { label: 'Qualified', value: 'qualified' },
+  { label: 'Disqualified', value: 'disqualified' },
+];
+
+const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
+  const { currentTenant } = useTenant();
+  const router = useRouter();
+  const [subView, setSubView] = useState<SubView>('leads');
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<LeadStatus | 'all'>('all');
+  const [search, setSearch] = useState('');
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+
+  const loadLeads = useCallback(async () => {
+    if (!currentTenant?.id) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('tenant_id', currentTenant.id)
+      .order('created_at', { ascending: false });
+    setLeads((data as Lead[]) || []);
+    setLoading(false);
+  }, [currentTenant?.id]);
+
+  useEffect(() => { loadLeads(); }, [loadLeads]);
+
+  const handleStatusUpdate = async (id: string, status: LeadStatus) => {
+    await supabase.from('leads').update({ status }).eq('id', id);
+    setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    toast.success(`Lead marked as ${status}`);
+  };
+
+  const filtered = leads.filter(l => {
+    if (filter !== 'all' && l.status !== filter) return false;
+    if (search && !l.name.toLowerCase().includes(search.toLowerCase()) && !l.email?.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  if (selectedLead) {
+    return <LeadDetail lead={selectedLead} onBack={() => setSelectedLead(null)} onUpdate={handleStatusUpdate} />;
+  }
+
+  return (
+    <div className="flex flex-col h-full relative">
+      {/* Sub-view tabs */}
+      <div className="flex border-b border-white/5 bg-slate-950">
+        {(['leads', 'clients', 'contacts'] as SubView[]).map(v => (
+          <button key={v} onClick={() => setSubView(v)} className={`flex-1 py-3 text-[13px] font-bold capitalize transition-colors ${subView === v ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}>
+            {v}
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="px-4 pt-3 pb-2">
+        <div className="flex items-center gap-2 bg-slate-900 border border-white/5 rounded-xl px-3 h-9">
+          <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={`Search ${subView}...`}
+            className="flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-slate-600"
+          />
+        </div>
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
+        {STATUS_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setFilter(f.value)}
+            className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${filter === f.value ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto bg-slate-950">
+        {loading ? (
+          <div className="space-y-px">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-[56px] bg-slate-900/40 animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+            <Users className="w-12 h-12 mb-3 opacity-30" />
+            <p className="text-[15px]">No {subView} found</p>
+            <p className="text-[13px] opacity-55 mt-1">Swipe right to contact, left to disqualify</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {filtered.map(lead => (
+              <SwipeableRow
+                key={lead.id}
+                lead={lead}
+                onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
+                onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
+                onTap={setSelectedLead}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* FAB */}
+      <button
+        onClick={() => router.push('/dashboard/crm/new')}
+        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30"
+      >
+        <UserPlus className="w-6 h-6 text-white" />
+      </button>
+    </div>
+  );
+};
+
+export default CRMTab;

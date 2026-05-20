@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Receipt, CheckCircle, Save, Users, Loader2, Search, Plus } from 'lucide-react';
+import { 
+    X, Receipt, CheckCircle, Save, Users, Loader2, Search, Plus, 
+    Laptop, Home, Plane, Utensils, Zap, Megaphone, FileText, Camera 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
@@ -13,6 +16,16 @@ interface AddExpenseModalProps {
     onClose: () => void;
     onExpenseAdded: () => void;
 }
+
+const CATEGORY_PRESETS = [
+    { label: 'Software', search: 'software', icon: Laptop, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    { label: 'Rent', search: 'rent', icon: Home, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    { label: 'Travel', search: 'travel', icon: Plane, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+    { label: 'Meals', search: 'meal', icon: Utensils, color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+    { label: 'Utilities', search: 'utilit', icon: Zap, color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
+    { label: 'Marketing', search: 'market', icon: Megaphone, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+    { label: 'Other', search: '', icon: FileText, color: 'text-slate-400 bg-slate-500/10 border-slate-500/20' }
+];
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onExpenseAdded }) => {
     const { currentTenant } = useTenant();
@@ -29,6 +42,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const [selectedCategoryPreset, setSelectedCategoryPreset] = useState<string>('');
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
+    const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
@@ -126,40 +146,34 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
         });
         setStep('edit');
         setSearchQuery('');
+        setSelectedCategoryPreset('');
+        setReceiptFile(null);
+        setReceiptPreview(null);
     };
 
     const getSuggestedAccount = (vendorName: string) => {
         const name = vendorName.toLowerCase();
         
-        // Software & Subscriptions
         if (name.includes('google') || name.includes('microsoft') || name.includes('github') || name.includes('vercel') || name.includes('aws') || name.includes('digitalocean') || name.includes('adobe') || name.includes('slack') || name.includes('zoom') || name.includes('software') || name.includes('subscription')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('software') || a.accountName.toLowerCase().includes('subscription'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('software') || a.accountName.toLowerCase().includes('subscription'))?.id, label: 'Software' };
         }
-        
-        // Rent & Utilities
         if (name.includes('rent') || name.includes('lease') || name.includes('office') || name.includes('space')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('rent'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('rent'))?.id, label: 'Rent' };
         }
         if (name.includes('electric') || name.includes('water') || name.includes('gas') || name.includes('utility') || name.includes('utilities') || name.includes('internet') || name.includes('broadband') || name.includes('phone')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('utilit'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('utilit'))?.id, label: 'Utilities' };
         }
-
-        // Travel & Meals
         if (name.includes('uber') || name.includes('lyft') || name.includes('taxi') || name.includes('train') || name.includes('flight') || name.includes('airline') || name.includes('hotel') || name.includes('travel')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('travel'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('travel'))?.id, label: 'Travel' };
         }
         if (name.includes('restaurant') || name.includes('cafe') || name.includes('coffee') || name.includes('starbucks') || name.includes('lunch') || name.includes('dinner') || name.includes('meal') || name.includes('food')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('meal') || a.accountName.toLowerCase().includes('entertainment'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('meal') || a.accountName.toLowerCase().includes('entertainment'))?.id, label: 'Meals' };
         }
-
-        // Professional Services
         if (name.includes('legal') || name.includes('law') || name.includes('attorney') || name.includes('consult') || name.includes('accounting') || name.includes('audit')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('professional') || a.accountName.toLowerCase().includes('consult'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('professional') || a.accountName.toLowerCase().includes('consult'))?.id, label: 'Other' };
         }
-
-        // Marketing & Advertising
         if (name.includes('facebook') || name.includes('adwords') || name.includes('instagram') || name.includes('marketing') || name.includes('ads') || name.includes('advertis')) {
-            return expenseAccounts.find(a => a.accountName.toLowerCase().includes('market') || a.accountName.toLowerCase().includes('advertis'))?.id;
+            return { id: expenseAccounts.find(a => a.accountName.toLowerCase().includes('market') || a.accountName.toLowerCase().includes('advertis'))?.id, label: 'Marketing' };
         }
 
         return null;
@@ -170,10 +184,24 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
         setSearchQuery('');
         setShowContactDropdown(false);
         
-        const suggestedId = getSuggestedAccount(name);
-        if (suggestedId) {
-            setFormData(prev => ({ ...prev, expenseAccountId: suggestedId }));
-            toast.success(`Automatically selected account based on vendor`, { icon: '🤖', duration: 2000 });
+        const suggestion = getSuggestedAccount(name);
+        if (suggestion && suggestion.id) {
+            setFormData(prev => ({ ...prev, expenseAccountId: suggestion.id }));
+            setSelectedCategoryPreset(suggestion.label);
+            toast.success(`Automatically selected ${suggestion.label} based on vendor`, { icon: '🤖', duration: 2000 });
+        }
+    };
+
+    const handleCategoryPresetSelect = (preset: typeof CATEGORY_PRESETS[0]) => {
+        setSelectedCategoryPreset(preset.label);
+        const suggested = expenseAccounts.find(a => a.accountName.toLowerCase().includes(preset.search));
+        if (suggested) {
+            setFormData(prev => ({ ...prev, expenseAccountId: suggested.id }));
+            toast.success(`Selected ${preset.label} account`, { icon: '🏷️', duration: 1500 });
+        } else if (preset.label === 'Other' && expenseAccounts.length > 0) {
+            setFormData(prev => ({ ...prev, expenseAccountId: expenseAccounts[0].id }));
+        } else {
+            toast.error(`Could not find an account matching ${preset.label}`);
         }
     };
 
@@ -277,8 +305,25 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
-                                        className="space-y-8"
+                                        className="space-y-6"
                                     >
+                                        {/* Neobank Outflow Spend Card */}
+                                        <div className="bg-gradient-to-br from-rose-500/10 to-red-500/5 border border-rose-500/20 rounded-3xl p-6 flex flex-col justify-between h-36 relative overflow-hidden shadow-inner">
+                                            <div className="absolute top-0 right-0 p-8 opacity-5">
+                                                <Receipt className="w-24 h-24 text-rose-500" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Total Recorded Outflow</p>
+                                                <p className="text-[28px] font-black text-white mt-1 font-mono tracking-tight leading-none">
+                                                    ${formData.amount ? parseFloat(formData.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                                                </p>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs text-slate-500 mt-2">
+                                                <span className="uppercase tracking-widest font-mono text-[9px]">Neobank Outflow Ledger</span>
+                                                <span className="font-semibold text-rose-400 uppercase tracking-widest text-[10px]">{formData.paymentMethod}</span>
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Effective Date</label>
@@ -301,12 +346,46 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                             </div>
                                         </div>
 
+                                        {/* Quick Categories preset selection */}
+                                        <div className="space-y-3">
+                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Quick Categories</label>
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                                                {CATEGORY_PRESETS.map((preset) => {
+                                                    const Icon = preset.icon;
+                                                    const isSelected = selectedCategoryPreset === preset.label;
+                                                    return (
+                                                        <button
+                                                            key={preset.label}
+                                                            type="button"
+                                                            onClick={() => handleCategoryPresetSelect(preset)}
+                                                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-1.5 ${
+                                                                isSelected 
+                                                                    ? 'bg-teal-600/20 border-teal-500 text-teal-400 font-bold' 
+                                                                    : 'bg-slate-950/40 border-white/5 text-slate-400 hover:text-white hover:bg-slate-950/60'
+                                                            }`}
+                                                        >
+                                                            <Icon className="w-4 h-4" />
+                                                            <span className="text-[10px] uppercase font-bold tracking-wider">{preset.label}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Expense Account (Category)</label>
                                                 <select
                                                     value={formData.expenseAccountId}
-                                                    onChange={(e) => setFormData(prev => ({ ...prev, expenseAccountId: e.target.value }))}
+                                                    onChange={(e) => {
+                                                        setFormData(prev => ({ ...prev, expenseAccountId: e.target.value }));
+                                                        // Update the matched preset label
+                                                        const matchedAcc = expenseAccounts.find(a => a.id === e.target.value);
+                                                        if (matchedAcc) {
+                                                            const preset = CATEGORY_PRESETS.find(p => matchedAcc.name.toLowerCase().includes(p.search));
+                                                            setSelectedCategoryPreset(preset ? preset.label : 'Other');
+                                                        }
+                                                    }}
                                                     className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
                                                 >
                                                     <option value="">Select Category</option>
@@ -396,7 +475,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                         ) : (
                                                             <div className="p-8 text-center">
                                                                 <p className="text-xs font-black uppercase tracking-widest text-slate-600 italic">Press Enter to use manual name</p>
-                                                            </div>
+                                                             </div>
                                                         )}
                                                     </motion.div>
                                                 )}
@@ -414,15 +493,90 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                             />
                                         </div>
 
+                                        {/* Camera & File Input Launcher */}
                                         <div className="border-t border-white/5 pt-8">
                                             <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-4 px-1">Proof of Transaction (Optional)</label>
-                                            <div className="border-2 border-dashed border-white/5 rounded-[2.5rem] p-10 text-center hover:bg-white/2 hover:border-teal-500/20 transition-all cursor-pointer group">
-                                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-inner">
-                                                    <Receipt className="w-8 h-8 text-slate-500 group-hover:text-teal-500 transition-colors" />
+                                            
+                                            {receiptPreview ? (
+                                                <div className="relative border border-white/10 rounded-3xl p-4 bg-slate-950/40 flex items-center gap-4">
+                                                    <img src={receiptPreview} alt="Receipt Preview" className="w-16 h-16 object-cover rounded-xl border border-white/10 bg-white" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-bold text-white truncate">{receiptFile?.name || 'Captured Image'}</p>
+                                                        <p className="text-xs text-slate-500 mt-1 font-mono uppercase">
+                                                            {(receiptFile?.size || 0) > 0 
+                                                                ? `${((receiptFile?.size || 0) / 1024 / 1024).toFixed(2)} MB` 
+                                                                : 'Camera Capture'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setReceiptFile(null); setReceiptPreview(null); }}
+                                                        className="p-2.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-xl transition-all border border-white/5 hover:border-rose-500/30"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
                                                 </div>
-                                                <p className="text-sm text-slate-300 font-bold">Upload Receipt</p>
-                                                <p className="text-xs text-slate-500 mt-2 uppercase tracking-widest font-mono">PDF, Image · Max 5MB</p>
-                                            </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        className="border-2 border-dashed border-white/5 hover:border-teal-500/30 rounded-3xl p-6 text-center hover:bg-white/2 transition-all flex flex-col items-center justify-center gap-2 group"
+                                                    >
+                                                        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                                                            <Receipt className="w-6 h-6 text-slate-500 group-hover:text-teal-400 transition-colors" />
+                                                        </div>
+                                                        <span className="text-xs font-bold text-slate-300">Choose File</span>
+                                                        <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">PDF, PNG, JPG</span>
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => cameraInputRef.current?.click()}
+                                                        className="border-2 border-dashed border-white/5 hover:border-teal-500/30 rounded-3xl p-6 text-center hover:bg-white/2 transition-all flex flex-col items-center justify-center gap-2 group"
+                                                    >
+                                                        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                                                            <Camera className="w-6 h-6 text-slate-500 group-hover:text-teal-400 transition-colors" />
+                                                        </div>
+                                                        <span className="text-xs font-bold text-slate-300">Take Photo</span>
+                                                        <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Mobile Camera</span>
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*,application/pdf"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setReceiptFile(file);
+                                                        if (file.type.startsWith('image/')) {
+                                                            setReceiptPreview(URL.createObjectURL(file));
+                                                        } else {
+                                                            setReceiptPreview('/icons/pdf-icon.png');
+                                                        }
+                                                    }
+                                                }}
+                                            />
+
+                                            <input
+                                                ref={cameraInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setReceiptFile(file);
+                                                        setReceiptPreview(URL.createObjectURL(file));
+                                                    }
+                                                }}
+                                            />
                                         </div>
                                     </motion.div>
                                 ) : (
@@ -481,4 +635,3 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
 };
 
 export default AddExpenseModal;
-

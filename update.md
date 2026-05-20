@@ -791,3 +791,20 @@
 
 ### Changed
 - **Database Schema**: Hardened the MCP migration `20260509140000_create_mcp_missing_tables.sql` with `IF NOT EXISTS` and `ON CONFLICT` clauses for safe, idempotent re-runs in production.
+
+## Date: 2026-05-20 (DASHBOARD REDESIGN & PWA ENHANCEMENTS)
+
+### Added
+- **Gamification Tab**: New dashboard module with XP tracking, leaderboards, and achievement badges.
+- **AI Agents Tab**: New dashboard module for monitoring playbooks, automated tasks, and AI system health.
+- **Contracts Tab**: Redesigned contracts module featuring a custom HTML5 canvas signature pad, accordion clauses, and step-based status progression.
+- **PWA Push Notifications**: Complete push notification infrastructure including service worker integration, database subscriptions schema (`20260520100000_pwa_push_subscriptions.sql`), and a dedicated `/api/push` delivery endpoint.
+
+### Changed
+- **Mobile-First UX Overhaul**: Refactored major dashboard modules (`HomeTab`, `CRMTab`, `DealsTab`, `ProjectsTab`, `TasksTab`, `FinanceTab`, `QuotesTab`, `ConferenceTab`, `AnalyticsTab`) to follow a native iOS-inspired design language with flat lists, swipe actions, and touch-optimized hit areas.
+- **Dashboard Routing**: Updated `Dashboard.tsx` orchestrator to seamlessly lazy-load the new modular tabs, streamlining the proxy architecture.
+- **Global Settings**: Unified business and global settings into a single, scrollable `SettingsPage.tsx` using a clean accordion-based iOS style, significantly reducing duplicate code.
+
+### Fixed
+- **TypeScript Compliance**: Resolved implicit `any` types in Supabase queries and fixed prop mismatch errors in `BusinessDashboard.tsx` and `ClientsPage.tsx` following the component refactoring.
+

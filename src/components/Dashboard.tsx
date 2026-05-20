@@ -61,12 +61,10 @@ import { messageService } from '../services/messageService';
 import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
 import SecurityDashboard from './dashboard/SecurityDashboard';
-import ContractDashboard from './contracts/ContractDashboard';
 import AlphaCloneContractModal from './contracts/AlphaCloneContractModal';
 import SettingsPage from './dashboard/SettingsPage';
 import OnboardingPipelines from './dashboard/OnboardingPipelines';
 import PortfolioShowcase from './dashboard/PortfolioShowcase';
-import SalesAgent from './dashboard/SalesAgent';
 import WelcomeModal from './dashboard/WelcomeModal';
 import OnboardingFlow from './onboarding/OnboardingFlow';
 import CreateInvoiceModal from './dashboard/CreateInvoiceModal';
@@ -101,6 +99,9 @@ const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRo
 const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
 const PnLStatement = React.lazy(() => import('./accounting/PnLStatement'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/business/BusinessPerformanceDashboard'));
+const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
+const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
+const ContractsTab = React.lazy(() => import('./dashboard/ContractsTab'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
@@ -1062,10 +1063,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
             <WidgetErrorBoundary title={activeTab === '/dashboard/meetings' ? 'Meetings' : 'Video Conference'}>
-              <ConferenceTab
-                user={user}
-                onJoinRoom={handleJoinCall}
-              />
+              <ConferenceTab />
             </WidgetErrorBoundary>
           </React.Suspense>
         );
@@ -1183,7 +1181,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/sales-agent':
-        return <SalesAgent />;
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <AIAgentsTab />
+          </React.Suspense>
+        );
+
+      case '/dashboard/gamification':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <GamificationTab />
+          </React.Suspense>
+        );
 
       case '/dashboard/zoho/mail':
         return (
@@ -1207,14 +1216,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/tasks':
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-            <TasksTab userId={user.id} userRole={user.role} />
+            <TasksTab user={user} />
           </React.Suspense>
         );
 
       case '/dashboard/deals':
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-            <DealsTab userId={user.id} userRole={user.role} />
+            <DealsTab user={user} />
           </React.Suspense>
         );
 
@@ -1228,7 +1237,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/quotes':
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-            <QuotesTab userId={user.id} userRole={user.role} />
+            <QuotesTab user={user} />
           </React.Suspense>
         );
 
@@ -1243,17 +1252,16 @@ const Dashboard: React.FC<DashboardProps> = ({
         // Clients see read-only invoice view, tenant_admin sees full billing/subscription management
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
-            <FinanceTab
-              user={user}
-              filteredInvoices={filteredInvoices}
-              handlePayClick={handlePayClick}
-              onCreateInvoice={() => setCreateInvoiceOpen(true)}
-            />
+            <FinanceTab user={user} />
           </React.Suspense>
         );
 
       case '/dashboard/contracts':
-        return <ContractDashboard user={user} />;
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ContractsTab user={user} />
+          </React.Suspense>
+        );
 
       case '/dashboard/articles':
         return (
@@ -1287,19 +1295,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/projects':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <ProjectsTab
-              user={user}
-              filteredProjects={filteredProjects}
-              refreshProjects={refreshProjects}
-              openArchitectTool={openArchitectTool}
-              startEditProject={startEditProject}
-              handleShareProject={handleShareProject}
-              declineProject={declineProject}
-              updateProjectStage={updateProjectStage}
-              openContractGenerator={openContractGenerator}
-              setSelectedProjectForMilestones={setSelectedProjectForMilestones}
-              setMilestoneModalOpen={setMilestoneModalOpen}
-            />
+            <ProjectsTab user={user} />
           </React.Suspense>
         );
 
@@ -1307,6 +1303,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <HomeTab
             user={user}
+            handlePayClick={handlePayClick}
             currentStats={currentStats}
             databaseStats={dashboardStats}
             filteredProjects={filteredProjects}
@@ -1615,7 +1612,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                 <Image src={LOGO_URL} alt="Logo" width={32} height={32} className="rounded-lg flex-shrink-0" />
-                <h1 className="text-base sm:text-lg font-bold text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none ac-dashboard-mobile-title">{t(APP_NAME)}</h1>
+                <h1 className="pwa-page-title text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none ac-dashboard-mobile-title">{t(APP_NAME)}</h1>
               </div>
             </div>
 

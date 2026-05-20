@@ -857,7 +857,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                     <select
                                         value={editForm.stage}
                                         onChange={(e) => setEditForm((f) => ({ ...f, stage: e.target.value }))}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
                                     >
                                         <option value="lead">Lead</option>
                                         <option value="qualified">Qualified</option>
@@ -995,7 +995,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                             />
                                         </div>
                                         
-                                        <div className="p-4 bg-black/40 rounded-xl border border-white/5">
+                                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
                                             <span className="text-xs font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
                                             <p className="text-sm text-slate-300 leading-relaxed">
                                                 {lead.hookAnalysis || "The Sales Agent predicts a high response rate based on industry intent and pain point alignment. Use the pattern-interrupting hook below for maximum conversion."}
@@ -1235,7 +1235,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 </Button>
                             </div>
                             <textarea
-                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-mono text-sm leading-relaxed"
+                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-mono text-sm leading-relaxed"
                                 placeholder="Record meeting outcomes, strategic observations, or lead requirements here..."
                                 value={leadNotes}
                                 onChange={(e) => setLeadNotes(e.target.value)}
@@ -1256,7 +1256,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-slate-900 border-2 border-slate-800 flex items-center justify-center">
                                             <div className={`w-2 h-2 rounded-full ${activity.type === 'stage_change' ? 'bg-teal-500' : 'bg-blue-500'}`} />
                                         </div>
-                                        <div className="glass-panel p-4 rounded-xl border border-white/5">
+                                        <div className="glass-panel p-4 rounded-2xl border border-white/5">
                                             <div className="flex justify-between items-start mb-1">
                                                 <p className="font-medium text-white">{activity.description}</p>
                                                 <span className="text-xs text-slate-500">{format(new Date(activity.created_at), 'MMM d, p')}</span>

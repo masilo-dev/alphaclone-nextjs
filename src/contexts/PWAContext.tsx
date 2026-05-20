@@ -15,7 +15,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_SERWIST !== 'true') {
+        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_ENABLE_SERWIST !== 'true' && process.env.NEXT_PUBLIC_ENABLE_PWA !== 'true') {
             const key = 'alphaclone_sw_unregistered';
             if (!sessionStorage.getItem(key)) {
                 void navigator.serviceWorker?.getRegistrations?.().then((regs) => {

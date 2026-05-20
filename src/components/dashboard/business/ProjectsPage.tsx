@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { projectService } from '../../../services/projectService';
@@ -27,7 +28,8 @@ import {
     Activity,
     Zap,
     LayoutList,
-    Download
+    Download,
+    FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { exportToCSV } from '../../../utils/exportUtils';
@@ -71,6 +73,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [searchQuery, setSearchQuery] = useState('');
+    const [viewingProject, setViewingProject] = useState<BusinessProject | null>(null);
 
     useEffect(() => {
         if (!nextSearch) return;
@@ -284,6 +287,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         onEdit={setEditingProject}
                                         onDelete={handleDeleteProject}
                                         onStageChange={handleStageUpdate}
+                                        onViewDetails={setViewingProject}
                                     />
                                 ))
                             )}
@@ -309,6 +313,16 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     onSave={handleSaveProject}
                 />
             )}
+
+            <AnimatePresence>
+                {viewingProject && (
+                    <ProjectDetailsDrawer
+                        project={viewingProject}
+                        onClose={() => setViewingProject(null)}
+                        onEdit={setEditingProject}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -317,15 +331,20 @@ const ProjectListRow = ({
     project,
     onEdit,
     onDelete,
-    onStageChange
+    onStageChange,
+    onViewDetails
 }: {
     project: BusinessProject,
     onEdit: any,
     onDelete: any,
-    onStageChange: (id: string, stage: ProjectStage) => void
+    onStageChange: (id: string, stage: ProjectStage) => void,
+    onViewDetails: (project: BusinessProject) => void
 }) => {
     return (
-        <div className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-violet-500/30 rounded-2xl transition-all duration-300 relative overflow-hidden">
+        <div 
+            onClick={() => onViewDetails(project)}
+            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-violet-500/30 rounded-2xl transition-all duration-300 relative overflow-hidden cursor-pointer"
+        >
             {/* Status Indicator Line */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-red-500 animate-pulse' :
                 project.health === 'Delayed' ? 'bg-amber-500' :
@@ -351,7 +370,7 @@ const ProjectListRow = ({
                                 {project.budget.toLocaleString()}
                             </span>
                         )}
-                        <div className="w-24 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                        <div className="w-24 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
                                 className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-1000"
                                 style={{ width: `${project.progress}%` }}
@@ -433,14 +452,14 @@ const ProjectListRow = ({
             {/* Ops */}
             <div className="col-span-1 lg:col-span-1 flex justify-end gap-1">
                 <button
-                    onClick={() => onEdit(project)}
+                    onClick={(e) => { e.stopPropagation(); onEdit(project); }}
                     className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg transition-all"
                     title="Edit project"
                 >
                     <Activity className="w-4 h-4" />
                 </button>
                 <button
-                    onClick={() => onDelete(project.id)}
+                    onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
                     className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-all"
                     title="Delete project"
                 >
@@ -719,6 +738,206 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                 })}
             </div>
         </div>
+    );
+};
+
+
+interface ProjectDetailsDrawerProps {
+    project: BusinessProject;
+    onClose: () => void;
+    onEdit: (project: BusinessProject) => void;
+}
+
+const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, onClose, onEdit }) => {
+    const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
+
+    useEffect(() => {
+        const key = `project_milestones_${project.id}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            setMilestones(JSON.parse(saved));
+        } else {
+            const defaults = [
+                { id: '1', label: 'Kickoff Meeting & Alignment', checked: false },
+                { id: '2', label: 'Project Scope & Requirements Sign-off', checked: false },
+                { id: '3', label: 'UI/UX Prototypes & Wireframes Approval', checked: false },
+                { id: '4', label: 'Core Infrastructure & Database Setup', checked: false },
+                { id: '5', label: 'First Functional Build Delivery', checked: false },
+                { id: '6', label: 'User Acceptance Testing (UAT)', checked: false },
+                { id: '7', label: 'Production Launch & Handover', checked: false }
+            ];
+            setMilestones(defaults);
+            localStorage.setItem(key, JSON.stringify(defaults));
+        }
+    }, [project.id]);
+
+    const toggleMilestone = (id: string) => {
+        const updated = milestones.map(m => m.id === id ? { ...m, checked: !m.checked } : m);
+        setMilestones(updated);
+        localStorage.setItem(`project_milestones_${project.id}`, JSON.stringify(updated));
+    };
+
+    const radius = 36;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - ((project.progress || 0) / 100) * circumference;
+
+    const teamList = project.team && project.team.length > 0 ? project.team : ['Alex Rivera', 'Sarah Chen', 'Marcus Vance'];
+
+    const getHealthColor = (health: string | undefined) => {
+        if (health === 'At Risk') return 'bg-red-500';
+        if (health === 'Delayed') return 'bg-amber-500';
+        return 'bg-emerald-500';
+    };
+
+    return (
+        <>
+            {/* Backdrop */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[115]"
+            />
+
+            {/* Sheet */}
+            <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-3xl md:rounded-2xl bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[120] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+            >
+                {/* Drag Handle Indicator */}
+                <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto my-3 md:hidden" />
+
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${getHealthColor(project.health)} animate-pulse`} />
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{project.health || 'On Track'}</span>
+                    </div>
+                    <button onClick={onClose} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-2">{project.name}</h3>
+                        <p className="text-slate-400 text-sm leading-relaxed">{project.description || 'No description provided.'}</p>
+                    </div>
+
+                    <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-6">
+                        <div className="relative w-24 h-24 flex-shrink-0">
+                            <svg className="w-full h-full transform -rotate-90">
+                                <circle cx="48" cy="48" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
+                                <circle cx="48" cy="48" r={radius} className="stroke-violet-500 transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
+                                {project.progress || 0}%
+                            </div>
+                        </div>
+
+                        <div className="flex-1 space-y-2">
+                            <div className="text-xs text-slate-500 uppercase tracking-wider">Project Progress</div>
+                            {project.budget && (
+                                <div>
+                                    <div className="text-xs text-slate-500 uppercase tracking-wider">Budget</div>
+                                    <div className="text-lg font-bold text-teal-400">${project.budget.toLocaleString()}</div>
+                                </div>
+                            )}
+                            <div>
+                                <div className="text-xs text-slate-500 uppercase tracking-wider">Target Date</div>
+                                <div className="text-sm font-semibold text-white">
+                                    {project.dueDate ? new Date(project.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <span>Completeness</span>
+                            <span>{project.progress || 0}%</span>
+                        </div>
+                        <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                            <div
+                                className="h-full bg-gradient-to-r from-teal-500 to-indigo-500 rounded-full transition-all duration-1000"
+                                style={{ width: `${project.progress || 0}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Project Team</span>
+                        <div className="flex items-center gap-3">
+                            <div className="flex -space-x-2 overflow-hidden">
+                                {teamList.map((name, i) => (
+                                    <div key={i} className="inline-block rounded-full ring-2 ring-slate-950 bg-teal-600 text-[10px] font-bold flex items-center justify-center text-white select-none" style={{ width: '28px', height: '28px' }}>
+                                        {name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                    </div>
+                                ))}
+                            </div>
+                            <span className="text-xs text-slate-500">{teamList.length} members assigned</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Milestones Checklist</span>
+                        <div className="space-y-2 bg-slate-950/20 rounded-2xl p-3 border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
+                            {milestones.map((m) => (
+                                <div key={m.id} className="flex items-start gap-3 py-1 cursor-pointer select-none" onClick={() => toggleMilestone(m.id)}>
+                                    <input
+                                        type="checkbox"
+                                        checked={m.checked}
+                                        onChange={() => {}}
+                                        className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0 shrink-0"
+                                    />
+                                    <span className={`text-sm ${m.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                        {m.label}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Document Folders</span>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { name: 'Project Briefing & Scope.pdf', type: 'PDF' },
+                                { name: 'Service Agreement.docx', type: 'DOCX' },
+                                { name: 'UX Prototypes (Figma).fig', type: 'FIGMA' },
+                                { name: 'Budget Sheet.xlsx', type: 'XLSX' }
+                            ].map((doc, idx) => (
+                                <div key={idx} className="flex items-center gap-2 p-2.5 bg-slate-950/40 border border-white/5 rounded-xl hover:border-teal-500/30 transition-all cursor-pointer">
+                                    <FileText className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                                    <span className="text-xs text-slate-300 truncate font-medium">{doc.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sticky Action Footer */}
+                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md px-6 py-4 border-t border-white/10 z-[125] flex gap-3 items-center justify-end">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs transition-all text-center"
+                    >
+                        Close Details
+                    </button>
+                    <button
+                        onClick={() => { onEdit(project); onClose(); }}
+                        className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold text-xs transition-all text-center"
+                    >
+                        Edit Properties
+                    </button>
+                </div>
+            </motion.div>
+        </>
     );
 };
 

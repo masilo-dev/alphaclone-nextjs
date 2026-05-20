@@ -25,7 +25,11 @@ import {
     Layers,
     Activity,
     CheckSquare,
-    MessageCircle
+    MessageCircle,
+    Mail,
+    Video,
+    Bot,
+    MessageSquare
 } from 'lucide-react';
 import { MomentumHUD } from '../MomentumHUD';
 
@@ -80,15 +84,15 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         },
         {
             id: 'new-invoice',
-            title: 'Create Invoice',
-            description: 'Get paid faster',
+            title: 'Invoices',
+            description: 'Billing and invoices',
             icon: FileText,
             color: 'bg-green-500',
             action: () => router.push('/dashboard/accounting')
         },
         {
             id: 'schedule-meeting',
-            title: 'Schedule Meeting',
+            title: 'Meetings',
             description: 'Connect with clients',
             icon: Calendar,
             color: 'bg-indigo-500',
@@ -96,7 +100,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         },
         {
             id: 'view-reports',
-            title: 'View Reports',
+            title: 'Reports',
             description: 'Track your progress',
             icon: BarChart2,
             color: 'bg-orange-500',
@@ -104,7 +108,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         },
         {
             id: 'social-media-manager',
-            title: 'Social Manager',
+            title: 'Social Hub',
             description: 'Create and schedule posts',
             icon: Globe,
             color: 'bg-cyan-500',
@@ -112,11 +116,59 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         },
         {
             id: 'linkedin-manager',
-            title: 'LinkedIn Manager',
+            title: 'LinkedIn',
             description: 'Manage LinkedIn posting',
             icon: Linkedin,
             color: 'bg-sky-500',
             action: () => router.push('/dashboard/business/linkedin')
+        },
+        {
+            id: 'email-campaigns',
+            title: 'Email Bot',
+            description: 'Send marketing flows',
+            icon: Mail,
+            color: 'bg-teal-500',
+            action: () => router.push('/dashboard/business/campaigns')
+        },
+        {
+            id: 'video-calls',
+            title: 'Video Rooms',
+            description: 'Start live calls',
+            icon: Video,
+            color: 'bg-rose-500',
+            action: () => router.push('/dashboard/business/video')
+        },
+        {
+            id: 'whatsapp-bot',
+            title: 'WhatsApp',
+            description: 'Automate WhatsApp chatbot',
+            icon: MessageSquare,
+            color: 'bg-emerald-500',
+            action: () => router.push('/dashboard/business/whatsapp')
+        },
+        {
+            id: 'ai-chat',
+            title: 'AI Copilot',
+            description: 'Talk to growth AI',
+            icon: Bot,
+            color: 'bg-purple-500',
+            action: () => router.push('/dashboard/sales-agent?tab=chat')
+        },
+        {
+            id: 'accounting-ledger',
+            title: 'Accounting',
+            description: 'Ledger and PnL statements',
+            icon: DollarSign,
+            color: 'bg-amber-500',
+            action: () => router.push('/dashboard/accounting')
+        },
+        {
+            id: 'tasks-list',
+            title: 'Tasks',
+            description: 'Organize your schedule',
+            icon: CheckSquare,
+            color: 'bg-pink-500',
+            action: () => router.push('/dashboard/tasks')
         }
     ], [router]);
 
@@ -346,30 +398,35 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 />
             </motion.div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions (PWA App Launcher Grid) */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-slate-800 rounded-2xl p-6 border border-slate-700"
+                className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800"
             >
-                <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-yellow-400" />
-                    Quick Actions
-                </h2>
+                <div className="flex items-center gap-2 mb-6">
+                    <Zap className="w-4 h-4 text-teal-400" />
+                    <span className="pwa-section-label text-slate-400">App Launcher</span>
+                </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {quickActions.filter(action => action.id && action.title).map((action, index) => (
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-y-6 gap-x-4 justify-items-center">
+                    {quickActions.map((action, index) => (
                         <motion.button
-                            key={action.id || `action-${index}`}
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            key={action.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.3 + index * 0.05 }}
+                            transition={{ delay: 0.1 + index * 0.03 }}
                             onClick={action.action}
-                            className="bg-gradient-to-r from-teal-500/20 to-blue-500/20 hover:from-teal-500/30 hover:to-blue-500/30 border border-teal-500/30 hover:border-blue-500/50 p-2 rounded-lg text-white transition-all transform"
+                            className="flex flex-col items-center justify-center text-center group cursor-pointer touch-manipulation"
                         >
-                            {action.icon && <action.icon className="w-4 h-4 mb-1 text-teal-400 group-hover:text-orange-400 transition-colors" />}
-                            <div className="text-xs font-medium">{action.title || 'Action'}</div>
+                            <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-white transition-all transform group-hover:scale-105 group-hover:border-teal-500/50 shadow-md relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 to-slate-900 group-hover:from-slate-900 group-hover:to-slate-850" />
+                                <action.icon className="w-7 h-7 text-teal-400 group-hover:text-teal-300 relative z-10 transition-colors" />
+                            </div>
+                            <span className="text-[11px] font-bold mt-2 text-slate-350 group-hover:text-teal-400 transition-colors leading-tight line-clamp-1">
+                                {action.title}
+                            </span>
                         </motion.button>
                     ))}
                 </div>

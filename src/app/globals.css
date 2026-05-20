@@ -897,3 +897,64 @@ body {
     page-break-inside: avoid;
   }
 }
+
+/* PWA Touch & Viewport Improvements */
+body, html {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+button, a, select, input, textarea, [role="button"], tr, .clickable-row {
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+/* iOS zoom prevention: Force input/textarea/select to minimum 16px font-size */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Strict Typography Presets */
+.pwa-page-title {
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.pwa-section-label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.pwa-body-label {
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.pwa-secondary-meta {
+  font-size: 13px !important;
+  opacity: 0.55 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.pwa-tab-label {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+.pwa-badge {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+/* Font family defaults for dashboard components */
+.ac-dashboard-root, .ac-business-root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+

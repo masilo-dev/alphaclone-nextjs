@@ -93,6 +93,7 @@ const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 import { TrialBanner } from '../TrialBanner';
 
 import Sidebar from '@/components/dashboard/Sidebar';
+import BottomNav from '../BottomNav';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
@@ -366,13 +367,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/crm':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <CRMTab userId={user.id} userRole={user.role} />
+                        <CRMTab user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/deals':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <DealsTab userId={user.id} userRole={user.role} />
+                        <DealsTab user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/business/referrals':
@@ -398,7 +399,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/tasks':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <TasksTab userId={user.id} userRole={user.role} />
+                        <TasksTab user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/sales-agent':
@@ -409,7 +410,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/quotes':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <QuotesTab userId={user.id} userRole={user.role} />
+                        <QuotesTab user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/business/tasks':
@@ -560,12 +561,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 const FinanceTab = React.lazy(() => import('../FinanceTab'));
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
-                        <FinanceTab
-                            user={user}
-                            filteredInvoices={[]}
-                            handlePayClick={() => {}}
-                            onCreateInvoice={() => setActiveTab('/dashboard/business/billing')}
-                        />
+                        <FinanceTab user={user} />
                     </React.Suspense>
                 );
             }
@@ -719,7 +715,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         </button>
 
                         <div className="flex items-center gap-2 sm:gap-3 md:hidden">
-                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden relative">
+                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden relative flex-shrink-0">
                                 {currentTenant?.logo_url ? (
                                     <Image
                                         src={currentTenant.logo_url}
@@ -732,6 +728,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
                                 )}
                             </div>
+                            <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
                         </div>
 
                         {/* Breadcrumb or Title for Desktop */}
@@ -838,6 +835,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     />
                 </React.Suspense>
             )}
+
+            {/* Mobile Bottom Navigation */}
+            <BottomNav
+                activeTab={activeTab}
+                onNavigate={(href) => setActiveTab(href)}
+                onToggleMenu={() => setSidebarOpen(true)}
+                unreadCount={0}
+                userRole="tenant_admin"
+            />
 
         </div>
     );

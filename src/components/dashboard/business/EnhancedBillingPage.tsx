@@ -32,6 +32,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [selectedInvoice, setSelectedInvoice] = useState<BusinessInvoice | null>(null);
     const [showPDFPreview, setShowPDFPreview] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedInvoiceForOptions, setSelectedInvoiceForOptions] = useState<BusinessInvoice | null>(null);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
     const [revenueData, setRevenueData] = useState<any[]>([]);
     const [stats, setStats] = useState({
         totalRevenue: 0,
@@ -223,7 +225,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                 <div className="space-y-3">
                     {filteredInvoices.map(inv => (
-                        <Card key={inv.id} onClick={() => handleViewPDF(inv)} className="p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer">
+                        <Card 
+                            key={inv.id} 
+                            onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }} 
+                            className="p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer"
+                        >
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-3">
                                     <div className={`p-2 rounded-lg bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={18} /></div>
@@ -232,19 +238,131 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         <p className="text-xs text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId] ? clientMap[inv.clientId] : 'Walk-in Client'}</p>
                                     </div>
                                 </div>
-                                <span className={`text-xs font-black uppercase px-2 py-1 rounded-lg border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
+                                <span className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
                             </div>
                             <div className="flex justify-between items-end">
                                 <div>
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Due Date</p>
                                     <p className="text-xs font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
                                 </div>
-                                <p className="text-lg font-black text-white">${inv.total.toLocaleString()}</p>
+                                <p className="text-[24px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
                             </div>
                         </Card>
                     ))}
                 </div>
             </div>
+
+            {/* Invoice Options Bottom Sheet */}
+            <AnimatePresence>
+                {isOptionsOpen && selectedInvoiceForOptions && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.7 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsOptionsOpen(false)}
+                            className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                            className="fixed inset-x-0 bottom-0 z-[150] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
+                        >
+                            <div className="flex justify-center py-3 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
+                                <div className="w-12 h-1 bg-white/20 rounded-full" />
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-12 space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                            Invoice ID: #{selectedInvoiceForOptions.id.slice(0, 8).toUpperCase()}
+                                        </span>
+                                        <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">
+                                            {selectedInvoiceForOptions.invoiceNumber}
+                                        </h3>
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId] ? clientMap[selectedInvoiceForOptions.clientId] : 'Walk-in Client'}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => setIsOptionsOpen(false)} className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6 text-center">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono mb-1">Total Amount Due</p>
+                                    <p className="text-3xl font-black text-teal-400 tracking-tight font-mono">
+                                        ${selectedInvoiceForOptions.total.toLocaleString()}
+                                    </p>
+                                    <div className="mt-3 flex justify-center">
+                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getStatusStyles(selectedInvoiceForOptions.status)}`}>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                            {selectedInvoiceForOptions.status}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    <button
+                                        onClick={() => {
+                                            handleViewPDF(selectedInvoiceForOptions);
+                                            setIsOptionsOpen(false);
+                                        }}
+                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                    >
+                                        <span className="flex items-center gap-3">
+                                            <Eye className="w-5 h-5 text-teal-400" />
+                                            <span>Preview PDF Invoice</span>
+                                        </span>
+                                        <span className="text-xs text-slate-500 font-mono">PDF PREVIEW</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
+                                            const client = selectedInvoiceForOptions.clientId ? { name: clientMap[selectedInvoiceForOptions.clientId] || selectedInvoiceForOptions.clientId, email: '' } : { name: metadata?.clientName || 'Walk-in', email: '' };
+                                            const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
+                                            doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
+                                            setIsOptionsOpen(false);
+                                        }}
+                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                    >
+                                        <span className="flex items-center gap-3">
+                                            <Download className="w-5 h-5 text-indigo-400" />
+                                            <span>Download PDF File</span>
+                                        </span>
+                                        <span className="text-xs text-slate-500 font-mono">PDF DOWNLOAD</span>
+                                    </button>
+
+                                    <button
+                                        onClick={async () => {
+                                            setIsOptionsOpen(false);
+                                            const toastId = toast.loading('Sending invoice...');
+                                            try {
+                                                const { callMcpTool } = await import('@/services/mcp/toolCaller');
+                                                await callMcpTool('send_invoice', { invoice_id: selectedInvoiceForOptions.id });
+                                                toast.success('Invoice dispatched successfully!', { id: toastId });
+                                            } catch (err: any) {
+                                                toast.error(`Failed: ${err.message}`, { id: toastId });
+                                            }
+                                        }}
+                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                    >
+                                        <span className="flex items-center gap-3">
+                                            <Send className="w-5 h-5 text-sky-400" />
+                                            <span>Email Invoice to Client</span>
+                                        </span>
+                                        <span className="text-xs text-slate-500 font-mono">EMAIL DISPATCH</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* PDF Preview Modal */}
             <AnimatePresence>
