@@ -186,6 +186,41 @@ const ContractDetail: React.FC<{ contract: Contract; onBack: () => void }> = ({ 
   );
 };
 
+interface ContractRowProps {
+  contract: Contract;
+  onSelect: (c: Contract) => void;
+  onArchive: (id: string) => void;
+}
+
+const ContractRow: React.FC<ContractRowProps> = ({ contract, onSelect, onArchive }) => {
+  const x = useMotionValue(0);
+  const rOp = useTransform(x, [-80, 0], [1, 0]);
+
+  return (
+    <div className="relative overflow-hidden">
+      <motion.div style={{ opacity: rOp }} className="absolute inset-y-0 right-0 w-20 bg-slate-700 flex items-center justify-center z-0">
+        <Archive className="w-5 h-5 text-white" />
+      </motion.div>
+      <motion.div drag="x" dragConstraints={{ left: -100, right: 0 }} dragElastic={0.1}
+        onDragEnd={(_: any, info: any) => { if (info.offset.x < -80) onArchive(contract.id); x.set(0); }}
+        style={{ x }} onClick={() => onSelect(contract)}
+        className="relative z-10 bg-slate-950 flex items-center gap-3 px-4 py-3 cursor-pointer">
+        <FileText className="w-5 h-5 text-slate-500 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="text-[15px] font-bold text-white truncate">{contract.title}</div>
+          {contract.counterparty_name && <div className="text-[13px] text-slate-500 opacity-55 truncate">{contract.counterparty_name}</div>}
+        </div>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${STATUS_COLORS[contract.status]}`}>{contract.status.replace('_', ' ')}</span>
+          <span className="text-[11px] text-slate-500 opacity-55">
+            {new Date(contract.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // ── Main ContractsTab ──────────────────────────────────────────────────────────
 interface ContractsTabProps { user: User; }
 
@@ -218,33 +253,14 @@ const ContractsTab: React.FC<ContractsTabProps> = ({ user }) => {
       <div className="flex-1 overflow-y-auto pb-20 bg-slate-950 divide-y divide-white/5">
         {loading ? [...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />) :
           contracts.length === 0 ? <div className="py-16 text-center text-[13px] text-slate-500">No contracts yet.</div> :
-          contracts.map(c => {
-            const x = useMotionValue(0);
-            const rOp = useTransform(x, [-80, 0], [1, 0]);
-            return (
-              <div key={c.id} className="relative overflow-hidden">
-                <motion.div style={{ opacity: rOp }} className="absolute inset-y-0 right-0 w-20 bg-slate-700 flex items-center justify-center z-0">
-                  <Archive className="w-5 h-5 text-white" />
-                </motion.div>
-                <motion.div drag="x" dragConstraints={{ left: -100, right: 0 }} dragElastic={0.1}
-                  onDragEnd={(_: any, info: any) => { if (info.offset.x < -80) archiveContract(c.id); x.set(0); }}
-                  style={{ x }} onClick={() => setSelected(c)}
-                  className="relative z-10 bg-slate-950 flex items-center gap-3 px-4 py-3 cursor-pointer">
-                  <FileText className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[15px] font-bold text-white truncate">{c.title}</div>
-                    {c.counterparty_name && <div className="text-[13px] text-slate-500 opacity-55 truncate">{c.counterparty_name}</div>}
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${STATUS_COLORS[c.status]}`}>{c.status.replace('_', ' ')}</span>
-                    <span className="text-[11px] text-slate-500 opacity-55">
-                      {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                </motion.div>
-              </div>
-            );
-          })
+          contracts.map(c => (
+            <ContractRow
+              key={c.id}
+              contract={c}
+              onSelect={setSelected}
+              onArchive={archiveContract}
+            />
+          ))
         }
       </div>
     </div>

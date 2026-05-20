@@ -14,7 +14,7 @@ interface BatchOutreachPanelProps {
 export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, onClose, selectedIds, onSuccess }) => {
     const [tone, setTone] = useState('professional');
     const [context, setContext] = useState('');
-    const [provider, setProvider] = useState('sendgrid');
+    const [provider, setProvider] = useState('zoho');
     const [isSending, setIsSending] = useState(false);
 
     const handleSend = async () => {

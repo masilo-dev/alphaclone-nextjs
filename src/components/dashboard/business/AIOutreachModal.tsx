@@ -51,7 +51,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [fetchingAccount, setFetchingAccount] = useState(false);
     const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
-    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail'>('sendgrid');
+    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail'>('zoho');
 
     useEffect(() => {
         if (isOpen) {
@@ -78,8 +78,13 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 setIntegrations(emailIntegrations);
                 
                 if (emailIntegrations.length > 0) {
-                    setSelectedIntegrationId(emailIntegrations[0].id);
-                    setSelectedProvider(emailIntegrations[0].type as any);
+                    const zohoInt = emailIntegrations.find(i => i.type === 'zoho');
+                    const brevoInt = emailIntegrations.find(i => i.type === 'brevo');
+                    const resendInt = emailIntegrations.find(i => i.type === 'resend');
+                    const sendgridInt = emailIntegrations.find(i => i.type === 'sendgrid');
+                    const defaultInt = zohoInt || brevoInt || resendInt || sendgridInt || emailIntegrations[0];
+                    setSelectedIntegrationId(defaultInt.id);
+                    setSelectedProvider(defaultInt.type as any);
                 }
             }
         } catch (err) {

@@ -88,7 +88,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         scheduledAt: '',
         scheduleEnabled: false,
         skipPreviouslyContacted: true,
-        selectedProviders: ['resend'] as string[],
+        selectedProviders: ['zoho'] as string[],
         balanceByDailyLimit: true,
         sendImmediately: false,
     });

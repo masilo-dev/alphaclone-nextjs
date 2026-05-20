@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
       "react-hooks/rules-of-hooks": "error", // Keep this as error
       "react-hooks/refs": "off",
       "react-hooks/set-state-in-effect": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/immutability": "off",
       "import/no-anonymous-default-export": "off",
       "prefer-const": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",

@@ -33,8 +33,12 @@ interface CRMTabProps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-const hashColor = (name: string) => {
+const getInitials = (name?: string) => {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+const hashColor = (name?: string) => {
+  if (!name) return 'bg-slate-500';
   const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-orange-500', 'bg-pink-500', 'bg-teal-500', 'bg-indigo-500'];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % colors.length;
@@ -101,7 +105,7 @@ const SwipeableRow: React.FC<{
         {/* Center */}
         <div className="flex-1 min-w-0 py-2.5">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[15px] font-semibold text-white truncate">{lead.name}</span>
+            <span className="text-[15px] font-semibold text-white truncate">{lead.name || 'Unknown'}</span>
             {lead.source && (
               <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${sourceColors[lead.source.toLowerCase()] || 'bg-slate-500/15 text-slate-400'}`}>
                 {lead.source}
@@ -142,7 +146,7 @@ const LeadDetail: React.FC<{ lead: Lead; onBack: () => void; onUpdate: (id: stri
           <div className={`w-16 h-16 rounded-full ${hashColor(lead.name)} flex items-center justify-center`}>
             <span className="text-xl font-black text-white">{getInitials(lead.name)}</span>
           </div>
-          <h2 className="text-[20px] font-bold text-white">{lead.name}</h2>
+          <h2 className="text-[20px] font-bold text-white">{lead.name || 'Unknown'}</h2>
           <span className={`text-[11px] font-bold px-3 py-1 rounded-full border ${statusColors[lead.status]}`}>{lead.status}</span>
         </div>
 
@@ -220,7 +224,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
   const filtered = leads.filter(l => {
     if (filter !== 'all' && l.status !== filter) return false;
-    if (search && !l.name.toLowerCase().includes(search.toLowerCase()) && !l.email?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !(l.name || '').toLowerCase().includes(search.toLowerCase()) && !l.email?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
