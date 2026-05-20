@@ -724,11 +724,10 @@ const LandingPage = () => {
                   transition={{ duration: 2.5 }}
                   className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
                >
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
                      {[
                         { value: '500', label: 'Businesses Trust AlphaClone' },
                         { value: '15+', label: 'Countries Supported' },
-                        { value: '500K+', label: 'Projects Managed' },
                         { value: '99.9%', label: 'Uptime SLA' },
                      ].map((stat, idx) => (
                         <motion.div

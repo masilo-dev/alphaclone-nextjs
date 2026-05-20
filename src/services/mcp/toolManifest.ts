@@ -2688,4 +2688,17 @@ export const MCP_TOOLS = [
       required: [],
     },
   },
+  {
+    name: 'execute_strategic_intelligence',
+    description: 'Unified router for executing AlphaClone 3-Year Leap strategic intelligence modules (e.g. pricing_elasticity, churn_propensity, proposal_generator, ivr_agent, network_graph, data_enrichment, revenue_recognition, invoice_factoring, objection_handling, narrative_reports, anomaly_alert, sql_query, etc.)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        module_name: { type: 'string', description: 'The name of the intelligence module to execute' },
+        parameters: { type: 'object', description: 'Parameters required by the chosen intelligence module (e.g., deal_id, client_id, query, etc.)' }
+      },
+      required: ['module_name']
+    }
+  }
 ];
