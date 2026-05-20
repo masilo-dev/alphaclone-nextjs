@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MoreVertical, Clock, AlertCircle, CheckCircle2, 
   Circle, PlayCircle, Eye, MessageSquare, Link2,
-  Zap, User as UserIcon
+  Zap, User as UserIcon, Lightbulb
 } from 'lucide-react';
 import { Task } from '../../../services/taskService';
 
@@ -36,6 +36,7 @@ interface KanbanViewProps {
 }
 
 const STATUSES: { id: Task['status']; label: string; icon: any; color: string }[] = [
+  { id: 'ideas', label: 'Ideas', icon: Lightbulb, color: 'text-fuchsia-400' },
   { id: 'todo', label: 'Todo', icon: Circle, color: 'text-slate-400' },
   { id: 'in_progress', label: 'Active', icon: PlayCircle, color: 'text-blue-400' },
   { id: 'review', label: 'Review', icon: Eye, color: 'text-amber-400' },
@@ -101,7 +102,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, o
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full min-h-[600px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 h-full min-h-[600px]">
         {STATUSES.map((status) => (
           <KanbanColumn
             key={status.id}
@@ -209,6 +210,14 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
   const urgencyGlow = task.priority === 'urgent' ? 'shadow-[0_0_15px_-5px_rgba(244,63,94,0.3)]' :
                       task.priority === 'high' ? 'shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]' : '';
 
+  const subtaskStats = useMemo(() => {
+    const subs = task.subtasks || [];
+    if (subs.length === 0) return null;
+    const completed = subs.filter((s) => s.completed).length;
+    const percent = Math.round((completed / subs.length) * 100);
+    return { completed, total: subs.length, percent };
+  }, [task.subtasks]);
+
   return (
     <motion.div
       whileHover={{ y: -2 }}
@@ -229,6 +238,43 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
           <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed font-medium">
             {task.description}
           </p>
+        )}
+
+        {/* Context Badges */}
+        {(task.relatedToProject || task.relatedToLead || task.relatedToDeal) && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {task.relatedToProject && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
+                Project
+              </span>
+            )}
+            {task.relatedToLead && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                Lead
+              </span>
+            )}
+            {task.relatedToDeal && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Deal
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Subtask Progress Bar */}
+        {subtaskStats && (
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">
+              <span>Progress</span>
+              <span>{subtaskStats.completed}/{subtaskStats.total} ({subtaskStats.percent}%)</span>
+            </div>
+            <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+              <div
+                className="h-full bg-teal-400 transition-all duration-300"
+                style={{ width: `${subtaskStats.percent}%` }}
+              />
+            </div>
+          </div>
         )}
 
         <div className="flex items-center justify-between pt-2">

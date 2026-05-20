@@ -55,3 +55,9 @@ declare module 'pdfjs-dist' {
     promise: Promise<PDFDocumentProxy>;
   };
 }
+
+declare module 'next-pwa' {
+  const withPWA: (config: any) => (nextConfig: any) => any;
+  export default withPWA;
+}
+

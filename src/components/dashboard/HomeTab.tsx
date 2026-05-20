@@ -1,435 +1,290 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Plus, Briefcase, Clock, Calendar, FileText, AlertCircle, Sun, Moon, Coffee, Zap, GripVertical, Sparkles, Bot, ArrowRight, Database, Layers, Activity, CheckSquare, MessageCircle, Users as UsersIcon } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import { TableSkeleton } from '../ui/Skeleton';
-import { EmptyState } from '../ui/EmptyState';
-import { Project, User, DashboardStat } from '../../types';
-import { useRouter } from 'next/navigation';
-import { AIPredictiveWidget } from './AIPredictiveWidget';
-import { MomentumHUD } from './MomentumHUD';
-import { IntegratedIntelligencePanel } from './IntegratedIntelligencePanel';
+'use client';
+
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  Users, Zap, CheckSquare, MessageCircle, FileText, Calendar, Settings,
+  Mail, Bot, Sparkles, Activity, HelpCircle, Bell, Sun, Moon, Coffee,
+  LayoutDashboard, Briefcase, BarChart3, Receipt, Phone, Video,
+  Trophy, Cpu, ShoppingBag, Clock, AlertCircle, ChevronRight, Plus
+} from 'lucide-react';
 import { motion } from 'framer-motion';
-import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
+import { useRouter } from 'next/navigation';
+import { User, DashboardStat, Project } from '../../types';
+import { supabase } from '../../lib/supabase';
+import { useTenant } from '../../contexts/TenantContext';
 import DailyBrief from './DailyBrief';
 import RevenueMomentumCard from './RevenueMomentumCard';
-import ActivityPulse from '../shared/ActivityPulse';
+import { AIPredictiveWidget } from './AIPredictiveWidget';
+import { IntegratedIntelligencePanel } from './IntegratedIntelligencePanel';
+import { CelebrationOverlay } from '../ui/CelebrationOverlay';
+import { paymentService } from '@/services/paymentService';
+import { contractService } from '@/services/contractService';
+import { Button } from '../ui/UIComponents';
 
-const DEFAULT_WIDGET_IDS = ['momentum', 'intelligence', 'database-summary', 'agenda', 'ai-widget', 'stats'] as const;
-
-function normalizeWidgetOrder(saved: string[] | undefined): string[] {
-  if (!saved?.length) return [...DEFAULT_WIDGET_IDS];
-  const allowed = new Set<string>(DEFAULT_WIDGET_IDS);
-  const ordered = saved.filter((id) => allowed.has(id));
-  for (const id of DEFAULT_WIDGET_IDS) {
-    if (!ordered.includes(id)) ordered.push(id);
-  }
-  return ordered;
+interface Module {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  accent: string;      // tailwind color class for icon
+  bg: string;          // tailwind bg class for container
+  badge?: number;
 }
+
+const MODULES: Module[] = [
+  { label: 'CRM',            icon: Users,         href: '/dashboard/crm',              accent: 'text-blue-400',   bg: 'bg-blue-500/15' },
+  { label: 'Deals',          icon: Zap,           href: '/dashboard/deals',            accent: 'text-emerald-400',bg: 'bg-emerald-500/15' },
+  { label: 'Projects',       icon: Briefcase,     href: '/dashboard/projects',         accent: 'text-violet-400', bg: 'bg-violet-500/15' },
+  { label: 'Tasks',          icon: CheckSquare,   href: '/dashboard/tasks',            accent: 'text-orange-400', bg: 'bg-orange-500/15' },
+  { label: 'Invoicing',      icon: FileText,      href: '/dashboard/finance',          accent: 'text-green-400',  bg: 'bg-green-500/15' },
+  { label: 'Quotes',         icon: Receipt,       href: '/dashboard/quotes',           accent: 'text-teal-400',   bg: 'bg-teal-500/15' },
+  { label: 'Contracts',      icon: FileText,      href: '/dashboard/contracts',        accent: 'text-indigo-400', bg: 'bg-indigo-500/15' },
+  { label: 'Expenses',       icon: ShoppingBag,   href: '/dashboard/finance',          accent: 'text-rose-400',   bg: 'bg-rose-500/15' },
+  { label: 'Accounting',     icon: BarChart3,     href: '/dashboard/accounting',       accent: 'text-cyan-400',   bg: 'bg-cyan-500/15' },
+  { label: 'Messages',       icon: MessageCircle, href: '/dashboard/messages',         accent: 'text-sky-400',    bg: 'bg-sky-500/15' },
+  { label: 'WhatsApp',       icon: Phone,         href: '/dashboard/whatsapp',         accent: 'text-green-400',  bg: 'bg-green-500/15' },
+  { label: 'Social',         icon: Sparkles,      href: '/dashboard/social',           accent: 'text-pink-400',   bg: 'bg-pink-500/15' },
+  { label: 'Campaigns',      icon: Mail,          href: '/dashboard/email-campaigns',  accent: 'text-amber-400',  bg: 'bg-amber-500/15' },
+  { label: 'Video',          icon: Video,         href: '/dashboard/conference',       accent: 'text-red-400',    bg: 'bg-red-500/15' },
+  { label: 'Gamification',   icon: Trophy,        href: '/dashboard/gamification',     accent: 'text-yellow-400', bg: 'bg-yellow-500/15' },
+  { label: 'AI Agents',      icon: Cpu,           href: '/dashboard/sales-agent',      accent: 'text-purple-400', bg: 'bg-purple-500/15' },
+  { label: 'Analytics',      icon: Activity,      href: '/dashboard/analytics',        accent: 'text-blue-400',   bg: 'bg-blue-500/15' },
+  { label: 'Settings',       icon: Settings,      href: '/dashboard/settings',         accent: 'text-slate-400',  bg: 'bg-slate-500/15' },
+];
+
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 6)  return { text: 'Burning midnight oil', Icon: Moon };
+  if (h < 12) return { text: 'Good morning',          Icon: Coffee };
+  if (h < 17) return { text: 'Good afternoon',        Icon: Sun };
+  if (h < 21) return { text: 'Good evening',          Icon: Zap };
+  return       { text: 'Working late',                 Icon: Moon };
+};
 
 interface HomeTabProps {
-    user: User;
-    currentStats: DashboardStat[];
-    filteredProjects: Project[];
-    isLoadingProjects: boolean;
-    updateProjectStage: (id: string, stage: any) => void;
-    STAGES: string[];
-    onProjectClick: (id: string) => void;
-    // Momentum Metrics
-    momentumScore?: number;
-    loginStreak?: number;
-    activity24h?: number;
-    newLeads24h?: number;
-    databaseStats?: any;
+  user: User;
+  currentStats: DashboardStat[];
+  filteredProjects: Project[];
+  isLoadingProjects: boolean;
+  updateProjectStage: (id: string, stage: any) => void;
+  STAGES: string[];
+  onProjectClick: (id: string) => void;
+  momentumScore?: number;
+  loginStreak?: number;
+  activity24h?: number;
+  newLeads24h?: number;
+  databaseStats?: any;
+  handlePayClick?: (invoice: any) => void;
 }
 
-const getGreeting = (): { text: string; Icon: any } => {
-    const hour = new Date().getHours();
-    if (hour < 6) return { text: 'Burning the midnight oil', Icon: Moon };
-    if (hour < 12) return { text: 'Good morning', Icon: Coffee };
-    if (hour < 17) return { text: 'Good afternoon', Icon: Sun };
-    if (hour < 21) return { text: 'Good evening', Icon: Zap };
-    return { text: 'Working late', Icon: Moon };
-};
-
-import { CelebrationOverlay } from '../ui/CelebrationOverlay';
-
-const TodayAgendaCard: React.FC<{ projects: Project[]; user: User }> = ({ projects, user }) => {
-    const { text: greeting, Icon: GreetIcon } = useMemo(() => getGreeting(), []);
-
-    const overdue = useMemo(() =>
-        projects.filter(p => {
-            if (!p.dueDate || p.status === 'done') return false;
-            return new Date(p.dueDate) < new Date();
-        }), [projects]);
-
-    const dueToday = useMemo(() =>
-        projects.filter(p => {
-            if (!p.dueDate) return false;
-            const due = new Date(p.dueDate);
-            const now = new Date();
-            return due.toDateString() === now.toDateString();
-        }), [projects]);
-
-    const inProgress = projects.filter(p => p.status === 'in_progress' || p.status === 'Active');
-
-    const items: { label: string; value: string | number; color: string; icon: any }[] = [
-        { label: 'Overdue', value: overdue.length, color: overdue.length > 0 ? 'text-red-400' : 'text-slate-500', icon: AlertCircle },
-        { label: 'Due Today', value: dueToday.length, color: dueToday.length > 0 ? 'text-amber-400' : 'text-slate-500', icon: Calendar },
-        { label: 'In Progress', value: inProgress.length, color: 'text-teal-400', icon: Clock },
-        { label: 'Total Active', value: projects.length, color: 'text-violet-400', icon: Briefcase },
-    ];
-
-    return (
-        <div className="bg-gradient-to-br from-slate-900/80 to-slate-950/80 backdrop-blur border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-6">
-            {/* Greeting */}
-            <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                    <GreetIcon className="w-4 h-4 text-teal-400" />
-                    <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">{greeting}</span>
-                </div>
-                <h2 className="text-lg font-black text-white">
-                    {user?.name?.split(' ')[0] || 'Member'}
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                </p>
-            </div>
-
-            {/* Agenda stats */}
-            <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:gap-6">
-                {items.map(({ label, value, color, icon: Icon }) => (
-                    <div key={label} className="flex flex-col items-center">
-                        <div className={`text-xl font-black ${color}`}>{value}</div>
-                        <div className="flex items-center gap-1 mt-0.5">
-                            <Icon className={`w-3 h-3 ${color}`} />
-                            <span className="text-xs text-slate-600 uppercase tracking-wider font-bold">{label}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
 const HomeTab: React.FC<HomeTabProps> = ({
-    user,
-    currentStats,
-    filteredProjects,
-    isLoadingProjects,
-    updateProjectStage,
-    STAGES,
-    onProjectClick,
-    momentumScore = 0,
-    loginStreak = 0,
-    activity24h = 0,
-    newLeads24h = 0,
-    databaseStats
+  user, currentStats, filteredProjects, isLoadingProjects,
+  databaseStats, handlePayClick
 }) => {
-    const router = useRouter();
-    const [celebration, setCelebration] = useState<{ show: boolean, message: string }>({ 
-        show: false, 
-        message: '' 
-    });
+  const router = useRouter();
+  const { currentTenant } = useTenant();
+  const { text: greeting, Icon: GreetIcon } = useMemo(() => getGreeting(), []);
 
-    // Widget customization state
-    const [widgetOrder, setWidgetOrder] = useState<string[]>(() => [...DEFAULT_WIDGET_IDS]);
-    const [draggedItem, setDraggedItem] = useState<string | null>(null);
-    const [widgetPrefsReady, setWidgetPrefsReady] = useState(false);
-    const widgetOrderRef = useRef(widgetOrder);
-    widgetOrderRef.current = widgetOrder;
+  const [quickStats, setQuickStats] = useState({ leads: 0, deals: 0, tasks: 0, unpaidInvoices: 0 });
+  const [activity, setActivity] = useState<any[]>([]);
+  const [celebration, setCelebration] = useState({ show: false, message: '' });
+  const [clientInvoices, setClientInvoices] = useState<any[]>([]);
+  const [clientContracts, setClientContracts] = useState<any[]>([]);
+  const [loadingClientData, setLoadingClientData] = useState(false);
 
-    useEffect(() => {
-        if (!user?.id) {
-            setWidgetPrefsReady(true);
-            return;
-        }
-        let cancelled = false;
-        (async () => {
-            const prefs = await fetchDashboardPreferences(user.id);
-            if (cancelled) return;
-            if (prefs.widgetOrder?.length) {
-                setWidgetOrder(normalizeWidgetOrder(prefs.widgetOrder));
-            }
-            setWidgetPrefsReady(true);
-        })();
-        return () => {
-            cancelled = true;
-        };
-    }, [user?.id]);
+  useEffect(() => {
+    if (user.role === 'client') {
+      setLoadingClientData(true);
+      Promise.all([
+        paymentService.getUserInvoices(user.id),
+        contractService.getUserContracts(user.id, user.role)
+      ]).then(([{ invoices }, { contracts }]) => {
+        setClientInvoices(invoices || []);
+        setClientContracts(contracts || []);
+      }).catch(console.error).finally(() => setLoadingClientData(false));
+    }
+  }, [user.id, user.role]);
 
-    useEffect(() => {
-        if (!user?.id || !widgetPrefsReady) return;
-        const t = window.setTimeout(() => {
-            void mergeDashboardPreferences(user.id, { widgetOrder: widgetOrderRef.current });
-        }, 600);
-        return () => window.clearTimeout(t);
-    }, [widgetOrder, user?.id, widgetPrefsReady]);
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+    const tid = currentTenant.id;
+    Promise.all([
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tid),
+      supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('stage', 'closed_won').neq('stage', 'closed_lost'),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('status', 'done'),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'sent'),
+    ]).then(([leads, deals, tasks, inv]) => {
+      setQuickStats({
+        leads: leads.count || 0,
+        deals: deals.count || 0,
+        tasks: tasks.count || 0,
+        unpaidInvoices: inv.count || 0,
+      });
+    }).catch(() => {});
 
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, widgetId: string) => {
-        setDraggedItem(widgetId);
-        e.dataTransfer.effectAllowed = 'move';
-    };
+    supabase.from('activity_log')
+      .select('*')
+      .eq('tenant_id', tid)
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }: { data: any[] | null }) => setActivity(data || []));
+  }, [currentTenant?.id]);
 
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    };
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetWidgetId: string) => {
-        e.preventDefault();
-        if (!draggedItem || draggedItem === targetWidgetId) return;
-
-        const newOrder = [...widgetOrder];
-        const draggedIndex = newOrder.indexOf(draggedItem);
-        const targetIndex = newOrder.indexOf(targetWidgetId);
-
-        newOrder.splice(draggedIndex, 1);
-        newOrder.splice(targetIndex, 0, draggedItem);
-
-        setWidgetOrder(newOrder);
-        setDraggedItem(null);
-    };
-
-    const handleActionComplete = (message: string) => {
-        setCelebration({ show: true, message });
-    };
-
+  // Client portal view
+  if (user.role === 'client') {
     return (
-        <div className="space-y-6 animate-fade-in relative pb-16">
-            <DailyBrief />
-            
-            {/* Celebration Overlay */}
-            <CelebrationOverlay 
-                isOpen={celebration.show} 
-                title="Mission Accomplished"
-                message={celebration.message}
-                onClose={() => setCelebration(prev => ({ ...prev, show: false }))}
-            />
-
-            {/* Render widgets in custom order */}
-            {widgetOrder.map((widgetId) => {
-                const isDragging = draggedItem === widgetId;
-                
-                return (
-                    <div
-                        key={widgetId}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e as React.DragEvent<HTMLDivElement>, widgetId)}
-                        onDragOver={(e) => handleDragOver(e as React.DragEvent<HTMLDivElement>)}
-                        onDrop={(e) => handleDrop(e as React.DragEvent<HTMLDivElement>, widgetId)}
-                        className={`relative group ${isDragging ? 'opacity-50' : ''}`}
-                        style={{ cursor: 'move' }}
-                    >
-                        {/* Drag handle */}
-                        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="p-1 bg-slate-800 rounded cursor-grab">
-                                <GripVertical className="w-4 h-4 text-slate-400" />
-                            </div>
-                        </div>
-
-                        {widgetId === 'momentum' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-3"
-                            >
-                                <RevenueMomentumCard />
-                                {/* AI Agent Connect Cards */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => router.push('/dashboard/marketplace?mcp=claude')}
-                                        className="group flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left"
-                                    >
-                                        <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                                            <Bot className="w-4 h-4 text-indigo-400" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-indigo-300 leading-tight">Claude AI</p>
-                                            <p className="text-xs text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
-                                        </div>
-                                        <ArrowRight className="w-3.5 h-3.5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    </button>
-                                    <button
-                                        onClick={() => router.push('/dashboard/marketplace?mcp=manus')}
-                                        className="group flex items-center gap-3 p-3.5 rounded-2xl bg-teal-500/5 border border-teal-500/20 hover:border-teal-500/50 hover:bg-teal-500/10 transition-all text-left"
-                                    >
-                                        <div className="w-9 h-9 rounded-xl bg-teal-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                                            <Sparkles className="w-4 h-4 text-teal-400" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-teal-300 leading-tight">Manus AI</p>
-                                            <p className="text-xs text-slate-500 leading-tight mt-0.5">Connect via MCP</p>
-                                        </div>
-                                        <ArrowRight className="w-3.5 h-3.5 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {widgetId === 'agenda' && (
-                            <TodayAgendaCard projects={filteredProjects} user={user} />
-                        )}
-
-                        {widgetId === 'intelligence' && (
-                            <IntegratedIntelligencePanel />
-                        )}
-
-                        {widgetId === 'ai-widget' && (
-                            <AIPredictiveWidget onActionComplete={handleActionComplete} />
-                        )}
-
-                        {widgetId === 'database-summary' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 }}
-                                className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/20 transition-all group"
-                            >
-                                <div className="flex items-center justify-between mb-5">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20">
-                                            <Database className="w-4 h-4 text-teal-400" />
-                                        </div>
-                                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Database Engine Summary</h3>
-                                    </div>
-                                    <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-green-500/5 border border-green-500/20">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-xs font-black text-green-500 uppercase tracking-tighter">System Optimal</span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-6">
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{databaseStats?.totalLeads || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <Layers className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Leads</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-blue-400 transition-colors">{databaseStats?.clientCount || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <UsersIcon className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Clients</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-purple-400 transition-colors">{databaseStats?.activeProjects || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <Briefcase className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Projects</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-amber-400 transition-colors">{databaseStats?.overdueInvoices || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <AlertCircle className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Overdue</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{databaseStats?.activeCampaigns || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <Zap className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Campaigns</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-blue-400 transition-colors">{databaseStats?.totalTasks || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <CheckSquare className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Tasks</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-indigo-400 transition-colors">{databaseStats?.unreadMessages || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <MessageCircle className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Messages</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col group/item cursor-default">
-                                        <span className="text-2xl font-black text-white group-hover/item:text-rose-400 transition-colors">{databaseStats?.activity24h || 0}</span>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <Activity className="w-3 h-3 text-slate-600" />
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Events</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {widgetId === 'stats' && (
-                            /* Stats Row */
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="dashboard-overview">
-                                {currentStats.map((stat, idx) => (
-                                    <div key={idx} className="bg-slate-900/60 backdrop-blur border border-slate-700 p-4 md:p-5 rounded-2xl hover:border-teal-500/30 transition-colors group">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className={`p-2.5 rounded-lg ${stat.color} bg-opacity-10 text-white`}>
-                                                {stat.icon && <stat.icon className="w-5 h-5" />}
-                                            </div>
-                                        </div>
-                                        <div className="text-2xl font-bold text-white mb-1 group-hover:text-teal-400 transition-colors">{stat.value}</div>
-                                        <div className="text-sm text-slate-500">{stat.label}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
-
-
-            {/* Projects Table */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white">
-                        {user.role === 'admin' ? 'Global Project Overview' : 'My Active Projects'}
-                    </h3>
-                    {user.role === 'client' && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.push('/dashboard?tab=projects')}
-                            className="text-xs"
-                        >
-                            View All
-                        </Button>
-                    )}
-                </div>
-
-                {isLoadingProjects ? (
-                    <TableSkeleton />
-                ) : filteredProjects.length > 0 ? (
-                    <div className="overflow-x-auto rounded-xl border border-slate-800">
-                         {/* ... table content ... */}
-                         <div className="bg-slate-900/40 p-4 text-center text-xs text-slate-500">
-                             Project list displayed in detail view.
-                         </div>
-                    </div>
-                ) : (
-                    <EmptyState
-                        icon={Briefcase}
-                        title="Silence isn't growth."
-                        description="The engine is idling. Put it in gear and start a project."
-                        action={
-                            <Button 
-                                variant="primary" 
-                                onClick={() => router.push('/dashboard?tab=projects')}
-                                className="bg-teal-600 hover:bg-teal-500 uppercase tracking-widest font-black"
-                            >
-                                Start Your Mission
-                            </Button>
-                        }
-                    />
-                )}
+      <div className="space-y-6 pb-24">
+        <div className="bg-slate-900/80 border border-white/5 rounded-3xl p-5">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white font-black text-xl">
+              {user.name?.[0]?.toUpperCase() || 'C'}
             </div>
-
-            <ActivityPulse />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[17px] font-semibold text-white">{user.name}</span>
+                <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[11px] font-bold text-teal-400 uppercase">Client Partner</span>
+              </div>
+              <p className="text-[13px] text-slate-500">{user.email}</p>
+            </div>
+          </div>
         </div>
+
+        <div className="space-y-3">
+          <span className="text-[13px] font-bold uppercase tracking-wider text-slate-400">Active Agreements</span>
+          {clientContracts.length > 0 ? clientContracts.map(c => (
+            <div key={c.id} className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <h4 className="text-[15px] font-semibold text-white">{c.title}</h4>
+                <p className="text-[13px] text-slate-500">{c.type}</p>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase ${c.status === 'fully_signed' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>{c.status.replace('_', ' ')}</span>
+            </div>
+          )) : (
+            <div className="p-5 bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl text-center text-[13px] text-slate-500">No active agreements.</div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <span className="text-[13px] font-bold uppercase tracking-wider text-slate-400">Outstanding Invoices</span>
+          {clientInvoices.filter(i => i.status !== 'paid').map(inv => (
+            <div key={inv.id} className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <span className="text-[15px] font-semibold text-white">Invoice #{inv.number || inv.id.slice(0, 6)}</span>
+                <p className="text-[13px] text-slate-500">Due: {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[17px] font-semibold text-white">${Number(inv.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                {handlePayClick && <Button variant="primary" size="sm" onClick={() => handlePayClick(inv)} className="bg-emerald-600 hover:bg-emerald-500 text-[11px] font-black uppercase px-3 py-1.5 h-auto">Pay</Button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
+  }
+
+  // Admin / Tenant Admin view
+  const statChips = [
+    { label: 'Open Leads',      value: quickStats.leads,          color: 'text-blue-400' },
+    { label: 'Active Deals',    value: quickStats.deals,          color: 'text-emerald-400' },
+    { label: 'Pending Tasks',   value: quickStats.tasks,          color: 'text-orange-400' },
+    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, color: 'text-rose-400' },
+  ];
+
+  return (
+    <div className="space-y-6 pb-24">
+      <CelebrationOverlay isOpen={celebration.show} title="Done!" message={celebration.message} onClose={() => setCelebration(p => ({ ...p, show: false }))} />
+
+      {/* Greeting */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <GreetIcon className="w-3.5 h-3.5 text-teal-400" />
+            <span className="text-[13px] text-slate-400 opacity-55">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+          </div>
+          <h2 className="text-[15px] font-semibold text-white">{greeting}, {user.name?.split(' ')[0]}</h2>
+        </div>
+        <button onClick={() => router.push('/dashboard/notifications')} className="relative w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 border border-white/5">
+          <Bell className="w-4 h-4 text-slate-300" />
+          <span className="absolute -top-0.5 -right-0.5 w-[11px] h-[11px] bg-red-500 rounded-full flex items-center justify-center text-[7px] font-black text-white">3</span>
+        </button>
+      </div>
+
+      <DailyBrief />
+
+      {/* Quick Stats Bar */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+        {statChips.map(s => (
+          <div key={s.label} className="flex-shrink-0 min-w-[120px] bg-slate-900 border border-white/5 rounded-2xl p-3">
+            <div className={`text-[20px] font-bold ${s.color}`}>{s.value}</div>
+            <div className="text-[11px] text-slate-500 mt-0.5 opacity-55 leading-tight">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* App Grid */}
+      <div className="space-y-2">
+        <span className="text-[13px] font-bold uppercase tracking-wider text-slate-400 block">Modules</span>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-x-4 gap-y-5">
+          {MODULES.map((mod, idx) => {
+            const Icon = mod.icon;
+            return (
+              <button
+                key={idx}
+                onClick={() => router.push(mod.href)}
+                className="flex flex-col items-center gap-2 focus:outline-none touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                <div className={`relative w-[60px] h-[60px] rounded-2xl ${mod.bg} flex items-center justify-center active:scale-[0.92] transition-transform duration-75`}>
+                  <Icon className={`w-7 h-7 ${mod.accent}`} />
+                  {mod.badge && mod.badge > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                  )}
+                </div>
+                <span className="text-[11px] font-medium text-slate-300 text-center truncate w-full max-w-[68px]">{mod.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Revenue */}
+      <RevenueMomentumCard />
+
+      {/* AI Intelligence */}
+      <IntegratedIntelligencePanel />
+
+      {/* AI Predictive */}
+      <AIPredictiveWidget onActionComplete={(msg) => setCelebration({ show: true, message: msg })} />
+
+      {/* Recent Activity Feed */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-bold uppercase tracking-wider text-slate-400">Recent Activity</span>
+          <button onClick={() => router.push('/dashboard/analytics')} className="text-[13px] text-teal-400 font-bold">View all</button>
+        </div>
+        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+          {activity.length === 0 && (
+            <div className="py-6 text-center text-[13px] text-slate-500 opacity-55">No recent activity yet.</div>
+          )}
+          {activity.map((item, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3">
+              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+                <Activity className="w-4 h-4 text-teal-400" />
+              </div>
+              <span className="flex-1 text-[15px] text-slate-300 truncate">{item.description || item.action}</span>
+              <span className="text-[13px] text-slate-500 opacity-55 flex-shrink-0">
+                {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
+              </span>
+            </div>
+          ))}
+          <button onClick={() => router.push('/dashboard/analytics')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors">
+            <span className="text-[13px] text-teal-400 font-bold">View all activity</span>
+            <ChevronRight className="w-4 h-4 text-teal-400" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default HomeTab;
-

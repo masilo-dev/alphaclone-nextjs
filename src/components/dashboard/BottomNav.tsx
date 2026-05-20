@@ -4,13 +4,10 @@ import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     LayoutDashboard,
-    Briefcase,
-    MessageSquare,
-    Menu,
-    DollarSign,
     Users,
     CheckSquare,
-    Calendar
+    MessageSquare,
+    Menu
 } from 'lucide-react';
 import { UserRole } from '../../types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,7 +17,7 @@ interface BottomNavProps {
     onNavigate: (href: string) => void;
     onToggleMenu: () => void;
     unreadCount?: number;
-    userRole?: UserRole; // Add user role
+    userRole?: UserRole;
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({
@@ -34,20 +31,13 @@ const BottomNav: React.FC<BottomNavProps> = ({
     const { t } = useLanguage();
 
     const mobileNavItems = useMemo(() => {
-        if (userRole === 'tenant_admin') {
-            return [
-                { labelKey: 'Home', href: '/dashboard', icon: LayoutDashboard },
-                { labelKey: 'Contacts', href: '/dashboard/business/clients', icon: Users },
-                { labelKey: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-                { labelKey: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-            ];
-        }
-
+        const crmPath = userRole === 'tenant_admin' ? '/dashboard/business/clients' : '/dashboard/crm';
+        const messagesPath = userRole === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages';
         return [
             { labelKey: 'Home', href: '/dashboard', icon: LayoutDashboard },
-            { labelKey: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-            { labelKey: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-            { labelKey: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+            { labelKey: 'CRM', href: crmPath, icon: Users },
+            { labelKey: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+            { labelKey: 'Messages', href: messagesPath, icon: MessageSquare },
         ];
     }, [userRole]);
 
@@ -57,27 +47,28 @@ const BottomNav: React.FC<BottomNavProps> = ({
     };
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-safe z-50 h-[calc(env(safe-area-inset-bottom,20px)+64px)]">
-            <div className="flex justify-around items-center h-16">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-[env(safe-area-inset-bottom,0px)] z-50 h-[calc(env(safe-area-inset-bottom,0px)+49px)]">
+            <div className="flex justify-around items-center h-[49px]">
                 {mobileNavItems.map((item) => {
-                    const isActive = activeTab === item.href;
+                    const isActive = activeTab === item.href || (item.href !== '/dashboard' && activeTab.startsWith(item.href));
                     return (
                         <button
                             key={item.href}
                             onClick={() => handleNavClick(item.href)}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? 'text-teal-400' : 'text-slate-400 hover:text-slate-300'
-                                }`}
+                            className={`flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-all ${
+                                isActive ? 'text-teal-400' : 'text-slate-400 opacity-45 hover:opacity-100'
+                            }`}
                         >
                             <div className="relative">
-                                <item.icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-                                {item.href === '/dashboard/messages' && unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                <item.icon className="w-6 h-6" />
+                                {item.labelKey === 'Messages' && unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                                     </span>
                                 )}
                             </div>
-                            <span className="text-xs font-medium tracking-wide">
+                            <span className="pwa-tab-label">
                                 {t(item.labelKey)}
                             </span>
                         </button>
@@ -87,10 +78,10 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 {/* 'More' / Menu toggle */}
                 <button
                     onClick={onToggleMenu}
-                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-500 hover:text-slate-300 active:scale-95 transition-transform"
+                    className="flex flex-col items-center justify-center w-full h-full space-y-0.5 text-slate-400 opacity-45 hover:opacity-100 transition-all"
                 >
                     <Menu className="w-6 h-6" />
-                    <span className="text-xs font-medium tracking-wide">{t('Menu')}</span>
+                    <span className="pwa-tab-label">{t('More')}</span>
                 </button>
             </div>
         </div>
@@ -98,4 +89,3 @@ const BottomNav: React.FC<BottomNavProps> = ({
 };
 
 export default BottomNav;
-

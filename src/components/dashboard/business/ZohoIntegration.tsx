@@ -23,6 +23,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState('US');
+    const [configuredRegion, setConfiguredRegion] = useState<string | null>(null);
     const [isTesting, setIsTesting] = useState(false);
     const [testRecipient, setTestRecipient] = useState('');
 
@@ -41,6 +42,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
             const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
             const data = await res.json();
             setIsConnected(!!data.isConnected);
+            if (data.configuredRegion) {
+                setConfiguredRegion(data.configuredRegion);
+            }
         } catch (err) {
             console.error('Check Zoho connection error:', err);
         } finally {
@@ -64,6 +68,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
             const res = await fetch('/api/auth/zoho/disconnect', { method: 'POST', credentials: 'include' });
             if (res.ok) {
                 setIsConnected(false);
+                setConfiguredRegion(null);
                 toast.success('Zoho disconnected successfully.');
             } else {
                 throw new Error('Failed to disconnect');
@@ -153,6 +158,12 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                     : "Integrate your Zoho CRM and Mail for a unified business experience. Select your data region to begin."
                                 }
                             </p>
+                            {isConnected && configuredRegion && (
+                                <div className="mt-2 text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                                    <Globe className="w-3.5 h-3.5 text-teal-400" />
+                                    <span>Active Datacenter: <strong className="text-teal-400 uppercase">{configuredRegion}</strong></span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -175,6 +186,10 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                 </select>
                                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500 group-hover:text-teal-500 transition-colors">
                                     <Globe className="w-4 h-4" />
+                                </div>
+                                <div className="mt-2 text-[11px] text-amber-500 flex items-center gap-1.5 max-w-[200px]">
+                                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Must match your Zoho account region</span>
                                 </div>
                             </div>
                         )}
@@ -247,4 +262,3 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
 };
 
 export default ZohoIntegration;
-

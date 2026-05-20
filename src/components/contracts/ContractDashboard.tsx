@@ -486,44 +486,71 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 opacity-30" />
                             <p>No saved contracts yet. Generate your first one.</p>
                         </div>
-                    ) : savedContracts.map((c: any) => (
-                        <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all">
-                            <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
-                                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
+                    ) : savedContracts.map((c: any) => {
+                        const statusBadgeStyles = {
+                            fully_signed: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
+                            client_signed: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+                            sent: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                            draft: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+                            rejected: 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                        }[c.status as string] || 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+
+                        const getExpiry = () => {
+                            const date = c.created_at ? new Date(c.created_at) : new Date();
+                            date.setFullYear(date.getFullYear() + 1);
+                            return format(date, 'MMM d, yyyy');
+                        };
+
+                        return (
+                            <div key={c.id} className="bg-slate-900/60 border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all">
+                                <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                                        <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
+                                    </div>
+                                    <div className="min-w-0 space-y-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="font-semibold text-white text-sm sm:text-base truncate">{c.title}</p>
+                                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${statusBadgeStyles}`}>
+                                                {c.status?.replace('_', ' ')}
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] sm:text-xs text-slate-500">
+                                            Value: <span className="text-slate-300 font-medium">{c.currency || 'USD'} {c.value ? c.value.toLocaleString() : '0'}</span>
+                                            <span className="mx-1.5">·</span>
+                                            Created: <span className="text-slate-300">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
+                                            <span className="mx-1.5">·</span>
+                                            Expiry: <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Expires {getExpiry()}</span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="font-semibold text-white text-sm sm:text-base truncate">{c.title}</p>
-                                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">{c.status} · {c.currency} {c.value?.toLocaleString()} · {c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : ''}</p>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const html = c.content.startsWith('<') ? c.content : contractToHTML(c.content);
+                                        setEditedHtml(html);
+                                        setGeneratedContract(c.content);
+                                        setContractId(c.id);
+                                        setSignatureData(c.admin_signature || '');
+                                        setSignatureName(c.admin_signature ? 'Administrator' : '');
+                                        setIsSigned(!!c.admin_signature);
+
+                                        // Use proxied URL if available
+                                        if (c.document_url) {
+                                            c.document_url = fileUploadService.convertToProxiedUrl(c.document_url);
+                                        }
+
+                                        setStep('preview');
+                                        setIsEditing(false);
+                                        setPreviewTab('document');
+                                        setActiveView('new');
+                                    }}
+                                    className="w-full sm:w-auto justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shrink-0 border border-white/5 hover:border-white/10"
+                                >
+                                    <Eye className="w-4 h-4 text-teal-400" /> View
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const html = c.content.startsWith('<') ? c.content : contractToHTML(c.content);
-                                    setEditedHtml(html);
-                                    setGeneratedContract(c.content);
-                                    setContractId(c.id);
-                                    setSignatureData(c.admin_signature || '');
-                                    setSignatureName(c.admin_signature ? 'Administrator' : '');
-                                    setIsSigned(!!c.admin_signature);
-
-                                    // Use proxied URL if available
-                                    if (c.document_url) {
-                                        c.document_url = fileUploadService.convertToProxiedUrl(c.document_url);
-                                    }
-
-                                    setStep('preview');
-                                    setIsEditing(false);
-                                    setPreviewTab('document');
-                                    setActiveView('new');
-                                }}
-                                className="w-full sm:w-auto justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shrink-0"
-                            >
-                                <Eye className="w-4 h-4" /> View
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

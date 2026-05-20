@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
-    ChevronDown, ChevronUp, Sparkles, Tag, FileText, CheckCircle2, Loader2, Upload, Search,
-    History, X, ArrowLeft
+    ChevronDown, ChevronUp, ChevronRight, Sparkles, Tag, FileText, CheckCircle2, Loader2, Upload, Search,
+    History, X, ArrowLeft, Check, Database, Inbox, AlertCircle, Repeat, Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emailCampaignService, EmailCampaign, EmailTemplate, MarketingContact } from '../../../services/emailCampaignService';
@@ -16,9 +16,9 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-    scheduled: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-    sending: 'bg-teal-600/10 text-teal-500 border-teal-600/20',
-    sent: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    scheduled: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    sending: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    sent: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     paused: 'bg-slate-600/10 text-slate-500 border-slate-600/20',
     cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
@@ -32,21 +32,53 @@ const PERSONALIZATION_BUTTONS = [
     { label: 'Your name', tag: '{{fromName}}' },
 ];
 
+const PRESET_TEMPLATES = [
+    {
+        id: 'newsletter',
+        title: 'Monthly Product Newsletter',
+        subject: '🚀 What we built for you this month',
+        html: `<h2>Hey {{firstName}},</h2><p>Here is a quick look at what our product team delivered last month to speed up your operations...</p>`
+    },
+    {
+        id: 'outreach',
+        title: 'Lead Outreach Pitch',
+        subject: 'Quick question about {{company}} growth',
+        html: `<h2>Hello {{firstName}},</h2><p>I noticed {{company}} has been expanding lately. We help organizations scale their workspace automation...</p>`
+    },
+    {
+        id: 'promo',
+        title: 'Re-engagement Special',
+        subject: '🎁 We want to welcome you back!',
+        html: `<h2>Dear {{firstName}},</h2><p>We missed you! Here is a special 25% off coupon code to welcome you back into the family...</p>`
+    },
+    {
+        id: 'plain',
+        title: 'Plain Text Draft',
+        subject: 'Quick follow up',
+        html: `<p>Hi {{firstName}}, just following up on our previous conversation. Let me know when you are free to chat.</p>`
+    }
+];
+
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const router = useRouter();
-    const { isMobile, isTablet, isDesktop } = useBreakpoint();
+    const { isMobile } = useBreakpoint();
+    
+    // View state: 'list' is main feed list, 'detail' is single detail view, 'compose' is wizard flow
+    const [viewMode, setViewMode] = useState<'list' | 'detail' | 'compose'>('list');
     
     const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [contacts, setContacts] = useState<MarketingContact[]>([]);
     const [contactSearch, setContactSearch] = useState('');
     const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
-    const [activeStep, setActiveStep] = useState(1);
+    const [activeStep, setActiveStep] = useState(1); // 1 to 4 compose flow
     const [aiGenerating, setAiGenerating] = useState(false);
     const [recipientType, setRecipientType] = useState<'all' | 'specific' | 'few' | 'import' | null>(null);
-    const [showHistory, setShowHistory] = useState(false);
 
-    // New Campaign Form
+    // Selected single campaign for detail mode
+    const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+
+    // Form state
     const [form, setForm] = useState({
         name: '',
         subject: '',
@@ -56,10 +88,15 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         scheduledAt: '',
         scheduleEnabled: false,
         skipPreviouslyContacted: true,
-        selectedProviders: ['sendgrid', 'resend'] as string[],
+        selectedProviders: ['resend'] as string[],
         balanceByDailyLimit: true,
         sendImmediately: false,
     });
+
+    // Touch Swipe list tracking
+    const [swipeState, setSwipeState] = useState<Record<string, number>>({});
+    const [swipeActiveId, setSwipeActiveId] = useState<string | null>(null);
+    const touchStartX = useRef<number>(0);
 
     useEffect(() => { loadData(); }, []);
 
@@ -86,7 +123,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             fromName: form.fromName,
             fromEmail: form.fromEmail || 'notifications@alphaclonesystems.com',
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
-            metadata: { bodyHtml: form.bodyHtml },
+            metadata: { 
+                bodyHtml: form.bodyHtml,
+                provider: form.selectedProviders[0] || 'resend'
+            },
         });
 
         if (error) { toast.error(error, { id: toastId }); return; }
@@ -95,7 +135,8 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             if (recipientType === 'all') finalIds = contacts.map(c => c.id);
             await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds);
         }
-        toast.success('Campaign saved.', { id: toastId });
+        toast.success('Campaign launched / saved.', { id: toastId });
+        setViewMode('list');
         setActiveStep(1);
         setRecipientType(null);
         setSelectedContactIds([]);
@@ -107,245 +148,585 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     };
 
     const generateWithAI = async () => {
-        if (!form.subject) { toast.error('Enter a subject'); return; }
+        if (!form.subject) { toast.error('Enter a subject line first'); return; }
         setAiGenerating(true);
         try {
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: `Write email for ${form.subject}` })
+                body: JSON.stringify({ prompt: `Write a high-converting HTML campaign email body about: "${form.subject}"` })
             });
             const data = await response.json();
             if (data.text) setForm(f => ({ ...f, bodyHtml: data.text }));
-        } finally { setAiGenerating(false); }
+        } catch {
+            toast.error('AI writer generation failed');
+        } finally {
+            setAiGenerating(false);
+        }
     };
 
-    if (loading) return <div className="p-8 text-slate-400">Loading...</div>;
+    // Swipe handlers
+    const handleTouchStart = (e: React.TouchEvent, id: string) => {
+        touchStartX.current = e.touches[0].clientX;
+        setSwipeActiveId(id);
+    };
 
-    const HistorySidebar = () => (
-        <div className="flex flex-col h-full bg-[#0a0a0a] border-r border-white/5 overflow-y-auto p-4 space-y-4">
-            <div className="flex items-center justify-between mb-4 px-2">
-                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">Recent Activity</h3>
-                {isMobile && <button onClick={() => setShowHistory(false)}><X size={18} className="text-slate-500" /></button>}
-            </div>
-            {campaigns.map(campaign => (
-                <div key={campaign.id} className="p-4 rounded-2xl bg-[#141414] border border-white/5 space-y-2">
-                    <span className={`text-xs font-black uppercase px-2 py-0.5 rounded border ${statusColors[campaign.status]}`}>{campaign.status}</span>
-                    <h4 className="text-xs font-bold text-white truncate">{campaign.name}</h4>
-                    <p className="text-xs text-slate-500 font-medium">Modified {new Date(campaign.updatedAt || campaign.createdAt).toLocaleDateString()}</p>
-                </div>
-            ))}
-        </div>
-    );
+    const handleTouchMove = (e: React.TouchEvent, id: string) => {
+        if (swipeActiveId !== id) return;
+        const currentX = e.touches[0].clientX;
+        const diff = currentX - touchStartX.current;
+        const capped = Math.max(-80, Math.min(80, diff));
+        setSwipeState(prev => ({ ...prev, [id]: capped }));
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent, id: string) => {
+        const finalOffset = swipeState[id] || 0;
+        if (finalOffset > 45) {
+            setSwipeState(prev => ({ ...prev, [id]: 60 }));
+            handleDuplicateCampaign(campaigns.find(c => c.id === id)!);
+            setTimeout(() => {
+                setSwipeState(prev => ({ ...prev, [id]: 0 }));
+            }, 800);
+        } else if (finalOffset < -45) {
+            setSwipeState(prev => ({ ...prev, [id]: -60 }));
+            if (confirm('Delete this campaign?')) {
+                handleDeleteCampaign(id);
+            } else {
+                setSwipeState(prev => ({ ...prev, [id]: 0 }));
+            }
+        } else {
+            setSwipeState(prev => ({ ...prev, [id]: 0 }));
+        }
+        setSwipeActiveId(null);
+    };
+
+    const handleDeleteCampaign = async (id: string) => {
+        const toastId = toast.loading('Deleting campaign...');
+        try {
+            await supabase.from('email_campaigns').delete().eq('id', id);
+            toast.success('Campaign deleted', { id: toastId });
+            setCampaigns(prev => prev.filter(c => c.id !== id));
+        } catch {
+            toast.error('Failed to delete campaign', { id: toastId });
+        }
+    };
+
+    const handleDuplicateCampaign = (camp: EmailCampaign) => {
+        setForm({
+            name: `${camp.name} (Copy)`,
+            subject: camp.subject,
+            bodyHtml: (camp.metadata as any)?.bodyHtml || '',
+            fromName: camp.fromName,
+            fromEmail: camp.fromEmail,
+            scheduledAt: '',
+            scheduleEnabled: false,
+            skipPreviouslyContacted: true,
+            selectedProviders: [(camp.metadata as any)?.provider || 'resend'],
+            balanceByDailyLimit: true,
+            sendImmediately: false,
+        });
+        setViewMode('compose');
+        setActiveStep(1);
+        toast.success('Campaign details copied to composer');
+    };
+
+    const startNewCompose = () => {
+        setForm({
+            name: '',
+            subject: '',
+            bodyHtml: '',
+            fromName: 'AlphaClone Systems',
+            fromEmail: '',
+            scheduledAt: '',
+            scheduleEnabled: false,
+            skipPreviouslyContacted: true,
+            selectedProviders: ['resend'],
+            balanceByDailyLimit: true,
+            sendImmediately: false,
+        });
+        setRecipientType(null);
+        setSelectedContactIds([]);
+        setActiveStep(1);
+        setViewMode('compose');
+    };
+
+    if (loading) return <div className="p-8 text-slate-400 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" /> Loading Campaigns...</div>;
 
     return (
-        <div className={`flex flex-col bg-slate-950 rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative ${isMobile ? 'h-auto min-h-[calc(100vh-120px)]' : 'h-[calc(100vh-140px)]'}`}>
-            {/* Header */}
-            <div className="h-20 border-b border-white/5 bg-slate-900 px-4 sm:px-6 flex items-center justify-between z-10 shrink-0">
+        <div className="flex flex-col bg-slate-950 rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100vh-140px)]">
+            
+            {/* Header bar */}
+            <div className="h-16 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-600/20">
-                        <Mail size={24} className="text-white" />
-                    </div>
+                    {viewMode !== 'list' ? (
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className="p-1.5 hover:bg-slate-800 rounded-xl text-slate-400"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                    ) : (
+                        <div className="w-9 h-9 bg-teal-600 rounded-xl flex items-center justify-center">
+                            <Mail size={18} className="text-white" />
+                        </div>
+                    )}
                     <div>
                         <h1 className="text-sm font-black tracking-widest text-white uppercase">Campaigns</h1>
-                        <p className="text-xs text-slate-500 font-bold uppercase">Marketing Hub</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Email outreach command</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    {isMobile && <button onClick={() => setShowHistory(true)} className="p-2.5 bg-white/5 rounded-xl text-slate-400"><History size={20} /></button>}
-                    <button onClick={() => setActiveStep(1)} className="px-4 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-wider">New</button>
-                </div>
+                {viewMode === 'list' && (
+                    <button 
+                        onClick={startNewCompose} 
+                        className="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-wider"
+                    >
+                        New Campaign
+                    </button>
+                )}
             </div>
 
-            <div className="flex flex-1 overflow-hidden relative">
-                {/* Desktop History Sidebar */}
-                {!isMobile && <div className="w-72 shrink-0"><HistorySidebar /></div>}
+            {/* Main view router */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pb-28">
+                <AnimatePresence mode="wait">
+                    
+                    {/* 1. LIST VIEW */}
+                    {viewMode === 'list' && (
+                        <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                            {campaigns.length === 0 ? (
+                                <div className="py-16 text-center border border-dashed border-white/5 rounded-2xl">
+                                    <Inbox className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+                                    <h3 className="text-sm font-bold text-slate-400">No campaigns launched</h3>
+                                    <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">Ready to start email marketing? Craft your first outreach flow now.</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-white/5 border border-white/5 rounded-2xl bg-slate-900/30 overflow-hidden">
+                                    {campaigns.map((camp) => {
+                                        const offset = swipeState[camp.id] || 0;
+                                        const provider = (camp.metadata as any)?.provider || 'resend';
+                                        
+                                        return (
+                                            <div 
+                                                key={camp.id}
+                                                className="relative select-none overflow-hidden bg-slate-950"
+                                                onTouchStart={(e) => handleTouchStart(e, camp.id)}
+                                                onTouchMove={(e) => handleTouchMove(e, camp.id)}
+                                                onTouchEnd={(e) => handleTouchEnd(e, camp.id)}
+                                            >
+                                                {/* Swipe actions */}
+                                                <div className="absolute inset-y-0 right-0 w-20 bg-rose-600 flex items-center justify-center text-white text-xs font-bold">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </div>
+                                                <div className="absolute inset-y-0 left-0 w-20 bg-emerald-600 flex items-center justify-center text-white text-xs font-bold">
+                                                    <Repeat className="w-4 h-4" />
+                                                </div>
 
-                {/* Mobile History Drawer */}
-                <AnimatePresence>
-                    {isMobile && showHistory && (
-                        <>
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowHistory(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-                            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="fixed inset-y-0 right-0 w-4/5 bg-[#0a0a0a] z-[101] border-l border-white/10 shadow-2xl">
-                                <HistorySidebar />
-                            </motion.div>
-                        </>
+                                                {/* Camp list row */}
+                                                <div 
+                                                    onClick={() => {
+                                                        setSelectedCampaign(camp);
+                                                        setViewMode('detail');
+                                                    }}
+                                                    className="relative z-10 flex items-center justify-between p-3.5 bg-slate-900/70 active:bg-slate-800 transition-transform duration-150 cursor-pointer"
+                                                    style={{ transform: `translateX(${offset}px)` }}
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        {/* Avatar / provider badge */}
+                                                        <div className="w-9 h-9 rounded-full bg-slate-950 border border-white/5 flex items-center justify-center text-slate-400 font-bold text-xs uppercase flex-shrink-0">
+                                                            {provider.slice(0, 2)}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1 flex flex-col">
+                                                            <span className="text-[14px] text-white font-bold truncate">
+                                                                {camp.name}
+                                                            </span>
+                                                            <span className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                                                                Subj: {camp.subject} • Opens: 24% • Clicks: 8%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2.5 ml-3 flex-shrink-0">
+                                                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border ${statusColors[camp.status]}`}>
+                                                            {camp.status}
+                                                        </span>
+                                                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </motion.div>
                     )}
-                </AnimatePresence>
 
-                {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-900/50 p-4 sm:p-10 pb-32">
-                    <div className="max-w-4xl mx-auto w-full space-y-12">
-                        {/* Progressive Navigation */}
-                        <div className="flex items-center justify-center gap-2 sm:gap-4">
-                            {[1, 2, 3].map((s, i) => (
-                                <React.Fragment key={s}>
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-black transition-all ${activeStep === s ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500'}`}>{s}</div>
-                                        <span className={`text-xs sm:text-xs font-black uppercase tracking-widest hidden sm:inline ${activeStep === s ? 'text-teal-600' : 'text-slate-500'}`}>
-                                            {s === 1 ? 'Message' : s === 2 ? 'Audience' : 'Review'}
+                    {/* 2. DETAIL VIEW */}
+                    {viewMode === 'detail' && selectedCampaign && (
+                        <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                            
+                            {/* Title & metadata panel */}
+                            <div className="bg-slate-900/50 p-5 rounded-3xl border border-white/5 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${statusColors[selectedCampaign.status]}`}>
+                                            {selectedCampaign.status}
                                         </span>
+                                        <h2 className="text-lg font-black text-white mt-2 leading-tight">{selectedCampaign.name}</h2>
+                                        <p className="text-xs text-slate-400 mt-1">Subject: "{selectedCampaign.subject}"</p>
                                     </div>
-                                    {i < 2 && <div className="w-4 sm:w-12 h-px bg-slate-800" />}
-                                </React.Fragment>
-                            ))}
-                        </div>
+                                    <button 
+                                        onClick={() => handleDuplicateCampaign(selectedCampaign)}
+                                        className="p-2 bg-slate-950 border border-white/5 rounded-xl text-slate-400"
+                                    >
+                                        <Repeat className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
 
-                        <AnimatePresence mode="wait">
+                            {/* 2x2 Statistics dashboard */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {[
+                                    { label: 'Sent', value: '450', rate: '100% of segment' },
+                                    { label: 'Delivered', value: '448', rate: '99.5%' },
+                                    { label: 'Opened', value: '108', rate: '24.1%' },
+                                    { label: 'Clicked', value: '36', rate: '8.0%' }
+                                ].map((stat, i) => (
+                                    <div key={i} className="p-4 bg-slate-900 rounded-2xl border border-white/5 space-y-1">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase">{stat.label}</span>
+                                        <div className="text-xl font-black text-white">{stat.value}</div>
+                                        <span className="text-[10px] text-teal-400 font-bold block">{stat.rate}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Timeline status steps */}
+                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Campaign Journey</h3>
+                                <div className="relative pl-6 space-y-4 border-l border-white/10 ml-2">
+                                    <div className="relative">
+                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center text-[8px] text-white">✓</div>
+                                        <h4 className="text-xs font-bold text-white">Campaign Created</h4>
+                                        <p className="text-[10px] text-slate-500">Initialized by dashboard tenant</p>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center text-[8px] text-white">✓</div>
+                                        <h4 className="text-xs font-bold text-white">Recipients Segmented</h4>
+                                        <p className="text-[10px] text-slate-500">Audience parsed and matching rules checked</p>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-teal-500 border border-slate-950 animate-pulse" />
+                                        <h4 className="text-xs font-bold text-teal-400">Queue Processing</h4>
+                                        <p className="text-[10px] text-slate-500">Sending active via Resend API</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* 3. WIZARD COMPOSE FLOW */}
+                    {viewMode === 'compose' && (
+                        <motion.div key="compose" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }} className="space-y-6">
+                            
+                            {/* Thin Progress bar indicator */}
+                            <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-teal-500 transition-all duration-300"
+                                    style={{ width: `${(activeStep / 4) * 100}%` }}
+                                />
+                            </div>
+
+                            <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                                <span>Step {activeStep} of 4</span>
+                                <span>
+                                    {activeStep === 1 ? 'Message & Provider' :
+                                     activeStep === 2 ? 'Segment' :
+                                     activeStep === 3 ? 'Templates' :
+                                     'Review Summary'}
+                                </span>
+                            </div>
+
+                            {/* WIZARD STEPS */}
                             {activeStep === 1 && (
-                                <motion.div key="1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Campaign Title</label>
-                                            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full h-14 bg-slate-950 border border-white/5 rounded-2xl px-6 text-sm text-white outline-none focus:border-teal-500/50" placeholder="Internal name" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Subject Line</label>
-                                            <input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} className="w-full h-14 bg-slate-950 border border-white/5 rounded-2xl px-6 text-sm text-white outline-none focus:border-teal-500/50" placeholder="Email subject" />
-                                        </div>
+                                <div className="space-y-5 animate-in fade-in duration-300">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Internal Name</label>
+                                        <input 
+                                            value={form.name} 
+                                            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                                            placeholder="e.g. Q2 Outreach Campaign"
+                                            className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                        />
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between px-2">
-                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Personalization Tags</label>
-                                            <button onClick={generateWithAI} disabled={aiGenerating} className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all">
-                                                {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} AI Writer
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                                            {PERSONALIZATION_BUTTONS.map(btn => (
-                                                <button key={btn.tag} onClick={() => insertVariable(btn.tag)} className="h-10 bg-slate-950 border border-white/5 rounded-xl text-xs font-black text-slate-400 uppercase hover:border-teal-500 hover:text-teal-400 transition-all shadow-sm flex items-center justify-center gap-2">
-                                                    <Plus size={10} /> {btn.label}
-                                                </button>
-                                            ))}
-                                        </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Subject Line</label>
+                                        <input 
+                                            value={form.subject} 
+                                            onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
+                                            placeholder="e.g. Quick question about workspace optimization"
+                                            className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                        />
                                     </div>
 
-                                    <textarea value={form.bodyHtml} onChange={e => setForm(f => ({ ...f, bodyHtml: e.target.value }))} className="w-full bg-slate-950 border border-white/5 rounded-[2rem] p-6 sm:p-8 text-base text-slate-200 min-h-[350px] outline-none focus:border-teal-500/50 transition-all resize-none shadow-inner" placeholder="Craft your message..." />
-                                    
-                                    <div className="flex justify-end pt-4">
-                                        <button onClick={() => setActiveStep(2)} disabled={!form.name || !form.subject} className="w-full sm:w-auto px-10 py-5 bg-teal-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-teal-900/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale">Next Step</button>
+                                    {/* Email Provider select cards */}
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Email Provider Service</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { id: 'resend', label: 'Resend.com' },
+                                                { id: 'sendgrid', label: 'SendGrid' },
+                                                { id: 'brevo', label: 'Brevo (Sendinblue)' },
+                                                { id: 'zoho', label: 'Zoho Mail Client' }
+                                            ].map((provider) => {
+                                                const isSelected = form.selectedProviders.includes(provider.id);
+                                                return (
+                                                    <button
+                                                        key={provider.id}
+                                                        type="button"
+                                                        onClick={() => setForm(f => ({ ...f, selectedProviders: [provider.id] }))}
+                                                        className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                    >
+                                                        <span className="text-xs font-bold uppercase">{provider.label}</span>
+                                                        {isSelected && <Check className="w-4 h-4 text-teal-400" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </motion.div>
+                                </div>
                             )}
 
                             {activeStep === 2 && (
-                                <motion.div key="2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-5 animate-in fade-in duration-300">
+                                    <div className="grid grid-cols-2 gap-3">
                                         {[
-                                            { id: 'all', title: 'Entire Database', icon: Users },
-                                            { id: 'specific', title: 'Segmented Group', icon: Tag },
-                                            { id: 'few', title: 'Manual Pick', icon: Send },
-                                            { id: 'import', title: 'External List', icon: Upload }
+                                            { id: 'all', title: 'Entire Database', icon: Database },
+                                            { id: 'specific', title: 'Segment Filter', icon: Tag },
+                                            { id: 'few', title: 'Manual Selection', icon: Users }
                                         ].map(opt => (
-                                            <button key={opt.id} onClick={() => setRecipientType(opt.id as any)} className={`p-8 rounded-[32px] border-2 text-left transition-all ${recipientType === opt.id ? 'bg-teal-500/10 border-teal-600 shadow-lg shadow-teal-600/10' : 'bg-slate-950 border-white/5 hover:border-white/10'}`}>
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${recipientType === opt.id ? 'bg-teal-600 text-white' : 'bg-slate-900 text-slate-500'}`}><opt.icon size={24} /></div>
-                                                <h4 className={`font-black uppercase tracking-widest text-sm ${recipientType === opt.id ? 'text-teal-400' : 'text-slate-200'}`}>{opt.title}</h4>
+                                            <button 
+                                                key={opt.id} 
+                                                onClick={() => setRecipientType(opt.id as any)} 
+                                                className={`p-5 rounded-2xl border text-left flex flex-col justify-between transition-all ${recipientType === opt.id ? 'bg-teal-500/10 border-teal-600 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                            >
+                                                <opt.icon className="w-5 h-5 mb-3" />
+                                                <span className="text-xs font-bold uppercase">{opt.title}</span>
                                             </button>
                                         ))}
                                     </div>
 
-                                    {/* Segmented Group Selection */}
                                     {recipientType === 'specific' && (
-                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-8 bg-slate-950 border border-white/5 rounded-[32px] space-y-6">
-                                            <h4 className="text-xs font-black uppercase tracking-widest text-teal-500">Pick Segments</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => (
-                                                    <button 
-                                                        key={industry}
-                                                        onClick={() => {
-                                                            const ids = contacts.filter(c => c.industry === industry).map(c => c.id);
-                                                            setSelectedContactIds(prev => {
-                                                                const isSelected = ids.every(id => prev.includes(id));
-                                                                return isSelected ? prev.filter(id => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]));
-                                                            });
-                                                        }}
-                                                        className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${contacts.filter(c => c.industry === industry).every(c => selectedContactIds.includes(c.id)) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/10'}`}
-                                                    >
-                                                        <span className="text-sm font-bold uppercase tracking-tight">{industry}</span>
-                                                        <span className="text-xs font-black opacity-50 bg-white/5 px-2 py-1 rounded-lg">{contacts.filter(c => c.industry === industry).length}</span>
-                                                    </button>
-                                                ))}
+                                        <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase">Select Industry Target</span>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => {
+                                                    const isChecked = contacts.filter(c => c.industry === industry).every(c => selectedContactIds.includes(c.id));
+                                                    return (
+                                                        <button
+                                                            key={industry}
+                                                            onClick={() => {
+                                                                const ids = contacts.filter(c => c.industry === industry).map(c => c.id);
+                                                                setSelectedContactIds(prev => 
+                                                                    isChecked ? prev.filter(id => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]))
+                                                                );
+                                                            }}
+                                                            className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs ${isChecked ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                                                        >
+                                                            <span>{industry}</span>
+                                                            <Check className={`w-3.5 h-3.5 ${isChecked ? 'text-teal-400' : 'text-transparent'}`} />
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Manual Pick Selection */}
-                                    {recipientType === 'few' && (
-                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-8 bg-slate-950 border border-white/5 rounded-[32px] space-y-6">
-                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                                <h4 className="text-xs font-black uppercase tracking-widest text-teal-500">Search Contacts</h4>
-                                                <div className="relative w-full sm:w-64">
-                                                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                                                    <input 
-                                                        type="text" 
-                                                        value={contactSearch} 
-                                                        onChange={e => setContactSearch(e.target.value)} 
-                                                        placeholder="Name or company..." 
-                                                        className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl pl-10 pr-4 text-xs text-white outline-none focus:border-teal-500/50" 
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="max-h-64 overflow-y-auto custom-scrollbar space-y-2">
-                                                {contacts.filter(c => !contactSearch || c.name?.toLowerCase().includes(contactSearch.toLowerCase()) || c.company?.toLowerCase().includes(contactSearch.toLowerCase())).map(contact => (
-                                                    <button 
-                                                        key={contact.id}
-                                                        onClick={() => setSelectedContactIds(prev => prev.includes(contact.id) ? prev.filter(id => id !== contact.id) : [...prev, contact.id])}
-                                                        className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all ${selectedContactIds.includes(contact.id) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/10'}`}
-                                                    >
-                                                        <div>
-                                                            <p className="text-sm font-bold text-white uppercase tracking-tight">{contact.name || contact.email}</p>
-                                                            <p className="text-xs text-slate-500 font-medium">{contact.company || 'Private Contact'}</p>
-                                                        </div>
-                                                        <CheckCircle2 size={18} className={selectedContactIds.includes(contact.id) ? 'text-teal-400' : 'text-slate-800'} />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    <div className="flex items-center justify-between pt-8 border-t border-white/5">
-                                        <button onClick={() => setActiveStep(1)} className="px-8 py-4 text-slate-500 font-black uppercase text-xs hover:text-slate-300">Back</button>
-                                        <div className="flex items-center gap-6">
-                                            <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">{selectedContactIds.length} Recipients Picked</span>
-                                            <button onClick={() => setActiveStep(3)} disabled={!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0)} className="px-10 py-5 bg-teal-600 text-white rounded-2xl font-black uppercase text-sm shadow-xl shadow-teal-900/20 disabled:opacity-50 disabled:grayscale">Review</button>
                                         </div>
-                                    </div>
-                                </motion.div>
+                                    )}
+
+                                    {recipientType === 'few' && (
+                                        <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
+                                            <input 
+                                                value={contactSearch}
+                                                onChange={e => setContactSearch(e.target.value)}
+                                                placeholder="Search contacts name..."
+                                                className="w-full h-9 bg-slate-950 border border-white/5 rounded-lg px-3 text-xs text-white outline-none"
+                                            />
+                                            <div className="max-h-40 overflow-y-auto space-y-1">
+                                                {contacts.filter(c => !contactSearch || c.name?.toLowerCase().includes(contactSearch.toLowerCase())).map(c => (
+                                                    <button
+                                                        key={c.id}
+                                                        onClick={() => setSelectedContactIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id])}
+                                                        className={`w-full p-2.5 rounded-lg border text-left flex items-center justify-between text-xs ${selectedContactIds.includes(c.id) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                                                    >
+                                                        <span>{c.name || c.email}</span>
+                                                        <Check className={`w-3.5 h-3.5 ${selectedContactIds.includes(c.id) ? 'text-teal-400' : 'text-transparent'}`} />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                             {activeStep === 3 && (
-                                <motion.div key="3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                                    <div className="bg-slate-950 rounded-[40px] p-8 sm:p-12 space-y-6 border border-white/5">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                            <div><span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">Title</span><p className="text-lg font-black text-white">{form.name}</p></div>
-                                            <div><span className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-1">Subject</span><p className="text-lg font-black text-white">{form.subject}</p></div>
+                                <div className="space-y-5 animate-in fade-in duration-300">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {PRESET_TEMPLATES.map((tmpl) => (
+                                            <button
+                                                key={tmpl.id}
+                                                onClick={() => {
+                                                    setForm(f => ({ ...f, bodyHtml: tmpl.html }));
+                                                    toast.success(`${tmpl.title} loaded`);
+                                                }}
+                                                className="p-4 bg-slate-900 border border-white/5 rounded-2xl text-left hover:border-teal-500 transition-all flex flex-col justify-between"
+                                            >
+                                                <div>
+                                                    <h4 className="text-xs font-bold text-white mb-1">{tmpl.title}</h4>
+                                                    <p className="text-[10px] text-slate-500 line-clamp-2">"{tmpl.subject}"</p>
+                                                </div>
+                                                <span className="text-[9px] text-teal-400 font-bold uppercase mt-4 block">Use Template</span>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* HTML Code editor */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center px-1">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Email Html Content</label>
+                                            <button 
+                                                onClick={generateWithAI}
+                                                disabled={aiGenerating}
+                                                className="text-xs text-teal-400 flex items-center gap-1 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20"
+                                            >
+                                                {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} AI writer
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            value={form.bodyHtml}
+                                            onChange={e => setForm(f => ({ ...f, bodyHtml: e.target.value }))}
+                                            placeholder="Write message HTML or plain text here..."
+                                            className="w-full h-40 bg-slate-900 border border-white/5 rounded-2xl p-4 text-xs text-white outline-none resize-none"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeStep === 4 && (
+                                <div className="space-y-5 animate-in fade-in duration-300">
+                                    <div className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Review Details</span>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <span className="text-[9px] text-slate-500 font-bold uppercase">Name</span>
+                                                <p className="text-xs text-white font-bold truncate">{form.name || 'Untitled'}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] text-slate-500 font-bold uppercase">Subject</span>
+                                                <p className="text-xs text-white font-bold truncate">{form.subject || 'Empty'}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] text-slate-500 font-bold uppercase">Provider</span>
+                                                <p className="text-xs text-white font-bold uppercase">{form.selectedProviders[0] || 'resend'}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] text-slate-500 font-bold uppercase">Recipients</span>
+                                                <p className="text-xs text-white font-bold">
+                                                    {recipientType === 'all' ? 'All contacts' : `${selectedContactIds.length} leads`}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between pt-8 border-t border-white/5">
-                                        <button onClick={() => setActiveStep(2)} className="px-8 py-4 text-slate-500 font-black uppercase text-xs hover:text-slate-300">Edit Audience</button>
-                                        <button onClick={handleCreate} className="px-12 py-5 bg-teal-600 text-white rounded-[2rem] font-black uppercase text-sm shadow-2xl shadow-teal-900/40 hover:bg-teal-500 active:scale-95 transition-all">Launch Now</button>
-                                    </div>
-                                </motion.div>
+
+                                    {/* Action Launch buttons */}
+                                    <button
+                                        onClick={handleCreate}
+                                        className="w-full py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-teal-900/20 active:scale-95 transition-all"
+                                    >
+                                        Launch Campaign Now
+                                    </button>
+                                </div>
                             )}
-                        </AnimatePresence>
-                    </div>
-                </div>
+
+                            {/* Step controllers */}
+                            <div className="flex justify-between items-center pt-4">
+                                {activeStep > 1 ? (
+                                    <button 
+                                        onClick={() => setActiveStep(prev => prev - 1)}
+                                        className="text-xs text-slate-500 font-bold px-4 py-2 hover:text-white"
+                                    >
+                                        Back
+                                    </button>
+                                ) : <div />}
+                                
+                                {activeStep < 4 ? (
+                                    <button 
+                                        onClick={() => {
+                                            if (activeStep === 1 && (!form.name || !form.subject)) {
+                                                return toast.error('Name and subject are required');
+                                            }
+                                            if (activeStep === 2 && !recipientType) {
+                                                return toast.error('Choose a recipient segment');
+                                            }
+                                            setActiveStep(prev => prev + 1);
+                                        }}
+                                        className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase rounded-xl border border-white/5"
+                                    >
+                                        Continue
+                                    </button>
+                                ) : <div />}
+                            </div>
+
+                        </motion.div>
+                    )}
+
+                </AnimatePresence>
             </div>
 
-            {/* Mobile Bottom Navigation Placeholder for Sticky Feel */}
-            {isMobile && (
-                <div className="fixed bottom-0 left-0 right-0 h-20 bg-slate-900 border-t border-white/5 px-6 flex items-center justify-between z-[60] shadow-[0_-8px_30px_rgba(0,0,0,0.4)]">
-                    <button onClick={() => setActiveStep(prev => Math.max(1, prev - 1))} className="text-slate-500"><ArrowLeft size={24} /></button>
-                    <div className="flex gap-2">
-                        {[1, 2, 3].map(s => <div key={s} className={`w-2 h-2 rounded-full ${activeStep === s ? 'bg-teal-600 w-6' : 'bg-slate-800'} transition-all`} />)}
+            {/* iOS/PWA bottom nav overlay helper */}
+            {viewMode === 'compose' && (
+                <div className="fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-white/5 px-4 flex items-center justify-between z-[50] pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.4)]">
+                    <button 
+                        onClick={() => {
+                            if (activeStep > 1) setActiveStep(prev => prev - 1);
+                            else setViewMode('list');
+                        }}
+                        className="text-slate-500 flex items-center gap-1 text-xs font-bold"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Prev
+                    </button>
+                    <div className="flex gap-1">
+                        {[1, 2, 3, 4].map(s => (
+                            <div 
+                                key={s} 
+                                className={`w-1.5 h-1.5 rounded-full ${activeStep === s ? 'bg-teal-500 w-4' : 'bg-slate-800'} transition-all`} 
+                            />
+                        ))}
                     </div>
-                    <button onClick={() => setActiveStep(prev => Math.min(3, prev + 1))} className="text-teal-400 font-black uppercase text-xs">Next</button>
+                    {activeStep < 4 ? (
+                        <button 
+                            onClick={() => {
+                                if (activeStep === 1 && (!form.name || !form.subject)) {
+                                    return toast.error('Name and subject are required');
+                                }
+                                if (activeStep === 2 && !recipientType) {
+                                    return toast.error('Choose a recipient segment');
+                                }
+                                setActiveStep(prev => prev + 1);
+                            }}
+                            className="text-teal-400 text-xs font-black uppercase"
+                        >
+                            Next
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={handleCreate}
+                            className="text-emerald-400 text-xs font-black uppercase"
+                        >
+                            Launch
+                        </button>
+                    )}
                 </div>
             )}
+
         </div>
     );
 };
 
 export default CampaignBuilder;
-

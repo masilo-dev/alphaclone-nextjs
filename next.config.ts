@@ -1,20 +1,14 @@
 import type { NextConfig } from "next";
 
-import withSerwistInit from "@serwist/next";
+import withPWAInit from "next-pwa";
 import { withSentryConfig } from "@sentry/nextjs";
 import { withBotId } from "botid/next/config";
 import { withWorkflow } from "workflow/next";
 
-// PWA worker is opt-in in production: it intercepts /api and /dashboard and has caused
-// false 503s behind Cloudflare and with extensions (SES lockdown). Dev stays off.
-const serwistDisabled =
-  process.env.NODE_ENV === "development" ||
-  process.env.ENABLE_SERWIST !== "true";
-
-const withSerwist = withSerwistInit({
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  disable: serwistDisabled,
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: false,
 });
 
 const nextConfig: NextConfig = {
@@ -30,6 +24,7 @@ const nextConfig: NextConfig = {
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_ENABLE_SERWIST:
       process.env.ENABLE_SERWIST === 'true' ? 'true' : 'false',
+    NEXT_PUBLIC_ENABLE_PWA: 'true',
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -203,7 +198,7 @@ const nextConfig: NextConfig = {
 };
 
 // Apply plugins sequentially to resolve type mismatches between various HOC signatures
-const baseConfig = withSerwist(nextConfig);
+const baseConfig = withPWA(nextConfig);
 const workflowConfig = withWorkflow(baseConfig as any);
 const botIdConfig = withBotId(workflowConfig as any);
 

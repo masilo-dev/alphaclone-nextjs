@@ -179,6 +179,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }, [contactParam, clients, pathname, router]);
 
     useEffect(() => {
+        if (searchParams?.get('add') === 'true') {
+            setShowAddModal(true);
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('add');
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        }
+    }, [searchParams, pathname, router]);
+
+    useEffect(() => {
         filterClients();
     }, [clients, selectedStage]);
 
@@ -461,7 +470,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         return (
             <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
                 <CRMNav pathname={pathname} />
-                <CRMTab userId={user.id} userRole={user.role} />
+                <CRMTab user={user} />
             </div>
         );
     }
@@ -482,7 +491,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
                 <CRMNav pathname={pathname} />
                 <Suspense fallback={crmSectionFallback}>
-                    <DealsTab userId={user.id} userRole={user.role ?? 'user'} />
+                    <DealsTab user={user} />
                 </Suspense>
             </div>
         );
@@ -711,17 +720,27 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm font-medium"
                                 />
                             </div>
-                            <select
-                                value={selectedStage}
-                                onChange={(e) => setSelectedStage(e.target.value)}
-                                className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-md font-medium"
-                            >
-                                <option value="all">All Stages</option>
-                                <option value="lead">Leads</option>
-                                <option value="prospect">Prospects</option>
-                                <option value="customer">Customers</option>
-                                <option value="lost">Lost</option>
-                            </select>
+                            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
+                                {[
+                                    { value: 'all', label: 'All' },
+                                    { value: 'lead', label: 'Leads' },
+                                    { value: 'prospect', label: 'Prospects' },
+                                    { value: 'customer', label: 'Customers' },
+                                    { value: 'lost', label: 'Lost' }
+                                ].map((stage) => (
+                                    <button
+                                        key={stage.value}
+                                        onClick={() => setSelectedStage(stage.value)}
+                                        className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                                            selectedStage === stage.value
+                                                ? 'bg-teal-600 text-white border-teal-600 shadow-sm shadow-teal-600/10'
+                                                : 'bg-slate-900 text-slate-400 border-slate-850 hover:text-white hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        {stage.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="flex items-center justify-between px-1 shrink-0">
@@ -772,16 +791,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             }}
                                             className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-600 focus:ring-teal-500/20"
                                         />
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-slate-300 text-sm">
+                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center font-semibold text-slate-350 text-xs shrink-0">
                                             {(client.name || '?').charAt(0)}
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant={client.salesStage === 'customer' ? 'success' : client.salesStage === 'lost' ? 'error' : 'blue'}>
-                                                {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
-                                            </Badge>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-teal-400 uppercase">
+                                                {client.salesStage}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -839,14 +858,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-slate-800/50 p-3 rounded-xl">
+                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
                                             <p className="text-xs text-slate-400 mb-1">Email</p>
                                             <div className="flex items-center gap-2 text-white text-sm">
                                                 <Mail className="w-4 h-4 text-teal-500" />
                                                 <span className="truncate">{selectedClient.email || 'N/A'}</span>
                                             </div>
                                         </div>
-                                        <div className="bg-slate-800/50 p-3 rounded-xl">
+                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
                                             <p className="text-xs text-slate-400 mb-1">Phone</p>
                                             <div className="flex items-center gap-2 text-white text-sm">
                                                 <Phone className="w-4 h-4 text-teal-500" />
