@@ -886,3 +886,5 @@
 
 
 
+- Fixed Leads KanbanBoard crash caused by undefined leads array length reading.
+- Fixed Leads KanbanBoard white styling to explicitly use brand dark colors.
