@@ -22,17 +22,18 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Authentication routes - enabled for Phase 1 hardening
-    if (pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) {
+    // Only rate limit POST requests to prevent Next.js prefetching or standard page loads from triggering 429s.
+    if ((pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
         if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
-    if (pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) {
+    if ((pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.signup);
         if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
-    if (pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) {
+    if ((pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.passwordReset);
         if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
