@@ -280,18 +280,15 @@ export const pwaService = {
                 applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
             });
 
-            // Send subscription to server
-            const { error } = await supabase
-                .from('push_subscriptions')
-                .upsert({
-                    user_id: userId,
-                    endpoint: subscription.endpoint,
-                    keys: subscription.toJSON().keys
-                }, { onConflict: 'endpoint' });
+            const response = await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription),
+            });
 
-            if (error) {
-                console.error('Failed to save subscription:', error);
-                throw new Error('Database save failed');
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || 'Database save failed');
             }
 
             return { success: true, error: null };
@@ -305,4 +302,3 @@ export const pwaService = {
         }
     }
 };
-

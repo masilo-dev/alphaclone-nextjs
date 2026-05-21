@@ -481,7 +481,7 @@ export default function SocialCommandCenter() {
     }
 
     return (
-        <div className="flex flex-col bg-slate-950 rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100vh-140px)]">
+        <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
             
             {/* Top Workspace Tab Mode Switcher */}
             <div className="flex border-b border-white/5 bg-slate-900/50 p-2 gap-2">

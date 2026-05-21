@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
     ChevronDown, ChevronUp, ChevronRight, Sparkles, Tag, FileText, CheckCircle2, Loader2, Upload, Search,
-    History, X, ArrowLeft, Check, Database, Inbox, AlertCircle, Repeat, Layers
+    History, X, ArrowLeft, Check, Database, Inbox, AlertCircle, Repeat, Layers, Languages
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emailCampaignService, EmailCampaign, EmailTemplate, MarketingContact } from '../../../services/emailCampaignService';
@@ -13,6 +13,7 @@ import { tenantService } from '../../../services/tenancy/TenantService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { CAMPAIGN_LANGUAGE_OPTIONS, getCampaignLanguageInstruction, type CampaignLanguageMode } from '@/lib/languageUtils';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
@@ -91,6 +92,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         selectedProviders: ['zoho'] as string[],
         balanceByDailyLimit: true,
         sendImmediately: false,
+        languageMode: 'auto' as CampaignLanguageMode,
     });
 
     // Touch Swipe list tracking
@@ -116,6 +118,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             toast.error('Name, subject, and message are required');
             return;
         }
+        if (form.languageMode === 'ask') {
+            toast.error('Choose a campaign language before launch, or switch language to Auto.');
+            return;
+        }
         const toastId = toast.loading('Creating campaign...');
         const { campaign, error } = await emailCampaignService.createCampaign(userId, {
             name: form.name,
@@ -125,7 +131,13 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
             metadata: { 
                 bodyHtml: form.bodyHtml,
-                provider: form.selectedProviders[0] || 'resend'
+                provider: form.selectedProviders[0] || 'resend',
+                languageMode: form.languageMode,
+                languageInstruction: getCampaignLanguageInstruction({ languageMode: form.languageMode }),
+                deliverySettings: {
+                    selectedProviders: form.selectedProviders,
+                    balanceByDailyLimit: form.balanceByDailyLimit,
+                },
             },
         });
 
@@ -154,7 +166,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: `Write a high-converting HTML campaign email body about: "${form.subject}"` })
+                body: JSON.stringify({
+                    prompt: `Write a high-converting HTML campaign email body about: "${form.subject}". ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
+                })
             });
             const data = await response.json();
             if (data.text) setForm(f => ({ ...f, bodyHtml: data.text }));
@@ -224,6 +238,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             selectedProviders: [(camp.metadata as any)?.provider || 'resend'],
             balanceByDailyLimit: true,
             sendImmediately: false,
+            languageMode: ((camp.metadata as any)?.languageMode || 'auto') as CampaignLanguageMode,
         });
         setViewMode('compose');
         setActiveStep(1);
@@ -243,6 +258,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             selectedProviders: ['resend'],
             balanceByDailyLimit: true,
             sendImmediately: false,
+            languageMode: 'auto',
         });
         setRecipientType(null);
         setSelectedContactIds([]);
@@ -253,7 +269,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     if (loading) return <div className="p-8 text-slate-400 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" /> Loading Campaigns...</div>;
 
     return (
-        <div className="flex flex-col bg-slate-950 rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100vh-140px)]">
+        <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
             
             {/* Header bar */}
             <div className="h-16 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between shrink-0">
@@ -303,6 +319,11 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                     {campaigns.map((camp) => {
                                         const offset = swipeState[camp.id] || 0;
                                         const provider = (camp.metadata as any)?.provider || 'resend';
+                                        const sent = Number(camp.totalSent || 0);
+                                        const opened = Number(camp.totalOpened || 0);
+                                        const clicked = Number(camp.totalClicked || 0);
+                                        const openRate = sent > 0 ? Math.round((opened / sent) * 100) : 0;
+                                        const clickRate = sent > 0 ? Math.round((clicked / sent) * 100) : 0;
                                         
                                         return (
                                             <div 
@@ -339,7 +360,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                                 {camp.name}
                                                             </span>
                                                             <span className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-                                                                Subj: {camp.subject} • Opens: 24% • Clicks: 8%
+                                                                Subj: {camp.subject} • Opens: {openRate}% • Clicks: {clickRate}%
                                                             </span>
                                                         </div>
                                                     </div>
@@ -385,14 +406,14 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                             {/* 2x2 Statistics dashboard */}
                             <div className="grid grid-cols-2 gap-4">
                                 {[
-                                    { label: 'Sent', value: '450', rate: '100% of segment' },
-                                    { label: 'Delivered', value: '448', rate: '99.5%' },
-                                    { label: 'Opened', value: '108', rate: '24.1%' },
-                                    { label: 'Clicked', value: '36', rate: '8.0%' }
+                                    { label: 'Recipients', value: selectedCampaign.totalRecipients || 0, rate: 'Audience size' },
+                                    { label: 'Sent', value: selectedCampaign.totalSent || 0, rate: `${selectedCampaign.totalRecipients ? Math.round((selectedCampaign.totalSent / selectedCampaign.totalRecipients) * 100) : 0}% of segment` },
+                                    { label: 'Opened', value: selectedCampaign.totalOpened || 0, rate: `${selectedCampaign.totalSent ? Math.round((selectedCampaign.totalOpened / selectedCampaign.totalSent) * 100) : 0}% open rate` },
+                                    { label: 'Clicked', value: selectedCampaign.totalClicked || 0, rate: `${selectedCampaign.totalSent ? Math.round((selectedCampaign.totalClicked / selectedCampaign.totalSent) * 100) : 0}% click rate` }
                                 ].map((stat, i) => (
                                     <div key={i} className="p-4 bg-slate-900 rounded-2xl border border-white/5 space-y-1">
                                         <span className="text-[10px] font-bold text-slate-500 uppercase">{stat.label}</span>
-                                        <div className="text-xl font-black text-white">{stat.value}</div>
+                                        <div className="text-xl font-black text-white">{String(stat.value)}</div>
                                         <span className="text-[10px] text-teal-400 font-bold block">{stat.rate}</span>
                                     </div>
                                 ))}
@@ -490,6 +511,22 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                     </button>
                                                 );
                                             })}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Language</label>
+                                        <div className="relative">
+                                            <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                            <select
+                                                value={form.languageMode}
+                                                onChange={e => setForm(f => ({ ...f, languageMode: e.target.value as CampaignLanguageMode }))}
+                                                className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl pl-9 pr-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                            >
+                                                {CAMPAIGN_LANGUAGE_OPTIONS.map(option => (
+                                                    <option key={option.code} value={option.code}>{option.label}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -626,6 +663,12 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                 <p className="text-xs text-white font-bold uppercase">{form.selectedProviders[0] || 'resend'}</p>
                                             </div>
                                             <div>
+                                                <span className="text-[9px] text-slate-500 font-bold uppercase">Language</span>
+                                                <p className="text-xs text-white font-bold">
+                                                    {CAMPAIGN_LANGUAGE_OPTIONS.find(option => option.code === form.languageMode)?.label || 'Auto'}
+                                                </p>
+                                            </div>
+                                            <div>
                                                 <span className="text-[9px] text-slate-500 font-bold uppercase">Recipients</span>
                                                 <p className="text-xs text-white font-bold">
                                                     {recipientType === 'all' ? 'All contacts' : `${selectedContactIds.length} leads`}
@@ -681,7 +724,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
             {/* iOS/PWA bottom nav overlay helper */}
             {viewMode === 'compose' && (
-                <div className="fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-white/5 px-4 flex items-center justify-between z-[50] pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.4)]">
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-white/5 px-4 flex items-center justify-between z-[50] pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.4)]">
                     <button 
                         onClick={() => {
                             if (activeStep > 1) setActiveStep(prev => prev - 1);

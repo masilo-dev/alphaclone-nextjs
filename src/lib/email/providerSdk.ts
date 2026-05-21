@@ -2,6 +2,8 @@ import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import sgMail from '@sendgrid/mail';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 
 export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow';
 
@@ -351,11 +353,69 @@ export async function sendWithProviderSdk(
     provider: EmailProvider,
     input: EmailSendInput
 ): Promise<EmailSendResult> {
-    if (provider === 'resend') return sendViaResend(input);
-    if (provider === 'sendgrid') return sendViaSendGrid(input);
-    if (provider === 'zoho') return sendViaZoho(input);
-    if (provider === 'gmail') return sendViaGmail(input);
-    if (provider === 'mailflow') return sendViaMailflow(input);
-    return sendViaBrevo(input);
+    let result: EmailSendResult;
+    if (provider === 'resend') result = await sendViaResend(input);
+    else if (provider === 'sendgrid') result = await sendViaSendGrid(input);
+    else if (provider === 'zoho') result = await sendViaZoho(input);
+    else if (provider === 'gmail') result = await sendViaGmail(input);
+    else if (provider === 'mailflow') result = await sendViaMailflow(input);
+    else result = await sendViaBrevo(input);
+
+    // Sync successfully sent external emails to unified_messages
+    if (result.ok && input.userId) {
+        try {
+            const supabaseAdmin = createSupabaseAdminClient();
+            // Resolve tenantId
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('tenant_id')
+                .eq('id', input.userId)
+                .maybeSingle();
+
+            let tenantId = profile?.tenant_id;
+            if (!tenantId) {
+                const { data: membership } = await supabaseAdmin
+                    .from('tenant_users')
+                    .select('tenant_id')
+                    .eq('user_id', input.userId)
+                    .maybeSingle();
+                tenantId = membership?.tenant_id;
+            }
+
+            if (tenantId) {
+                const recipients = Array.isArray(input.to) ? input.to : [input.to];
+                for (const recipient of recipients) {
+                    const cleanRecipient = String(recipient || '').trim().toLowerCase();
+                    if (!cleanRecipient) continue;
+
+                    const { contact_id, company_id } = await resolveContactByEmailAdmin(
+                        supabaseAdmin,
+                        tenantId,
+                        cleanRecipient
+                    );
+
+                    await syncExternalMessageAdmin(supabaseAdmin, {
+                        tenant_id: tenantId,
+                        contact_id,
+                        company_id,
+                        source: provider as any,
+                        external_id: result.emailId || `${provider}-outbound-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                        direction: 'outbound',
+                        channel: 'email',
+                        subject: input.subject,
+                        body: input.text || input.html?.replace(/<[^>]*>/g, '') || '',
+                        html_body: input.html,
+                        from_address: input.fromEmail,
+                        to_address: cleanRecipient,
+                        sent_at: new Date().toISOString(),
+                    });
+                }
+            }
+        } catch (syncErr) {
+            console.error('[providerSdk] Failed to sync outbound email to unified_messages:', syncErr);
+        }
+    }
+
+    return result;
 }
 

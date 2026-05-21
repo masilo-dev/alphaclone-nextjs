@@ -31,16 +31,22 @@ export async function GET(req: NextRequest) {
     }
 
     const redirectUri = `${appUrl}/api/auth/facebook/callback`;
-    const scopes = [
+    const scopeMode = req.nextUrl.searchParams.get('scope_mode') === 'publishing' ? 'publishing' : 'advanced';
+    const publishingScopes = [
         'pages_show_list',
         'pages_read_engagement',
-        'pages_read_user_content',
         'pages_manage_posts',       // required to post content to page
+    ];
+    const advancedScopes = [
+        ...publishingScopes,
+        'pages_read_user_content',
         'pages_manage_engagement',  // required to comment on posts
         'pages_messaging',          // required for Messenger send
         'leads_retrieval',
         'ads_management',
-    ].join(',');
+    ];
+    const requestedScopes = scopeMode === 'advanced' ? advancedScopes : publishingScopes;
+    const scopes = requestedScopes.join(',');
 
     const ALLOWED_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
     const returnToRaw = req.nextUrl.searchParams.get('return_to')?.trim();
@@ -58,6 +64,8 @@ export async function GET(req: NextRequest) {
             tenantId: tenantIdParam,
             ts: Date.now(),
             returnTo,
+            scopeMode,
+            requestedScopes,
         })
     ).toString('base64url');
 

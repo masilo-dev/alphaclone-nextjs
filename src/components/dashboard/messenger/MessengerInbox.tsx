@@ -264,7 +264,7 @@ export default function MessengerInbox() {
     const activeConv = conversations.find(c => c.id === selectedConversation);
 
     return (
-        <div className="flex flex-col bg-gray-950 text-gray-100 rounded-3xl border border-white/5 overflow-hidden shadow-2xl h-[calc(100vh-160px)] min-h-[600px] relative">
+        <div className="flex flex-col bg-gray-950 text-gray-100 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden shadow-2xl h-[calc(100dvh-160px)] min-h-[520px] relative">
             <div className="flex flex-1 overflow-hidden">
                 {/* Conversation Sidebar */}
                 <div className={`
@@ -497,4 +497,3 @@ export default function MessengerInbox() {
         </div>
     );
 }
-

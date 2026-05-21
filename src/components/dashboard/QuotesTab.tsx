@@ -51,7 +51,7 @@ const QuoteRow: React.FC<{ quote: Quote; onDelete: (id: string) => void; onTap: 
 };
 
 const QuoteDetail: React.FC<{ quote: Quote; onBack: () => void; onConvert: (id: string) => void }> = ({ quote, onBack, onConvert }) => (
-  <div className="flex flex-col h-full">
+  <div className="relative flex flex-col h-full overflow-hidden">
     <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
       <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
       <span className="text-[15px] font-bold text-white">Quote Detail</span>
@@ -72,7 +72,7 @@ const QuoteDetail: React.FC<{ quote: Quote; onBack: () => void; onConvert: (id: 
         </button>
       )}
     </div>
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+    <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 native-bottom-bar">
       {['Send', 'Convert to Invoice', 'Delete'].map(lbl => (
         <button key={lbl} onClick={lbl === 'Convert to Invoice' ? () => onConvert(quote.id) : undefined} className={`flex-1 py-3.5 text-[12px] font-bold hover:bg-white/5 transition-colors ${lbl === 'Delete' ? 'text-red-400' : lbl === 'Convert to Invoice' ? 'text-teal-400' : 'text-slate-400'}`}>{lbl}</button>
       ))}

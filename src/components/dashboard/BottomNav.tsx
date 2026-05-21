@@ -47,15 +47,15 @@ const BottomNav: React.FC<BottomNavProps> = ({
     };
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-[env(safe-area-inset-bottom,0px)] z-50 h-[calc(env(safe-area-inset-bottom,0px)+49px)]">
-            <div className="flex justify-around items-center h-[49px]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-50 h-[calc(env(safe-area-inset-bottom,0px)+54px)] native-bottom-bar">
+            <div className="flex justify-around items-center h-[54px]">
                 {mobileNavItems.map((item) => {
                     const isActive = activeTab === item.href || (item.href !== '/dashboard' && activeTab.startsWith(item.href));
                     return (
                         <button
                             key={item.href}
                             onClick={() => handleNavClick(item.href)}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-all ${
+                            className={`native-tap flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-all ${
                                 isActive ? 'text-teal-400' : 'text-slate-400 opacity-45 hover:opacity-100'
                             }`}
                         >
@@ -78,7 +78,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 {/* 'More' / Menu toggle */}
                 <button
                     onClick={onToggleMenu}
-                    className="flex flex-col items-center justify-center w-full h-full space-y-0.5 text-slate-400 opacity-45 hover:opacity-100 transition-all"
+                    className="native-tap flex flex-col items-center justify-center w-full h-full space-y-0.5 text-slate-400 opacity-45 hover:opacity-100 transition-all"
                 >
                     <Menu className="w-6 h-6" />
                     <span className="pwa-tab-label">{t('More')}</span>

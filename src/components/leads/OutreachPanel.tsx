@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Sparkles, Send, Mail, Loader2, Check, AlertCircle,
   Zap, Edit3, Eye, Clock,
-  Briefcase, Smile, Gift,
+  Briefcase, Smile, Gift, Languages,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTenant } from '../../contexts/TenantContext';
 import { qualifyLead, QualificationResult, PITCH_ANGLES } from '../../lib/leadQualification';
 import { supabase } from '../../lib/supabase';
+import { CAMPAIGN_LANGUAGE_OPTIONS, type CampaignLanguageMode } from '@/lib/languageUtils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface OutreachLead {
@@ -32,6 +33,8 @@ interface GeneratedEmail {
   pitchAngle:    string;
   recipientEmail: string | null;
   recipientSource: 'lead' | 'inferred' | 'none';
+  language?: string;
+  languageLabel?: string;
 }
 
 type SendStatus = 'idle' | 'generating' | 'preview' | 'sending' | 'done';
@@ -73,6 +76,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [queueOnly,     setQueueOnly    ] = useState(false);
   const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['zoho']);
   const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(false);
+  const [languageMode, setLanguageMode] = useState<CampaignLanguageMode>('auto');
 
   const inferLeadRecipient = (lead: OutreachLead): string | null => {
     const directEmail = String(lead?.email || '').trim();
@@ -133,6 +137,10 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
       toast.error('No leads selected for outreach generation');
       return;
     }
+    if (languageMode === 'ask') {
+      toast.error('Choose a language before generating, or switch language to Auto.');
+      return;
+    }
     setStatus('generating');
 
     try {
@@ -147,6 +155,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             website:  l.website || '',
             rating:   l.rating || 0,
             address:  l.address || '',
+            country:  l.address || '',
             category: l.category || '',
             pitchAngle: inferLeadRecipient(l) ? (l.qualification?.pitchAngle || 'professional') : 'no-email-follow-up',
             insights:   Array.isArray(l.qualification?.insights) ? l.qualification.insights : [],
@@ -156,6 +165,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
           tone,
           customContext,
           senderName: senderName || 'the team',
+          languageMode,
         }),
       });
 
@@ -212,6 +222,8 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
             queue:       queueOnly,
             deliveryProviders: selectedProviders,
             balanceByDailyLimit,
+            language: email.language,
+            languageMode,
           }),
         });
         const data = await res.json();
@@ -322,6 +334,25 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                 placeholder="e.g. Mention our 30-day free trial offer. Ask for a 10-min video call."
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white min-h-[80px] resize-none focus:outline-none focus:border-teal-500 transition-all"
               />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Email Language</p>
+              <div className="relative">
+                <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <select
+                  value={languageMode}
+                  onChange={(e) => setLanguageMode(e.target.value as CampaignLanguageMode)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500"
+                >
+                  {CAMPAIGN_LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.code} value={option.code}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Auto uses country, address, and company context. Ask mode makes MCP/UI request confirmation before sending.
+              </p>
             </div>
 
             {/* From address selector */}
@@ -464,7 +495,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-white truncate">{email.business_name}</p>
                           <p className="text-xs text-slate-500 truncate">
-                            To: {email.recipientEmail || 'No recipient email'}
+                            To: {email.recipientEmail || 'No recipient email'}{email.languageLabel ? ` · ${email.languageLabel}` : ''}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -585,4 +616,3 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
 }
 
 export default OutreachPanel;
-

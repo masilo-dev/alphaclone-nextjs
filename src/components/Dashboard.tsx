@@ -1345,7 +1345,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }
 
   return (
-    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root">
+    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root [height:100dvh]">
       <ConnectionStatus />
 
       <WelcomeModal
@@ -1601,7 +1601,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950 ac-dashboard-shell-bg">
+      <div className="flex-1 flex flex-col overflow-hidden bg-slate-950 ac-dashboard-shell-bg [height:100dvh]">
         <TrialBanner />
         {/* Header - Visible in all dashboard views */}
         <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header">
@@ -1656,7 +1656,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </header>
 
         {/* Main Content Area */}
-        <main id="main-content" className={`flex-1 ${['/dashboard/mail', '/dashboard/gmail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
+        <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail', '/dashboard/gmail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
           <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${activeTab === '/dashboard/gmail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
             {/* Background decorative elements */}
@@ -1801,4 +1801,3 @@ const Dashboard: React.FC<DashboardProps> = ({
 };
 
 export default Dashboard;
-

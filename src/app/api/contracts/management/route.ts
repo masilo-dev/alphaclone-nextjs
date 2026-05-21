@@ -9,6 +9,7 @@ import { requireTenantAccess } from '@/lib/apiAuth';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
 import { randomBytes } from 'crypto';
+import { AppUrls } from '@/lib/urls';
 import {
   AlignmentType,
   Document,
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
       case 'download_contract':
         return NextResponse.json(await downloadContract(tenantId, config, supabase));
       case 'send_contract':
-        return NextResponse.json(await sendContract(tenantId, config, supabase, req.nextUrl.origin, user.id));
+        return NextResponse.json(await sendContract(tenantId, config, supabase, user.id));
       case 'delete_contract':
         return NextResponse.json(await deleteContract(tenantId, config, supabase));
       case 'get_templates':
@@ -273,7 +274,7 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
   }
 }
 
-async function sendContract(tenantId: string, config: any, supabase: any, origin: string, actorUserId: string) {
+async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
   try {
     const { contractId, recipients, subject, message, format = 'pdf' } = config;
     if (!contractId || !recipients) {
@@ -320,7 +321,7 @@ async function sendContract(tenantId: string, config: any, supabase: any, origin
       return { success: false, error: 'Failed to create signing link' };
     }
 
-    const signingUrl = `${origin}/contract/${token}`;
+    const signingUrl = AppUrls.signContract(token);
 
     const generated = await downloadContract(tenantId, { contractId, format, optimize: true }, supabase);
     if (!generated?.success || !generated?.data?.bufferBase64) {

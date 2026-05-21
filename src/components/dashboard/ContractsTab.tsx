@@ -116,7 +116,7 @@ const ContractDetail: React.FC<{ contract: Contract; onBack: () => void }> = ({ 
   const toggleClause = (i: number) => setExpandedClauses(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
         <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
         <span className="text-[17px] font-bold text-white flex-1 truncate">{contract.title}</span>
@@ -166,7 +166,7 @@ const ContractDetail: React.FC<{ contract: Contract; onBack: () => void }> = ({ 
       </div>
 
       {/* Action bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 native-bottom-bar">
         {contract.status !== 'signed' && (
           <button onClick={() => setShowSignPad(true)} className="w-full h-[52px] bg-teal-600 text-white font-black uppercase tracking-wider text-[13px] flex items-center justify-center gap-2">
             <PenLine className="w-5 h-5" /> Sign Contract

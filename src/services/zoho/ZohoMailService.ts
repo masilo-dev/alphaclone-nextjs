@@ -3,6 +3,7 @@ import { routeAIRequest } from '@/services/aiRouter';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cleanAIJSONResponse } from '@/lib/utils';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 
 export interface ZohoMessage {
     messageId: string;
@@ -210,7 +211,7 @@ export class ZohoMailService extends ZohoService {
             throw new Error('Recipient email address is invalid.');
         }
 
-        return await this.callZohoAPI(`${base}/messages`, {
+        const result = await this.callZohoAPI(`${base}/messages`, {
             method: 'POST',
             body: JSON.stringify({
                 ...params,
@@ -219,6 +220,36 @@ export class ZohoMailService extends ZohoService {
                 content: ensureFooter(String(params.content || '')),
             }),
         });
+
+        // Log the outbound email in unified_messages for contact/CRM sync
+        try {
+            const tenantId = await this.resolveTenantIdForIntegration();
+            if (tenantId) {
+                const supabase = this.getSupabaseClient();
+                const { contact_id, company_id } = await resolveContactByEmailAdmin(supabase, tenantId, toAddress);
+                
+                await syncExternalMessageAdmin(supabase, {
+                    tenant_id: tenantId,
+                    contact_id,
+                    company_id,
+                    source: 'zoho',
+                    external_id: result?.data?.messageId || result?.messageId || `zoho-outbound-${Date.now()}`,
+                    direction: 'outbound',
+                    channel: 'email',
+                    subject,
+                    body: params.content,
+                    from_address: params.fromAddress,
+                    to_address: toAddress,
+                    cc_address: params.ccAddress,
+                    bcc_address: params.bccAddress,
+                    sent_at: new Date().toISOString(),
+                });
+            }
+        } catch (logErr) {
+            console.error('[ZohoMailService] Failed to log outbound email to unified_messages:', logErr);
+        }
+
+        return result;
     }
 
     async searchMessages(query: string): Promise<ZohoMessage[]> {

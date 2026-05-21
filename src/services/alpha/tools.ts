@@ -94,19 +94,62 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                 try {
                     const supabase = createSupabaseAdminClient();
                     const normalizedLeads = normalizeAiLeads(String(res.content || ''));
-                    const leadRows = normalizedLeads.map((lead) => ({
-                        tenant_id: tenantId,
-                        owner_id: userId,
-                        business_name: lead.businessName,
-                        email: lead.email || null,
-                        source: lead.source,
-                        stage: lead.stage,
-                        notes: lead.notes,
-                        value: lead.value,
-                    }));
-                    const { data, error } = await supabase.from('leads').insert(leadRows).select('id, business_name, email, source, stage');
                     
-                    if (error) throw error;
+                    const finalLeadsToInsert: any[] = [];
+                    const savedLeadIds: string[] = [];
+                    const duplicateLeads: any[] = [];
+
+                    for (const lead of normalizedLeads) {
+                        const businessName = lead.businessName;
+                        const email = lead.email ? lead.email.trim().toLowerCase() : null;
+
+                        // Check if lead exists by business name or email
+                        let query = supabase
+                            .from('leads')
+                            .select('id, business_name, email')
+                            .eq('tenant_id', tenantId);
+
+                        const orConditions = [`business_name.ilike.${businessName.replace(/[%_]/g, '\\$&')}`];
+                        if (email) {
+                            orConditions.push(`email.ilike.${email}`);
+                        }
+
+                        query = query.or(orConditions.join(','));
+                        const { data: existing, error: searchError } = await query.limit(1);
+
+                        if (!searchError && existing && existing.length > 0) {
+                            console.log(`[lead_prospector] Lead already exists: ${businessName}. Skipping.`);
+                            savedLeadIds.push(existing[0].id);
+                            duplicateLeads.push({
+                                ...lead,
+                                id: existing[0].id,
+                                duplicated: true
+                            });
+                        } else {
+                            finalLeadsToInsert.push({
+                                tenant_id: tenantId,
+                                owner_id: userId,
+                                business_name: lead.businessName,
+                                email: lead.email || null,
+                                source: lead.source,
+                                stage: lead.stage,
+                                notes: lead.notes,
+                                value: lead.value,
+                            });
+                        }
+                    }
+
+                    let insertedData: any[] = [];
+                    if (finalLeadsToInsert.length > 0) {
+                        const { data: insertRes, error } = await supabase
+                            .from('leads')
+                            .insert(finalLeadsToInsert)
+                            .select('id, business_name, email, source, stage');
+                        
+                        if (error) throw error;
+                        insertedData = insertRes || [];
+                        insertedData.forEach((row: any) => savedLeadIds.push(row.id));
+                    }
 
                     // REAL-TIME SYNC: Push to External CRM (HubSpot)
                     try {
@@ -133,9 +176,9 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
 
                     return {
                         status: 'success',
-                        saved_lead_ids: (data || []).map((row: any) => row.id),
-                        saved_count: (data || []).length,
-                        leads: normalizedLeads,
+                        saved_lead_ids: savedLeadIds,
+                        saved_count: savedLeadIds.length,
+                        leads: [...(insertedData.map(row => ({ ...row, businessName: row.business_name }))), ...duplicateLeads],
                     };
                 } catch (dbError: any) {
                     console.error('Failed to save leads to DB:', dbError);

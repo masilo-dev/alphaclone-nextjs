@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         const supabase = createSupabaseAdminClient();
         const { data: subscriptions, error } = await supabase
             .from('push_subscriptions')
-            .select('*')
+            .select('id, subscription, endpoint, keys')
             .eq('user_id', userId);
 
         if (error || !subscriptions) {
@@ -56,20 +56,32 @@ export async function POST(request: Request) {
         const results = await Promise.allSettled(
             subscriptions.map((sub: any) =>
                 webPush.sendNotification(
-                    {
-                        endpoint: sub.endpoint,
-                        keys: sub.keys as any
-                    },
+                    sub.subscription
+                        ? (typeof sub.subscription === 'string' ? JSON.parse(sub.subscription) : sub.subscription)
+                        : { endpoint: sub.endpoint, keys: sub.keys as any },
                     payload
                 )
             )
         );
 
         // Cleanup invalid subscriptions (410 Gone)
+        const getSubscriptionEndpoint = (sub: any) => {
+            if (sub.endpoint) return sub.endpoint;
+            if (!sub.subscription) return undefined;
+
+            const subscription =
+                typeof sub.subscription === 'string'
+                    ? JSON.parse(sub.subscription)
+                    : sub.subscription;
+
+            return subscription?.endpoint;
+        };
+
         const invalidEndpoints: string[] = [];
         results.forEach((result, index) => {
             if (result.status === 'rejected' && (result.reason as any).statusCode === 410) {
-                invalidEndpoints.push(subscriptions[index].endpoint);
+                const endpoint = getSubscriptionEndpoint(subscriptions[index]);
+                if (endpoint) invalidEndpoints.push(endpoint);
             }
         });
 

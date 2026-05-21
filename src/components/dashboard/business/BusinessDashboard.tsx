@@ -664,7 +664,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Use external nav items instead of local redundant array
 
     return (
-        <div className="flex h-screen min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root">
+        <div className="flex min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root [height:100dvh]">
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
@@ -678,7 +678,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main className="flex-1 flex flex-col min-w-0 bg-slate-950 ac-business-main">
+            <main className="flex-1 flex flex-col min-w-0 min-h-0 bg-slate-950 ac-business-main">
 
                 <TrialBanner />
 

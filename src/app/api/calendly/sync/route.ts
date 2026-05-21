@@ -70,13 +70,13 @@ export async function POST(req: Request) {
         // Fetch Scheduled Events from Calendly (syncing past 30 days to future)
         const minStartTime = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         let allEvents: any[] = [];
-        let nextPage = `https://api.calendly.com/scheduled_events?user=${encodeURIComponent(config.calendlyUserUri)}&min_start_time=${encodeURIComponent(minStartTime)}&status=active`;
+        let nextPage = `https://api.calendly.com/scheduled_events?user=${encodeURIComponent(calendlyUserUri)}&min_start_time=${encodeURIComponent(minStartTime)}&status=active`;
 
         let pages = 0;
         while (nextPage && pages < 10) {
             const response = await fetch(nextPage, {
                 headers: {
-                    'Authorization': `Bearer ${config.accessToken}`,
+                    'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
                 .from('calendar_events')
                 .select('id')
                 .eq('metadata->>calendly_event_uri', event.uri)
-                .single();
+                .maybeSingle();
 
             if (!existing) {
                 let desc = event.name;
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
                 try {
                     const inviteesRes = await fetch(`https://api.calendly.com/scheduled_events/${eventUuid}/invitees`, {
                         headers: {
-                            'Authorization': `Bearer ${config.accessToken}`
+                            'Authorization': `Bearer ${accessToken}`
                         }
                     });
                     if (inviteesRes.ok) {

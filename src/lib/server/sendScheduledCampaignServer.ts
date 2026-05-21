@@ -260,6 +260,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         const campaignFromEmail = String(c.from_email || 'notifications@alphaclonesystems.com');
         const campaignFromName = String(c.from_name || 'AlphaClone Systems');
         const replyTo = (c.reply_to as string) || undefined;
+        const campaignLanguage = toNonEmptyString(rawMeta?.language) || toNonEmptyString(rawMeta?.languageMode) || undefined;
 
         const { data: integrationRows, error: integrationError } = await admin
             .from('integrations')
@@ -388,7 +389,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .update({
                         status: 'sent',
                         sent_at: new Date().toISOString(),
-                        metadata: { provider: provider.id, provider_from: fromEmail },
+                        metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage },
                     })
                     .eq('id', recipient.id);
                 try {
@@ -412,6 +413,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                             contactId: recipient.contact_id,
                             provider: provider.id,
                             providerFrom: fromEmail,
+                            language: campaignLanguage,
                         },
                     });
                 } catch {
@@ -423,7 +425,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .update({
                         status: 'failed',
                         error_message: sendResult.error || 'Provider send failed',
-                        metadata: { provider: provider.id, provider_from: fromEmail },
+                        metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage },
                     })
                     .eq('id', recipient.id);
             }
