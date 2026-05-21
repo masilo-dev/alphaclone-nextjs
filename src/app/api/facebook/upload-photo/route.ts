@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         ) {
             return NextResponse.json(
                 {
-                    error: 'Permission denied. Reconnect Facebook and grant all Page permissions.',
+                    error: 'Permission denied. Reconnect Facebook and grant Page publishing permissions.',
                     code: 'FACEBOOK_PERMISSION',
                     action: 'reconnect',
                 },

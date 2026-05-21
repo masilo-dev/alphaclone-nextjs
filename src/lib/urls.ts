@@ -7,10 +7,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesyste
 
 export const AppUrls = {
   // Public Signing
-  signContract: (token: string) => `${BASE_URL}/sign/${token}`,
+  signContract: (token: string) => `${BASE_URL}/contract/${token}`,
   
   // Public Payment
-  payInvoice: (invoiceId: string) => `${BASE_URL}/pay/${invoiceId}`,
+  payInvoice: (invoiceId: string) => `${BASE_URL}/invoice/${invoiceId}`,
   
   // Public Document View
   viewDocument: (docId: string, type: 'invoice' | 'contract' | 'receipt') => 
@@ -24,5 +24,5 @@ export const AppUrls = {
   accounting: () => `${BASE_URL}/dashboard?tab=accounting`,
   
   // Auth
-  login: () => `${BASE_URL}/sign-in`,
+  login: () => `${BASE_URL}/auth/login`,
 };

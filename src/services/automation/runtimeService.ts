@@ -134,19 +134,45 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
       let output: Record<string, unknown> = {};
 
       if (action === 'create_lead') {
-        const payload = {
-          tenant_id: tenantId,
-          owner_id: inputs.user_id || null,
-          business_name: String(inputs.business_name || inputs.lead_name || 'Inbound lead'),
-          email: inputs.lead_email ? String(inputs.lead_email) : null,
-          phone: inputs.lead_phone ? String(inputs.lead_phone) : null,
-          source: String(inputs.source || 'automation_playbook'),
-          stage: 'lead',
-          status: 'new',
-        };
-        const { data, error } = await supabase.from('leads').insert(payload).select('id, business_name, source').single();
-        if (error) throw new Error(error.message);
-        output = { lead_id: data.id, lead: data };
+        const businessName = String(inputs.business_name || inputs.lead_name || 'Inbound lead').trim();
+        const email = inputs.lead_email ? String(inputs.lead_email).trim().toLowerCase() : null;
+        const phone = inputs.lead_phone ? String(inputs.lead_phone).trim() : null;
+
+        // Check if lead exists by business name, email, or phone
+        let query = supabase
+          .from('leads')
+          .select('id, business_name, source')
+          .eq('tenant_id', tenantId);
+
+        const orConditions = [`business_name.ilike.${businessName.replace(/[%_]/g, '\\$&')}`];
+        if (email) {
+          orConditions.push(`email.ilike.${email}`);
+        }
+        if (phone) {
+          orConditions.push(`phone.eq.${phone}`);
+        }
+
+        query = query.or(orConditions.join(','));
+        const { data: existingLeads, error: searchError } = await query.limit(1);
+
+        if (!searchError && existingLeads && existingLeads.length > 0) {
+          console.log(`[Automation] Lead already exists: ${existingLeads[0].business_name} (ID: ${existingLeads[0].id}). Skipping insertion.`);
+          output = { lead_id: existingLeads[0].id, lead: existingLeads[0], duplicated: true };
+        } else {
+          const payload = {
+            tenant_id: tenantId,
+            owner_id: inputs.user_id || null,
+            business_name: businessName,
+            email: email || null,
+            phone: phone || null,
+            source: String(inputs.source || 'automation_playbook'),
+            stage: 'lead',
+            status: 'new',
+          };
+          const { data, error } = await supabase.from('leads').insert(payload).select('id, business_name, source').single();
+          if (error) throw new Error(error.message);
+          output = { lead_id: data.id, lead: data };
+        }
       } else if (action === 'create_task') {
         const title = String(inputs.task_title || 'Follow up inbound lead');
         const description = String(inputs.task_description || 'Automatically created by playbook.');

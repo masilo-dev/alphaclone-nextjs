@@ -52,8 +52,8 @@ export async function generatePnLStatement(
 
   // 1. Fetch Revenue (Paid Invoices)
   const { data: invoices, error: invError } = await supabase
-    .from('invoices')
-    .select('paid_amount, total_amount, status, created_at')
+    .from('business_invoices')
+    .select('total, status, created_at')
     .eq('tenant_id', tenantId)
     .gte('created_at', from)
     .lte('created_at', to) as { data: any[] | null, error: any };
@@ -61,16 +61,16 @@ export async function generatePnLStatement(
   if (invError) throw new Error(`Revenue query failed: ${invError.message}`);
 
   const paidInvoices = (invoices || []).filter((i: any) => i.status === 'paid');
-  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + (Number(i.paid_amount) || 0), 0);
+  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + (Number(i.total) || 0), 0);
   
   const outstandingInvoices = (invoices || []).filter((i: any) => ['sent', 'overdue'].includes(i.status || ''));
-  const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + (Number(i.total_amount) - (Number(i.paid_amount) || 0)), 0);
+  const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + (Number(i.total) || 0), 0);
 
   // Group revenue by month
   const revenueByMonthMap = new Map<string, number>();
   paidInvoices.forEach((i: any) => {
     const month = i.created_at.substring(0, 7); // YYYY-MM
-    revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + (Number(i.paid_amount) || 0));
+    revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + (Number(i.total) || 0));
   });
   const revenueByMonth = Array.from(revenueByMonthMap.entries())
     .map(([month, amount]) => ({ month, amount: Number(amount.toFixed(2)) }))
@@ -79,7 +79,7 @@ export async function generatePnLStatement(
   // 2. Fetch Expenses (Approved)
   const { data: expenses, error: expError } = await supabase
     .from('expenses')
-    .select('amount, status, category, expense_categories(name)')
+    .select('amount, status, category, categories:category_id(name)')
     .eq('tenant_id', tenantId)
     .gte('date', (from as string).split('T')[0])
     .lte('date', (to as string).split('T')[0]) as { data: any[] | null, error: any };
@@ -93,7 +93,7 @@ export async function generatePnLStatement(
   // Group expenses by category
   const expenseByCatMap = new Map<string, number>();
   approvedExpenses.forEach((e: any) => {
-    const cat = e.category || e.expense_categories?.name || 'Uncategorized';
+    const cat = e.category || (e.categories as any)?.name || 'Uncategorized';
     expenseByCatMap.set(cat, (expenseByCatMap.get(cat) || 0) + (Number(e.amount) || 0));
   });
   

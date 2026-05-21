@@ -4,7 +4,7 @@ import { auditLoggingService } from './auditLoggingService';
 export interface ClientActivity {
     id: string;
     client_id: string;
-    activity_type: 'message' | 'call' | 'meeting' | 'contract' | 'payment' | 'project_update' | 'file_upload' | 'note';
+    activity_type: 'message' | 'call' | 'meeting' | 'contract' | 'payment' | 'project_update' | 'file_upload' | 'note' | 'invoice';
     title: string;
     description?: string;
     metadata?: any;
@@ -35,7 +35,7 @@ class ClientActivityService {
             // Get client info
             const { data: client } = await supabase
                 .from('business_clients')
-                .select('name')
+                .select('name, email, tenant_id')
                 .eq('id', clientId)
                 .single();
 
@@ -44,31 +44,37 @@ class ClientActivityService {
             }
 
             // Get all activities from various sources
-            const [messages, meetings, contracts, payments, projects, files] = await Promise.all([
+            const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes] = await Promise.all([
                 this.getClientMessages(clientId),
+                this.getClientUnifiedMessages(clientId, client.email),
+                this.getClientEmailLogs(clientId, client.email),
                 this.getClientMeetings(clientId),
                 this.getClientContracts(clientId),
                 this.getClientPayments(clientId),
                 this.getClientProjects(clientId),
                 this.getClientFiles(clientId),
+                this.getClientNotes(clientId),
             ]);
 
             // Combine all activities
             const activities: ClientActivity[] = [
                 ...messages,
+                ...unifiedMessages,
+                ...emailLogs,
                 ...meetings,
                 ...contracts,
                 ...payments,
                 ...projects,
                 ...files,
+                ...notes,
             ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             // Calculate stats
             const stats = {
-                total_messages: messages.length,
+                total_messages: messages.length + unifiedMessages.length + emailLogs.length,
                 total_calls: meetings.filter(m => m.activity_type === 'call').length,
                 total_meetings: meetings.filter(m => m.activity_type === 'meeting').length,
-                total_payments: payments.length,
+                total_payments: payments.filter(p => p.activity_type === 'payment').length,
                 last_contact: activities.length > 0 ? activities[0].created_at : null,
                 response_time_avg: await this.calculateAvgResponseTime(clientId),
             };
@@ -170,28 +176,121 @@ class ClientActivityService {
     }
 
     /**
-     * Get client payments
+     * Get client payments and invoices
      */
     private async getClientPayments(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('invoices')
             .select('*')
             .eq('user_id', clientId)
-            .eq('status', 'paid')
-            .order('paid_at', { ascending: false });
+            .order('created_at', { ascending: false });
 
-        return (data || []).map((invoice: any) => ({
-            id: invoice.id,
+        return (data || []).map((invoice: any) => {
+            const isPaid = invoice.status === 'paid';
+            return {
+                id: invoice.id,
+                client_id: clientId,
+                activity_type: (isPaid ? 'payment' : 'invoice') as any,
+                title: isPaid 
+                    ? `Payment received: $${invoice.amount.toLocaleString()}` 
+                    : `Invoice ${invoice.status.toUpperCase()}: $${invoice.amount.toLocaleString()}`,
+                description: `${invoice.description || 'No description'}. Due: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}`,
+                metadata: {
+                    invoice_id: invoice.id,
+                    amount: invoice.amount,
+                    currency: invoice.currency,
+                    status: invoice.status,
+                    due_date: invoice.due_date,
+                },
+                created_at: isPaid ? (invoice.paid_at || invoice.created_at) : invoice.created_at,
+            };
+        });
+    }
+
+    private async getClientNotes(clientId: string): Promise<ClientActivity[]> {
+        const { data } = await supabase
+            .from('client_notes')
+            .select('*')
+            .eq('client_id', clientId)
+            .order('created_at', { ascending: false });
+
+        return (data || []).map((note: any) => ({
+            id: note.id,
             client_id: clientId,
-            activity_type: 'payment' as const,
-            title: `Payment received: $${invoice.amount.toLocaleString()}`,
-            description: invoice.description,
+            activity_type: 'note' as const,
+            title: note.title || 'Note added',
+            description: note.description,
             metadata: {
-                invoice_id: invoice.id,
-                amount: invoice.amount,
-                currency: invoice.currency,
+                note_id: note.id,
+                created_by: note.created_by,
             },
-            created_at: invoice.paid_at || invoice.created_at,
+            created_at: note.created_at,
+            created_by: note.created_by,
+        }));
+    }
+
+    private async getClientUnifiedMessages(clientId: string, email?: string): Promise<ClientActivity[]> {
+        let query = supabase
+            .from('unified_messages')
+            .select('*');
+
+        if (email) {
+            query = query.or(`contact_id.eq.${clientId},from_address.eq.${email},to_address.eq.${email}`);
+        } else {
+            query = query.eq('contact_id', clientId);
+        }
+
+        const { data } = await query
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        return (data || []).map((msg: any) => {
+            const channelIcon = msg.channel === 'email' ? '✉️' : msg.channel === 'chat' ? '💬' : msg.channel === 'sms' ? '📱' : '📞';
+            const dir = msg.direction === 'inbound' ? 'Received' : 'Sent';
+            const sourceStr = msg.source ? `via ${msg.source.toUpperCase()}` : '';
+            return {
+                id: msg.id,
+                client_id: clientId,
+                activity_type: 'message' as const,
+                title: `${channelIcon} ${dir} message ${sourceStr}: ${msg.subject || '(No Subject)'}`,
+                description: msg.body?.substring(0, 200) + (msg.body?.length > 200 ? '...' : ''),
+                metadata: {
+                    message_id: msg.id,
+                    direction: msg.direction,
+                    channel: msg.channel,
+                    source: msg.source,
+                    from: msg.from_address,
+                    to: msg.to_address,
+                    sent_at: msg.sent_at || msg.created_at,
+                },
+                created_at: msg.created_at || msg.sent_at || msg.received_at,
+            };
+        });
+    }
+
+    private async getClientEmailLogs(clientId: string, email?: string): Promise<ClientActivity[]> {
+        if (!email) return [];
+        const { data } = await supabase
+            .from('email_logs')
+            .select('*')
+            .or(`user_id.eq.${clientId},to_email.eq.${email}`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        return (data || []).map((log: any) => ({
+            id: log.id,
+            client_id: clientId,
+            activity_type: 'message' as const,
+            title: `✉️ Sent Platform Email: ${log.subject || 'No Subject'}`,
+            description: `Status: ${log.status}. Template: ${log.template_name || 'Generic'}. Provider: ${log.provider}`,
+            metadata: {
+                log_id: log.id,
+                status: log.status,
+                provider: log.provider,
+                subject: log.subject,
+                error: log.error,
+            },
+            created_at: log.created_at,
         }));
     }
 

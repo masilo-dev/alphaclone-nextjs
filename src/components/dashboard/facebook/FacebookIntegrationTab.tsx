@@ -207,6 +207,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [postsNextCursor, setPostsNextCursor] = useState<string | null>(null);
     const [loadingMorePosts, setLoadingMorePosts] = useState(false);
     const [insightsByPost, setInsightsByPost] = useState<Record<string, { loading?: boolean; rows?: { name: string; values?: { value?: number }[] }[]; note?: string }>>({});
+    const [capabilitiesByPage, setCapabilitiesByPage] = useState<Record<string, any>>({});
+    const [deletingPostById, setDeletingPostById] = useState<Record<string, boolean>>({});
     const [hashtags, setHashtags] = useState<string[]>([]);
     const [suggestedHashtags, setSuggestedHashtags] = useState<string[]>(['#AlphaClone', '#AItools', '#founders', '#productivity', '#automation']);
     const [activeQueueFilter, setActiveQueueFilter] = useState<'all' | 'published' | 'scheduled' | 'failed'>('all');
@@ -413,6 +415,45 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         [selectedPageId]
     );
 
+    const loadPageCapabilities = useCallback(async (pageId: string) => {
+        if (!pageId) return;
+        try {
+            const res = await fetch(`/api/facebook/capabilities?pageId=${encodeURIComponent(pageId)}`);
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setCapabilitiesByPage((prev) => ({ ...prev, [pageId]: data }));
+            }
+        } catch (err) {
+            console.error('[Facebook] Failed to load capabilities:', err);
+        }
+    }, []);
+
+    const deleteFacebookPost = useCallback(async (postId: string) => {
+        if (!selectedPageId || !postId) return;
+        if (!window.confirm('Delete this Facebook post from the connected Page?')) return;
+        setDeletingPostById((prev) => ({ ...prev, [postId]: true }));
+        try {
+            const res = await fetch('/api/facebook/post/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId: selectedPageId, postId }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                if (data.action === 'reconnect') setReconnectRequired(true);
+                toast.error(data.error || 'Failed to delete Facebook post');
+                return;
+            }
+            setPagePosts((prev) => prev.filter((post) => post.id !== postId));
+            toast.success('Facebook post deleted');
+        } catch (err) {
+            console.error('[Facebook] Delete post failed:', err);
+            toast.error('Failed to delete Facebook post');
+        } finally {
+            setDeletingPostById((prev) => ({ ...prev, [postId]: false }));
+        }
+    }, [selectedPageId]);
+
     const loadScheduleQueue = useCallback(async () => {
         if (!tenant?.id) return;
         setQueueLoading(true);
@@ -477,8 +518,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     useEffect(() => {
         if (selectedPageId) {
             void loadScheduleQueue();
+            void loadPageCapabilities(selectedPageId);
         }
-    }, [selectedPageId, loadScheduleQueue]);
+    }, [selectedPageId, loadScheduleQueue, loadPageCapabilities]);
 
     const duplicateMap = useMemo(() => {
         const counts: Record<string, number> = {};
@@ -660,7 +702,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     }
 
     return (
-        <div className={`flex flex-col bg-[#0f0f0f] rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative ${isMobile ? 'h-auto min-h-[calc(100vh-120px)]' : 'h-[calc(100vh-140px)]'}`}>
+        <div className={`flex flex-col bg-[#0f0f0f] rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative ${isMobile ? 'h-auto min-h-[calc(100dvh-120px)]' : 'h-[calc(100dvh-140px)]'}`}>
             {!isConnected && (
                 <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-8 text-center">
                     <div className="max-w-md space-y-8">
@@ -937,6 +979,27 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
                                     )}
 
+                                    {selectedPageId && capabilitiesByPage[selectedPageId] && (
+                                        <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                                            <div className="mb-3 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p className="text-xs font-black uppercase tracking-widest text-gray-500">Granted Page Capabilities</p>
+                                                    <p className="mt-1 text-sm text-gray-300">{capabilitiesByPage[selectedPageId].note}</p>
+                                                </div>
+                                                <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-xs font-black uppercase text-blue-200">
+                                                    {capabilitiesByPage[selectedPageId].scope_mode}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                {Object.entries(capabilitiesByPage[selectedPageId].capabilities || {}).map(([key, enabled]) => (
+                                                    <div key={key} className={`rounded-xl border px-3 py-2 text-xs ${enabled ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200' : 'border-rose-500/20 bg-rose-500/10 text-rose-200'}`}>
+                                                        <span className="font-black uppercase">{String(key).replace(/_/g, ' ')}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="flex flex-wrap gap-2">
                                         {pages.map((p) => (
                                             <button
@@ -1052,6 +1115,15 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                         )}
 
                                                         <div className="flex flex-wrap gap-2">
+                                                            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white">
+                                                                Reach {post.insights?.post_impressions_unique ?? post.reactions?.summary?.total_count ?? 0}
+                                                            </div>
+                                                            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white">
+                                                                Comments {post.comments?.summary?.total_count ?? 0}
+                                                            </div>
+                                                            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white">
+                                                                Shares {post.shares?.count ?? 0}
+                                                            </div>
                                                             <button
                                                                 onClick={() => loadPostComments(post.id)}
                                                                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white"
@@ -1074,6 +1146,14 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                     Open Post
                                                                 </a>
                                                             )}
+                                                            <button
+                                                                onClick={() => deleteFacebookPost(post.id)}
+                                                                disabled={!!deletingPostById[post.id]}
+                                                                className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs font-black uppercase text-rose-200 disabled:opacity-50"
+                                                            >
+                                                                <Trash2 className="mr-1 inline h-3 w-3" />
+                                                                {deletingPostById[post.id] ? 'Deleting' : 'Delete'}
+                                                            </button>
                                                         </div>
 
                                                         {commentsLoadingByPost[post.id] && (
@@ -1127,7 +1207,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
             {/* Bottom Status Bar for Mobile - Positioned above BottomNav to avoid collision */}
             {isMobile && isConnected && (
-                <div className="fixed bottom-[calc(env(safe-area-inset-bottom,20px)+64px)] left-0 right-0 bg-[#0a0a0a]/95 border-t border-white/10 px-6 py-4 flex items-center justify-between z-[40] backdrop-blur-xl">
+                <div className="absolute bottom-0 left-0 right-0 bg-[#0a0a0a]/95 border-t border-white/10 px-6 py-4 flex items-center justify-between z-[40] backdrop-blur-xl native-bottom-bar">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
                         <span className="text-xs font-black text-gray-400 uppercase tracking-widest truncate max-w-[120px]">
@@ -1229,4 +1309,3 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         </div>
     );
 }
-

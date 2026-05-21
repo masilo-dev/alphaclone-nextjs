@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { resolveTenantContextForUser } from '@/lib/quotas/resolveTenantForAiRequest';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { getCampaignLanguageInstruction, resolveCampaignLanguage } from '@/lib/languageUtils';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface LeadForGeneration {
@@ -16,6 +17,8 @@ interface LeadForGeneration {
   pitchAngle: string;
   insights:   string[];
   score:      number;
+  countryCode?: string;
+  country?: string;
 }
 
 interface GeneratedEmail {
@@ -25,6 +28,8 @@ interface GeneratedEmail {
   pitchAngle:    string;
   recipientEmail: string | null;
   recipientSource: 'lead' | 'inferred' | 'none';
+  language?: string;
+  languageLabel?: string;
 }
 
 const PITCH_HOOKS: Record<string, string> = {
@@ -84,6 +89,7 @@ export async function POST(request: Request) {
       customContext = '',
       senderName = 'the AlphaClone team',
       tenantId: bodyTenantId,
+      languageMode = 'auto',
     }: {
       leads: LeadForGeneration[];
       industry: string;
@@ -91,10 +97,14 @@ export async function POST(request: Request) {
       customContext?: string;
       senderName?: string;
       tenantId?: string;
+      languageMode?: string;
     } = body;
 
     if (!leads?.length) {
       return NextResponse.json({ error: 'No leads provided' }, { status: 400 });
+    }
+    if (resolveCampaignLanguage({ languageMode }).mustAsk) {
+      return NextResponse.json({ error: 'Choose a language before generating outreach, or use languageMode "auto".' }, { status: 400 });
     }
 
     const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
@@ -137,6 +147,8 @@ export async function POST(request: Request) {
         hasWebsite: !!l.website,
         rating:     l.rating,
         address:    l.address,
+        countryCode: l.countryCode,
+        country: l.country,
         pitchAngle: l.pitchAngle,
         pitchContext: PITCH_HOOKS[l.pitchAngle] || PITCH_HOOKS['growth-opportunity'],
         qualityScore: l.score,
@@ -151,6 +163,7 @@ SENDER: ${senderName}
 INDUSTRY SEARCHED: ${industry}
 TONE: ${TONE_DESCRIPTIONS[tone] || TONE_DESCRIPTIONS.professional}
 ${customContext ? `ADDITIONAL CONTEXT FROM USER: ${customContext}` : ''}
+${getCampaignLanguageInstruction({ languageMode, country: batchLeadsJson[0]?.country, countryCode: batchLeadsJson[0]?.countryCode, address: batchLeadsJson[0]?.address, company: batchLeadsJson[0]?.business })}
 
 RULES:
 - Each email must be 80–140 words maximum
@@ -223,6 +236,13 @@ Return this exact JSON structure (array of objects):
         : recipientEmail
           ? 'inferred'
           : 'none';
+      const language = resolveCampaignLanguage({
+        languageMode,
+        country: lead?.country,
+        countryCode: lead?.countryCode,
+        address: lead?.address,
+        company: lead?.business_name,
+      });
       return {
         business_name: lead?.business_name || `Lead ${g.index}`,
         subject:       g.subject,
@@ -230,6 +250,8 @@ Return this exact JSON structure (array of objects):
         pitchAngle:    lead?.pitchAngle || 'growth-opportunity',
         recipientEmail,
         recipientSource,
+        language: language.code,
+        languageLabel: language.label,
       };
     });
 

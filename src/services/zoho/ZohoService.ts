@@ -99,7 +99,7 @@ export class ZohoService {
         return config as ZohoConfig;
     }
 
-    private async resolveTenantIdForIntegration(): Promise<string | null> {
+    protected async resolveTenantIdForIntegration(): Promise<string | null> {
         const supabase = this.getSupabaseClient();
         const { data: existing } = await supabase
             .from('integrations')

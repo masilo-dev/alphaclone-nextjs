@@ -474,7 +474,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     );
 
     return (
-        <div className={`flex flex-col bg-[#0f0f0f] rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative h-[calc(100vh-140px)]`}>
+        <div className={`flex flex-col bg-[#0f0f0f] rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative h-[calc(100dvh-140px)]`}>
             
             {/* Expired Token Inline Banner (non-blocking, below header) */}
             {needsReconnect && (

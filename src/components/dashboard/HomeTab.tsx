@@ -5,7 +5,7 @@ import {
   Users, Zap, CheckSquare, MessageCircle, FileText, Calendar, Settings,
   Mail, Bot, Sparkles, Activity, HelpCircle, Bell, Sun, Moon, Coffee,
   LayoutDashboard, Briefcase, BarChart3, Receipt, Phone, Video,
-  Trophy, Cpu, ShoppingBag, Clock, AlertCircle, ChevronRight, Plus
+  Trophy, Cpu, ShoppingBag, Clock, AlertCircle, ChevronRight, Plus, Flame, Brain
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -78,7 +78,11 @@ interface HomeTabProps {
 
 const HomeTab: React.FC<HomeTabProps> = ({
   user, currentStats, filteredProjects, isLoadingProjects,
-  databaseStats, handlePayClick
+  databaseStats, handlePayClick,
+  momentumScore = 0,
+  loginStreak = 0,
+  activity24h = 0,
+  newLeads24h = 0,
 }) => {
   const router = useRouter();
   const { currentTenant } = useTenant();
@@ -189,19 +193,34 @@ const HomeTab: React.FC<HomeTabProps> = ({
     { label: 'Pending Tasks',   value: quickStats.tasks,          color: 'text-orange-400' },
     { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, color: 'text-rose-400' },
   ];
+  const memoryCount = Number(
+    databaseStats?.memoryCount ??
+    databaseStats?.knowledgeCount ??
+    databaseStats?.documents ??
+    databaseStats?.totalDocuments ??
+    0
+  );
+  const commandStats = [
+    { label: 'Momentum', value: `${Math.round(momentumScore)}%`, icon: Zap, color: 'text-teal-400' },
+    { label: 'Day Streak', value: `${loginStreak}d`, icon: Flame, color: loginStreak > 0 ? 'text-orange-400' : 'text-slate-500' },
+    { label: '24h Activity', value: activity24h, icon: Activity, color: 'text-blue-400' },
+    { label: 'Memory', value: memoryCount || 'Live', icon: Brain, color: 'text-purple-400' },
+  ];
+  const primaryModules = MODULES.slice(0, 12);
+  const secondaryModules = MODULES.slice(12);
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-4 pb-24">
       <CelebrationOverlay isOpen={celebration.show} title="Done!" message={celebration.message} onClose={() => setCelebration(p => ({ ...p, show: false }))} />
 
       {/* Greeting */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
             <GreetIcon className="w-3.5 h-3.5 text-teal-400" />
             <span className="text-[13px] text-slate-400 opacity-55">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
           </div>
-          <h2 className="text-[15px] font-semibold text-white">{greeting}, {user.name?.split(' ')[0]}</h2>
+          <h2 className="text-[15px] font-semibold text-white truncate">{greeting}, {user.name?.split(' ')[0]}</h2>
         </div>
         <button onClick={() => router.push('/dashboard/notifications')} className="relative w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 border border-white/5">
           <Bell className="w-4 h-4 text-slate-300" />
@@ -209,43 +228,103 @@ const HomeTab: React.FC<HomeTabProps> = ({
         </button>
       </div>
 
-      <DailyBrief />
-
-      {/* Quick Stats Bar */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-        {statChips.map(s => (
-          <div key={s.label} className="flex-shrink-0 min-w-[120px] bg-slate-900 border border-white/5 rounded-2xl p-3">
-            <div className={`text-[20px] font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-[11px] text-slate-500 mt-0.5 opacity-55 leading-tight">{s.label}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {commandStats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="bg-slate-900 border border-white/5 rounded-xl px-3 py-2.5 flex items-center gap-2 min-w-0">
+              <Icon className={`w-4 h-4 shrink-0 ${s.color}`} />
+              <div className="min-w-0">
+                <div className="text-[15px] font-black text-white leading-none truncate">{s.value}</div>
+                <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider truncate mt-1">{s.label}</div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* App Grid */}
-      <div className="space-y-2">
-        <span className="text-[13px] font-bold uppercase tracking-wider text-slate-400 block">Modules</span>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-x-4 gap-y-5">
-          {MODULES.map((mod, idx) => {
-            const Icon = mod.icon;
-            return (
-              <button
-                key={idx}
-                onClick={() => router.push(mod.href)}
-                className="flex flex-col items-center gap-2 focus:outline-none touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-              >
-                <div className={`relative w-[60px] h-[60px] rounded-2xl ${mod.bg} flex items-center justify-center active:scale-[0.92] transition-transform duration-75`}>
-                  <Icon className={`w-7 h-7 ${mod.accent}`} />
-                  {mod.badge && mod.badge > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                  )}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)] gap-4 items-start">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {statChips.map(s => (
+              <div key={s.label} className="bg-slate-900 border border-white/5 rounded-xl p-3 min-w-0">
+                <div className={`text-[18px] font-black leading-none ${s.color}`}>{s.value}</div>
+                <div className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider leading-tight">{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-3">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
+              <button onClick={() => router.push('/dashboard/settings')} className="text-[11px] text-teal-400 font-bold">Manage</button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+              {primaryModules.map((mod, idx) => {
+                const Icon = mod.icon;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => router.push(mod.href)}
+                    className="h-12 px-2 rounded-xl bg-slate-950/70 border border-white/5 hover:border-teal-500/30 active:scale-[0.98] transition-all flex items-center gap-2 min-w-0"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                  >
+                    <span className={`w-7 h-7 rounded-lg ${mod.bg} flex items-center justify-center shrink-0`}>
+                      <Icon className={`w-4 h-4 ${mod.accent}`} />
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-300 truncate">{mod.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {secondaryModules.map((mod, idx) => {
+                const Icon = mod.icon;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => router.push(mod.href)}
+                    className="h-9 px-2 rounded-lg bg-slate-950/40 border border-white/5 hover:border-white/10 transition-all flex items-center gap-1.5 min-w-0"
+                  >
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${mod.accent}`} />
+                    <span className="text-[10px] font-bold text-slate-400 truncate">{mod.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Recent Activity</span>
+            <button onClick={() => router.push('/dashboard/analytics')} className="text-[12px] text-teal-400 font-bold">View all</button>
+          </div>
+          <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+            {activity.length === 0 && (
+              <div className="py-5 text-center text-[13px] text-slate-500 opacity-55">No recent activity yet.</div>
+            )}
+            {activity.slice(0, 4).map((item, i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+                  <Activity className="w-3.5 h-3.5 text-teal-400" />
                 </div>
-                <span className="text-[11px] font-medium text-slate-300 text-center truncate w-full max-w-[68px]">{mod.label}</span>
-              </button>
-            );
-          })}
+                <span className="flex-1 text-[13px] text-slate-300 truncate">{item.description || item.action}</span>
+                <span className="text-[11px] text-slate-500 opacity-55 flex-shrink-0">
+                  {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
+                </span>
+              </div>
+            ))}
+            <button onClick={() => router.push('/dashboard/analytics')} className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors">
+              <span className="text-[12px] text-teal-400 font-bold">Open activity center</span>
+              <ChevronRight className="w-4 h-4 text-teal-400" />
+            </button>
+          </div>
         </div>
       </div>
+
+      <DailyBrief />
 
       {/* Revenue */}
       <RevenueMomentumCard />
@@ -255,34 +334,6 @@ const HomeTab: React.FC<HomeTabProps> = ({
 
       {/* AI Predictive */}
       <AIPredictiveWidget onActionComplete={(msg) => setCelebration({ show: true, message: msg })} />
-
-      {/* Recent Activity Feed */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-bold uppercase tracking-wider text-slate-400">Recent Activity</span>
-          <button onClick={() => router.push('/dashboard/analytics')} className="text-[13px] text-teal-400 font-bold">View all</button>
-        </div>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
-          {activity.length === 0 && (
-            <div className="py-6 text-center text-[13px] text-slate-500 opacity-55">No recent activity yet.</div>
-          )}
-          {activity.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
-                <Activity className="w-4 h-4 text-teal-400" />
-              </div>
-              <span className="flex-1 text-[15px] text-slate-300 truncate">{item.description || item.action}</span>
-              <span className="text-[13px] text-slate-500 opacity-55 flex-shrink-0">
-                {item.created_at ? new Date(item.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
-              </span>
-            </div>
-          ))}
-          <button onClick={() => router.push('/dashboard/analytics')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors">
-            <span className="text-[13px] text-teal-400 font-bold">View all activity</span>
-            <ChevronRight className="w-4 h-4 text-teal-400" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

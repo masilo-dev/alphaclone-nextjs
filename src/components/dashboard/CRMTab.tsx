@@ -20,6 +20,7 @@ type SubView = 'leads' | 'clients' | 'contacts';
 interface Lead {
   id: string;
   name: string;
+  business_name?: string;
   email?: string;
   phone?: string;
   company?: string;
@@ -35,7 +36,7 @@ interface CRMTabProps {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const getInitials = (name?: string) => {
   if (!name) return '?';
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  return name.split(' ').filter(Boolean).map(n => n[0] || '').join('').toUpperCase().slice(0, 2) || '?';
 };
 const hashColor = (name?: string) => {
   if (!name) return 'bg-slate-500';
@@ -167,7 +168,7 @@ const LeadDetail: React.FC<{ lead: Lead; onBack: () => void; onUpdate: (id: stri
       </div>
 
       {/* Fixed action bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex gap-0 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex gap-0 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
         {[
           { label: 'Message', icon: MessageCircle, color: 'text-sky-400' },
           { label: 'Create Deal', icon: Briefcase, color: 'text-emerald-400', fn: () => onUpdate(lead.id, 'qualified') },
@@ -210,7 +211,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       .select('*')
       .eq('tenant_id', currentTenant.id)
       .order('created_at', { ascending: false });
-    setLeads((data as Lead[]) || []);
+    setLeads(((data as any[]) || []).map((row) => ({
+      ...row,
+      name: row.name || row.business_name || row.company || 'Unknown lead',
+      company: row.company || row.business_name || '',
+      status: (['new', 'contacted', 'qualified', 'disqualified'].includes(row.status) ? row.status : 'new') as LeadStatus,
+      created_at: row.created_at || new Date().toISOString(),
+    })));
     setLoading(false);
   }, [currentTenant?.id]);
 
@@ -224,7 +231,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
   const filtered = leads.filter(l => {
     if (filter !== 'all' && l.status !== filter) return false;
-    if (search && !(l.name || '').toLowerCase().includes(search.toLowerCase()) && !l.email?.toLowerCase().includes(search.toLowerCase())) return false;
+    const haystack = [l.name, l.business_name, l.company, l.email, l.phone].filter(Boolean).join(' ').toLowerCase();
+    if (search && !haystack.includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -301,7 +309,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       {/* FAB */}
       <button
         onClick={() => router.push('/dashboard/crm/new')}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30"
+        className="absolute bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30"
       >
         <UserPlus className="w-6 h-6 text-white" />
       </button>

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         // Fetch subscriptions for target user
         const { data: subscriptions, error: fetchError } = await supabase
             .from('push_subscriptions')
-            .select('id, subscription')
+            .select('id, subscription, endpoint, keys')
             .eq('user_id', targetUserId);
 
         if (fetchError) {
@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
         // Send push to all registered devices of the user
         const results = await Promise.allSettled(
             subscriptions.map((sub: any) => {
-                const subObj = typeof sub.subscription === 'string' ? JSON.parse(sub.subscription) : sub.subscription;
+                const subObj = sub.subscription
+                    ? (typeof sub.subscription === 'string' ? JSON.parse(sub.subscription) : sub.subscription)
+                    : { endpoint: sub.endpoint, keys: sub.keys };
                 return webPush.sendNotification(subObj, payload);
             })
         );

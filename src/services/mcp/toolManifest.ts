@@ -847,6 +847,16 @@ export const MCP_TOOLS = [
           type: 'boolean',
           description: 'If true, distribute sends across selected providers based on remaining daily limit.',
         },
+        language_mode: {
+          type: 'string',
+          enum: ['auto', 'ask', 'en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
+          description: 'Email language. Use "auto" to infer from country/company, "ask" to ask the user before sending, or an explicit language code.',
+        },
+        language: {
+          type: 'string',
+          enum: ['en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
+          description: 'Explicit email language code. Overrides auto inference when provided.',
+        },
       },
       required: ['name', 'subject', 'body_html', 'target_audience', 'from_email', 'from_name'],
     },
@@ -862,9 +872,43 @@ export const MCP_TOOLS = [
         client_ids: { type: 'array', items: { type: 'string' }, description: 'References of clients from get_clients' },
         tone: { type: 'string', description: 'professional | friendly | direct | creative' },
         custom_context: { type: 'string', description: 'Specific strategic instructions for relationship personalization.' },
-        delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' }
+        delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' },
+        language_mode: {
+          type: 'string',
+          enum: ['auto', 'ask', 'en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
+          description: 'Email language. Use "ask" when the user must choose before any send, "auto" to infer from available country/company context, or an explicit language code.',
+        },
+        language: {
+          type: 'string',
+          enum: ['en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
+          description: 'Explicit email language code.',
+        },
       },
       required: [],
+    },
+  },
+  {
+    name: 'queue_email_campaign_send',
+    description: 'Queue an existing AlphaClone email campaign for immediate sending through connected providers such as Zoho, Brevo, Resend, SendGrid, or Gmail. Keeps delivery inside AlphaClone.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        campaign_id: { type: 'string', description: 'Email campaign UUID from create_bulk_email_campaign or dashboard.' },
+      },
+      required: ['campaign_id'],
+    },
+  },
+  {
+    name: 'get_email_campaign_delivery_status',
+    description: 'Get campaign delivery progress, provider routing summary, sent/failed/open/click style recipient statuses, and sample failures.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        campaign_id: { type: 'string', description: 'Email campaign UUID.' },
+      },
+      required: ['campaign_id'],
     },
   },
   {
@@ -901,7 +945,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'upload_document',
-    description: 'Upload a document or file (PDF, Docx, Text) into the workspace document management system. Includes automated cyber-security scanning.',
+    description: 'Upload a document or file (PDF, Docx, Text) into the native AlphaClone Document Hub. Includes automated cyber-security scanning. Does not return a public/external link unless create_public_link is explicitly true.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -911,8 +955,10 @@ export const MCP_TOOLS = [
         file_base64: { type: 'string', description: 'File data encoded as string (data:*;base64,...)' },
         category: { type: 'string', description: 'Optional category (e.g. "Invoice", "Contract")' },
         tags: { type: 'array', items: { type: 'string' } },
-        entity_type: { type: 'string', description: 'Optional entity type (e.g. "client", "lead")' },
-        entity_id: { type: 'string', description: 'Optional entity reference' },
+        entity_type: { type: 'string', description: 'Optional native link target: client, project, lead, deal, contract, invoice, task' },
+        entity_id: { type: 'string', description: 'Optional AlphaClone record id for the link target' },
+        create_public_link: { type: 'boolean', description: 'Only true when the user explicitly asks for an external/public share link.' },
+        public_link_expires_hours: { type: 'number', description: 'Optional expiry for explicit public links. Defaults to 48 hours.' },
       },
       required: ['filename', 'mime_type', 'file_base64'],
     },
@@ -926,6 +972,44 @@ export const MCP_TOOLS = [
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
+    },
+  },
+  {
+    name: 'get_facebook_page_capabilities',
+    description: 'Report the exact Facebook Page capabilities AlphaClone can use for the connected page: publish, media upload, delete, insights, comments, Messenger, and leads.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        page_id: { type: 'string', description: 'Optional page id. If omitted, the first publishable page is used.' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_facebook_post_insights',
+    description: 'Fetch reach and engagement metrics for a Facebook Page post through AlphaClone.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        page_id: { type: 'string', description: 'Optional page id. If omitted, the first publishable page is used.' },
+        post_id: { type: 'string', description: 'Facebook post id.' },
+      },
+      required: ['post_id'],
+    },
+  },
+  {
+    name: 'delete_facebook_post',
+    description: 'Delete a Facebook Page post using the connected AlphaClone Facebook Page token.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        page_id: { type: 'string', description: 'Optional page id. If omitted, the first publishable page is used.' },
+        post_id: { type: 'string', description: 'Facebook post id to delete.' },
+      },
+      required: ['post_id'],
     },
   },
   {
@@ -1168,9 +1252,21 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'get_project_summary',
+    description: 'Get a rich AlphaClone project summary with project fields, task counts, estimated/actual hours, and linked Document Hub files.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        project_id: { type: 'string', description: 'Project UUID from get_projects.' },
+      },
+      required: ['project_id'],
+    },
+  },
+  {
     name: 'create_project',
     description:
-      'Create a new project in the workspace. Use for new initiatives, client workstreams, or internal execution plans.',
+      'Create a new native AlphaClone project in the workspace. Use like an Asana/Azure Boards-style workstream, but keep execution inside AlphaClone with CRM, documents, tasks, and email context linked together.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1179,6 +1275,7 @@ export const MCP_TOOLS = [
         description: { type: 'string', description: 'Optional project brief' },
         status: { type: 'string', description: 'planning | active | on_hold | completed | cancelled' },
         due_date: { type: 'string', description: 'Optional ISO date or datetime' },
+        client_id: { type: 'string', description: 'Optional CRM client id to link this project to.' },
       },
       required: ['name'],
     },
@@ -1226,7 +1323,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_task',
-    description: 'Create a task or schedule a follow-up. Use for reminders, action items, and scheduled calls.',
+    description: 'Create a native AlphaClone task or schedule a follow-up. Use like Asana/Azure task assignment inside AlphaClone. Can link to projects and optionally notify the assignee by email.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1238,6 +1335,7 @@ export const MCP_TOOLS = [
           description: 'Optional. Reference of business project to link (stored as related_to_project).',
         },
         assigned_to: { type: 'string' },
+        notify_assignee: { type: 'boolean', description: 'If true and assigned_to has an email, send the task assignment by AlphaClone email.' },
         due_date: { type: 'string', description: 'ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)' },
         priority: { type: 'string', description: 'low | medium | high | urgent' },
       },
@@ -1431,7 +1529,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_transactional_email',
-    description: 'Send a transactional email using the caller user scoped provider configuration. Supports base64 file attachments for sending PDFs and documents.',
+    description: 'Send a transactional email using the caller user scoped provider configuration. Supports base64 file attachments for sending PDFs and documents. For Claude, Manus, Grok, and other MCP clients: send documents as attachments/native email by default; do not create or include external document links unless the user explicitly asks. If no stored sender signature exists, ask the user for email_signature before sending.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1442,6 +1540,20 @@ export const MCP_TOOLS = [
         html: { type: 'string' },
         text: { type: 'string' },
         from_name: { type: 'string' },
+        email_signature: { type: 'string', description: 'Sender-specific signature. Required when the user has not saved a signature in AlphaClone.' },
+        document_file_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional AlphaClone Document Hub file_uploads IDs. By default these are attached directly to the email.',
+        },
+        include_public_document_links: {
+          type: 'boolean',
+          description: 'Only true when the user explicitly asks for share links. Links are AlphaClone-hosted and expire after 48 hours by default.',
+        },
+        public_link_expires_hours: {
+          type: 'number',
+          description: 'Optional expiry for explicit AlphaClone document share links. Defaults to 48 hours.',
+        },
         attachments: {
           type: 'array',
           description: 'Optional file attachments to include in the email.',
@@ -1859,6 +1971,29 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'get_calendly_status',
+    description: 'Check Calendly connection status and return configured booking URL plus local booking fallback.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'sync_calendly_events',
+    description: 'Sync active Calendly scheduled events into the native AlphaClone calendar so reminders and CRM context work inside AlphaClone.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        user_id: { type: 'string', description: 'Optional calendar owner. Defaults to MCP user.' },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'create_subscription_checkout',
     description: 'Payment/subscription adapter: creates Stripe checkout URL for subscription upgrade.',
     inputSchema: {
@@ -2082,6 +2217,21 @@ export const MCP_TOOLS = [
         intensity: { type: 'string', enum: ['normal', 'high', 'extreme'], default: 'high' }
       },
       required: ['topic'],
+    },
+  },
+  {
+    name: 'generate_grok_video',
+    description: 'Generate a short Grok/xAI video inside AlphaClone using grok-imagine-video. Supports text-to-video and image-to-video via image_url. Returns the xAI video URL when ready.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        prompt: { type: 'string', description: 'Video generation prompt' },
+        image_url: { type: 'string', description: 'Optional source image URL for image-to-video' },
+        duration: { type: 'number', description: 'Duration in seconds, clamped to provider-supported short clips' },
+        poll: { type: 'boolean', description: 'If true, wait for completion. Defaults true.' },
+      },
+      required: ['prompt'],
     },
   },
   {

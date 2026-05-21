@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService, BusinessClient } from '../../../services/businessClientService';
+import { clientActivityService } from '../../../services/clientActivityService';
 import { fileImportService } from '../../../services/fileImportService';
 import {
     Users,
@@ -27,7 +28,9 @@ import {
     FileSpreadsheet,
     Grid3X3,
     CheckCircle2,
-    Sparkles
+    Sparkles,
+    Clock,
+    Send
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
@@ -113,6 +116,63 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [showCommunicationModal, setShowCommunicationModal] = useState(false);
     const [selectedClientForCommunication, setSelectedClientForCommunication] = useState<BusinessClient | null>(null);
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
+    const [clientTimeline, setClientTimeline] = useState<any>(null);
+    const [timelineLoading, setTimelineLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<'timeline' | 'notes' | 'invoices' | 'properties'>('timeline');
+    const [newNoteTitle, setNewNoteTitle] = useState('');
+    const [newNoteDescription, setNewNoteDescription] = useState('');
+    const [noteSubmitting, setNoteSubmitting] = useState(false);
+
+    const loadClientTimeline = useCallback(async (clientId: string) => {
+        setTimelineLoading(true);
+        try {
+            const { timeline } = await clientActivityService.getClientTimeline(clientId);
+            setClientTimeline(timeline);
+        } catch (err) {
+            console.error('Failed to load client timeline:', err);
+        } finally {
+            setTimelineLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (selectedClient?.id) {
+            void loadClientTimeline(selectedClient.id);
+            setActiveTab('timeline'); // Reset tab on change
+        } else {
+            setClientTimeline(null);
+        }
+    }, [selectedClient, loadClientTimeline]);
+
+    const handleAddNote = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedClient?.id || !newNoteTitle.trim()) return;
+
+        setNoteSubmitting(true);
+        try {
+            const { activity, error } = await clientActivityService.addClientNote(
+                selectedClient.id,
+                newNoteTitle.trim(),
+                newNoteDescription.trim(),
+                user.id
+            );
+
+            if (error) {
+                toast.error(`Failed to add note: ${error}`);
+            } else {
+                toast.success('Note added successfully!');
+                setNewNoteTitle('');
+                setNewNoteDescription('');
+                void loadClientTimeline(selectedClient.id);
+            }
+        } catch (err) {
+            console.error('Note add error:', err);
+            toast.error('An error occurred.');
+        } finally {
+            setNoteSubmitting(false);
+        }
+    };
+
     const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
     const [showOutreachModal, setShowOutreachModal] = useState(false);
     const [showOutreachPanel, setShowOutreachPanel] = useState(false);
@@ -826,7 +886,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {/* Right Pane: Details */}
                     <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
                         {selectedClient ? (
-                            <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden">
+                            <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
                                 <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
                                     <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-teal-400 text-sm font-medium">
                                         <ChevronLeft className="w-5 h-5" /> Back
@@ -837,19 +897,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                                    <div className="flex justify-between items-start gap-4 mb-6">
+                                    <div className="flex justify-between items-start gap-4 mb-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-teal-500/10">
                                                 {(selectedClient.name || '?').charAt(0)}
                                             </div>
                                             <div>
-                                                <h2 className="text-2xl font-bold text-white">{selectedClient.name}</h2>
-                                                {selectedClient.industry && <p className="text-slate-400 text-sm">{selectedClient.industry}</p>}
+                                                <h2 className="text-2xl font-bold text-white leading-tight">{selectedClient.name}</h2>
+                                                {selectedClient.industry && <p className="text-slate-400 text-sm mt-0.5">{selectedClient.industry}</p>}
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
                                             <Dropdown
-                                                trigger={<Button size="sm" variant="ghost" className="!p-2" icon={<MoreVertical className="w-5 h-5" />} />}
+                                                trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
                                                 items={[
                                                     { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
                                                     { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
@@ -858,24 +918,258 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
-                                            <p className="text-xs text-slate-400 mb-1">Email</p>
-                                            <div className="flex items-center gap-2 text-white text-sm">
-                                                <Mail className="w-4 h-4 text-teal-500" />
-                                                <span className="truncate">{selectedClient.email || 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
-                                            <p className="text-xs text-slate-400 mb-1">Phone</p>
-                                            <div className="flex items-center gap-2 text-white text-sm">
-                                                <Phone className="w-4 h-4 text-teal-500" />
-                                                <span className="truncate">{selectedClient.phone || 'N/A'}</span>
-                                            </div>
-                                        </div>
+                                    {/* Tabs Header */}
+                                    <div className="flex border-b border-slate-800 mb-4 overflow-x-auto [scrollbar-width:none]">
+                                        <button
+                                            onClick={() => setActiveTab('timeline')}
+                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'timeline'
+                                                    ? 'border-teal-500 text-teal-400'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Timeline
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('notes')}
+                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'notes'
+                                                    ? 'border-teal-500 text-teal-400'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Notes
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('invoices')}
+                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'invoices'
+                                                    ? 'border-teal-500 text-teal-400'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Billing ({clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment')?.length || 0})
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('properties')}
+                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'properties'
+                                                    ? 'border-teal-500 text-teal-400'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Properties
+                                        </button>
                                     </div>
 
-                                    <div className="mt-auto pt-6 border-t border-slate-800">
+                                    {/* Tabs Content */}
+                                    <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar mb-6">
+                                        {activeTab === 'timeline' && (
+                                            <div className="space-y-4">
+                                                {timelineLoading ? (
+                                                    <div className="flex justify-center items-center py-12">
+                                                        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    </div>
+                                                ) : !clientTimeline?.activities || clientTimeline.activities.length === 0 ? (
+                                                    <div className="text-center py-12 text-slate-500 text-sm">
+                                                        No timeline activity or communications found for this client.
+                                                    </div>
+                                                ) : (
+                                                    <div className="relative pl-6 border-l-2 border-slate-800 space-y-6 py-2">
+                                                        {clientTimeline.activities.map((act: any) => {
+                                                            let typeColor = 'bg-slate-800 text-slate-400 border-slate-700';
+                                                            if (act.activity_type === 'message') typeColor = 'bg-indigo-950 text-indigo-400 border-indigo-900';
+                                                            else if (act.activity_type === 'payment') typeColor = 'bg-emerald-950 text-emerald-400 border-emerald-900';
+                                                            else if (act.activity_type === 'invoice') typeColor = 'bg-amber-950 text-amber-400 border-amber-900';
+                                                            else if (act.activity_type === 'contract') typeColor = 'bg-teal-950 text-teal-400 border-teal-900';
+                                                            else if (act.activity_type === 'note') typeColor = 'bg-violet-950 text-violet-400 border-violet-900';
+                                                            else if (act.activity_type === 'meeting' || act.activity_type === 'call') typeColor = 'bg-cyan-950 text-cyan-400 border-cyan-900';
+
+                                                            return (
+                                                                <div key={act.id} className="relative group">
+                                                                    {/* Marker */}
+                                                                    <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 ${typeColor} flex items-center justify-center transition-transform group-hover:scale-125`} />
+                                                                    
+                                                                    <div>
+                                                                        <div className="flex items-center justify-between gap-4">
+                                                                            <h4 className="text-sm font-bold text-slate-200">{act.title}</h4>
+                                                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-950 border border-slate-850 px-2 py-0.5 rounded-full font-mono">
+                                                                                {new Date(act.created_at).toLocaleDateString()}
+                                                                            </span>
+                                                                        </div>
+                                                                        {act.description && (
+                                                                            <p className="text-xs text-slate-400 mt-1 whitespace-pre-wrap leading-relaxed bg-slate-950/40 p-2.5 rounded-xl border border-slate-805/30 group-hover:border-slate-805/65 transition-colors">
+                                                                                {act.description}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'notes' && (
+                                            <div className="space-y-4">
+                                                {/* Add Note Form */}
+                                                <form onSubmit={handleAddNote} className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+                                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">Add Activity Note</h3>
+                                                    <div>
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="Note Title (e.g. Call feedback, Meeting summary)"
+                                                            value={newNoteTitle}
+                                                            onChange={(e) => setNewNoteTitle(e.target.value)}
+                                                            className="!bg-slate-900 border-slate-800 text-white placeholder-slate-500 text-sm"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <textarea
+                                                            placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
+                                                            value={newNoteDescription}
+                                                            onChange={(e) => setNewNoteDescription(e.target.value)}
+                                                            className="w-full bg-slate-900 border border-slate-800 text-white placeholder-slate-500 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 min-h-[80px]"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="flex justify-end">
+                                                        <Button
+                                                            type="submit"
+                                                            size="sm"
+                                                            isLoading={noteSubmitting}
+                                                            className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white"
+                                                            icon={<Send className="w-3.5 h-3.5" />}
+                                                        >
+                                                            Add Note
+                                                        </Button>
+                                                    </div>
+                                                </form>
+
+                                                {/* Notes Feed */}
+                                                <div className="space-y-3 mt-4">
+                                                    {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').length === 0 ? (
+                                                        <p className="text-center py-6 text-xs text-slate-500">No notes written yet. Add one above!</p>
+                                                    ) : (
+                                                        clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').map((note: any) => (
+                                                            <div key={note.id} className="bg-slate-950/40 border border-slate-805 p-3 rounded-2xl">
+                                                                <div className="flex justify-between items-start gap-2 mb-1">
+                                                                    <h4 className="text-xs font-bold text-teal-400">{note.title}</h4>
+                                                                    <span className="text-[10px] text-slate-500 font-mono">
+                                                                        {new Date(note.created_at).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{note.description}</p>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'invoices' && (
+                                            <div className="space-y-3">
+                                                {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').length === 0 ? (
+                                                    <div className="text-center py-12 text-slate-500 text-sm">
+                                                        No billing records or invoices found.
+                                                    </div>
+                                                ) : (
+                                                    clientTimeline.activities.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').map((inv: any) => {
+                                                        const status = inv.metadata?.status || 'paid';
+                                                        const isPaid = status === 'paid';
+                                                        return (
+                                                            <div key={inv.id} className="bg-slate-950/80 border border-slate-850 p-4 rounded-2xl flex justify-between items-center gap-4">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Receipt className={`w-4 h-4 ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`} />
+                                                                        <h4 className="text-sm font-bold text-slate-200">${inv.metadata?.amount?.toLocaleString() || '0.00'}</h4>
+                                                                        <Badge variant={isPaid ? 'success' : 'warning'}>
+                                                                            {status.toUpperCase()}
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <p className="text-xs text-slate-400 mt-1">{inv.description}</p>
+                                                                    {inv.metadata?.due_date && (
+                                                                        <span className="text-[10px] text-slate-500 block mt-1 font-mono">Due: {new Date(inv.metadata.due_date).toLocaleDateString()}</span>
+                                                                    )}
+                                                                </div>
+                                                                {inv.metadata?.invoice_id && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="text-teal-400 hover:text-teal-300"
+                                                                        onClick={() => {
+                                                                            window.open(`/api/billing/invoices/${inv.metadata.invoice_id}/download`, '_blank');
+                                                                        }}
+                                                                    >
+                                                                        Download
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'properties' && (
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <p className="text-xs text-slate-400 mb-1">Email</p>
+                                                        <div className="flex items-center gap-2 text-white text-sm">
+                                                            <Mail className="w-4 h-4 text-teal-500" />
+                                                            <span className="truncate">{selectedClient.email || 'N/A'}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <p className="text-xs text-slate-400 mb-1">Phone</p>
+                                                        <div className="flex items-center gap-2 text-white text-sm">
+                                                            <Phone className="w-4 h-4 text-teal-500" />
+                                                            <span className="truncate">{selectedClient.phone || 'N/A'}</span>
+                                                        </div>
+                                                    </div>
+                                                    {selectedClient.industry && (
+                                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                            <p className="text-xs text-slate-400 mb-1">Industry</p>
+                                                            <p className="text-white text-sm font-semibold">{selectedClient.industry}</p>
+                                                        </div>
+                                                    )}
+                                                    {selectedClient.location && (
+                                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                            <p className="text-xs text-slate-400 mb-1">Location</p>
+                                                            <p className="text-white text-sm font-semibold">{selectedClient.location}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {selectedClient.description && (
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <p className="text-xs text-slate-400 mb-2">Description</p>
+                                                        <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
+                                                    </div>
+                                                )}
+
+                                                {selectedClient.customFields && Object.keys(selectedClient.customFields).length > 0 && (
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <p className="text-xs text-slate-400 mb-3">Custom Fields</p>
+                                                        <div className="space-y-2">
+                                                            {Object.entries(selectedClient.customFields).map(([key, val]) => (
+                                                                <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-800/40 text-xs">
+                                                                    <span className="text-slate-400 font-bold uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
+                                                                    <span className="text-slate-200 font-semibold">{String(val)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Quick Actions Footer */}
+                                    <div className="mt-auto pt-6 border-t border-slate-800 bg-slate-900/50">
                                         <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>

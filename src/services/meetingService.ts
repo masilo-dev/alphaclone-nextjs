@@ -125,32 +125,78 @@ export const meetingService = {
 
             // Send via AlphaClone's internal email API to Attendee
             try {
-                await fetch('/api/email/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: data.attendeeEmail,
-                        subject: `Meeting Confirmed: ${data.title}`,
-                        html: emailHtml,
-                        attachments: [{ filename: 'invite.ics', content: calendarInvite }],
-                    }),
-                });
+                if (typeof window === 'undefined') {
+                    const { data: tenantUserData } = await supabase
+                        .from('tenant_users')
+                        .select('tenant_id')
+                        .eq('user_id', data.hostId)
+                        .limit(1)
+                        .single();
+                    const tenantId = tenantUserData?.tenant_id;
+                    if (tenantId) {
+                        const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+                        await sendEmailServer({
+                            tenantId,
+                            to: data.attendeeEmail,
+                            subject: `Meeting Confirmed: ${data.title}`,
+                            html: emailHtml,
+                            attachments: [{ filename: 'invite.ics', content: calendarInvite }],
+                            userId: data.hostId,
+                        });
+                    } else {
+                        console.error('No tenant_id found for host', data.hostId);
+                    }
+                } else {
+                    await fetch('/api/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: data.attendeeEmail,
+                            subject: `Meeting Confirmed: ${data.title}`,
+                            html: emailHtml,
+                            attachments: [{ filename: 'invite.ics', content: calendarInvite }],
+                        }),
+                    });
+                }
             } catch (emailErr) {
                 console.error('Meeting confirmation email for attendee failed (non-blocking):', emailErr);
             }
 
             // Send to Host
             try {
-                await fetch('/api/email/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: data.hostEmail,
-                        subject: `Meeting Scheduled: ${data.title}`,
-                        html: emailHtml,
-                        attachments: [{ filename: 'invite.ics', content: calendarInvite }],
-                    }),
-                });
+                if (typeof window === 'undefined') {
+                    const { data: tenantUserData } = await supabase
+                        .from('tenant_users')
+                        .select('tenant_id')
+                        .eq('user_id', data.hostId)
+                        .limit(1)
+                        .single();
+                    const tenantId = tenantUserData?.tenant_id;
+                    if (tenantId) {
+                        const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+                        await sendEmailServer({
+                            tenantId,
+                            to: data.hostEmail,
+                            subject: `Meeting Scheduled: ${data.title}`,
+                            html: emailHtml,
+                            attachments: [{ filename: 'invite.ics', content: calendarInvite }],
+                            userId: data.hostId,
+                        });
+                    } else {
+                        console.error('No tenant_id found for host', data.hostId);
+                    }
+                } else {
+                    await fetch('/api/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: data.hostEmail,
+                            subject: `Meeting Scheduled: ${data.title}`,
+                            html: emailHtml,
+                            attachments: [{ filename: 'invite.ics', content: calendarInvite }],
+                        }),
+                    });
+                }
             } catch (emailErr) {
                 console.error('Meeting confirmation email for host failed (non-blocking):', emailErr);
             }

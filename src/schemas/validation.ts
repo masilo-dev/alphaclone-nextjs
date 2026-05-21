@@ -100,6 +100,8 @@ export const outreachSendSchema = z.object({
     deliveryProviders: z.array(z.string()).optional(),
     preferredProvider: z.string().optional(),
     balanceByDailyLimit: z.boolean().optional(),
+    language: z.string().max(40).optional(),
+    languageMode: z.string().max(40).optional(),
 });
 
 const tenantIdSchema = z.string().uuid('Invalid tenantId');

@@ -185,6 +185,8 @@ export async function POST(request: Request) {
       deliveryProviders = [],
       preferredProvider,
       balanceByDailyLimit = false,
+      language,
+      languageMode,
     } = parsed.data;
     const normalizedSubject = normalizeEmailSubject(subject);
     if (!normalizedSubject) {
@@ -593,6 +595,8 @@ export async function POST(request: Request) {
             logId,
             provider: sentProvider,
             fromName: sentFromName,
+            language,
+            languageMode,
           },
         });
       } catch (captureError) {

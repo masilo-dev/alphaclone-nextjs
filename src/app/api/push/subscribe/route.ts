@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
                 .from('push_subscriptions')
                 .update({
                     subscription,
-                    tenant_id: tenantId
+                    endpoint: subscription.endpoint,
+                    keys: subscription.keys || subscription.toJSON?.().keys || null,
+                    tenant_id: tenantId,
+                    updated_at: new Date().toISOString()
                 })
                 .eq('id', existingSub.id);
 
@@ -59,7 +62,9 @@ export async function POST(req: NextRequest) {
                 .insert({
                     user_id: user.id,
                     tenant_id: tenantId,
-                    subscription
+                    subscription,
+                    endpoint: subscription.endpoint,
+                    keys: subscription.keys || subscription.toJSON?.().keys || null
                 });
 
             if (insertError) throw insertError;

@@ -35,6 +35,7 @@ import {
 import { ZohoMailService } from '../zoho/ZohoMailService';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
+import { sendEmailServer } from '../../lib/email/sendEmailServer';
 import {
   cancelRun,
   executeRun,
@@ -48,7 +49,9 @@ import { listBuiltInPlaybooks } from '../automation/playbookService';
 import { emailHelpers } from '../email/emailService';
 import { businessInvoiceService } from '../businessInvoiceService';
 import { AppUrls } from '../../lib/urls';
+import { getCampaignLanguageInstruction, resolveCampaignLanguage } from '../../lib/languageUtils';
 import { fileUploadService } from '../fileUploadService';
+import { publicShareService } from '../publicShareService';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '../../workflows/invoice-lifecycle';
 import { contractLifecycleWorkflow } from '../../workflows/contract-lifecycle';
@@ -75,6 +78,81 @@ const UUID_RE =
 
 function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+async function resolveMcpEmailSignature(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  userId: string,
+  provided?: unknown
+): Promise<string> {
+  const explicit = typeof provided === 'string' ? provided.trim() : '';
+  if (explicit) return explicit;
+
+  const { data } = await supabaseAdmin
+    .from('integrations')
+    .select('type, config')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', userId)
+    .eq('enabled', true)
+    .in('type', ['email_profile', 'brevo', 'resend', 'sendgrid', 'zoho', 'gmail'])
+    .order('updated_at', { ascending: false });
+
+  const rows = Array.isArray(data) ? data : [];
+  const profileRow = rows.find((row: any) => row?.type === 'email_profile');
+  const orderedRows = profileRow ? [profileRow, ...rows.filter((row: any) => row !== profileRow)] : rows;
+  for (const row of orderedRows) {
+    const config = (row?.config || {}) as Record<string, unknown>;
+    const saved = typeof config.signature === 'string' ? config.signature.trim() : '';
+    if (saved) return saved;
+  }
+
+  throw new Error('email_signature is required before sending. Ask the user for the sender signature they want on this email, or save one in AlphaClone Email Sender Profile.');
+}
+
+function appendSignatureToEmail(input: { html?: unknown; text?: unknown }, signature: string) {
+  const footer = "Sent through AlphaClone Systems. This message and any attached documents were sent from the sender's AlphaClone workspace.";
+  const textSignature = `${signature}\n\n--\n${footer}`;
+  const htmlSignature = `${signature.replace(/\n/g, '<br>')}<br><br><small style="color:#64748b">${footer}</small>`;
+
+  return {
+    html: input.html ? `${String(input.html)}<br><br>${htmlSignature}` : undefined,
+    text: input.text ? `${String(input.text)}\n\n${textSignature}` : undefined,
+    fallbackText: `Please see the attached document.\n\n${textSignature}`,
+  };
+}
+
+function appendDocumentLinksToEmail(
+  input: { html?: unknown; text?: unknown; fallbackText?: string },
+  links: Array<{ name: string; url: string; expiresAt: string }>
+): { html?: string; text?: string; fallbackText: string } {
+  if (!links.length) {
+    return {
+      html: input.html ? String(input.html) : undefined,
+      text: input.text ? String(input.text) : undefined,
+      fallbackText: input.fallbackText || 'Please see the attached document.',
+    };
+  }
+
+  const textLinks = [
+    'Secure AlphaClone document links:',
+    ...links.map((link) => `- ${link.name}: ${link.url} (expires ${link.expiresAt})`),
+  ].join('\n');
+  const htmlLinks = [
+    '<p><strong>Secure AlphaClone document links</strong></p>',
+    '<ul>',
+    ...links.map(
+      (link) =>
+        `<li><a href="${link.url}">${link.name}</a> <span style="color:#64748b">(expires ${link.expiresAt})</span></li>`
+    ),
+    '</ul>',
+  ].join('');
+
+  return {
+    html: input.html ? `${String(input.html)}<br><br>${htmlLinks}` : undefined,
+    text: input.text ? `${String(input.text)}\n\n${textLinks}` : undefined,
+    fallbackText: `${input.fallbackText || 'Please review the linked documents.'}\n\n${textLinks}`,
+  };
 }
 
 const DEAL_STAGES = new Set(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']);
@@ -1345,69 +1423,104 @@ class AlphaCloneMCPServer {
           if (linkedin_url) enrichmentLines.push(`LinkedIn: ${linkedin_url}`);
           const enrichedNotes = [notes, ...enrichmentLines].filter(Boolean).join('\n') || null;
 
-          const primaryInsert = await supabaseAdmin
+          // Deduplication check
+          const normalizedPhone = normalizePhoneForStorage(phone);
+          let dupQuery = supabaseAdmin
             .from('leads')
-            .insert(cleanObjectPlaceholders({
-              tenant_id,
-              owner_id,
-              business_name: primaryName,
-              email: email || null,
-              phone: normalizePhoneForStorage(phone),
-              industry: industry || '',
-              location: location || null,
-              status: 'new',
-              stage: 'lead',
-              source: resolvedSource,
-              notes: enrichedNotes,
-              linkedin_url: linkedin_url || null,
-              decision_maker_name: decision_maker_name || null,
-            }))
             .select('id, business_name, email, status')
-            .single();
+            .eq('tenant_id', tenant_id);
+          
+          const dupOrs = [`business_name.ilike.${primaryName.replace(/[%_]/g, '\\$&')}`];
+          if (email) dupOrs.push(`email.ilike.${String(email).trim()}`);
+          if (normalizedPhone) dupOrs.push(`phone.eq.${normalizedPhone}`);
+          
+          dupQuery = dupQuery.or(dupOrs.join(','));
+          const { data: existingLeads, error: dupError } = await dupQuery.limit(1);
+          
+          let data: any;
+          let error: any;
+          let duplicated = false;
 
-          // Fallback for legacy schemas where one of status/stage/owner_id may differ.
-          let data = primaryInsert.data;
-          let error = primaryInsert.error;
-          if (error) {
-            const fallbackInsert = await supabaseAdmin
+          if (!dupError && existingLeads && existingLeads.length > 0) {
+            console.log(`[MCP create_lead] Lead already exists: ${existingLeads[0].business_name} (ID: ${existingLeads[0].id}). Returning existing.`);
+            data = existingLeads[0];
+            duplicated = true;
+          } else {
+            const primaryInsert = await supabaseAdmin
               .from('leads')
-              .insert({
+              .insert(cleanObjectPlaceholders({
                 tenant_id,
+                owner_id,
                 business_name: primaryName,
                 email: email || null,
-                phone: normalizePhoneForStorage(phone),
+                phone: normalizedPhone,
                 industry: industry || '',
                 location: location || null,
+                status: 'new',
+                stage: 'lead',
                 source: resolvedSource,
-                notes: notes || null,
-              })
+                notes: enrichedNotes,
+                linkedin_url: linkedin_url || null,
+                decision_maker_name: decision_maker_name || null,
+              }))
               .select('id, business_name, email, status')
               .single();
-            data = fallbackInsert.data;
-            error = fallbackInsert.error;
+
+            // Fallback for legacy schemas where one of status/stage/owner_id may differ.
+            data = primaryInsert.data;
+            error = primaryInsert.error;
+            if (error) {
+              const fallbackInsert = await supabaseAdmin
+                .from('leads')
+                .insert({
+                  tenant_id,
+                  business_name: primaryName,
+                  email: email || null,
+                  phone: normalizedPhone,
+                  industry: industry || '',
+                  location: location || null,
+                  source: resolvedSource,
+                  notes: notes || null,
+                })
+                .select('id, business_name, email, status')
+                .single();
+              data = fallbackInsert.data;
+              error = fallbackInsert.error;
+            }
+
+            if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
+
+            // Verify visibility to ensure it's not a silent failure
+            const { data: verified } = await supabaseAdmin.from('leads').select('id').eq('id', data?.id).single();
+            if (!verified) throw new Error('Lead creation failed: Record not found in database after insertion.');
           }
 
-          if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
-
-          // Verify visibility to ensure it's not a silent failure
-          const { data: verified } = await supabaseAdmin.from('leads').select('id').eq('id', data?.id).single();
-          if (!verified) throw new Error('Lead creation failed: Record not found in database after insertion.');
-
-          await enqueueMcpEvent(
-            supabaseAdmin,
-            tenant_id,
-            owner_id,
-            'on_new_lead_created',
-            { lead_id: data?.id || null, business_name: data?.business_name || primaryName, source: resolvedSource }
-          );
-          result = {
-            content: [
-              {
-                type: 'text',
-                text: `SUCCESS: Lead "${data?.business_name || primaryName}" (ID: ${data?.id}) has been added to the AlphaClone CRM and is now visible in your Leads pipeline. I have initialized the pursuit strategy for this lead.`,
-              },
-            ],
-          };
+          if (duplicated) {
+            result = {
+              content: [
+                {
+                  type: 'text',
+                  text: `SUCCESS: Lead "${data?.business_name || primaryName}" (ID: ${data?.id}) already exists in the AlphaClone CRM (duplicated check). Returning the existing lead record.`,
+                },
+              ],
+            };
+          } else {
+            await enqueueMcpEvent(
+              supabaseAdmin,
+              tenant_id,
+              owner_id,
+              'on_new_lead_created',
+              { lead_id: data?.id || null, business_name: data?.business_name || primaryName, source: resolvedSource }
+            );
+            result = {
+              content: [
+                {
+                  type: 'text',
+                  text: `SUCCESS: Lead "${data?.business_name || primaryName}" (ID: ${data?.id}) has been added to the AlphaClone CRM and is now visible in your Leads pipeline. I have initialized the pursuit strategy for this lead.`,
+                },
+              ],
+            };
+          }
           break;
         }
 
@@ -1591,7 +1704,7 @@ class AlphaCloneMCPServer {
           const { status } = a;
           let query = supabaseAdmin
             .from('business_projects')
-            .select('id, name, status, due_date, description, created_at')
+            .select('id, name, status, due_date, description, client_id, created_at')
             .eq('tenant_id', tenant_id)
             .limit(50);
           if (status) query = query.eq('status', status);
@@ -1601,13 +1714,70 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'get_project_summary': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const projectId = String(a.project_id || '').trim();
+          if (!isUuidString(projectId)) throw new Error('project_id must be a valid business project UUID from get_projects');
+
+          const { data: project, error: projectError } = await supabaseAdmin
+            .from('business_projects')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .eq('id', projectId)
+            .single();
+          if (projectError || !project) {
+            throw supabaseErrorToMcpClientError('get_project_summary', projectError?.message || 'Project not found');
+          }
+
+          const [{ data: tasks }, { data: documents }] = await Promise.all([
+            supabaseAdmin
+              .from('tasks')
+              .select('id, title, status, priority, due_date, assigned_to, estimated_hours, actual_hours')
+              .eq('tenant_id', tenant_id)
+              .eq('related_to_project', projectId)
+              .limit(500),
+            supabaseAdmin
+              .from('file_uploads')
+              .select('id, original_filename, category, file_type, created_at')
+              .eq('tenant_id', tenant_id)
+              .eq('entity_type', 'project')
+              .eq('entity_id', projectId)
+              .limit(100),
+          ]);
+
+          const taskRows = tasks || [];
+          const taskStatusCounts = taskRows.reduce((acc: Record<string, number>, task: any) => {
+            const status = String(task.status || 'unknown');
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+          }, {});
+          const estimatedHours = taskRows.reduce((sum: number, task: any) => sum + (Number(task.estimated_hours) || 0), 0);
+          const actualHours = taskRows.reduce((sum: number, task: any) => sum + (Number(task.actual_hours) || 0), 0);
+
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            project,
+            task_summary: {
+              total: taskRows.length,
+              by_status: taskStatusCounts,
+              estimated_hours: estimatedHours,
+              actual_hours: actualHours,
+            },
+            documents: documents || [],
+          }, null, 2) }] };
+          break;
+        }
+
         // â”€â”€ create_project â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'create_project': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { name, description, status = 'planning', due_date } = a;
+          const { name, description, status = 'planning', due_date, client_id } = a;
           if (typeof name !== 'string' || !name.trim()) {
             throw new Error('name is required');
+          }
+          if (client_id != null && client_id !== '' && !isUuidString(client_id)) {
+            throw new Error('client_id must be a valid CRM client UUID or omitted');
           }
 
           const { data, error } = await supabaseAdmin
@@ -1618,8 +1788,9 @@ class AlphaCloneMCPServer {
               description: typeof description === 'string' ? description : null,
               status: typeof status === 'string' && status.trim() ? status.trim() : 'planning',
               due_date: typeof due_date === 'string' && due_date.trim() ? due_date.trim() : null,
+              client_id: client_id && isUuidString(client_id) ? client_id.trim() : null,
             })
-            .select('id, name, status, due_date, created_at')
+            .select('id, name, status, due_date, client_id, created_at')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_project', error.message);
           result = { content: [{ type: 'text', text: `Project created: ${JSON.stringify(data)}` }] };
@@ -1688,7 +1859,7 @@ class AlphaCloneMCPServer {
         case 'create_task': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { title, description, project_id, assigned_to, due_date, priority = 'medium' } = a;
+          const { title, description, project_id, assigned_to, due_date, priority = 'medium', notify_assignee } = a;
           if (!title || typeof title !== 'string' || !title.trim()) {
             throw new Error('title is required');
           }
@@ -1716,7 +1887,35 @@ class AlphaCloneMCPServer {
             .select('id, title, due_date, priority, related_to_project')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_task', error.message);
-          result = { content: [{ type: 'text', text: `Task created: ${JSON.stringify(data)}` }] };
+          let notificationSent = false;
+          if (notify_assignee === true && assigned_to && isUuidString(assigned_to)) {
+            const { data: profile } = await supabaseAdmin
+              .from('profiles')
+              .select('email, name')
+              .eq('id', assigned_to.trim())
+              .maybeSingle();
+            if (profile?.email) {
+              const emailResult = await sendEmailServer({
+                tenantId: tenant_id,
+                userId: this.ctx?.userId || undefined,
+                to: profile.email,
+                subject: `New task assigned: ${title.trim()}`,
+                text: [
+                  `Hi ${profile.name || 'there'},`,
+                  '',
+                  `You have been assigned a task in AlphaClone: ${title.trim()}`,
+                  description ? `Details: ${description}` : '',
+                  due_date ? `Due: ${due_date}` : '',
+                  '',
+                  'Open your AlphaClone task board to review and update progress.',
+                ].filter(Boolean).join('\n'),
+                isPlatformNotification: true,
+                templateName: 'mcpTaskAssigned',
+              });
+              notificationSent = Boolean(emailResult.success);
+            }
+          }
+          result = { content: [{ type: 'text', text: `Task created: ${JSON.stringify({ ...data, assignee_notified: notificationSent })}` }] };
           break;
         }
 
@@ -1817,9 +2016,19 @@ class AlphaCloneMCPServer {
             ? a.delivery_providers.map((p: unknown) => String(p).trim().toLowerCase()).filter(Boolean)
             : [];
           const balanceByDailyLimit = a.balance_by_daily_limit !== false;
+          const language = resolveCampaignLanguage({
+            languageMode: a.language_mode,
+            language: a.language,
+            country: a.country,
+            countryCode: a.country_code,
+            company: campaignName,
+          });
 
           if (!campaignName || !subject || !body_html || !target_audience || !from_name || !from_email) {
             throw new Error('Missing required fields for bulk email campaign.');
+          }
+          if (language.mustAsk) {
+            throw new Error('language_mode is "ask". Ask the user which language to use, then call this tool again with language or language_mode set to that language code.');
           }
 
           let recipients: { id: string; email: string }[] = [];
@@ -1852,6 +2061,9 @@ class AlphaCloneMCPServer {
             created_by: createdByUserId,
             metadata: {
               bodyHtml: body_html,
+              language: language.code,
+              languageMode: language.mode,
+              languageInstruction: getCampaignLanguageInstruction({ languageMode: language.code }),
               deliverySettings: {
                 selectedProviders: deliveryProviders,
                 balanceByDailyLimit,
@@ -1887,14 +2099,106 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'queue_email_campaign_send': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const campaignId = String(a.campaign_id || '').trim();
+          if (!isUuidString(campaignId)) throw new Error('campaign_id must be a valid email campaign UUID');
+
+          const { data: campaign, error: campaignErr } = await supabaseAdmin
+            .from('email_campaigns')
+            .select('id, name, status, tenant_id, total_recipients')
+            .eq('tenant_id', tenant_id)
+            .eq('id', campaignId)
+            .single();
+          if (campaignErr || !campaign) {
+            throw supabaseErrorToMcpClientError('queue_email_campaign_send', campaignErr?.message || 'Campaign not found');
+          }
+
+          await supabaseAdmin
+            .from('email_campaigns')
+            .update({ status: 'queued', queued_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .eq('id', campaignId);
+
+          sendScheduledCampaignServer(campaignId).catch((err) =>
+            console.error('MCP campaign queue send error:', err)
+          );
+
+          result = {
+            content: [{ type: 'text', text: JSON.stringify({
+              campaign_id: campaignId,
+              campaign_name: campaign.name,
+              status: 'queued',
+              total_recipients: campaign.total_recipients || 0,
+              provider_routing: 'AlphaClone will use connected Zoho, Brevo, Resend, SendGrid, Gmail providers according to campaign settings.',
+            }, null, 2) }],
+          };
+          break;
+        }
+
+        case 'get_email_campaign_delivery_status': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const campaignId = String(a.campaign_id || '').trim();
+          if (!isUuidString(campaignId)) throw new Error('campaign_id must be a valid email campaign UUID');
+
+          const { data: campaign, error: campaignErr } = await supabaseAdmin
+            .from('email_campaigns')
+            .select('id, name, subject, status, total_recipients, total_sent, sent_at, completed_at, metadata')
+            .eq('tenant_id', tenant_id)
+            .eq('id', campaignId)
+            .single();
+          if (campaignErr || !campaign) {
+            throw supabaseErrorToMcpClientError('get_email_campaign_delivery_status', campaignErr?.message || 'Campaign not found');
+          }
+
+          const { data: recipients, error: recipientErr } = await supabaseAdmin
+            .from('campaign_recipients')
+            .select('status, metadata, sent_at, error_message')
+            .eq('tenant_id', tenant_id)
+            .eq('campaign_id', campaignId)
+            .limit(10000);
+          if (recipientErr) throw supabaseErrorToMcpClientError('get_email_campaign_delivery_status', recipientErr.message);
+
+          const byStatus: Record<string, number> = {};
+          const byProvider: Record<string, number> = {};
+          const failures: string[] = [];
+          for (const row of recipients || []) {
+            const status = String(row.status || 'unknown');
+            byStatus[status] = (byStatus[status] || 0) + 1;
+            const provider = String((row.metadata as any)?.provider || 'unknown');
+            byProvider[provider] = (byProvider[provider] || 0) + 1;
+            if (status === 'failed' && row.error_message && failures.length < 10) failures.push(String(row.error_message));
+          }
+
+          result = {
+            content: [{ type: 'text', text: JSON.stringify({
+              campaign,
+              recipients_total: recipients?.length || 0,
+              by_status: byStatus,
+              by_provider: byProvider,
+              sample_failures: failures,
+            }, null, 2) }],
+          };
+          break;
+        }
+
         case 'send_batch_outreach': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const { lead_ids = [], client_ids = [], tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
+          const batchLanguage = resolveCampaignLanguage({
+            languageMode: a.language_mode,
+            language: a.language,
+          });
           
           if (lead_ids.length === 0 && client_ids.length === 0) {
             throw new Error('Provide at least one lead_id or client_id');
+          }
+          if (batchLanguage.mustAsk) {
+            throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
           }
           
           const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 20);
@@ -1923,6 +2227,13 @@ class AlphaCloneMCPServer {
                 Target Tone: ${tone}.
                 User Context: ${custom_context}.
                 Business Context: ${JSON.stringify(entity.metadata || {})}.
+                ${getCampaignLanguageInstruction({
+                  languageMode: batchLanguage.code,
+                  country: (entity as any).country,
+                  countryCode: (entity as any).country_code,
+                  address: (entity as any).address,
+                  company: entity.business_name || entity.name,
+                })}
                 
                 Rules:
                 - Max 120 words.
@@ -1963,7 +2274,7 @@ class AlphaCloneMCPServer {
                   provider: providerConfig.provider,
                 });
                 
-                return { name: entity.business_name || entity.name, status: 'sent' };
+                return { name: entity.business_name || entity.name, status: 'sent', language: batchLanguage.code };
              } catch (err: any) {
                 return { name: entity.business_name || entity.name, status: 'failed', error: err.message };
              }
@@ -2238,7 +2549,17 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { filename, mime_type, file_base64, category, tags = [], entity_type, entity_id } = a;
+          const {
+            filename,
+            mime_type,
+            file_base64,
+            category,
+            tags = [],
+            entity_type,
+            entity_id,
+            create_public_link,
+            public_link_expires_hours,
+          } = a;
           
           if (typeof filename !== 'string' || !filename.trim()) throw new Error('filename is required');
           if (typeof mime_type !== 'string' || !mime_type.trim()) throw new Error('mime_type is required');
@@ -2268,7 +2589,39 @@ class AlphaCloneMCPServer {
             throw new Error(uploadRes.error || 'Failed to upload document');
           }
 
-          result = { content: [{ type: 'text', text: `Document uploaded and secured: ${JSON.stringify(uploadRes)}` }] };
+          const response: Record<string, unknown> = {
+            success: true,
+            file_id: uploadRes.fileId,
+            stored_in: 'AlphaClone Document Hub',
+            linked_to: entity_type && entity_id ? { entity_type, entity_id } : null,
+            public_link_created: false,
+          };
+
+          if (create_public_link === true) {
+            if (!uploadRes.fileId) throw new Error('Document uploaded, but no file id was returned for public sharing.');
+            const { data: fileRecord, error: fileErr } = await supabaseAdmin
+              .from('file_uploads')
+              .select('storage_path, original_filename')
+              .eq('id', uploadRes.fileId)
+              .eq('tenant_id', tenant_id)
+              .single();
+            if (fileErr || !fileRecord?.storage_path) {
+              throw supabaseErrorToMcpClientError('upload_document', fileErr?.message || 'Uploaded file record was not found');
+            }
+            const share = await publicShareService.createShare({
+              tenantId: tenant_id,
+              bucket: 'uploads',
+              filePath: fileRecord.storage_path,
+              originalName: fileRecord.original_filename || filename.trim(),
+              createdBy: user_id,
+              expiresInHours: Number(public_link_expires_hours) > 0 ? Number(public_link_expires_hours) : 48,
+            });
+            response.public_link_created = true;
+            response.public_share_url = share.url;
+            response.public_share_expires_at = share.expiresAt;
+          }
+
+          result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
           break;
         }
 
@@ -2299,6 +2652,101 @@ class AlphaCloneMCPServer {
             };
           });
           result = { content: [{ type: 'text', text: JSON.stringify({ connected: identities.length > 0, identities }, null, 2) }] };
+          break;
+        }
+
+        case 'get_facebook_page_capabilities': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
+          let integration: FacebookIntegrationIdentity | null = null;
+          let query = supabaseAdmin
+            .from('facebook_integrations')
+            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+            .eq('tenant_id', tenant_id)
+            .eq('user_id', user_id)
+            .eq('is_active', true);
+          if (pageId) query = query.eq('page_id', pageId);
+          const { data: rows, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_facebook_page_capabilities', error.message);
+          integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
+          if (!integration) throw new Error('No active Facebook Page integration found.');
+          pageId = integration.page_id;
+          const tasks = Array.isArray(integration.metadata?.page_tasks)
+            ? (integration.metadata.page_tasks as unknown[]).map((task) => String(task))
+            : [];
+          const canCreateContent = tasks.includes('CREATE_CONTENT') || tasks.includes('MANAGE') || tasks.includes('ADVERTISE');
+          const hasPageToken = Boolean(integration.page_access_token);
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            page_id: pageId,
+            page_name: integration.page_name,
+            page_tasks: tasks,
+            scope_mode: integration.metadata?.scope_mode || 'advanced',
+            requested_scopes: integration.metadata?.requested_scopes || [],
+            capabilities: {
+              publish_posts: hasPageToken && canCreateContent,
+              upload_media: hasPageToken && canCreateContent,
+              delete_posts: hasPageToken && canCreateContent,
+              read_posts: hasPageToken,
+              read_insights: hasPageToken,
+              read_comments: hasPageToken,
+              manage_comments: hasPageToken && canCreateContent,
+              messenger: hasPageToken,
+              leads: hasPageToken,
+            },
+          }, null, 2) }] };
+          break;
+        }
+
+        case 'get_facebook_post_insights': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const postId = String(a.post_id || '').trim();
+          if (!postId) throw new Error('post_id is required');
+          let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
+          let integration: FacebookIntegrationIdentity | null = null;
+          let query = supabaseAdmin
+            .from('facebook_integrations')
+            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+            .eq('tenant_id', tenant_id)
+            .eq('is_active', true);
+          if (pageId) query = query.eq('page_id', pageId);
+          const { data: rows, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_facebook_post_insights', error.message);
+          integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
+          if (!integration?.page_access_token) throw new Error('No Facebook Page token found for insights.');
+          const metrics = ['post_impressions', 'post_impressions_unique', 'post_engaged_users', 'post_clicks'].join(',');
+          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.page_access_token)}`);
+          const fb = await resp.json();
+          if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook insights unavailable');
+          result = { content: [{ type: 'text', text: JSON.stringify({ post_id: postId, insights: fb.data || [] }, null, 2) }] };
+          break;
+        }
+
+        case 'delete_facebook_post': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const postId = String(a.post_id || '').trim();
+          if (!postId) throw new Error('post_id is required');
+          let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
+          let integration: FacebookIntegrationIdentity | null = null;
+          let query = supabaseAdmin
+            .from('facebook_integrations')
+            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
+            .eq('tenant_id', tenant_id)
+            .eq('is_active', true);
+          if (pageId) query = query.eq('page_id', pageId);
+          const { data: rows, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('delete_facebook_post', error.message);
+          integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
+          if (!integration?.page_access_token) throw new Error('No Facebook Page token found for delete.');
+          pageId = integration.page_id;
+          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.page_access_token)}`, { method: 'DELETE' });
+          const fb = await resp.json().catch(() => ({}));
+          if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook delete failed');
+          await supabaseAdmin.from('facebook_page_posts').delete().eq('fb_post_id', postId).eq('page_id', pageId);
+          result = { content: [{ type: 'text', text: JSON.stringify({ deleted: true, post_id: postId, page_id: pageId }, null, 2) }] };
           break;
         }
 
@@ -3175,6 +3623,7 @@ class AlphaCloneMCPServer {
             .from('business_invoices')
             .update({
               status: 'sent',
+              is_public: true,
               sent_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             })
@@ -4101,10 +4550,6 @@ class AlphaCloneMCPServer {
           const to = String(a.to || '').trim();
           const subject = String(a.subject || '').trim();
           if (!to || !subject) throw new Error('to and subject are required');
-          const resolved = await resolveEmailProviderConfig({ tenantId: tenant_id, preferredUserId: user_id, fallbackToEnv: false });
-          if (!resolved?.provider || !resolved?.apiKey) {
-            throw new Error('No provider configured for this user. Connect Resend/SendGrid/Brevo first.');
-          }
 
           // Normalise attachments from the MCP schema (content_type -> contentType)
           const rawAttachments = Array.isArray(a.attachments) ? a.attachments : [];
@@ -4116,21 +4561,80 @@ class AlphaCloneMCPServer {
               contentType: String(att.content_type || att.contentType || 'application/octet-stream'),
             }));
 
-          const sendResult = await sendWithProviderSdk(resolved.provider as EmailProvider, {
-            apiKey: resolved.apiKey,
-            fromEmail: resolved.fromEmail || String(a.from_email || ''),
-            fromName: String(a.from_name || 'AlphaClone Systems'),
+          const documentFileIds = Array.isArray(a.document_file_ids)
+            ? a.document_file_ids.map((id: unknown) => String(id || '').trim()).filter(isUuidString)
+            : [];
+          const includePublicDocumentLinks = a.include_public_document_links === true;
+          const publicLinkExpiresHours = Number(a.public_link_expires_hours) > 0
+            ? Number(a.public_link_expires_hours)
+            : 48;
+          const publicDocumentLinks: Array<{ name: string; url: string; expiresAt: string }> = [];
+
+          if (documentFileIds.length > 0) {
+            const { data: fileRows, error: fileError } = await supabaseAdmin
+              .from('file_uploads')
+              .select('id, storage_path, original_filename, file_type')
+              .eq('tenant_id', tenant_id)
+              .in('id', documentFileIds);
+            if (fileError) throw supabaseErrorToMcpClientError('send_transactional_email', fileError.message);
+
+            for (const file of fileRows || []) {
+              const name = String(file.original_filename || 'AlphaClone document');
+              if (includePublicDocumentLinks) {
+                const share = await publicShareService.createShare({
+                  tenantId: tenant_id,
+                  bucket: 'uploads',
+                  filePath: String(file.storage_path),
+                  originalName: name,
+                  createdBy: user_id,
+                  expiresInHours: publicLinkExpiresHours,
+                });
+                publicDocumentLinks.push({ name, url: share.url, expiresAt: share.expiresAt });
+              } else {
+                const { data: blob, error: downloadError } = await supabaseAdmin.storage
+                  .from('uploads')
+                  .download(String(file.storage_path));
+                if (downloadError || !blob) {
+                  throw supabaseErrorToMcpClientError(
+                    'send_transactional_email',
+                    downloadError?.message || `Could not attach ${name}`
+                  );
+                }
+                const arrayBuffer = await blob.arrayBuffer();
+                attachments.push({
+                  filename: name,
+                  content: Buffer.from(arrayBuffer).toString('base64'),
+                  contentType: String(file.file_type || 'application/octet-stream'),
+                });
+              }
+            }
+          }
+
+          const signature = await resolveMcpEmailSignature(supabaseAdmin, tenant_id, user_id, a.email_signature);
+          const signedBody = appendDocumentLinksToEmail(
+            appendSignatureToEmail({ html: a.html, text: a.text }, signature),
+            publicDocumentLinks
+          );
+          const sendResult = await sendEmailServer({
+            tenantId: tenant_id,
+            userId: user_id,
             to,
             subject,
-            html: a.html ? String(a.html) : undefined,
-            text: a.text ? String(a.text) : undefined,
+            fromName: String(a.from_name || 'AlphaClone Systems'),
+            html: signedBody.html,
+            text: signedBody.text || (!signedBody.html ? signedBody.fallbackText : undefined),
             attachments: attachments.length > 0 ? attachments : undefined,
+            templateName: 'mcpTransactionalEmail',
           });
-          if (!sendResult.ok) throw new Error(sendResult.error || 'Transactional email failed');
+          if (!sendResult.success) throw new Error(sendResult.error || 'Transactional email failed');
           result = { content: [{ type: 'text', text: JSON.stringify({
             provider: sendResult.provider,
             id: sendResult.emailId,
             attachments_sent: attachments.length,
+            document_file_ids_used: documentFileIds,
+            public_document_links_created: publicDocumentLinks.length,
+            public_document_links_expire_hours: publicDocumentLinks.length ? publicLinkExpiresHours : null,
+            external_document_link_created: false,
           }, null, 2) }] };
           break;
         }
@@ -5301,6 +5805,39 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        case 'get_calendly_status': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const { data: tenant, error } = await supabaseAdmin
+            .from('tenants')
+            .select('settings')
+            .eq('id', tenant_id)
+            .maybeSingle();
+          if (error) throw supabaseErrorToMcpClientError('get_calendly_status', error.message);
+          const settings = (tenant?.settings || {}) as Record<string, any>;
+          const calendly = settings.calendly || {};
+          const booking = settings.booking || {};
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            calendly_connected: Boolean(calendly.enabled && calendly.accessToken && calendly.calendlyUserUri),
+            calendly_event_url: calendly.eventUrl || null,
+            local_booking_enabled: Boolean(booking.enabled && booking.slug),
+            local_booking_url: booking.slug ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesystems.com'}/book/${booking.slug}` : null,
+            recommended: calendly.enabled ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.' : 'Connect Calendly or enable the native AlphaClone booking link in Meetings settings.',
+          }, null, 2) }] };
+          break;
+        }
+
+        case 'sync_calendly_events': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = a.user_id ? this.requireProfileUser(a) : (this.ctx?.userId || null);
+          if (!user_id) throw new Error('user_id is required when no MCP user context is available');
+          const { calendlyService } = await import('../calendlyService');
+          const syncedCount = await calendlyService.syncUpcomingEvents(user_id, tenant_id);
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, synced_count: syncedCount }, null, 2) }] };
+          break;
+        }
+
         case 'create_subscription_checkout': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -5523,6 +6060,21 @@ Return ONLY a JSON array of 60 objects:
           
           const script = await xaiVideoGenerationService.generateViralScript(topic, intensity as any);
           result = { content: [{ type: 'text', text: JSON.stringify(script, null, 2) }] };
+          break;
+        }
+
+        case 'generate_grok_video': {
+          const a = args as Record<string, any>;
+          this.requireTenant(a);
+          const prompt = String(a.prompt || '').trim();
+          if (!prompt) throw new Error('prompt is required');
+          const video = await xaiVideoGenerationService.generateVideo({
+            prompt,
+            imageUrl: a.image_url ? String(a.image_url).trim() : undefined,
+            duration: a.duration ? Number(a.duration) : undefined,
+            poll: a.poll !== false,
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify(video, null, 2) }] };
           break;
         }
 

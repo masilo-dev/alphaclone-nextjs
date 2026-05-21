@@ -89,7 +89,7 @@ const InvoiceRow: React.FC<{ invoice: Invoice; onDelete: (id: string) => void; o
 
 // ── Invoice Detail ─────────────────────────────────────────────────────────────
 const InvoiceDetail: React.FC<{ invoice: Invoice; onBack: () => void }> = ({ invoice, onBack }) => (
-  <div className="flex flex-col h-full">
+  <div className="relative flex flex-col h-full overflow-hidden">
     <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
       <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
       <span className="text-[15px] font-bold text-white">Invoice Detail</span>
@@ -119,7 +119,7 @@ const InvoiceDetail: React.FC<{ invoice: Invoice; onBack: () => void }> = ({ inv
       </div>
     </div>
     {/* Fixed action bar */}
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+    <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 native-bottom-bar">
       {['Send', 'Mark Paid', 'Download PDF'].map(lbl => (
         <button key={lbl} className="flex-1 flex flex-col items-center justify-center h-[52px] gap-1 hover:bg-white/5 transition-colors">
           {lbl === 'Send' && <Send className="w-4 h-4 text-sky-400" />}

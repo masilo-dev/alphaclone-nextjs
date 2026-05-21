@@ -179,7 +179,7 @@ export default function AccountingDashboard() {
     }
 
     return (
-        <div className={`space-y-6 max-w-7xl mx-auto pb-24 ${isMobile ? 'px-2' : 'px-6'}`}>
+        <div className={`relative space-y-6 max-w-7xl mx-auto pb-24 ${isMobile ? 'px-2' : 'px-6'}`}>
             {/* Initialization Banner for Empty Accounts */}
             {!loading && accounts.length === 0 && (
                 <div className="bg-teal-500/10 border border-teal-500/20 rounded-[32px] p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-2xl shadow-teal-900/10 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -365,7 +365,7 @@ export default function AccountingDashboard() {
 
             {/* Mobile Action Bar */}
             {isMobile && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-xl border-t border-white/5 z-50 flex gap-2">
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-xl border-t border-white/5 z-40 flex gap-2 native-bottom-bar">
                     <button onClick={() => setIsUploadOpen(true)} className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><Upload size={18} className="mr-2" /> Upload</button>
                     <button onClick={() => setIsReceiptGeneratorOpen(true)} className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><FileText size={18} className="mr-2" /> Receipt</button>
                 </div>
@@ -373,4 +373,3 @@ export default function AccountingDashboard() {
         </div>
     );
 }
-

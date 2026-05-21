@@ -8,6 +8,8 @@ type FacebookOAuthState = {
     ts: number;
     tenantId?: string | null;
     returnTo?: string | null;
+    scopeMode?: 'publishing' | 'advanced';
+    requestedScopes?: string[];
 };
 
 function redirectOAuthEarly(appUrl: string, fbError: string): NextResponse {
@@ -159,6 +161,8 @@ export async function GET(req: NextRequest) {
                     page_category: page.category || null,
                     page_tasks: page.tasks || [],
                     can_post: hasManageTask,
+                    scope_mode: stateData.scopeMode || 'publishing',
+                    requested_scopes: stateData.requestedScopes || [],
                 },
             }, { onConflict: 'user_id,page_id' });
             if (upErr) {
@@ -217,6 +221,8 @@ export async function GET(req: NextRequest) {
                 fb_name: profileData.name,
                 no_pages: true,
                 warning: 'No pages found. User may not have granted pages_show_list or has no Facebook Pages.',
+                scope_mode: stateData.scopeMode || 'publishing',
+                requested_scopes: stateData.requestedScopes || [],
             },
         }, { onConflict: 'user_id,page_id' });
         if (upErr) {
@@ -235,11 +241,15 @@ export async function GET(req: NextRequest) {
         await supabase.from('tenant_integrations').upsert(
             {
                 tenant_id: resolvedTenantId,
-                integration_id: 'facebook-leads',
+                integration_id: stateData.scopeMode === 'advanced' ? 'facebook-advanced' : 'facebook-publishing',
                 status: 'connected',
                 connected_at: new Date().toISOString(),
                 configured_by: stateData.userId,
-                metadata: { pages_connected: pages.length },
+                metadata: {
+                    pages_connected: pages.length,
+                    scope_mode: stateData.scopeMode || 'publishing',
+                    requested_scopes: stateData.requestedScopes || [],
+                },
             },
             { onConflict: 'tenant_id,integration_id' }
         );

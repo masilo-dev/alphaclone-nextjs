@@ -6,6 +6,34 @@ import { taskDependencyService } from './taskDependencyService';
 import { notificationService } from './notificationService';
 import { taskEmailTemplates } from '../lib/email/taskEmailTemplates';
 
+async function sendNotificationEmail(params: {
+    tenantId: string;
+    to: string;
+    subject: string;
+    templateName: string;
+    html: string;
+}) {
+    if (typeof window === 'undefined') {
+        try {
+            const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+            await sendEmailServer(params);
+        } catch (err) {
+            console.error('Error sending email programmatically:', err);
+        }
+    } else {
+        try {
+            await fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+        } catch (err) {
+            console.error('Error sending email via fetch:', err);
+        }
+    }
+}
+
+
 export interface Task {
     id: string;
     title: string;
@@ -297,24 +325,20 @@ export const taskService = {
                         const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
                         const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
 
-                        await fetch('/api/email/send', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                tenantId,
-                                to: assigneeData.email,
-                                subject: `New Task Assigned: ${taskData.title}`,
-                                templateName: 'taskAssigned',
-                                html: taskEmailTemplates.taskAssigned({
-                                    recipientName: assigneeData.name || 'Team Member',
-                                    assignerName: assignerData?.name,
-                                    taskTitle: taskData.title,
-                                    taskDescription: taskData.description,
-                                    dueDate: taskData.dueDate,
-                                    priority: taskData.priority === 'urgent' ? 'high' : taskData.priority,
-                                    actionUrl,
-                                    workspaceName
-                                })
+                        await sendNotificationEmail({
+                            tenantId,
+                            to: assigneeData.email,
+                            subject: `New Task Assigned: ${taskData.title}`,
+                            templateName: 'taskAssigned',
+                            html: taskEmailTemplates.taskAssigned({
+                                recipientName: assigneeData.name || 'Team Member',
+                                assignerName: assignerData?.name,
+                                taskTitle: taskData.title,
+                                taskDescription: taskData.description,
+                                dueDate: taskData.dueDate,
+                                priority: taskData.priority === 'urgent' ? 'high' : taskData.priority,
+                                actionUrl,
+                                workspaceName
                             })
                         });
                     }
@@ -454,20 +478,16 @@ export const taskService = {
                             const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
                             const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
 
-                            await fetch('/api/email/send', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    tenantId,
-                                    to: creatorData.email,
-                                    subject: `Task Completed: ${data.title}`,
-                                    templateName: 'taskCompleted',
-                                    html: taskEmailTemplates.taskCompleted({
-                                        recipientName: creatorData.name || 'Task Creator',
-                                        taskTitle: data.title,
-                                        actionUrl,
-                                        workspaceName
-                                    })
+                            await sendNotificationEmail({
+                                tenantId,
+                                to: creatorData.email,
+                                subject: `Task Completed: ${data.title}`,
+                                templateName: 'taskCompleted',
+                                html: taskEmailTemplates.taskCompleted({
+                                    recipientName: creatorData.name || 'Task Creator',
+                                    taskTitle: data.title,
+                                    actionUrl,
+                                    workspaceName
                                 })
                             });
                         }
@@ -669,24 +689,20 @@ export const taskService = {
 
                         for (const notifyUser of usersToNotify || []) {
                             if (notifyUser.email) {
-                                await fetch('/api/email/send', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        tenantId: taskData.tenant_id,
-                                        to: notifyUser.email,
-                                        subject: `New Comment on Task: ${taskData.title}`,
-                                        templateName: 'taskComment',
-                                        html: taskEmailTemplates.taskComment({
-                                            recipientName: notifyUser.name || 'Team Member',
-                                            commenterName: commenterData?.name,
-                                            commentText: comment,
-                                            taskTitle: taskData.title,
-                                            actionUrl,
-                                            workspaceName
-                                        })
+                                await sendNotificationEmail({
+                                    tenantId: taskData.tenant_id,
+                                    to: notifyUser.email,
+                                    subject: `New Comment on Task: ${taskData.title}`,
+                                    templateName: 'taskComment',
+                                    html: taskEmailTemplates.taskComment({
+                                        recipientName: notifyUser.name || 'Team Member',
+                                        commenterName: commenterData?.name,
+                                        commentText: comment,
+                                        taskTitle: taskData.title,
+                                        actionUrl,
+                                        workspaceName
                                     })
-                                }).catch(e => console.error('Error sending comment email fetch:', e));
+                                }).catch(e => console.error('Error sending comment email:', e));
                             }
                         }
                     }
