@@ -17,6 +17,8 @@
 - **Clients, Meetings & Home Dashboard UX Polish**:
   - **Clients & Meetings** ([ClientsPage.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/ClientsPage.tsx), [MeetingsPage.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/MeetingsPage.tsx)): Upgraded filter grids, client lists, and meeting logs.
   - **Home Dashboard** ([HomeTab.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/HomeTab.tsx)): Restyled primary metrics and real-time database state triggers.
+- **Authentication Rate Limiting Fix** ([middleware.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/middleware.ts)):
+  - Restructured auth route rate limiting to run only on POST requests. This prevents GET page requests and Next.js router prefetches (e.g. `_rsc=...`) from triggering 429 Too Many Requests errors.
 
 ### Production Readiness
 - **Vercel Safe**: Staged and ready for Vercel deployment with zero build-blocking issues.
