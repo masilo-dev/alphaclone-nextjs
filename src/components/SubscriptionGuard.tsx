@@ -33,5 +33,5 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
         }
     }, [isInactive, isTrialExpired, isLoading, currentTenant]);
 
-    if (isLoading || !currentTenant) return <>{children}</>;
+    return <>{children}</>;
 };
