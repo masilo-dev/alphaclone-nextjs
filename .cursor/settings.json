@@ -3,5 +3,6 @@
     "vercel": {
       "enabled": true
     }
-  }
+  },
+  "css.lint.unknownAtRules": "ignore"
 }

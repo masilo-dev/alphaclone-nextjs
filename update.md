@@ -1,5 +1,16 @@
 # Update Log
 
+## Date: 2026-05-22 (IDE CSS VALIDATION CONFIGURATION)
+
+### Added/Modified
+- **IDE Settings** ([.vscode/settings.json](file:///home/bonnie/alphaclone-nextjs/.vscode/settings.json), [.cursor/settings.json](file:///home/bonnie/alphaclone-nextjs/.cursor/settings.json)):
+  - Configured `css.lint.unknownAtRules` to `"ignore"`. This suppresses IDE/editor warnings about Tailwind CSS v4 custom directives (`@theme`, `@apply`, `@plugin`) in CSS files.
+
+### Production Readiness
+- **Vercel Safe**: Configured settings only apply to the local IDE/editor environment and have zero impact on Tailwind CSS compile-time parsing, maintaining 100% build compatibility on Vercel.
+
+---
+
 ## Date: 2026-05-21 (MULTILINGUAL OUTREACH, SECURE SHARING & VIRAL VIDEO GENERATION)
 
 ### Added/Modified
