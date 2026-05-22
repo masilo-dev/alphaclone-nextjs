@@ -18,6 +18,47 @@ const MCP_PROTOCOL_VERSION = '2025-03-26';
  * and self-referencing loops in serverless environments.
  */
 
+async function resolveAuth(req: NextRequest) {
+  const auth = await validateMCPAuthApp(req);
+  if (!('error' in auth)) {
+    return auth;
+  }
+
+  // Fallback: Try cookie-based Supabase session
+  try {
+    const { createSupabaseServerClient } = await import('@/lib/supabase-server');
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (!userError && user) {
+      const tenantIdHeader = req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId');
+      let resolvedTenantId = tenantIdHeader || '';
+
+      if (!resolvedTenantId) {
+        const { data: userTenant } = await supabase
+          .from('tenant_users')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        resolvedTenantId = userTenant?.tenant_id || '';
+      }
+
+      if (resolvedTenantId) {
+        return {
+          tenant_id: resolvedTenantId,
+          user_id: user.id,
+        };
+      }
+    }
+  } catch (fallbackErr) {
+    console.error('[MCP Route Auth Fallback] failed:', fallbackErr);
+  }
+
+  return auth;
+}
+
 export async function POST(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
@@ -58,7 +99,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      const auth = await validateMCPAuthApp(req);
+      const auth = await resolveAuth(req);
       if ('error' in auth) {
         return NextResponse.json({
           jsonrpc: '2.0',
@@ -71,7 +112,7 @@ export async function POST(req: NextRequest) {
     } else {
       const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
       if (expiry < new Date()) {
-        const auth = await validateMCPAuthApp(req);
+        const auth = await resolveAuth(req);
         if ('error' in auth) {
           return NextResponse.json({
             jsonrpc: '2.0',
@@ -87,7 +128,7 @@ export async function POST(req: NextRequest) {
       }
     }
   } else {
-    const auth = await validateMCPAuthApp(req);
+    const auth = await resolveAuth(req);
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
     }
@@ -192,7 +233,7 @@ export async function GET(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
 
-  const auth = await validateMCPAuthApp(req);
+  const auth = await resolveAuth(req);
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
   }

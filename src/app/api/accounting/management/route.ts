@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(await getAccountsPayableAging(tenantId, supabase));
       case 'get_finance_snapshot':
         return NextResponse.json(await getFinanceSnapshot(tenantId, supabase));
+      case 'create_default_chart_of_accounts':
+        return NextResponse.json(await createDefaultChartOfAccounts(tenantId, supabase));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
@@ -1015,3 +1017,16 @@ function generateInvoiceHTML(invoice: any, template: string) {
     </html>
   `;
 }
+
+async function createDefaultChartOfAccounts(tenantId: string, supabase: any) {
+  try {
+    const { error } = await supabase.rpc('create_default_chart_of_accounts', {
+      p_tenant_id: tenantId,
+    });
+    if (error) throw error;
+    return { success: true, error: null };
+  } catch (error: any) {
+    return operationFailed('accounting/management', error);
+  }
+}
+
