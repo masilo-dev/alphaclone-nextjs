@@ -622,10 +622,36 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         try {
             let res: Response;
             if (postImageFile) {
+                let publicUrl = '';
+                // First upload to Supabase storage directly from the client to avoid Vercel's 4.5MB request limit
+                try {
+                    const ext = postImageFile.name.split('.').pop() || 'bin';
+                    const storagePath = `media/${tenant?.id || 'public'}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+                    
+                    const { error: uploadError } = await supabase.storage
+                        .from('public-assets')
+                        .upload(storagePath, postImageFile, {
+                            contentType: postImageFile.type,
+                            upsert: false,
+                        });
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(storagePath);
+                    publicUrl = urlData.publicUrl;
+                } catch (storageErr) {
+                    console.warn('[Facebook Upload] Direct storage upload failed, trying API fallback:', storageErr);
+                }
+
                 const form = new FormData();
                 form.append('pageId', selectedPageId);
                 form.append('message', postMessage);
-                form.append('file', postImageFile);
+                if (publicUrl) {
+                    form.append('fileUrl', publicUrl);
+                    form.append('fileType', postImageFile.type);
+                } else {
+                    form.append('file', postImageFile);
+                }
                 res = await fetch('/api/facebook/upload-photo', { method: 'POST', body: form });
             } else {
                 res = await fetch('/api/facebook/post', {

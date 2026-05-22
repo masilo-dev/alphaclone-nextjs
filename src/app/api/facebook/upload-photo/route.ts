@@ -31,14 +31,44 @@ export async function POST(req: NextRequest) {
     const pageId = formData.get('pageId') as string;
     const message = formData.get('message') as string;
     const file = formData.get('file') as File | null;
+    const fileUrl = formData.get('fileUrl') as string | null;
+    const fileTypeParam = formData.get('fileType') as string | null;
     const coverFrame = formData.get('coverFrame') as File | null;
 
-    if (!pageId || !file) {
-        return NextResponse.json({ error: 'pageId and file are required' }, { status: 400 });
+    if (!pageId) {
+        return NextResponse.json({ error: 'pageId is required' }, { status: 400 });
     }
 
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
+    let fileStream: Blob | File | null = null;
+    let fileType = '';
+    let fileName = 'file';
+
+    if (fileUrl) {
+        try {
+            const fileRes = await fetch(fileUrl);
+            if (!fileRes.ok) {
+                return NextResponse.json({ error: 'Failed to retrieve media file from storage' }, { status: 400 });
+            }
+            const blob = await fileRes.blob();
+            fileStream = blob;
+            fileType = fileTypeParam || blob.type || '';
+            fileName = fileUrl.split('/').pop() || 'file';
+        } catch (fetchErr) {
+            console.error('[Facebook Media Upload] failed to fetch fileUrl:', fetchErr);
+            return NextResponse.json({ error: 'Failed to download file from URL' }, { status: 400 });
+        }
+    } else if (file) {
+        fileStream = file;
+        fileType = file.type || '';
+        fileName = file.name || 'file';
+    }
+
+    if (!fileStream) {
+        return NextResponse.json({ error: 'file or fileUrl is required' }, { status: 400 });
+    }
+
+    const isImage = fileType.startsWith('image/');
+    const isVideo = fileType.startsWith('video/');
     if (!isImage && !isVideo) {
         return NextResponse.json({ error: 'File must be an image or video' }, { status: 400 });
     }
@@ -60,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     // Forward directly to Facebook Photos/Videos API using multipart/form-data with `source`
     const fbForm = new FormData();
-    fbForm.append('source', file);
+    fbForm.append('source', fileStream, fileName);
     if (message?.trim()) {
         if (isVideo) {
             fbForm.append('description', message.trim());

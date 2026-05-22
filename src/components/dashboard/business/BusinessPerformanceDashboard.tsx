@@ -30,18 +30,60 @@ const BusinessPerformanceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const defaultData = {
+    revenue: {
+      thisMonth: 0,
+      trend: 0,
+      byPeriod: [],
+    },
+    businessOS: {
+      pipeline: {
+        stats: [],
+        weightedValue: 0,
+      },
+      automation: {
+        successRate: 100,
+        totalRuns: 0,
+        statusCounts: {
+          completed: 0,
+          failed: 0,
+        },
+      },
+    },
+  };
+
   const fetchData = async () => {
     setRefreshing(true);
     try {
       const analyticsRes = await analyticsService.getAnalytics('30d');
       const osData = await analyticsService.getBusinessOSData();
       
+      const analyticsData = (analyticsRes?.data || {}) as any;
+      const businessOSData = (osData || {}) as any;
+
       setData({
-        ...analyticsRes.data,
-        businessOS: osData
+        revenue: {
+          ...defaultData.revenue,
+          ...(analyticsData.revenue || {}),
+        },
+        businessOS: {
+          pipeline: {
+            ...defaultData.businessOS.pipeline,
+            ...(businessOSData.pipeline || {}),
+          },
+          automation: {
+            ...defaultData.businessOS.automation,
+            ...(businessOSData.automation || {}),
+            statusCounts: {
+              ...defaultData.businessOS.automation.statusCounts,
+              ...(businessOSData.automation?.statusCounts || {}),
+            },
+          },
+        },
       });
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
+      setData(defaultData);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -113,12 +155,12 @@ const BusinessPerformanceDashboard: React.FC = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{data.businessOS.pipeline.stats.reduce((s: any, c: any) => s + c.dealCount, 0)}</span>
+                <span className="text-2xl font-bold text-white">{(data?.businessOS?.pipeline?.stats || []).reduce((s: any, c: any) => s + (c?.dealCount || 0), 0)}</span>
                 <span className="text-xs text-slate-400 mb-1">Active Deals</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Weighted Value</span>
-                <span className="text-blue-400 font-mono font-bold">{formatCurrency(data.businessOS.pipeline.weightedValue)}</span>
+                <span className="text-blue-400 font-mono font-bold">{formatCurrency(data?.businessOS?.pipeline?.weightedValue ?? 0)}</span>
               </div>
               <div className="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
                 <div className="bg-blue-500 h-full rounded-full" style={{ width: '65%' }} />
@@ -173,8 +215,8 @@ const BusinessPerformanceDashboard: React.FC = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{formatCurrency(data.revenue.thisMonth)}</span>
-                <span className="text-xs text-teal-400 font-bold mb-1">+{data.revenue.trend.toFixed(1)}%</span>
+                <span className="text-2xl font-bold text-white">{formatCurrency(data?.revenue?.thisMonth ?? 0)}</span>
+                <span className="text-xs text-teal-400 font-bold mb-1">+{(data?.revenue?.trend ?? 0).toFixed(1)}%</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Monthly Revenue</span>
@@ -208,11 +250,11 @@ const BusinessPerformanceDashboard: React.FC = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{data.businessOS.automation.successRate.toFixed(1)}%</span>
+                <span className="text-2xl font-bold text-white">{(data?.businessOS?.automation?.successRate ?? 0).toFixed(1)}%</span>
                 <span className="text-xs text-yellow-400 font-bold mb-1">Health</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">{data.businessOS.automation.totalRuns} Runs (24h)</span>
+                <span className="text-slate-500">{data?.businessOS?.automation?.totalRuns ?? 0} Runs (24h)</span>
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   <span className="text-green-400">Active</span>
@@ -221,11 +263,11 @@ const BusinessPerformanceDashboard: React.FC = () => {
               <div className="flex gap-2 mt-4">
                 <div className="flex-1 bg-slate-800 rounded-lg p-2 text-center">
                    <p className="text-[10px] text-slate-500 font-bold uppercase">Success</p>
-                   <p className="text-xs text-white font-mono">{data.businessOS.automation.statusCounts.completed || 0}</p>
+                   <p className="text-xs text-white font-mono">{data?.businessOS?.automation?.statusCounts?.completed ?? 0}</p>
                 </div>
                 <div className="flex-1 bg-slate-800 rounded-lg p-2 text-center">
                    <p className="text-[10px] text-slate-500 font-bold uppercase">Fail</p>
-                   <p className="text-xs text-red-400 font-mono">{data.businessOS.automation.statusCounts.failed || 0}</p>
+                   <p className="text-xs text-red-400 font-mono">{data?.businessOS?.automation?.statusCounts?.failed ?? 0}</p>
                 </div>
               </div>
             </div>
@@ -258,7 +300,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
           <div className="h-[350px] w-full">
             <ChartContainer className="h-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.revenue.byPeriod}>
+                <AreaChart data={data?.revenue?.byPeriod || []}>
                   <defs>
                     <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
