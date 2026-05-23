@@ -54,7 +54,6 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
       { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
-      { label: 'Meetings', href: '/dashboard/conference', icon: Video },
     ]
   },
   {
@@ -92,7 +91,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
-      { label: 'Meetings', href: '/dashboard/meetings' },
       { label: 'Mail', href: '/dashboard/mail' },
       { label: 'Messages', href: '/dashboard/messages' },
     ]
@@ -147,8 +145,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
       { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
       { label: 'LinkedIn Manager', href: '/dashboard/business/linkedin', icon: Linkedin },
-      { label: 'X (Twitter) Manager', href: '/dashboard/business/x', icon: Twitter },
-      { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
+      { label: 'X (Twitter) Manager', href: '/dashboard/business/x', icon: Twitter, comingSoon: true },
+      { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram, comingSoon: true },
       { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
     ]
   },
@@ -158,7 +156,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
       { label: 'Booking Links', href: '/dashboard/business/booking', icon: Clock },
-      { label: 'Conference Space', href: '/dashboard/business/meetings', icon: Video },
     ]
   },
 

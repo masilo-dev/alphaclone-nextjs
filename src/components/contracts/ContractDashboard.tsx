@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages } from 'lucide-react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -132,9 +132,101 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [generatedContract, setGeneratedContract] = useState('');
     const [contractId, setContractId] = useState<string>('');
     const [savedContracts, setSavedContracts] = useState<any[]>([]);
-    const [loadingContracts, setLoadingContracts] = useState(true);
+        const [loadingContracts, setLoadingContracts] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [activeView, setActiveView] = useState<'new' | 'list'>('new');
+    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer'>('new');
+    
+    // AI Lawyer Chat States
+    const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
+        { role: 'assistant', content: 'Hello! I am your AI Legal Assistant. You can ask me to review clauses, draft custom sections, explain legal terms, or evaluate potential risks. Select a contract below to analyze it specifically, or just start typing.' }
+    ]);
+    const [selectedContractIdForChat, setSelectedContractIdForChat] = useState<string>('');
+    const [chatInput, setChatInput] = useState('');
+    const [isLawyerResponding, setIsLawyerResponding] = useState(false);
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (activeView === 'lawyer') {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatMessages, activeView]);
+
+    const handleSendLawyerMessage = async (customPrompt?: string) => {
+        const textToSend = customPrompt || chatInput;
+        if (!textToSend.trim()) return;
+
+        const newMessages = [
+            ...chatMessages,
+            { role: 'user' as const, content: textToSend }
+        ];
+        setChatMessages(newMessages);
+        setChatInput('');
+        setIsLawyerResponding(true);
+
+        // Add placeholder assistant response that we will stream into
+        setChatMessages(prev => [...prev, { role: 'assistant' as const, content: '' }]);
+
+        try {
+            // Find contract context
+            let contractContext = '';
+            if (selectedContractIdForChat) {
+                const contract = savedContracts.find(c => c.id === selectedContractIdForChat);
+                if (contract) {
+                    contractContext = `You are reviewing the following contract:\nTitle: ${contract.title}\nContent:\n${contract.content || contract.original_content || ''}\n\n`;
+                }
+            }
+
+            const prompt = `You are an expert professional contract lawyer. Provide clean, professional, legally sound analysis and explanations. Format your responses beautifully in markdown.\n\n${contractContext}User Question: ${textToSend}`;
+
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    maxTokens: 1500,
+                    stream: true,
+                }),
+            });
+
+            if (!res.ok) throw new Error('Failed to get lawyer response');
+
+            const reader = res.body?.getReader();
+            if (!reader) throw new Error('No reader available');
+
+            const decoder = new TextDecoder();
+            let done = false;
+            let accumulated = '';
+
+            while (!done) {
+                const { value, done: doneReading } = await reader.read();
+                done = doneReading;
+                const chunkValue = decoder.decode(value);
+                accumulated += chunkValue;
+
+                setChatMessages(prev => {
+                    const next = [...prev];
+                    if (next.length > 0) {
+                        next[next.length - 1] = { role: 'assistant', content: accumulated };
+                    }
+                    return next;
+                });
+
+                if (doneReading) break;
+            }
+        } catch (err: any) {
+            console.error(err);
+            setChatMessages(prev => {
+                const next = [...prev];
+                if (next.length > 0) {
+                    next[next.length - 1] = { role: 'assistant', content: 'Sorry, I encountered an error while processing your request. Please try again.' };
+                }
+                return next;
+            });
+        } finally {
+            setIsLawyerResponding(false);
+        }
+    };
+
     const [signatureName, setSignatureName] = useState('');
     const [signatureData, setSignatureData] = useState('');
     const [signatureDate] = useState(format(new Date(), 'MMMM d, yyyy'));
@@ -460,6 +552,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     >
                         Saved ({savedContracts.length})
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveView('lawyer')}
+                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                    >
+                        AI Lawyer
+                    </button>
                 </div>
             </div>
 
@@ -515,7 +614,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             </span>
                                         </div>
                                         <p className="text-[11px] sm:text-xs text-slate-500">
-                                            Value: <span className="text-slate-300 font-medium">{c.currency || 'USD'} {c.value ? c.value.toLocaleString() : '0'}</span>
+                                            Value: <span className="text-slate-300 font-medium">{c.currency || 'USD'} {c.value ? (typeof c.value === 'number' ? c.value : parseFloat(c.value as any) || 0).toLocaleString() : '0'}</span>
                                             <span className="mx-1.5">·</span>
                                             Created: <span className="text-slate-300">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
                                             <span className="mx-1.5">·</span>
@@ -951,6 +1050,167 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 </>
             )}
 
+            {activeView === 'lawyer' && (
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-280px)] min-h-[500px] mb-8">
+                    {/* Left Sidebar: Context and Quick Actions */}
+                    <div className="lg:col-span-1 flex flex-col gap-4">
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1.5">
+                                <Scale className="w-4 h-4 text-teal-400" /> Contract Context
+                            </h2>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Select a contract from your account to ask questions or draft modifications for that specific document.
+                            </p>
+                            
+                            <select
+                                value={selectedContractIdForChat}
+                                onChange={(e) => setSelectedContractIdForChat(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500 transition-colors"
+                            >
+                                <option value="">No context (General AI Lawyer)</option>
+                                {savedContracts.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.title || 'Untitled Contract'}
+                                    </option>
+                                ))}
+                            </select>
+                            
+                            {selectedContractIdForChat && (
+                                <div className="text-[10px] text-teal-400/80 bg-teal-950/40 border border-teal-900/30 rounded-lg p-2 flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                    <span>AI will reference selected contract content</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2.5">
+                            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1.5">
+                                <Sparkles className="w-4 h-4 text-teal-400" /> Quick Actions
+                            </h2>
+                            <p className="text-xs text-slate-500 leading-relaxed mb-1">
+                                Click any pre-set query to consult the lawyer instantly.
+                            </p>
+                            
+                            {[
+                                { label: 'Explain Indemnity Clause', query: 'Explain the purpose and implications of an indemnity clause in simple terms.' },
+                                { label: 'Draft NDA Clause', query: 'Draft a robust confidentiality and non-disclosure clause for a service agreement.' },
+                                { label: 'Check Liability Risks', query: 'What are the main liability risks in a standard service agreement, and how do I limit them?' },
+                                { label: 'Draft Custom Payments', query: 'Draft a payment schedule clause with 50% deposit and milestones.' },
+                                { label: 'Termination Clause', query: 'Draft a termination for convenience and termination for cause clause.' }
+                            ].map((action, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    disabled={isLawyerResponding}
+                                    onClick={() => handleSendLawyerMessage(action.query)}
+                                    className="w-full text-left bg-slate-950/50 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700/60 rounded-xl px-3 py-2 text-xs text-slate-300 hover:text-white transition-all duration-150 disabled:opacity-50"
+                                >
+                                    {action.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right Main Panel: Chat Thread */}
+                    <div className="lg:col-span-3 bg-slate-900/60 border border-slate-800 rounded-3xl flex flex-col overflow-hidden h-full">
+                        {/* Header */}
+                        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
+                                <div>
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                                        <Bot className="w-4 h-4 text-teal-400" /> AI Legal Assistant
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500">Virtual legal expert powered by AI</p>
+                                </div>
+                            </div>
+                            
+                            <button
+                                type="button"
+                                onClick={() => setChatMessages([
+                                    { role: 'assistant', content: 'Hello! I am your AI Legal Assistant. You can ask me to review clauses, draft custom sections, explain legal terms, or evaluate potential risks. Select a contract below to analyze it specifically, or just start typing.' }
+                                ])}
+                                className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                            >
+                                Clear Chat
+                            </button>
+                        </div>
+
+                        {/* Message list */}
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                            {chatMessages.map((msg, i) => (
+                                <div
+                                    key={i}
+                                    className={`flex gap-3 max-w-[85%] ${
+                                        msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''
+                                    }`}
+                                >
+                                    <div
+                                        className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold ${
+                                            msg.role === 'user'
+                                                ? 'bg-teal-600 text-white'
+                                                : 'bg-slate-800 text-teal-400 border border-slate-700/50'
+                                        }`}
+                                    >
+                                        {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                                    </div>
+                                    
+                                    <div
+                                        className={`rounded-2xl px-4 py-3 text-xs leading-relaxed overflow-x-auto ${
+                                            msg.role === 'user'
+                                                ? 'bg-teal-600/10 border border-teal-500/20 text-teal-100'
+                                                : 'bg-slate-950/60 border border-slate-800 text-slate-300'
+                                        }`}
+                                    >
+                                        {msg.content ? (
+                                            <div className="prose prose-invert prose-xs max-w-none space-y-1.5 break-words whitespace-pre-wrap">
+                                                {msg.content}
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1.5 py-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Input bar */}
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                handleSendLawyerMessage();
+                            }}
+                            className="p-4 border-t border-slate-800 bg-slate-900/30 flex gap-2"
+                        >
+                            <input
+                                type="text"
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                disabled={isLawyerResponding}
+                                placeholder={
+                                    selectedContractIdForChat
+                                        ? "Ask a question about the selected contract..."
+                                        : "Ask a general legal question or request a clause..."
+                                }
+                                className="flex-1 bg-slate-950 border border-slate-800 focus:border-teal-500 focus:outline-none rounded-xl px-4 py-2 text-xs text-white placeholder-slate-500 transition-colors"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isLawyerResponding || !chatInput.trim()}
+                                className="bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 disabled:text-slate-500 text-white p-2.5 rounded-xl transition-all flex items-center justify-center shrink-0"
+                            >
+                                <Send className="w-4 h-4" />
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {showSendModal && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
@@ -1084,8 +1344,16 @@ function lengthInstruction(length: ContractForm['contractLength']): { headline: 
     }
 }
 
+function safeParseFloat(val: any, fallback: number = 0): number {
+    if (val === null || val === undefined || val === '') return fallback;
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? fallback : parsed;
+}
+
 function buildAIPrompt(f: ContractForm): string {
-    const deposit = f.totalAmount ? (parseFloat(f.totalAmount) * parseFloat(f.depositPercent || '50') / 100).toLocaleString() : '0';
+    const total = safeParseFloat(f.totalAmount, 0);
+    const depPercent = safeParseFloat(f.depositPercent, 50);
+    const deposit = (total * depPercent / 100).toLocaleString();
     const { headline, sections, wordHint } = lengthInstruction(f.contractLength);
     const lang = outputLanguageInstruction(f.outputLanguage);
 
@@ -1114,7 +1382,7 @@ PROJECT:
 - Deliverables: ${f.deliverables || 'All project deliverables as described in the scope'}
 
 FINANCIAL:
-- Total Value: ${f.currency} ${parseFloat(f.totalAmount || '0').toLocaleString()}
+- Total Value: ${f.currency} ${total.toLocaleString()}
 - Deposit (${f.depositPercent}%): ${f.currency} ${deposit}
 - Payment Schedule: ${f.paymentSchedule}
 
@@ -1134,8 +1402,8 @@ Use markdown: # for main title, ## for sections, **bold** for key terms.`;
 }
 
 function buildOnePageTemplateContract(f: ContractForm): string {
-    const amount = parseFloat(f.totalAmount || '0');
-    const depositPct = parseFloat(f.depositPercent || '50');
+    const amount = safeParseFloat(f.totalAmount, 0);
+    const depositPct = safeParseFloat(f.depositPercent, 50);
     const deposit = (amount * depositPct) / 100;
     const balance = amount - deposit;
     const jurisdiction = f.jurisdiction || 'the jurisdiction agreed by the parties';
@@ -1169,8 +1437,8 @@ function buildOnePageTemplateContract(f: ContractForm): string {
 }
 
 function buildTwoPageTemplateContract(f: ContractForm): string {
-    const amount = parseFloat(f.totalAmount || '0');
-    const depositPct = parseFloat(f.depositPercent || '50');
+    const amount = safeParseFloat(f.totalAmount, 0);
+    const depositPct = safeParseFloat(f.depositPercent, 50);
     const deposit = (amount * depositPct) / 100;
     const balance = amount - deposit;
     const jurisdiction = f.jurisdiction || 'the jurisdiction agreed by the parties';
@@ -1219,8 +1487,8 @@ Governing law: ${govLaw}. Entire agreement; amendments in writing; independent c
 }
 
 function buildThreePageTemplateContract(f: ContractForm): string {
-    const amount = parseFloat(f.totalAmount || '0');
-    const depositPct = parseFloat(f.depositPercent || '50');
+    const amount = safeParseFloat(f.totalAmount, 0);
+    const depositPct = safeParseFloat(f.depositPercent, 50);
     const deposit = (amount * depositPct) / 100;
     const balance = amount - deposit;
     const jurisdiction = f.jurisdiction || 'the jurisdiction agreed by the parties';
@@ -1272,8 +1540,8 @@ Governing law: ${govLaw}. Entire agreement; amendments in writing; severability;
 }
 
 function buildFullTemplateContract(f: ContractForm): string {
-    const amount = parseFloat(f.totalAmount || '0');
-    const depositPct = parseFloat(f.depositPercent || '50');
+    const amount = safeParseFloat(f.totalAmount, 0);
+    const depositPct = safeParseFloat(f.depositPercent, 50);
     const deposit = (amount * depositPct / 100);
     const balance = amount - deposit;
     const jurisdiction = f.jurisdiction || 'the applicable jurisdiction agreed upon by the parties';

@@ -103,7 +103,7 @@ const SwipeableDealRow: React.FC<{
           {deal.contact_name && <span className="text-[13px] text-slate-500 opacity-55 block truncate">{deal.contact_name}</span>}
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="text-[15px] font-bold text-teal-400">${deal.value.toLocaleString()}</span>
+          <span className="text-[15px] font-bold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
           <span className="text-[11px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded-full">{daysInStage(deal.updated_at)}d</span>
         </div>
       </motion.div>
@@ -128,7 +128,7 @@ const DealDetail: React.FC<{ deal: Deal; onBack: () => void; onStageChange: (id:
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
         {/* Value hero */}
         <div className="flex flex-col items-center py-4 gap-2">
-          <span className="text-[32px] font-extrabold text-teal-400">${deal.value.toLocaleString()}</span>
+          <span className="text-[32px] font-extrabold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
           <button
             onClick={() => {
               const next = stageIdx < STAGES.length - 1 ? STAGES[stageIdx + 1] : deal.stage;
@@ -236,7 +236,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             const stageDeals = grouped[stage] || [];
             if (stageDeals.length === 0) return null;
             const col = STAGE_COLORS[stage];
-            const total = stageDeals.reduce((s, d) => s + d.value, 0);
+            const total = stageDeals.reduce((s, d) => s + (d.value || 0), 0);
             return (
               <div key={stage}>
                 {/* Stage header */}

@@ -107,13 +107,19 @@ async function resolveMcpEmailSignature(
     if (saved) return saved;
   }
 
-  throw new Error('email_signature is required before sending. Ask the user for the sender signature they want on this email, or save one in AlphaClone Email Sender Profile.');
+  // Bug #5 fix: return empty string instead of throwing so emails can still
+  // be sent without a stored signature. The footer is still appended by
+  // appendSignatureToEmail. Users can set a signature in Email Sender Profile.
+  return '';
 }
 
 function appendSignatureToEmail(input: { html?: unknown; text?: unknown }, signature: string) {
   const footer = "Sent through AlphaClone Systems. This message and any attached documents were sent from the sender's AlphaClone workspace.";
-  const textSignature = `${signature}\n\n--\n${footer}`;
-  const htmlSignature = `${signature.replace(/\n/g, '<br>')}<br><br><small style="color:#64748b">${footer}</small>`;
+  // Bug #5 fix: when signature is empty, only append the footer (no double blank line before it)
+  const sigBlock = signature ? `${signature}\n\n` : '';
+  const textSignature = `${sigBlock}--\n${footer}`;
+  const htmlSigBlock = signature ? `${signature.replace(/\n/g, '<br>')}<br><br>` : '';
+  const htmlSignature = `${htmlSigBlock}<small style="color:#64748b">${footer}</small>`;
 
   return {
     html: input.html ? `${String(input.html)}<br><br>${htmlSignature}` : undefined,
@@ -591,7 +597,11 @@ class AlphaCloneMCPServer {
   private requireTenant(args: Record<string, any>): string {
     if (this.ctx?.tenantId) {
       const r = args.tenant_id;
-      if (r != null && r !== '' && typeof r === 'string' && r !== this.ctx.tenantId) {
+      // Bug #4 fix: trim the incoming tenant_id before comparing so whitespace
+      // differences (e.g. trailing newline from some MCP clients) don't cause
+      // a spurious mismatch error.
+      const rTrimmed = typeof r === 'string' ? r.trim() : r;
+      if (rTrimmed != null && rTrimmed !== '' && rTrimmed !== this.ctx.tenantId) {
         throw new Error(
           'tenant_id does not match this MCP connection. Omit tenant_id when using your personal MCP URL; the server scopes to your workspace automatically.'
         );
@@ -1615,7 +1625,14 @@ class AlphaCloneMCPServer {
         case 'create_deal': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const owner_id = this.requireProfileUser(a);
+          // Bug #1 fix: owner_id is optional — use the authenticated user from
+          // the MCP context when available; fall back to the user_id arg if
+          // provided; do NOT throw if neither is present (deals can be ownerless).
+          const owner_id: string | null =
+            this.ctx?.userId ||
+            (a.user_id && typeof a.user_id === 'string' && isUuidString(a.user_id.trim())
+              ? a.user_id.trim()
+              : null);
           const { name, value, stage = 'qualified', description } = a;
           if (!name || typeof name !== 'string' || !name.trim()) {
             throw new Error('name is required');
@@ -3644,9 +3661,12 @@ class AlphaCloneMCPServer {
           const pdfUrl = AppUrls.payInvoice(invoice.id);
 
           // Resolve tenant's configured email provider — never use global env vars
+          // Bug #2 fix: pass preferredUserId as undefined (not null) so the
+          // resolver doesn't restrict to rows where user_id IS NULL, which caused
+          // provider lookups to fail when user_id was not set on the connection.
           const providerConfig = await resolveEmailProviderConfig({
             tenantId: tenant_id,
-            preferredUserId: user_id,
+            preferredUserId: user_id || undefined,
             preferredProvider: preferredProvider as EmailProvider | undefined,
             fallbackToEnv: false,
           });
@@ -6394,12 +6414,78 @@ Return ONLY a JSON array of 60 objects:
         }
 
         // ── AlphaClone Nexus Intelligence ──────────────────────────────────
+
+        // Bug #3 fix: nexus_contract_drafter used to be batched with the other
+        // nexus status tools and only returned existing contract counts. Now it
+        // detects when contract_type + client_name are supplied and routes to the
+        // full AI generate_contract_draft path so the tool actually drafts.
+        case 'nexus_contract_drafter': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const contract_type = typeof a.contract_type === 'string' ? a.contract_type.trim() : '';
+          const client_name  = typeof a.client_name  === 'string' ? a.client_name.trim()  : '';
+
+          if (contract_type && client_name) {
+            // Redirect to the AI drafting path — reuse generate_contract_draft logic.
+            // Mutate args so the shared generate_contract_draft case can handle it.
+            (args as Record<string, any>).contract_type = contract_type;
+            (args as Record<string, any>).client_name   = client_name;
+            // Fall through to generate_contract_draft by re-invoking executeTool.
+            // Since we can't fall-through across switch cases cleanly, delegate inline.
+            const { data: tenantRow } = await supabaseAdmin
+              .from('tenants')
+              .select('subscription_plan')
+              .eq('id', tenant_id)
+              .maybeSingle();
+            const plan = (tenantRow?.subscription_plan as string) || 'free';
+            const quota = await consumeTenantAiUnits(supabaseAdmin, tenant_id, plan, unitsForTextGeneration(2048));
+            if (!quota.ok) {
+              throw new Error('Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.');
+            }
+            const apiKey = process.env.ANTHROPIC_API_KEY;
+            if (!apiKey) throw new Error(MCP_GENERIC_OPERATION_ERROR);
+            const anthropic = new Anthropic({ apiKey });
+            const aiResponse = await anthropic.messages.create({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 2048,
+              messages: [{
+                role: 'user',
+                content: `Draft a professional ${contract_type} for a client named "${client_name}". Key terms and scope: ${a.key_terms || 'Standard professional terms'}. Write a complete, legally-structured contract with all standard sections (parties, recitals, terms, obligations, payment, termination, governing law). Use plain, professional language.`,
+              }],
+            });
+            let contractContent = aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '';
+            contractContent = appendContractDisclaimer(contractContent, 'Claude (via AlphaClone MCP nexus_contract_drafter)');
+            const { data: savedContract, error: saveErr } = await supabaseAdmin
+              .from('contracts')
+              .insert({
+                tenant_id,
+                title: `${contract_type}: ${client_name}`,
+                content: contractContent,
+                status: 'draft',
+                type: contract_type.toLowerCase().replace(/\s+/g, '_'),
+              })
+              .select('id, title, status')
+              .single();
+            if (saveErr) {
+              result = { content: [{ type: 'text', text: `Contract draft generated (could not save automatically):\n\n${contractContent}` }] };
+            } else {
+              result = { content: [{ type: 'text', text: `Contract draft saved!\nID: ${savedContract.id}\nTitle: ${savedContract.title}\nStatus: draft — ready in the Contracts section.\n\nPreview:\n${contractContent.substring(0, 400)}...` }] };
+            }
+          } else {
+            // No contract_type / client_name — return portfolio overview with a clear action hint.
+            const nexus = new AlphaNexus(tenant_id);
+            const response = await nexus.executeSystemAction('contract_drafter', {});
+            const hint = '\n\nTo draft a new contract, call nexus_contract_drafter again with contract_type (e.g. "Service Agreement") and client_name, or use generate_contract_draft directly.';
+            result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) + hint }] };
+          }
+          break;
+        }
+
         case 'nexus_payroll_sync':
         case 'nexus_invoice_chasing':
         case 'nexus_month_end_close':
         case 'nexus_lead_enrichment':
         case 'nexus_sales_campaign':
-        case 'nexus_contract_drafter':
         case 'nexus_content_synthesis':
         case 'nexus_market_pulse':
         case 'nexus_design_audit':

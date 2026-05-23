@@ -19,6 +19,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     const [transactionType, setTransactionType] = useState<'received' | 'spent'>('spent');
     const [showAddAccount, setShowAddAccount] = useState(false);
     const [newAccountName, setNewAccountName] = useState('');
+    const [newAssetAccountName, setNewAssetAccountName] = useState('');
     const [selectedAssetAccountId, setSelectedAssetAccountId] = useState('');
     const [formData, setFormData] = useState({
         entryDate: new Date().toISOString().split('T')[0],
@@ -143,7 +144,36 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     };
 
     const totalAmount = formData.lines.reduce((sum, line) => sum + (line.amount || 0), 0);
-    const isValid = totalAmount > 0 && formData.lines.every(l => l.accountId) && selectedAssetAccountId;
+    const isValid = totalAmount > 0 && formData.lines.every(l => l.accountId && l.accountId !== 'ADD_NEW') && selectedAssetAccountId && selectedAssetAccountId !== 'ADD_NEW_ASSET';
+
+    const handleCreateAssetAccount = async () => {
+        if (!newAssetAccountName) return;
+        setLoading(true);
+        try {
+            const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+            const maxCode = Math.max(...assetAccounts.map(a => parseInt(a.accountCode) || 1000), 1000);
+            
+            const { account, error } = await chartOfAccountsService.createAccount({
+                accountName: newAssetAccountName,
+                accountCode: (maxCode + 1).toString(),
+                accountType: 'asset',
+                normalBalance: 'debit',
+            });
+
+            if (error || !account) {
+                toast.error(`Error: ${error || 'Failed to create account'}`);
+            } else {
+                toast.success('Bank/Cash account created!');
+                setNewAssetAccountName('');
+                setSelectedAssetAccountId(account.id);
+                onSuccess();
+            }
+        } catch (err) {
+            toast.error('Failed to create bank/cash account');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleCreateAccount = async () => {
         if (!newAccountName) return;
@@ -268,7 +298,22 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                     {account.accountName} (${account.currentBalance.toLocaleString()})
                                 </option>
                             ))}
+                            <option value="ADD_NEW_ASSET" className="text-teal-400 font-bold">+ Add new bank/cash account...</option>
                         </select>
+                        
+                        {selectedAssetAccountId === 'ADD_NEW_ASSET' && (
+                            <div className="mt-3 p-3 bg-slate-800 rounded-xl border border-teal-500/30 flex gap-2">
+                                <input 
+                                    autoFocus
+                                    placeholder="Bank/Cash Account Name (e.g. Chase Business)"
+                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-teal-500"
+                                    value={newAssetAccountName}
+                                    onChange={(e) => setNewAssetAccountName(e.target.value)}
+                                />
+                                <Button size="sm" onClick={handleCreateAssetAccount} disabled={loading}>Add</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setSelectedAssetAccountId('')}>Cancel</Button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

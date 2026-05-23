@@ -41,6 +41,7 @@ import ProjectSubmitTab from './dashboard/ProjectSubmitTab';
 import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
 import { generateText } from '../services/unifiedAIService';
+import BonnieWidget from './dashboard/bonnie/BonnieWidget';
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
@@ -1796,6 +1797,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         title="Mission Accomplished" 
         message="Achievement unlocked." 
       />
+      <BonnieWidget />
     </div>
   );
 };
