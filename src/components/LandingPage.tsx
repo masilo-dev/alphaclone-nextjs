@@ -47,6 +47,251 @@ const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
 const LOGIN_HREF = '/auth/login';
 
+// CPU and Terminal Icons for HUD Simulator
+const CpuIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <rect x="5" y="5" width="14" height="14" rx="2" />
+    <path d="M9 1v4M15 1v4M9 19v4M15 19v4M20 9h3M20 15h3M1 9h3M1 15h3" />
+  </svg>
+);
+
+const ClaudeHudSimulator = () => {
+   const [activeTab, setActiveTab] = useState<'invoices' | 'leads' | 'contracts'>('invoices');
+   
+   const contents = {
+      invoices: {
+         prompt: 'AlphaClone, check for overdue invoices and sync this month\'s payments.',
+         toolCalls: [
+            { name: 'list_invoices', args: '{ status: "overdue" }', duration: '800ms' },
+            { name: 'sync_general_ledger', args: '{ tenant_id: "tenant_9a2f" }', duration: '1200ms' }
+         ],
+         response: "I've successfully synced the payments. I also found one overdue invoice for Acme Corp ($1,200). I can draft and send a polite payment reminder email. Shall I proceed?",
+         subPrompt: 'Yes, draft and send it.',
+         subToolCalls: [
+            { name: 'send_email', args: '{ to: "billing@acme.com", subject: "Invoice reminder #2024-91" }', duration: '900ms' }
+         ],
+         subResponse: 'Payment reminder email sent successfully to Acme Corp! The communication has been logged to your CRM database.'
+      },
+      leads: {
+         prompt: 'Find recent tech companies in Boston and enrich them as leads.',
+         toolCalls: [
+            { name: 'scrape_business_data', args: '{ query: "tech", location: "Boston" }', duration: '1500ms' },
+            { name: 'verify_business_emails', args: '{ domains: ["bostondevs.com", "hubtech.io"] }', duration: '1000ms' },
+            { name: 'create_crm_leads', args: '{ count: 3 }', duration: '700ms' }
+         ],
+         response: "I've imported 3 verified leads from Boston into your CRM pipeline:\n\n1. Boston Devs Inc (Trust Score: 92%)\n2. HubTech (Trust Score: 88%)\n3. Vertex Labs (Trust Score: 85%)\n\nWould you like me to queue an introductory outreach sequence?",
+         subPrompt: 'Yes, queue them.',
+         subToolCalls: [
+            { name: 'nexus_sales_campaign', args: '{ campaign_id: "camp_b102", target_leads: 3 }', duration: '1100ms' }
+         ],
+         subResponse: 'Campaign sequence queued! The AI will execute outreach daily. You can monitor progress under the Campaigns tab.'
+      },
+      contracts: {
+         prompt: 'Draft a standard service contract for client "DevFlow LLC" for $5,000.',
+         toolCalls: [
+            { name: 'generate_contract_draft', args: '{ client: "DevFlow LLC", amount: 5000, type: "service_agreement" }', duration: '1600ms' }
+         ],
+         response: "Contract drafted and saved to your workspace as 'Service Agreement: DevFlow LLC'.\n\nKey Terms Summary:\n- Value: $5,000 USD\n- Deposit: 50% ($2,500)\n- Jurisdiction: Delaware\n- Governing Law: Delaware State Laws\n\nWould you like me to request client signature via e-sign?",
+         subPrompt: 'Yes, email it for signature.',
+         subToolCalls: [
+            { name: 'send_contract_signature_request', args: '{ contract_id: "cont_99a8" }', duration: '1200ms' }
+         ],
+         subResponse: 'E-sign request sent to DevFlow LLC! E-signature status is now tracked under the Contracts dashboard.'
+      }
+   };
+
+   const [step, setStep] = useState(0);
+
+   useEffect(() => {
+      setStep(0);
+      const t1 = setTimeout(() => setStep(1), 600);
+      const t2 = setTimeout(() => setStep(2), 1800);
+      const t3 = setTimeout(() => setStep(3), 3200);
+      const t4 = setTimeout(() => setStep(4), 4200);
+      const t5 = setTimeout(() => setStep(5), 5500);
+      return () => {
+         clearTimeout(t1);
+         clearTimeout(t2);
+         clearTimeout(t3);
+         clearTimeout(t4);
+         clearTimeout(t5);
+      };
+   }, [activeTab]);
+
+   const activeContent = contents[activeTab];
+
+   return (
+      <div className="w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-cyan-500/30 bg-slate-950/80 backdrop-blur-xl shadow-[0_0_50px_-10px_rgba(0,255,255,0.15)] flex flex-col md:flex-row h-[480px] text-left">
+         {/* Sidebar */}
+         <div className="hidden md:flex flex-col w-64 border-r border-slate-800 bg-[#060D19] p-4 shrink-0">
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Integrations</div>
+            <div className="space-y-2">
+               {[
+                  { name: 'AlphaClone MCP', desc: 'Core platform systems', active: true },
+                  { name: 'Stripe Billing', desc: 'Invoice & payment reconciliation', active: true },
+                  { name: 'Gmail Workspace', desc: 'Outreach & inbox tracking', active: true },
+                  { name: 'Supabase Database', desc: 'CRM & general ledger', active: true }
+               ].map((item) => (
+                  <div key={item.name} className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/30 border border-slate-800/40">
+                     <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                     </span>
+                     <div>
+                        <div className="text-xs font-semibold text-slate-300">{item.name}</div>
+                        <div className="text-[10px] text-slate-500">{item.desc}</div>
+                     </div>
+                  </div>
+               ))}
+            </div>
+            
+            <div className="mt-auto pt-4 border-t border-slate-900">
+               <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Simulated Scopes</div>
+               <div className="flex flex-col gap-1.5 font-sans">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                     <Check className="w-3.5 h-3.5 text-cyan-400" />
+                     <span>Read/Write CRM</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                     <Check className="w-3.5 h-3.5 text-cyan-400" />
+                     <span>Draft Contracts</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                     <Check className="w-3.5 h-3.5 text-cyan-400" />
+                     <span>Send Emails</span>
+                  </div>
+               </div>
+            </div>
+         </div>
+
+         {/* Chat Area */}
+         <div className="flex-1 flex flex-col h-full bg-slate-950/40">
+            {/* Header */}
+            <div className="px-4 py-3 bg-[#0B1527] border-b border-slate-800 flex items-center justify-between">
+               <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+                  <span className="text-[11px] font-mono text-slate-400 ml-2">claude-3.5-sonnet-workspace</span>
+               </div>
+               <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">MCP Server Active</span>
+               </div>
+            </div>
+
+            {/* Messages body */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 font-sans text-xs custom-scrollbar">
+               {/* 1. Prompt */}
+               {step >= 0 && (
+                  <div className="flex items-start gap-3">
+                     <div className="w-7 h-7 rounded-xl bg-cyan-950 border border-cyan-800/50 flex items-center justify-center text-cyan-400 shrink-0 font-bold">
+                        U
+                     </div>
+                     <div className="bg-slate-900/50 border border-slate-800 px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-slate-200 max-w-[85%]">
+                        {activeContent.prompt}
+                     </div>
+                  </div>
+               )}
+
+               {/* 2. Tool Calls */}
+               {step >= 1 && (
+                  <div className="space-y-1.5 pl-10">
+                     {activeContent.toolCalls.map((tool, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-cyan-400/90 font-mono text-[10px] bg-cyan-950/20 border border-cyan-500/10 rounded-lg py-1.5 px-3">
+                           <span className="animate-spin h-3.5 w-3.5 border-2 border-cyan-400 border-t-transparent rounded-full shrink-0" style={{ display: step === 1 && idx === activeContent.toolCalls.length - 1 ? 'block' : 'none' }} />
+                           {(step > 1 || idx < activeContent.toolCalls.length - 1) && (
+                              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                           )}
+                           <span>Calling Tool: <strong className="text-cyan-300 font-bold">{tool.name}</strong>({tool.args})</span>
+                           <span className="ml-auto text-slate-500 text-[9px]">{tool.duration}</span>
+                        </div>
+                     ))}
+                  </div>
+               )}
+
+               {/* 3. Claude Response */}
+               {step >= 2 && (
+                  <div className="flex items-start gap-3 animate-in fade-in duration-300">
+                     <div className="w-7 h-7 rounded-xl bg-orange-950 border border-orange-800/45 flex items-center justify-center shrink-0">
+                        <CpuIcon className="w-4 h-4 text-orange-400" />
+                     </div>
+                     <div className="bg-[#10192A]/60 border border-slate-800 px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-slate-200 max-w-[85%] whitespace-pre-line leading-relaxed shadow-sm">
+                        {activeContent.response}
+                     </div>
+                  </div>
+               )}
+
+               {/* 4. SubPrompt */}
+               {step >= 3 && (
+                  <div className="flex items-start gap-3 animate-in fade-in duration-300">
+                     <div className="w-7 h-7 rounded-xl bg-cyan-950 border border-cyan-800/50 flex items-center justify-center text-cyan-400 shrink-0 font-bold">
+                        U
+                     </div>
+                     <div className="bg-slate-900/50 border border-slate-800 px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-slate-200 max-w-[85%]">
+                        {activeContent.subPrompt}
+                     </div>
+                  </div>
+               )}
+
+               {/* 5. SubTool Calls */}
+               {step >= 4 && (
+                  <div className="space-y-1.5 pl-10 animate-in fade-in duration-300">
+                     {activeContent.subToolCalls.map((tool, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-cyan-400/90 font-mono text-[10px] bg-cyan-950/20 border border-cyan-500/10 rounded-lg py-1.5 px-3">
+                           <span className="animate-spin h-3.5 w-3.5 border-2 border-cyan-400 border-t-transparent rounded-full shrink-0" style={{ display: step === 4 ? 'block' : 'none' }} />
+                           {step > 4 && (
+                              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                           )}
+                           <span>Calling Tool: <strong className="text-cyan-300 font-bold">{tool.name}</strong>({tool.args})</span>
+                           <span className="ml-auto text-slate-500 text-[9px]">{tool.duration}</span>
+                        </div>
+                     ))}
+                  </div>
+               )}
+
+               {/* 6. SubResponse */}
+               {step >= 5 && (
+                  <div className="flex items-start gap-3 animate-in fade-in duration-300">
+                     <div className="w-7 h-7 rounded-xl bg-orange-950 border border-orange-800/45 flex items-center justify-center shrink-0">
+                        <CpuIcon className="w-4 h-4 text-orange-400" />
+                     </div>
+                     <div className="bg-[#10192A]/60 border border-slate-800 px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-slate-200 max-w-[85%] whitespace-pre-line leading-relaxed shadow-sm">
+                        <div className="flex items-center gap-1.5 text-emerald-400 font-semibold mb-1">
+                           <Check className="w-4 h-4" /> Workflow Executed
+                        </div>
+                        {activeContent.subResponse}
+                     </div>
+                  </div>
+               )}
+            </div>
+
+            {/* Interactive Demo Controllers */}
+            <div className="p-3 border-t border-slate-800/80 bg-[#060D19]/60 flex flex-wrap gap-2 justify-center sm:justify-start items-center">
+               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mr-1 shrink-0">Try Workflows:</span>
+               {[
+                  { id: 'invoices', label: 'Reconcile Revenue' },
+                  { id: 'leads', label: 'Enrich CRM Pipeline' },
+                  { id: 'contracts', label: 'Draft Client Agreement' }
+               ].map((tab) => (
+                  <button
+                     key={tab.id}
+                     onClick={() => setActiveTab(tab.id as any)}
+                     className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
+                        activeTab === tab.id
+                           ? 'bg-cyan-500 border-cyan-400 text-slate-950 shadow-md shadow-cyan-500/10'
+                           : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                     }`}
+                  >
+                     {tab.label}
+                  </button>
+               ))}
+            </div>
+         </div>
+      </div>
+   );
+};
+
 const LandingPage = () => {
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [mobilePlatformOpen, setMobilePlatformOpen] = useState(false);
@@ -521,7 +766,7 @@ const LandingPage = () => {
                </motion.div>
             </section>
 
-            {/* Run your business from Claude Image Section */}
+            {/* Run your business from Claude HUD Section */}
             <section className="py-12 bg-[#020617] border-y border-slate-800">
                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                   <h3 className="text-2xl md:text-3xl font-black text-white mb-4">
@@ -534,14 +779,9 @@ const LandingPage = () => {
                      initial={{ opacity: 0, y: 20 }}
                      whileInView={{ opacity: 1, y: 0 }}
                      viewport={{ once: true }}
-                     className="relative w-full aspect-video max-w-5xl mx-auto rounded-xl overflow-hidden border border-cyan-500/30 shadow-[0_0_50px_-10px_rgba(0,255,255,0.15)]"
+                     className="w-full max-w-5xl mx-auto"
                   >
-                     <Image
-                        src="/cat-claude-business.png"
-                        alt="Cat doing business in Claude and AlphaClone"
-                        fill
-                        className="object-cover"
-                     />
+                     <ClaudeHudSimulator />
                   </motion.div>
                </div>
             </section>

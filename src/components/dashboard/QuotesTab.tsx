@@ -42,7 +42,7 @@ const QuoteRow: React.FC<{ quote: Quote; onDelete: (id: string) => void; onTap: 
           {quote.valid_until && <span className="text-[13px] text-slate-500 opacity-55">Valid until {new Date(quote.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="text-[15px] font-bold text-white">${quote.amount.toLocaleString()}</span>
+          <span className="text-[15px] font-bold text-white">${(quote.amount || 0).toLocaleString()}</span>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${STATUS_COLORS[quote.status]}`}>{quote.status}</span>
         </div>
       </motion.div>
@@ -59,7 +59,7 @@ const QuoteDetail: React.FC<{ quote: Quote; onBack: () => void; onConvert: (id: 
     <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-4">
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
         <div className="text-[13px] text-slate-500">Quote #{quote.number || quote.id.slice(0,8)}</div>
-        <div className="text-[32px] font-bold text-teal-400">${quote.amount.toLocaleString()}</div>
+        <div className="text-[32px] font-bold text-teal-400">${(quote.amount || 0).toLocaleString()}</div>
         <span className={`inline-block text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${STATUS_COLORS[quote.status]}`}>{quote.status}</span>
       </div>
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">

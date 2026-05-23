@@ -2398,11 +2398,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'nexus_contract_drafter',
-    description: 'AlphaClone Nexus: Autonomous Legal Instrument Drafting and Deal Architecting.',
+    description: 'AlphaClone Nexus: Autonomous Legal Instrument Drafting. When contract_type and client_name are provided, uses AI to draft and save a full professional contract. Without those params, returns an overview of existing contracts and prompts for drafting details.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        contract_type: { type: 'string', description: 'Type of contract to draft, e.g. "Service Agreement", "NDA", "MSA", "SOW"' },
+        client_name: { type: 'string', description: 'Full name of the client the contract is for' },
+        key_terms: { type: 'string', description: 'Optional key terms, scope, or special clauses to include in the contract' },
       },
       required: [],
     },
