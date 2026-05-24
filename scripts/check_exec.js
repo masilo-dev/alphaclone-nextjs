@@ -22,7 +22,7 @@ async function checkExec() {
 
   if (!url || !key) return;
 
-  const res = await fetch(`${url.replace(/\/$/, '')}/rest/v1/rpc/exec_sql`, {
+  const res = await fetch(`${url.replace(/\/$/, '')}/rest/v1/rpc/query`, {
     method: 'POST',
     headers: {
       'apikey': key,
@@ -33,9 +33,9 @@ async function checkExec() {
   });
 
   if (res.ok) {
-    console.log('SQL EXEC: AVAILABLE');
+    console.log('SQL QUERY: AVAILABLE');
   } else {
-    console.log('SQL EXEC: NOT AVAILABLE', res.status);
+    console.log('SQL QUERY: NOT AVAILABLE', res.status, await res.text());
   }
 }
 
