@@ -127,6 +127,10 @@ export interface AIRequestOptions {
   temperature?: number;
   image?: string; // Base64 image for vision tasks
   model?: string; // Optional specific model
+  /** Enable Extended Thinking for Anthropic models. tokenBudget controls how many tokens Claude can use for reasoning. */
+  extendedThinking?: { enabled: boolean; tokenBudget?: number };
+  /** Enable Citations support for Anthropic models (structured source references). */
+  enableCitations?: boolean;
 }
 
 export interface AIResponse {
@@ -135,6 +139,10 @@ export interface AIResponse {
   model: string;
   success: boolean;
   error?: string;
+  /** Thinking content blocks returned when Extended Thinking is enabled */
+  thinkingContent?: string;
+  /** Citation references returned when Citations are enabled */
+  citations?: Array<{ document_title?: string; document_url?: string; quote?: string; start_char?: number; end_char?: number }>;
 }
 
 export interface AIStreamResponse {
@@ -392,46 +400,73 @@ async function completeWithAnthropic(options: AIRequestOptions): Promise<AIRespo
 
   const model = normalizeClaudeModel(options.model);
 
+  // Build request params
+  const useThinking = options.extendedThinking?.enabled === true;
+  const thinkingBudget = options.extendedThinking?.tokenBudget ?? 5000;
+  const useCitations = options.enableCitations === true;
+
+  const betaHeaders: string[] = [];
+  if (useThinking) betaHeaders.push('interleaved-thinking-2025-05-14');
+  if (useCitations) betaHeaders.push('citations-2023-06-01');
+
+  const buildParams = (mdl: string): any => ({
+    model: mdl,
+    max_tokens: options.maxTokens || 8192,
+    ...(useThinking ? {} : { temperature: options.temperature || 0.7 }),
+    system: options.systemPrompt,
+    messages: [
+      {
+        role: 'user',
+        content: options.prompt,
+      },
+    ],
+    ...(useThinking ? { thinking: { type: 'enabled', budget_tokens: thinkingBudget } } : {}),
+    ...(betaHeaders.length ? { betas: betaHeaders } : {}),
+  });
+
   let message;
   try {
-    message = await anthropic.messages.create({
-      model: model,
-      max_tokens: options.maxTokens || 8192,
-      temperature: options.temperature || 0.7,
-      system: options.systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: options.prompt,
-        },
-      ],
-    });
+    message = await (anthropic as any).messages.create(buildParams(model));
   } catch (error: any) {
     if (model !== 'claude-sonnet-4-20250514' && isAnthropicModelNotFound(error)) {
-      message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: options.maxTokens || 8192,
-        temperature: options.temperature || 0.7,
-        system: options.systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: options.prompt,
-          },
-        ],
-      });
+      message = await (anthropic as any).messages.create(buildParams('claude-sonnet-4-20250514'));
     } else {
       throw error;
     }
   }
 
-  const content = message.content[0].type === 'text' ? message.content[0].text : '';
+  // Extract text, thinking, and citations from content blocks
+  let content = '';
+  let thinkingContent = '';
+  const citations: AIResponse['citations'] = [];
+
+  for (const block of message.content || []) {
+    if (block.type === 'text') {
+      content += block.text;
+      // Extract inline citations if present
+      if (useCitations && Array.isArray((block as any).citations)) {
+        for (const c of (block as any).citations) {
+          citations.push({
+            document_title: c.document?.title,
+            document_url: c.document?.url,
+            quote: c.cited_text,
+            start_char: c.start_char_index,
+            end_char: c.end_char_index,
+          });
+        }
+      }
+    } else if (block.type === 'thinking') {
+      thinkingContent += (block as any).thinking || '';
+    }
+  }
 
   return {
-    content,
+    content: content || '',
     provider: 'anthropic',
     model: model,
     success: true,
+    ...(thinkingContent ? { thinkingContent } : {}),
+    ...(citations.length ? { citations } : {}),
   };
 }
 
