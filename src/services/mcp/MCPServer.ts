@@ -80,6 +80,47 @@ function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
 }
 
+async function getInvoiceWithDetailsAdmin(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  invoiceId: string,
+  tenantId?: string
+): Promise<{ invoice: any | null; error: string | null }> {
+  try {
+    let query = supabaseAdmin
+      .from('business_invoices')
+      .select(`
+          *,
+          tenant:tenant_id (
+              id,
+              name,
+              slug
+          ),
+          client:client_id (
+              id,
+              name,
+              email,
+              company,
+              phone
+          ),
+          project:project_id (
+              id,
+              name
+          )
+      `)
+      .eq('id', invoiceId);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { data, error } = await query.single();
+    if (error) return { invoice: null, error: error.message };
+    return { invoice: data, error: null };
+  } catch (err: any) {
+    return { invoice: null, error: err.message || 'Unknown error' };
+  }
+}
+
 async function resolveMcpEmailSignature(
   supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
   tenantId: string,
@@ -674,9 +715,19 @@ class AlphaCloneMCPServer {
       throw new Error(`Resource not found: ${uri}`);
     });
 
-    this.server.setRequestHandler(ListPromptsRequestSchema, async () => ({
-      prompts: [],
-    }));
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      const { listMcpPrompts } = await import('../../lib/mcp/prompts/review_bonnie_patterns');
+      const prompts = listMcpPrompts().map(p => ({
+        name: p.name,
+        description: p.description,
+        arguments: (p.arguments || []).map(a => ({
+          name: a.name,
+          description: a.description,
+          required: a.required ?? false,
+        })),
+      }));
+      return { prompts };
+    });
 
     // â”€â”€ Tool Manifest â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: MCP_TOOLS }));
@@ -689,6 +740,24 @@ class AlphaCloneMCPServer {
       const traceId = crypto.randomUUID();
       const supabaseAdmin = createSupabaseAdminClient();
       const supabase = supabaseAdmin;
+
+      // Check new registry first
+      try {
+        const { hasTool, executeTool, initializeRegistry } = await import('@/lib/mcp/tool-registry');
+        initializeRegistry();
+        if (hasTool(name)) {
+          const tenantId = this.requireTenant((args || {}) as Record<string, any>);
+          const userId = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
+          return await executeTool(tenantId, userId, name, (args || {}) as Record<string, any>);
+        }
+      } catch (regErr: any) {
+        console.error(`Registry execution error for tool ${name}:`, regErr);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: true, message: regErr.message }) }],
+          isError: true
+        };
+      }
+
       let result: any;
 
       try {
@@ -1633,7 +1702,7 @@ class AlphaCloneMCPServer {
             (a.user_id && typeof a.user_id === 'string' && isUuidString(a.user_id.trim())
               ? a.user_id.trim()
               : null);
-          const { name, value, stage = 'qualified', description } = a;
+          const { name, value, stage = 'qualified', description, source } = a;
           if (!name || typeof name !== 'string' || !name.trim()) {
             throw new Error('name is required');
           }
@@ -1644,6 +1713,11 @@ class AlphaCloneMCPServer {
           if (!Number.isFinite(numericValue) || numericValue < 0) {
             throw new Error('value must be a non-negative number');
           }
+          const validSources = ['referral', 'website', 'cold_outreach', 'social_media', 'event', 'partner', 'organic', 'other'];
+          const finalSource = (typeof source === 'string' && validSources.includes(source.trim()))
+            ? source.trim()
+            : 'other';
+
           const { data, error } = await supabaseAdmin
             .from('deals')
             .insert({
@@ -1653,7 +1727,7 @@ class AlphaCloneMCPServer {
               value: numericValue,
               stage,
               description: typeof description === 'string' ? description : null,
-              source: 'MCP Agent',
+              source: finalSource,
             })
             .select('id, name, value, stage')
             .single();
@@ -3409,75 +3483,129 @@ class AlphaCloneMCPServer {
             }
 
             const postId = String(pendingRow.id);
-            const primaryMediaUrl = mergedMediaUrls.find((url) => typeof url === 'string' && url.trim()) || null;
-            let shareMediaCategory: 'NONE' | 'IMAGE' = 'NONE';
+            let shareMediaCategory: 'NONE' | 'IMAGE' | 'VIDEO' = 'NONE';
             let media: Array<Record<string, unknown>> = [];
 
-            if (primaryMediaUrl) {
-              const isLikelyVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(primaryMediaUrl);
-              if (isLikelyVideo) {
-                throw new Error(
-                  'LinkedIn MCP immediate publish currently supports image media only. Use image media or schedule video via dashboard publisher.'
-                );
-              }
+            if (mergedMediaUrls.length > 0) {
+              const firstMediaUrl = mergedMediaUrls[0];
+              const isVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
 
-              const fetchController = new AbortController();
-              const fetchTimer = setTimeout(() => fetchController.abort(), 30000);
-              const imageFetch = await fetch(primaryMediaUrl, {
-                method: 'GET',
-                signal: fetchController.signal,
-              }).finally(() => clearTimeout(fetchTimer));
-              if (!imageFetch.ok) {
-                throw new Error(`Could not download media URL (${imageFetch.status})`);
-              }
-              const contentType = String(imageFetch.headers.get('content-type') || 'image/jpeg');
-              if (!contentType.startsWith('image/')) {
-                throw new Error(`LinkedIn image publish requires image content-type. Received ${contentType}.`);
-              }
-              const imageBuffer = await imageFetch.arrayBuffer();
+              if (isVideo) {
+                const fetchController = new AbortController();
+                const fetchTimer = setTimeout(() => fetchController.abort(), 60000);
+                const videoFetch = await fetch(firstMediaUrl, {
+                  method: 'GET',
+                  signal: fetchController.signal,
+                }).finally(() => clearTimeout(fetchTimer));
+                if (!videoFetch.ok) {
+                  throw new Error(`Could not download video URL (${videoFetch.status})`);
+                }
+                const contentType = String(videoFetch.headers.get('content-type') || 'video/mp4');
+                const videoBuffer = await videoFetch.arrayBuffer();
 
-              const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${li.access_token}`,
-                  'Content-Type': 'application/json',
-                  'X-Restli-Protocol-Version': '2.0.0',
-                },
-                body: JSON.stringify({
-                  registerUploadRequest: {
-                    recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-                    owner: authorUrn,
-                    serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+                const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${li.access_token}`,
+                    'Content-Type': 'application/json',
+                    'X-Restli-Protocol-Version': '2.0.0',
                   },
-                }),
-              });
-              const registerJson = await registerRes.json().catch(() => ({}));
-              if (!registerRes.ok) {
-                throw new Error(registerJson?.message || `LinkedIn media register failed (${registerRes.status})`);
-              }
-              const assetUrn = String(registerJson?.value?.asset || '');
-              const uploadUrl = String(
-                registerJson?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl || ''
-              );
-              if (!assetUrn || !uploadUrl) {
-                throw new Error('LinkedIn media register response missing upload target');
-              }
+                  body: JSON.stringify({
+                    registerUploadRequest: {
+                      recipes: ['urn:li:digitalmediaRecipe:feedshare-video'],
+                      owner: authorUrn,
+                      serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+                    },
+                  }),
+                });
+                const registerJson = await registerRes.json().catch(() => ({}));
+                if (!registerRes.ok) {
+                  throw new Error(registerJson?.message || `LinkedIn video register failed (${registerRes.status})`);
+                }
+                const assetUrn = String(registerJson?.value?.asset || '');
+                const uploadUrl = String(
+                  registerJson?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl || ''
+                );
+                if (!assetUrn || !uploadUrl) {
+                  throw new Error('LinkedIn video register response missing upload target');
+                }
 
-              const uploadRes = await fetch(uploadUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': contentType },
-                body: imageBuffer,
-              });
-              if (!uploadRes.ok) {
-                throw new Error(`LinkedIn media upload failed (${uploadRes.status})`);
-              }
+                const uploadRes = await fetch(uploadUrl, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': contentType },
+                  body: videoBuffer,
+                });
+                if (!uploadRes.ok) {
+                  throw new Error(`LinkedIn video upload failed (${uploadRes.status})`);
+                }
 
-              shareMediaCategory = 'IMAGE';
-              media = [{
-                status: 'READY',
-                media: assetUrn,
-                title: { text: 'AlphaClone image' },
-              }];
+                shareMediaCategory = 'VIDEO';
+                media = [{
+                  status: 'READY',
+                  media: assetUrn,
+                  title: { text: 'AlphaClone video' },
+                }];
+              } else {
+                shareMediaCategory = 'IMAGE';
+                for (let i = 0; i < mergedMediaUrls.length; i++) {
+                  const imageUrl = mergedMediaUrls[i];
+                  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.trim()) continue;
+
+                  const fetchController = new AbortController();
+                  const fetchTimer = setTimeout(() => fetchController.abort(), 30000);
+                  const imageFetch = await fetch(imageUrl, {
+                    method: 'GET',
+                    signal: fetchController.signal,
+                  }).finally(() => clearTimeout(fetchTimer));
+                  if (!imageFetch.ok) {
+                    throw new Error(`Could not download image URL (${imageFetch.status})`);
+                  }
+                  const contentType = String(imageFetch.headers.get('content-type') || 'image/jpeg');
+                  const imageBuffer = await imageFetch.arrayBuffer();
+
+                  const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${li.access_token}`,
+                      'Content-Type': 'application/json',
+                      'X-Restli-Protocol-Version': '2.0.0',
+                    },
+                    body: JSON.stringify({
+                      registerUploadRequest: {
+                        recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                        owner: authorUrn,
+                        serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+                      },
+                    }),
+                  });
+                  const registerJson = await registerRes.json().catch(() => ({}));
+                  if (!registerRes.ok) {
+                    throw new Error(registerJson?.message || `LinkedIn image register failed (${registerRes.status})`);
+                  }
+                  const assetUrn = String(registerJson?.value?.asset || '');
+                  const uploadUrl = String(
+                    registerJson?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl || ''
+                  );
+                  if (!assetUrn || !uploadUrl) {
+                    throw new Error('LinkedIn image register response missing upload target');
+                  }
+
+                  const uploadRes = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': contentType },
+                    body: imageBuffer,
+                  });
+                  if (!uploadRes.ok) {
+                    throw new Error(`LinkedIn image upload failed (${uploadRes.status})`);
+                  }
+
+                  media.push({
+                    status: 'READY',
+                    media: assetUrn,
+                    title: { text: `AlphaClone image ${i + 1}` },
+                  });
+                }
+              }
             }
 
             const payload = {
@@ -3632,7 +3760,7 @@ class AlphaCloneMCPServer {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
 
-          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id, tenant_id);
+          const { invoice, error: fetchErr } = await getInvoiceWithDetailsAdmin(supabaseAdmin, invoice_id, tenant_id);
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
           // Update status in DB
@@ -3739,7 +3867,7 @@ class AlphaCloneMCPServer {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
 
-          const { invoice, error: fetchErr } = await businessInvoiceService.getInvoiceWithDetails(invoice_id, tenant_id);
+          const { invoice, error: fetchErr } = await getInvoiceWithDetailsAdmin(supabaseAdmin, invoice_id, tenant_id);
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
           if (invoice.status !== 'paid') {

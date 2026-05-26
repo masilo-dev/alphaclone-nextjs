@@ -361,13 +361,13 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
       ? `urn:li:organization:${requestedOrganizationId}`
       : activeIntegration.linkedin_person_urn;
 
-    async function registerAndUploadLinkedInImage(authorUrn: string, imageUrl: string): Promise<string> {
-      const imageFetch = await fetchWithTimeout(imageUrl, { method: 'GET' }, 25000);
-      if (!imageFetch.ok) {
-        throw new Error(`Could not download image URL (${imageFetch.status})`);
+    async function registerAndUploadLinkedInMedia(authorUrn: string, mediaUrl: string, isVideo: boolean): Promise<string> {
+      const mediaFetch = await fetchWithTimeout(mediaUrl, { method: 'GET' }, isVideo ? 60000 : 25000);
+      if (!mediaFetch.ok) {
+        throw new Error(`Could not download media URL (${mediaFetch.status})`);
       }
-      const contentType = imageFetch.headers.get('content-type') || 'image/jpeg';
-      const imageBuffer = await imageFetch.arrayBuffer();
+      const contentType = mediaFetch.headers.get('content-type') || (isVideo ? 'video/mp4' : 'image/jpeg');
+      const mediaBuffer = await mediaFetch.arrayBuffer();
 
       const registerRes = await fetchWithTimeout('https://api.linkedin.com/v2/assets?action=registerUpload', {
         method: 'POST',
@@ -378,7 +378,7 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         },
         body: JSON.stringify({
           registerUploadRequest: {
-            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+            recipes: [isVideo ? 'urn:li:digitalmediaRecipe:feedshare-video' : 'urn:li:digitalmediaRecipe:feedshare-image'],
             owner: authorUrn,
             serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
           },
@@ -404,33 +404,47 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
         headers: {
           'Content-Type': contentType,
         },
-        body: imageBuffer,
-      }, 30000);
+        body: mediaBuffer,
+      }, isVideo ? 60000 : 30000);
 
       if (!uploadRes.ok) {
-        throw new Error(`LinkedIn image upload failed (${uploadRes.status})`);
+        throw new Error(`LinkedIn media upload failed (${uploadRes.status})`);
       }
 
       return assetUrn;
     }
 
     const hasLink = typeof post.link_url === 'string' && post.link_url.trim().length > 0;
-    const imageUrl = Array.isArray(post.media_urls) && post.media_urls.length > 0
-      ? String(post.media_urls[0] || '').trim()
-      : '';
-    const hasImage = imageUrl.length > 0;
+    const mediaUrls = Array.isArray(post.media_urls) ? post.media_urls.filter((url) => typeof url === 'string' && url.trim()) : [];
+    const hasMedia = mediaUrls.length > 0;
 
-    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' = 'NONE';
+    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' | 'VIDEO' = 'NONE';
     let media: Array<Record<string, unknown>> = [];
 
-    if (hasImage) {
-      const assetUrn = await registerAndUploadLinkedInImage(authorUrn, imageUrl);
-      shareMediaCategory = 'IMAGE';
-      media = [{
-        status: 'READY',
-        media: assetUrn,
-        title: { text: 'AlphaClone Image' },
-      }];
+    if (hasMedia) {
+      const firstMediaUrl = mediaUrls[0];
+      const isVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
+
+      if (isVideo) {
+        const assetUrn = await registerAndUploadLinkedInMedia(authorUrn, firstMediaUrl, true);
+        shareMediaCategory = 'VIDEO';
+        media = [{
+          status: 'READY',
+          media: assetUrn,
+          title: { text: 'AlphaClone Video' },
+        }];
+      } else {
+        shareMediaCategory = 'IMAGE';
+        for (let i = 0; i < mediaUrls.length; i++) {
+          const imageUrl = mediaUrls[i];
+          const assetUrn = await registerAndUploadLinkedInMedia(authorUrn, imageUrl, false);
+          media.push({
+            status: 'READY',
+            media: assetUrn,
+            title: { text: `AlphaClone Image ${i + 1}` },
+          });
+        }
+      }
     } else if (hasLink) {
       shareMediaCategory = 'ARTICLE';
       media = [{ status: 'READY', originalUrl: post.link_url, title: { text: 'AlphaClone Link' } }];

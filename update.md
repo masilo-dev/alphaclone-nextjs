@@ -1,5 +1,21 @@
 # Update Log
 
+## Date: 2026-05-26 (MCP POWER UPGRADE, FACEBOOK REELS & MULTI-IMAGE, LINKEDIN VIDEO & MULTI-PHOTO PUBLISHING)
+
+### Added/Modified
+- **LinkedIn Video & Multi-Photo Support** ([route.ts](file:///home/bonnie/alphaclone-nextjs/src/app/api/social/schedule/route.ts), [cronPublish.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/social/cronPublish.ts)):
+  - Extended social publishing cron routines to natively detect and upload video files (using `urn:li:digitalmediaRecipe:feedshare-video` and the `VIDEO` category) as well as multi-image carousel uploads to LinkedIn.
+- **MCP Server Upgrade & Extended Tools** ([MCPServer.ts](file:///home/bonnie/alphaclone-nextjs/src/services/mcp/MCPServer.ts), [toolManifest.ts](file:///home/bonnie/alphaclone-nextjs/src/services/mcp/toolManifest.ts), [tool-registry.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/mcp/tool-registry.ts)):
+  - Implemented advanced model operations and registered rich new tools: `define_outcome`, `export_to_google_workspace`, `get_api_health`, `send_document_to_claude`, `analyze_workspace_document_url`, `publish_facebook_reel`, and `publish_facebook_multi_photo`.
+  - Refactored invoicing tools to use elevated admin functions, resolving permission/RLS access limitations during backend job execution.
+- **Database & Schema Upgrades** ([20260524181600_mcp_power_upgrade.sql](file:///home/bonnie/alphaclone-nextjs/supabase/migrations/20260524181600_mcp_power_upgrade.sql)):
+  - Run migrations supporting the new MCP tool registry, database tracing tables, and entity mappings.
+
+### Production Readiness
+- **Vercel Safe**: Changes prepared and structured for seamless deployment compatibility.
+
+---
+
 ## Date: 2026-05-23 (BONNIE AGENT SYSTEM, LANDING PAGE HUD SIMULATOR & TYPE SAFETY)
 
 ### Added/Modified
