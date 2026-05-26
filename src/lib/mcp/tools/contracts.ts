@@ -157,3 +157,79 @@ registerTool('contracts', {
     };
   },
 });
+
+// 5. send_contract
+registerTool('contracts', {
+  name: 'send_contract',
+  description: 'Send a contract for review and digital signature. Generates a PDF of the contract and emails a secure signature link to the recipient using the tenant-configured email provider.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    contract_id: z.string().uuid(),
+    recipient_email: z.string().email().optional(),
+    subject: z.string().optional(),
+    message: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      contract_id: { type: 'string', format: 'uuid' },
+      recipient_email: { type: 'string', format: 'email', description: 'Override recipient email. If omitted, uses email from the linked client.' },
+      subject: { type: 'string', description: 'Optional custom email subject' },
+      message: { type: 'string', description: 'Optional custom email body message' },
+    },
+    required: ['tenant_id', 'contract_id'],
+  },
+  handler: async (args, context) => {
+    const supabase = createSupabaseAdminClient();
+    const userId = context.userId || '';
+
+    // If recipient_email is not provided, try to fetch it from the contract's client
+    let toEmail = args.recipient_email;
+    if (!toEmail) {
+      const { data: contract } = await supabase
+        .from('contracts')
+        .select('client_id')
+        .eq('id', args.contract_id)
+        .single();
+      
+      if (contract?.client_id) {
+        const { data: client } = await supabase
+          .from('clients')
+          .select('email')
+          .eq('id', contract.client_id)
+          .single();
+        if (client?.email) {
+          toEmail = client.email;
+        }
+      }
+    }
+
+    if (!toEmail) {
+      throw new Error('Recipient email is required (could not resolve from contract/client)');
+    }
+
+    const { sendContract } = await import('@/app/api/contracts/management/route');
+    const result = await sendContract(
+      args.tenant_id,
+      {
+        contractId: args.contract_id,
+        recipients: toEmail,
+        subject: args.subject,
+        message: args.message,
+      },
+      supabase,
+      userId
+    );
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send contract');
+    }
+
+    return {
+      status: 'sent',
+      message: 'Contract successfully sent to client',
+      recipient: toEmail,
+    };
+  },
+});

@@ -1463,6 +1463,21 @@ export const MCP_TOOLS = [
       required: ['title', 'content'],
     },
   },
+  {
+    name: 'send_contract',
+    description: 'Send a contract for review and digital signature. Generates a PDF of the contract and emails a secure signature link to the recipient using the tenant-configured email provider.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        contract_id: { type: 'string', description: 'Contract ID reference' },
+        recipient_email: { type: 'string', description: 'Override recipient email. If omitted, uses email from the linked client.' },
+        subject: { type: 'string', description: 'Optional custom email subject' },
+        message: { type: 'string', description: 'Optional custom email body message' },
+      },
+      required: ['tenant_id', 'contract_id'],
+    },
+  },
   // ── Research & Web ─────────────────────────────────────────────────
   {
     name: 'read_url_content',
@@ -3066,6 +3081,18 @@ export const MCP_TOOLS = [
         publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
       },
       required: ['tenant_id', 'caption', 'photos'],
+    },
+  },
+  {
+    name: 'run_chief_of_staff_routine',
+    description: 'Execute the autonomous Chief of Staff routine: 1) Pipeline Health (draft invoices, new deals for stale leads, update due tasks), 2) Revenue Recovery (nexus invoice chasing, resend), 3) Deal Pipeline (get leads without deals, create deals, score them), 4) Daily Social Engine (post 3 rotated content updates on LinkedIn and Facebook scheduled at 9am, 1pm, 5pm Warsaw time). Runs once per calendar day for social updates.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        user_id: { type: 'string', description: 'Optional user UUID' },
+      },
+      required: ['tenant_id'],
     },
   },
 ];

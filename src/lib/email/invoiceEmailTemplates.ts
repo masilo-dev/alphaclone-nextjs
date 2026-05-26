@@ -5,7 +5,7 @@
 export interface InvoiceEmailData {
     recipientName: string;
     invoiceNumber: string;
-    amount: number;
+    amount: number | string;
     currency?: string;
     dueDate?: string;
     actionUrl: string;
@@ -33,7 +33,7 @@ const baseHtml = (content: string, workspaceName: string) => `
     .val { color: #0f172a; float: right; font-weight: 500;}
     .amount { font-size: 24px; font-weight: bold; color: #0f172a; text-align: center; margin: 20px 0; }
     .btn-container { text-align: center; padding: 16px 0; }
-    .btn { display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
+    .btn { display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
     .footer { padding: 24px; background-color: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0; }
     .footer-text { margin: 0 0 8px 0; color: #64748b; font-size: 12px; }
   </style>
@@ -50,7 +50,17 @@ const baseHtml = (content: string, workspaceName: string) => `
 </html>
 `;
 
-function formatCurrency(amount: number, currency: string = 'USD') {
+function formatCurrency(amount: number | string, currency: string = 'USD') {
+    if (typeof amount === 'string') {
+        if (/[^\d.,]/.test(amount)) {
+            return amount;
+        }
+        const parsed = parseFloat(amount.replace(/,/g, ''));
+        if (!isNaN(parsed)) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(parsed);
+        }
+        return amount;
+    }
     return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 }
 
