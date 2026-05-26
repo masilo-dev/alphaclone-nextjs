@@ -123,4 +123,5 @@ export function initializeRegistry() {
   require('./tools/bonnie-outcomes');
   require('./tools/google-workspace');
   require('./tools/api-health');
+  require('./tools/documents');
 }

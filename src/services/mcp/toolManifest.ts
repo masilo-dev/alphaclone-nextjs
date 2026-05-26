@@ -2853,5 +2853,219 @@ export const MCP_TOOLS = [
       },
       required: ['module_name']
     }
-  }
+  },
+  // ── Bonnie Dreaming (Self-Improving Agent) ─────────────────────────────────
+  {
+    name: 'trigger_bonnie_dream',
+    description: 'Triggers a Bonnie Dreaming session: reviews the last 50 MCP session logs, calls the Claude Managed Agents dreaming endpoint to extract patterns, and stores results. Optionally auto-applies memory updates.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        auto_apply: { type: 'boolean', description: 'Auto-apply extracted patterns immediately (default false)', default: false },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'get_dream_sessions',
+    description: 'Returns the history of Bonnie dreaming sessions for the tenant, including extracted patterns and memory updates.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number', description: 'Max sessions to return (default 10)', default: 10 },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'approve_dream_update',
+    description: 'Approves a pending Bonnie dreaming session and marks its memory updates as applied.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        session_id: { type: 'string', description: 'Dream session UUID to approve' },
+      },
+      required: ['tenant_id', 'session_id'],
+    },
+  },
+  // ── Bonnie Multiagent Orchestration ────────────────────────────────────────
+  {
+    name: 'orchestrate_task',
+    description: 'Orchestrates a complex task by delegating sub-tasks to specialized Bonnie subagents using the Claude Managed Agents multiagent session type.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        task: { type: 'string', description: 'High-level task description' },
+        subagents: {
+          type: 'array',
+          description: 'List of subagents (max 5). Each has: name, role, instructions.',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              role: { type: 'string' },
+              instructions: { type: 'string' },
+            },
+            required: ['name', 'role', 'instructions'],
+          },
+        },
+      },
+      required: ['tenant_id', 'task', 'subagents'],
+    },
+  },
+  {
+    name: 'get_orchestration_history',
+    description: 'Returns the history of orchestrated tasks from MCP session logs for the tenant.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number', description: 'Max history entries (default 20)', default: 20 },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  // ── Bonnie Outcomes ────────────────────────────────────────────────────────
+  {
+    name: 'define_outcome',
+    description: 'Defines and records the success/failure outcome of a Bonnie agent session, including evaluation criteria and performance scores.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        session_id: { type: 'string', description: 'Optional MCP session ID this outcome is linked to' },
+        criteria: {
+          type: 'array',
+          description: 'Evaluation criteria with met/not-met flags',
+          items: {
+            type: 'object',
+            properties: {
+              metric: { type: 'string' },
+              target: { type: ['string', 'number'] },
+              actual: { type: ['string', 'number'] },
+              met: { type: 'boolean' },
+            },
+            required: ['metric', 'target', 'met'],
+          },
+        },
+        status: { type: 'string', enum: ['success', 'partial', 'failure'], description: 'Overall outcome status' },
+        notes: { type: 'string', description: 'Optional notes about the outcome' },
+      },
+      required: ['tenant_id', 'criteria', 'status'],
+    },
+  },
+  // ── External Integrations (MCP Hooks) ─────────────────────────────────────
+  {
+    name: 'export_to_google_workspace',
+    description: 'Exports AlphaClone data (contacts, invoices, deals, documents) to Google Workspace (Sheets, Docs, Drive). Requires a connected Google OAuth token.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        export_type: { type: 'string', enum: ['contacts', 'invoices', 'deals', 'documents'], description: 'Type of data to export' },
+        destination: { type: 'string', enum: ['sheets', 'docs', 'drive'], description: 'Google Workspace destination' },
+        title: { type: 'string', description: 'Optional title for the exported file' },
+        filters: { type: 'object', description: 'Optional filters to narrow the export' },
+      },
+      required: ['tenant_id', 'export_type', 'destination'],
+    },
+  },
+  // ── API Health & Rate Limit Diagnostics ────────────────────────────────────
+  {
+    name: 'get_api_health',
+    description: 'Returns API health metrics including tool execution success rates, error rates, average latency, and rate-limit diagnostics for the tenant.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        hours: { type: 'number', description: 'Lookback window in hours (default 24, max 168)', default: 24 },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  // ── Document → Claude (Files API) ─────────────────────────────────────────
+  {
+    name: 'send_document_to_claude',
+    description: 'Sends a contract, invoice, quote, or workspace file directly to Claude for unlimited analysis, Q&A, or summarization using the Anthropic Files API. No token or size limits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        document_type: { type: 'string', enum: ['contract', 'invoice', 'quote', 'file'], description: 'Type of document to retrieve and send to Claude' },
+        document_id: { type: 'string', description: 'UUID of the contract, invoice, quote, or file' },
+        question: { type: 'string', description: 'What you want Claude to analyze, answer, or do with the document' },
+        system_prompt: { type: 'string', description: 'Optional custom system prompt for Claude' },
+        model: { type: 'string', description: 'Optional Claude model override' },
+      },
+      required: ['tenant_id', 'document_type', 'document_id', 'question'],
+    },
+  },
+  {
+    name: 'analyze_workspace_document_url',
+    description: 'Fetches any document by URL (PDF, TXT, contract, invoice) and sends it directly to Claude for full analysis — no size limits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        document_url: { type: 'string', description: 'Public URL of the document to analyze' },
+        document_name: { type: 'string', description: 'Optional display name for the document' },
+        mime_type: { type: 'string', description: 'MIME type (default: application/pdf)', default: 'application/pdf' },
+        question: { type: 'string', description: 'What you want Claude to do with the document' },
+        system_prompt: { type: 'string', description: 'Optional system prompt for Claude' },
+        model: { type: 'string', description: 'Optional Claude model override' },
+      },
+      required: ['tenant_id', 'document_url', 'question'],
+    },
+  },
+  // ── Facebook Reels & Multi-Photo ───────────────────────────────────────────
+  {
+    name: 'publish_facebook_reel',
+    description: 'Publishes a Facebook Reel (short video) to a connected Facebook Page. Accepts a public video URL or base64-encoded video. Supports immediate publish or scheduled publishing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        page_id: { type: 'string', description: 'Facebook Page ID (uses first connected page if omitted)' },
+        video_url: { type: 'string', description: 'Public URL of the video to publish as a Reel' },
+        video_base64: { type: 'string', description: 'Base64-encoded video content (alternative to video_url)' },
+        video_filename: { type: 'string', description: 'Filename for base64 video', default: 'reel.mp4' },
+        description: { type: 'string', description: 'Reel caption/description' },
+        title: { type: 'string', description: 'Optional Reel title' },
+        publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
+        scheduled_publish_time: { type: 'number', description: 'Unix timestamp for scheduled publishing' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'publish_facebook_multi_photo',
+    description: 'Publishes a Facebook post with multiple photos (1–10 images) in a single post. Accepts public image URLs or base64-encoded images. Creates a proper multi-photo Facebook carousel post.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        page_id: { type: 'string', description: 'Facebook Page ID (uses first connected page if omitted)' },
+        caption: { type: 'string', description: 'Post caption/text' },
+        photos: {
+          type: 'array',
+          description: 'List of 1–10 photos. Each needs url or base64.',
+          items: {
+            type: 'object',
+            properties: {
+              url: { type: 'string', description: 'Public image URL' },
+              base64: { type: 'string', description: 'Base64-encoded image' },
+              filename: { type: 'string', description: 'Filename for base64 uploads', default: 'photo.jpg' },
+            },
+          },
+        },
+        link_url: { type: 'string', description: 'Optional link URL to attach to the post' },
+        publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
+      },
+      required: ['tenant_id', 'caption', 'photos'],
+    },
+  },
 ];
