@@ -44,7 +44,6 @@ const EXP_CAT_COLORS: Record<string, string> = {
 const INV_FILTERS: InvoiceStatus[] = ['draft', 'sent', 'paid', 'overdue'];
 const EXP_CATS = ['All', 'Travel', 'Software', 'Office', 'Food', 'Other'];
 
-// ── Invoice Swipeable Row ──────────────────────────────────────────────────────
 const InvoiceRow: React.FC<{ invoice: Invoice; onDelete: (id: string) => void; onMarkPaid: (id: string) => void; onTap: (inv: Invoice) => void }> = ({ invoice, onDelete, onMarkPaid, onTap }) => {
   const x = useMotionValue(0);
   const lOp = useTransform(x, [0, 80], [0, 1]);
@@ -56,6 +55,9 @@ const InvoiceRow: React.FC<{ invoice: Invoice; onDelete: (id: string) => void; o
     else if (info.offset.x < -80) { onDelete(invoice.id); }
     x.set(0);
   };
+
+  const clientName = invoice.client_name?.trim() || 'Unnamed Client';
+  const amountDisplay = invoice.amount && invoice.amount > 0 ? `$${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00 (Draft)';
 
   return (
     <div className={`relative overflow-hidden ${overdue ? 'bg-red-500/5' : ''}`}>
@@ -74,12 +76,12 @@ const InvoiceRow: React.FC<{ invoice: Invoice; onDelete: (id: string) => void; o
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-[13px] text-slate-500 opacity-55">#{invoice.number || invoice.id.slice(0,6)}</span>
-            <span className="text-[15px] font-bold text-white truncate">{invoice.client_name}</span>
+            <span className="text-[15px] font-bold text-white truncate">{clientName}</span>
           </div>
           {invoice.due_date && <span className="text-[13px] text-slate-500 opacity-55">Due {new Date(invoice.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="text-[15px] font-bold text-white">${invoice.amount.toLocaleString()}</span>
+          <span className="text-[15px] font-bold text-white">{amountDisplay}</span>
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${INV_STATUS_COLORS[invoice.status]}`}>{invoice.status}</span>
         </div>
       </motion.div>
@@ -87,50 +89,65 @@ const InvoiceRow: React.FC<{ invoice: Invoice; onDelete: (id: string) => void; o
   );
 };
 
-// ── Invoice Detail ─────────────────────────────────────────────────────────────
-const InvoiceDetail: React.FC<{ invoice: Invoice; onBack: () => void }> = ({ invoice, onBack }) => (
-  <div className="relative flex flex-col h-full overflow-hidden">
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
-      <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
-      <span className="text-[15px] font-bold text-white">Invoice Detail</span>
-    </div>
-    <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-4">
-      {/* Top card */}
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
-        <div className="text-[13px] text-slate-500">Invoice #{invoice.number || invoice.id.slice(0,8)}</div>
-        <div className="text-[32px] font-bold text-teal-400">${invoice.amount.toLocaleString()}</div>
-        <span className={`inline-block text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${INV_STATUS_COLORS[invoice.status]}`}>{invoice.status}</span>
+const InvoiceDetail: React.FC<{
+  invoice: Invoice;
+  onBack: () => void;
+  onSend: (id: string) => void;
+  onMarkPaid: (id: string) => void;
+  onDownload: (id: string) => void;
+  onDelete: (id: string) => void;
+}> = ({ invoice, onBack, onSend, onMarkPaid, onDownload, onDelete }) => {
+  const clientName = invoice.client_name?.trim() || 'Unnamed Client';
+  const amountDisplay = invoice.amount && invoice.amount > 0 ? `$${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00 (Draft)';
+
+  return (
+    <div className="relative flex flex-col h-full overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+        <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
+        <span className="text-[15px] font-bold text-white">Invoice Detail</span>
       </div>
-      {/* Client */}
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-1">
-        <div className="text-[15px] font-bold text-white">{invoice.client_name}</div>
-        {invoice.client_email && <div className="text-[13px] text-slate-400 opacity-55">{invoice.client_email}</div>}
-      </div>
-      {/* Totals */}
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-        <div className="flex justify-between py-1.5 border-b border-white/5">
-          <span className="text-[15px] text-slate-400">Subtotal</span>
-          <span className="text-[15px] text-white font-mono">${invoice.amount.toLocaleString()}</span>
+      <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-4">
+        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
+          <div className="text-[13px] text-slate-500">Invoice #{invoice.number || invoice.id.slice(0,8)}</div>
+          <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
+          <span className={`inline-block text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${INV_STATUS_COLORS[invoice.status]}`}>{invoice.status}</span>
         </div>
-        <div className="flex justify-between pt-2">
-          <span className="text-[17px] font-bold text-white">Total</span>
-          <span className="text-[20px] font-bold text-teal-400 font-mono">${invoice.amount.toLocaleString()}</span>
+        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-1">
+          <div className="text-[15px] font-bold text-white">{clientName}</div>
+          {invoice.client_email && <div className="text-[13px] text-slate-400 opacity-55">{invoice.client_email}</div>}
+        </div>
+        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+          <div className="flex justify-between py-1.5 border-b border-white/5">
+            <span className="text-[15px] text-slate-400">Subtotal</span>
+            <span className="text-[15px] text-white font-mono">{amountDisplay}</span>
+          </div>
+          <div className="flex justify-between pt-2">
+            <span className="text-[17px] font-bold text-white">Total</span>
+            <span className="text-[20px] font-bold text-teal-400 font-mono">{amountDisplay}</span>
+          </div>
         </div>
       </div>
-    </div>
-    {/* Fixed action bar */}
-    <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 native-bottom-bar">
-      {['Send', 'Mark Paid', 'Download PDF'].map(lbl => (
-        <button key={lbl} className="flex-1 flex flex-col items-center justify-center h-[52px] gap-1 hover:bg-white/5 transition-colors">
-          {lbl === 'Send' && <Send className="w-4 h-4 text-sky-400" />}
-          {lbl === 'Mark Paid' && <CheckCircle className="w-4 h-4 text-emerald-400" />}
-          {lbl === 'Download PDF' && <Download className="w-4 h-4 text-slate-400" />}
-          <span className="text-[11px] text-slate-400 font-bold">{lbl}</span>
+      <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 native-bottom-bar pb-safe">
+        <button onClick={() => onSend(invoice.id)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors">
+          <Send className="w-4 h-4 text-sky-400" />
+          <span className="text-[11px] text-slate-400 font-bold">Send Invoice</span>
         </button>
-      ))}
+        <button onClick={() => onMarkPaid(invoice.id)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors">
+          <CheckCircle className="w-4 h-4 text-emerald-400" />
+          <span className="text-[11px] text-slate-400 font-bold">Mark Paid</span>
+        </button>
+        <button onClick={() => onDownload(invoice.id)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors">
+          <Download className="w-4 h-4 text-slate-400" />
+          <span className="text-[11px] text-slate-400 font-bold">Download PDF</span>
+        </button>
+        <button onClick={() => onDelete(invoice.id)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors">
+          <Trash2 className="w-4 h-4 text-red-400" />
+          <span className="text-[11px] text-red-400 font-bold">Delete</span>
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Expense Row ────────────────────────────────────────────────────────────────
 const ExpenseRow: React.FC<{ expense: Expense; onDelete: (id: string) => void }> = ({ expense, onDelete }) => {
@@ -208,7 +225,30 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     toast.success('Expense deleted');
   };
 
-  if (selectedInvoice) return <InvoiceDetail invoice={selectedInvoice} onBack={() => setSelectedInvoice(null)} />;
+  if (selectedInvoice) return (
+    <InvoiceDetail
+      invoice={selectedInvoice}
+      onBack={() => setSelectedInvoice(null)}
+      onSend={async (id) => {
+        await supabase.from('invoices').update({ status: 'sent' }).eq('id', id);
+        setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'sent' } : i));
+        setSelectedInvoice(prev => prev ? { ...prev, status: 'sent' } : null);
+        toast.success('Invoice marked as sent');
+      }}
+      onMarkPaid={async (id) => {
+        await markPaid(id);
+        setSelectedInvoice(prev => prev ? { ...prev, status: 'paid' } : null);
+      }}
+      onDownload={(id) => {
+        window.open(`/api/pdf/invoice/${id}`, '_blank');
+        toast.success('Downloading invoice PDF');
+      }}
+      onDelete={async (id) => {
+        await deleteInvoice(id);
+        setSelectedInvoice(null);
+      }}
+    />
+  );
 
   const filteredInvoices = invoices.filter(i => invFilter === 'all' || i.status === invFilter);
   const filteredExpenses = expenses.filter(e => expCat === 'All' || e.category.toLowerCase() === expCat.toLowerCase());

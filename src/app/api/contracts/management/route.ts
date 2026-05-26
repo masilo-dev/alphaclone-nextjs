@@ -7,6 +7,7 @@ import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess } from '@/lib/apiAuth';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
+import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
 import { randomBytes } from 'crypto';
 import { AppUrls } from '@/lib/urls';
@@ -274,7 +275,7 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
   }
 }
 
-async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
+export async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
   try {
     const { contractId, recipients, subject, message, format = 'pdf' } = config;
     if (!contractId || !recipients) {
@@ -337,13 +338,28 @@ async function sendContract(tenantId: string, config: any, supabase: any, actorU
       return { success: false, error: 'Email service not configured for this account' };
     }
 
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('name')
+      .eq('id', tenantId)
+      .single();
+    const tenantName = tenantData?.name || resolvedProvider.fromName || 'AlphaClone Systems';
+
     const emailResult = await sendWithProviderSdk(resolvedProvider.provider as EmailProvider, {
       apiKey: resolvedProvider.apiKey,
       fromEmail: resolvedProvider.fromEmail || process.env.SENDGRID_FROM_EMAIL || process.env.BREVO_FROM_EMAIL || 'onboarding@alphacone.io',
-      fromName: resolvedProvider.fromName || 'AlphaClone Systems',
+      fromName: resolvedProvider.fromName || tenantName,
       to: recipients,
       subject: subject || `Contract: ${contract.title}`,
       text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
+      html: contractEmailTemplates.signatureRequest({
+        recipientEmail,
+        contractTitle: contract.title,
+        contractType: contract.type || 'Service Agreement',
+        signingUrl,
+        workspaceName: tenantName,
+        customMessage: message || undefined,
+      }),
       attachments: [{
         filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
         content: generated.data.bufferBase64,
