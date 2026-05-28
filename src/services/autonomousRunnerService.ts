@@ -54,11 +54,56 @@ async function processAutopilotApprovals(
       .eq('status', 'pending');
 
     if (pendingApprovals && pendingApprovals.length > 0) {
+      // 1. Fetch or create Sovereign AI Treasury bank account
+      let treasuryAccount: any = null;
+      try {
+        const { data: existing } = await admin
+          .from('bank_accounts')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .eq('name', 'Sovereign AI Treasury')
+          .maybeSingle();
+
+        if (existing) {
+          treasuryAccount = existing;
+        } else {
+          const { data: created, error: createErr } = await admin
+            .from('bank_accounts')
+            .insert({
+              tenant_id: tenantId,
+              name: 'Sovereign AI Treasury',
+              account_number_last4: '0000',
+              bank_name: 'AlphaClone Virtual Bank',
+              account_type: 'checking',
+              currency: 'USD',
+              opening_balance: 1000.00,
+              current_balance: 1000.00,
+              is_active: true,
+              metadata: { system_managed: true }
+            })
+            .select('*')
+            .maybeSingle();
+          if (!createErr && created) {
+            treasuryAccount = created;
+          }
+        }
+      } catch (err) {
+        console.warn('[Autopilot] Treasury account DB access failed, operating in virtual mode:', err);
+      }
+
       let autoApprovedCount = 0;
       for (const app of pendingApprovals) {
         const confidence = app.confidence_score ?? 0;
         const threshold = rules.auto_send_confidence_threshold ?? 85;
         if (confidence >= threshold) {
+          // 2. Validate Sovereign AI Treasury balance
+          const actionCost = 0.05; // $0.05 per AI action
+          if (treasuryAccount && (treasuryAccount.current_balance ?? 0) < actionCost) {
+            console.warn(`[Autopilot] Insufficient Sovereign AI Treasury funds for tenant ${tenantId}. Balance: ${treasuryAccount.current_balance}`);
+            await recordAction('autopilot_treasury_warning', 'skipped', `Sovereign AI Treasury balance too low to auto-approve action. Required: $${actionCost}, Balance: $${treasuryAccount.current_balance}`);
+            continue;
+          }
+
           try {
             if (app.action_key === 'auto_reply_buying_signal') {
               const payload = app.payload || {};
@@ -85,10 +130,36 @@ async function processAutopilotApprovals(
               });
             }
 
+            // Update approvals table status
             await admin
               .from('autonomous_runner_approvals')
               .update({ status: 'approved', updated_at: new Date().toISOString() })
               .eq('id', app.id);
+
+            // Deduct treasury balance and log transaction if active
+            if (treasuryAccount) {
+              const newBalance = Math.max(0, (treasuryAccount.current_balance ?? 0) - actionCost);
+              await admin
+                .from('bank_accounts')
+                .update({ current_balance: newBalance })
+                .eq('id', treasuryAccount.id);
+              treasuryAccount.current_balance = newBalance;
+
+              try {
+                await admin.from('accounting_transactions').insert({
+                  tenant_id: tenantId,
+                  type: 'expense',
+                  reference_id: app.id,
+                  amount: actionCost,
+                  currency: 'USD',
+                  status: 'completed',
+                  metadata: { description: 'Sovereign AI Agent execution cost', action_key: app.action_key },
+                  created_at: new Date().toISOString()
+                });
+              } catch (txErr) {
+                console.warn('[Autopilot] Failed to record transaction log:', txErr);
+              }
+            }
             
             autoApprovedCount++;
           } catch (e) {

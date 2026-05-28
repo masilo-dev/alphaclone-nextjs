@@ -105,6 +105,28 @@ Return ONLY valid JSON with:
       return NextResponse.json({ error: `Failed to save dream session: ${insertErr.message}` }, { status: 500 });
     }
 
+    // 4. Self-Evolutionary Playbooks: Create task cards in the database for each memory/optimization insight
+    if (memoryUpdates && memoryUpdates.length > 0) {
+      try {
+        for (const update of memoryUpdates) {
+          await supabase
+            .from('tasks')
+            .insert({
+              tenant_id,
+              title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
+              description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
+              priority: 'medium',
+              status: 'todo',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              metadata: { source: 'bonnie_dream', update_category: update.category }
+            });
+        }
+      } catch (taskErr) {
+        console.warn('[bonnie/dream] Failed to create self-evolutionary task cards:', taskErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       session_id: dreamSession.id,
