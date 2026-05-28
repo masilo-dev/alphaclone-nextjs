@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Failed to fetch sessions: ${sessErr.message}` }, { status: 500 });
     }
 
-    // 2. Call Claude Managed Agents dreaming endpoint
     const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
     let patternsExtracted: any[] = [];
     let memoryUpdates: any[] = [];
@@ -71,19 +70,28 @@ Return ONLY valid JSON with:
           const parsed = JSON.parse(cleanText);
           patternsExtracted = parsed.patterns_extracted || [];
           memoryUpdates = parsed.memory_updates || [];
+        } else {
+          throw new Error(`Anthropic API returned status ${res.status}`);
         }
       } catch (e) {
         console.warn('[bonnie/dream] Dreaming endpoint failed, synthesizing from data:', e);
-        const failedTools: string[] = (sessions || []).filter((s: any) => !s.success).map((s: any) => s.tool_name as string);
-        const uniqueFailed: string[] = Array.from(new Set(failedTools));
-        patternsExtracted = uniqueFailed.map((tool: string) => ({
-          type: 'failure_pattern',
-          description: `Tool "${tool}" has recurring failures`,
-          frequency: failedTools.filter((t: string) => t === tool).length,
-          severity: 'medium',
-        }));
-        memoryUpdates = [{ category: 'reliability', insight: 'Some tools have recurring failures', action_recommendation: 'Review tool implementations' }];
+        runFallbackSynthesis();
       }
+    } else {
+      console.warn('[bonnie/dream] ANTHROPIC_API_KEY missing, using fallback synthesis');
+      runFallbackSynthesis();
+    }
+
+    function runFallbackSynthesis() {
+      const failedTools: string[] = (sessions || []).filter((s: any) => !s.success).map((s: any) => s.tool_name as string);
+      const uniqueFailed: string[] = Array.from(new Set(failedTools));
+      patternsExtracted = uniqueFailed.map((tool: string) => ({
+        type: 'failure_pattern',
+        description: `Tool "${tool}" has recurring failures`,
+        frequency: failedTools.filter((t: string) => t === tool).length,
+        severity: 'medium',
+      }));
+      memoryUpdates = [{ category: 'reliability', insight: 'Some tools have recurring failures', action_recommendation: 'Review tool implementations' }];
     }
 
     // 3. Store dream session
