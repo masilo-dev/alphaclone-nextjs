@@ -1,5 +1,22 @@
 # Update Log
 
+## Date: 2026-05-28 (SEO OPTIMIZATIONS & LLM DISCOVERY CONTEXT & PRICING PLAN COMPARISON)
+
+### Added/Modified
+- **SEO & Search Discovery Enhancements** ([PricingPageContent.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/pricing/PricingPageContent.tsx), [robots.ts](file:///home/bonnie/alphaclone-nextjs/src/app/robots.ts), [layout.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/layout.tsx)):
+  - Added JSON-LD Structured Data to the pricing page for the `AlphaClone Business OS` product/offer, enhancing search result visibility.
+  - Linked `llms.txt` context reference in the HTML head of the global layout for advanced agent discovery.
+  - Consolidated and optimized AI crawler policies in `robots.ts` into a unified user-agent block.
+- **Premium Pricing Plan Comparison** ([LandingPage.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/LandingPage.tsx)):
+  - Designed and integrated an interactive premium layout comparing AlphaClone against HubSpot, QuickBooks, Asana, and others.
+- **MCP Version Alignment & Type Safety** ([route.ts](file:///home/bonnie/alphaclone-nextjs/src/app/api/mcp/route.ts), [tool-registry.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/mcp/tool-registry.ts)):
+  - Aligned MCP protocol version handshake and verified that `@/types/mcp` types compile with 100% safety.
+
+### Production Readiness
+- **Vercel Safe**: Clean production build verified via `npm run build` passing with zero errors.
+
+---
+
 ## Date: 2026-05-26 (MCP POWER UPGRADE, FACEBOOK REELS & MULTI-IMAGE, LINKEDIN VIDEO & MULTI-PHOTO PUBLISHING)
 
 ### Added/Modified

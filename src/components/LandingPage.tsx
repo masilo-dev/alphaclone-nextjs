@@ -786,6 +786,111 @@ const LandingPage = () => {
                </div>
             </section>
 
+            {/* Competitive Comparison Section */}
+            <motion.section 
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ duration: 0.8 }}
+               className="py-24 relative overflow-hidden bg-slate-950/40 border-y border-slate-900"
+            >
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                  <div className="text-center mb-16">
+                     <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
+                        Stop Wasting <span className="text-red-400">$300+/Month</span>
+                     </h2>
+                     <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+                        See how AlphaClone replaces 12+ tools with ONE unified platform
+                     </p>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
+                     <table className="w-full min-w-[800px]">
+                        <thead>
+                           <tr className="border-b border-slate-800">
+                              <th className="text-left p-4 text-slate-400 font-medium">Feature</th>
+                              <th className="text-center p-4">
+                                 <div className="flex items-center justify-center gap-2">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
+                                       <span className="text-white font-black text-xs">AC</span>
+                                    </div>
+                                    <span className="text-white font-bold">AlphaClone</span>
+                                 </div>
+                              </th>
+                              <th className="text-center p-4 text-slate-400 font-medium">HubSpot</th>
+                              <th className="text-center p-4 text-slate-400 font-medium">QuickBooks</th>
+                              <th className="text-center p-4 text-slate-400 font-medium">Asana</th>
+                              <th className="text-center p-4 text-slate-400 font-medium">Others</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {[
+                              { feature: 'CRM & Pipeline', ac: true, hubspot: true, quickbooks: false, asana: false, others: '$45/mo' },
+                              { feature: 'Invoicing & Payments', ac: true, hubspot: false, quickbooks: true, asana: false, others: '$25/mo' },
+                              { feature: 'Contract Management', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$35/mo' },
+                              { feature: 'Project Management', ac: true, hubspot: false, quickbooks: false, asana: true, others: '$15/mo' },
+                              { feature: 'Video Conferencing', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$20/mo' },
+                              { feature: 'Email Campaigns', ac: true, hubspot: true, quickbooks: false, asana: false, others: '$30/mo' },
+                              { feature: 'AI Sales Assistant', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$50/mo' },
+                              { feature: 'Team Chat', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$10/mo' },
+                              { feature: 'Analytics & Reports', ac: true, hubspot: true, quickbooks: true, asana: true, others: '$20/mo' },
+                              { feature: 'Calendar & Bookings', ac: true, hubspot: true, quickbooks: false, asana: false, others: '$15/mo' },
+                           ].map((row, idx) => (
+                              <tr key={idx} className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
+                                 <td className="p-4 text-white font-medium">{row.feature}</td>
+                                 <td className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center w-8 h-8 bg-teal-500/20 text-teal-400 rounded-lg">
+                                       <Check className="w-4.5 h-4.5" />
+                                    </div>
+                                 </td>
+                                 <td className="p-4 text-center">
+                                    {row.hubspot ? <Check className="w-4.5 h-4.5 text-teal-400 mx-auto" /> : <X className="w-4.5 h-4.5 text-slate-700 mx-auto" />}
+                                 </td>
+                                 <td className="p-4 text-center">
+                                    {row.quickbooks ? <Check className="w-4.5 h-4.5 text-teal-400 mx-auto" /> : <X className="w-4.5 h-4.5 text-slate-700 mx-auto" />}
+                                 </td>
+                                 <td className="p-4 text-center">
+                                    {row.asana ? <Check className="w-4.5 h-4.5 text-teal-400 mx-auto" /> : <X className="w-4.5 h-4.5 text-slate-700 mx-auto" />}
+                                 </td>
+                                 <td className="p-4 text-center text-slate-500 text-sm font-semibold">{row.others}</td>
+                              </tr>
+                           ))}
+                        </tbody>
+                        <tfoot>
+                           <tr className="border-t-2 border-slate-700 bg-slate-900/60">
+                              <td className="p-4 text-white font-bold">Total Cost</td>
+                              <td className="p-4 text-center">
+                                 <div className="inline-flex items-center justify-center px-3 py-1 bg-green-500/20 text-green-400 rounded-lg font-black">
+                                    $15/mo
+                                 </div>
+                              </td>
+                              <td className="p-4 text-center text-slate-400 font-semibold">$90/mo</td>
+                              <td className="p-4 text-center text-slate-400 font-semibold">$35/mo</td>
+                              <td className="p-4 text-center text-slate-400 font-semibold">$15/mo</td>
+                              <td className="p-4 text-center text-red-400 font-bold">$240+/mo</td>
+                           </tr>
+                        </tfoot>
+                     </table>
+                  </div>
+
+                  <div className="mt-12 text-center">
+                     <div className="inline-flex flex-col sm:flex-row items-center gap-6 bg-gradient-to-r from-teal-500/10 to-blue-500/10 border border-teal-500/20 rounded-2xl p-6">
+                        <div className="text-left">
+                           <div className="text-sm text-slate-400 mb-1">Your monthly savings</div>
+                           <div className="text-3xl font-black text-green-400">$225+</div>
+                           <div className="text-xs text-slate-500 mt-1">Per year: $2,700+</div>
+                        </div>
+                        <div className="hidden sm:block w-px h-16 bg-slate-700" />
+                        <div className="text-left">
+                           <div className="text-sm text-slate-400 mb-1">Tools replaced</div>
+                           <div className="text-3xl font-black text-teal-400">12+</div>
+                           <div className="text-xs text-slate-500 mt-1">One login to rule them all</div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </motion.section>
+
             {/* Workflow and Product Preview */}
             <section className="py-16 border-y border-slate-800 bg-[#050B14]/80">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
