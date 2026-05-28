@@ -125,7 +125,49 @@ export async function autonomousRunner() {
 
 async function runAgentsStep() {
     "use step";
-    console.log("Running AI agents...");
+    const admin = createSupabaseAdminClient();
+    const nowIso = new Date().toISOString();
+
+    // 1. Run scheduled AI tasks
+    const { data: tasks } = await admin
+        .from('scheduled_ai_tasks')
+        .select('*')
+        .eq('status', 'active')
+        .lte('next_run_at', nowIso)
+        .order('next_run_at', { ascending: true })
+        .limit(10);
+
+    for (const task of tasks || []) {
+        try {
+            const { taskAutomationService } = await import("@/services/automation/taskAutomationService");
+            await taskAutomationService.executeTask(task);
+            console.log(`[AutonomousRunner] Executed task: ${task.id} (${task.name || task.type})`);
+        } catch (e) {
+            console.error(`[AutonomousRunner] Task ${task.id} failed:`, e);
+        }
+    }
+
+    // 2. Run autonomous rules (AI-triggered actions)
+    const { data: rules } = await admin
+        .from('autonomous_rules')
+        .select('*')
+        .eq('is_active', true)
+        .limit(20);
+
+    for (const rule of rules || []) {
+        try {
+            await admin.from('autonomous_rule_runs').insert({
+                rule_id: rule.id,
+                tenant_id: rule.tenant_id,
+                status: 'triggered',
+                triggered_at: nowIso
+            });
+        } catch (e) {
+            console.error(`[AutonomousRunner] Rule ${rule.id} logging failed:`, e);
+        }
+    }
+
+    console.log(`[AutonomousRunner] Cycle complete. Tasks: ${(tasks || []).length}, Rules checked: ${(rules || []).length}`);
 }
 
 /**

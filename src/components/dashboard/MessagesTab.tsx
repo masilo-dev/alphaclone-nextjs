@@ -59,6 +59,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarTab, setSidebarTab] = useState<'chats' | 'contacts'>('chats');
+    const [selectedCRMContact, setSelectedCRMContact] = useState<{ id: string; name: string; email?: string; phone?: string } | null>(null);
+    const [activeChannel, setActiveChannel] = useState<'all' | 'email' | 'whatsapp' | 'sms' | 'internal'>('all');
     const [isAIGenerating, setIsAIGenerating] = useState(false);
     const { currentTenant } = useTenant();
     const { clients: crmClients, isLoading: isLoadingCRM } = useClients(currentTenant?.id, { limit: 100 });
@@ -279,31 +281,36 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         };
     }, [user.id, currentTenant?.id]);
 
-    // Fetch Unified Messages (WhatsApp, etc.)
+    // Fetch Unified Messages (WhatsApp, email, SMS, internal) for both chat clients and CRM contacts
     useEffect(() => {
-        if (!selectedClient || !currentTenant?.id) return;
-        
+        const contactId = selectedCRMContact?.id || selectedClient?.id;
+        const contactName = selectedCRMContact?.name || selectedClient?.name || '';
+        if (!contactId || !currentTenant?.id) {
+            setUnifiedMessages([]);
+            return;
+        }
+
         const fetchUnified = async () => {
             const { data, error } = await supabase
                 .from('unified_messages')
                 .select('*')
                 .eq('tenant_id', currentTenant.id)
-                .eq('contact_id', selectedClient.id)
+                .eq('contact_id', contactId)
                 .order('created_at', { ascending: true });
-                
+
             if (error) {
                 console.error('Failed to fetch unified messages', error);
                 return;
             }
-            
+
             if (data) {
                 const mapped: ChatMessage[] = data.map((um: any) => ({
                     id: um.id,
                     role: um.direction === 'inbound' ? 'user' : 'model',
-                    senderId: um.direction === 'inbound' ? selectedClient.id : user.id,
-                    senderName: um.direction === 'inbound' ? selectedClient.name : user.name,
-                    recipientId: um.direction === 'inbound' ? user.id : selectedClient.id,
-                    text: um.body || '',
+                    senderId: um.direction === 'inbound' ? contactId : user.id,
+                    senderName: um.direction === 'inbound' ? contactName : user.name,
+                    recipientId: um.direction === 'inbound' ? user.id : contactId,
+                    text: um.body || um.subject || '',
                     timestamp: new Date(um.received_at || um.sent_at || um.created_at),
                     source: um.source,
                     readAt: um.read_at ? new Date(um.read_at) : null
@@ -311,21 +318,21 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 setUnifiedMessages(mapped);
             }
         };
-        
+
         fetchUnified();
-        
-        // Setup realtime listener for unified messages
-        const channelName = `unified_msg_${currentTenant.id}_${selectedClient.id}`;
+
+        // Setup realtime listener
+        const channelName = `unified_msg_${currentTenant.id}_${contactId}`;
         const channel = supabase.channel(channelName)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'unified_messages', filter: `contact_id=eq.${selectedClient.id}` }, (payload: any) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'unified_messages', filter: `contact_id=eq.${contactId}` }, (payload: any) => {
                 const um = payload.new as any;
                 const newMsg: ChatMessage = {
                     id: um.id,
                     role: um.direction === 'inbound' ? 'user' : 'model',
-                    senderId: um.direction === 'inbound' ? selectedClient.id : user.id,
-                    senderName: um.direction === 'inbound' ? selectedClient.name : user.name,
-                    recipientId: um.direction === 'inbound' ? user.id : selectedClient.id,
-                    text: um.body || '',
+                    senderId: um.direction === 'inbound' ? contactId : user.id,
+                    senderName: um.direction === 'inbound' ? contactName : user.name,
+                    recipientId: um.direction === 'inbound' ? user.id : contactId,
+                    text: um.body || um.subject || '',
                     timestamp: new Date(um.received_at || um.sent_at || um.created_at),
                     source: um.source,
                     readAt: um.read_at ? new Date(um.read_at) : null
@@ -333,11 +340,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                 setUnifiedMessages(prev => [...prev.filter(m => m.id !== newMsg.id), newMsg]);
             })
             .subscribe();
-            
+
         return () => {
             supabase.removeChannel(channel).catch(() => {});
         };
-    }, [selectedClient, currentTenant?.id, user.id, user.name]);
+    }, [selectedClient, selectedCRMContact, currentTenant?.id, user.id, user.name]);
 
     // Scroll to bottom
     useEffect(() => {
@@ -384,6 +391,14 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const visibleMessages = useMemo(() => {
         let internal: ChatMessage[] = [];
         if (isAdmin) {
+            // CRM contact mode: only show unified messages
+            if (selectedCRMContact) {
+                const filtered = unifiedMessages.filter(m => {
+                    if (activeChannel === 'all') return true;
+                    return m.source === activeChannel;
+                });
+                return filtered.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            }
             if (!selectedClient) return [];
             internal = filteredMessages.filter(m =>
                 (m.senderId === user.id && m.recipientId === selectedClient.id) ||
@@ -396,7 +411,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         // Merge with unified messages and sort by timestamp
         const combined = [...internal, ...unifiedMessages];
         return combined.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    }, [user.role, selectedClient, filteredMessages, user.id, unifiedMessages, isAdmin]);
+    }, [user.role, selectedClient, selectedCRMContact, activeChannel, filteredMessages, user.id, unifiedMessages, isAdmin]);
 
     /**
      * AUTO-PILOT & READ STATUS LOGIC
@@ -759,30 +774,23 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                             <div
                                                 key={contact.id}
                                                 onClick={() => {
-                                                    // Map CRM contact to a User object for the chat
-                                                    // This assumes current messaging system requires a user record
-                                                    // but we'll adapt it or show an invite option
-                                                    const mappedUser: User = {
-                                                        id: contact.id, // Using CRM ID as temporarily fallback
-                                                        name: contact.name,
-                                                        email: contact.email || '',
-                                                        role: 'client',
-                                                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=0D9488&color=fff`
-                                                    };
-                                                    setSelectedClient(mappedUser);
+                                                    setSelectedCRMContact({ id: contact.id, name: contact.name, email: contact.email || undefined });
+                                                    setSelectedClient(null);
                                                     setConversationSummary(null);
-                                                    setSidebarTab('chats'); 
+                                                    setActiveChannel('all');
                                                 }}
-                                                className="p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50"
+                                                className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedCRMContact?.id === contact.id ? 'bg-teal-500/10 border-l-2 border-l-teal-500' : 'border-l-2 border-l-transparent'}`}
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 font-bold">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm">
                                                     {(contact.name || '?').charAt(0)}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-sm font-medium text-slate-300 truncate">{contact.name}</h4>
                                                     <p className="text-xs text-slate-400 truncate">{contact.email || 'No email'}</p>
                                                 </div>
-                                                <UserPlus className="w-4 h-4 text-slate-500 hover:text-teal-400" />
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium">CRM</span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -794,8 +802,43 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     {/* --- CHAT AREA --- */}
                     {showChat && (
                         <div className="flex-1 flex flex-col z-10 bg-slate-900/20 min-w-0 overflow-hidden h-full">
+                            {/* CRM Omnichannel Header */}
+                            {isAdmin && selectedCRMContact && (
+                                <div className="px-4 pt-3 pb-0 border-b border-slate-700 bg-slate-900/60 flex-shrink-0">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        {isMobile && (
+                                            <button onClick={() => { setSelectedCRMContact(null); }} className="p-1 text-slate-400 hover:text-white">
+                                                <ArrowLeft className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm">
+                                            {selectedCRMContact.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold text-sm">{selectedCRMContact.name}</h3>
+                                            <p className="text-xs text-slate-400">{selectedCRMContact.email || 'CRM Contact'}</p>
+                                        </div>
+                                        <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30 font-semibold">OMNICHANNEL</span>
+                                    </div>
+                                    <div className="flex gap-1 pb-0 overflow-x-auto">
+                                        {(['all', 'email', 'whatsapp', 'sms', 'internal'] as const).map(ch => (
+                                            <button
+                                                key={ch}
+                                                onClick={() => setActiveChannel(ch)}
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+                                                    activeChannel === ch
+                                                        ? 'text-teal-400 border-teal-400 bg-teal-500/10'
+                                                        : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
+                                                }`}
+                                            >
+                                                {ch === 'all' ? '🌐 All' : ch === 'email' ? '✉️ Email' : ch === 'whatsapp' ? '💬 WhatsApp' : ch === 'sms' ? '📱 SMS' : '🔒 Internal'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             {/* Chat Header */}
-                            <div className="p-3 md:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/50 backdrop-blur-md flex-shrink-0 h-[60px] md:h-auto">
+                            <div className={`p-3 md:p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900/50 backdrop-blur-md flex-shrink-0 ${isAdmin && selectedCRMContact ? 'hidden' : 'h-[60px] md:h-auto'}`}>
                                 <div className="flex items-center gap-3">
                                     {/* Mobile Back Button */}
                                     {isMobile && isAdmin && selectedClient && (
@@ -938,24 +981,35 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
                                         <div className="space-y-1">
                                             {visibleMessages.map((msg, index) => {
-                                                const isOwn = msg.senderId === user.id;
+                                                const isOwn = msg.senderId === user.id || msg.role === 'model';
                                                 const prevMsg = visibleMessages[index - 1];
                                                 const isSequence = prevMsg && prevMsg.senderId === msg.senderId && (new Date(msg.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() < 60000);
-
-                                                // Logic for showing avatar/name
-                                                // Show avatar if it's NOT a sequence (first message of a group)
-                                                // OR if the previous message was a long time ago
                                                 const showAvatar = !isSequence;
-                                                const showSenderName = !isSequence && !isOwn; // Only show name for others, once per group
+                                                const showSenderName = !isSequence && !isOwn;
+                                                const channelSource = msg.source;
+                                                const channelBadge = channelSource && channelSource !== 'internal'
+                                                    ? channelSource === 'gmail' || channelSource === 'zoho' || channelSource === 'sendgrid' || channelSource === 'resend' || channelSource === 'brevo' ? '✉️'
+                                                    : channelSource === 'whatsapp' ? '💬'
+                                                    : channelSource === 'sms' ? '📱'
+                                                    : null
+                                                    : null;
 
                                                 return (
-                                                    <MessageBubble
-                                                        key={msg.id}
-                                                        message={msg}
-                                                        isOwn={isOwn}
-                                                        showAvatar={showAvatar}
-                                                        showSenderName={showSenderName}
-                                                    />
+                                                    <div key={msg.id} className="relative">
+                                                        {channelBadge && (
+                                                            <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-0.5 px-2`}>
+                                                                <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                                                    {channelBadge} <span className="capitalize">{channelSource}</span>
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <MessageBubble
+                                                            message={msg}
+                                                            isOwn={isOwn}
+                                                            showAvatar={showAvatar}
+                                                            showSenderName={showSenderName}
+                                                        />
+                                                    </div>
                                                 );
                                             })}
                                         </div>
@@ -976,7 +1030,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                             </div>
 
                             {/* Input Area */}
-                            {(!isAdmin || selectedClient) && (
+                            {(!isAdmin || selectedClient || selectedCRMContact) && (
                                 <div className="p-3 md:p-5 border-t border-slate-700 relative bg-slate-900/40 backdrop-blur-md flex-shrink-0">
                                     {/* Pending Attachments Preview */}
                                     {pendingAttachments.length > 0 && (

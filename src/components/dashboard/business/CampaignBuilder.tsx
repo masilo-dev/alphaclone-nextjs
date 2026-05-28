@@ -308,8 +308,20 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             let finalIds = selectedContactIds;
             if (recipientType === 'all') finalIds = contacts.map(c => c.id);
             await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds);
+
+            if (!form.scheduleEnabled || !form.scheduledAt) {
+                toast.loading('Dispatching campaign emails...', { id: toastId });
+                const sendResult = await emailCampaignService.sendCampaign(campaign.id);
+                if (!sendResult.success) {
+                    toast.error(`Campaign created but sending failed: ${sendResult.error}`, { id: toastId });
+                } else {
+                    toast.success('Campaign launched and sent!', { id: toastId });
+                }
+            } else {
+                await emailCampaignService.updateCampaign(campaign.id, { status: 'scheduled' });
+                toast.success('Campaign scheduled successfully.', { id: toastId });
+            }
         }
-        toast.success('Campaign launched / saved.', { id: toastId });
         setViewMode('list');
         setActiveStep(1);
         setRecipientType(null);
@@ -566,12 +578,32 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                         <h2 className="text-lg font-black text-white mt-2 leading-tight">{selectedCampaign.name}</h2>
                                         <p className="text-xs text-slate-400 mt-1">Subject: "{selectedCampaign.subject}"</p>
                                     </div>
-                                    <button 
-                                        onClick={() => handleDuplicateCampaign(selectedCampaign)}
-                                        className="p-2 bg-slate-950 border border-white/5 rounded-xl text-slate-400"
-                                    >
-                                        <Repeat className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {(selectedCampaign.status === 'draft' || selectedCampaign.status === 'scheduled') && (
+                                            <button 
+                                                onClick={async () => {
+                                                    const toastId = toast.loading('Sending campaign...');
+                                                    const res = await emailCampaignService.sendCampaign(selectedCampaign.id);
+                                                    if (res.success) {
+                                                        toast.success('Campaign sent!', { id: toastId });
+                                                        loadData();
+                                                        setViewMode('list');
+                                                    } else {
+                                                        toast.error(res.error || 'Failed to send campaign', { id: toastId });
+                                                    }
+                                                }}
+                                                className="px-3 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"
+                                            >
+                                                <Play className="w-3 h-3" /> Run Now
+                                            </button>
+                                        )}
+                                        <button 
+                                            onClick={() => handleDuplicateCampaign(selectedCampaign)}
+                                            className="p-2 bg-slate-950 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            <Repeat className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
