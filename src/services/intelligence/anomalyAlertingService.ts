@@ -151,9 +151,9 @@ class AnomalyAlertingService {
     // Monitor days to complete tasks
     const { data: tasks } = await supabase
       .from('tasks')
-      .select('created_at, updated_at')
+      .select('created_at, completed_at, updated_at')
       .eq('tenant_id', tenantId)
-      .eq('status', 'done')
+      .eq('status', 'completed')
       .order('updated_at', { ascending: false })
       .limit(30);
 
@@ -161,7 +161,7 @@ class AnomalyAlertingService {
 
     const completionTimes = tasks.map(t => {
       const start = new Date(t.created_at).getTime();
-      const end = new Date(t.updated_at).getTime();
+      const end = new Date(t.completed_at || t.updated_at).getTime();
       return Math.max(1, (end - start) / (1000 * 60 * 60 * 24)); // Days
     });
 

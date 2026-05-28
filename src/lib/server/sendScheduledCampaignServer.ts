@@ -1,9 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { emailCampaignService } from '@/services/emailCampaignService';
-import { ZohoMailService } from '@/services/zoho/ZohoMailService';
-import { gmailServerService } from '@/services/server/gmailServerService';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
 type ProviderConfig = {
@@ -44,34 +43,6 @@ function normalizeProviderId(value: unknown): CampaignProvider | null {
     return null;
 }
 
-function encodeGmailRawMessage(params: {
-    to: string;
-    subject: string;
-    html: string;
-    fromEmail: string;
-    fromName: string;
-    replyTo?: string;
-}) {
-    const utf8Subject = `=?utf-8?B?${btoa(String.fromCharCode(...new TextEncoder().encode(params.subject)))}?=`;
-    const message = [
-        `From: ${params.fromName} <${params.fromEmail}>`,
-        `To: ${params.to}`,
-        params.replyTo ? `Reply-To: ${params.replyTo}` : null,
-        `Subject: ${utf8Subject}`,
-        'MIME-Version: 1.0',
-        'Content-Type: text/html; charset="UTF-8"',
-        '',
-        params.html,
-    ]
-        .filter(Boolean)
-        .join('\n');
-
-    return btoa(String.fromCharCode(...new TextEncoder().encode(message)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-}
-
 function resolveProviderConfig(provider: CampaignProvider, config: Record<string, unknown>): ProviderConfig {
     return {
         id: provider,
@@ -99,108 +70,6 @@ function selectProviderForRecipient(
         return (providerCountsToday.get(a.id) || 0) - (providerCountsToday.get(b.id) || 0);
     });
     return ranked[0] || null;
-}
-
-async function sendViaProvider(
-    provider: ProviderConfig,
-    args: {
-        to: string;
-        subject: string;
-        html: string;
-        fromEmail: string;
-        fromName: string;
-        replyTo?: string;
-        userId: string;
-    }
-): Promise<{ success: boolean; error?: string }> {
-    if (provider.id === 'sendgrid') {
-        if (!provider.apiKey) return { success: false, error: 'SendGrid API key is missing' };
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${provider.apiKey}`,
-            },
-            body: JSON.stringify({
-                personalizations: [{ to: [{ email: args.to }] }],
-                from: { email: args.fromEmail, name: args.fromName },
-                subject: args.subject,
-                content: [{ type: 'text/html', value: args.html }],
-                reply_to: args.replyTo ? { email: args.replyTo } : undefined,
-            }),
-        });
-        if (!response.ok) return { success: false, error: `SendGrid rejected request (${response.status})` };
-        return { success: true };
-    }
-
-    if (provider.id === 'resend') {
-        if (!provider.apiKey) return { success: false, error: 'Resend API key is missing' };
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${provider.apiKey}`,
-            },
-            body: JSON.stringify({
-                from: `${args.fromName} <${args.fromEmail}>`,
-                to: args.to,
-                subject: args.subject,
-                html: args.html,
-                reply_to: args.replyTo,
-            }),
-        });
-        if (!response.ok) return { success: false, error: `Resend rejected request (${response.status})` };
-        return { success: true };
-    }
-
-    if (provider.id === 'brevo') {
-        if (!provider.apiKey) return { success: false, error: 'Brevo API key is missing' };
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'api-key': provider.apiKey,
-            },
-            body: JSON.stringify({
-                sender: { email: args.fromEmail, name: args.fromName },
-                to: [{ email: args.to }],
-                subject: args.subject,
-                htmlContent: args.html,
-                replyTo: args.replyTo ? { email: args.replyTo } : undefined,
-            }),
-        });
-        if (!response.ok) return { success: false, error: `Brevo rejected request (${response.status})` };
-        return { success: true };
-    }
-
-    if (provider.id === 'zoho') {
-        const zoho = new ZohoMailService(args.userId);
-        await zoho.sendEmail({
-            fromAddress: args.fromEmail,
-            toAddress: args.to,
-            subject: args.subject,
-            content: args.html,
-        });
-        return { success: true };
-    }
-
-    if (provider.id === 'gmail') {
-        const raw = encodeGmailRawMessage({
-            to: args.to,
-            subject: args.subject,
-            html: args.html,
-            fromEmail: args.fromEmail,
-            fromName: args.fromName,
-            replyTo: args.replyTo,
-        });
-        await gmailServerService.proxyRequest(args.userId, 'messages/send', {
-            method: 'POST',
-            body: JSON.stringify({ raw }),
-        });
-        return { success: true };
-    }
-
-    return { success: false, error: 'Unsupported provider' };
 }
 
 /**
@@ -371,32 +240,34 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     senderName: fromName,
                 }
             );
-            const sendResult = await sendViaProvider(provider, {
+            const preferredProvider = provider.id === 'gmail' ? undefined : provider.id;
+            const sendResult = await sendEmail(String(c.tenant_id || ''), {
                 to: recipient.email,
                 subject: personalizedSubject,
                 html: personalizedHtml,
-                fromEmail,
-                fromName,
-                replyTo,
+                from_name: fromName,
+                reply_to: replyTo,
                 userId: campaignCreatorId,
-            });
+                templateName: 'emailCampaign',
+            }, preferredProvider);
 
             if (sendResult.success) {
                 sentCount++;
-                providerCountsToday.set(provider.id, (providerCountsToday.get(provider.id) || 0) + 1);
+                const usedProvider = normalizeProviderId(sendResult.provider) || provider.id;
+                providerCountsToday.set(usedProvider, (providerCountsToday.get(usedProvider) || 0) + 1);
                 await admin
                     .from('campaign_recipients')
                     .update({
                         status: 'sent',
                         sent_at: new Date().toISOString(),
-                        metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage },
+                        metadata: { provider: sendResult.provider || provider.id, provider_from: fromEmail, language: campaignLanguage },
                     })
                     .eq('id', recipient.id);
                 try {
                     await captureUnifiedMessageFromWebhook({
                         supabase: admin as any,
                         tenantId: String(c.tenant_id || ''),
-                        source: provider.id,
+                        source: (sendResult.provider || provider.id) as any,
                         channel: 'email',
                         direction: 'outbound',
                         externalId: String(recipient.id),
@@ -411,7 +282,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                             campaignId,
                             campaignName: String(c.name || ''),
                             contactId: recipient.contact_id,
-                            provider: provider.id,
+                            provider: sendResult.provider || provider.id,
                             providerFrom: fromEmail,
                             language: campaignLanguage,
                         },
@@ -425,7 +296,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .update({
                         status: 'failed',
                         error_message: sendResult.error || 'Provider send failed',
-                        metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage },
+                        metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage, tried: sendResult.tried },
                     })
                     .eq('id', recipient.id);
             }

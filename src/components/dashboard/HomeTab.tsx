@@ -113,7 +113,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
     Promise.all([
       supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tid),
       supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('stage', 'closed_won').neq('stage', 'closed_lost'),
-      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('status', 'done'),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('status', 'completed'),
       supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'sent'),
     ]).then(([leads, deals, tasks, inv]) => {
       setQuickStats({

@@ -73,6 +73,7 @@ import { generatePnLStatement } from '../../lib/accounting/pnl';
 import { AlphaNexus } from '../../lib/social/alphaNexus';
 import { gmailServerService } from '../server/gmailServerService';
 import { taskAutomationService } from '../automation/taskAutomationService';
+import { sendWhatsAppMessage } from '../../lib/whatsapp/sendWhatsApp';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -2453,6 +2454,43 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'send_task_email': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const taskId = String(a.task_id || '').trim();
+          const to = String(a.to || a.recipient_email || '').trim();
+          if (!isUuidString(taskId)) throw new Error('task_id must be a valid task UUID');
+          if (!to) throw new Error('to is required');
+          const { data: task, error } = await supabaseAdmin
+            .from('tasks')
+            .select('id,title,description,status,priority,due_date,related_to_project,created_at')
+            .eq('tenant_id', tenant_id)
+            .eq('id', taskId)
+            .single();
+          if (error || !task) throw supabaseErrorToMcpClientError('send_task_email', error?.message || 'Task not found');
+          const html = `
+            <h2>${task.title}</h2>
+            <p><strong>Status:</strong> ${task.status || 'todo'}</p>
+            <p><strong>Priority:</strong> ${task.priority || 'medium'}</p>
+            <p><strong>Due:</strong> ${task.due_date || 'No due date'}</p>
+            ${task.description ? `<p>${String(task.description).replace(/\n/g, '<br/>')}</p>` : ''}
+          `;
+          const sendResult = await sendEmailServer({
+            tenantId: tenant_id,
+            userId: user_id,
+            to,
+            subject: String(a.subject || `Task: ${task.title}`),
+            html,
+            fromName: String(a.from_name || 'AlphaClone Tasks'),
+            preferredProvider: a.provider as any,
+            templateName: 'mcpTaskEmail',
+          });
+          if (!sendResult.success) throw new Error(sendResult.error || 'Task email failed');
+          result = { content: [{ type: 'text', text: JSON.stringify({ sent: true, task_id: taskId, to, provider: sendResult.provider, email_id: sendResult.emailId }, null, 2) }] };
+          break;
+        }
+
         // â”€â”€ update_task â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'update_task': {
           const a = args as Record<string, any>;
@@ -2625,8 +2663,11 @@ class AlphaCloneMCPServer {
           
           if (publish_now) {
              actionText = `Campaign "${campaignName}" created and queued to send to ${recipients.length} recipients with provider balancing.`;
-             // Trigger server-side background sender
-             sendScheduledCampaignServer(campaign.id).catch(err => console.error('Background send error:', err));
+             const sendResult = await sendScheduledCampaignServer(campaign.id);
+             if (!sendResult.success) {
+               throw new Error(sendResult.error || 'Campaign send failed');
+             }
+             actionText = `Campaign "${campaignName}" created and sent to ${recipients.length} recipients.`;
           }
 
           result = { content: [{ type: 'text', text: actionText }] };
@@ -2655,17 +2696,18 @@ class AlphaCloneMCPServer {
             .eq('tenant_id', tenant_id)
             .eq('id', campaignId);
 
-          sendScheduledCampaignServer(campaignId).catch((err) =>
-            console.error('MCP campaign queue send error:', err)
-          );
+          const sendResult = await sendScheduledCampaignServer(campaignId);
+          if (!sendResult.success) {
+            throw new Error(sendResult.error || 'Campaign send failed');
+          }
 
           result = {
             content: [{ type: 'text', text: JSON.stringify({
               campaign_id: campaignId,
               campaign_name: campaign.name,
-              status: 'queued',
+              status: 'sent',
               total_recipients: campaign.total_recipients || 0,
-              provider_routing: 'AlphaClone will use connected Zoho, Brevo, Resend, SendGrid, Gmail providers according to campaign settings.',
+              provider_routing: 'AlphaClone used connected providers through sendEmail fallback.',
             }, null, 2) }],
           };
           break;
@@ -2777,24 +2819,17 @@ class AlphaCloneMCPServer {
                 
                 const aiRes = await routeAutonomousTask('social_caption', prompt); // Reuse caption task for short professional outreach
                 
-                // 2. Send via provider
-                const providerConfig = await resolveEmailProviderConfig({ 
-                    tenantId: tenant_id, 
-                    preferredUserId: user_id, 
-                    preferredProvider: delivery_provider as EmailProvider 
-                });
-                
-                if (!providerConfig) return { name: entity.business_name || entity.name, status: 'failed', error: 'Email provider not configured' };
-                
-                await sendWithProviderSdk(providerConfig.provider, {
+                const emailResult = await sendEmailServer({
+                  tenantId: tenant_id,
+                  userId: user_id,
                   to: email,
                   subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
                   html: aiRes.content,
-                  apiKey: providerConfig.apiKey,
-                  fromName: providerConfig.fromName || 'AlphaClone Outreach',
-                  fromEmail: providerConfig.fromEmail || '',
-                  userId: providerConfig.ownerUserId || user_id || undefined
+                  fromName: 'AlphaClone Outreach',
+                  preferredProvider: delivery_provider as any,
+                  templateName: 'mcpAiOutreach',
                 });
+                if (!emailResult.success) throw new Error(emailResult.error || 'Outreach email failed');
 
                 // 3. Log the outreach
                 await supabaseAdmin.from('lead_outreach_log').insert({
@@ -2805,10 +2840,10 @@ class AlphaCloneMCPServer {
                   subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
                   body_html: aiRes.content,
                   status: 'sent',
-                  provider: providerConfig.provider,
+                  provider: emailResult.provider,
                 });
                 
-                return { name: entity.business_name || entity.name, status: 'sent', language: batchLanguage.code };
+                return { name: entity.business_name || entity.name, status: 'sent', language: batchLanguage.code, provider: emailResult.provider, email_id: emailResult.emailId };
              } catch (err: any) {
                 return { name: entity.business_name || entity.name, status: 'failed', error: err.message };
              }
@@ -4206,20 +4241,6 @@ class AlphaCloneMCPServer {
           const { invoice, error: fetchErr } = await getInvoiceWithDetailsAdmin(supabaseAdmin, invoice_id, tenant_id);
           if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
 
-          // Update status in DB
-          const { error: updateError } = await supabaseAdmin
-            .from('business_invoices')
-            .update({
-              status: 'sent',
-              is_public: true,
-              sent_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('tenant_id', tenant_id)
-            .eq('id', invoice_id.trim());
-          
-          if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
-
           // Generate PDF
           const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
           const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
@@ -4231,82 +4252,62 @@ class AlphaCloneMCPServer {
           const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
           const pdfUrl = AppUrls.payInvoice(invoice.id);
 
-          // Resolve tenant's configured email provider — never use global env vars
-          // Bug #2 fix: pass preferredUserId as undefined (not null) so the
-          // resolver doesn't restrict to rows where user_id IS NULL, which caused
-          // provider lookups to fail when user_id was not set on the connection.
-          const providerConfig = await resolveEmailProviderConfig({
+          const dispatch = await sendEmailServer({
             tenantId: tenant_id,
-            preferredUserId: user_id || undefined,
-            preferredProvider: preferredProvider as EmailProvider | undefined,
-            fallbackToEnv: false,
+            userId: user_id || undefined,
+            preferredProvider: preferredProvider as any,
+            to,
+            subject: `Invoice ${invoice.invoice_number} — ${amount}`,
+            fromName: invoice.tenant?.name || 'AlphaClone',
+            html: invoiceEmailTemplates.invoiceSent({
+              recipientName: invoice.client?.name || 'Valued Client',
+              invoiceNumber: invoice.invoice_number,
+              amount: Number(invoice.total || 0),
+              currency: invoice.currency || 'USD',
+              dueDate: invoice.due_date,
+              actionUrl: pdfUrl,
+              workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
+              notes: invoice.notes || undefined,
+            }),
+            attachments: [{
+              filename: `Invoice_${invoice.invoice_number}.pdf`,
+              content: pdfBase64,
+              content_type: 'application/pdf',
+            }],
+            templateName: 'mcpInvoiceSent',
           });
 
-          let dispatchOk = false;
-          let dispatchProvider = 'platform';
-          let dispatchEmailId: string | undefined;
-          let dispatchError: string | undefined;
-
-          if (providerConfig) {
-            // Send via tenant's own provider (Resend/SendGrid/Brevo/Zoho/Gmail SMTP)
-            const sdkResult = await sendWithProviderSdk(providerConfig.provider as EmailProvider, {
-              apiKey: providerConfig.apiKey,
-              fromEmail: providerConfig.fromEmail || '',
-              fromName: providerConfig.fromName || invoice.tenant?.name || 'AlphaClone',
-              to,
-              subject: `Invoice ${invoice.invoice_number} — ${amount}`,
-              html: invoiceEmailTemplates.invoiceSent({
-                recipientName: invoice.client?.name || 'Valued Client',
-                invoiceNumber: invoice.invoice_number,
-                amount: Number(invoice.total || 0),
-                currency: invoice.currency || 'USD',
-                dueDate: invoice.due_date,
-                actionUrl: pdfUrl,
-                workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
-                notes: invoice.notes || undefined,
-              }),
-              attachments: [{
-                filename: `Invoice_${invoice.invoice_number}.pdf`,
-                content: pdfBase64,
-                contentType: 'application/pdf',
-              }],
-              userId: providerConfig.ownerUserId || user_id || undefined,
-            });
-            dispatchOk = sdkResult.ok;
-            dispatchProvider = sdkResult.provider;
-            dispatchEmailId = sdkResult.emailId;
-            dispatchError = sdkResult.error;
-          } else {
-            // Fallback to platform emailHelpers if no tenant provider configured
-            const helpers = await emailHelpers.sendInvoice(
-              to, invoice.invoice_number, amount, pdfUrl,
-              { filename: `Invoice_${invoice.invoice_number}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }
-            );
-            dispatchOk = helpers.success;
-            dispatchError = helpers.error || undefined;
+          if (!dispatch.success) {
+            throw new Error(`Invoice email delivery failed: ${dispatch.error || 'unknown error'} ${JSON.stringify(dispatch.errorDetails || [])}`);
           }
 
-          if (!dispatchOk) {
-            console.error('[send_invoice] Email delivery failed:', dispatchError);
-            result = { content: [{ type: 'text', text: JSON.stringify({
-              status: 'partial',
-              message: 'Invoice marked as sent in DB, but email delivery failed.',
-              invoice_number: invoice.invoice_number,
-              pdf_url: pdfUrl,
-              email_error: dispatchError,
-            }, null, 2) }] };
-          } else {
-            result = { content: [{ type: 'text', text: JSON.stringify({
+          const { error: updateError } = await supabaseAdmin
+            .from('business_invoices')
+            .update({
               status: 'sent',
-              message: `Invoice ${invoice.invoice_number} sent successfully.`,
-              sent_to: to,
-              invoice_number: invoice.invoice_number,
-              amount,
-              provider_used: dispatchProvider,
-              email_id: dispatchEmailId,
-              pdf_url: pdfUrl,
-            }, null, 2) }] };
-          }
+              is_public: true,
+              sent_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id.trim());
+          if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
+
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            status: 'sent',
+            message: `Invoice ${invoice.invoice_number} sent successfully.`,
+            sent_to: to,
+            invoice_number: invoice.invoice_number,
+            amount,
+            provider_used: dispatch.provider,
+            email_id: dispatch.emailId,
+            pdf_url: pdfUrl,
+            attachment: {
+              filename: `Invoice_${invoice.invoice_number}.pdf`,
+              content_type: 'application/pdf',
+              base64: pdfBase64,
+            },
+          }, null, 2) }] };
           break;
         }
 
@@ -5290,6 +5291,7 @@ class AlphaCloneMCPServer {
             text: signedBody.text || (!signedBody.html ? signedBody.fallbackText : undefined),
             attachments: attachments.length > 0 ? attachments : undefined,
             templateName: 'mcpTransactionalEmail',
+            preferredProvider: a.provider as any,
           });
           if (!sendResult.success) throw new Error(sendResult.error || 'Transactional email failed');
           result = { content: [{ type: 'text', text: JSON.stringify({
@@ -5828,22 +5830,26 @@ class AlphaCloneMCPServer {
             .in('id', clientIds);
           if (clientsErr) throw supabaseErrorToMcpClientError('send_bulk_email_campaign', clientsErr.message);
           const targets = (clients || []).filter((c: any) => !!c.email);
-          const itemResults: Array<Record<string, unknown>> = targets.map((t: any) => ({ client_id: t.id, email: t.email, status: dryRun ? 'dry_run' : 'queued' }));
+          const itemResults: Array<Record<string, unknown>> = dryRun
+            ? targets.map((t: any) => ({ client_id: t.id, email: t.email, status: 'dry_run' }))
+            : [];
           if (!dryRun) {
-            const resolved = await resolveEmailProviderConfig({ tenantId: tenant_id, preferredUserId: user_id, fallbackToEnv: false });
-            if (!resolved?.provider || !resolved?.apiKey) throw new Error('No provider configured for this user. Connect provider first.');
             for (const target of targets) {
-              const sendResult = await sendWithProviderSdk(resolved.provider as EmailProvider, {
-                apiKey: resolved.apiKey,
-                fromEmail: resolved.fromEmail || '',
-                fromName: 'AlphaClone Systems',
+              const sendResult = await sendEmailServer({
+                tenantId: tenant_id,
+                userId: user_id,
                 to: String(target.email),
                 subject,
                 html: a.html ? String(a.html) : undefined,
                 text: a.text ? String(a.text) : undefined,
+                fromName: String(a.from_name || 'AlphaClone Systems'),
+                preferredProvider: a.provider as any,
+                templateName: 'mcpBulkEmail',
               });
-              if (!sendResult.ok) {
+              if (!sendResult.success) {
                 itemResults.push({ client_id: target.id, email: target.email, status: 'failed', error: sendResult.error || 'send_failed' });
+              } else {
+                itemResults.push({ client_id: target.id, email: target.email, status: 'sent', provider: sendResult.provider, email_id: sendResult.emailId });
               }
             }
           }
@@ -5920,7 +5926,7 @@ class AlphaCloneMCPServer {
 
         case 'get_zoho_mail_messages': {
           const a = args as Record<string, any>;
-          this.requireTenant(a);
+          const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const folderId = typeof a.folder_id === 'string' ? a.folder_id.trim() : '';
           const searchQuery = typeof a.search_query === 'string' ? a.search_query.trim() : '';
@@ -5931,16 +5937,89 @@ class AlphaCloneMCPServer {
           let payload: Record<string, unknown>;
           if (searchQuery) {
             const messages = await zoho.searchMessages(searchQuery);
-            payload = { mode: 'search', query: searchQuery, messages: messages.slice(0, limit) };
+            const fullMessages = await Promise.all(messages.slice(0, limit).map((message: any) => zoho.getFullMessagePayload(message, message.folderId)));
+            payload = { mode: 'search', query: searchQuery, messages: fullMessages };
           } else if (folderId) {
             const messages = await zoho.getMessages(folderId, limit, start);
-            payload = { mode: 'folder_messages', folder_id: folderId, start, limit, messages };
+            const fullMessages = await Promise.all(messages.map((message: any) => zoho.getFullMessagePayload(message, folderId)));
+            payload = { mode: 'folder_messages', tenant_id, folder_id: folderId, start, limit, messages: fullMessages };
           } else {
             const folders = await zoho.getFolders();
             payload = { mode: 'folders', folders };
           }
 
           result = { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
+          break;
+        }
+
+        case 'get_zoho_mail_thread': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const threadId = String(a.thread_id || '').trim();
+          if (!threadId) throw new Error('thread_id is required');
+          const zoho = new ZohoMailService(user_id);
+          const messages = await zoho.getThread(threadId);
+          result = { content: [{ type: 'text', text: JSON.stringify({ tenant_id, thread_id: threadId, messages }, null, 2) }] };
+          break;
+        }
+
+        case 'reply_to_zoho_mail': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const messageId = String(a.message_id || '').trim();
+          if (!messageId) throw new Error('message_id is required');
+          if (!a.body_html && !a.body_text) throw new Error('body_html or body_text is required');
+          const zoho = new ZohoMailService(user_id);
+          const reply = await zoho.replyToMessage({
+            messageId,
+            bodyHtml: String(a.body_html || a.body_text || ''),
+            bodyText: a.body_text ? String(a.body_text) : undefined,
+            attachments: Array.isArray(a.attachments)
+              ? a.attachments.map((attachment: any) => ({
+                filename: String(attachment.filename || 'attachment'),
+                content: String(attachment.content || ''),
+                contentType: String(attachment.content_type || attachment.contentType || 'application/octet-stream'),
+              }))
+              : undefined,
+          });
+
+          const senderEmail = String((reply as any)?.original?.from || '').toLowerCase();
+          const matchEmail = senderEmail.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]?.toLowerCase() || '';
+          let matchedContact: Record<string, unknown> | null = null;
+          if (matchEmail) {
+            const { data: contact } = await supabaseAdmin
+              .from('business_clients')
+              .select('id,name,email,sales_stage,deal_value,updated_at')
+              .eq('tenant_id', tenant_id)
+              .ilike('email', matchEmail)
+              .maybeSingle();
+            if (contact) {
+              matchedContact = {
+                id: contact.id,
+                name: contact.name,
+                stage: contact.sales_stage,
+                deal_value: contact.deal_value,
+                last_activity: contact.updated_at,
+              };
+              await supabaseAdmin.from('activity_logs').insert({
+                tenant_id,
+                user_id,
+                action: 'email_reply',
+                entity_type: 'client',
+                entity_id: contact.id,
+                metadata: { message_id: messageId, email: matchEmail },
+              });
+            }
+          }
+
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            sent: true,
+            message_id: String((reply as any)?.data?.messageId || (reply as any)?.messageId || ''),
+            matched_contact: matchedContact,
+            suggested_action: matchedContact ? null : { type: 'create_lead', email: matchEmail || null },
+          }, null, 2) }] };
           break;
         }
 
@@ -6010,6 +6089,58 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_quote', error.message);
           result = { content: [{ type: 'text', text: `Quote created: ${JSON.stringify(data)}` }] };
+          break;
+        }
+
+        case 'send_quote': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const quoteId = String(a.quote_id || '').trim();
+          const to = String(a.to || a.recipient_email || '').trim();
+          if (!isUuidString(quoteId)) throw new Error('quote_id must be a valid quote UUID');
+          if (!to) throw new Error('to is required');
+          const [{ data: quote, error: quoteError }, { data: items }] = await Promise.all([
+            supabaseAdmin.from('quotes').select('*').eq('tenant_id', tenant_id).eq('id', quoteId).single(),
+            supabaseAdmin.from('quote_items').select('*').eq('quote_id', quoteId).order('item_order', { ascending: true }),
+          ]);
+          if (quoteError || !quote) throw supabaseErrorToMcpClientError('send_quote', quoteError?.message || 'Quote not found');
+          const itemRows = (items || []).map((item: any) => `<tr><td>${item.product_name || item.description || 'Item'}</td><td>${Number(item.quantity || 0)}</td><td>${Number(item.line_total || 0).toFixed(2)}</td></tr>`).join('');
+          const html = `
+            <h2>Quote ${quote.quote_number || ''}</h2>
+            <p><strong>${quote.name || 'Quote'}</strong></p>
+            <p><strong>Valid until:</strong> ${quote.valid_until || 'Not specified'}</p>
+            <p><strong>Total:</strong> ${Number(quote.total_amount || 0).toFixed(2)} ${quote.currency || 'USD'}</p>
+            <table border="1" cellpadding="6" cellspacing="0"><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${itemRows}</tbody></table>
+            ${quote.notes ? `<p>${String(quote.notes).replace(/\n/g, '<br/>')}</p>` : ''}
+          `;
+          const attachmentContent = Buffer.from(html, 'utf8').toString('base64');
+          const sendResult = await sendEmailServer({
+            tenantId: tenant_id,
+            userId: user_id,
+            to,
+            subject: String(a.subject || `Quote ${quote.quote_number || quote.name}`),
+            html,
+            text: String(a.message || `Please review quote ${quote.quote_number || quote.name}.`),
+            fromName: String(a.from_name || 'AlphaClone Quotes'),
+            preferredProvider: a.provider as any,
+            attachments: [{
+              filename: `Quote_${quote.quote_number || quote.id}.html`,
+              content: attachmentContent,
+              content_type: 'text/html',
+            }],
+            templateName: 'mcpQuoteEmail',
+          });
+          if (!sendResult.success) throw new Error(sendResult.error || 'Quote email failed');
+          await supabaseAdmin.from('quotes').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('tenant_id', tenant_id).eq('id', quoteId);
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            sent: true,
+            quote_id: quoteId,
+            to,
+            provider: sendResult.provider,
+            email_id: sendResult.emailId,
+            attachment: { filename: `Quote_${quote.quote_number || quote.id}.html`, content_type: 'text/html', base64: attachmentContent },
+          }, null, 2) }] };
           break;
         }
 
@@ -6397,6 +6528,7 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { limit = 10 } = a;
+          const user_id = a.user_id ? this.requireProfileUser(a) : this.ctx?.userId || null;
 
           // Fetch recent messages across channels
           const { data: messages } = await supabaseAdmin
@@ -6413,10 +6545,26 @@ Return ONLY a JSON array of 60 objects:
               .eq('status', 'new')
               .limit(5);
 
+          let zohoMessages: any[] = [];
+          if (user_id) {
+            try {
+              const zoho = new ZohoMailService(user_id);
+              const folders = await zoho.getFolders();
+              const inbox = folders.find((folder) => /inbox/i.test(folder.folderName)) || folders[0];
+              if (inbox) {
+                const rawMessages = await zoho.getMessages(inbox.folderId, Math.min(Number(limit) || 10, 50), 1);
+                zohoMessages = await Promise.all(rawMessages.map((message: any) => zoho.getFullMessagePayload(message, inbox.folderId)));
+              }
+            } catch (error) {
+              zohoMessages = [{ error: error instanceof Error ? error.message : 'Zoho sync failed' }];
+            }
+          }
+
           result = { content: [{ type: 'text', text: JSON.stringify({
             messages: messages || [],
+            zoho_mail: zohoMessages,
             new_leads: leads || [],
-            summary: `Synced ${messages?.length || 0} messages and ${leads?.length || 0} hot leads for processing.`
+            summary: `Synced ${messages?.length || 0} internal messages, ${zohoMessages.length} Zoho messages, and ${leads?.length || 0} hot leads for processing.`
           }, null, 2) }] };
           break;
         }
@@ -6676,8 +6824,9 @@ Return ONLY a JSON array of 60 objects:
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const { campaign_id } = a;
-          const { runId } = await start(emailCampaignWorkflow, [{ campaignId: campaign_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          const sendResult = await sendScheduledCampaignServer(String(campaign_id || '').trim());
+          if (!sendResult.success) throw new Error(sendResult.error || 'Campaign send failed');
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, status: 'sent' }, null, 2) }] };
           break;
         }
 
@@ -7338,6 +7487,45 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        case 'send_project_email': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const projectId = String(a.project_id || '').trim();
+          const to = String(a.to || a.recipient_email || '').trim();
+          if (!isUuidString(projectId)) throw new Error('project_id must be a valid project UUID');
+          if (!to) throw new Error('to is required');
+          const [{ data: project, error: projectError }, { data: tasks }, { data: milestones }] = await Promise.all([
+            supabaseAdmin.from('projects').select('*').eq('tenant_id', tenant_id).eq('id', projectId).single(),
+            supabaseAdmin.from('tasks').select('title,status,priority,due_date').eq('tenant_id', tenant_id).eq('related_to_project', projectId).order('due_date', { ascending: true }),
+            supabaseAdmin.from('project_milestones').select('title,status,due_date').eq('project_id', projectId).order('due_date', { ascending: true }),
+          ]);
+          if (projectError || !project) throw supabaseErrorToMcpClientError('send_project_email', projectError?.message || 'Project not found');
+          const taskRows = (tasks || []).map((task: any) => `<li>${task.title} - ${task.status || 'todo'}${task.due_date ? `, due ${task.due_date}` : ''}</li>`).join('');
+          const milestoneRows = (milestones || []).map((item: any) => `<li>${item.title} - ${item.status || 'pending'}${item.due_date ? `, due ${item.due_date}` : ''}</li>`).join('');
+          const html = `
+            <h2>${project.name}</h2>
+            <p><strong>Status:</strong> ${project.status || 'active'}</p>
+            <p><strong>Due:</strong> ${project.due_date || 'No due date'}</p>
+            ${project.description ? `<p>${String(project.description).replace(/\n/g, '<br/>')}</p>` : ''}
+            <h3>Tasks</h3><ul>${taskRows || '<li>No tasks listed</li>'}</ul>
+            <h3>Milestones</h3><ul>${milestoneRows || '<li>No milestones listed</li>'}</ul>
+          `;
+          const sendResult = await sendEmailServer({
+            tenantId: tenant_id,
+            userId: user_id,
+            to,
+            subject: String(a.subject || `Project update: ${project.name}`),
+            html,
+            fromName: String(a.from_name || 'AlphaClone Projects'),
+            preferredProvider: a.provider as any,
+            templateName: 'mcpProjectEmail',
+          });
+          if (!sendResult.success) throw new Error(sendResult.error || 'Project email failed');
+          result = { content: [{ type: 'text', text: JSON.stringify({ sent: true, project_id: projectId, to, provider: sendResult.provider, email_id: sendResult.emailId }, null, 2) }] };
+          break;
+        }
+
         // ── get_contract_versions ─────────────────────────────────────────────
         case 'get_contract_versions': {
           const a = args as Record<string, any>;
@@ -7362,7 +7550,7 @@ Return ONLY a JSON array of 60 objects:
           const contract_id = typeof a.contract_id === 'string' && a.contract_id.trim() ? a.contract_id.trim() : null;
           let query = supabaseAdmin
             .from('contract_approvals')
-            .select('id, contract_id, contract_version_id, approver_id, status, request_note, due_at, reviewed_at, review_note, created_at, updated_at')
+            .select('id, contract_id, contract_version_id, approver_id, status, request_note, due_at, decided_at, decision_note, created_at, updated_at')
             .eq('tenant_id', tenant_id)
             .order('created_at', { ascending: false })
             .limit(50);
@@ -7471,8 +7659,105 @@ Return ONLY a JSON array of 60 objects:
         case 'get_chatbot_conversations': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          // Currently mapped to general unified messages or simple return
-          result = { content: [{ type: 'text', text: JSON.stringify({ note: 'Conversation retrieval uses the general unified_messages table filtered by source=whatsapp' }, null, 2) }] };
+          const limit = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
+          const { data, error } = await supabaseAdmin
+            .from('unified_messages')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .eq('source', 'whatsapp')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+          if (error) throw supabaseErrorToMcpClientError('get_chatbot_conversations', error.message);
+          result = { content: [{ type: 'text', text: JSON.stringify({ messages: data || [] }, null, 2) }] };
+          break;
+        }
+
+        case 'send_whatsapp_message': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const phone = String(a.phone || '').trim();
+          const message = String(a.message || '').trim();
+          if (!phone || !message) throw new Error('phone and message are required');
+          const sendResult = await sendWhatsAppMessage({
+            tenantId: tenant_id,
+            phone,
+            message,
+            integrationId: a.integration_id ? String(a.integration_id) : undefined,
+            contactId: a.contact_id ? String(a.contact_id) : null,
+            clientId: a.client_id ? String(a.client_id) : null,
+            metadata: { source: 'mcp', tool: 'send_whatsapp_message' },
+          });
+          if (!sendResult.success) throw new Error(sendResult.error || 'WhatsApp send failed');
+          result = { content: [{ type: 'text', text: JSON.stringify({ sent: true, ...sendResult }, null, 2) }] };
+          break;
+        }
+
+        case 'get_whatsapp_status': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const [integrationRes, settingsRes, recentLogsRes, recentMessagesRes] = await Promise.all([
+            supabaseAdmin
+              .from('whatsapp_integrations')
+              .select('id, phone_number, waba_id, provider, is_active, status, last_connected_at, metadata, created_at, updated_at')
+              .eq('tenant_id', tenant_id)
+              .order('updated_at', { ascending: false })
+              .limit(5),
+            supabaseAdmin
+              .from('whatsapp_chatbot_settings')
+              .select('*')
+              .eq('tenant_id', tenant_id)
+              .maybeSingle(),
+            supabaseAdmin
+              .from('whatsapp_outreach_logs')
+              .select('id, phone_number, status, error_message, sent_at, created_at')
+              .eq('tenant_id', tenant_id)
+              .order('created_at', { ascending: false })
+              .limit(20),
+            supabaseAdmin
+              .from('unified_messages')
+              .select('id, direction, from_address, to_address, body, sent_at, created_at, external_id')
+              .eq('tenant_id', tenant_id)
+              .eq('source', 'whatsapp')
+              .order('created_at', { ascending: false })
+              .limit(20),
+          ]);
+          if (integrationRes.error) throw supabaseErrorToMcpClientError('get_whatsapp_status', integrationRes.error.message);
+          if (settingsRes.error) throw supabaseErrorToMcpClientError('get_whatsapp_status', settingsRes.error.message);
+          const integrations = integrationRes.data || [];
+          const active = integrations.find((item: any) => item.is_active) || null;
+          const issues: string[] = [];
+          if (!active) issues.push('No active whatsapp_integrations row found.');
+          if (active && !active.waba_id) issues.push('Active WhatsApp integration is missing waba_id / Green API idInstance.');
+          if (active && !active.metadata?.apiTokenInstance) issues.push('Active WhatsApp integration is missing metadata.apiTokenInstance.');
+          if (!settingsRes.data?.chatbot_enabled) issues.push('WhatsApp chatbot is disabled.');
+          if (!settingsRes.data?.auto_outreach_enabled) issues.push('Lead auto-outreach is disabled.');
+          if (recentLogsRes.error) issues.push(`Could not read outreach logs: ${recentLogsRes.error.message}`);
+          if (recentMessagesRes.error) issues.push(`Could not read WhatsApp inbox messages: ${recentMessagesRes.error.message}`);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                ready_to_send: issues.filter((issue) => issue.includes('missing') || issue.includes('No active')).length === 0,
+                issues,
+                active_integration: active ? {
+                  id: active.id,
+                  phone_number: active.phone_number,
+                  provider: active.provider,
+                  status: active.status,
+                  is_active: active.is_active,
+                  has_id_instance: Boolean(active.waba_id),
+                  has_api_token: Boolean(active.metadata?.apiTokenInstance),
+                  last_connected_at: active.last_connected_at,
+                } : null,
+                settings: settingsRes.data || null,
+                recent_outreach_logs: recentLogsRes.data || [],
+                recent_messages: recentMessagesRes.data || [],
+                next_actions: issues.length
+                  ? ['Connect or reactivate WhatsApp integration', 'Verify Green API idInstance and apiTokenInstance', 'Send a test with send_whatsapp_message']
+                  : ['Send a test with send_whatsapp_message', 'Review recent_messages for inbound sync health'],
+              }, null, 2),
+            }],
+          };
           break;
         }
 

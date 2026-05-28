@@ -74,36 +74,33 @@ registerTool('documents', {
       documentTitle = `Quote ${data.quote_number || args.document_id}`;
       documentContent = JSON.stringify(data, null, 2);
     } else {
-      // Generic file from workspace_files
+      // Generic file from file_uploads
       const { data, error } = await supabase
-        .from('workspace_files')
-        .select('name, file_url, file_type, size')
+        .from('file_uploads')
+        .select('original_filename, filename, storage_path, file_type, file_size')
         .eq('id', args.document_id)
         .eq('tenant_id', args.tenant_id)
         .single();
       if (error) throw new Error(`File not found: ${error.message}`);
-      documentTitle = data.name || 'Document';
+      documentTitle = data.original_filename || data.filename || 'Document';
       mimeType = data.file_type || 'application/pdf';
 
-      // Fetch content from URL
-      if (data.file_url) {
-        const res = await fetch(data.file_url);
-        if (res.ok) {
-          const buf = Buffer.from(await res.arrayBuffer());
-          // Upload to Anthropic Files API and use file reference
-          const uploaded = await uploadFileToAnthropic(buf, data.name || 'document', mimeType);
-          const answer = await callClaudeWithFile({
-            fileId: uploaded.id,
-            filename: documentTitle,
-            mimeType,
-            userMessage: args.question,
-            systemPrompt: args.system_prompt || 'You are an expert business document analyst for AlphaClone Systems. Be concise, accurate, and professionally helpful.',
-            model: args.model,
-          });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ document: documentTitle, answer }, null, 2) }],
-          };
-        }
+      if (data.storage_path) {
+        const { data: blob, error: downloadError } = await supabase.storage.from('uploads').download(data.storage_path);
+        if (downloadError) throw new Error(`Could not download file: ${downloadError.message}`);
+        const buf = Buffer.from(await blob.arrayBuffer());
+        const uploaded = await uploadFileToAnthropic(buf, documentTitle, mimeType);
+        const answer = await callClaudeWithFile({
+          fileId: uploaded.id,
+          filename: documentTitle,
+          mimeType,
+          userMessage: args.question,
+          systemPrompt: args.system_prompt || 'You are an expert business document analyst for AlphaClone Systems. Be concise, accurate, and professionally helpful.',
+          model: args.model,
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ document: documentTitle, answer }, null, 2) }],
+        };
       }
       documentContent = `[File: ${documentTitle} — could not fetch content directly]`;
     }

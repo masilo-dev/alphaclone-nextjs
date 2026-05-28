@@ -129,54 +129,13 @@ async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> 
 
 async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
     try {
-        const brevoModule = (await import('@getbrevo/brevo')) as Record<string, unknown>;
-        const maybeBrevoClient = brevoModule.BrevoClient as
-            | (new (config: { apiKey: string }) => {
-                transactionalEmails: {
-                    sendTransacEmail: (payload: unknown) => Promise<{ messageId?: string }>;
-                };
-            })
-            | undefined;
-
-        if (maybeBrevoClient) {
-            const client = new maybeBrevoClient({ apiKey: input.apiKey });
-            const result = await client.transactionalEmails.sendTransacEmail({
-                sender: { email: input.fromEmail, name: input.fromName },
-                to: normalizeRecipients(input.to).map((email) => ({ email })),
-                subject: input.subject,
-                htmlContent: input.html,
-                textContent: input.text,
-                replyTo: input.replyTo ? { email: input.replyTo } : undefined,
-                cc: input.cc?.map((email) => ({ email })),
-                bcc: input.bcc?.map((email) => ({ email })),
-                attachment: input.attachments?.map((attachment) => ({
-                    name: attachment.filename,
-                    content: attachment.content,
-                })),
-            });
-            return { ok: true, provider: 'brevo', emailId: result.messageId };
-        }
-
-        const maybeApiClient = brevoModule.ApiClient as
-            | { instance: { authentications: Record<string, { apiKey: string }> } }
-            | undefined;
-        const maybeTransactionalEmailsApi = brevoModule.TransactionalEmailsApi as
-            | (new () => {
-                sendTransacEmail: (payload: unknown) => Promise<{ body?: { messageId?: string } }>;
-            })
-            | undefined;
-
-        if (!maybeApiClient || !maybeTransactionalEmailsApi) {
-            return {
-                ok: false,
-                provider: 'brevo',
-                error: 'Unsupported Brevo SDK shape',
-            };
-        }
-
-        maybeApiClient.instance.authentications['api-key'].apiKey = input.apiKey;
-        const legacyClient = new maybeTransactionalEmailsApi();
-        const response = await legacyClient.sendTransacEmail({
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': input.apiKey,
+            },
+            body: JSON.stringify({
             sender: { email: input.fromEmail, name: input.fromName },
             to: normalizeRecipients(input.to).map((email) => ({ email })),
             subject: input.subject,
@@ -187,11 +146,17 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
             bcc: input.bcc?.map((email) => ({ email })),
             attachment: input.attachments?.map((attachment) => ({
                 name: attachment.filename,
-                content: attachment.content,
+                content: attachment.content instanceof Buffer ? attachment.content.toString('base64') : String(attachment.content),
             })),
+            }),
         });
 
-        return { ok: true, provider: 'brevo', emailId: response.body?.messageId };
+        const bodyText = await response.text();
+        if (!response.ok) {
+            return { ok: false, provider: 'brevo', error: bodyText || `Brevo rejected request (${response.status})` };
+        }
+        const body = bodyText ? JSON.parse(bodyText) : {};
+        return { ok: true, provider: 'brevo', emailId: body.messageId };
     } catch (error) {
         return {
             ok: false,
@@ -214,9 +179,16 @@ async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
         const zohoService = new ZohoMailService(input.userId);
         const result = await zohoService.sendEmail({
             fromAddress: input.fromEmail,
-            toAddress: recipients[0],
+            toAddress: recipients.join(','),
             subject: input.subject,
             content: input.html || input.text || '',
+            ccAddress: input.cc?.join(','),
+            bccAddress: input.bcc?.join(','),
+            attachments: input.attachments?.map((attachment) => ({
+                filename: attachment.filename,
+                content: attachment.content instanceof Buffer ? attachment.content.toString('base64') : String(attachment.content),
+                contentType: attachment.contentType || 'application/octet-stream',
+            })),
         });
 
         return {
@@ -418,4 +390,3 @@ export async function sendWithProviderSdk(
 
     return result;
 }
-

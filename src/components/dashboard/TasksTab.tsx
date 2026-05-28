@@ -12,7 +12,7 @@ import { User as UserType } from '../../types';
 import toast from 'react-hot-toast';
 
 type Priority = 'low' | 'medium' | 'high';
-type TaskStatus = 'todo' | 'in_progress' | 'done';
+type TaskStatus = 'todo' | 'in_progress' | 'completed';
 
 interface Task {
   id: string;
@@ -40,7 +40,7 @@ const groupTasks = (tasks: Task[]) => {
   const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
   const groups: Record<string, Task[]> = { Today: [], 'This Week': [], Later: [], 'No Due Date': [], Completed: [] };
   for (const t of tasks) {
-    if (t.status === 'done') { groups['Completed'].push(t); continue; }
+    if (t.status === 'completed') { groups['Completed'].push(t); continue; }
     if (!t.due_date) { groups['No Due Date'].push(t); continue; }
     const d = new Date(t.due_date); d.setHours(0,0,0,0);
     if (d <= today) groups['Today'].push(t);
@@ -60,7 +60,7 @@ const SwipeableTaskRow: React.FC<{
   const x = useMotionValue(0);
   const leftOp  = useTransform(x, [0, 70],   [0, 1]);
   const rightOp = useTransform(x, [-70, 0], [1, 0]);
-  const done = task.status === 'done';
+  const done = task.status === 'completed';
 
   const handleDragEnd = (_: any, info: any) => {
     if (info.offset.x > 70 && !done) onComplete(task.id);
@@ -257,19 +257,22 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   useEffect(() => { load(); }, [load]);
 
   const handleComplete = async (id: string) => {
-    await supabase.from('tasks').update({ status: 'done' }).eq('id', id);
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'done' as TaskStatus } : t));
+    if (!currentTenant?.id) return;
+    await supabase.from('tasks').update({ status: 'completed' }).eq('id', id).eq('tenant_id', currentTenant.id);
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' as TaskStatus } : t));
     toast.success('Task completed! 🎉');
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('tasks').delete().eq('id', id);
+    if (!currentTenant?.id) return;
+    await supabase.from('tasks').delete().eq('id', id).eq('tenant_id', currentTenant.id);
     setTasks(prev => prev.filter(t => t.id !== id));
     toast.success('Task deleted');
   };
 
   const handleUpdate = async (id: string, changes: Partial<Task>) => {
-    await supabase.from('tasks').update(changes).eq('id', id);
+    if (!currentTenant?.id) return;
+    await supabase.from('tasks').update(changes).eq('id', id).eq('tenant_id', currentTenant.id);
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
     toast.success('Task updated');
   };

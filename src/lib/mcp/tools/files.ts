@@ -21,14 +21,25 @@ registerTool('files', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
-      .from('workspace_files')
-      .select('*')
+      .from('file_uploads')
+      .select('id, original_filename, filename, file_type, file_size, storage_path, category, entity_type, entity_id, created_at')
       .eq('tenant_id', args.tenant_id)
       .order('created_at', { ascending: false })
       .limit(args.limit);
 
     if (error) throw error;
-    return data;
+    return ((data || []) as Array<Record<string, any>>).map((file) => ({
+      id: file.id,
+      name: file.original_filename || file.filename,
+      filename: file.filename,
+      content_type: file.file_type,
+      size: file.file_size,
+      storage_path: file.storage_path,
+      category: file.category,
+      entity_type: file.entity_type,
+      entity_id: file.entity_id,
+      created_at: file.created_at,
+    }));
   },
 });
 
@@ -53,8 +64,8 @@ registerTool('files', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { data: fileRecord, error: dbError } = await supabase
-      .from('workspace_files')
-      .select('*')
+      .from('file_uploads')
+      .select('id, original_filename, filename, storage_path')
       .eq('id', args.file_id)
       .eq('tenant_id', args.tenant_id)
       .single();
@@ -62,12 +73,12 @@ registerTool('files', {
     if (dbError) throw dbError;
     if (!fileRecord) throw new Error('File not found or access denied.');
 
-    // We generate a signed URL from 'uploads' bucket by default (or 'public-assets' if path starts with it)
-    const isPublicAsset = fileRecord.anthropic_file_id.startsWith('public-assets/');
+    const storagePath = fileRecord.storage_path || '';
+    const isPublicAsset = storagePath.startsWith('public-assets/');
     const bucket = isPublicAsset ? 'public-assets' : 'uploads';
     const cleanPath = isPublicAsset 
-      ? fileRecord.anthropic_file_id.substring('public-assets/'.length)
-      : fileRecord.anthropic_file_id;
+      ? storagePath.substring('public-assets/'.length)
+      : storagePath;
 
     const { data, error: storageError } = await supabase.storage
       .from(bucket)

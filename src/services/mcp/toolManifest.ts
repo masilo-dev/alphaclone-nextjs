@@ -1361,6 +1361,22 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'send_task_email',
+    description: 'Send a task by email with title, description, status, priority, assignee, project, and due date details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        task_id: { type: 'string', description: 'Task reference from get_tasks' },
+        to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Optional subject override' },
+        message: { type: 'string', description: 'Optional intro message to include before the task details' },
+        provider: { type: 'string', description: 'Optional provider override: zoho | brevo | sendgrid | resend' },
+      },
+      required: ['task_id', 'to'],
+    },
+  },
+  {
     name: 'write_task_note',
     description:
       'Append a timestamped note to a task. Use for progress logs, blockers, handoff notes, and AI-generated summaries.',
@@ -1528,7 +1544,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'get_zoho_mail_messages',
-    description: 'Read Zoho Mail messages for the connected user. Supports folder listing, folder message fetch, and search.',
+    description: 'Read full Zoho Mail messages for the connected user including body, recipients, read status, thread IDs, and attachments.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1540,6 +1556,47 @@ export const MCP_TOOLS = [
         start: { type: 'number', description: 'Zoho pagination start index (default 1).' },
       },
       required: [],
+    },
+  },
+  {
+    name: 'get_zoho_mail_thread',
+    description: 'Read a full Zoho Mail conversation thread ordered chronologically with complete message bodies and attachment metadata.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        user_id: { type: 'string', description: 'Optional user reference. Defaults to connection user.' },
+        thread_id: { type: 'string', description: 'Zoho thread/conversation ID from get_zoho_mail_messages' },
+      },
+      required: ['thread_id'],
+    },
+  },
+  {
+    name: 'reply_to_zoho_mail',
+    description: 'Reply to a Zoho Mail message preserving the thread chain, optionally with base64 attachments, and log the reply to matching CRM contact history.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        user_id: { type: 'string', description: 'Optional user reference. Defaults to connection user.' },
+        message_id: { type: 'string', description: 'Zoho message ID to reply to' },
+        body_html: { type: 'string', description: 'HTML reply body' },
+        body_text: { type: 'string', description: 'Optional plain text reply body' },
+        attachments: {
+          type: 'array',
+          description: 'Optional base64 attachments.',
+          items: {
+            type: 'object',
+            properties: {
+              filename: { type: 'string' },
+              content: { type: 'string', description: 'Base64-encoded content' },
+              content_type: { type: 'string' },
+            },
+            required: ['filename', 'content'],
+          },
+        },
+      },
+      required: ['message_id', 'body_html'],
     },
   },
   {
@@ -1555,6 +1612,7 @@ export const MCP_TOOLS = [
         html: { type: 'string' },
         text: { type: 'string' },
         from_name: { type: 'string' },
+        provider: { type: 'string', description: 'Optional provider override: zoho | brevo | sendgrid | resend' },
         email_signature: { type: 'string', description: 'Sender-specific signature. Required when the user has not saved a signature in AlphaClone.' },
         document_file_ids: {
           type: 'array',
@@ -1831,6 +1889,22 @@ export const MCP_TOOLS = [
         status: { type: 'string', description: 'draft | sent | viewed | accepted | rejected | expired | converted' },
       },
       required: ['name'],
+    },
+  },
+  {
+    name: 'send_quote',
+    description: 'Send a quote/proposal by email with quote details and an attached quote document generated from AlphaClone data.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        quote_id: { type: 'string', description: 'Reference from get_quotes or create_quote' },
+        to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Optional subject override' },
+        message: { type: 'string', description: 'Optional intro message to include before quote details' },
+        provider: { type: 'string', description: 'Optional provider override: zoho | brevo | sendgrid | resend' },
+      },
+      required: ['quote_id', 'to'],
     },
   },
   {
@@ -2629,6 +2703,22 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'send_project_email',
+    description: 'Send a project summary by email with project status, due date, task list, milestones, and optional message.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        project_id: { type: 'string', description: 'Project reference from get_projects' },
+        to: { type: 'string', description: 'Recipient email address' },
+        subject: { type: 'string', description: 'Optional subject override' },
+        message: { type: 'string', description: 'Optional intro message before the project details' },
+        provider: { type: 'string', description: 'Optional provider override: zoho | brevo | sendgrid | resend' },
+      },
+      required: ['project_id', 'to'],
+    },
+  },
+  {
     name: 'task_create',
     description: 'Autonomous Scheduler: Create a recurring or one-time AI prompt task. e.g. "Check Bitcoin price every morning"',
     inputSchema: {
@@ -2804,6 +2894,32 @@ export const MCP_TOOLS = [
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         limit: { type: 'number' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'send_whatsapp_message',
+    description: 'Send a WhatsApp message through the tenant connected WhatsApp integration and return the real provider delivery result.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        phone: { type: 'string', description: 'Recipient phone number in international format' },
+        message: { type: 'string', description: 'Message text to send' },
+        contact_id: { type: 'string', description: 'Optional CRM contact/client reference' },
+        integration_id: { type: 'string', description: 'Optional WhatsApp integration override' },
+      },
+      required: ['phone', 'message'],
+    },
+  },
+  {
+    name: 'get_whatsapp_status',
+    description: 'Diagnose tenant WhatsApp setup, recent sends, inbox sync, chatbot settings, and missing configuration.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
       },
       required: [],
     },
