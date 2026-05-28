@@ -142,6 +142,32 @@ const AIAgentsTab: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  // Sovereign Autopilot Throttled Auto-Trigger
+  useEffect(() => {
+    if (!currentTenant?.id || loading) return;
+
+    const lastRunKey = `last_auto_sync_${currentTenant.id}`;
+    const lastRunStr = localStorage.getItem(lastRunKey);
+    const now = Date.now();
+    const cooldown = 5 * 60 * 1000; // 5 minutes in ms
+
+    if (!lastRunStr || now - parseInt(lastRunStr, 10) > cooldown) {
+      localStorage.setItem(lastRunKey, now.toString());
+      fetch('/api/autonomous/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: currentTenant.id }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            loadData();
+          }
+        })
+        .catch((err) => console.error('[Autopilot] Background auto-sync failed:', err));
+    }
+  }, [currentTenant?.id, loading, loadData]);
+
   // Handle manual trigger run
   const triggerAutonomousRunner = async () => {
     if (!currentTenant?.id || isTriggering) return;
@@ -263,16 +289,26 @@ const AIAgentsTab: React.FC = () => {
     <div className="overflow-y-auto pb-24 space-y-6 px-4 pt-4">
 
       {/* Primary Global Action Board */}
-      <div className="bg-gradient-to-r from-purple-900/40 to-slate-900 border border-purple-500/10 rounded-3xl p-5 relative overflow-hidden">
+      <div className={`bg-gradient-to-r ${rules.auto_send_enabled ? 'from-amber-950/20 via-purple-950/20 to-slate-900 border-amber-500/25' : 'from-purple-900/40 to-slate-900 border-purple-500/10'} border rounded-3xl p-5 relative overflow-hidden`}>
         <div className="absolute right-0 top-0 w-44 h-44 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
-              <h2 className="text-md font-black uppercase tracking-wider text-purple-400">AlphaClone Nexus Orchestrator</h2>
+              <span className={`w-2.5 h-2.5 rounded-full ${rules.auto_send_enabled ? 'bg-amber-400 animate-pulse' : 'bg-purple-400 animate-ping'}`} />
+              <h2 className="text-md font-black uppercase tracking-wider text-purple-400 flex items-center gap-1.5 flex-wrap">
+                AlphaClone Nexus Orchestrator
+                {rules.auto_send_enabled && (
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/25 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-400" /> SOVEREIGN AUTOPILOT ENGAGED
+                  </span>
+                )}
+              </h2>
             </div>
-            <p className="text-xs text-slate-400 mt-1 max-w-lg">
-              Nexus acts as your sovereign automated agent network. It checks messages, prompts leads, drafts social posts, triages calendars, and reconciles payments.
+            <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
+              {rules.auto_send_enabled 
+                ? 'Sovereign Autopilot Mode is fully engaged. The platform is running 100% autonomously: auto-triggering playbook syncs, scoring messages, routing leads, and auto-dispatching high-confidence outreach. Zero founder involvement required.'
+                : 'Nexus acts as your sovereign automated agent network. It checks messages, prompts leads, drafts social posts, triages calendars, and reconciles payments.'
+              }
             </p>
           </div>
           <button
@@ -281,7 +317,9 @@ const AIAgentsTab: React.FC = () => {
             className={`w-full md:w-auto h-12 px-6 rounded-xl text-white font-black uppercase tracking-wider text-[12px] flex items-center justify-center gap-2 transition-all ${
               !rules.enabled 
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' 
-                : 'bg-purple-600 hover:bg-purple-500 active:scale-95 shadow-lg shadow-purple-900/30'
+                : rules.auto_send_enabled
+                  ? 'bg-amber-600 hover:bg-amber-500 active:scale-95 shadow-lg shadow-amber-900/30 border border-amber-500/35'
+                  : 'bg-purple-600 hover:bg-purple-500 active:scale-95 shadow-lg shadow-purple-900/30'
             }`}
           >
             {isTriggering ? (
@@ -564,11 +602,11 @@ const AIAgentsTab: React.FC = () => {
                 </button>
               </div>
 
-              {/* Auto send emails switch */}
+              {/* Sovereign Autopilot switch */}
               <div className="flex items-center justify-between p-3.5 bg-slate-950 border border-white/5 rounded-2xl">
                 <div>
-                  <span className="text-xs font-bold text-white block">Auto-Send Low-Risk Messages</span>
-                  <span className="text-[10px] text-slate-500">Enable AI agents to automatically reply to clear buying signals without manual triage.</span>
+                  <span className="text-xs font-bold text-white block">Sovereign Autopilot Mode (Auto-Send & Auto-Approve)</span>
+                  <span className="text-[10px] text-slate-500">Enable AI agents to automatically trigger runs, reply to buying signals, and auto-approve high-confidence actions. Zero founder involvement required.</span>
                 </div>
                 <button 
                   onClick={() => handleUpdateRules({ auto_send_enabled: !rules.auto_send_enabled })}
