@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { resolveEmailAttachmentsFromFileIds } from '@/lib/files/resolveEmailAttachments';
 import { z } from 'zod';
-import { waitUntil } from '@vercel/functions';
-import { v4 as uuidv4 } from 'uuid';
 
 const SendEmailSchema = z.object({
     to: z.union([z.string().email(), z.array(z.string().email())]),
@@ -19,6 +18,8 @@ const SendEmailSchema = z.object({
     isPlatformNotification: z.boolean().optional(),
     templateName: z.string().optional(),
     listUnsubscribeUrl: z.string().optional(),
+    preferredProvider: z.enum(['zoho', 'brevo', 'resend', 'sendgrid']).optional(),
+    document_file_ids: z.array(z.string().uuid()).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -44,25 +45,27 @@ export async function POST(req: NextRequest) {
             authUserId = user.id;
         }
 
-        const emailId = uuidv4();
+        const resolvedAttachments = parsed.data.document_file_ids?.length
+            ? await resolveEmailAttachmentsFromFileIds(parsed.data.tenantId, parsed.data.document_file_ids)
+            : [];
+        const sendResult = await sendEmailServer({
+            ...parsed.data,
+            userId: parsed.data.userId || authUserId || undefined,
+            attachments: [
+                ...(parsed.data.attachments || []),
+                ...resolvedAttachments,
+            ],
+        });
 
-        // Offload email sending to background processing using Vercel's waitUntil
-        waitUntil((async () => {
-            try {
-                await sendEmailServer({
-                    ...parsed.data,
-                    userId: parsed.data.userId || authUserId || undefined
-                });
-            } catch (backgroundError) {
-                console.error('[Background Email Send Error]:', backgroundError);
-            }
-        })());
+        if (!sendResult.success) {
+            return NextResponse.json(sendResult, { status: 502 });
+        }
 
-        // Return immediately with queued status and generated email ID
         return NextResponse.json({
             success: true,
-            id: emailId,
-            status: 'queued',
+            id: sendResult.emailId,
+            provider: sendResult.provider,
+            status: 'sent',
         });
 
     } catch (error) {

@@ -134,8 +134,8 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
             {tasks.length === 0 && <div className="py-8 text-center text-[13px] text-slate-500">No tasks yet.</div>}
             {tasks.map(task => (
               <div key={task.id} className="flex items-center gap-3 px-4 py-3">
-                <div className={`w-4 h-4 rounded flex-shrink-0 border-2 ${task.status === 'done' ? 'bg-teal-500 border-teal-500' : 'border-slate-600'}`} />
-                <span className={`flex-1 text-[15px] ${task.status === 'done' ? 'line-through text-slate-500' : 'text-white'}`}>{task.title}</span>
+                <div className={`w-4 h-4 rounded flex-shrink-0 border-2 ${task.status === 'completed' ? 'bg-teal-500 border-teal-500' : 'border-slate-600'}`} />
+                <span className={`flex-1 text-[15px] ${task.status === 'completed' ? 'line-through text-slate-500' : 'text-white'}`}>{task.title}</span>
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-red-500' : task.priority === 'medium' ? 'bg-yellow-500' : 'bg-slate-600'}`} />
               </div>
             ))}

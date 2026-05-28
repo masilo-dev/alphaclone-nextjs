@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
 // Initialize Clients
 // Initialize Clients inside handler to avoid build-time errors if env vars missing
@@ -270,19 +270,18 @@ export async function POST(req: Request) {
         }
 
         // 6. Send Email
-        const resendApiKey = process.env.RESEND_API_KEY;
-        if (resendApiKey) {
-            const resend = new Resend(resendApiKey);
+        if (tenant_id) {
             const dateStr = new Date(start_time).toLocaleString('en-US', {
                 timeZone: time_zone || 'UTC',
                 dateStyle: 'full',
                 timeStyle: 'short'
             });
 
-            await resend.emails.send({
-                from: 'AlphaClone <bookings@resend.dev>', // Update on prod
+            const emailResult = await sendEmailServer({
+                tenantId: tenant_id,
                 to: client_email,
                 subject: `Confirmation: ${booking_type_name || 'Meeting'} on ${dateStr}`,
+                templateName: 'bookingConfirmation',
                 html: `
                     <!DOCTYPE html>
                     <html>
@@ -338,6 +337,9 @@ export async function POST(req: Request) {
                     </html>
                  `
             });
+            if (!emailResult.success) {
+                console.error('Booking confirmation email failed:', emailResult.error);
+            }
         }
 
         return NextResponse.json({ success: true, booking, roomUrl: maskedUrl });

@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
 import { aiService } from '../ai/aiService';
 
 export class WhatsAppOutreachService {
@@ -53,51 +54,34 @@ export class WhatsAppOutreachService {
     const msg = await this.generateOutreachMessage(tenantId, lead, settings.persona_prompt);
     if (!msg) return;
 
-    // 6. Send with delay
-    console.log(`[WhatsAppOutreach] Queuing message for ${phoneToContact}...`);
-    
-    // Using setTimeout for demo; in production use a real background job queue
-    setTimeout(async () => {
-       await this.sendMessage(integration.waba_id, integration.metadata.apiTokenInstance, phoneToContact, msg);
-       
-       // Log
-       await supabase.from('whatsapp_outreach_logs').insert({
-         tenant_id: tenantId,
-         lead_id: leadId,
-         phone_number: phoneToContact,
-         status: 'sent',
-         message_content: msg,
-         sent_at: new Date().toISOString()
-       });
+    // 6. Send synchronously. Serverless runtimes may kill delayed timers before they fire.
+    console.log(`[WhatsAppOutreach] Sending message for ${phoneToContact}...`);
+    const sendResult = await sendWhatsAppMessage({
+      tenantId,
+      phone: phoneToContact,
+      message: msg,
+      clientId: leadId,
+      metadata: {
+        source: 'auto_outreach',
+        lead_id: leadId,
+      },
+    });
 
-       // Save to Unified Messages
-       await supabase.from('unified_messages').insert({
-         tenant_id: tenantId,
-         source: 'whatsapp',
-         external_id: `wa_outreach_${Date.now()}`,
-         direction: 'outbound',
-         channel: 'chat',
-         body: msg,
-         from_address: integration.waba_id,
-         to_address: phoneToContact,
-         contact_id: leadId,
-         read: true,
-         replied: false,
-         starred: false,
-         archived: false,
-         folder: 'sent',
-         priority: 'normal',
-         needs_response: false,
-         auto_replied: true,
-         sent_at: new Date().toISOString()
-       });
+    if (!sendResult.success) {
+      await supabase.from('whatsapp_outreach_logs').insert({
+        tenant_id: tenantId,
+        lead_id: leadId,
+        phone_number: phoneToContact,
+        status: 'failed',
+        message_content: msg,
+        error_message: sendResult.error || 'WhatsApp send failed',
+      });
+      throw new Error(sendResult.error || 'WhatsApp send failed');
+    }
 
-       // Update Lead
-       await supabase.from('business_clients').update({
-         whatsapp_outreach_sent_at: new Date().toISOString()
-       }).eq('id', leadId);
-
-    }, (settings.outreach_delay_seconds || 30) * 1000);
+    await supabase.from('business_clients').update({
+      whatsapp_outreach_sent_at: new Date().toISOString()
+    }).eq('id', leadId);
   }
 
   async checkWhatsAppNumber(idInstance: string, apiToken: string, phone: string): Promise<boolean> {

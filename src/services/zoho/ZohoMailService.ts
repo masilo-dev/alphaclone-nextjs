@@ -7,6 +7,7 @@ import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services
 
 export interface ZohoMessage {
     messageId: string;
+    threadId?: string;
     sender: string;
     subject: string;
     receivedTime: string;
@@ -14,6 +15,21 @@ export interface ZohoMessage {
     content?: string;
     hasAttachment: boolean;
     folderId: string;
+}
+
+export interface ZohoFullMessage {
+    id: string;
+    thread_id: string | null;
+    subject: string;
+    from: string;
+    to: string[];
+    cc: string[];
+    date: string | null;
+    is_read: boolean;
+    body_html: string;
+    body_text: string;
+    attachments: Array<{ filename: string; size?: number; attachment_id?: string }>;
+    folder_id?: string;
 }
 
 export interface ZohoFolder {
@@ -170,6 +186,53 @@ export class ZohoMailService extends ZohoService {
         }
     }
 
+    async getFullMessagePayload(message: any, folderId?: string): Promise<ZohoFullMessage> {
+        const resolvedFolderId = folderId || message.folderId || message.folder_id || '';
+        const id = String(message.messageId || message.id || message.message_id || '');
+        const { content } = resolvedFolderId && id
+            ? await this.getMessageContent(id, resolvedFolderId)
+            : { content: message.content || message.body || '' };
+        const html = String(content || message.htmlContent || message.body_html || '');
+        const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        const attachments = Array.isArray(message.attachments || message.attachmentInfo)
+            ? (message.attachments || message.attachmentInfo).map((attachment: any) => ({
+                filename: attachment.fileName || attachment.filename || attachment.name || 'attachment',
+                size: Number(attachment.size || attachment.fileSize || 0) || undefined,
+                attachment_id: attachment.attachmentId || attachment.id || attachment.storeName,
+            }))
+            : [];
+
+        return {
+            id,
+            thread_id: String(message.threadId || message.thread_id || message.conversationId || id || '') || null,
+            subject: String(message.subject || ''),
+            from: String(message.sender || message.fromAddress || message.from || ''),
+            to: String(message.toAddress || message.to || '').split(',').map((item) => item.trim()).filter(Boolean),
+            cc: String(message.ccAddress || message.cc || '').split(',').map((item) => item.trim()).filter(Boolean),
+            date: String(message.receivedTime || message.sentDateInGMT || message.date || message.createdTime || '') || null,
+            is_read: Boolean(message.isRead ?? message.read ?? !message.unread),
+            body_html: html,
+            body_text: text,
+            attachments,
+            folder_id: resolvedFolderId || undefined,
+        };
+    }
+
+    async getThread(threadId: string): Promise<ZohoFullMessage[]> {
+        const folders = await this.getFolders();
+        const allMessages: ZohoFullMessage[] = [];
+        for (const folder of folders.slice(0, 8)) {
+            const messages = await this.getMessages(folder.folderId, 100, 1).catch(() => []);
+            const matches = messages.filter((message: any) =>
+                String(message.threadId || message.conversationId || message.messageId) === threadId
+            );
+            for (const message of matches) {
+                allMessages.push(await this.getFullMessagePayload(message, folder.folderId));
+            }
+        }
+        return allMessages.sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
+    }
+
     async proxyImage(path: string) {
         const config = await this.getConfig();
         const accessToken = await this.getValidAccessToken();
@@ -193,6 +256,7 @@ export class ZohoMailService extends ZohoService {
         bccAddress?: string;
         inReplyTo?: string;
         references?: string;
+        attachments?: Array<{ filename: string; content: string; contentType?: string }>;
     }) {
         const { base } = await this.getMailBase();
         const validAddresses = await this.getSenderAddresses();
@@ -218,6 +282,11 @@ export class ZohoMailService extends ZohoService {
                 toAddress,
                 subject,
                 content: ensureFooter(String(params.content || '')),
+                attachments: params.attachments?.map((attachment) => ({
+                    fileName: attachment.filename,
+                    content: attachment.content,
+                    contentType: attachment.contentType || 'application/octet-stream',
+                })),
             }),
         });
 
@@ -250,6 +319,34 @@ export class ZohoMailService extends ZohoService {
         }
 
         return result;
+    }
+
+    async replyToMessage(params: {
+        messageId: string;
+        bodyHtml: string;
+        bodyText?: string;
+        attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+    }) {
+        const folders = await this.getFolders();
+        let original: ZohoFullMessage | null = null;
+        for (const folder of folders.slice(0, 8)) {
+            const messages = await this.getMessages(folder.folderId, 100, 1).catch(() => []);
+            const hit = messages.find((message: any) => String(message.messageId || message.id) === params.messageId);
+            if (hit) {
+                original = await this.getFullMessagePayload(hit, folder.folderId);
+                break;
+            }
+        }
+        if (!original) throw new Error('Original Zoho message not found');
+        const sentResult = await this.sendEmail({
+            toAddress: original.from,
+            subject: normalizeReplySubject(original.subject),
+            content: params.bodyHtml || params.bodyText || '',
+            inReplyTo: original.id,
+            references: original.thread_id || original.id,
+            attachments: params.attachments,
+        });
+        return { ...sentResult, original };
     }
 
     async searchMessages(query: string): Promise<ZohoMessage[]> {

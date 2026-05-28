@@ -1,6 +1,9 @@
 import { sleep } from 'workflow';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
+import { AppUrls } from '@/lib/urls';
 
 /**
  * Invoice Lifecycle Workflow
@@ -13,7 +16,7 @@ export async function invoiceLifecycleWorkflow({ invoiceId, tenantId }: { invoic
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
   // 1. Generate PDF
-  const pdf = await generatePDF(invoiceId);
+  await generatePDF(invoiceId);
 
   // 2. Send via Provider
   await sendEmail(invoiceId, tenantId);
@@ -37,6 +40,7 @@ export async function invoiceLifecycleWorkflow({ invoiceId, tenantId }: { invoic
 
 async function generatePDF(invoiceId: string) {
   "use step";
+  console.log(`[invoice-lifecycle] Step 1 generate_pdf start: ${invoiceId}`);
   const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId);
   if (error || !invoice) throw new Error(`Invoice not found: ${error}`);
   
@@ -45,32 +49,61 @@ async function generatePDF(invoiceId: string) {
   
   // generatePDF returns the doc object. In a real environment we would save it to storage.
   const doc = businessInvoiceService.generatePDF(invoice, tenant, client);
-  console.log(`PDF generated for invoice ${invoice.invoice_number || invoice.invoiceNumber}`);
-  return { success: true };
+  const pdfBase64 = Buffer.from(doc.output('arraybuffer')).toString('base64');
+  console.log(`[invoice-lifecycle] Step 1 generate_pdf complete: ${invoice.invoice_number || invoice.invoiceNumber}`);
+  return { success: true, pdfBase64 };
 }
 
 async function sendEmail(invoiceId: string, tenantId: string) {
   "use step";
+  console.log(`[invoice-lifecycle] Step 2 send_email start: ${invoiceId}`);
   const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId);
   if (error || !invoice) throw new Error(`Invoice not found: ${error}`);
-  
-  if (invoice.client?.email) {
-    const { emailHelpers } = await import('@/services/email/emailService');
-    await emailHelpers.sendInvoicePaid(
-        invoice.client.email, 
-        invoice.invoice_number || invoice.invoiceNumber, 
-        (invoice.total || 0).toString(), 
-        `https://alphaclone.tech/invoice/${invoiceId}`
-    );
+
+  if (!invoice.client?.email) {
+    throw new Error(`Invoice ${invoiceId} has no client email`);
   }
+
+  const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
+  const pdfBase64 = Buffer.from(doc.output('arraybuffer')).toString('base64');
+  const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
+  const actionUrl = AppUrls.payInvoice(invoiceId);
+  const result = await sendEmailServer({
+    tenantId,
+    to: invoice.client.email,
+    subject: `Invoice ${invoiceNumber}`,
+    html: invoiceEmailTemplates.invoiceSent({
+      recipientName: invoice.client?.name || 'Valued Client',
+      invoiceNumber,
+      amount: invoice.total || invoice.total_amount || 0,
+      currency: invoice.currency || 'USD',
+      dueDate: invoice.due_date,
+      actionUrl,
+      workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
+      notes: invoice.notes || undefined,
+    }),
+    attachments: [{
+      filename: `Invoice_${invoiceNumber}.pdf`,
+      content: pdfBase64,
+      content_type: 'application/pdf',
+    }],
+    templateName: 'invoiceLifecycleSent',
+  });
+  if (!result.success) {
+    throw new Error(`Invoice email dispatch failed: ${result.error}`);
+  }
+  console.log(`[invoice-lifecycle] Step 2 send_email complete via ${result.provider}: ${invoiceId}`);
+  return { success: true, provider: result.provider, emailId: result.emailId };
 }
 
 async function updateCRMStatus(invoiceId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  console.log(`Updating CRM status for invoice ${invoiceId}`);
+  console.log(`[invoice-lifecycle] Step 3 update_status start: ${invoiceId}`);
   await supabase.from('invoices').update({ status: 'sent' }).eq('id', invoiceId);
+  await supabase.from('business_invoices').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', invoiceId);
+  console.log(`[invoice-lifecycle] Step 3 update_status complete: ${invoiceId}`);
 }
 
 async function checkPaymentStatus(invoiceId: string, tenantId: string) {
@@ -83,13 +116,57 @@ async function checkPaymentStatus(invoiceId: string, tenantId: string) {
 
 async function sendReminder(invoiceId: string, tenantId: string) {
   "use step";
-  console.log(`Sending payment reminder for invoice ${invoiceId}`);
+  console.log(`[invoice-lifecycle] Step 4 reminder start: ${invoiceId}`);
+  const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId);
+  if (error || !invoice) throw new Error(`Invoice not found: ${error}`);
+  if (!invoice.client?.email) throw new Error(`Invoice ${invoiceId} has no client email for reminder`);
+  const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
+  const result = await sendEmailServer({
+    tenantId,
+    to: invoice.client.email,
+    subject: `Reminder: Invoice ${invoiceNumber}`,
+    html: invoiceEmailTemplates.invoiceSent({
+      recipientName: invoice.client?.name || 'Valued Client',
+      invoiceNumber,
+      amount: invoice.total || invoice.total_amount || 0,
+      currency: invoice.currency || 'USD',
+      dueDate: invoice.due_date,
+      actionUrl: AppUrls.payInvoice(invoiceId),
+      workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
+      notes: 'Friendly reminder that this invoice is still awaiting payment.',
+    }),
+    templateName: 'invoiceLifecycleReminder',
+  });
+  if (!result.success) throw new Error(`Invoice reminder failed: ${result.error}`);
+  console.log(`[invoice-lifecycle] Step 4 reminder complete via ${result.provider}: ${invoiceId}`);
 }
 
 async function escalateOverdue(invoiceId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+  console.log(`[invoice-lifecycle] Step 5 overdue start: ${invoiceId}`);
+  const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId);
+  if (error || !invoice) throw new Error(`Invoice not found: ${error}`);
   await supabase.from('invoices').update({ status: 'overdue' }).eq('id', invoiceId);
-  console.log(`Invoice ${invoiceId} escalated to overdue`);
+  await supabase.from('business_invoices').update({ status: 'overdue', updated_at: new Date().toISOString() }).eq('id', invoiceId);
+  if (!invoice.client?.email) throw new Error(`Invoice ${invoiceId} has no client email for overdue notice`);
+  const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
+  const result = await sendEmailServer({
+    tenantId,
+    to: invoice.client.email,
+    subject: `Overdue: Invoice ${invoiceNumber}`,
+    html: invoiceEmailTemplates.invoiceOverdue({
+      recipientName: invoice.client?.name || 'Valued Client',
+      invoiceNumber,
+      amount: invoice.total || invoice.total_amount || 0,
+      currency: invoice.currency || 'USD',
+      dueDate: invoice.due_date,
+      actionUrl: AppUrls.payInvoice(invoiceId),
+      workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
+    }),
+    templateName: 'invoiceLifecycleOverdue',
+  });
+  if (!result.success) throw new Error(`Invoice overdue email failed: ${result.error}`);
+  console.log(`[invoice-lifecycle] Step 5 overdue complete via ${result.provider}: ${invoiceId}`);
 }

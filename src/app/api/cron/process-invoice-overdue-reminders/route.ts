@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
 function authorized(req: NextRequest): boolean {
     const headerSecret = req.headers.get('x-cron-secret') || req.headers.get('authorization')?.replace('Bearer ', '');
@@ -61,49 +62,62 @@ export async function POST(req: NextRequest) {
                 .maybeSingle();
             const recipientEmail = String(client?.email || '').trim();
 
-            await admin.from('invoice_reminders').insert({
-                tenant_id: invoice.tenant_id,
-                invoice_id: invoice.id,
-                reminder_type: reminderType,
-                sent_to: recipientEmail || null,
-                status: recipientEmail ? 'sent' : 'skipped',
-                metadata: {
-                    invoiceNumber: invoice.invoice_number,
-                    clientName: client?.name || null,
-                    generatedAt: nowIso,
-                },
-            });
-
             if (recipientEmail) {
                 try {
                     const { data: tenant } = await admin.from('tenants').select('name').eq('id', invoice.tenant_id).single();
                     const actionUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/portal/${invoice.tenant_id}/invoice/${invoice.id}`;
 
-                    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email/send`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-internal-api-key': process.env.INTERNAL_API_KEY || ''
-                        },
-                        body: JSON.stringify({
-                            tenantId: invoice.tenant_id,
-                            to: recipientEmail,
-                            subject: `Invoice Overdue: ${invoice.invoice_number}`,
-                            templateName: 'invoiceOverdue',
-                            html: invoiceEmailTemplates.invoiceOverdue({
-                                recipientName: client?.name || 'Valued Client',
-                                invoiceNumber: invoice.invoice_number,
-                                amount: invoice.total_amount || 0,
-                                currency: invoice.currency || 'USD',
-                                dueDate: invoice.due_date,
-                                actionUrl,
-                                workspaceName: tenant?.name || 'Our Company'
-                            })
+                    const sendResult = await sendEmailServer({
+                        tenantId: invoice.tenant_id,
+                        to: recipientEmail,
+                        subject: `Invoice Overdue: ${invoice.invoice_number}`,
+                        templateName: 'invoiceOverdue',
+                        html: invoiceEmailTemplates.invoiceOverdue({
+                            recipientName: client?.name || 'Valued Client',
+                            invoiceNumber: invoice.invoice_number,
+                            amount: invoice.total_amount || 0,
+                            currency: invoice.currency || 'USD',
+                            dueDate: invoice.due_date,
+                            actionUrl,
+                            workspaceName: tenant?.name || 'Our Company'
                         })
+                    });
+                    if (!sendResult.success) throw new Error(sendResult.error || 'Overdue email failed');
+                    await admin.from('invoice_reminders').insert({
+                        tenant_id: invoice.tenant_id,
+                        invoice_id: invoice.id,
+                        reminder_type: reminderType,
+                        sent_to: recipientEmail,
+                        status: 'sent',
+                        metadata: {
+                            invoiceNumber: invoice.invoice_number,
+                            clientName: client?.name || null,
+                            generatedAt: nowIso,
+                            provider: sendResult.provider,
+                            emailId: sendResult.emailId,
+                        },
                     });
                 } catch (err) {
                     console.error('Failed to send invoice overdue email:', err);
+                    await admin.from('invoice_reminders').insert({
+                        tenant_id: invoice.tenant_id,
+                        invoice_id: invoice.id,
+                        reminder_type: reminderType,
+                        sent_to: recipientEmail,
+                        status: 'failed',
+                        metadata: { error: err instanceof Error ? err.message : 'Unknown send error', generatedAt: nowIso },
+                    });
+                    continue;
                 }
+            } else {
+                await admin.from('invoice_reminders').insert({
+                    tenant_id: invoice.tenant_id,
+                    invoice_id: invoice.id,
+                    reminder_type: reminderType,
+                    sent_to: null,
+                    status: 'skipped',
+                    metadata: { invoiceNumber: invoice.invoice_number, clientName: client?.name || null, generatedAt: nowIso },
+                });
             }
 
             await admin

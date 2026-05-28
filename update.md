@@ -1,5 +1,24 @@
 # Update Log
 
+## Date: 2026-05-28 (OMNICHANNEL INBOX, WHATSAPP & ZOHO MAIL MCP EXTENSIONS, AND CONTRACT APPROVAL SCHEMAS)
+
+### Added/Modified
+- **Omnichannel Messaging & Integrations** ([route.ts](file:///home/bonnie/alphaclone-nextjs/src/app/api/integrations/whatsapp/send/route.ts), [WhatsAppOutreachService.ts](file:///home/bonnie/alphaclone-nextjs/src/services/whatsapp/WhatsAppOutreachService.ts), [ZohoMailService.ts](file:///home/bonnie/alphaclone-nextjs/src/services/zoho/ZohoMailService.ts)):
+  - Completed WhatsApp messaging integration, allowing direct outreach through green-api/whatsapp integration.
+  - Added Zoho Mail messaging thread fetching (`get_zoho_mail_thread`) and reply-to functionalities (`reply_to_zoho_mail`) with full CRM contact logging compatibility.
+- **MCP Server Extended Tools** ([MCPServer.ts](file:///home/bonnie/alphaclone-nextjs/src/services/mcp/MCPServer.ts), [toolManifest.ts](file:///home/bonnie/alphaclone-nextjs/src/services/mcp/toolManifest.ts)):
+  - Registered and implemented new high-utility tools: `send_whatsapp_message`, `get_whatsapp_status`, `get_chatbot_conversations`, `send_task_email`, `send_project_email`, `send_quote`, `get_zoho_mail_thread`, and `reply_to_zoho_mail`.
+  - Added optional `provider` override support for email sending tools to manually choose between zoho, brevo, sendgrid, resend, and gmail.
+- **Workflow & Lifecycle Enhancements** ([invoice-lifecycle.ts](file:///home/bonnie/alphaclone-nextjs/src/workflows/invoice-lifecycle.ts), [sendScheduledCampaignServer.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/server/sendScheduledCampaignServer.ts)):
+  - Refactored invoice lifecycle workflows and campaign send routines to utilize the unified, multi-provider `sendEmailServer` with PDF attachment encoding.
+- **Database Schemas & Migrations** ([20260528000000_fix_contract_tables.sql](file:///home/bonnie/alphaclone-nextjs/supabase/migrations/20260528000000_fix_contract_tables.sql), [fix-contract-tables.js](file:///home/bonnie/alphaclone-nextjs/scripts/fix-contract-tables.js)):
+  - Created a robust migration establishing the `contract_approvals` table with RLS policies, as well as fixing a missing `tenant_id` column on the `contract_versions` table.
+
+### Production Readiness
+- **Vercel Safe**: Clean production build verified via `npm run build` passing with zero errors.
+
+---
+
 ## Date: 2026-05-28 (SEO OPTIMIZATIONS & LLM DISCOVERY CONTEXT & PRICING PLAN COMPARISON)
 
 ### Added/Modified

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 import { contactSchema } from '@/schemas/validation';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,17 +44,16 @@ export async function POST(request: NextRequest) {
     }
 
     const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();
-    const resendKey = process.env.RESEND_API_KEY;
-    const fromAddress = process.env.RESEND_CONTACT_FROM?.trim() || 'AlphaClone <bookings@resend.dev>';
-    if (salesInbox && resendKey) {
+    const tenantId = process.env.CONTACT_TENANT_ID?.trim();
+    if (salesInbox && tenantId) {
       try {
-        const resend = new Resend(resendKey);
-        await resend.emails.send({
-          from: fromAddress,
+        await sendEmailServer({
+          tenantId,
           to: salesInbox,
           replyTo: email,
           subject: `Website contact: ${subject || 'General inquiry'}`,
           text: `From: ${name} <${email}>\nCompany: ${company || '—'}\n\n${message}`,
+          templateName: 'websiteContact',
         });
       } catch (notifyErr) {
         console.error('Contact form sales notification failed:', notifyErr);
