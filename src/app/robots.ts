@@ -17,34 +17,23 @@ export default function robots(): MetadataRoute.Robots {
             // These bots are allowed to read all marketing & documentation content
             // but must NOT index private user data routes
             {
-                userAgent: 'GPTBot',
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
+                userAgent: [
+                    'GPTBot',
+                    'OAI-SearchBot',
+                    'PerplexityBot',
+                    'ClaudeBot',
+                    'anthropic-ai',
+                    'Applebot',
+                    'Google-Extended',
+                    'deepseek-ai',
+                    'DeepSeekBot',
+                    'Meta-ExternalAgent',
+                    'YouBot',
+                    'cohere-ai',
+                    'BytesSpider'
+                ],
+                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/faq', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
                 disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'OAI-SearchBot',
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'PerplexityBot',
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'ClaudeBot',
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'anthropic-ai',
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/'],
-            },
-            {
-                userAgent: 'Applebot',
-                allow: ['/api/mcp/', '/api/mcp', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/'],
             },
 
             // General fallback — all other bots get full marketing access, no sensitive routes

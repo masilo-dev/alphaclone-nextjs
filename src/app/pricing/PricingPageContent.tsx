@@ -125,6 +125,27 @@ export default function PricingPageContent() {
                     ]
                 })
             }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'Product',
+                    'name': 'AlphaClone Business OS',
+                    'image': 'https://alphaclonesystems.com/favicon.ico',
+                    'description': 'Unified business operating platform for service businesses with CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations.',
+                    'brand': {
+                        '@type': 'Brand',
+                        'name': 'AlphaClone'
+                    },
+                    'offers': {
+                        '@type': 'Offer',
+                        'price': '15.00',
+                        'priceCurrency': 'USD',
+                        'url': 'https://alphaclonesystems.com/pricing',
+                        'priceValidUntil': '2027-12-31',
+                        'availability': 'https://schema.org/InStock'
+                    }
+                })
+            }} />
 
 
             <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />

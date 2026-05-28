@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
-const MCP_PROTOCOL_VERSION = '2025-11-20';
+const MCP_PROTOCOL_VERSION = '2025-03-26';
 
 /**
  * Unified MCP Endpoint (/api/mcp)
@@ -137,61 +137,6 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
-  if (requestBody.method === 'initialize') {
-    const response = {
-      jsonrpc: '2.0',
-      id: requestBody.id,
-      result: {
-        protocolVersion: '2025-11-20',
-        capabilities: {
-          prompts: {},
-          resources: {
-            subscribe: true,
-            listChanged: true
-          },
-          tools: {
-            listChanged: true
-          }
-        },
-        serverInfo: {
-          name: 'AlphaClone-Systems-MCP',
-          version: '2.0.0'
-        }
-      }
-    };
-
-    const headers = new Headers(getMcpCorsHeaders(req));
-    headers.set('MCP-Protocol-Version', '2025-11-20');
-
-    if (ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      try {
-        const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-        const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
-        const { data: sessionRow } = await supabaseAdmin
-          .from('mcp_sessions')
-          .insert({
-            tenant_id: tenantId,
-            user_id: userId || null,
-            expires_at: expiresAt,
-            metadata: {
-              client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
-              protocol_version: '2025-11-20',
-            },
-          })
-          .select('id')
-          .single();
-
-        if (sessionRow?.id) {
-          headers.set('Mcp-Session-Id', sessionRow.id);
-        }
-      } catch (sessErr) {
-        console.error('Failed to create session on initialize:', sessErr);
-      }
-    }
-
-    return NextResponse.json(response, { headers });
-  }
-
   if (requestBody.method === 'tools/list') {
     const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
     const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');

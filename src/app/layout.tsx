@@ -161,6 +161,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://challenges.cloudflare.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
+        <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
         <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
       </head>
       <body
