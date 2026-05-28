@@ -39,6 +39,72 @@ function toIsoDate(date: Date): string {
   return date.toISOString().split('T')[0] || '';
 }
 
+async function processAutopilotApprovals(
+  admin: any,
+  tenantId: string,
+  rules: TenantRunnerRules,
+  recordAction: (key: string, status: RunnerActionStatus, details: string, payload?: Record<string, unknown>) => Promise<void>
+) {
+  if (!rules.auto_send_enabled) return;
+  try {
+    const { data: pendingApprovals } = await admin
+      .from('autonomous_runner_approvals')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pending');
+
+    if (pendingApprovals && pendingApprovals.length > 0) {
+      let autoApprovedCount = 0;
+      for (const app of pendingApprovals) {
+        const confidence = app.confidence_score ?? 0;
+        const threshold = rules.auto_send_confidence_threshold ?? 85;
+        if (confidence >= threshold) {
+          try {
+            if (app.action_key === 'auto_reply_buying_signal') {
+              const payload = app.payload || {};
+              const replyText = `Thank you for your message. We can move this forward today. I have prepared the next step and can send pricing and implementation options immediately.`;
+              await admin.from('messages').insert({
+                tenant_id: tenantId,
+                sender_id: null,
+                sender_name: 'Alpha AI Operator',
+                sender_role: 'ai',
+                recipient_id: payload.senderId,
+                text: replyText,
+                priority: 'high',
+                reply_to: payload.messageId,
+              });
+            } else if (app.action_key === 'custom_playbook_outreach') {
+              const payload = app.payload || {};
+              await admin.from('messages').insert({
+                tenant_id: tenantId,
+                sender_id: null,
+                sender_name: 'Alpha SDR Agent',
+                sender_role: 'ai',
+                text: payload.email_body || '',
+                priority: 'normal',
+              });
+            }
+
+            await admin
+              .from('autonomous_runner_approvals')
+              .update({ status: 'approved', updated_at: new Date().toISOString() })
+              .eq('id', app.id);
+            
+            autoApprovedCount++;
+          } catch (e) {
+            console.error(`[Autopilot] Failed to auto-approve action ${app.id}:`, e);
+          }
+        }
+      }
+      if (autoApprovedCount > 0) {
+        await recordAction('autopilot_auto_approvals', 'success', `Sovereign Autopilot automatically approved and executed ${autoApprovedCount} pending actions.`);
+      }
+    }
+  } catch (error) {
+    console.error('[Autopilot] Error processing autopilot approvals:', error);
+  }
+}
+
 export const autonomousRunnerService = {
   async runOnce(): Promise<{ success: boolean; runs: RunnerSummary[]; error?: string }> {
     const admin = createSupabaseAdminClient();
@@ -428,6 +494,9 @@ export const autonomousRunnerService = {
         } catch (error) {
           await recordAction('payment_loop_reconciliation', 'failed', error instanceof Error ? error.message : 'Unknown error');
         }
+
+        // Autopilot Auto-Approvals Process
+        await processAutopilotApprovals(admin, tenantId, rules, recordAction);
 
         if (runId) {
           const failedCount = summary.actions.filter((a) => a.status === 'failed').length;
@@ -834,6 +903,9 @@ export const autonomousRunnerService = {
       } catch (error) {
         await recordAction('payment_loop_reconciliation', 'failed', error instanceof Error ? error.message : 'Unknown error');
       }
+
+      // Autopilot Auto-Approvals Process
+      await processAutopilotApprovals(admin, tenantId, rules, recordAction);
 
       if (runId) {
         const failedCount = summary.actions.filter((a) => a.status === 'failed').length;
