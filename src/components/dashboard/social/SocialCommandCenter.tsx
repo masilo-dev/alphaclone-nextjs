@@ -7,7 +7,7 @@ import {
     Copy, ChevronRight, Twitter, MessageSquare, Users, Activity as ActivityIcon, 
     Sparkles, Brain, Bot, Calendar, Camera, Image as ImageIcon, X, Sliders, 
     BarChart2, Settings, HelpCircle, Clock, ArrowLeft, History, User, Building, 
-    ChevronDown, Repeat, Paperclip, AlertTriangle
+    ChevronDown, Repeat, Paperclip, AlertTriangle, Heart, Share2, MousePointerClick
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,8 +30,17 @@ interface SocialPost {
     published_at: string | null;
     facebook_post_id: string | null;
     linkedin_post_urn: string | null;
+    linkedin_stats?: Record<string, any> | null;
     error_message: string | null;
     created_at: string;
+}
+
+interface PostMetrics {
+    impressions: number;
+    reactions: number;
+    comments: number;
+    clicks: number;
+    shares: number;
 }
 
 interface BookmarkRow {
@@ -85,6 +94,7 @@ export default function SocialCommandCenter() {
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
     const [linkedinIntegrations, setLinkedinIntegrations] = useState<LinkedInIntegration[]>([]);
     const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
+    const [postMetrics, setPostMetrics] = useState<Record<string, PostMetrics>>({});
     const [loading, setLoading] = useState(true);
 
     // Detail Bottom Sheet
@@ -95,6 +105,7 @@ export default function SocialCommandCenter() {
     const [composeCaption, setComposeCaption] = useState('');
     const [composePlatforms, setComposePlatforms] = useState<string[]>(['linkedin']);
     const [composeMedia, setComposeMedia] = useState<string[]>([]);
+    const [composeMediaUrl, setComposeMediaUrl] = useState('');
     const [composeScheduledAt, setComposeScheduledAt] = useState('');
     const [composeIsScheduled, setComposeIsScheduled] = useState(false);
     const [selectedLinkedInId, setSelectedLinkedInId] = useState('');
@@ -152,13 +163,29 @@ export default function SocialCommandCenter() {
             setRecentInteractions(ccData.recentInteractions || []);
 
             // Query social posts, fb pages, and linkedin profiles from DB
-            const [postsRes, pagesRes, linkedinRes] = await Promise.all([
+            const [postsRes, pagesRes, linkedinRes, analyticsRes] = await Promise.all([
                 supabase.from('social_posts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(60),
                 supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user?.id || '').eq('is_active', true),
-                supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
+                supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
+                supabase.from('social_post_analytics').select('post_id,impressions,clicks,reactions,created_at').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(250),
             ]);
 
             if (!postsRes.error) setPosts(postsRes.data || []);
+            if (!analyticsRes.error) {
+                const latestMetrics: Record<string, PostMetrics> = {};
+                (analyticsRes.data || []).forEach((row: any) => {
+                    if (!latestMetrics[row.post_id]) {
+                        latestMetrics[row.post_id] = {
+                            impressions: Number(row.impressions || 0),
+                            clicks: Number(row.clicks || 0),
+                            reactions: Number(row.reactions || 0),
+                            comments: Number(row.comments || 0),
+                            shares: Number(row.shares || 0),
+                        };
+                    }
+                });
+                setPostMetrics(latestMetrics);
+            }
             if (!pagesRes.error) {
                 setFbPages(pagesRes.data || []);
                 if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
@@ -174,6 +201,47 @@ export default function SocialCommandCenter() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const compactNumber = (value: number | undefined | null) => {
+        const number = Number(value || 0);
+        return new Intl.NumberFormat(undefined, { notation: number >= 1000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(number);
+    };
+
+    const detectMediaType = (url: string) => {
+        if (/\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(url)) return 'video';
+        if (/\.(gif)(\?|$)/i.test(url)) return 'gif';
+        return 'image';
+    };
+
+    const getPostMetrics = (post: SocialPost): PostMetrics => {
+        const analytics = postMetrics[post.id];
+        const stats = post.linkedin_stats || {};
+        const impressions = analytics?.impressions ?? stats.impressions ?? stats.totalShareStatistics?.impressionCount ?? 0;
+        const reactions = analytics?.reactions ?? stats.reactions ?? stats.likes ?? stats.totalShareStatistics?.likeCount ?? 0;
+        const comments = analytics?.comments ?? stats.comments ?? stats.totalShareStatistics?.commentCount ?? 0;
+        const clicks = analytics?.clicks ?? stats.clicks ?? stats.totalShareStatistics?.clickCount ?? 0;
+        const shares = analytics?.shares ?? stats.shares ?? stats.totalShareStatistics?.shareCount ?? 0;
+        return {
+            impressions: Number(impressions) || 0,
+            reactions: Number(reactions) || 0,
+            comments: Number(comments) || 0,
+            clicks: Number(clicks) || 0,
+            shares: Number(shares) || 0,
+        };
+    };
+
+    const addComposeMediaUrl = () => {
+        const url = composeMediaUrl.trim();
+        if (!url) return;
+        try {
+            new URL(url);
+        } catch {
+            toast.error('Paste a valid media URL');
+            return;
+        }
+        setComposeMedia(prev => prev.includes(url) ? prev : [...prev, url]);
+        setComposeMediaUrl('');
     };
 
     useEffect(() => {
@@ -235,6 +303,7 @@ export default function SocialCommandCenter() {
         setComposeCaption(post.caption);
         setComposePlatforms(post.platforms);
         setComposeMedia(post.media_urls);
+        setComposeMediaUrl('');
         setComposeScheduledAt(post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : '');
         setComposeIsScheduled(!!post.scheduled_at);
         setIsComposeOpen(true);
@@ -252,7 +321,7 @@ export default function SocialCommandCenter() {
                 caption: composeCaption,
                 platforms: composePlatforms,
                 media_urls: composeMedia,
-                media_types: composeMedia.map(() => 'image'),
+                media_types: composeMedia.map(detectMediaType),
                 scheduled_at: composeIsScheduled && composeScheduledAt ? new Date(composeScheduledAt).toISOString() : undefined,
                 facebook_page_id: composePlatforms.includes('facebook') ? selectedPageId : undefined,
                 linkedin_member_id: composePlatforms.includes('linkedin') ? selectedLinkedInId : undefined,
@@ -270,6 +339,7 @@ export default function SocialCommandCenter() {
             setIsComposeOpen(false);
             setComposeCaption('');
             setComposeMedia([]);
+            setComposeMediaUrl('');
             setXThreadPosts([]);
             loadData();
         } catch (err: any) {
@@ -471,6 +541,27 @@ export default function SocialCommandCenter() {
     const maxChars = activePlatform === 'x' ? 280 : activePlatform === 'linkedin' ? 3000 : 63206;
     const charCount = composeCaption.length;
     const isOverLimit = charCount > maxChars;
+    const selectedMetrics = selectedPost ? getPostMetrics(selectedPost) : null;
+    const selectedPrimaryMedia = selectedPost?.media_urls?.[0];
+    const selectedPrimaryMediaType = selectedPrimaryMedia
+        ? (selectedPost?.media_types?.[0] || detectMediaType(selectedPrimaryMedia))
+        : '';
+    const platformPosts = posts.filter(post => post.platforms.includes(activePlatform));
+    const publishedPlatformPosts = platformPosts.filter(post => post.status === 'published');
+    const analyticsTotals = publishedPlatformPosts.reduce(
+        (totals, post) => {
+            const metrics = getPostMetrics(post);
+            totals.impressions += metrics.impressions;
+            totals.reactions += metrics.reactions;
+            totals.comments += metrics.comments;
+            totals.clicks += metrics.clicks;
+            return totals;
+        },
+        { impressions: 0, reactions: 0, comments: 0, clicks: 0 }
+    );
+    const engagementRate = analyticsTotals.impressions > 0
+        ? ((analyticsTotals.reactions + analyticsTotals.comments + analyticsTotals.clicks) / analyticsTotals.impressions) * 100
+        : 0;
 
     if (loading) {
         return (
@@ -580,16 +671,16 @@ export default function SocialCommandCenter() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     {[
-                                        { label: 'Impressions', value: '14,204', change: '+12.4%', up: true },
-                                        { label: 'Likes & Reactions', value: '1,894', change: '+8.2%', up: true },
-                                        { label: 'Comments', value: '342', change: '-2.1%', up: false },
-                                        { label: 'Clicks', value: '620', change: '+24.5%', up: true }
+                                        { label: 'Impressions', value: compactNumber(analyticsTotals.impressions), change: `${publishedPlatformPosts.length} published`, up: true },
+                                        { label: 'Likes & Reactions', value: compactNumber(analyticsTotals.reactions), change: 'Synced metrics', up: true },
+                                        { label: 'Comments', value: compactNumber(analyticsTotals.comments), change: 'Conversation signal', up: analyticsTotals.comments > 0 },
+                                        { label: 'Clicks', value: compactNumber(analyticsTotals.clicks), change: 'Traffic signal', up: analyticsTotals.clicks > 0 }
                                     ].map((stat, i) => (
                                         <div key={i} className="p-4 bg-slate-900 rounded-2xl border border-white/5 space-y-1">
                                             <span className="text-[11px] font-bold text-slate-500 uppercase">{stat.label}</span>
                                             <div className="text-xl font-bold text-white">{stat.value}</div>
                                             <span className={`text-[10px] font-bold ${stat.up ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                {stat.change} vs last period
+                                                {stat.change}
                                             </span>
                                         </div>
                                     ))}
@@ -600,7 +691,7 @@ export default function SocialCommandCenter() {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <span className="text-xs font-bold text-slate-500 uppercase">Average Engagement Rate</span>
-                                            <div className="text-2xl font-black text-white">4.82%</div>
+                                            <div className="text-2xl font-black text-white">{engagementRate.toFixed(2)}%</div>
                                         </div>
                                         <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
                                             <ActivityIcon className="w-3.5 h-3.5" /> High Performance
@@ -636,13 +727,17 @@ export default function SocialCommandCenter() {
                                         <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">Tap the plus button below to craft your first draft.</p>
                                     </div>
                                 ) : (
-                                    <div className="divide-y divide-white/5 border border-white/5 rounded-2xl bg-slate-900/30 overflow-hidden">
+                                    <div className="space-y-4">
                                         {filteredPosts.map((post) => {
                                             const offset = swipeState[post.id] || 0;
+                                            const metrics = getPostMetrics(post);
+                                            const primaryMedia = post.media_urls?.[0];
+                                            const primaryMediaType = post.media_types?.[0] || (primaryMedia ? detectMediaType(primaryMedia) : '');
+                                            const publishedOrCreatedAt = post.published_at || post.created_at;
                                             return (
                                                 <div 
                                                     key={post.id} 
-                                                    className="relative select-none overflow-hidden bg-slate-950"
+                                                    className="relative select-none overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl shadow-black/20"
                                                     onTouchStart={(e) => handleTouchStart(e, post.id)}
                                                     onTouchMove={(e) => handleTouchMove(e, post.id)}
                                                     onTouchEnd={(e) => handleTouchEnd(e, post.id)}
@@ -660,46 +755,111 @@ export default function SocialCommandCenter() {
                                                     {/* Main Post Row */}
                                                     <div 
                                                         onClick={() => setSelectedPost(post)}
-                                                        className="relative z-10 flex items-center justify-between p-3.5 bg-slate-900/70 active:bg-slate-800 transition-transform duration-150 cursor-pointer"
+                                                        className="relative z-10 bg-slate-900/90 active:bg-slate-800 transition-transform duration-150 cursor-pointer"
                                                         style={{ 
                                                             transform: `translateX(${offset}px)`,
-                                                            minHeight: '52px'
                                                         }}
                                                     >
-                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                            {/* Platform Badge Icon Left */}
-                                                            <div className="p-2 rounded-xl bg-slate-950 border border-white/5 flex-shrink-0">
-                                                                {activePlatform === 'linkedin' && <Linkedin className="w-5 h-5 text-sky-400" />}
-                                                                {activePlatform === 'facebook' && <Facebook className="w-5 h-5 text-blue-500" />}
-                                                                {activePlatform === 'x' && <Twitter className="w-5 h-5 text-white" />}
+                                                        <div className="p-4 space-y-4">
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="flex items-center gap-3 min-w-0">
+                                                                    <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 via-teal-400 to-violet-500 p-[2px] flex-shrink-0">
+                                                                        <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center">
+                                                                            {activePlatform === 'linkedin' && <Linkedin className="w-5 h-5 text-sky-400" />}
+                                                                            {activePlatform === 'facebook' && <Facebook className="w-5 h-5 text-blue-500" />}
+                                                                            {activePlatform === 'x' && <Twitter className="w-5 h-5 text-white" />}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <h4 className="text-sm font-black text-white truncate">
+                                                                                AlphaClone Systems
+                                                                            </h4>
+                                                                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-950 text-slate-400 border border-white/5 uppercase font-black">
+                                                                                {activePlatform}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-[11px] text-slate-500 font-bold">
+                                                                            {post.scheduled_at
+                                                                                ? `Scheduled for ${new Date(post.scheduled_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`
+                                                                                : `Published ${new Date(publishedOrCreatedAt).toLocaleDateString([], { dateStyle: 'medium' })}`}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex-shrink-0 ${
+                                                                    post.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                                    post.status === 'scheduled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                                    post.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                                                                    'bg-slate-800 text-slate-400 border-transparent'
+                                                                }`}>
+                                                                    {post.status}
+                                                                </span>
                                                             </div>
 
-                                                            {/* Snippet Detail Center */}
-                                                            <div className="flex-1 min-w-0 flex flex-col">
-                                                                <span className="text-[14px] text-white font-medium line-clamp-2 leading-snug">
+                                                            <div className="space-y-3">
+                                                                <p className="text-[15px] text-slate-100 font-medium leading-relaxed whitespace-pre-line line-clamp-5">
                                                                     {post.caption}
-                                                                </span>
-                                                                <span className="text-[11px] text-slate-500 font-bold uppercase mt-1 flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3" />
-                                                                    {post.scheduled_at 
-                                                                        ? `Scheduled: ${new Date(post.scheduled_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}` 
-                                                                        : `Posted: ${new Date(post.created_at).toLocaleDateString()}`
-                                                                    }
-                                                                </span>
+                                                                </p>
+                                                                {post.hashtags?.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        {post.hashtags.slice(0, 5).map(tag => (
+                                                                            <span key={tag} className="text-xs font-bold text-sky-400">#{tag.replace(/^#/, '')}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        </div>
 
-                                                        {/* Status Badge & Chevron Right */}
-                                                        <div className="flex items-center gap-2.5 ml-3 flex-shrink-0">
-                                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border ${
-                                                                post.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                                post.status === 'scheduled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                                post.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                                                'bg-slate-800 text-slate-400 border-transparent'
-                                                            }`}>
-                                                                {post.status}
-                                                            </span>
-                                                            <ChevronRight className="w-4 h-4 text-slate-600" />
+                                                            {primaryMedia && (
+                                                                <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
+                                                                    {primaryMediaType === 'video' ? (
+                                                                        <video
+                                                                            src={primaryMedia}
+                                                                            className="w-full max-h-[420px] bg-black object-cover"
+                                                                            controls
+                                                                            playsInline
+                                                                            preload="metadata"
+                                                                        />
+                                                                    ) : (
+                                                                        <img
+                                                                            src={primaryMedia}
+                                                                            alt="Social post media preview"
+                                                                            className="w-full max-h-[420px] object-cover"
+                                                                            loading="lazy"
+                                                                        />
+                                                                    )}
+                                                                    {post.media_urls.length > 1 && (
+                                                                        <div className="px-3 py-2 text-[11px] text-slate-400 font-bold bg-slate-950/90">
+                                                                            +{post.media_urls.length - 1} more media item{post.media_urls.length > 2 ? 's' : ''}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5">
+                                                                {[
+                                                                    { icon: Eye, label: 'Views', value: metrics.impressions },
+                                                                    { icon: Heart, label: 'Likes', value: metrics.reactions },
+                                                                    { icon: MessageSquare, label: 'Comments', value: metrics.comments },
+                                                                    { icon: MousePointerClick, label: 'Clicks', value: metrics.clicks },
+                                                                ].map((metric) => {
+                                                                    const Icon = metric.icon;
+                                                                    return (
+                                                                        <div key={metric.label} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-950/80 px-2 py-2 text-slate-400">
+                                                                            <Icon className="w-3.5 h-3.5" />
+                                                                            <span className="text-[11px] font-black text-white">{compactNumber(metric.value)}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+
+                                                            <div className="flex items-center justify-between pt-1">
+                                                                <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500">
+                                                                    <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> React</span>
+                                                                    <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Comment</span>
+                                                                    <span className="flex items-center gap-1"><Share2 className="w-3.5 h-3.5" /> Share</span>
+                                                                </div>
+                                                                <ChevronRight className="w-4 h-4 text-slate-600" />
+                                                            </div>
                                                         </div>
 
                                                         {/* Optional New/Unread Accent Dot */}
@@ -1034,6 +1194,66 @@ export default function SocialCommandCenter() {
                                 />
                             </div>
 
+                            {/* Media attachment preview */}
+                            <div className="bg-slate-900 p-4 rounded-2xl border border-white/5 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Paperclip className="w-4 h-4 text-teal-400" />
+                                        <span className="text-xs font-bold text-white">Attach media URL</span>
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">{composeMedia.length} attached</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        value={composeMediaUrl}
+                                        onChange={e => setComposeMediaUrl(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addComposeMediaUrl();
+                                            }
+                                        }}
+                                        placeholder="https://... image, gif, or mp4"
+                                        className="flex-1 h-11 bg-slate-950 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={addComposeMediaUrl}
+                                        className="h-11 px-4 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-black uppercase"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+
+                                {composeMedia.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {composeMedia.map((url) => {
+                                            const mediaType = detectMediaType(url);
+                                            return (
+                                                <div key={url} className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950">
+                                                    {mediaType === 'video' ? (
+                                                        <video src={url} className="h-32 w-full object-cover bg-black" controls playsInline preload="metadata" />
+                                                    ) : (
+                                                        <img src={url} alt="Attached social media" className="h-32 w-full object-cover" loading="lazy" />
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setComposeMedia(prev => prev.filter(item => item !== url))}
+                                                        className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-rose-600 text-white rounded-full"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <span className="absolute left-2 bottom-2 px-2 py-0.5 rounded-md bg-black/70 text-[9px] font-black uppercase text-white">
+                                                        {mediaType}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Scheduled configuration picker */}
                             <div className="bg-slate-900 p-4 rounded-2xl border border-white/5 space-y-3">
                                 <div className="flex justify-between items-center">
@@ -1153,6 +1373,19 @@ export default function SocialCommandCenter() {
                                     </div>
                                 </div>
 
+                                {selectedPrimaryMedia && (
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Rendered media</span>
+                                        <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950">
+                                            {selectedPrimaryMediaType === 'video' ? (
+                                                <video src={selectedPrimaryMedia} className="w-full max-h-[440px] bg-black object-cover" controls playsInline preload="metadata" />
+                                            ) : (
+                                                <img src={selectedPrimaryMedia} alt="Social post media" className="w-full max-h-[440px] object-cover" loading="lazy" />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Platform and Date Info */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-3.5 bg-slate-950 rounded-2xl border border-white/5 flex flex-col justify-center">
@@ -1178,10 +1411,10 @@ export default function SocialCommandCenter() {
                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Performance metrics</span>
                                     <div className="grid grid-cols-4 gap-2">
                                         {[
-                                            { label: 'Impressions', val: '430' },
-                                            { label: 'Likes', val: '24' },
-                                            { label: 'Comments', val: '2' },
-                                            { label: 'Clicks', val: '8' }
+                                            { label: 'Views', val: compactNumber(selectedMetrics?.impressions) },
+                                            { label: 'Likes', val: compactNumber(selectedMetrics?.reactions) },
+                                            { label: 'Comments', val: compactNumber(selectedMetrics?.comments) },
+                                            { label: 'Clicks', val: compactNumber(selectedMetrics?.clicks) }
                                         ].map((stat, i) => (
                                             <div key={i} className="p-3 bg-slate-950 rounded-2xl border border-white/5 text-center flex flex-col justify-center">
                                                 <span className="text-[17px] font-black text-white">{stat.val}</span>

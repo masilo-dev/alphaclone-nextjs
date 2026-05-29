@@ -17,13 +17,13 @@ interface WhatsAppMessage {
     id: string;
     body: string;
     direction: 'inbound' | 'outbound';
-    from_address: string;
-    to_address: string;
+    phone_number: string;
     contact_id: string | null;
+    status: string;
+    message_type: string;
     created_at: string;
     received_at: string | null;
     sent_at: string | null;
-    source: string;
 }
 
 interface ChatThread {
@@ -130,17 +130,16 @@ export default function WhatsAppChatHub() {
 
         fetchWhatsAppMessages();
 
-        // Setup real-time listener for unified_messages
+        // Setup real-time listener for standalone WhatsApp messages
         const channel = supabase.channel(`whatsapp_live_chats_${currentTenant.id}`)
             .on(
                 'postgres_changes' as any,
-                { event: 'INSERT', schema: 'public', table: 'unified_messages', filter: `tenant_id=eq.${currentTenant.id}` },
+                { event: 'INSERT', schema: 'public', table: 'whatsapp_messages', filter: `tenant_id=eq.${currentTenant.id}` },
                 (payload: any) => {
                     const newMsg = payload.new as WhatsAppMessage;
-                    if (newMsg.source !== 'whatsapp') return;
 
                     // Locate thread phone number
-                    const targetPhone = newMsg.direction === 'inbound' ? newMsg.from_address : newMsg.to_address;
+                    const targetPhone = newMsg.phone_number;
                     if (!targetPhone) return;
 
                     setThreads(prev => {
@@ -191,10 +190,9 @@ export default function WhatsAppChatHub() {
         setLoading(true);
         try {
             const { data, error } = await supabase
-                .from('unified_messages')
+                .from('whatsapp_messages')
                 .select('*')
                 .eq('tenant_id', currentTenant.id)
-                .eq('source', 'whatsapp')
                 .order('created_at', { ascending: true });
 
             if (error) throw error;
@@ -218,7 +216,7 @@ export default function WhatsAppChatHub() {
             // Group into threads
             const threadMap = new Map<string, WhatsAppMessage[]>();
             msgs.forEach(m => {
-                const phone = m.direction === 'inbound' ? m.from_address : m.to_address;
+                const phone = m.phone_number;
                 if (!phone) return;
                 const cleanKey = phone.replace(/[^0-9]/g, '');
                 if (!threadMap.has(cleanKey)) {
@@ -461,7 +459,7 @@ export default function WhatsAppChatHub() {
                                                 </span>
                                                 {isMe && (
                                                     <span className="text-emerald-400 shrink-0">
-                                                        {msg.received_at ? <CheckCheck className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5 text-slate-500" />}
+                                                        {['delivered', 'read'].includes(msg.status) ? <CheckCheck className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5 text-slate-500" />}
                                                     </span>
                                                 )}
                                             </div>

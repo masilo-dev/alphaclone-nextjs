@@ -2,6 +2,54 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { aiService } from '../ai/aiService';
 
 export class WhatsAppChatbotService {
+  private extractMessage(payload: any): { text: string; metadata: Record<string, unknown>; canAutoReply: boolean } | null {
+    const messageData = payload?.messageData;
+    if (!messageData) return null;
+
+    const typeMessage = messageData.typeMessage || 'unknown';
+    const text =
+      messageData.textMessageData?.textMessage ||
+      messageData.extendedTextMessageData?.text ||
+      messageData.fileMessageData?.caption ||
+      messageData.fileMessageData?.fileName ||
+      messageData.locationMessageData?.nameLocation ||
+      messageData.contactMessageData?.displayName ||
+      messageData.contactsArrayMessageData?.contacts?.map((contact: any) => contact.displayName).filter(Boolean).join(', ') ||
+      '';
+
+    const fallbackByType: Record<string, string> = {
+      imageMessage: '[WhatsApp image]',
+      videoMessage: '[WhatsApp video]',
+      audioMessage: '[WhatsApp audio]',
+      documentMessage: '[WhatsApp document]',
+      locationMessage: '[WhatsApp location]',
+      contactMessage: '[WhatsApp contact]',
+      contactsArrayMessage: '[WhatsApp contacts]',
+      stickerMessage: '[WhatsApp sticker]',
+      pollMessage: '[WhatsApp poll]',
+      reactionMessage: '[WhatsApp reaction]',
+      deletedMessage: '[WhatsApp deleted message]',
+      editedMessage: '[WhatsApp edited message]',
+    };
+
+    const body = text || fallbackByType[typeMessage] || `[WhatsApp ${typeMessage}]`;
+    return {
+      text: body,
+      canAutoReply: Boolean(text && (messageData.textMessageData || messageData.extendedTextMessageData)),
+      metadata: {
+        provider: 'green-api',
+        typeWebhook: payload.typeWebhook,
+        typeMessage,
+        idMessage: payload.idMessage || null,
+        receiptId: payload.receiptId || null,
+        file: messageData.fileMessageData || null,
+        location: messageData.locationMessageData || null,
+        contact: messageData.contactMessageData || null,
+        contacts: messageData.contactsArrayMessageData || null,
+      },
+    };
+  }
+
   /**
    * Main entrypoint for Green API webhooks
    */
@@ -14,17 +62,52 @@ export class WhatsAppChatbotService {
     const typeWebhook = payload.typeWebhook;
     const isIncoming = typeWebhook === 'incomingMessageReceived';
     const isOutgoing = typeWebhook === 'outgoingMessageReceived' || typeWebhook === 'outgoingAPIMessageReceived';
+    const isStatus = typeWebhook === 'outgoingMessageStatus';
 
-    if (!isIncoming && !isOutgoing) {
+    if (!isIncoming && !isOutgoing && !isStatus) {
       console.log(`[WhatsAppChatbot] Skip unhandled webhook type: ${typeWebhook}`);
       return;
     }
 
-    const messageData = payload.messageData;
-    if (!messageData || !messageData.textMessageData || !messageData.textMessageData.textMessage) return;
-
-    const messageText = messageData.textMessageData.textMessage;
     const idInstance = payload.idInstance;
+    const supabase = createSupabaseAdminClient();
+
+    // 1. Find Tenant by Green API instance (waba_id)
+    const { data: integration, error: intError } = await supabase
+      .from('whatsapp_integrations')
+      .select('id, tenant_id, metadata')
+      .eq('is_active', true)
+      .eq('waba_id', idInstance)
+      .maybeSingle();
+
+    if (intError || !integration) {
+      console.log(`[WhatsAppChatbot] No active tenant found for idInstance ${idInstance}`);
+      return;
+    }
+
+    const tenantId = integration.tenant_id;
+
+    if (isStatus) {
+      const providerMessageId = payload.idMessage || payload.messageData?.idMessage || payload.statusData?.idMessage;
+      const status = payload.statusData?.status || payload.statusMessage;
+      if (!providerMessageId || !status) return;
+
+      await supabase
+        .from('whatsapp_messages')
+        .update({
+          status,
+          raw_payload: payload,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('tenant_id', tenantId)
+        .eq('provider_message_id', providerMessageId);
+      return;
+    }
+
+    const parsedMessage = this.extractMessage(payload);
+    if (!parsedMessage) return;
+
+    const messageText = parsedMessage.text;
 
     // Resolve client/customer phone number
     let customerPhone = '';
@@ -41,23 +124,6 @@ export class WhatsAppChatbotService {
 
     console.log(`[WhatsAppChatbot] Process ${isIncoming ? 'Incoming' : 'Outgoing'} chat for ${customerPhone}: ${messageText}`);
 
-    const supabase = createSupabaseAdminClient();
-
-    // 1. Find Tenant by Green API instance (waba_id)
-    const { data: integration, error: intError } = await supabase
-      .from('whatsapp_integrations')
-      .select('tenant_id, metadata')
-      .eq('is_active', true)
-      .eq('waba_id', idInstance)
-      .maybeSingle();
-
-    if (intError || !integration) {
-      console.log(`[WhatsAppChatbot] No active tenant found for idInstance ${idInstance}`);
-      return;
-    }
-
-    const tenantId = integration.tenant_id;
-
     // 2. Get CRM Contact/Client context
     const { data: client } = await supabase
       .from('contacts')
@@ -66,37 +132,32 @@ export class WhatsAppChatbotService {
       .or(`phone.ilike.%${customerPhone}%,mobile.ilike.%${customerPhone}%`)
       .maybeSingle();
 
-    // 3. Save Message to Unified Messages
-    const externalId = payload.receiptId || `${isIncoming ? 'wa_in' : 'wa_out'}_${Date.now()}`;
-    await supabase.from('unified_messages').insert({
+    // 3. Save Message to standalone WhatsApp module table
+    const providerMessageId = payload.idMessage || payload.messageData?.idMessage || payload.receiptId || `${isIncoming ? 'wa_in' : 'wa_out'}_${Date.now()}`;
+    await supabase.from('whatsapp_messages').upsert({
       tenant_id: tenantId,
-      source: 'whatsapp',
-      external_id: externalId,
+      integration_id: integration.id,
+      provider_message_id: providerMessageId,
+      provider_receipt_id: payload.receiptId || null,
+      chat_id: isIncoming ? payload.senderData?.chatId || payload.senderData?.sender : payload.recipientData?.chatId || payload.recipientData?.recipient,
+      phone_number: customerPhone,
       direction: isIncoming ? 'inbound' : 'outbound',
-      channel: 'chat',
+      message_type: String(parsedMessage.metadata.typeMessage || 'text'),
       body: messageText,
-      from_address: isIncoming ? customerPhone : idInstance,
-      to_address: isIncoming ? idInstance : customerPhone,
       contact_id: client?.id || null,
-      read: isMeOutbound(isIncoming),
-      replied: isMeOutbound(isIncoming),
-      starred: false,
-      archived: false,
-      folder: isIncoming ? 'inbox' : 'sent',
-      priority: 'normal',
+      status: isIncoming ? 'received' : 'sent',
+      sent_by: isIncoming ? 'contact' : typeWebhook === 'outgoingAPIMessageReceived' ? 'api' : 'phone',
       needs_response: isIncoming,
       auto_replied: false,
+      media: parsedMessage.metadata,
+      raw_payload: payload,
+      metadata: parsedMessage.metadata,
       received_at: isIncoming ? new Date().toISOString() : null,
       sent_at: isIncoming ? null : new Date().toISOString()
-    });
-
-    // Helper helper
-    function isMeOutbound(inbound: boolean) {
-      return !inbound;
-    }
+    }, { onConflict: 'tenant_id,provider_message_id' });
 
     // 4. Trigger AI chatbot auto-reply ONLY for inbound messages
-    if (!isIncoming) return;
+    if (!isIncoming || !parsedMessage.canAutoReply) return;
 
     // Check if Chatbot is Enabled for this tenant
     const { data: settings } = await supabase
@@ -132,25 +193,22 @@ export class WhatsAppChatbotService {
         replyText
     );
 
-    // 7. Save AI Outbound Message to Unified Messages
-    await supabase.from('unified_messages').insert({
+    // 7. Save AI Outbound Message to standalone WhatsApp messages
+    await supabase.from('whatsapp_messages').insert({
       tenant_id: tenantId,
-      source: 'whatsapp',
-      external_id: `wa_out_ai_${Date.now()}`,
+      integration_id: integration.id,
+      provider_message_id: `wa_out_ai_${Date.now()}`,
+      chat_id: `${customerPhone}@c.us`,
+      phone_number: customerPhone,
       direction: 'outbound',
-      channel: 'chat',
+      message_type: 'text',
       body: replyText,
-      from_address: idInstance,
-      to_address: customerPhone,
       contact_id: client?.id || null,
-      read: true,
-      replied: true,
-      starred: false,
-      archived: false,
-      folder: 'sent',
-      priority: 'normal',
+      status: 'sent',
+      sent_by: 'bot',
       needs_response: false,
       auto_replied: true,
+      metadata: { provider: 'green-api', source: 'ai_auto_reply' },
       sent_at: new Date().toISOString()
     });
   }

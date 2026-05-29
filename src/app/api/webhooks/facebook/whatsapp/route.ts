@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
-import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
@@ -116,7 +115,7 @@ export async function POST(req: NextRequest) {
                 const wabaId = String(entry.id || '').trim();
                 const { data: waIntegration } = await supabaseAdmin
                     .from('whatsapp_integrations')
-                    .select('tenant_id')
+                    .select('id, tenant_id')
                     .eq('waba_id', wabaId)
                     .eq('is_active', true)
                     .maybeSingle();
@@ -133,41 +132,30 @@ export async function POST(req: NextRequest) {
                                 id: message.id
                             });
 
-                            // Store the message in the database
-                            // You can customize this to match your database schema
-                            await supabaseAdmin.from('whatsapp_messages').insert({
-                                message_id: message.id,
-                                from_number: message.from,
-                                timestamp: message.timestamp,
-                                type: message.type,
-                                text: message.text?.body || null,
-                                media_url: message.image?.id || message.video?.id || message.audio?.id || null,
-                                status: 'received',
-                                received_at: new Date().toISOString()
-                            });
+                            if (!waIntegration?.tenant_id) continue;
 
-                            if (waIntegration?.tenant_id) {
-                                await captureUnifiedMessageFromWebhook({
-                                    supabase: supabaseAdmin as any,
-                                    tenantId: waIntegration.tenant_id,
-                                    source: 'whatsapp',
-                                    channel: 'chat',
-                                    direction: 'inbound',
-                                    externalId: message.id || null,
-                                    threadId: phoneNumberId || wabaId || null,
-                                    from: String(message.from || ''),
-                                    to: phoneNumberId || wabaId || 'whatsapp',
-                                    subject: null,
-                                    text: message.text?.body || null,
-                                    html: null,
-                                    receivedAt: new Date().toISOString(),
-                                    metadata: {
-                                        wabaId,
-                                        phoneNumberId,
-                                        type: message.type,
-                                    },
-                                });
-                            }
+                            await supabaseAdmin.from('whatsapp_messages').upsert({
+                                tenant_id: waIntegration.tenant_id,
+                                integration_id: waIntegration.id,
+                                provider: 'meta-whatsapp',
+                                provider_message_id: message.id,
+                                chat_id: message.from,
+                                phone_number: String(message.from || '').replace(/[^0-9]/g, ''),
+                                direction: 'inbound',
+                                message_type: message.type || 'text',
+                                body: message.text?.body || `[WhatsApp ${message.type || 'message'}]`,
+                                media: {
+                                    image: message.image || null,
+                                    video: message.video || null,
+                                    audio: message.audio || null,
+                                    document: message.document || null,
+                                },
+                                status: 'received',
+                                sent_by: 'contact',
+                                raw_payload: message,
+                                metadata: { wabaId, phoneNumberId },
+                                received_at: new Date().toISOString()
+                            }, { onConflict: 'tenant_id,provider_message_id' });
 
                             // TODO: Add your business logic here
                             // - Auto-reply to messages
@@ -190,7 +178,7 @@ export async function POST(req: NextRequest) {
                             await supabaseAdmin
                                 .from('whatsapp_messages')
                                 .update({ status: status.status })
-                                .eq('message_id', status.id);
+                                .eq('provider_message_id', status.id);
                         }
                     }
                 }

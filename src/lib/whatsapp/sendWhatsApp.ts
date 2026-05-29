@@ -65,22 +65,19 @@ export async function sendWhatsAppMessage(params: {
       .or(`phone.ilike.%${cleanTo}%,mobile.ilike.%${cleanTo}%`)
       .maybeSingle();
 
-  await supabase.from('unified_messages').insert({
+  await supabase.from('whatsapp_messages').insert({
     tenant_id: params.tenantId,
-    source: 'whatsapp',
-    external_id: messageId,
+    integration_id: integration.id,
+    provider_message_id: messageId,
+    chat_id: `${cleanTo}@c.us`,
+    phone_number: cleanTo,
     direction: 'outbound',
-    channel: 'chat',
+    message_type: 'text',
     body: params.message,
-    from_address: idInstance,
-    to_address: cleanTo,
     contact_id: contact?.id || null,
-    read: true,
-    replied: true,
-    starred: false,
-    archived: false,
-    folder: 'sent',
-    priority: 'normal',
+    client_id: params.clientId || null,
+    status: 'sent',
+    sent_by: params.metadata?.source === 'auto_outreach' ? 'bot' : params.metadata?.source === 'mcp' ? 'api' : 'human',
     needs_response: false,
     sent_at: new Date().toISOString(),
     metadata: params.metadata || {},
