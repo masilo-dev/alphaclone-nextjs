@@ -19,6 +19,21 @@ export interface NexusResult {
     refinedContent?: string;
 }
 
+function asResultRecord(value: unknown): Record<string, any> {
+    return value && typeof value === 'object' ? value as Record<string, any> : {};
+}
+
+function resultNeedsAction(value: unknown): boolean {
+    const result = asResultRecord(value);
+    return Boolean(
+        result.action_required ||
+        Number(result.overdue_tasks || 0) > 0 ||
+        Number(result.pending_approval_count || 0) > 0 ||
+        Number(result.missing_alt_text || 0) > 0 ||
+        Number(result.queued_outreach || 0) > 0
+    );
+}
+
 export class AlphaNexus {
     private tenantId: string;
     private admin = createSupabaseAdminClient();
@@ -566,7 +581,6 @@ export class AlphaNexus {
      * Triggers multiple Nexus systems based on a high-level business objective.
      */
     async strategicOrchestrator(objective: string) {
-        const admin = this.admin;
         const tenantId = this.tenantId;
 
         // In a real system, we might use LLM to decide which systems to trigger.
@@ -586,6 +600,15 @@ export class AlphaNexus {
         if (objLower.includes('brand') || objLower.includes('social') || objLower.includes('content')) {
             systemsToTrigger.push('content_synthesis', 'design_audit');
         }
+        if (objLower.includes('quote') || objLower.includes('proposal') || objLower.includes('contract')) {
+            systemsToTrigger.push('contract_drafter');
+        }
+        if (objLower.includes('task') || objLower.includes('follow-up') || objLower.includes('follow up')) {
+            systemsToTrigger.push('project_architect', 'email_triage');
+        }
+        if (objLower.includes('client') || objLower.includes('customer')) {
+            systemsToTrigger.push('onboarding_flow');
+        }
 
         // Default to a general health check if no keywords match
         if (systemsToTrigger.length === 0) {
@@ -601,12 +624,32 @@ export class AlphaNexus {
             }
         }
 
+        const executedSystems = Object.keys(results);
+        const failedSystems = executedSystems.filter((system) => asResultRecord(results[system]).status === 'error');
+        const actionRequiredSystems = executedSystems.filter((system) => resultNeedsAction(results[system]));
+        const orchestrationStatus =
+            failedSystems.length === executedSystems.length ? 'failed' :
+            failedSystems.length > 0 ? 'partial' :
+            actionRequiredSystems.length > 0 ? 'needs_action' :
+            'complete';
+
         return {
             objective,
-            orchestration_status: 'complete',
+            orchestration_status: orchestrationStatus,
             timestamp: new Date().toISOString(),
             executed_systems: results,
-            strategic_summary: `Nexus Orchestrator successfully aligned ${Object.keys(results).length} business systems with the objective: "${objective}".`
+            execution_summary: {
+                tenant_id: tenantId,
+                requested_systems: Array.from(new Set(systemsToTrigger)),
+                executed_count: executedSystems.length,
+                failed_systems: failedSystems,
+                action_required_systems: actionRequiredSystems,
+            },
+            strategic_summary:
+                orchestrationStatus === 'complete'
+                    ? `Nexus Orchestrator checked ${executedSystems.length} business systems for the objective: "${objective}".`
+                    : `Nexus Orchestrator checked ${executedSystems.length} business systems for the objective: "${objective}", but follow-up is still required before this can be treated as fully complete.`,
+            reliability_note: 'This result reflects verified system checks and queued work status. External networks such as Facebook, LinkedIn, and email providers can still delay visibility or insights after a successful local publish.',
         };
     }
 

@@ -1,5 +1,24 @@
 # Update Log
 
+## Date: 2026-05-29 (WHATSAPP STANDALONE STORAGE, SOCIAL COMMAND CENTER MEDIA & STRATEGIC ORCHESTRATION)
+
+### Added/Modified
+- **Standalone WhatsApp Storage** ([20260529000000_create_whatsapp_standalone_messages.sql](file:///home/bonnie/alphaclone-nextjs/supabase/migrations/20260529000000_create_whatsapp_standalone_messages.sql), [WhatsAppChatbotService.ts](file:///home/bonnie/alphaclone-nextjs/src/services/whatsapp/WhatsAppChatbotService.ts), [WhatsAppChatHub.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/WhatsAppChatHub.tsx), [sendWhatsApp.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/whatsapp/sendWhatsApp.ts), [MCPServer.ts](file:///home/bonnie/alphaclone-nextjs/src/services/mcp/MCPServer.ts)):
+  - Migrated WhatsApp message store to a standalone table (`whatsapp_messages`) with dedicated RLS policies and indexes instead of relying on the unified `unified_messages` table.
+  - Refactored `WhatsAppChatbotService` and webhook route handlers to store incoming/outgoing messages and status notifications directly in the new table.
+  - Updated `WhatsAppChatHub` component to fetch and subscribe to the `whatsapp_messages` table.
+- **Social Command Center Enhancements** ([SocialCommandCenter.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/social/SocialCommandCenter.tsx)):
+  - Integrated support for attaching media URLs (images, GIFs, and videos) with real-time video/image preview capability during post composition.
+  - Updated performance metrics visualization to bind views, reactions, comments, and clicks dynamically.
+- **Strategic Orchestrator** ([alphaNexus.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/social/alphaNexus.ts), [route.ts](file:///home/bonnie/alphaclone-nextjs/src/app/api/social/command-center/route.ts)):
+  - Implemented the strategic orchestrator mode in `AlphaNexus` to route objective-based requests to the appropriate subagents/systems dynamically.
+  - Integrated the orchestration mode with the social command center API endpoint.
+
+### Production Readiness
+- **Vercel Safe**: Built with verified compatibility.
+
+---
+
 ## Date: 2026-05-29 (BRAND MESSAGING ALIGNMENT & COMPLIANCE AND GENERAL HARDENING)
 
 ### Added/Modified

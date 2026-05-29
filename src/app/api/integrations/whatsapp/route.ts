@@ -61,7 +61,11 @@ export async function GET(request: NextRequest) {
                 body: JSON.stringify({
                   webhookUrl: targetWebhookUrl,
                   incomingWebhook: 'yes',
-                  stateWebhook: 'yes'
+                  outgoingWebhook: 'yes',
+                  outgoingMessageWebhook: 'yes',
+                  outgoingAPIMessageWebhook: 'yes',
+                  stateWebhook: 'yes',
+                  statusInstanceChangedWebhook: 'yes'
                 }),
                 signal: AbortSignal.timeout(1500)
               });
@@ -129,7 +133,11 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           webhookUrl: webhookUrl,
           incomingWebhook: 'yes',
-          stateWebhook: 'yes'
+          outgoingWebhook: 'yes',
+          outgoingMessageWebhook: 'yes',
+          outgoingAPIMessageWebhook: 'yes',
+          stateWebhook: 'yes',
+          statusInstanceChangedWebhook: 'yes'
         }),
         signal: AbortSignal.timeout(3000)
       });

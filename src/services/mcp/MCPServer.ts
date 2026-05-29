@@ -7661,10 +7661,9 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
           const limit = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
           const { data, error } = await supabaseAdmin
-            .from('unified_messages')
+            .from('whatsapp_messages')
             .select('*')
             .eq('tenant_id', tenant_id)
-            .eq('source', 'whatsapp')
             .order('created_at', { ascending: false })
             .limit(limit);
           if (error) throw supabaseErrorToMcpClientError('get_chatbot_conversations', error.message);
@@ -7714,10 +7713,9 @@ Return ONLY a JSON array of 60 objects:
               .order('created_at', { ascending: false })
               .limit(20),
             supabaseAdmin
-              .from('unified_messages')
-              .select('id, direction, from_address, to_address, body, sent_at, created_at, external_id')
+              .from('whatsapp_messages')
+              .select('id, direction, phone_number, body, status, sent_by, sent_at, received_at, created_at, provider_message_id')
               .eq('tenant_id', tenant_id)
-              .eq('source', 'whatsapp')
               .order('created_at', { ascending: false })
               .limit(20),
           ]);

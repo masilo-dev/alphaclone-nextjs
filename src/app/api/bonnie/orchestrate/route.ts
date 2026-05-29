@@ -5,6 +5,14 @@ export const maxDuration = 60;
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
+type SubagentResult = {
+  name: string;
+  role: string;
+  result: string;
+  success: boolean;
+  execution_mode: 'live' | 'unavailable';
+};
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -28,13 +36,14 @@ export async function POST(req: NextRequest) {
         try {
           send({ type: 'orchestration_start', task, total_subagents: subagents.length });
 
-          const results: any[] = [];
+          const results: SubagentResult[] = [];
 
           for (const subagent of subagents) {
             send({ type: 'subagent_start', name: subagent.name, role: subagent.role });
 
             let result = '';
             let success = false;
+            let executionMode: SubagentResult['execution_mode'] = 'unavailable';
 
             if (ANTHROPIC_API_KEY) {
               try {
@@ -58,6 +67,7 @@ export async function POST(req: NextRequest) {
                   const data = await res.json();
                   result = data.content?.[0]?.text || '';
                   success = true;
+                  executionMode = 'live';
                 } else {
                   result = `API error: ${res.status}`;
                 }
@@ -65,15 +75,37 @@ export async function POST(req: NextRequest) {
                 result = `Subagent error: ${e.message}`;
               }
             } else {
-              result = JSON.stringify({ outcome: 'simulated', details: `${subagent.name} processed task`, next_steps: [] });
-              success = true;
+              result = JSON.stringify({
+                outcome: 'not_run',
+                details: `${subagent.name} was not executed because ANTHROPIC_API_KEY is not configured.`,
+                next_steps: ['Configure ANTHROPIC_API_KEY or route this task through a connected live agent provider.'],
+              });
+              success = false;
             }
 
-            results.push({ name: subagent.name, role: subagent.role, result, success });
-            send({ type: 'subagent_complete', name: subagent.name, success, result });
+            results.push({ name: subagent.name, role: subagent.role, result, success, execution_mode: executionMode });
+            send({ type: 'subagent_complete', name: subagent.name, success, result, execution_mode: executionMode });
           }
 
-          send({ type: 'orchestration_complete', task, results, total: subagents.length });
+          const successful = results.filter((r) => r.success).length;
+          const status = results.length === 0
+            ? 'no_subagents'
+            : successful === results.length
+              ? 'complete'
+              : successful === 0
+                ? 'failed'
+                : 'partial';
+
+          send({
+            type: 'orchestration_complete',
+            task,
+            status,
+            actual_execution: status === 'complete' || status === 'partial',
+            results,
+            total: subagents.length,
+            successful,
+            failed: results.length - successful,
+          });
         } catch (err: any) {
           send({ type: 'error', message: err.message });
         } finally {

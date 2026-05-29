@@ -128,6 +128,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, result });
         }
 
+        if (mode === 'strategic_orchestrator') {
+            const objective = String(body.objective || '').trim();
+            if (!objective) return NextResponse.json({ error: 'objective is required' }, { status: 400 });
+
+            const nexus = new AlphaNexus(tenantId);
+            const result = await nexus.strategicOrchestrator(objective);
+            return NextResponse.json({
+                success: result.orchestration_status === 'complete',
+                result,
+            });
+        }
+
         return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
     } catch (error) {
         if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
