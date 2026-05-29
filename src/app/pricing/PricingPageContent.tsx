@@ -46,15 +46,15 @@ const plans = [
 ];
 
 const replacedTools = [
-    { icon: Brain, name: 'HubSpot CRM', cost: '$50/mo', replaced: 'CRM & Deals module' },
-    { icon: Video, name: 'Zoom Pro', cost: '$15/mo', replaced: 'Native 1-hour video meetings' },
-    { icon: FileText, name: 'DocuSign', cost: '$25/mo', replaced: 'Contract Engine' },
-    { icon: DollarSign, name: 'Financial Software', cost: '$30/mo', replaced: 'Financial Suite' },
-    { icon: Mail, name: 'Mailchimp', cost: '$20/mo', replaced: 'Comms & Email module' },
-    { icon: Calendar, name: 'Calendly Pro', cost: '$12/mo', replaced: 'Calendar integration' },
-    { icon: BarChart3, name: 'Asana', cost: '$25/mo', replaced: 'Task Management module' },
-    { icon: Lock, name: 'PandaDoc', cost: '$49/mo', replaced: 'Contract Engine (e-sign)' },
-    { icon: Globe, name: 'Intercom', cost: '$74/mo', replaced: 'AI Growth Agent' },
+    { icon: Brain, name: 'CRM software', replaced: 'CRM & Deals module' },
+    { icon: Video, name: 'Video meetings', replaced: 'Native 1-hour video meetings' },
+    { icon: FileText, name: 'E-signature tools', replaced: 'Contract Engine' },
+    { icon: DollarSign, name: 'Financial software', replaced: 'Financial Suite' },
+    { icon: Mail, name: 'Email campaign tools', replaced: 'Comms & Email module' },
+    { icon: Calendar, name: 'Scheduling tools', replaced: 'Calendar integration' },
+    { icon: BarChart3, name: 'Task management tools', replaced: 'Task Management module' },
+    { icon: Lock, name: 'Proposal tools', replaced: 'Contract Engine (e-sign)' },
+    { icon: Globe, name: 'Lead operations tools', replaced: 'AI Growth Agent' },
 ];
 
 const faqs = [
@@ -64,7 +64,7 @@ const faqs = [
     },
     {
         q: 'How much money does software sprawl usually cost per year?',
-        a: 'Most teams replace 7 to 9 subscriptions after moving to AlphaClone. Typical combined spend for those tools ranges from about $300 to $380 per month, which is roughly $3,600 to $4,560 per year. At $15 per month, AlphaClone is often a significant annual cost reduction.',
+        a: 'Costs vary by stack. AlphaClone is priced to consolidate common workflows like CRM, finance, contracts, meetings, projects, and outreach into one $15/month starter workspace.',
     },
     {
         q: 'What is included in the $15 plan?',
@@ -76,7 +76,7 @@ const faqs = [
     },
     {
         q: 'Will my team struggle to switch from multiple tools?',
-        a: 'The transition is designed to be practical. You can import contacts and client data, run outreach, and handle meetings and operations from one dashboard. Most teams are productive quickly because the system reduces handoffs rather than adding new complexity.',
+        a: 'The transition is designed to be practical. You can import contacts and client data, run outreach, and handle meetings and operations from one dashboard.',
     },
     {
         q: 'Is this really one connected system, or just bundled features?',
@@ -88,7 +88,7 @@ const faqs = [
     },
     {
         q: 'Is my business data secure?',
-        a: 'Yes. AlphaClone uses enterprise-grade controls including encryption in transit and at rest, tenant isolation, role-based access, and audit logging to protect business data.',
+        a: 'AlphaClone uses controls including encryption in transit and at rest, tenant isolation, role-based access, and audit logging to protect business data.',
     },
 ];
 
@@ -109,9 +109,9 @@ export default function PricingPageContent() {
                     '@type': 'FAQPage',
                     mainEntity: [
                         { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone has one public price of $15 per month and includes a 14-day free trial without a credit card.' } },
-                        { '@type': 'Question', name: 'How much can software sprawl cost per year?', acceptedAnswer: { '@type': 'Answer', text: 'Many businesses spend about $300 to $380 per month across multiple tools, which can equal $3,600 to $4,560 per year.' } },
+                        { '@type': 'Question', name: 'How much can software sprawl cost per year?', acceptedAnswer: { '@type': 'Answer', text: 'Costs vary by stack. AlphaClone consolidates common workflows like CRM, finance, contracts, meetings, projects, and outreach into one $15/month starter workspace.' } },
                         { '@type': 'Question', name: 'Does AlphaClone include built-in video meetings?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone includes native built-in 1-hour video meetings as part of the platform.' } },
-                        { '@type': 'Question', name: 'Why was AlphaClone built?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone was built to replace fragmented business software with one connected operating system for CRM, communication, finance, contracts, and operations.' } },
+                        { '@type': 'Question', name: 'Why was AlphaClone built?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone was built to reduce fragmented business software by connecting CRM, communication, finance, contracts, and operations in one workspace.' } },
                     ]
                 })
             }} />
@@ -197,7 +197,7 @@ export default function PricingPageContent() {
                             <div className="bg-slate-950 rounded-[calc(1.5rem-1px)] p-8 h-full flex flex-col relative overflow-hidden">
                                 {plan.highlight && (
                                     <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest">
-                                        Most Popular
+                                        Single Plan
                                     </div>
                                 )}
 
@@ -246,8 +246,8 @@ export default function PricingPageContent() {
                 {/* Trust indicators */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-12 border-y border-slate-800 mb-20">
                     {[
-                        { icon: Shield, label: 'AES-256 Encryption', sub: 'Enterprise security on all plans' },
-                        { icon: Zap, label: '< 30 Min Setup', sub: 'Onboarding guide included' },
+                        { icon: Shield, label: 'Encrypted Data', sub: 'Security controls on all plans' },
+                        { icon: Zap, label: 'Guided Setup', sub: 'Onboarding guide included' },
                         { icon: Globe, label: 'Global Access', sub: 'Works from any device, anywhere' },
                         { icon: MessageSquare, label: '14-Day Free Trial', sub: 'No credit card required' },
                     ].map((item, i) => (
@@ -264,8 +264,8 @@ export default function PricingPageContent() {
                 {/* Value: Tools Replaced */}
                 <div className="mb-20">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold text-white mb-3">What AlphaClone Replaces</h2>
-                        <p className="text-slate-400 max-w-xl mx-auto">The average AlphaClone customer retired <strong className="text-white">7–9 separate subscriptions</strong> within 30 days of switching. Here's what you'd pay for those tools individually:</p>
+                        <h2 className="text-3xl font-bold text-white mb-3">What AlphaClone Consolidates</h2>
+                        <p className="text-slate-400 max-w-xl mx-auto">AlphaClone brings common operating workflows into one workspace, so teams can reduce tool switching and keep business context connected.</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         {replacedTools.map((tool, i) => (
@@ -277,14 +277,14 @@ export default function PricingPageContent() {
                                     <p className="text-white text-sm font-semibold truncate">{tool.name}</p>
                                     <p className="text-slate-500 text-xs">{tool.replaced}</p>
                                 </div>
-                                <span className="text-red-400 text-sm font-bold flex-shrink-0">{tool.cost}</span>
+                                <span className="text-red-400 text-xs font-bold flex-shrink-0">Separate tool</span>
                             </div>
                         ))}
                     </div>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 p-6 bg-slate-900/60 border border-slate-800 rounded-2xl text-center">
                         <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Combined market cost</p>
-                            <p className="text-3xl font-black text-red-400">$300–$380<span className="text-lg text-slate-500">/mo</span></p>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Separate stack</p>
+                            <p className="text-3xl font-black text-red-400">Varies<span className="text-lg text-slate-500"> by team</span></p>
                         </div>
                         <div className="text-slate-600 text-2xl font-bold">vs</div>
                         <div>
@@ -292,8 +292,8 @@ export default function PricingPageContent() {
                             <p className="text-3xl font-black text-teal-400">$15<span className="text-lg text-slate-500">/mo</span></p>
                         </div>
                         <div className="px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-xl">
-                            <p className="text-xs text-teal-300 font-bold">Save up to ~$360/month</p>
-                            <p className="text-xs text-slate-500">Up to ~$4,320 per year</p>
+                            <p className="text-xs text-teal-300 font-bold">Consolidate common workflows</p>
+                            <p className="text-xs text-slate-500">Compare against your current stack</p>
                         </div>
                     </div>
                 </div>
@@ -335,7 +335,7 @@ export default function PricingPageContent() {
                     <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-blue-500/5 -z-10" />
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter">Ready to Deploy Your <span className="hero-metallic-text">OS?</span></h2>
                     <p className="text-slate-400 text-xl mb-12 max-w-xl mx-auto font-medium">
-                        Join 500+ high-performance businesses. Deploy your 14-day free trial in under 60 seconds.
+                        Start a 14-day trial and test the CRM, finance, contract, meeting, and workflow modules in one workspace.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <Link
@@ -351,7 +351,7 @@ export default function PricingPageContent() {
                             Contact Sales
                         </Link>
                     </div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-8">Secure • ISO/IEC 27001 Compliant Architecture • GDPR Ready</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-8">Security controls • Public policies • GDPR data rights support</p>
                 </div>
                 <p className="text-xs text-slate-600 mt-8 text-center pb-8">No credit card required · Cancel anytime · 14-day free trial</p>
                 </div>
@@ -360,4 +360,3 @@ export default function PricingPageContent() {
         </div>
     );
 }
-

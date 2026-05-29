@@ -23,7 +23,7 @@ function handleError(err: unknown): NextResponse {
         );
     }
     console.error('[Zoho Books API]', err);
-    return NextResponse.json({ error: 'Something went wrong. Please try again.', code: 'INTERNAL_ERROR' }, { status: 500 });
+    return NextResponse.json({ error: 'Zoho Books request failed on our side. Try again or reconnect Zoho if it repeats.', code: 'INTERNAL_ERROR' }, { status: 500 });
 }
 
 // GET /api/zoho/books?action=<action>

@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import ServicesPage from '@/components/pages/ServicesPage';
 
 export const metadata: Metadata = {
-    title: 'Solutions | The Unified AI Business OS — Kill SaaS Bloat',
-    description: 'AlphaClone Systems is the AI-powered Business OS for service teams. One platform unifies CRM, invoicing, AI sales workflows, contracts, video meetings, and accounting.',
+    title: 'Operating System | Unified AI Business OS for Service Teams',
+    description: 'AlphaClone is the business operating system for service teams: CRM, invoicing, contracts, meetings, accounting, and AI workflows in one backbone.',
     keywords: [
         'AI business operating system',
-        'eliminate SaaS bloat',
-        'Autonomous Growth Agent',
+        'reduce SaaS tool sprawl',
+        'AI Growth Agent',
         'Unified CRM intelligence',
         'Mission Control software',
         'Agreement Lifecycle management',
@@ -20,15 +20,15 @@ export const metadata: Metadata = {
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/services' },
     openGraph: {
-        title: 'Solutions | AlphaClone Unified AI Business OS',
-        description: 'Eliminate SaaS bloat with one unified architecture. Autonomous Growth, Unified CRM, Mission Control, Revenue Center — all in AlphaClone.',
+        title: 'Operating System | AlphaClone Unified AI Business OS',
+        description: 'Run AI sales workflows, CRM, projects, invoicing, contracts, and meetings from one operating backbone.',
         url: 'https://alphaclonesystems.com/services',
         type: 'website',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Solutions | AlphaClone Unified AI Business OS',
-        description: 'Eliminate SaaS bloat. One unified platform: AI Sales, CRM, Projects, Invoicing, Contracts, Meetings. Starting at $15/month.',
+        title: 'Operating System | AlphaClone Unified AI Business OS',
+        description: 'One workspace for AI sales workflows, CRM, projects, invoicing, contracts, and meetings. Starting at $15/month.',
     },
 };
 
@@ -49,7 +49,7 @@ const faqSchema = {
             name: 'How does the AI Growth Agent work?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'The AlphaClone AI Growth Agent automatically discovers leads in your target industry, qualifies them through AI-powered chat, and manages initial outreach — so you can focus on closing deals. No sales team required. It runs 24/7 in the background while you run your business.',
+                text: 'The AlphaClone AI Growth Agent helps discover leads from public sources, supports qualification workflows, and prepares outreach for review and follow-up inside your CRM.',
             },
         },
         {
@@ -57,7 +57,7 @@ const faqSchema = {
             name: 'Can AlphaClone replace QuickBooks for invoicing and accounting?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Yes. AlphaClone includes a full accounting suite with chart of accounts, journal entries, P&L statements, balance sheets, and professional invoice generation with payment tracking. Most small businesses can completely replace QuickBooks with AlphaClone\'s financial module.',
+                text: 'AlphaClone includes invoice generation, payment tracking, chart of accounts, journal entries, P&L statements, balance sheets, and related financial workflows. Businesses should confirm their accounting and tax requirements before replacing dedicated accounting software.',
             },
         },
         {
@@ -73,7 +73,7 @@ const faqSchema = {
             name: 'Can I manage contracts and get e-signatures through AlphaClone?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Yes. AlphaClone\'s Contract Engine uses AI to assist in drafting professional business contracts, NDAs, service agreements, and proposals. Clients can then sign them electronically without needing DocuSign or a lawyer for standard contracts.',
+                text: 'Yes. AlphaClone\'s Contract Engine uses AI to assist with contract, NDA, service agreement, and proposal drafts. Clients can sign electronically, and teams should review legal documents before sending.',
             },
         },
         {
@@ -81,7 +81,7 @@ const faqSchema = {
             name: 'How much does AlphaClone cost?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'AlphaClone starts at $15/month for the Starter plan (up to 3 users), $45/month for Pro (up to 10 users, full AI Growth Agent), and $80/month for Enterprise (unlimited users, priority support, custom integrations). Most businesses save $200-500/month by switching from multiple tools.',
+                text: 'AlphaClone starts at $15/month for Starter and has a Pro Video plan for teams that need integrated video meetings. Current plan details are shown on the pricing section of the site.',
             },
         },
     ],

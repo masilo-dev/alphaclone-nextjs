@@ -25,7 +25,7 @@ export default function UpgradePage() {
     const { currentTenant, isLoading: tenantLoading } = useTenant();
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('pro');
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
     if (tenantLoading || authLoading) {
@@ -40,6 +40,11 @@ export default function UpgradePage() {
         if (!currentTenant || !user) {
             toast.error('Session expired. Please log in again.');
             router.push('/auth/login');
+            return;
+        }
+
+        if (!selectedPlan) {
+            toast.error('Choose a plan before opening checkout.');
             return;
         }
 
@@ -78,14 +83,14 @@ export default function UpgradePage() {
         pro: {
             icon: Zap,
             color: 'indigo',
-            tagline: 'Most Popular',
+            tagline: 'More capacity',
             gradient: 'from-indigo-500/20 to-purple-500/20',
             borderColor: 'border-indigo-500/50'
         },
         enterprise: {
             icon: Crown,
             color: 'amber',
-            tagline: 'Full Power',
+            tagline: 'Full infrastructure',
             gradient: 'from-amber-500/20 to-orange-500/20',
             borderColor: 'border-amber-500/30'
         }
@@ -127,7 +132,7 @@ export default function UpgradePage() {
                         className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto"
                     >
                         You're currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan}</span> plan. 
-                        Upgrade to remove limits and unlock elite automation.
+                        Upgrade to raise your workspace limits and enable the listed automation features.
                     </motion.p>
                 </div>
 
@@ -163,7 +168,7 @@ export default function UpgradePage() {
                                         </div>
                                         {planId === 'pro' && (
                                             <span className="px-3 py-1 rounded-full bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest">
-                                                Best Value
+                                                More Capacity
                                             </span>
                                         )}
                                     </div>
@@ -220,7 +225,7 @@ export default function UpgradePage() {
                         <div className="text-center md:text-left">
                             <h4 className="text-xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
                                 <CheckCircle2 className="w-5 h-5 text-teal-400" />
-                                Selected: {selectedPlan.toUpperCase()}
+                                Selected: {selectedPlan ? selectedPlan.toUpperCase() : 'Choose a plan'}
                             </h4>
                             <p className="text-slate-400 text-sm">
                                 No long term contracts. Switch or cancel any time. 
@@ -233,7 +238,7 @@ export default function UpgradePage() {
                             isLoading={isProcessing}
                             className="w-full md:w-auto px-10 h-14 bg-teal-600 hover:bg-teal-500 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 group transition-all"
                         >
-                            {isProcessing ? 'Setting up secure checkout...' : 'Upgrade Now'}
+                            {isProcessing ? 'Setting up secure checkout...' : 'Open checkout'}
                             {!isProcessing && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                         </Button>
                     </div>

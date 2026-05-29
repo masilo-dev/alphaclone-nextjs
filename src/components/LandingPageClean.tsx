@@ -193,10 +193,10 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                   {/* Proof stats */}
                   <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-center mt-12">
                      {[
-                        { value: '12+', label: 'tools replaced' },
-                        { value: '67%', label: 'time saved' },
-                        { value: '3x', label: 'faster deals' },
-                        { value: '0', label: 'overwhelm' },
+                        { value: '12', label: 'core modules' },
+                        { value: '1', label: 'shared workspace' },
+                        { value: '14', label: 'trial days' },
+                        { value: '$0', label: 'card required' },
                      ].map(({ value, label }) => (
                         <div key={label}>
                            <div className="text-2xl sm:text-3xl font-black text-teal-400">{value}</div>
@@ -216,7 +216,7 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                      The <span className="text-teal-400">Business OS</span> That Works
                   </h2>
                   <p className="text-xl text-slate-400 max-w-3xl mx-auto">
-                     Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system that actually drives revenue.
+                     Stop juggling disconnected tools. AlphaClone brings your core operating workflows into one workspace.
                   </p>
                </div>
 
@@ -231,17 +231,17 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                         {
                            title: '12 Tools → 1 Platform',
                            desc: 'CRM, invoicing, projects, contracts, and more in one login.',
-                           impact: 'Save 20+ hours per month'
+                           impact: 'One place for core workflows'
                         },
                         {
                            title: 'Revenue-First Workflow',
                            desc: 'Built-in sequences that turn leads into cash automatically.',
-                           impact: '3x faster deal closing'
+                           impact: 'Follow-up and pipeline visibility'
                         },
                         {
                            title: 'AI-Powered Growth',
-                           desc: 'Smart outreach that books meetings while you sleep.',
-                           impact: '10x qualified leads'
+                           desc: 'AI-assisted outreach workflows that help prepare and track follow-up.',
+                           impact: 'Lead context connected to CRM'
                         }
                      ].map((item, idx) => (
                         <motion.div
@@ -271,16 +271,16 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                      className="bg-slate-800/60 border border-slate-800 rounded-2xl p-8"
                   >
                      <div className="text-center mb-8">
-                        <h3 className="text-2xl font-bold text-white mb-2">Real Results</h3>
-                        <p className="text-slate-400">What happens when you switch to AlphaClone</p>
+                        <h3 className="text-2xl font-bold text-white mb-2">Operational Signals</h3>
+                        <p className="text-slate-400">What AlphaClone helps you track in one workspace</p>
                      </div>
                      
                      <div className="grid grid-cols-2 gap-6 mb-8">
                         {[
-                           { label: 'Time Saved', value: '67%', desc: 'Monthly admin work' },
-                           { label: 'Revenue Growth', value: '34%', desc: 'First 6 months' },
-                           { label: 'Client Response', value: '5x', desc: 'Faster replies' },
-                           { label: 'Deal Close Rate', value: '89%', desc: 'vs 62% industry' }
+                           { label: 'CRM', value: '1', desc: 'Client source of truth' },
+                           { label: 'Finance', value: '1', desc: 'Billing workspace' },
+                           { label: 'Contracts', value: '1', desc: 'Agreement workflow' },
+                           { label: 'Meetings', value: '1', desc: 'Client call context' }
                         ].map((stat) => (
                            <div key={stat.label} className="text-center">
                               <div className="text-3xl font-black text-teal-400 mb-1">{stat.value}</div>
@@ -310,7 +310,7 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                      Built for <span className="text-teal-400">Serious Business</span>
                   </h2>
                   <p className="text-slate-400 max-w-2xl mx-auto">
-                     Join thousands of agencies, freelancers, and startups running their entire business on AlphaClone
+                     Built for agencies, freelancers, and startups that want core operations in one workspace.
                   </p>
                </div>
 

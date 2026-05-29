@@ -432,7 +432,7 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">Select a thread to review</h3>
                             <p className="max-w-xs text-sm text-slate-500 leading-relaxed">
-                                Seamlessly manage your Gmail conversations directly from your AlphaClone dashboard.
+                                Review Gmail conversations directly from your AlphaClone command center.
                             </p>
                         </motion.div>
                     </div>
@@ -441,4 +441,3 @@ export const GmailIntegrationView: React.FC<GmailIntegrationViewProps> = ({ user
         </div>
     );
 };
-

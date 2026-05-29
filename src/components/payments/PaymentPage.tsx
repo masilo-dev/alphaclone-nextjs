@@ -116,7 +116,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                     {invoices.length === 0 ? (
                         <Card className="p-8 text-center text-slate-400">
                             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            No invoices found.
+                            No invoices yet. Create or send an invoice to start tracking payments.
                         </Card>
                     ) : (
                         invoices.map((invoice) => (
@@ -168,7 +168,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                     {payments.length === 0 ? (
                         <Card className="p-8 text-center text-slate-400">
                             <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            No payment history yet.
+                            No payments recorded yet. Paid invoices will appear here.
                         </Card>
                     ) : (
                         payments.map((payment) => (

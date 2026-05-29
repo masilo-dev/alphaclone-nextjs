@@ -155,7 +155,7 @@ export default function DocsPageContent() {
                                             },
                                             {
                                                 n: 2, title: 'Plan Selection',
-                                                body: 'All plans include every feature. You choose based on usage quotas: Starter ($15/mo — 5 users, 50 AI queries/mo), Pro ($45/mo — 25 users, 500 AI queries/mo), Enterprise ($80/mo — unlimited everything). 14-day free trial on all plans, no credit card required.'
+                                                body: 'Current public plans start at $15/month for the core platform and $35/month for Pro Video. Plan details, usage limits, and trial terms are listed on the pricing page. The 14-day trial does not require a credit card.'
                                             },
                                             {
                                                 n: 3, title: 'Business Workspace Setup',
@@ -276,7 +276,7 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-8 leading-relaxed">
-                                The AI Growth Agent is AlphaClone's flagship feature — a continuously running automated sales development system that identifies leads, manages outreach, qualifies prospects through AI conversation, and delivers warm leads to your CRM. Available on Pro and Enterprise plans. No separate setup, third-party API keys, or technical configuration required.
+                                The AI Growth Agent supports lead discovery, outreach drafts, qualification workflows, and CRM handoff from one workspace. No separate setup, third-party API keys, or technical configuration required.
                             </p>
                             <div className="bg-gradient-to-br from-teal-900/20 to-blue-900/20 rounded-3xl p-8 border border-white/5 mb-6">
                                 <h4 className="text-teal-400 font-bold mb-6 text-lg">Using the Growth Agent — Step by Step</h4>
@@ -288,11 +288,11 @@ export default function DocsPageContent() {
                                         },
                                         {
                                             title: 'Step 2: Lead Discovery (Scraping)',
-                                            body: 'Go to Growth Agent → Discover Leads → Scrape. Enter a target description (e.g., "digital marketing agencies in Cape Town with under 30 employees"). The agent scans public business directories, LinkedIn-compatible sources, and industry databases. Results typically return within 2–5 minutes. Review the lead list, de-select any irrelevant entries, then click "Add to CRM" or "Begin Outreach."',
+                                            body: 'Go to Growth Agent → Discover Leads → Scrape. Enter a target description (e.g., "digital marketing agencies in Cape Town with under 30 employees"). The agent searches configured public business sources. Review the lead list, de-select any irrelevant entries, then click "Add to CRM" or "Begin Outreach."',
                                         },
                                         {
                                             title: 'Step 3: AI-Managed Outreach',
-                                            body: 'When outreach is activated, the Growth Agent sends personalized first-contact messages to each lead. When a lead replies, the agent continues the conversation: asking discovery questions about their current tools, team size, pain points, and budget. It handles objections, provides information about your services, and continues the dialogue. You can review all active conversations in real time from the Growth Agent → Conversations tab.',
+                                            body: 'When outreach is activated, the Growth Agent prepares or sends first-contact messages based on your workspace settings. When a lead replies, the agent can help continue qualification with discovery questions about current tools, team size, pain points, and budget. Review active conversations from the Growth Agent → Conversations tab.',
                                         },
                                         {
                                             title: 'Step 4: Lead Qualification & Handoff',
@@ -401,7 +401,7 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-6 leading-relaxed">
-                                The AlphaClone Financial Suite replaces standalone accounting software like QuickBooks or FreshBooks for most small and medium businesses. It includes professional invoicing, quote management, full double-entry accounting, and financial reporting — all connected to your CRM so every financial transaction links to the right client record.
+                                The AlphaClone Financial Suite includes invoicing, quote management, double-entry accounting workflows, and financial reporting — all connected to your CRM so financial transactions can link to the right client record. Confirm your accounting and tax requirements before replacing dedicated accounting software.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {[
@@ -474,7 +474,7 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-6 leading-relaxed">
-                                The Contract Engine allows you to draft professional legal contracts using AI assistance and collect legally valid electronic signatures — all without a separate DocuSign account or a lawyer for standard agreements. Navigation: Dashboard → Contracts.
+                                The Contract Engine allows you to draft agreement templates using AI assistance and collect electronic signatures without a separate signature tool. Review legal documents for your jurisdiction and business context before sending. Navigation: Dashboard → Contracts.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
@@ -534,15 +534,15 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-6 leading-relaxed">
-                                AlphaClone implements enterprise-grade security at every layer — from individual data encryption to network-level DDoS protection. All security features are active by default; no configuration is required to benefit from baseline protection.
+                                AlphaClone includes security controls such as data encryption, role-based access, audit logging, and public policy pages. Baseline security controls are active by default.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
                                     { title: 'RBAC', desc: 'Role-Based Access Control. Assign Admin, Manager, Member, or Viewer roles. Configure project-level access for contractors and external stakeholders. Navigate: Settings → Security → Access Roles.' },
-                                    { title: 'SIEM Audit Logs', desc: 'Continuous audit trail of all platform activity. Logs include: who accessed what, when, from which IP. Available to Admin users via Settings → Security → Audit Log.' },
-                                    { title: 'Perimeter Guard', desc: 'Real-time IP threat intelligence and automated DDoS mitigation. Operates at network level — no configuration required. Incident reports available via Settings → Security → Incident Log.' },
-                                    { title: 'Data Encryption', desc: 'All data encrypted at rest (AES-256) and in transit (TLS 1.3). Database-level encryption for all CRM, financial, and document data.' },
-                                    { title: 'GDPR Compliance', desc: 'Full GDPR-compliant data handling. Right to erasure supported — delete any contact and all associated data is purged from our systems permanently within 72 hours.' },
+                                    { title: 'Audit Logs', desc: 'Audit trail for key platform activity. Logs help Admin users review important account actions via Settings → Security → Audit Log.' },
+                                    { title: 'Security Monitoring', desc: 'Security controls and incident visibility are available through the security area and public support channels.' },
+                                    { title: 'Data Encryption', desc: 'Data is encrypted in transit and protected with database-level security controls for CRM, financial, and document records.' },
+                                    { title: 'GDPR Data Rights', desc: 'Data deletion and account lifecycle requests are supported through public policy pages and account controls.' },
                                     { title: '2FA Authentication', desc: 'Two-factor authentication available for all accounts. Enable via Settings → Security → Two-Factor Authentication. Supports authenticator apps and SMS.' },
                                 ].map((item, i) => (
                                     <div key={i} className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 text-center">
@@ -625,4 +625,3 @@ export default function DocsPageContent() {
         </div>
     );
 }
-

@@ -13,12 +13,12 @@ const EcosystemPage: React.FC = () => {
     const advantages = [
         {
             name: 'Lightning-Fast Delivery',
-            description: 'Get your project from concept to launch in record time without sacrificing quality',
+            description: 'Move from concept to launch with structured workflows and clear delivery steps',
             icon: Zap
         },
         {
             name: 'Enterprise-Grade Security',
-            description: 'Your data and your clients\' data protected with bank-level security standards',
+            description: 'Role-based access, audit logging, and policy visibility for business data',
             icon: Shield
         },
         {
@@ -28,12 +28,12 @@ const EcosystemPage: React.FC = () => {
         },
         {
             name: 'Dedicated Support',
-            description: '24/7 support and ongoing maintenance to keep your business running smoothly',
+            description: 'Support channels for setup, account, and operational questions',
             icon: HeartHandshake
         },
         {
             name: 'Results-Driven',
-            description: 'We focus on metrics that matter - conversions, engagement, and ROI',
+            description: 'Dashboards focus on operational metrics like pipeline, billing, and delivery status',
             icon: Target
         },
         {
@@ -84,7 +84,7 @@ const EcosystemPage: React.FC = () => {
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.2}>
                         <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-8">
-                            Replace 10+ fragmented tools with one unified platform. Built for agencies, freelancers, and service businesses who need enterprise power without enterprise complexity.
+                            Bring CRM, billing, projects, contracts, meetings, and analytics into one workspace. Built for agencies, freelancers, and service businesses that want fewer disconnected systems.
                         </p>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.3}>
@@ -116,7 +116,7 @@ const EcosystemPage: React.FC = () => {
                             Integrated <span className="text-teal-400">Business Modules</span>
                         </h2>
                         <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Every tool you need to run your service business, unified in one platform with real-time data synchronization.
+                            Core workflows for service businesses, unified in one platform with shared operational context.
                         </p>
                     </AnimateIn>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -125,10 +125,10 @@ const EcosystemPage: React.FC = () => {
                             { icon: BarChart, title: 'Analytics', desc: 'Real-time business metrics, revenue tracking, and performance dashboards' },
                             { icon: MessageSquare, title: 'Communications', desc: 'Unified inbox for email, SMS, and team messaging in one place' },
                             { icon: Database, title: 'Client Portal', desc: 'Branded client access for projects, invoices, and collaboration' },
-                            { icon: Shield, title: 'Contracts & Legal', desc: 'E-signature, contract templates, and compliance management' },
+                            { icon: Shield, title: 'Contracts & Legal', desc: 'E-signature workflows, contract templates, and approval tracking' },
                             { icon: Zap, title: 'Automation', desc: 'Workflow automation, task scheduling, and smart notifications' },
-                            { icon: Lock, title: 'Security & Compliance', desc: 'SOC 2 Type II, GDPR compliant, end-to-end encryption' },
-                            { icon: Globe, title: 'Integrations', desc: 'Connect Stripe, Slack, Google Workspace, and 50+ tools' },
+                            { icon: Lock, title: 'Security & Compliance', desc: 'Role-based access, audit logging, and GDPR data-rights support' },
+                            { icon: Globe, title: 'Integrations', desc: 'Connect core tools such as Stripe, Google Workspace, and email providers' },
                         ].map((module, idx) => (
                             <AnimateIn key={idx} type="stagger" index={idx}>
                                 <div className="bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-sm p-6 rounded-2xl border border-slate-800/80 hover:border-teal-500/50 transition-all group h-full">
@@ -148,7 +148,7 @@ const EcosystemPage: React.FC = () => {
                             Built on <span className="text-teal-400">Modern Infrastructure</span>
                         </h2>
                         <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Enterprise-grade architecture designed for performance, reliability, and scale.
+                            Modern architecture designed for performance, reliability, and scale.
                         </p>
                     </AnimateIn>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 min-w-0">
@@ -182,7 +182,7 @@ const EcosystemPage: React.FC = () => {
                                 <h3 className="text-xl font-bold mb-4">Infrastructure</h3>
                                 <ul className="space-y-2 text-slate-400">
                                     <li>Vercel Edge Network</li>
-                                    <li>99.99% uptime SLA</li>
+                                    <li>Managed hosting on Vercel</li>
                                     <li>Global CDN</li>
                                     <li>Auto-scaling</li>
                                 </ul>
@@ -231,7 +231,7 @@ const EcosystemPage: React.FC = () => {
                                     Start Building Smarter Today
                                 </h2>
                                 <p className="text-xl text-teal-50 mb-10 max-w-2xl mx-auto leading-relaxed">
-                                    Join 500+ agencies and service businesses running their entire operation on AlphaClone. Free 14-day trial, no credit card required.
+                                    Start a 14-day trial and test the CRM, billing, contracts, project, and meeting workflows in one workspace. No credit card required.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                     <Link

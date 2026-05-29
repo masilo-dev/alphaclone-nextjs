@@ -1,7 +1,7 @@
 {
-  "name": "AlphaClone Systems - Enterprise Platform",
+  "name": "AlphaClone Systems - Business Operating System",
   "short_name": "AlphaClone",
-  "description": "Enterprise-grade project management and communication platform with AI integration",
+  "description": "Business operating system for CRM, finance, projects, contracts, and communication.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

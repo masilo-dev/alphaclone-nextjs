@@ -116,7 +116,7 @@ const INDUSTRY_PROFILES: Array<{ keywords: string[]; weights: IndustryWeights; d
 
 // ── Pitch angle descriptions (used by AI email generator) ─────────────────────
 export const PITCH_ANGLES: Record<string, { label: string; hook: string }> = {
-  'digital-presence':      { label: 'No Online Presence', hook: 'We noticed you don\'t have a website — 87% of customers look online before calling a local business. We can fix that.' },
+  'digital-presence':      { label: 'No Online Presence', hook: 'We noticed you don\'t have a website. Many customers check a business online before calling. We can fix that.' },
   'reputation-management': { label: 'Reputation Boost',  hook: 'We help local businesses build strong online reputations that attract more customers.' },
   'patient-acquisition':   { label: 'New Patient Growth', hook: 'We specialize in helping practices grow their patient base through targeted digital campaigns.' },
   'strategic-partnership': { label: 'Strategic Alliance', hook: 'We work with firms like yours to generate qualified inbound leads without ads.' },

@@ -295,11 +295,10 @@ export function OnboardingWizard() {
                             <div className="text-center py-8">
                                 <Sparkles className="h-16 w-16 text-blue-600 mx-auto mb-4" />
                                 <p className="text-lg text-gray-700 mb-6">
-                                    We're thrilled to have you here! Let's get your account set up
-                                    so you can start managing your business operations seamlessly.
+                                    Welcome. Let's get your account set up so you can start managing your business operations from one command center.
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                    This will only take 2-3 minutes
+                                    You can skip optional setup and return later.
                                 </p>
                             </div>
                         )}

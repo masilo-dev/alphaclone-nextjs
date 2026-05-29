@@ -338,7 +338,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
             <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
           </div>
         ) : teamMembers.length === 0 ? (
-          <p className="text-slate-400 text-center py-8">No team members yet</p>
+          <p className="text-slate-400 text-center py-8">No team members yet. Invite your first teammate to share this workspace.</p>
         ) : (
           <div className="space-y-3">
             {teamMembers.map((member: any) => (

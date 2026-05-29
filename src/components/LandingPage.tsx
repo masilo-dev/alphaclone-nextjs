@@ -751,10 +751,10 @@ const LandingPage = () => {
                      {/* Proof stats */}
                      <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-center">
                         {[
-                           { value: '12+', label: 'tools replaced' },
-                           { value: '67%', label: 'time saved' },
-                           { value: '3x', label: 'faster deals' },
-                           { value: '$0', label: 'setup cost' },
+                           { value: '12', label: 'core modules' },
+                           { value: '1', label: 'shared workspace' },
+                           { value: '14', label: 'trial days' },
+                           { value: '$0', label: 'card required' },
                         ].map(({ value, label }) => (
                            <div key={label} className="px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/15">
                               <div className="text-2xl sm:text-3xl font-black text-cyan-400 font-marketing-data">{value}</div>
@@ -773,7 +773,7 @@ const LandingPage = () => {
                      Do your business while in <span className="text-cyan-400">Claude</span>
                   </h3>
                   <p className="text-slate-300 mb-8 max-w-2xl mx-auto">
-                     Manage leads, automation, and deals seamlessly without breaking focus.
+                     Manage leads, automation, and deals from the same command center.
                   </p>
                   <motion.div 
                      initial={{ opacity: 0, y: 20 }}
@@ -797,10 +797,10 @@ const LandingPage = () => {
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <div className="text-center mb-16">
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
-                        Stop Wasting <span className="text-red-400">$300+/Month</span>
+                        Compare the Tools Behind <span className="text-red-400">Daily Operations</span>
                      </h2>
                      <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        See how AlphaClone replaces 12+ tools with ONE unified platform
+                        See which operating workflows AlphaClone brings into one workspace.
                      </p>
                   </div>
 
@@ -825,16 +825,16 @@ const LandingPage = () => {
                         </thead>
                         <tbody>
                            {[
-                              { feature: 'CRM & Pipeline', ac: true, hubspot: true, quickbooks: false, asana: false, others: '$45/mo' },
-                              { feature: 'Invoicing & Payments', ac: true, hubspot: false, quickbooks: true, asana: false, others: '$25/mo' },
-                              { feature: 'Contract Management', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$35/mo' },
-                              { feature: 'Project Management', ac: true, hubspot: false, quickbooks: false, asana: true, others: '$15/mo' },
-                              { feature: 'Video Conferencing', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$20/mo' },
-                              { feature: 'Email Campaigns', ac: true, hubspot: true, quickbooks: false, asana: false, others: '$30/mo' },
-                              { feature: 'AI Sales Assistant', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$50/mo' },
-                              { feature: 'Team Chat', ac: true, hubspot: false, quickbooks: false, asana: false, others: '$10/mo' },
-                              { feature: 'Analytics & Reports', ac: true, hubspot: true, quickbooks: true, asana: true, others: '$20/mo' },
-                              { feature: 'Calendar & Bookings', ac: true, hubspot: true, quickbooks: false, asana: false, others: '$15/mo' },
+                              { feature: 'CRM & Pipeline', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
+                              { feature: 'Invoicing & Payments', ac: true, hubspot: false, quickbooks: true, asana: false, others: 'Often separate' },
+                              { feature: 'Contract Management', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                              { feature: 'Project Management', ac: true, hubspot: false, quickbooks: false, asana: true, others: 'Often separate' },
+                              { feature: 'Video Conferencing', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                              { feature: 'Email Campaigns', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
+                              { feature: 'AI Sales Assistant', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                              { feature: 'Team Chat', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                              { feature: 'Analytics & Reports', ac: true, hubspot: true, quickbooks: true, asana: true, others: 'Often separate' },
+                              { feature: 'Calendar & Bookings', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
                            ].map((row, idx) => (
                               <tr key={idx} className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                                  <td className="p-4 text-white font-medium">{row.feature}</td>
@@ -858,16 +858,16 @@ const LandingPage = () => {
                         </tbody>
                         <tfoot>
                            <tr className="border-t-2 border-slate-700 bg-slate-900/60">
-                              <td className="p-4 text-white font-bold">Total Cost</td>
+                              <td className="p-4 text-white font-bold">Starting Price</td>
                               <td className="p-4 text-center">
                                  <div className="inline-flex items-center justify-center px-3 py-1 bg-green-500/20 text-green-400 rounded-lg font-black">
                                     $15/mo
                                  </div>
                               </td>
-                              <td className="p-4 text-center text-slate-400 font-semibold">$90/mo</td>
-                              <td className="p-4 text-center text-slate-400 font-semibold">$35/mo</td>
-                              <td className="p-4 text-center text-slate-400 font-semibold">$15/mo</td>
-                              <td className="p-4 text-center text-red-400 font-bold">$240+/mo</td>
+                              <td className="p-4 text-center text-slate-400 font-semibold">Varies</td>
+                              <td className="p-4 text-center text-slate-400 font-semibold">Varies</td>
+                              <td className="p-4 text-center text-slate-400 font-semibold">Varies</td>
+                              <td className="p-4 text-center text-red-400 font-bold">Varies</td>
                            </tr>
                         </tfoot>
                      </table>
@@ -876,15 +876,15 @@ const LandingPage = () => {
                   <div className="mt-12 text-center">
                      <div className="inline-flex flex-col sm:flex-row items-center gap-6 bg-gradient-to-r from-teal-500/10 to-blue-500/10 border border-teal-500/20 rounded-2xl p-6">
                         <div className="text-left">
-                           <div className="text-sm text-slate-400 mb-1">Your monthly savings</div>
-                           <div className="text-3xl font-black text-green-400">$225+</div>
-                           <div className="text-xs text-slate-500 mt-1">Per year: $2,700+</div>
+                           <div className="text-sm text-slate-400 mb-1">Starting plan</div>
+                           <div className="text-3xl font-black text-green-400">$15/mo</div>
+                           <div className="text-xs text-slate-500 mt-1">14-day trial, no card required</div>
                         </div>
                         <div className="hidden sm:block w-px h-16 bg-slate-700" />
                         <div className="text-left">
-                           <div className="text-sm text-slate-400 mb-1">Tools replaced</div>
-                           <div className="text-3xl font-black text-teal-400">12+</div>
-                           <div className="text-xs text-slate-500 mt-1">One login to rule them all</div>
+                           <div className="text-sm text-slate-400 mb-1">Core modules</div>
+                           <div className="text-3xl font-black text-teal-400">12</div>
+                           <div className="text-xs text-slate-500 mt-1">One login for daily operations</div>
                         </div>
                      </div>
                   </div>
@@ -1071,9 +1071,9 @@ const LandingPage = () => {
                >
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
                      {[
-                        { value: '500', label: 'Businesses Trust AlphaClone' },
-                        { value: '15+', label: 'Countries Supported' },
-                        { value: '99.9%', label: 'Uptime SLA' },
+                        { value: '2', label: 'Public pricing plans' },
+                        { value: '4', label: 'Policy pages linked' },
+                        { value: '3', label: 'Support contact channels' },
                      ].map((stat, idx) => (
                         <motion.div
                            key={stat.label}
@@ -1104,7 +1104,7 @@ const LandingPage = () => {
                         You are not running a business. You are managing software.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-                        Stop juggling 12 different tools. AlphaClone replaces your entire business stack with one unified system across CRM, all leads, project management, AI agents, invoices, quotations, receipts, contracts, and video operations.
+                        Stop juggling disconnected tools. AlphaClone brings CRM, lead operations, project management, AI agents, invoices, quotations, receipts, contracts, and video operations into one workspace.
                      </p>
                   </motion.div>
 
@@ -1149,7 +1149,7 @@ const LandingPage = () => {
                         {
                            icon: ShieldCheck,
                            title: 'Safe & Secure',
-                           desc: 'Bank-level security, SOC 2 compliance, and regular security audits.',
+                           desc: 'Role-based access, audit logging, and security policy links for operational control.',
                            color: 'from-red-500 to-blue-500'
                         },
                         {
@@ -1189,7 +1189,7 @@ const LandingPage = () => {
                         One price. Every feature. No games.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-                        No hidden fees. No surprise charges. Just powerful software that grows with your business.
+                        No hidden fees. No surprise charges. One operating system for the work you run every day.
                      </p>
                   </motion.div>
 
@@ -1234,7 +1234,7 @@ const LandingPage = () => {
                         >
                            {plan.popular && (
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-400 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
-                                 Most Popular
+                                 Includes Video
                               </div>
                            )}
                            <h3 className="text-xl sm:text-2xl font-black text-white mb-1">{plan.name}</h3>
@@ -1276,7 +1276,7 @@ const LandingPage = () => {
                         Built for founders who run lean and move fast.
                      </h2>
                      <p className="text-base text-slate-300 max-w-xl mx-auto mb-8">
-                        From signup to running your business in under ten minutes. Reach out to our team for onboarding support.
+                        Create your workspace, connect the basics, and ask our team for onboarding support when you need it.
                      </p>
                      
                      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">

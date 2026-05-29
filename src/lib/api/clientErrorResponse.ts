@@ -51,7 +51,7 @@ export function clientErrorResponse(
     });
 
     const body: ApiErrorBody = {
-        error: options.fallbackMessage ?? 'Something went wrong. Please try again.',
+        error: options.fallbackMessage ?? 'The request failed on our side. Try again; if it repeats, send support the request ID.',
         code: 'INTERNAL_ERROR',
         ...(requestId ? { requestId } : {}),
     };

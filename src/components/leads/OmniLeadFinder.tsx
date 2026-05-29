@@ -468,10 +468,10 @@ export default function OmniLeadFinder() {
       .map(([source]) => source.toUpperCase());
 
     if (failedSources.length === 0) {
-      return 'No leads found. Try a broader location or a different industry.';
+      return 'No matching leads for this search. Try a broader location or a different industry.';
     }
 
-    return `No leads found. Some sources (HERE/OSM) reported errors: ${failedSources.join(', ')}. Please check your API configurations.`;
+    return `No matching leads for this search. Some sources (HERE/OSM) reported errors: ${failedSources.join(', ')}. Check your API configurations.`;
   };
 
   const persistSearchHistory = (searchLeads: ScrapedLead[]) => {

@@ -56,7 +56,7 @@ export default async function Home() {
         name: 'What tools does Alphaclone replace?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Alphaclone replaces your CRM, invoicing software, contract and e-signature tool, social media scheduler, AI writing assistant, and video meeting platform in one place for 15 USD per month.',
+          text: 'Alphaclone brings CRM, invoicing, contracts, social media workflows, AI assistance, and video meeting operations into one workspace. Starter plans begin at 15 USD per month.',
         },
       },
       {
@@ -64,7 +64,7 @@ export default async function Home() {
         name: 'Is Alphaclone good for solopreneurs and one-person businesses?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes. Alphaclone is designed for solo founders and small teams that need enterprise capabilities without enterprise pricing or complexity.',
+          text: 'Yes. Alphaclone is designed for solo founders and small teams that need CRM, billing, contracts, meetings, and automation in one workspace.',
         },
       },
       {
@@ -72,7 +72,7 @@ export default async function Home() {
         name: 'How is Alphaclone different from HubSpot or QuickBooks?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'HubSpot and QuickBooks focus on single functions. Alphaclone combines CRM, finance, contracts, social media, meetings, and AI in one platform controlled through natural language.',
+          text: 'HubSpot and QuickBooks focus on specific business functions. Alphaclone combines CRM, finance, contracts, social media workflows, meetings, and AI-assisted operations in one platform.',
         },
       },
       {
@@ -80,15 +80,15 @@ export default async function Home() {
         name: 'Do I need to know how to use AI to use Alphaclone?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'No. You describe what you need in plain language and Alphaclone executes it.',
+          text: 'No. You can describe operational tasks in plain language and use the dashboard controls for review and execution.',
         },
       },
       {
         '@type': 'Question',
-        name: 'What is the best affordable alternative to HubSpot for small businesses?',
+        name: 'How does Alphaclone compare with HubSpot for small businesses?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Alphaclone provides CRM, pipeline management, contact tracking, and AI-powered follow-ups starting at 15 USD per month with broader built-in functionality.',
+          text: 'Alphaclone includes CRM, pipeline management, contact tracking, and AI-assisted follow-up workflows starting at 15 USD per month, alongside finance, contracts, meetings, and social workflows.',
         },
       },
     ],
