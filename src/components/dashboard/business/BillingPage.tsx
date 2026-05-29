@@ -293,7 +293,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ user }) => {
 
             {filteredInvoices.length === 0 && (
                 <div className="text-center py-12 text-slate-400">
-                    No invoices found. Create your first invoice to get started!
+                    No invoices yet. Create your first invoice to start tracking billing.
                 </div>
             )}
 

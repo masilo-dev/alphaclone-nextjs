@@ -317,7 +317,7 @@ export default function PagesTab() {
                     {pages.length === 0 ? (
                         <div className="text-center py-8 px-4">
                             <FileText className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-                            <p className="text-xs text-slate-500 mb-3">No pages yet</p>
+                            <p className="text-xs text-slate-500 mb-3">No pages yet. Create your first client-facing page.</p>
                             <button
                                 onClick={() => createPage(null)}
                                 className="text-xs text-teal-400 hover:text-teal-300 font-medium"

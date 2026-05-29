@@ -297,7 +297,7 @@ export async function POST(request: Request) {
             builtwith: 'Free tier',
             total: '~$1.00 vs Apollo $5-10'
           },
-          savings: '80-90% vs premium tools'
+          savings: 'Cost varies by provider and usage'
         };
         break;
       }

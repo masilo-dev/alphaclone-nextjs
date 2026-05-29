@@ -155,8 +155,8 @@ export function IntegrationSettings() {
             </p>
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
               {[
-                { label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: true },
-                { label: 'Error reporting',       sub: 'Share anonymous error data to improve reliability', defaultChecked: true },
+                { label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: false },
+                { label: 'Error reporting',       sub: 'Share anonymous error data to improve reliability', defaultChecked: false },
                 { label: 'API key rotation',      sub: 'Auto-rotate API keys every 90 days', defaultChecked: false },
                 { label: 'Require 2FA for actions', sub: 'Extra confirmation before connecting or disconnecting', defaultChecked: false },
               ].map(row => (
@@ -270,4 +270,3 @@ export function IntegrationSettings() {
     </div>
   );
 }
-

@@ -106,7 +106,7 @@ export async function requirePlatformSuperAdmin() {
  */
 export function routeErrorResponse(
     error: unknown,
-    fallbackMessage = 'Something went wrong. Please try again.',
+    fallbackMessage = 'The request failed on our side. Try again; if it repeats, send support the request ID.',
     request?: Pick<Request, 'headers'>
 ): NextResponse {
     return clientErrorResponse(error, {

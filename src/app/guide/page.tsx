@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import PlatformGuide from '@/components/pages/PlatformGuide';
 
 export const metadata: Metadata = {
-    title: 'Platform Guide & Onboarding | How to Set Up AlphaClone in 30 Minutes',
+    title: 'Platform Guide & Onboarding | Set Up AlphaClone Step by Step',
     description: 'Complete onboarding guide for AlphaClone Business OS. Step-by-step setup from account creation to your first AI lead campaign — including Gmail, Calendly, CRM, invoicing, and team setup. No technical knowledge required.',
     keywords: [
         'AlphaClone setup guide', 'how to set up business software', 'CRM onboarding tutorial',
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     alternates: { canonical: 'https://alphaclonesystems.com/guide' },
     openGraph: {
         title: 'Platform Guide & Onboarding | AlphaClone Systems',
-        description: 'Set up your entire business OS in under 30 minutes. Step-by-step guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
+        description: 'Set up your business OS step by step. Follow the guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
         url: 'https://alphaclonesystems.com/guide',
         type: 'article',
     },
@@ -42,7 +42,7 @@ const faqSchema = {
             name: 'How long does it take to set up AlphaClone?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Most users complete their full AlphaClone setup — including workspace configuration, Gmail connection, CRM import, and first invoice — in under 30 minutes. The AI Growth Agent can be activated with a single button click after initial setup.',
+                text: 'The guide walks through workspace setup, Gmail connection, CRM import, and your first invoice. The AI Growth Agent can be activated after initial setup.',
             },
         },
         {
@@ -58,7 +58,7 @@ const faqSchema = {
             name: 'How do I connect Gmail to AlphaClone?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Go to Settings → Gmail Integration and click "Connect Google Account." You\'ll be redirected to a standard Google OAuth screen where you authorize AlphaClone to read and send emails on your behalf. The connection takes under 60 seconds.',
+                text: 'Go to Settings → Gmail Integration and click "Connect Google Account." You\'ll be redirected to a standard Google OAuth screen where you authorize AlphaClone to read and send emails on your behalf.',
             },
         },
         {

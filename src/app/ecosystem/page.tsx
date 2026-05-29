@@ -3,13 +3,13 @@ import EcosystemPage from '@/components/pages/EcosystemPage';
 
 export const metadata: Metadata = {
     title: 'The AlphaClone Ecosystem | One Unified Business OS Architecture',
-    description: 'Explore the AlphaClone Business OS ecosystem. Nine integrated modules — Autonomous Growth, Unified CRM, Mission Control, Revenue Center, Agreement Lifecycle, and more — operating as one high-performance architecture. No SaaS bloat. One platform.',
+    description: 'Explore the AlphaClone Business OS ecosystem. Integrated modules for CRM, operations, revenue workflows, agreements, meetings, and analytics in one platform.',
     keywords: [
         'AlphaClone ecosystem',
         'unified business OS architecture',
         'AI business platform modules',
         'SaaS consolidation platform',
-        'Autonomous Growth Agent',
+        'AI Growth Agent',
         'Mission Control software',
         'Unified CRM Intelligence',
         'revenue operations platform',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
     openGraph: {
         title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
-        description: 'Nine integrated modules. One unified Business OS. No SaaS bloat. Explore the full AlphaClone architecture.',
+        description: 'Integrated modules for CRM, operations, revenue workflows, agreements, meetings, and analytics in one AlphaClone workspace.',
         url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },

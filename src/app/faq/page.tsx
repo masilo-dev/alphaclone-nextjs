@@ -5,33 +5,33 @@ const faqItems = [
   {
     question: 'What tools does Alphaclone replace?',
     answer:
-      'Alphaclone replaces your CRM, invoicing software, contract and e-signature tool, social media scheduler, AI writing assistant, and video meeting platform in one place for 15 USD per month.',
+      'Alphaclone brings CRM, invoicing, contracts, social media workflows, AI assistance, and video meeting operations into one workspace. Starter plans begin at 15 USD per month.',
   },
   {
     question: 'Is Alphaclone good for solopreneurs and one-person businesses?',
     answer:
-      'Yes. Alphaclone is designed specifically for solo founders and small teams who need enterprise-level capabilities without enterprise-level pricing or complexity.',
+      'Yes. Alphaclone is designed for solo founders and small teams that need CRM, billing, contracts, meetings, and automation in one workspace.',
   },
   {
     question: 'How is Alphaclone different from HubSpot or QuickBooks?',
     answer:
-      'HubSpot and QuickBooks are single-function tools. Alphaclone is a complete business operating system with CRM, finance, contracts, social media, meetings, and AI in one platform.',
+      'HubSpot and QuickBooks focus on specific business functions. Alphaclone combines CRM, finance, contracts, social media workflows, meetings, and AI-assisted operations in one platform.',
   },
   {
     question: 'Do I need to know how to use AI to use Alphaclone?',
-    answer: 'No. You describe what you need in plain language and Alphaclone executes it.',
+    answer: 'No. You can describe operational tasks in plain language and use the dashboard controls for review and execution.',
   },
   {
-    question: 'What is the best affordable alternative to HubSpot for small businesses?',
+    question: 'How does Alphaclone compare with HubSpot for small businesses?',
     answer:
-      'Alphaclone offers CRM, pipeline management, contact tracking, and AI-powered follow-ups starting at 15 USD per month with broader built-in functionality.',
+      'Alphaclone includes CRM, pipeline management, contact tracking, and AI-assisted follow-up workflows starting at 15 USD per month, alongside finance, contracts, meetings, and social workflows.',
   },
 ];
 
 export const metadata: Metadata = {
   title: 'FAQ | Alphaclone',
   description:
-    'Frequently asked questions about Alphaclone pricing, features, and how it replaces CRM, invoicing, contracts, social media, and meetings.',
+    'Frequently asked questions about Alphaclone pricing, features, CRM, invoicing, contracts, social media workflows, and meetings.',
   alternates: { canonical: `${SITE_URL}/faq` },
   openGraph: {
     title: 'FAQ | Alphaclone',

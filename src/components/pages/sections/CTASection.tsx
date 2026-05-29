@@ -12,7 +12,7 @@ const CTASection: React.FC = () => {
                     Ready for <span className="hero-metallic-text">Unified Control?</span>
                 </h2>
                 <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-                    Deploy your Business OS in under 60 seconds. Join 500+ teams who have eliminated the SaaS Tax.
+                    Start your 14-day trial and build your operating workspace before you pay.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     <Link href="/register" className="w-full sm:w-auto">
@@ -27,7 +27,7 @@ const CTASection: React.FC = () => {
                     </Link>
                 </div>
                 <p className="mt-10 text-xs font-black text-slate-500 uppercase tracking-[0.3em]">
-                    No Credit Card Required • Instant Deployment • Global Scale
+                    No Credit Card Required • Clear Trial Terms • Cancel Anytime
                 </p>
             </div>
         </section>

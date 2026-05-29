@@ -223,7 +223,7 @@ Unique differentiators:
 - Native MCP server (Claude/Manus can operate the entire platform via AI)
 - AI Growth Agent runs autonomous outreach (no equivalent in HubSpot at this price)
 - Full double-entry accounting (not available in HubSpot or Monday)
-- 80-90% cost reduction vs equivalent SaaS stack
+- Can reduce stack cost when it replaces paid CRM, billing, meetings, contracts, and project systems
 - Single sign-on across all modules (no integration glue required)
 
 ---

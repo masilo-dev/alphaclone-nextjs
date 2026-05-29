@@ -43,7 +43,7 @@ const CLIENT_ERRORS = {
     type: 'warning'
   },
   NO_LEADS_FOUND: {
-    title: 'No Leads Found',
+    title: 'No Matching Leads',
     message: 'We could not find any business leads on this page.',
     suggestion: 'Try a different page or check if this website contains business information.',
     type: 'info'
@@ -55,7 +55,7 @@ const CLIENT_ERRORS = {
     type: 'error'
   },
   UNKNOWN_ERROR: {
-    title: 'Something Went Wrong',
+    title: 'Lead Discovery Error',
     message: 'We encountered an unexpected issue while finding leads.',
     suggestion: 'Please try again. If this continues, contact our support team.',
     type: 'error'

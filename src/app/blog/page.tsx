@@ -64,7 +64,7 @@ export default async function BlogPage() {
                     </div>
                 ) : (
                     <div className="text-center py-20">
-                        <p className="text-slate-400 text-lg">No published articles yet.</p>
+                        <p className="text-slate-400 text-lg">No articles are published yet. Draft or publish the first article from the content dashboard.</p>
                     </div>
                 )}
             </div>

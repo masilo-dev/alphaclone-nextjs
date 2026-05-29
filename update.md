@@ -1,5 +1,20 @@
 # Update Log
 
+## Date: 2026-05-29 (BRAND MESSAGING ALIGNMENT & COMPLIANCE AND GENERAL HARDENING)
+
+### Added/Modified
+- **Brand Messaging & Compliance** ([alphaclone-brand-messaging-checklist.md](file:///home/bonnie/alphaclone-nextjs/docs/alphaclone-brand-messaging-checklist.md), [LandingPage.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/LandingPage.tsx), [PricingPageContent.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/pricing/PricingPageContent.tsx), [OnboardingFlow.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/onboarding/OnboardingFlow.tsx), [CreateBusinessOnboarding.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/onboarding/CreateBusinessOnboarding.tsx), [ServicesPage.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/pages/ServicesPage.tsx), etc.):
+  - Documented the brand messaging prompt checklist based on Cialdini's Influence + Rory Sutherland's Alchemy + BS Continuum.
+  - Aligned website and UI copy across 50+ files to ensure claims are specific, verifiable, and respect the reader's intelligence (e.g., transitioning tool comparisons to generic categories, updating pricing FAQs, updating pitch hooks, and removing hard marketing assertions).
+  - Changed the pricing highlight label on the checkout/pricing page from "Most Popular" to "Single Plan" to reflect the single-pricing model transparently.
+- **Error Handling & UX Hardening** ([apiAuth.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/apiAuth.ts), [clientErrorResponse.ts](file:///home/bonnie/alphaclone-nextjs/src/lib/api/clientErrorResponse.ts)):
+  - Updated fallback error messages to present clear, actionable diagnostics instead of vague defaults (e.g., instructing users to send request IDs to support on failure).
+
+### Production Readiness
+- **Vercel Safe**: Clean production build verified via `npm run build` and `npm run typecheck` passing with zero errors.
+
+---
+
 ## Date: 2026-05-28 (OMNICHANNEL INBOX, WHATSAPP & ZOHO MAIL MCP EXTENSIONS, AND CONTRACT APPROVAL SCHEMAS)
 
 ### Added/Modified

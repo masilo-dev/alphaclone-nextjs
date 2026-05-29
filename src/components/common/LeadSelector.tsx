@@ -122,7 +122,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                                 </div>
                             ) : filteredLeads.length === 0 ? (
                                 <div className="p-4 text-center">
-                                    <p className="text-slate-400 text-sm mb-2">No leads found</p>
+                                    <p className="text-slate-400 text-sm mb-2">No leads match this search. Clear the search or add a new lead.</p>
                                     <a
                                         href="/dashboard/sales-agent"
                                         className="text-teal-400 text-xs hover:underline flex items-center justify-center gap-1"
@@ -177,4 +177,3 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
 };
 
 export default LeadSelector;
-

@@ -277,7 +277,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             </div>
             <div className="divide-y divide-white/5">
               {loading ? [...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />) :
-                filteredInvoices.length === 0 ? <div className="py-12 text-center text-[13px] text-slate-500">No invoices found.</div> :
+                filteredInvoices.length === 0 ? <div className="py-12 text-center text-[13px] text-slate-500">No invoices match this filter. Clear the filter or create a new invoice.</div> :
                 filteredInvoices.map(inv => <InvoiceRow key={inv.id} invoice={inv} onDelete={deleteInvoice} onMarkPaid={markPaid} onTap={setSelectedInvoice} />)
               }
             </div>

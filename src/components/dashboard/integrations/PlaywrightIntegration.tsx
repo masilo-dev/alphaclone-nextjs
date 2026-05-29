@@ -134,7 +134,7 @@ export function PlaywrightIntegration() {
     
     if (errorMessage.includes('No leads found') || errorMessage.includes('empty')) {
       return {
-        title: 'No Leads Found',
+        title: 'No Matching Leads',
         message: 'We could not find any business leads on this page.',
         suggestion: 'Try a different page or check if this website contains business information.',
         type: 'info'
@@ -143,7 +143,7 @@ export function PlaywrightIntegration() {
     
     // Default friendly error
     return {
-      title: 'Something Went Wrong',
+      title: 'Lead Discovery Error',
       message: 'We encountered an unexpected issue while finding leads.',
       suggestion: 'Please try again. If this continues, contact our support team.',
       type: 'error'

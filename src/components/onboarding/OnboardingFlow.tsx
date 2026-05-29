@@ -35,14 +35,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
     const steps: OnboardingStep[] = [
         {
             id: 'welcome',
-            title: 'Mission Control Initialized.',
-            description: 'Your unfair advantage is ready to deploy. Takes 60 seconds.',
+            title: 'Command Center Ready.',
+            description: 'Your workspace is ready. Connect the basics or go straight to the dashboard.',
             icon: <CheckCircle className="w-16 h-16 text-teal-400" />,
         },
         {
             id: 'profile',
-            title: 'Identity Secure.',
-            description: 'Upload your photo so we know who is in charge here.',
+            title: 'Profile Setup.',
+            description: 'Add a profile photo so teammates know who owns the work.',
             icon: <CheckCircle className="w-16 h-16 text-blue-400" />,
             action: {
                 label: 'Polish Profile',
@@ -53,8 +53,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
         },
         {
             id: 'integrations',
-            title: 'Connect Your Stack.',
-            description: 'Hook up Gmail and Stripe to automate the daily grind.',
+            title: 'Connect Your Operating Stack.',
+            description: 'Connect Gmail and Stripe when you are ready to route email and payments through AlphaClone.',
             icon: <CheckCircle className="w-16 h-16 text-orange-400" />,
             action: {
                 label: 'Link Accounts',
@@ -65,8 +65,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
         },
         {
             id: 'tour',
-            title: 'The Grand Tour.',
-            description: '60 seconds to master your new Business OS.',
+            title: 'Workspace Tour.',
+            description: 'See where CRM, projects, finance, and contracts live in your Business OS.',
             icon: <CheckCircle className="w-16 h-16 text-purple-400" />,
             action: {
                 label: 'Show Me',
@@ -77,11 +77,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
         },
         {
             id: 'finish',
-            title: 'Let\'s Get Dangerous.',
-            description: 'Execution starts now. Go get them.',
+            title: 'Your command center is ready.',
+            description: 'Open the dashboard and start with the next real workflow.',
             icon: <CheckCircle className="w-16 h-16 text-green-400" />,
             action: {
-                label: 'Ignite Dashboard',
+                label: 'Open Dashboard',
                 onClick: () => {
                     handleComplete();
                 },
@@ -223,4 +223,3 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
 };
 
 export default OnboardingFlow;
-

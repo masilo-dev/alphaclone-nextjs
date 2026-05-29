@@ -64,7 +64,7 @@ function handleZohoError(err: unknown): NextResponse {
     }
 
     console.error('[Zoho Mail API]', err);
-    return NextResponse.json({ error: 'Something went wrong. Please try again.', code: 'INTERNAL_ERROR' }, { status: 500 });
+    return NextResponse.json({ error: 'Zoho Mail request failed on our side. Try again or reconnect Zoho if it repeats.', code: 'INTERNAL_ERROR' }, { status: 500 });
 }
 
 export async function GET(req: NextRequest) {

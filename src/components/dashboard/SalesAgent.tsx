@@ -449,7 +449,7 @@ const SalesAgent: React.FC = () => {
                     }
                     return { count, processed };
                 } else {
-                    throw new Error("No leads found. AI can make mistakes or have region-specific limitations. Try being more direct with your search or adjusting the criteria.");
+                    throw new Error("No matching leads for this search. Try a clearer niche, a broader location, or fewer filters.");
                 }
             },
             (result) => {
@@ -923,7 +923,7 @@ const SalesAgent: React.FC = () => {
 
                     return { count, processed, industry, location };
                 } else {
-                    throw new Error("No leads found. Try different criteria.");
+                    throw new Error("No matching leads for this search. Try a broader niche or location.");
                 }
             },
             (result) => {
@@ -1266,4 +1266,3 @@ const SalesAgent: React.FC = () => {
 };
 
 export default SalesAgent;
-

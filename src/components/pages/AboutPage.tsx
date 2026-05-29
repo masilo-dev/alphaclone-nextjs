@@ -20,12 +20,12 @@ const AboutPage: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
 
     const stats = [
-        { label: 'Businesses Served', value: '500+', sub: 'and growing every week' },
-        { label: 'Tools Replaced Per Client', value: '8+', sub: 'on average' },
-        { label: 'Monthly SaaS Costs Saved', value: '$280', sub: 'per client, on average' },
-        { label: 'Hours Saved Per Week', value: '15+', sub: 'per business owner' },
-        { label: 'Customer Satisfaction', value: '97%', sub: 'based on support surveys' },
-        { label: 'Uptime Guarantee', value: '99.9%', sub: 'SLA for all plans' },
+        { label: 'Core Workflows', value: 'CRM', sub: 'pipeline and contacts' },
+        { label: 'Revenue Workflow', value: 'Billing', sub: 'quotes, invoices, payments' },
+        { label: 'Legal Workflow', value: 'Contracts', sub: 'drafts, approvals, signatures' },
+        { label: 'Delivery Workflow', value: 'Projects', sub: 'tasks, milestones, ownership' },
+        { label: 'Communication Workflow', value: 'Comms', sub: 'email, meetings, updates' },
+        { label: 'Operating Layer', value: 'OS', sub: 'one backbone for daily work' },
     ];
 
     const timeline = [
@@ -300,7 +300,7 @@ const AboutPage: React.FC = () => {
                                 <span className="hero-metallic-text">Business Operations?</span>
                             </h2>
                             <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                                Join 500+ high-performance teams running smarter on AlphaClone. Deploy your Unified Business OS in under 60 seconds.
+                                Start a 14-day trial and build your Unified Business OS before you pay.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
                                 <Link href="/register">

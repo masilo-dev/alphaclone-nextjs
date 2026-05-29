@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s | AlphaClone Systems",
   },
   description:
-    "Run your entire business from one AI platform. CRM, invoicing, contracts, social media, and meetings in plain English. Replace 10+ tools for $15 per month.",
+    "Run CRM, invoicing, contracts, social media workflows, and meetings from one AI-assisted business workspace. Starter plans begin at $15 per month.",
   keywords: [
     "AI business operating system",
     "Alphaclone",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Alphaclone — AI Business OS for Founders",
     description:
-      "Replace 10+ tools with one AI platform. CRM, invoicing, contracts, social media, and meetings for $15 per month.",
+      "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
     type: "website",
     url: SITE_URL,
     siteName: "AlphaClone Systems",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Alphaclone — AI Business OS for Founders",
     description:
-      "Replace 10+ tools with one AI platform. CRM, invoicing, contracts, social media, and meetings. $15 per month.",
+      "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
     creator: "@AlphaCloneSys",
     images: ["/twitter-image"],
   },

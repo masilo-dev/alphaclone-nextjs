@@ -128,9 +128,9 @@ export default async function BlogPost({ params }: PageProps) {
 
                     <div className="mt-16 bg-gradient-to-r from-teal-900/50 to-blue-900/50 rounded-2xl p-8 border border-teal-500/20 text-center relative overflow-hidden">
                         <div className="relative z-10">
-                            <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Business?</h3>
+                            <h3 className="text-2xl font-bold text-white mb-4">Ready to Try AlphaClone?</h3>
                             <p className="text-slate-300 mb-8 max-w-xl mx-auto">
-                                Join thousands of businesses using AlphaClone Systems to automate and scale operations.
+                                Start a 14-day trial and test the CRM, billing, contracts, meetings, and workflow modules in one workspace.
                             </p>
                             <Link href="/register" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">
                                 Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />

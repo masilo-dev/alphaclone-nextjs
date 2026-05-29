@@ -503,7 +503,7 @@ const SetupWizard: React.FC = () => {
       title: 'Complete Your Profile',
       description: 'Add your business information to personalize your experience',
       component: ProfileSetup,
-      isRequired: true,
+      isRequired: false,
       isCompleted: completedSteps.has('profile'),
       actionText: 'Complete Profile',
       icon: Users
@@ -513,7 +513,7 @@ const SetupWizard: React.FC = () => {
       title: 'Set Up Payment System',
       description: 'Connect Stripe to receive payments directly to your account',
       component: StripeConnectSetup,
-      isRequired: true,
+      isRequired: false,
       isCompleted: completedSteps.has('payments'),
       actionText: 'Connect Stripe',
       icon: CreditCard
@@ -523,7 +523,7 @@ const SetupWizard: React.FC = () => {
       title: 'Configure Email Service',
       description: 'Set up SendGrid to send professional emails to clients',
       component: EmailServiceSetup,
-      isRequired: true,
+      isRequired: false,
       isCompleted: completedSteps.has('email'),
       actionText: 'Configure Email',
       icon: Mail
@@ -531,7 +531,7 @@ const SetupWizard: React.FC = () => {
     {
       id: 'crm',
       title: 'Connect Your CRM',
-      description: 'Sync contacts and deals with HubSpot for seamless workflow',
+      description: 'Sync contacts and deals with HubSpot when you want CRM data in one command center',
       component: HubSpotSetup,
       isRequired: false,
       isCompleted: completedSteps.has('crm'),

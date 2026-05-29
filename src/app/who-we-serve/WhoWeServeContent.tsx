@@ -71,7 +71,7 @@ export default function WhoWeServePage() {
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
                             <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-                                AlphaClone isn't just a tool—it's the operating layer for teams who have outgrown fragmented SaaS and need a unified, high-authority system.
+                                AlphaClone is the operating layer for teams that have outgrown fragmented SaaS and need one command center.
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                                 <Button
@@ -109,7 +109,7 @@ export default function WhoWeServePage() {
                                         <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Replaces</p>
                                         <p className="text-sm font-bold text-white">HubSpot + ClickUp + DocuSign</p>
                                     </div>
-                                    <p className="text-slate-400 leading-relaxed text-sm">Managing clients across silos kills your margin. AlphaClone provides a single multi-tenant architecture for unlimited clients and high-velocity delivery.</p>
+                                    <p className="text-slate-400 leading-relaxed text-sm">Managing clients across silos creates rework. AlphaClone gives you one client backbone for CRM, delivery, and billing.</p>
                                     <div className="space-y-3">
                                         <p className="text-xs font-black text-teal-400 uppercase tracking-widest">Core Impact:</p>
                                         <ul className="text-sm text-slate-300 space-y-2">
@@ -205,7 +205,7 @@ export default function WhoWeServePage() {
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-sm font-semibold text-slate-300 mb-2">Your Challenge:</p>
-                                        <p className="text-sm text-slate-400">Enterprise tools price you out. Need world-class features at prices that make sense for your market.</p>
+                                        <p className="text-sm text-slate-400">Enterprise software can price you out. AlphaClone gives you core operating infrastructure at a smaller-business price.</p>
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold text-orange-400 mb-2">How We Help:</p>
@@ -309,7 +309,7 @@ export default function WhoWeServePage() {
                             Ready for <span className="hero-metallic-text">Unified Control?</span>
                         </h2>
                         <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-                            Join 500+ high-performance teams running smarter on AlphaClone. Deploy your 14-day free trial in under 60 seconds.
+                            Start a 14-day trial and build your operating workspace before you pay.
                         </p>
                          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Button
@@ -336,4 +336,3 @@ export default function WhoWeServePage() {
         </div>
     );
 }
-
