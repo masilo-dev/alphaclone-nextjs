@@ -5,6 +5,9 @@
 ### Added/Modified
 - **Next.js Config Module Transpilation** ([next.config.ts](file:///home/bonnie/alphaclone-nextjs/next.config.ts)):
   - Added `@tiptap/core`, `@tiptap/react`, and `@tiptap/pm` to the `transpilePackages` array in `next.config.ts`. This resolves import and compilation errors related to Tiptap core packages when bundling with Next.js Turbopack / Webpack, ensuring seamless module compilation.
+- **Explicit Tiptap Dependencies & Version Alignment** ([package.json](file:///home/bonnie/alphaclone-nextjs/package.json), [package-lock.json](file:///home/bonnie/alphaclone-nextjs/package-lock.json)):
+  - Explicitly added `@tiptap/core`, `@tiptap/pm`, `@tiptap/react`, `@tiptap/extension-bubble-menu`, and `@tiptap/extension-floating-menu` to `package.json` dependencies.
+  - Locked all these Tiptap packages to the exact version `3.21.0` to resolve transitive dependency hoisting issues and version conflicts in Turbopack's module resolution pipeline on Vercel.
 
 ### Production Readiness
 - **Vercel Safe**: Clean production compilation verified. Next.js production build (`npm run build`) and typecheck (`npm run typecheck`) both compiled successfully with zero errors.
