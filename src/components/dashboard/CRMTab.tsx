@@ -16,6 +16,10 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { churnPropensityService, ChurnRiskReport } from '@/services/intelligence/churnPropensityService';
 import { customer360Service, Customer360Profile, TimelineEvent } from '@/services/intelligence/customer360Service';
+import { presenceService } from '@/services/presenceService';
+import { microsoft365Service } from '@/services/microsoft365Service';
+import { missedCallsService } from '@/services/missedCallsService';
+import OnlineStatusBadge from './OnlineStatusBadge';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -116,10 +120,12 @@ const statusColors: Record<string, string> = {
 // ── Swipeable Row ──────────────────────────────────────────────────────────────
 const SwipeableRow: React.FC<{
   entity: CRMEntity;
+  status: 'online' | 'away' | 'busy' | 'offline';
+  isTeamsConnected: boolean;
   onMarkContacted: (id: string) => void;
   onDisqualify: (id: string) => void;
   onTap: (entity: CRMEntity) => void;
-}> = ({ entity, onMarkContacted, onDisqualify, onTap }) => {
+}> = ({ entity, status, isTeamsConnected, onMarkContacted, onDisqualify, onTap }) => {
   const x = useMotionValue(0);
   const leftOpacity  = useTransform(x, [0, 80],  [0, 1]);
   const rightOpacity = useTransform(x, [-80, 0], [1, 0]);
@@ -159,14 +165,26 @@ const SwipeableRow: React.FC<{
         onClick={() => onTap(entity)}
       >
         {/* Avatar */}
-        <div className={`w-10 h-10 rounded-xl ${hashColor(entity.name)} flex items-center justify-center flex-shrink-0 shadow-inner`}>
-          <span className="text-xs font-black text-white">{getInitials(entity.name)}</span>
+        <div className="relative flex-shrink-0">
+          <div className={`w-10 h-10 rounded-xl ${hashColor(entity.name)} flex items-center justify-center shadow-inner`}>
+            <span className="text-xs font-black text-white">{getInitials(entity.name)}</span>
+          </div>
+          <OnlineStatusBadge
+            status={status}
+            size="sm"
+            className="absolute -bottom-1 -right-1 border-2 border-slate-950 rounded-full bg-slate-950"
+          />
         </div>
 
         {/* Center */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-sm font-bold text-white truncate">{entity.name}</span>
+            {isTeamsConnected && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-purple-500/20 bg-purple-950/30 text-purple-300 flex items-center gap-0.5">
+                Teams
+              </span>
+            )}
             {entity.source && (
               <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md capitalize flex-shrink-0 ${sourceColors[entity.source.toLowerCase()] || 'bg-slate-800 text-slate-400'}`}>
                 {entity.source}
@@ -296,10 +314,13 @@ const LeadDetail: React.FC<{
 // ── Client/Contact 360 Detail Component ────────────────────────────────────────
 const Client360Detail: React.FC<{
   client: BusinessClient;
+  user: User;
   onBack: () => void;
   onNewDeal: (client: BusinessClient) => void;
   onDraftContract: (client: BusinessClient) => void;
-}> = ({ client, onBack, onNewDeal, onDraftContract }) => {
+  status: 'online' | 'away' | 'busy' | 'offline';
+  isTeamsConnected: boolean;
+}> = ({ client, user, onBack, onNewDeal, onDraftContract, status, isTeamsConnected }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
 
@@ -331,10 +352,16 @@ const Client360Detail: React.FC<{
     fetch360Data();
   }, [client, currentTenant?.id]);
 
-  const handleStartVideoCall = () => {
+  const handleStartVideoCall = async () => {
     const roomId = `room-${client.id.slice(0, 8)}`;
-    toast.success('Meeting launched! Redirecting to call room...');
-    router.push(`/dashboard/call/${roomId}`);
+    if (status === 'online') {
+      toast.success('Meeting launched! Redirecting to call room...');
+      router.push(`/dashboard/call/${roomId}`);
+    } else {
+      toast.error(`${client.name} is offline. Missed call notification sent.`);
+      await missedCallsService.createMissedCall(user.id, client.id, 'video', roomId);
+      await missedCallsService.createCallAttempt(user.id, client.id, 'video', roomId);
+    }
   };
 
   const handleOpenWhatsApp = () => {
@@ -359,8 +386,13 @@ const Client360Detail: React.FC<{
       <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-28">
         {/* Profile Card */}
         <div className="flex flex-col items-center gap-2 py-4">
-          <div className={`w-20 h-20 rounded-2xl ${hashColor(client.name)} flex items-center justify-center shadow-lg shadow-black/30`}>
+          <div className={`w-20 h-20 rounded-2xl ${hashColor(client.name)} flex items-center justify-center shadow-lg shadow-black/30 relative`}>
             <span className="text-2xl font-black text-white">{getInitials(client.name)}</span>
+            <OnlineStatusBadge
+              status={status}
+              size="lg"
+              className="absolute -bottom-1 -right-1 border-4 border-slate-950 rounded-full bg-slate-950"
+            />
           </div>
           <h2 className="text-xl font-bold text-white text-center mt-2">{client.name}</h2>
           <div className="flex items-center gap-2">
@@ -370,6 +402,11 @@ const Client360Detail: React.FC<{
             {client.industry && (
               <span className="text-[11px] font-bold px-3 py-1 rounded-full border border-slate-700 bg-slate-900/60 text-slate-400 capitalize">
                 {client.industry}
+              </span>
+            )}
+            {isTeamsConnected && (
+              <span className="text-[11px] font-bold px-3 py-1 rounded-full border border-purple-500/30 bg-purple-950/40 text-purple-300 flex items-center gap-1.5 shadow-sm shadow-purple-500/10 animate-pulse">
+                Teams Synced
               </span>
             )}
           </div>
@@ -813,10 +850,70 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [search, setSearch] = useState('');
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
 
+  const [presenceMap, setPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
+  const [teamsPresenceMap, setTeamsPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
+  const [isTeamsConnected, setIsTeamsConnected] = useState<boolean>(false);
+
   // Modals / Drawers
   const [isQualifyOpen, setIsQualifyOpen] = useState(false);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  useEffect(() => {
+    const checkTeamsConnection = async () => {
+      if (currentTenant?.id) {
+        const { config } = await microsoft365Service.getMicrosoft365Config(currentTenant.id);
+        setIsTeamsConnected(!!config?.services?.teams);
+      }
+    };
+    checkTeamsConnection();
+  }, [currentTenant?.id]);
+
+  useEffect(() => {
+    const fetchPresences = async () => {
+      const { data } = await supabase
+        .from('user_presence')
+        .select('user_id, status');
+      if (data) {
+        const initialMap: Record<string, 'online' | 'away' | 'busy' | 'offline'> = {};
+        data.forEach((p: any) => {
+          initialMap[p.user_id] = p.status;
+        });
+        setPresenceMap(initialMap);
+      }
+    };
+    fetchPresences();
+
+    const unsubscribe = presenceService.subscribeToPresence((presence) => {
+      setPresenceMap((prev) => ({
+        ...prev,
+        [presence.user_id]: presence.status,
+      }));
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isTeamsConnected && currentTenant?.id) {
+      const fetchTeamsPresences = async () => {
+        const allEntities = [...leads, ...clients];
+        const newTeamsMap: Record<string, 'online' | 'away' | 'busy' | 'offline'> = {};
+        await Promise.all(
+          allEntities.map(async (entity) => {
+            if (entity.email) {
+              const { status } = await microsoft365Service.fetchTeamsPresence(currentTenant.id, entity.email);
+              newTeamsMap[entity.id] = status;
+            }
+          })
+        );
+        setTeamsPresenceMap(newTeamsMap);
+      };
+      fetchTeamsPresences();
+    }
+  }, [isTeamsConnected, currentTenant?.id, leads, clients]);
 
   // Fetch data across leads & business_clients
   const loadCRMData = useCallback(async () => {
@@ -1063,6 +1160,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       return (
         <Client360Detail
           client={selectedEntity.rawClient}
+          user={user}
           onBack={() => setSelectedEntity(null)}
           onNewDeal={(c) => {
             setSelectedEntity(null);
@@ -1072,6 +1170,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             setSelectedEntity(null);
             router.push('/dashboard/business/contracts');
           }}
+          status={isTeamsConnected ? (teamsPresenceMap[selectedEntity.id] || 'offline') : (presenceMap[selectedEntity.id] || 'offline')}
+          isTeamsConnected={isTeamsConnected}
         />
       );
     }
@@ -1179,6 +1279,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               <SwipeableRow
                 key={entity.id}
                 entity={entity}
+                status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
+                isTeamsConnected={isTeamsConnected}
                 onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
                 onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
                 onTap={setSelectedEntity}

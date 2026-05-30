@@ -1085,3 +1085,15 @@
 ### Production Readiness
 - **Vercel Safe**: Verified correct serving of the static association JSON and type-safe UI component compilations with `npm run typecheck`.
 
+---
+
+## Date: 2026-05-30 (MS Teams Calling & Presence Integration)
+
+### Added/Modified
+- **MS Teams Presence Check/Mock Helper** ([microsoft365Service.ts](file:///home/bonnie/alphaclone-nextjs/src/services/microsoft365Service.ts)): Added a new `fetchTeamsPresence(tenantId, email)` method that checks if the Microsoft 365 Teams service is connected, fetches the Teams status, and falls back to a simulated presence when appropriate.
+- **Presence Lifecycle & Missed Calls in Dashboard Shell** ([Dashboard.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/Dashboard.tsx) & [BusinessDashboard.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/BusinessDashboard.tsx)): Configured dashboard mount hooks to automatically register the user presence as 'online' using `presenceService.initializePresence` and clean up on unmount. Deployed the `<MissedCallsNotification>` indicator in dashboard headers supporting one-click "Call Back" routing.
+- **CRM Integration & Presence Badges** ([CRMTab.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/CRMTab.tsx)): Integrated live presence badges dynamically linked to native workspace status or Microsoft Teams presence (if connected). Users are now prevented from starting calls to offline contacts; instead, an offline call registers a missed call attempt and triggers an automated notification.
+
+### Production Readiness
+- **Vercel Safe**: 100% type-safe compilation verified across CRM and shell layouts. Successfully executed `npm run typecheck` returning exit code 0.
+

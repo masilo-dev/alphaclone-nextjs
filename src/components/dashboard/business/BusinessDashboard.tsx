@@ -100,6 +100,8 @@ import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import NotificationCenter from '../NotificationCenter';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { presenceService } from '@/services/presenceService';
+import MissedCallsNotification from '../MissedCallsNotification';
 
 /** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). CRM pipeline routes scroll with the main column so they are not listed here. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
@@ -144,6 +146,16 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             setSidebarOpen(window.innerWidth >= 768);
         }
     }, []);
+
+    // Initialize MS Teams-like Presence
+    React.useEffect(() => {
+        if (user?.id) {
+            presenceService.initializePresence(user.id, 'online');
+            return () => {
+                presenceService.cleanup(user.id);
+            };
+        }
+    }, [user?.id]);
 
     // -- PERSISTENT VIDEO CALL STATE --
     const { tasks: bgTasks } = useBackgroundTasks();
@@ -754,6 +766,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <div className="hidden sm:block w-px h-6 bg-slate-800 mx-1" />
 
                         <div className="flex items-center gap-3 sm:gap-4">
+                            <MissedCallsNotification
+                                userId={user.id}
+                                onCallBack={(callerId) => {
+                                    const roomId = `room-${callerId.slice(0, 8)}`;
+                                    toast.success('Calling back...');
+                                    router.push(`/dashboard/call/${roomId}`);
+                                }}
+                            />
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
                             <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group relative">
                                 <Image
