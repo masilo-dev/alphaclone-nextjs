@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ExcelJS from 'exceljs';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
@@ -76,27 +75,10 @@ export async function POST(request: NextRequest) {
       const text = await file.text();
       rawRows = parseCsv(text);
     } else {
-      const workbook = new ExcelJS.Workbook();
-      const buffer = new Uint8Array(await file.arrayBuffer());
-      await workbook.xlsx.load(buffer as any);
-      const worksheet = workbook.worksheets[0];
-      if (!worksheet) {
-        return NextResponse.json({ error: 'Workbook has no sheets', code: 'VALIDATION_ERROR' }, { status: 400 });
-      }
-      const headerRow = worksheet.getRow(1);
-      const headers = ((headerRow.values as unknown[]) || []).slice(1).map((v) => String(v || '').trim());
-      for (let r = 2; r <= worksheet.rowCount; r++) {
-        const row = worksheet.getRow(r);
-        const item: Record<string, unknown> = {};
-        let hasData = false;
-        headers.forEach((header, index) => {
-          const value = row.getCell(index + 1).value as any;
-          const normalizedValue = value && typeof value === 'object' && 'text' in value ? value.text : value;
-          if (String(normalizedValue || '').trim()) hasData = true;
-          item[header || `column${index + 1}`] = normalizedValue ?? '';
-        });
-        if (hasData) rawRows.push(item);
-      }
+      return NextResponse.json(
+        { error: 'Only CSV imports are supported. Please export as CSV and re-upload.', code: 'VALIDATION_ERROR' },
+        { status: 400 }
+      );
     }
 
     const recipients = mapRows(rawRows);

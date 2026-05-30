@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import DOMPurify from 'dompurify';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
     ChevronDown, ChevronUp, ChevronRight, Sparkles, Tag, FileText, CheckCircle2, Loader2, Upload, Search,
@@ -94,6 +95,12 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         sendImmediately: false,
         languageMode: 'auto' as CampaignLanguageMode,
     });
+
+    const sanitizedBodyHtml = useMemo(() => {
+        const html = String(form.bodyHtml || '').trim();
+        if (!html) return '';
+        return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    }, [form.bodyHtml]);
 
     // Touch Swipe list tracking
     const [swipeState, setSwipeState] = useState<Record<string, number>>({});
@@ -901,7 +908,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                     </div>
                                                     <div 
                                                         className="p-5 bg-white text-slate-800 rounded-2xl min-h-[220px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
-                                                        dangerouslySetInnerHTML={{ __html: form.bodyHtml || '<p class="text-slate-400 italic text-center py-10">Select a template or click "Code Editor" to write some HTML.</p>' }}
+                                                        dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic text-center py-10">Select a template or click "Code Editor" to write some HTML.</p>' }}
                                                     />
                                                 </div>
                                             </div>
@@ -946,7 +953,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                             <div className="bg-slate-950 border border-white/5 rounded-3xl overflow-hidden p-5">
                                                 <div 
                                                     className="p-5 bg-white text-slate-800 rounded-2xl min-h-[200px] prose prose-sm max-w-none shadow-inner"
-                                                    dangerouslySetInnerHTML={{ __html: form.bodyHtml || '<p class="text-slate-400 italic">No email body content.</p>' }}
+                                                    dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">No email body content.</p>' }}
                                                 />
                                             </div>
                                         </div>

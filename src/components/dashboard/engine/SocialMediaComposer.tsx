@@ -299,6 +299,7 @@ export default function SocialMediaComposer() {
                 link_url: linkUrl || undefined,
                 hashtags,
                 scheduled_at: publishNow ? undefined : scheduledAt || undefined,
+                publish_now: publishNow,
                 facebook_page_id: platforms.includes('facebook') ? selectedPageId : undefined,
                 linkedin_member_id: platforms.includes('linkedin') ? (selectedLinkedInMemberId || undefined) : undefined,
             }),
@@ -306,7 +307,10 @@ export default function SocialMediaComposer() {
         const data = await res.json();
 
         if (data.success) {
-            toast.success(publishNow ? 'Post sent!' : 'Post scheduled!', { id: toastId });
+            toast.success(
+                data.publishBlocked ? 'Saved (publishing disabled)' : publishNow ? 'Post sent!' : 'Post scheduled!',
+                { id: toastId }
+            );
             userLearningPreferencesService.recordSocialPost(finalCaption, aiTone);
             if (!publishNow) {
                 await launchFunnelService.completeStep('first_post_scheduled', user?.id, tenant?.id, {
@@ -1584,4 +1588,3 @@ Return only the comment text.`;
         </div>
     );
 }
-

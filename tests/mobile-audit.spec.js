@@ -13,9 +13,9 @@ test.describe('Mobile Audit & Restoration Verification', () => {
     });
 
     await page.goto('/auth/login');
-    // Use environment variables or provided credentials
-    const email = process.env.TEST_USER_EMAIL || 'inf@movanah.eu';
-    const password = process.env.TEST_USER_PASSWORD || 'Masilo@2';
+    const email = process.env.TEST_USER_EMAIL;
+    const password = process.env.TEST_USER_PASSWORD;
+    if (!email || !password) test.skip(true, 'Missing TEST_USER_EMAIL/TEST_USER_PASSWORD');
     
     await page.fill('input[type="email"]', email);
     await page.fill('input[type="password"]', password);

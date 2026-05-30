@@ -5,6 +5,10 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 
+function isSocialPublishEnabled(): boolean {
+  return process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
+}
+
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
   const { data: { user } } = await authClient.auth.getUser();
@@ -15,6 +19,10 @@ export async function POST(req: NextRequest) {
 
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
+
+    if (action === 'create_post' && !isSocialPublishEnabled()) {
+      return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
     }
 
     const supabase = createSupabaseAdminClient();

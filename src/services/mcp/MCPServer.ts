@@ -3344,6 +3344,10 @@ class AlphaCloneMCPServer {
           } = a;
           const cleanCaption = cleanProfessionalContent(caption || '');
           if (!cleanCaption) throw new Error('caption is required');
+          const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
+          if (publish_now && !publishEnabled) {
+            throw new Error('Publishing disabled');
+          }
 
           // A. Dynamic Context & Sovereign Brand Strategy Scanner
           let finalCaption = cleanCaption;

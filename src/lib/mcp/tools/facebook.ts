@@ -98,7 +98,7 @@ registerTool('facebook', {
     video_filename: z.string().optional().default('reel.mp4'),
     description: z.string().optional(),
     title: z.string().optional(),
-    publish_now: z.boolean().optional().default(true),
+    publish_now: z.boolean().optional().default(false),
     scheduled_publish_time: z.number().int().optional(),
   }),
   jsonSchema: {
@@ -111,7 +111,7 @@ registerTool('facebook', {
       video_filename: { type: 'string', description: 'Filename for base64 video (default: reel.mp4)', default: 'reel.mp4' },
       description: { type: 'string', description: 'Reel caption/description' },
       title: { type: 'string', description: 'Optional Reel title' },
-      publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
+      publish_now: { type: 'boolean', description: 'Publish immediately (default: false)', default: false },
       scheduled_publish_time: { type: 'number', description: 'Unix timestamp for scheduled publishing (only when publish_now is false)' },
     },
     required: ['tenant_id'],
@@ -266,7 +266,7 @@ registerTool('facebook', {
       })
     ).min(1).max(10),
     link_url: z.string().url().optional(),
-    publish_now: z.boolean().optional().default(true),
+    publish_now: z.boolean().optional().default(false),
   }),
   jsonSchema: {
     type: 'object',
@@ -289,7 +289,7 @@ registerTool('facebook', {
         },
       },
       link_url: { type: 'string', description: 'Optional link to attach to the post' },
-      publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
+      publish_now: { type: 'boolean', description: 'Publish immediately (default: false)', default: false },
     },
     required: ['tenant_id', 'caption', 'photos'],
   },

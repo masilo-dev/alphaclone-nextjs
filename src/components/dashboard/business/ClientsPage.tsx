@@ -368,41 +368,31 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             Description: cleanExportText(c.description || ''),
             Created: new Date(c.createdAt).toLocaleDateString(),
         }));
-        const ExcelJS = (await import('exceljs')).default;
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('Contacts');
-        const headers = Object.keys(rows[0] || {});
-        sheet.columns = headers.map((key) => ({ header: key, key }));
-        for (const row of rows) sheet.addRow(row);
-        sheet.getRow(1).font = { bold: true };
-        sheet.views = [{ state: 'frozen', ySplit: 1 }];
-        sheet.autoFilter = {
-            from: { row: 1, column: 1 },
-            to: { row: 1, column: headers.length },
+        const toCsvValue = (value: unknown) => {
+            const raw = value == null ? '' : String(value);
+            const escaped = raw.replace(/"/g, '""');
+            if (/[",\r\n]/.test(escaped)) return `"${escaped}"`;
+            return escaped;
         };
-        sheet.getColumn('Description').alignment = { wrapText: true, vertical: 'top' };
-        sheet.columns?.forEach((col) => {
-            if (!col) return;
-            const header = String(col.header || '');
-            if (header === 'Description') col.width = 55;
-            else if (header === 'Name') col.width = 22;
-            else if (header === 'Email') col.width = 28;
-            else if (header === 'Website') col.width = 26;
-            else if (header === 'Location') col.width = 18;
-            else col.width = 14;
+
+        const headers = Object.keys(rows[0] || {});
+        const lines: string[] = [];
+        lines.push(headers.map((h) => toCsvValue(h)).join(','));
+        rows.forEach((row) => {
+            lines.push(headers.map((h) => toCsvValue((row as any)[h])).join(','));
         });
 
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const csv = lines.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `alphaclone-contacts-${Date.now()}.xlsx`;
+        a.download = `alphaclone-contacts-${Date.now()}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toast.success(`Exported ${filteredClients.length} contacts to Excel`);
+        toast.success(`Exported ${filteredClients.length} contacts to CSV`);
 
         // Audit Trail
         if (currentTenant) {
@@ -410,7 +400,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 activityService.logSystemAction(
                     user.id,
                     'EXPORT',
-                    `Exported ${filteredClients.length} contacts to Excel database`,
+                    `Exported ${filteredClients.length} contacts to CSV`,
                     { count: filteredClients.length },
                     currentTenant.id
                 );
@@ -579,7 +569,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         variant="outline"
                         onClick={handleExportExcel}
                         icon={<FileSpreadsheet className="w-4 h-4" />}
-                        title="Export contacts to Excel"
+                        title="Export contacts to CSV"
                     >
                         Export
                     </Button>
@@ -1974,4 +1964,3 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
 };
 
 export default ClientsPage;
-
