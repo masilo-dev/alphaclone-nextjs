@@ -32,6 +32,8 @@ import AIStudio from './dashboard/AIStudio';
 import AIStudioTab from './dashboard/AIStudioTab';
 import NotificationCenter from './dashboard/NotificationCenter';
 import ThemeToggle from './ThemeToggle';
+import { presenceService } from '../services/presenceService';
+import MissedCallsNotification from './dashboard/MissedCallsNotification';
 import EnhancedGlobalSearch from './dashboard/EnhancedGlobalSearch';
 import Sidebar from './dashboard/Sidebar';
 import BottomNav from './dashboard/BottomNav';
@@ -162,6 +164,16 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Initialize recurring overdue task notifications
   useOverdueTaskNotifier(user);
+
+  // Initialize MS Teams-like Presence
+  useEffect(() => {
+    if (user?.id) {
+      presenceService.initializePresence(user.id, 'online');
+      return () => {
+        presenceService.cleanup(user.id);
+      };
+    }
+  }, [user?.id]);
 
   // Sync sidebar on mount to avoid hydration mismatch
   useEffect(() => {
@@ -1650,6 +1662,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onNavigate={router.push}
                 />
                 <ThemeToggle userId={user.id} />
+                <MissedCallsNotification
+                  userId={user.id}
+                  onCallBack={(callerId) => {
+                    const roomId = `room-${callerId.slice(0, 8)}`;
+                    toast.success('Calling back...');
+                    router.push(`/dashboard/call/${roomId}`);
+                  }}
+                />
                 <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />
               </div>
             </div>

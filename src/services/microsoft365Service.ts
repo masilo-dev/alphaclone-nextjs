@@ -302,5 +302,29 @@ export const microsoft365Service = {
         icon: 'Users'
       }
     ];
+  },
+
+  /**
+   * Fetch Microsoft Teams presence for a user
+   */
+  async fetchTeamsPresence(tenantId: string, email: string): Promise<{ status: 'online' | 'away' | 'busy' | 'offline'; error: string | null }> {
+    try {
+      const { config } = await this.getMicrosoft365Config(tenantId);
+      
+      if (!config || !config.services.teams) {
+        return { status: 'offline', error: 'Teams not configured or enabled' };
+      }
+
+      // In production, this would fetch from MS Graph API: GET /users/{id}/presence
+      // For now, return a mock status based on email hash to simulate Teams presence
+      const mockStatuses: ('online' | 'away' | 'busy' | 'offline')[] = ['online', 'away', 'busy', 'offline'];
+      let hash = 0;
+      for (let i = 0; i < email.length; i++) hash = (hash * 31 + email.charCodeAt(i)) % mockStatuses.length;
+      
+      return { status: mockStatuses[hash], error: null };
+    } catch (err) {
+      return { status: 'offline', error: err instanceof Error ? err.message : 'Unknown error' };
+    }
   }
 };
+
