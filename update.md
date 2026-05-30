@@ -1,5 +1,16 @@
 # Update Log
 
+## Date: 2026-05-30 (TIPTAP CORE AND REACT MODULE RESOLUTION & TURBOPACK BUILD FIXES)
+
+### Added/Modified
+- **Next.js Config Module Transpilation** ([next.config.ts](file:///home/bonnie/alphaclone-nextjs/next.config.ts)):
+  - Added `@tiptap/core`, `@tiptap/react`, and `@tiptap/pm` to the `transpilePackages` array in `next.config.ts`. This resolves import and compilation errors related to Tiptap core packages when bundling with Next.js Turbopack / Webpack, ensuring seamless module compilation.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. Next.js production build (`npm run build`) and typecheck (`npm run typecheck`) both compiled successfully with zero errors.
+
+---
+
 ## Date: 2026-05-29 (WHATSAPP STANDALONE STORAGE, SOCIAL COMMAND CENTER MEDIA & STRATEGIC ORCHESTRATION)
 
 ### Added/Modified

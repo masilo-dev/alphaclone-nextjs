@@ -19,7 +19,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  transpilePackages: ['@blocknote/core', '@blocknote/react', '@blocknote/mantine'],
+  transpilePackages: [
+    '@blocknote/core',
+    '@blocknote/react',
+    '@blocknote/mantine',
+    '@tiptap/core',
+    '@tiptap/react',
+    '@tiptap/pm'
+  ],
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
