@@ -90,6 +90,7 @@ const XIntegrationTab = React.lazy(() => import('../social/XIntegrationTab'));
 const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCenter'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
+const TeamsPage = React.lazy(() => import('./TeamsPage'));
 import { TrialBanner } from '../TrialBanner';
 
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -342,6 +343,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <BookingTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/teams':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <TeamsPage user={user} setActiveTab={setActiveTab} />
                     </React.Suspense>
                 );
             case '/dashboard/business/billing':
@@ -619,6 +626,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/ingestion': return t('Lead Ingestion');
             case '/dashboard/business/quotes': return t('Quotes & Proposals');
             case '/dashboard/business/booking': return t('Scheduling & Booking');
+            case '/dashboard/business/teams': return t('MS Teams');
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');

@@ -156,6 +156,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
       { label: 'Booking Links', href: '/dashboard/business/booking', icon: Clock },
+      { label: 'MS Teams', href: '/dashboard/business/teams', icon: Video },
     ]
   },
 
