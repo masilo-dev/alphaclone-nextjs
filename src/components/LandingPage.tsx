@@ -306,6 +306,7 @@ const LandingPage = () => {
       subject: '',
       message: ''
    });
+   const [selectedMobileCompetitor, setSelectedMobileCompetitor] = useState<'hubspot' | 'quickbooks' | 'asana' | 'others'>('hubspot');
 
    // Smooth scroll function
    const scrollToSection = useCallback((sectionId: string) => {
@@ -804,7 +805,8 @@ const LandingPage = () => {
                      </p>
                   </div>
 
-                  <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
                      <table className="w-full min-w-[800px]">
                         <thead>
                            <tr className="border-b border-slate-800">
@@ -871,6 +873,93 @@ const LandingPage = () => {
                            </tr>
                         </tfoot>
                      </table>
+                  </div>
+
+                  {/* Mobile Interactive Comparison View */}
+                  <div className="block md:hidden">
+                     {/* Tab selector */}
+                     <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none snap-x justify-start">
+                        {(['hubspot', 'quickbooks', 'asana', 'others'] as const).map((comp) => (
+                           <button
+                              key={comp}
+                              onClick={() => setSelectedMobileCompetitor(comp)}
+                              className={`px-4 py-2 rounded-full text-xs font-bold border transition-all capitalize whitespace-nowrap snap-center ${
+                                 selectedMobileCompetitor === comp
+                                    ? 'bg-teal-500/20 text-teal-400 border-teal-500/40 shadow-sm shadow-teal-500/10'
+                                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white'
+                              }`}
+                           >
+                              {comp === 'others' ? 'Others' : comp.charAt(0).toUpperCase() + comp.slice(1)}
+                           </button>
+                        ))}
+                     </div>
+
+                     {/* Features comparison stack */}
+                     <div className="space-y-3">
+                        {[
+                           { feature: 'CRM & Pipeline', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
+                           { feature: 'Invoicing & Payments', ac: true, hubspot: false, quickbooks: true, asana: false, others: 'Often separate' },
+                           { feature: 'Contract Management', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                           { feature: 'Project Management', ac: true, hubspot: false, quickbooks: false, asana: true, others: 'Often separate' },
+                           { feature: 'Video Conferencing', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                           { feature: 'Email Campaigns', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
+                           { feature: 'AI Sales Assistant', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                           { feature: 'Team Chat', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
+                           { feature: 'Analytics & Reports', ac: true, hubspot: true, quickbooks: true, asana: true, others: 'Often separate' },
+                           { feature: 'Calendar & Bookings', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
+                        ].map((row, idx) => {
+                           const val = row[selectedMobileCompetitor];
+                           let compValue;
+                           if (typeof val === 'boolean') {
+                              compValue = val ? (
+                                 <Check className="w-4 h-4 text-teal-400" />
+                              ) : (
+                                 <X className="w-4 h-4 text-slate-700" />
+                              );
+                           } else {
+                              compValue = <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{val}</span>;
+                           }
+
+                           return (
+                              <div key={idx} className="flex items-center justify-between p-3.5 bg-slate-900/30 border border-slate-800/85 rounded-xl">
+                                 <span className="text-xs font-semibold text-slate-350">{row.feature}</span>
+                                 <div className="flex items-center gap-4">
+                                    <div className="flex flex-col items-center gap-0.5">
+                                       <span className="text-[8px] uppercase tracking-widest text-slate-500 font-mono">AlphaClone</span>
+                                       <div className="w-7 h-7 bg-teal-500/10 border border-teal-500/25 rounded-md flex items-center justify-center">
+                                          <Check className="w-3.5 h-3.5 text-teal-400" />
+                                       </div>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-0.5">
+                                       <span className="text-[8px] uppercase tracking-widest text-slate-500 font-mono capitalize truncate max-w-[48px]">{selectedMobileCompetitor}</span>
+                                       <div className="w-7 h-7 bg-slate-950 border border-slate-900 rounded-md flex items-center justify-center">
+                                          {compValue}
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           );
+                        })}
+
+                        {/* Starting Price Card */}
+                        <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-teal-500/20 rounded-xl">
+                           <span className="text-xs font-bold text-white">Starting Price</span>
+                           <div className="flex items-center gap-4">
+                              <div className="flex flex-col items-center gap-0.5">
+                                 <span className="text-[8px] uppercase tracking-widest text-slate-400 font-mono">AlphaClone</span>
+                                 <div className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-md text-[10px] font-black">
+                                    $15/mo
+                                 </div>
+                              </div>
+                              <div className="flex flex-col items-center gap-0.5">
+                                 <span className="text-[8px] uppercase tracking-widest text-slate-500 font-mono capitalize">{selectedMobileCompetitor}</span>
+                                 <div className="px-2 py-0.5 bg-slate-950 text-slate-400 border border-slate-900 rounded-md text-[10px] font-semibold">
+                                    Varies
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
                   <div className="mt-12 text-center">
