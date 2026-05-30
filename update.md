@@ -1058,3 +1058,16 @@
 
 ### Production Readiness
 - **Vercel Safe**: Typecheck successfully executed with zero errors.
+
+---
+
+## Date: 2026-05-30 (Microsoft Identity Association & Mobile UI Enhancements)
+
+### Added/Modified
+- **Microsoft Identity Association Configuration** ([microsoft-identity-association.json](file:///home/bonnie/alphaclone-nextjs/public/.well-known/microsoft-identity-association.json)): Configured the Microsoft identity association file for domain verification, mapping the specified application ID.
+- **Mobile Deals Tab & Kanban Stages** ([DealsTab.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/DealsTab.tsx)): Optimised the Deals pipeline view for mobile with responsive stages list switcher, swipe-to-advance gesture interactions, and a clean deal creation modal layout.
+- **Landing Page Competitive Mobile view** ([LandingPage.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/LandingPage.tsx)): Integrated a mobile-responsive tabbed competitive comparison stack to replace the wide desktop tables on small viewports.
+
+### Production Readiness
+- **Vercel Safe**: Verified correct serving of the static association JSON and type-safe UI component compilations with `npm run typecheck`.
+
