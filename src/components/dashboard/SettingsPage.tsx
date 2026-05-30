@@ -31,6 +31,7 @@ import TwilioIntegration from './business/TwilioIntegration';
 import SendGridIntegration from './business/SendGridIntegration';
 import ResendIntegration from './business/ResendIntegration';
 import BrevoIntegration from './business/BrevoIntegration';
+import Microsoft365Integration from './business/Microsoft365Integration';
 import MFAEnrollment from './business/MFAEnrollment';
 
 interface SettingsPageProps {
@@ -598,6 +599,20 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </div>
                         {expandedRows['integ_zoho'] && (
                             <div className="p-4 bg-slate-950/40 border-t border-white/5"><ZohoIntegration user={user} /></div>
+                        )}
+                    </div>
+
+                    {/* Microsoft 365 */}
+                    <div>
+                        <div 
+                            onClick={() => toggleRow('integ_m365')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">Microsoft 365 / Teams Suite</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_m365'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['integ_m365'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5"><Microsoft365Integration /></div>
                         )}
                     </div>
 
