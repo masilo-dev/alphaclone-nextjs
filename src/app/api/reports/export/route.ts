@@ -1,13 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable'; // Note: This might need a separate import if not bundled
+
+function toCsvValue(value: unknown): string {
+    const raw = value == null ? '' : String(value);
+    const escaped = raw.replace(/"/g, '""');
+    if (/[",\r\n]/.test(escaped)) return `"${escaped}"`;
+    return escaped;
+}
+
+function toCsv(rows: any[]): string {
+    if (!rows || rows.length === 0) return '';
+    const headers = Object.keys(rows[0] || {});
+    const lines: string[] = [];
+    lines.push(headers.map((h) => toCsvValue(h)).join(','));
+    for (const row of rows) {
+        lines.push(headers.map((h) => toCsvValue(row?.[h])).join(','));
+    }
+    return lines.join('\n');
+}
 
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const type = searchParams.get('type') || 'pdf'; // pdf or xlsx
+        const type = searchParams.get('type') || 'pdf'; // pdf or csv
         const category = searchParams.get('category') || 'revenue'; // revenue, clients, activity
         const tenantId = searchParams.get('tenantId');
 
@@ -59,24 +76,12 @@ export async function GET(req: NextRequest) {
         }
 
         // 2. Generate Export
-        if (type === 'xlsx') {
-            const workbook = new ExcelJS.Workbook();
-            const sheet = workbook.addWorksheet(category.charAt(0).toUpperCase() + category.slice(1));
-
-            const headers = Object.keys(data[0] || {});
-            sheet.columns = headers.map((key) => ({ header: key, key }));
-            for (const row of data) {
-                sheet.addRow(row);
-            }
-
-            sheet.getRow(1).font = { bold: true };
-
-            const buffer = await workbook.xlsx.writeBuffer();
-
-            return new NextResponse(Buffer.from(buffer), {
+        if (type === 'csv' || type === 'xlsx') {
+            const csv = toCsv(data);
+            return new NextResponse(csv, {
                 headers: {
-                    'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'Content-Disposition': `attachment; filename=${fileName}.xlsx`,
+                    'Content-Type': 'text/csv; charset=utf-8',
+                    'Content-Disposition': `attachment; filename=${fileName}.csv`,
                 },
             });
         } else {

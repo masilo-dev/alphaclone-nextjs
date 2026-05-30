@@ -25,6 +25,10 @@ type SchedulePayload = {
   publish_now?: boolean;
 };
 
+function isSocialPublishEnabled(): boolean {
+  return process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
+}
+
 function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name: string | null }> {
   if (!raw || typeof raw !== 'object') return [];
   const maybePages = (raw as { company_pages?: unknown }).company_pages;
@@ -642,7 +646,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid scheduled_at date value' }, { status: 400 });
     }
     const scheduledAt = parsedScheduledAt ? parsedScheduledAt.toISOString() : null;
-    const shouldPublishNow = body.publish_now === true || !scheduledAt;
+    const shouldPublishNow = body.publish_now === true;
+    const publishEnabled = isSocialPublishEnabled();
 
     // Use a legacy-safe insert status; some deployments still enforce
     // an older social_posts_status_check that rejects "queued".
@@ -670,6 +675,9 @@ export async function POST(req: NextRequest) {
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 
     if (shouldPublishNow) {
+      if (!publishEnabled) {
+        return NextResponse.json({ success: true, post, publishBlocked: true }, { status: 202 });
+      }
       await publishSocialPost(post.id);
     }
 
@@ -749,6 +757,10 @@ export async function PATCH(req: NextRequest) {
         .eq('tenant_id', body.tenantId);
       if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
       return NextResponse.json({ success: true });
+    }
+
+    if (!isSocialPublishEnabled()) {
+      return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
     }
 
     const { error } = await supabase

@@ -85,35 +85,7 @@ export const fileImportService = {
                 }
                 return { contacts: toContacts(rows), error: null };
             }
-
-            const ExcelJS = (await import('exceljs')).default;
-            const workbook = new ExcelJS.Workbook();
-            const buffer = await file.arrayBuffer();
-            await workbook.xlsx.load(buffer as any);
-            const worksheet = workbook.worksheets[0];
-            if (!worksheet) {
-                return { contacts: [], error: 'Workbook has no sheets' };
-            }
-
-            const headerRow = worksheet.getRow(1);
-            const headers = (headerRow.values as any[]).slice(1).map((v) => normalizeKey(v));
-            const rows: Array<Record<string, any>> = [];
-            for (let r = 2; r <= worksheet.rowCount; r++) {
-                const row = worksheet.getRow(r);
-                const obj: Record<string, any> = {};
-                let hasAny = false;
-                for (let c = 0; c < headers.length; c++) {
-                    const key = headers[c] || `Column${c + 1}`;
-                    const cell = row.getCell(c + 1).value as any;
-                    const value =
-                        cell && typeof cell === 'object' && 'text' in cell ? String(cell.text || '') : cell ?? '';
-                    if (String(value).trim().length > 0) hasAny = true;
-                    obj[key] = value;
-                }
-                if (hasAny) rows.push(obj);
-            }
-
-            return { contacts: toContacts(rows), error: null };
+            return { contacts: [], error: 'XLSX import is disabled. Please upload a CSV file.' };
         } catch (err: any) {
             console.error('Error importing Excel:', err);
             return { contacts: [], error: err.message };

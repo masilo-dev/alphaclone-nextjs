@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
-import withPWAInit from "next-pwa";
+import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
 import { withBotId } from "botid/next/config";
 import { withWorkflow } from "workflow/next";
 
-const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV !== "production",
   register: false,
 });
 
@@ -22,8 +23,7 @@ const nextConfig: NextConfig = {
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_ENABLE_SERWIST:
-      process.env.ENABLE_SERWIST === 'true' ? 'true' : 'false',
+    NEXT_PUBLIC_ENABLE_SERWIST: 'true',
     NEXT_PUBLIC_ENABLE_PWA: 'true',
   },
   images: {
@@ -198,7 +198,7 @@ const nextConfig: NextConfig = {
 };
 
 // Apply plugins sequentially to resolve type mismatches between various HOC signatures
-const baseConfig = withPWA(nextConfig);
+const baseConfig = withSerwist(nextConfig);
 const workflowConfig = withWorkflow(baseConfig as any);
 const botIdConfig = withBotId(workflowConfig as any);
 

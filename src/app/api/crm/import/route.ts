@@ -1,8 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import ExcelJS from 'exceljs';
 import * as Sentry from '@sentry/nextjs';
 import { requireTenantAccess, routeErrorResponse, createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
+
+function splitCsvLine(line: string): string[] {
+    const cells: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+            const next = line[i + 1];
+            if (inQuotes && next === '"') {
+                current += '"';
+                i++;
+                continue;
+            }
+            inQuotes = !inQuotes;
+            continue;
+        }
+        if (ch === ',' && !inQuotes) {
+            cells.push(current);
+            current = '';
+            continue;
+        }
+        current += ch;
+    }
+
+    cells.push(current);
+    return cells.map((c) => c.trim());
+}
+
+function parseCsv(text: string): Array<Record<string, string>> {
+    const lines = text
+        .split(/\r?\n/)
+        .map((l) => l.trimEnd())
+        .filter((l) => l.trim().length > 0);
+    if (lines.length === 0) return [];
+
+    const headers = splitCsvLine(lines[0] || '').map((h) => h.trim());
+    const rows: Array<Record<string, string>> = [];
+    for (const line of lines.slice(1)) {
+        const cells = splitCsvLine(line);
+        const row: Record<string, string> = {};
+        headers.forEach((header, index) => {
+            if (!header) return;
+            row[header] = String(cells[index] || '').trim();
+        });
+        rows.push(row);
+    }
+    return rows;
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -25,41 +74,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
-        const buffer = new Uint8Array(await file.arrayBuffer());
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer as any);
-        const worksheet = workbook.worksheets[0];
-        if (!worksheet) {
-            return NextResponse.json({ error: 'Workbook has no sheets' }, { status: 400 });
+        const isCsv = file.type.includes('csv') || file.name.toLowerCase().endsWith('.csv');
+        if (!isCsv) {
+            return NextResponse.json({ error: 'Only CSV imports are supported. Please export as CSV and re-upload.' }, { status: 400 });
         }
 
-        const normalizeCell = (value: unknown) => {
-            if (value == null) return '';
-            if (typeof value === 'string') return value;
-            if (typeof value === 'number') return value;
-            if (typeof value === 'boolean') return value ? 'true' : 'false';
-            if (value instanceof Date) return value.toISOString();
-            if (typeof value === 'object' && value && 'text' in (value as any)) return String((value as any).text || '');
-            if (typeof value === 'object' && value && 'result' in (value as any)) return String((value as any).result || '');
-            return String(value);
-        };
-
-        const headerRow = worksheet.getRow(1);
-        const headers = (headerRow.values as any[]).slice(1).map((h) => String(normalizeCell(h)).trim());
-        const data: Record<string, unknown>[] = [];
-        for (let r = 2; r <= worksheet.rowCount; r++) {
-            const row = worksheet.getRow(r);
-            const obj: Record<string, unknown> = {};
-            let hasAny = false;
-            for (let c = 0; c < headers.length; c++) {
-                const key = headers[c] || `Column${c + 1}`;
-                const raw = row.getCell(c + 1).value;
-                const cellValue = normalizeCell(raw);
-                if (cellValue !== '' && cellValue !== null && cellValue !== undefined) hasAny = true;
-                obj[key] = cellValue;
-            }
-            if (hasAny) data.push(obj);
-        }
+        const data = parseCsv(await file.text());
 
         if (data.length === 0) {
             return NextResponse.json({ error: 'File is empty' }, { status: 400 });

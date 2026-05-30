@@ -62,7 +62,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     subItems: [
       { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail, comingSoon: true },
     ]
   },
   {
@@ -91,7 +91,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
-      { label: 'Mail', href: '/dashboard/mail' },
+      { label: 'Mail', href: '/dashboard/mail', comingSoon: true },
       { label: 'Messages', href: '/dashboard/messages' },
     ]
   },
@@ -138,7 +138,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   {
     label: 'Social & Outreach', href: '#', icon: Globe,
     subItems: [
-      { label: 'Gmail / SMTP Mail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Gmail / SMTP Mail', href: '/dashboard/mail', icon: Mail, comingSoon: true },
       { label: 'WhatsApp Accounts', href: '/dashboard/business/whatsapp', icon: MessageCircle },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },

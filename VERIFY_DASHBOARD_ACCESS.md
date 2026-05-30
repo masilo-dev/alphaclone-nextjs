@@ -3,9 +3,9 @@
 ## ✅ TENANT_ADMIN ACCESS VERIFICATION
 
 ### Current Role: `tenant_admin`
-**User ID**: `df841125-59ce-4e09-aa2d-5b746ec03d9b`
-**Email**: `inf@movanah.eu`
-**Tenant ID**: `51772ee6-dee8-4c42-81f7-0fee297e5b27`
+**User ID**: `(redacted)`
+**Email**: `(redacted)`
+**Tenant ID**: `(redacted)`
 
 ---
 

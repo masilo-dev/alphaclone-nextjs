@@ -110,6 +110,14 @@ export async function updateSession(request: NextRequest) {
 
         // HARD GATE: Enforce trial and subscription status for dashboard routes
         if (pathname.startsWith('/dashboard')) {
+            const accept = request.headers.get('accept') || '';
+            const fetchDest = request.headers.get('sec-fetch-dest') || '';
+            const isDocumentNavigation = fetchDest === 'document' || accept.includes('text/html');
+
+            if (!isDocumentNavigation) {
+                return response;
+            }
+
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {

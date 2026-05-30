@@ -208,6 +208,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [loadingMorePosts, setLoadingMorePosts] = useState(false);
     const [insightsByPost, setInsightsByPost] = useState<Record<string, { loading?: boolean; rows?: { name: string; values?: { value?: number }[] }[]; note?: string }>>({});
     const [capabilitiesByPage, setCapabilitiesByPage] = useState<Record<string, any>>({});
+    const [pageInfoByPage, setPageInfoByPage] = useState<Record<string, any>>({});
+    const [pageInfoLoadingByPage, setPageInfoLoadingByPage] = useState<Record<string, boolean>>({});
+    const [pageInfoErrorByPage, setPageInfoErrorByPage] = useState<Record<string, string>>({});
     const [deletingPostById, setDeletingPostById] = useState<Record<string, boolean>>({});
     const [hashtags, setHashtags] = useState<string[]>([]);
     const [suggestedHashtags, setSuggestedHashtags] = useState<string[]>(['#AlphaClone', '#AItools', '#founders', '#productivity', '#automation']);
@@ -267,15 +270,19 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             ? supabase.from('messenger_conversations').select('id, is_read').eq('tenant_id', tenantId)
             : Promise.resolve({ data: [] as { id: string; is_read: boolean }[], error: null });
 
-        const [pagesRes, leadsRes, convRes] = await Promise.all([
-            supabase
-                .from('facebook_integrations')
-                .select('id,page_id,page_name,is_active,connected_at,page_access_token,metadata')
-                .eq('user_id', user.id)
-                .eq('is_active', true),
-            leadsQuery,
-            convQuery,
-        ]);
+        const pagesQueryBase = supabase
+            .from('facebook_integrations')
+            .select('id,page_id,page_name,is_active,connected_at,page_access_token,metadata')
+            .eq('user_id', user.id)
+            .eq('is_active', true);
+
+        const pagesQuery = tenantId ? pagesQueryBase.eq('tenant_id', tenantId) : pagesQueryBase;
+
+        const [leadsRes, convRes] = await Promise.all([leadsQuery, convQuery]);
+        let pagesRes = await pagesQuery;
+        if (pagesRes.error && tenantId && /tenant_id/i.test(pagesRes.error.message)) {
+            pagesRes = await pagesQueryBase;
+        }
 
         if (pagesRes.error) {
             console.error('[Facebook] facebook_integrations select:', pagesRes.error);
@@ -428,6 +435,31 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
     }, []);
 
+    const loadPageInfo = useCallback(async (pageId: string) => {
+        if (!pageId) return;
+        setPageInfoLoadingByPage((prev) => ({ ...prev, [pageId]: true }));
+        setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: '' }));
+        try {
+            const res = await fetch(`/api/facebook/page-info?pageId=${encodeURIComponent(pageId)}`);
+            if (res.status === 401 || res.status === 403) {
+                setReconnectRequired(true);
+                setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: 'Re-authentication required' }));
+                return;
+            }
+            const data = await res.json();
+            if (!res.ok || !data?.success) {
+                setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: data?.error || 'Failed to load page info' }));
+                return;
+            }
+            setPageInfoByPage((prev) => ({ ...prev, [pageId]: data.page }));
+        } catch (err) {
+            console.error('[Facebook] Failed to load page info:', err);
+            setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: 'Failed to load page info' }));
+        } finally {
+            setPageInfoLoadingByPage((prev) => ({ ...prev, [pageId]: false }));
+        }
+    }, []);
+
     const deleteFacebookPost = useCallback(async (postId: string) => {
         if (!selectedPageId || !postId) return;
         if (!window.confirm('Delete this Facebook post from the connected Page?')) return;
@@ -519,8 +551,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         if (selectedPageId) {
             void loadScheduleQueue();
             void loadPageCapabilities(selectedPageId);
+            void loadPageInfo(selectedPageId);
         }
-    }, [selectedPageId, loadScheduleQueue, loadPageCapabilities]);
+    }, [selectedPageId, loadScheduleQueue, loadPageCapabilities, loadPageInfo]);
 
     const duplicateMap = useMemo(() => {
         const counts: Record<string, number> = {};
@@ -1023,6 +1056,61 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                     </div>
                                                 ))}
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {selectedPageId && (
+                                        <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                                            <div className="mb-3 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p className="text-xs font-black uppercase tracking-widest text-gray-500">Page Profile</p>
+                                                    <p className="mt-1 text-sm text-gray-300">
+                                                        {pageInfoErrorByPage[selectedPageId]
+                                                            ? pageInfoErrorByPage[selectedPageId]
+                                                            : pageInfoByPage[selectedPageId]?.name || 'Loading page details...'}
+                                                    </p>
+                                                </div>
+                                                {pageInfoByPage[selectedPageId]?.picture?.data?.url && (
+                                                    <img
+                                                        src={pageInfoByPage[selectedPageId].picture.data.url}
+                                                        alt=""
+                                                        className="h-10 w-10 rounded-xl border border-white/10 object-cover"
+                                                    />
+                                                )}
+                                            </div>
+                                            {pageInfoLoadingByPage[selectedPageId] ? (
+                                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                    Loading...
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
+                                                        <span className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Followers</span>
+                                                        <span className="mt-1 block text-sm font-black text-white">
+                                                            {Number(pageInfoByPage[selectedPageId]?.followers_count || 0).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
+                                                        <span className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Talking</span>
+                                                        <span className="mt-1 block text-sm font-black text-white">
+                                                            {Number(pageInfoByPage[selectedPageId]?.talking_about_count || 0).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
+                                                        <span className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Category</span>
+                                                        <span className="mt-1 block truncate text-sm font-black text-white">
+                                                            {String(pageInfoByPage[selectedPageId]?.category || '—')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
+                                                        <span className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Username</span>
+                                                        <span className="mt-1 block truncate text-sm font-black text-white">
+                                                            {pageInfoByPage[selectedPageId]?.username ? `@${pageInfoByPage[selectedPageId].username}` : '—'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 

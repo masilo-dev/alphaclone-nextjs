@@ -27,6 +27,11 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
+    if (!publishEnabled) {
+        return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
+    }
+
     const formData = await req.formData();
     const pageId = formData.get('pageId') as string;
     const message = formData.get('message') as string;

@@ -4,6 +4,7 @@ import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
 import { hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadNurtureWorkflow } from './lead-nurture';
 import { enrichLeadData } from '@/services/unifiedAIService';
+import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
 
 type WorkflowLead = {
   businessName: string;
@@ -105,43 +106,66 @@ async function discoverLeads(query: string, location: string): Promise<LeadResul
 }
 
 async function enrichLeads(rawLeads: LeadResult[], query: string, location: string): Promise<WorkflowLead[]> {
-  return Promise.all(
-    rawLeads.slice(0, 20).map(async (lead) => {
-      const trustScore = scoreLead(lead);
-      const intelligence = await enrichLeadData({
-        businessName: lead.business_name,
-        industry: lead.category || query,
-        location: lead.address || location,
-        website: lead.website,
-        knownEmails: uniqueStrings([lead.email]),
-        socialLinks: {},
-        techStack: [],
-      }).catch(() => 'Intelligence gathering failed. Please try again later.');
+  const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> => {
+    const results = new Array<R>(items.length);
+    let cursor = 0;
+    const workers = new Array(Math.min(limit, items.length)).fill(0).map(async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        results[index] = await fn(items[index], index);
+      }
+    });
+    await Promise.all(workers);
+    return results;
+  };
 
-      return {
-        businessName: lead.business_name,
-        email: lead.email || undefined,
-        phone: lead.phone || undefined,
-        website: lead.website || undefined,
-        location: lead.address || location,
+  return mapLimit(rawLeads.slice(0, 20), 4, async (lead) => {
+    const trustScore = scoreLead(lead);
+    const website = String(lead.website || '').trim();
+    let email = String(lead.email || '').trim();
+    let phone = String(lead.phone || '').trim();
+
+    if (website && (!email || !phone)) {
+      const enrichment = await enrichLeadWebsite(website, 12000).catch(() => null);
+      if (enrichment) {
+        if (!email) email = enrichment.emails?.[0] || '';
+        if (!phone) phone = enrichment.phone || '';
+      }
+    }
+
+    const intelligence = await enrichLeadData({
+      businessName: lead.business_name,
+      industry: lead.category || query,
+      location: lead.address || location,
+      website: lead.website,
+      knownEmails: uniqueStrings([email]),
+      socialLinks: {},
+      techStack: [],
+    }).catch(() => 'Intelligence gathering failed. Please try again later.');
+
+    return {
+      businessName: lead.business_name,
+      email: email || undefined,
+      phone: phone || undefined,
+      website: lead.website || undefined,
+      location: lead.address || location,
+      industry: lead.category || query,
+      category: lead.category,
+      source: lead.source,
+      lat: lead.lat,
+      lng: lead.lng,
+      rating: lead.rating,
+      trustScore,
+      score: trustScore,
+      notes: intelligence,
+      valueProposition: deriveValueProposition({
         industry: lead.category || query,
+        website: lead.website,
         category: lead.category,
-        source: lead.source,
-        lat: lead.lat,
-        lng: lead.lng,
         rating: lead.rating,
-        trustScore,
-        score: trustScore,
-        notes: intelligence,
-        valueProposition: deriveValueProposition({
-          industry: lead.category || query,
-          website: lead.website,
-          category: lead.category,
-          rating: lead.rating,
-        }),
-      };
-    })
-  );
+      }),
+    };
+  });
 }
 
 async function bulkAddCRM(scoredLeads: WorkflowLead[], tenantId: string) {

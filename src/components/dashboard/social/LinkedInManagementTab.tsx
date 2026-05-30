@@ -547,6 +547,7 @@ ${parentContext}Return only the comment text.`;
           tenantId: currentTenant.id,
           caption,
           platforms: ['linkedin'],
+          publish_now: publishNow,
           link_url: composeLinkUrl.trim() || undefined,
           media_urls: composeImageUrl.trim() ? [composeImageUrl.trim()] : undefined,
           media_types: composeImageUrl.trim() ? [composeMediaType] : undefined,
@@ -560,7 +561,10 @@ ${parentContext}Return only the comment text.`;
         toast.error(data.error || 'Failed to submit LinkedIn post', { id: toastId });
         return;
       }
-      toast.success(publishNow ? 'LinkedIn post submitted' : 'LinkedIn post scheduled', { id: toastId });
+      toast.success(
+        data.publishBlocked ? 'Saved (publishing disabled)' : publishNow ? 'LinkedIn post submitted' : 'LinkedIn post scheduled',
+        { id: toastId }
+      );
       setComposeCaption('');
       setComposeLinkUrl('');
       setComposeImageUrl('');
@@ -748,6 +752,29 @@ ${parentContext}Return only the comment text.`;
           />
         </div>
 
+        {composeCaption.trim() && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-xl bg-teal-600/20 border border-teal-500/30 flex items-center justify-center shrink-0">
+                <Linkedin className="h-5 w-5 text-teal-300" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-white">
+                    {selectedLinkedInOrganizationId
+                      ? companyPages.find((p) => p.id === selectedLinkedInOrganizationId)?.name || 'Company page'
+                      : 'Personal profile'}
+                  </p>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Preview</span>
+                </div>
+                <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap break-words">
+                  {composeCaption}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="relative">
             <input
@@ -846,12 +873,36 @@ ${parentContext}Return only the comment text.`;
         </div>
 
         <div className="flex items-center gap-2">
+          {integrations.length > 0 && (
+            <select
+              value={selectedLinkedInMemberId}
+              onChange={(e) => {
+                setSelectedLinkedInMemberId(e.target.value);
+                setSelectedLinkedInOrganizationId('');
+              }}
+              className="h-11 rounded-lg bg-slate-800 border border-slate-700 px-3 text-xs font-semibold text-slate-200 hover:border-slate-600 focus:outline-none max-w-[240px]"
+            >
+              {integrations.map((row) => (
+                <option key={row.linkedin_member_id} value={row.linkedin_member_id} className="bg-slate-900">
+                  {row.linkedin_member_id}
+                </option>
+              ))}
+            </select>
+          )}
           {!selectedIntegration?.is_active && (
             <button
               onClick={handleConnectLinkedIn}
               className="px-4 py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-900/20"
             >
               Connect
+            </button>
+          )}
+          {selectedIntegration?.is_active && (
+            <button
+              onClick={handleDisconnectLinkedIn}
+              className="px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+            >
+              Disconnect
             </button>
           )}
           <button
@@ -1120,4 +1171,3 @@ ${parentContext}Return only the comment text.`;
     </div>
   );
 }
-

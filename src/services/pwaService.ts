@@ -48,6 +48,20 @@ export const pwaService = {
         }
 
         try {
+            const purgeKey = 'pwa_purge_v1';
+            const shouldPurge = typeof window !== 'undefined' && window.localStorage?.getItem(purgeKey) !== '1';
+            if (shouldPurge) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map((registration) => registration.unregister()));
+
+                if ('caches' in window) {
+                    const cacheKeys = await caches.keys();
+                    await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+                }
+
+                window.localStorage?.setItem(purgeKey, '1');
+            }
+
             const registration = await navigator.serviceWorker.register('/sw.js', {
                 scope: '/',
             });

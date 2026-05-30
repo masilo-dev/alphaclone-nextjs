@@ -50,6 +50,8 @@ const groupTasks = (tasks: Task[]) => {
   return groups;
 };
 
+const PAGE_SIZE = 200;
+
 // ── Swipeable Task Row ─────────────────────────────────────────────────────────
 const SwipeableTaskRow: React.FC<{
   task: Task;
@@ -244,15 +246,50 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+
+  const loadPage = useCallback(async (pageIndex: number) => {
+    if (!currentTenant?.id) return;
+    const from = pageIndex * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { data, count } = await supabase
+      .from('tasks')
+      .select('*, projects(name)', { count: 'exact' })
+      .eq('tenant_id', currentTenant.id)
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    const mapped = ((data as any[]) || []).map((t) => ({ ...t, project_name: t.projects?.name }));
+    setTotalCount(typeof count === 'number' ? count : null);
+    setHasMore(typeof count === 'number' ? to + 1 < count : mapped.length === PAGE_SIZE);
+
+    return mapped as Task[];
+  }, [currentTenant?.id]);
 
   const load = useCallback(async () => {
-    if (!currentTenant?.id) return;
     setLoading(true);
-    const { data } = await supabase.from('tasks').select('*, projects(name)').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false });
-    const mapped = ((data as any[]) || []).map(t => ({ ...t, project_name: t.projects?.name }));
-    setTasks(mapped as Task[]);
+    setPage(0);
+    const firstPage = await loadPage(0);
+    if (firstPage) setTasks(firstPage);
     setLoading(false);
-  }, [currentTenant?.id]);
+  }, [loadPage]);
+
+  const loadMore = useCallback(async () => {
+    if (loading || !hasMore) return;
+    const nextPage = page + 1;
+    setLoading(true);
+    const nextTasks = await loadPage(nextPage);
+    if (nextTasks?.length) {
+      setTasks((prev) => [...prev, ...nextTasks]);
+      setPage(nextPage);
+    } else {
+      setHasMore(false);
+    }
+    setLoading(false);
+  }, [hasMore, loadPage, loading, page]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -279,6 +316,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   const groups = groupTasks(tasks);
   const ORDER = ['Today', 'This Week', 'Later', 'No Due Date', 'Completed'];
+  const isTruncated = totalCount !== null && tasks.length < totalCount;
 
   return (
     <div className="relative flex flex-col h-full">
@@ -286,17 +324,34 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         {loading ? (
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
         ) : (
-          ORDER.map(label => (
-            <TaskSection
-              key={label}
-              label={label}
-              tasks={groups[label] || []}
-              defaultCollapsed={label === 'Completed'}
-              onComplete={handleComplete}
-              onDelete={handleDelete}
-              onTap={setDetailTask}
-            />
-          ))
+          <div>
+            {isTruncated && (
+              <div className="px-4 py-3 text-[12px] text-slate-400 bg-slate-900/60 border-b border-white/5">
+                Showing {tasks.length.toLocaleString()} of {totalCount?.toLocaleString()} tasks
+              </div>
+            )}
+            {ORDER.map(label => (
+              <TaskSection
+                key={label}
+                label={label}
+                tasks={groups[label] || []}
+                defaultCollapsed={label === 'Completed'}
+                onComplete={handleComplete}
+                onDelete={handleDelete}
+                onTap={setDetailTask}
+              />
+            ))}
+            {hasMore && (
+              <div className="p-4">
+                <button
+                  onClick={loadMore}
+                  className="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-xl text-[13px] font-bold text-slate-200"
+                >
+                  Load more
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

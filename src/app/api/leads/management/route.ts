@@ -183,11 +183,13 @@ async function searchFacebookLeads(tenantId: string, businessType: string, limit
     }
 
     const leads = [];
+    const token = integration.user_access_token || integration.page_access_token;
+    if (!token) return [];
 
     // Search for Facebook pages related to business type
     const searchQuery = `${businessType} business`;
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/search?type=page&q=${encodeURIComponent(searchQuery)}&limit=${limit}&access_token=${integration.page_access_token}`
+      `https://graph.facebook.com/v18.0/search?type=page&q=${encodeURIComponent(searchQuery)}&limit=${limit}&fields=id,name,category,category_list,location,website,phone,fan_count,verified,talking_about_count,cover,rating&access_token=${encodeURIComponent(token)}`
     );
 
     const data = await response.json();
