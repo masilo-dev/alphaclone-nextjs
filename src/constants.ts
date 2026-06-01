@@ -138,7 +138,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   {
     label: 'Social & Outreach', href: '#', icon: Globe,
     subItems: [
-      { label: 'Gmail / SMTP Mail', href: '/dashboard/mail', icon: Mail, comingSoon: true },
+      { label: 'Outlook / Provider Mail', href: '/dashboard/mail', icon: Mail, comingSoon: true },
       { label: 'WhatsApp Accounts', href: '/dashboard/business/whatsapp', icon: MessageCircle },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },

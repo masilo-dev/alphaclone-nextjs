@@ -15,7 +15,7 @@ interface CommunicationModalProps {
     onSent: () => void;
 }
 
-type EmailProvider = 'gmail' | 'zoho' | 'sendgrid' | 'resend' | 'brevo' | null;
+type EmailProvider = 'microsoft' | 'zoho' | 'sendgrid' | 'resend' | 'brevo' | null;
 type ProviderStatusMap = Record<Exclude<EmailProvider, null>, boolean>;
  
 export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, user, onClose, onSent }) => {
@@ -27,7 +27,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [selectedProvider, setSelectedProvider] = useState<EmailProvider>(null);
     const [loadingProvider, setLoadingProvider] = useState(false);
     const [providerStatus, setProviderStatus] = useState<ProviderStatusMap>({
-        gmail: false,
+        microsoft: false,
         zoho: false,
         sendgrid: false,
         resend: false,
@@ -44,13 +44,13 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
-    const availableProviders: EmailProvider[] = ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
+    const availableProviders: EmailProvider[] = ['microsoft', 'zoho', 'brevo', 'resend', 'sendgrid'];
 
     const providerLabels: Record<Exclude<EmailProvider, null>, string> = {
         sendgrid: 'SendGrid',
         resend: 'Resend',
         brevo: 'Brevo',
-        gmail: 'Gmail',
+        microsoft: 'Microsoft 365',
         zoho: 'Zoho Mail',
     };
 
@@ -89,7 +89,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                 if (!response.ok) throw new Error(data.error || 'Failed to load provider status');
                 const integrations = Array.isArray(data.integrations) ? data.integrations : [];
                 const next: ProviderStatusMap = {
-                    gmail: false,
+                    microsoft: false,
                     zoho: false,
                     sendgrid: false,
                     resend: false,
@@ -109,7 +109,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                 });
             } catch {
                 setProviderStatus({
-                    gmail: false,
+                    microsoft: false,
                     zoho: false,
                     sendgrid: false,
                     resend: false,
@@ -424,7 +424,7 @@ Return valid JSON with keys "subject" and "body".`;
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
                         ) : selectedProvider ? (
-                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : selectedProvider === 'brevo' ? 'Brevo' : 'Gmail'} to send securely</>
+                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'microsoft' ? 'Microsoft 365' : selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : 'Brevo'} to send securely</>
                         ) : (
                             <><span className="text-amber-500">⚠ No provider connected. Emails cannot be sent.</span></>
                         )}
@@ -447,4 +447,3 @@ Return valid JSON with keys "subject" and "body".`;
         </Modal>
     );
 };
-

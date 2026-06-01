@@ -38,13 +38,13 @@ interface GeneratedEmail {
 }
 
 type SendStatus = 'idle' | 'generating' | 'preview' | 'sending' | 'done';
-type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
+type OutreachProvider = 'microsoft' | 'brevo' | 'resend' | 'sendgrid' | 'zoho';
 const OUTREACH_PROVIDER_OPTIONS: { id: OutreachProvider; label: string }[] = [
+  { id: 'microsoft', label: 'Microsoft 365' },
   { id: 'brevo', label: 'Brevo' },
   { id: 'resend', label: 'Resend' },
   { id: 'sendgrid', label: 'SendGrid' },
   { id: 'zoho', label: 'Zoho Mail' },
-  { id: 'gmail', label: 'Gmail' },
 ];
 
 const TONES: { id: string; label: string; Icon: typeof Briefcase }[] = [
@@ -74,7 +74,7 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
   const [editingIdx,    setEditingIdx   ] = useState<number | null>(null);
   const [sendResults,   setSendResults  ] = useState<Array<{ name: string; status: 'sent' | 'queued' | 'failed'; error?: string }>>([]);
   const [queueOnly,     setQueueOnly    ] = useState(false);
-  const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['zoho']);
+  const [selectedProviders, setSelectedProviders] = useState<OutreachProvider[]>(['microsoft']);
   const [balanceByDailyLimit, setBalanceByDailyLimit] = useState(false);
   const [languageMode, setLanguageMode] = useState<CampaignLanguageMode>('auto');
 

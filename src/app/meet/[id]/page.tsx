@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomVideoRoom from '@/components/dashboard/video/CustomVideoRoom';
+import MicrosoftMeetingEmbed from '@/components/dashboard/video/MicrosoftMeetingEmbed';
 import { dailyService } from '@/services/dailyService';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +14,7 @@ export default function MeetPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
     const [roomUrl, setRoomUrl] = useState<string | null>(null);
+    const [meetingProvider, setMeetingProvider] = useState<'daily' | 'teams' | 'jitsi'>('daily');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [callId, setCallId] = useState<string | null>(null);
@@ -164,6 +166,8 @@ export default function MeetPage() {
                     return;
                 }
 
+                const provider = (call.metadata?.video_provider as 'daily' | 'teams' | 'jitsi' | undefined) || 'daily';
+                setMeetingProvider(provider);
                 setRoomUrl(call.daily_room_url);
                 setLoading(false);
 
@@ -311,13 +315,26 @@ export default function MeetPage() {
 
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden relative">
-            {/* The URL bar will show /meet/[id], effectively masking the Daily URL */}
-            {roomUrl && (
+            {roomUrl && meetingProvider === 'daily' && (
                 <CustomVideoRoom
                     user={user || guestUser}
                     roomUrl={roomUrl}
                     callId={callId!}
                     onLeave={() => router.push(user ? '/dashboard' : '/')}
+                />
+            )}
+            {roomUrl && meetingProvider === 'teams' && (
+                <MicrosoftMeetingEmbed
+                    meetingLink={roomUrl}
+                    displayName={(user?.name || guestName || 'Guest').trim()}
+                />
+            )}
+            {roomUrl && meetingProvider === 'jitsi' && (
+                <iframe
+                    src={roomUrl}
+                    title="Jitsi Meeting"
+                    className="h-full w-full border-0"
+                    allow="camera; microphone; fullscreen; display-capture"
                 />
             )}
         </div>

@@ -8,7 +8,8 @@ import { AppUrls } from '@/lib/urls';
 import { Check, Shield, FileText, PenTool, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function PublicSignPage() {
-  const { token } = useParams();
+  const params = useParams();
+  const token = typeof params?.token === 'string' ? params.token : Array.isArray(params?.token) ? params?.token[0] : undefined;
   const router = useRouter();
   
   const [loading, setLoading] = useState(true);

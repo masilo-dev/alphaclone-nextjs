@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 // Initialize Clients
 // Initialize Clients inside handler to avoid build-time errors if env vars missing
@@ -11,8 +12,6 @@ import { ENV } from '@/config/env';
 import { isTurnstileEnforced, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
-    const DAILY_API_KEY = ENV.DAILY_API_KEY;
-
     try {
         // Initialize Supabase Client
         const supabase = createClient(
@@ -80,6 +79,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Configuration Error: Tenant has no active hosts.' }, { status: 500 });
         }
         const host_id = users[0].user_id;
+        const microsoftConnection = await microsoftServerService.getConnection(host_id).catch(() => null);
 
         // 2b. Conflict Check (Harden against Race Conditions)
         const requestedStart = new Date(start_time);
@@ -97,58 +97,66 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'This slot was just taken. Please select another time.' }, { status: 409 });
         }
 
-        // 3. Create Daily Room
-        // Room name: "booking-{short_random}"
+        if (microsoftConnection) {
+            try {
+                const externalBusy = await microsoftServerService.getCalendarBusyWindows(
+                    host_id,
+                    requestedStart.toISOString(),
+                    requestedEnd.toISOString()
+                );
+                const isMicrosoftBlocked = externalBusy.some((event) => {
+                    return requestedStart.getTime() < event.end && requestedEnd.getTime() > event.start;
+                });
+
+                if (isMicrosoftBlocked) {
+                    return NextResponse.json({ error: 'This slot is busy on the host Microsoft calendar.' }, { status: 409 });
+                }
+            } catch (microsoftError) {
+                console.error('Microsoft booking conflict check failed:', microsoftError);
+            }
+        }
+
+        // 3. Create meeting provider room/link
         const roomName = `booking-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-        // 3a. Enforce Video Duration Limit
-        const meetingDurationMinutes = (new Date(end_time).getTime() - new Date(start_time).getTime()) / 60000;
-        const maxMinutes = planFeatures.maxVideoMinutesPerMeeting;
-
-        // If plan limit is stricter than requested duration, cap it
-        const finalDurationMinutes = maxMinutes === -1 ? meetingDurationMinutes : Math.min(meetingDurationMinutes, maxMinutes);
-
-        const startUnix = Math.floor(new Date(start_time).getTime() / 1000);
-        const endUnix = startUnix + (finalDurationMinutes * 60);
-
+        const jitsiRoomName = `alphaclone-${roomName}`;
         let dailyRoomUrl = '';
         let roomId = '';
+        let meetingProvider: 'external' = 'external';
+        let providerMetadata: Record<string, unknown> = {
+            room_name: jitsiRoomName,
+        };
 
-        if (DAILY_API_KEY) {
-            const dailyRes = await fetch('https://api.daily.co/v1/rooms', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${DAILY_API_KEY}`
-                },
-                body: JSON.stringify({
-                    name: roomName,
-                    properties: {
-                        nbf: startUnix - 600, // 10 mins before
-                        exp: endUnix + 3600, // 1 hour after
-                        enable_chat: true,
-                    }
-                })
+        if (microsoftConnection) {
+            const msEvent = await microsoftServerService.createCalendarEvent(host_id, {
+                subject: `${booking_type_name || 'Meeting'} with ${client_name}`,
+                start: requestedStart.toISOString(),
+                end: requestedEnd.toISOString(),
+                attendees: [client_email],
+                body: client_notes || `Booking created in Alphaclone for ${client_name}.`,
+                isOnlineMeeting: true,
             });
 
-            if (dailyRes.ok) {
-                const roomData = await dailyRes.json();
-                dailyRoomUrl = roomData.url;
-                roomId = roomData.name;
-            } else {
-                console.error('Daily API Failed', await dailyRes.text());
-                // Fallback? We can continue without video or error.
-                // Let's error for now as "video call" is key feature.
-                return NextResponse.json({ error: 'Failed to generate video meeting' }, { status: 502 });
-            }
+            dailyRoomUrl =
+                msEvent.onlineMeeting?.joinUrl ||
+                msEvent.onlineMeetingUrl ||
+                msEvent.webLink ||
+                '';
+            roomId = msEvent.id || roomName;
+            providerMetadata = {
+                ...providerMetadata,
+                provider: 'teams',
+                microsoft_event_id: msEvent.id,
+                teams_join_url: dailyRoomUrl,
+                web_link: msEvent.webLink || '',
+            };
         } else {
-            console.warn('DAILY_API_KEY missing - skipping video room');
-            // Mock for dev if key missing
-            if (process.env.NODE_ENV === 'development') {
-                const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
-                roomId = roomName;
-                dailyRoomUrl = `https://${domain}.daily.co/${roomName}`;
-            }
+            roomId = roomName;
+            dailyRoomUrl = `https://meet.jit.si/${jitsiRoomName}`;
+            providerMetadata = {
+                ...providerMetadata,
+                provider: 'jitsi',
+                jitsi_url: dailyRoomUrl,
+            };
         }
 
         // 3b. Construct Masked URL
@@ -168,7 +176,9 @@ export async function POST(req: Request) {
                     host_id: host_id,
                     title: `Meeting with ${client_name}`,
                     status: 'scheduled',
-                    is_public: false
+                    is_public: false,
+                    video_provider: meetingProvider,
+                    provider_metadata: providerMetadata,
                 })
                 .select('id')
                 .single();
@@ -182,6 +192,7 @@ export async function POST(req: Request) {
             videoCallId = vCall.id;
         }
 
+        let microsoftEventId: string | null = null;
         // 4.5 NATIVE CRM INTEGRATION (Lead, Calendar Event, Task)
         let leadId = null;
         try {
@@ -214,7 +225,7 @@ export async function POST(req: Request) {
             }
 
             // Create Native Calendar Event
-            await supabase.from('calendar_events').insert({
+            const calendarInsert = await supabase.from('calendar_events').insert({
                 tenant_id,
                 user_id: host_id,
                 title: `Booking: ${booking_type_name || 'Meeting'} with ${client_name}`,
@@ -225,8 +236,16 @@ export async function POST(req: Request) {
                 video_room_id: roomId,
                 related_to_lead: leadId,
                 is_all_day: false,
-                reminder_minutes: 15
+                reminder_minutes: 15,
+                metadata: providerMetadata.provider === 'teams'
+                    ? { microsoft_event_id: providerMetadata.microsoft_event_id }
+                    : { jitsi_url: dailyRoomUrl }
             });
+            if (calendarInsert.error) throw calendarInsert.error;
+
+            microsoftEventId = typeof providerMetadata.microsoft_event_id === 'string'
+                ? providerMetadata.microsoft_event_id
+                : null;
 
             // Create Native Task for the Sales Agent
             await supabase.from('tasks').insert({
@@ -259,7 +278,12 @@ export async function POST(req: Request) {
                 end_time,
                 time_zone,
                 status: 'confirmed',
-                video_call_id: videoCallId
+                video_call_id: videoCallId,
+                metadata: {
+                    meeting_provider: providerMetadata.provider,
+                    room_url: dailyRoomUrl,
+                    microsoft_event_id: microsoftEventId,
+                }
             })
             .select('*')
             .single();

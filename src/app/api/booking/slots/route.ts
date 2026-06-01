@@ -2,7 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes, parse, isValid } from 'date-fns';
-import { toZonedTime, fromZonedTime, format as formatZoned } from 'date-fns-tz';
+import { fromZonedTime } from 'date-fns-tz';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 
 // Helper to get Supabase Admin Client
@@ -93,16 +94,8 @@ export async function GET(req: NextRequest) {
         const hostId = host.user_id;
 
         // 4. Calculate Work Hours in UTC
-        const startHour = parseInt(availability.hours.start.split(':')[0]);
-        const startMin = parseInt(availability.hours.start.split(':')[1]);
-        const endHour = parseInt(availability.hours.end.split(':')[0]);
-        const endMin = parseInt(availability.hours.end.split(':')[1]);
-
         // Construct the start and end times in the Tenant's timezone
         // We create a string "YYYY-MM-DD HH:mm" and then parse it with fromZonedTime
-
-        const startStr = `${dateStr} ${availability.hours.start}`; // "2024-01-29 09:00"
-        const endStr = `${dateStr} ${availability.hours.end}`;     // "2024-01-29 17:00"
 
         // Convert strict string to Date object in the specific timezone, then get UTC equivalent
         // Note: fromZonedTime takes a date/string and a timezone, and returns a Date object (which is effectively UTC timestamp)
@@ -167,6 +160,20 @@ export async function GET(req: NextRequest) {
                 }
             } catch (err) {
                 console.error('[BookingAPI] Google Calendar fetch error:', err);
+            }
+        }
+
+        const microsoftConnection = await microsoftServerService.getConnection(hostId).catch(() => null);
+        if (microsoftConnection) {
+            try {
+                const microsoftEvents = await microsoftServerService.getCalendarBusyWindows(
+                    hostId,
+                    workStart.toISOString(),
+                    workEnd.toISOString()
+                );
+                externalEvents = [...externalEvents, ...microsoftEvents.map((event) => ({ start: event.start, end: event.end }))];
+            } catch (err) {
+                console.error('[BookingAPI] Microsoft Calendar fetch error:', err);
             }
         }
 

@@ -1,15 +1,12 @@
 /**
- * Microsoft 365 Integration Service
- * 
- * This service handles integration with Microsoft 365 services:
- * - Outlook (Email & Calendar)
- * - OneDrive (File Storage)
- * - SharePoint (Document Management)
- * - Teams (Communication)
- * - Azure AD (Identity)
+ * Legacy compatibility wrapper around the new Microsoft auth + Graph services.
+ * Existing dashboard modules still import this file for connection state and
+ * Teams-style presence hints, so keep the API stable while routing real data
+ * through delegated OAuth.
  */
 
-import { supabase } from '../lib/supabase';
+import { microsoftAuthService } from '@/services/microsoftAuthService';
+import { microsoftGraphService } from '@/services/microsoftGraphService';
 
 export interface Microsoft365Config {
   id: string;
@@ -53,41 +50,35 @@ export interface Microsoft365Event {
 
 export const microsoft365Service = {
   /**
-   * Get Microsoft 365 configuration for a tenant
+   * Get Microsoft 365 delegated connection metadata for the current user.
    */
   async getMicrosoft365Config(tenantId: string): Promise<{ config: Microsoft365Config | null; error: string | null }> {
     try {
-      const { data, error } = await supabase
-        .from('microsoft365_integrations')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .eq('enabled', true)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return { config: null, error: null };
-        }
-        return { config: null, error: error.message };
+      const connection = await microsoftAuthService.getConnection();
+      if (!connection) {
+        return { config: null, error: null };
       }
 
       const config: Microsoft365Config = {
-        id: data.id,
-        tenantId: data.tenant_id,
-        clientId: data.client_id,
-        clientSecret: data.client_secret,
-        tenantDomain: data.tenant_domain,
-        enabled: data.enabled,
-        services: data.services || {
+        id: connection.id,
+        tenantId,
+        clientId: '',
+        clientSecret: '',
+        tenantDomain: 'common',
+        enabled: true,
+        services: {
           outlook: true,
           calendar: true,
-          onedrive: false,
+          onedrive: true,
           sharepoint: false,
-          teams: false
+          teams: true,
         },
-        metadata: data.metadata || {},
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
+        metadata: {
+          microsoftEmail: connection.microsoft_email,
+          displayName: connection.display_name,
+        },
+        createdAt: connection.created_at || new Date().toISOString(),
+        updatedAt: connection.updated_at || new Date().toISOString(),
       };
 
       return { config, error: null };
@@ -97,41 +88,25 @@ export const microsoft365Service = {
   },
 
   /**
-   * Save Microsoft 365 configuration
+   * Delegated OAuth does not store tenant-managed credentials in the browser.
    */
   async saveMicrosoft365Config(tenantId: string, config: Omit<Microsoft365Config, 'id' | 'tenantId' | 'createdAt' | 'updatedAt'>): Promise<{ config: Microsoft365Config | null; error: string | null }> {
     try {
-      const { data, error } = await supabase
-        .from('microsoft365_integrations')
-        .upsert({
-          tenant_id: tenantId,
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          tenant_domain: config.tenantDomain,
-          enabled: config.enabled,
+      return {
+        config: {
+          id: 'delegated-oauth',
+          tenantId,
+          clientId: config.clientId,
+          clientSecret: '',
+          tenantDomain: config.tenantDomain,
+          enabled: true,
           services: config.services,
           metadata: config.metadata || {},
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const m365Config: Microsoft365Config = {
-        id: data.id,
-        tenantId: data.tenant_id,
-        clientId: data.client_id,
-        clientSecret: data.client_secret,
-        tenantDomain: data.tenant_domain,
-        enabled: data.enabled,
-        services: data.services || {},
-        metadata: data.metadata || {},
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        error: null,
       };
-
-      return { config: m365Config, error: null };
     } catch (err) {
       return { config: null, error: err instanceof Error ? err.message : 'Unknown error' };
     }
@@ -142,16 +117,7 @@ export const microsoft365Service = {
    */
   async fetchOutlookEmails(tenantId: string, limit: number = 50): Promise<{ emails: Microsoft365Email[]; error: string | null }> {
     try {
-      const { config } = await this.getMicrosoft365Config(tenantId);
-      
-      if (!config || !config.services.outlook) {
-        return { emails: [], error: 'Outlook not configured or enabled' };
-      }
-
-      // In production, this would use Microsoft Graph API
-      // For now, return empty array
-      const emails: Microsoft365Email[] = [];
-
+      const emails = await microsoftGraphService.getInboxMessages(limit);
       return { emails, error: null };
     } catch (err) {
       return { emails: [], error: err instanceof Error ? err.message : 'Unknown error' };
@@ -163,16 +129,7 @@ export const microsoft365Service = {
    */
   async fetchCalendarEvents(tenantId: string, startDate: string, endDate: string): Promise<{ events: Microsoft365Event[]; error: string | null }> {
     try {
-      const { config } = await this.getMicrosoft365Config(tenantId);
-      
-      if (!config || !config.services.calendar) {
-        return { events: [], error: 'Calendar not configured or enabled' };
-      }
-
-      // In production, this would use Microsoft Graph API
-      // For now, return empty array
-      const events: Microsoft365Event[] = [];
-
+      const events = await microsoftGraphService.getCalendarEvents(startDate, endDate);
       return { events, error: null };
     } catch (err) {
       return { events: [], error: err instanceof Error ? err.message : 'Unknown error' };
@@ -184,16 +141,15 @@ export const microsoft365Service = {
    */
   async createCalendarEvent(tenantId: string, event: Omit<Microsoft365Event, 'id'>): Promise<{ eventId: string | null; error: string | null }> {
     try {
-      const { config } = await this.getMicrosoft365Config(tenantId);
-      
-      if (!config || !config.services.calendar) {
-        return { eventId: null, error: 'Calendar not configured or enabled' };
-      }
-
-      // In production, this would use Microsoft Graph API to create event
-      const eventId = `event_${Date.now()}`;
-
-      return { eventId, error: null };
+      const created = await microsoftGraphService.createCalendarEvent({
+        subject: event.subject,
+        start: event.start,
+        end: event.end,
+        attendees: event.attendees,
+        location: event.location,
+        isOnlineMeeting: event.isOnlineMeeting,
+      });
+      return { eventId: created.id, error: null };
     } catch (err) {
       return { eventId: null, error: err instanceof Error ? err.message : 'Unknown error' };
     }
@@ -204,14 +160,7 @@ export const microsoft365Service = {
    */
   async sendEmail(tenantId: string, to: string[], subject: string, body: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      const { config } = await this.getMicrosoft365Config(tenantId);
-      
-      if (!config || !config.services.outlook) {
-        return { success: false, error: 'Outlook not configured or enabled' };
-      }
-
-      // In production, this would use Microsoft Graph API to send email
-      // For now, return success
+      await microsoftGraphService.sendEmail({ to, subject, body });
       return { success: true, error: null };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -223,25 +172,7 @@ export const microsoft365Service = {
    */
   async testIntegration(tenantId: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      const { config } = await this.getMicrosoft365Config(tenantId);
-      
-      if (!config) {
-        return { success: false, error: 'Microsoft 365 not configured' };
-      }
-
-      // Validate configuration
-      if (!config.clientId || !config.clientSecret || !config.tenantDomain) {
-        return { success: false, error: 'Invalid Microsoft 365 configuration' };
-      }
-
-      // In production, this would test the actual Microsoft Graph API connection
-      // For now, validate the configuration format
-      try {
-        new URL(`https://${config.tenantDomain}`);
-      } catch {
-        return { success: false, error: 'Invalid tenant domain' };
-      }
-
+      await microsoftGraphService.getTeams();
       return { success: true, error: null };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -253,13 +184,7 @@ export const microsoft365Service = {
    */
   async disconnectIntegration(tenantId: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      const { error } = await supabase
-        .from('microsoft365_integrations')
-        .update({ enabled: false, updated_at: new Date().toISOString() })
-        .eq('tenant_id', tenantId);
-
-      if (error) throw error;
-
+      await microsoftAuthService.disconnect();
       return { success: true, error: null };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -309,14 +234,13 @@ export const microsoft365Service = {
    */
   async fetchTeamsPresence(tenantId: string, email: string): Promise<{ status: 'online' | 'away' | 'busy' | 'offline'; error: string | null }> {
     try {
-      const { config } = await this.getMicrosoft365Config(tenantId);
-      
-      if (!config || !config.services.teams) {
+      const connected = await microsoftAuthService.isConnected();
+      if (!connected) {
         return { status: 'offline', error: 'Teams not configured or enabled' };
       }
 
-      // In production, this would fetch from MS Graph API: GET /users/{id}/presence
-      // For now, return a mock status based on email hash to simulate Teams presence
+      // Presence.Read.All is not part of the requested scope set, so keep a
+      // lightweight deterministic status indicator for CRM until that scope is added.
       const mockStatuses: ('online' | 'away' | 'busy' | 'offline')[] = ['online', 'away', 'busy', 'offline'];
       let hash = 0;
       for (let i = 0; i < email.length; i++) hash = (hash * 31 + email.charCodeAt(i)) % mockStatuses.length;
@@ -327,4 +251,3 @@ export const microsoft365Service = {
     }
   }
 };
-

@@ -51,7 +51,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [fetchingAccount, setFetchingAccount] = useState(false);
     const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
-    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail'>('zoho');
+    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'microsoft'>('microsoft');
 
     useEffect(() => {
         if (isOpen) {
@@ -73,16 +73,17 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 // Also fetch integrations for this user
                 const { integrations: userIntegrations } = await integrationsService.getUserIntegrations(user.id);
                 const emailIntegrations = userIntegrations.filter(i => 
-                    ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'].includes(i.type) && i.enabled
+                    ['sendgrid', 'resend', 'brevo', 'zoho', 'microsoft'].includes(i.type) && i.enabled
                 );
                 setIntegrations(emailIntegrations);
                 
                 if (emailIntegrations.length > 0) {
+                    const microsoftInt = emailIntegrations.find(i => i.type === 'microsoft');
                     const zohoInt = emailIntegrations.find(i => i.type === 'zoho');
                     const brevoInt = emailIntegrations.find(i => i.type === 'brevo');
                     const resendInt = emailIntegrations.find(i => i.type === 'resend');
                     const sendgridInt = emailIntegrations.find(i => i.type === 'sendgrid');
-                    const defaultInt = zohoInt || brevoInt || resendInt || sendgridInt || emailIntegrations[0];
+                    const defaultInt = microsoftInt || zohoInt || brevoInt || resendInt || sendgridInt || emailIntegrations[0];
                     setSelectedIntegrationId(defaultInt.id);
                     setSelectedProvider(defaultInt.type as any);
                 }
@@ -536,5 +537,4 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 };
 
 export default AIOutreachModal;
-
 

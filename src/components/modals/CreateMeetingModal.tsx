@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, User, Mail, Video, Loader2 } from 'lucide-react';
+import { X, User, Mail, Video, Loader2 } from 'lucide-react';
 import { meetingService, CreateMeetingData } from '../../services/meetingService';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { dailyService } from '../../services/dailyService';
+import { microsoftAuthService } from '@/services/microsoftAuthService';
+import { microsoftGraphService } from '@/services/microsoftGraphService';
 
 interface CreateMeetingModalProps {
     onClose: () => void;
@@ -30,16 +31,31 @@ export const CreateMeetingModal: React.FC<CreateMeetingModalProps> = ({ onClose,
         setLoading(true);
 
         try {
-            // 1. Create Daily.co room
             const startTime = new Date(`${formData.date}T${formData.time}`);
-            const { room, error: roomError } = await dailyService.createRoom({
-                title: formData.title,
-                startTime: startTime,
-                duration: formData.duration
-            });
+            const endTime = new Date(startTime.getTime() + formData.duration * 60 * 1000);
+            const microsoftConnected = await microsoftAuthService.isConnected();
 
-            if (roomError || !room) {
-                throw new Error('Failed to create video room');
+            let meetingUrl = `https://meet.jit.si/alphaclone-${startTime.getTime().toString(36)}`;
+            let meetingProvider: CreateMeetingData['meetingProvider'] = 'jitsi';
+            let providerMetadata: Record<string, any> = {
+                room_name: `alphaclone-${startTime.getTime().toString(36)}`,
+            };
+
+            if (microsoftConnected) {
+                const teamsMeeting = await microsoftGraphService.createTeamsMeeting({
+                    subject: formData.title,
+                    start: startTime.toISOString(),
+                    end: endTime.toISOString(),
+                    attendees: [formData.attendeeEmail],
+                    description: formData.description,
+                });
+                meetingUrl = teamsMeeting.joinUrl;
+                meetingProvider = 'teams';
+                providerMetadata = {
+                    ...providerMetadata,
+                    teams_meeting_id: teamsMeeting.id,
+                    teams_join_url: teamsMeeting.joinUrl,
+                };
             }
 
             // 2. Prepare meeting data
@@ -53,7 +69,9 @@ export const CreateMeetingModal: React.FC<CreateMeetingModalProps> = ({ onClose,
                 description: formData.description,
                 startTime: startTime.toISOString(),
                 duration: formData.duration,
-                dailyRoomUrl: room.url
+                dailyRoomUrl: meetingUrl,
+                meetingProvider,
+                providerMetadata,
             };
 
             // 3. Create meeting & send confirmation (log email)
@@ -63,7 +81,7 @@ export const CreateMeetingModal: React.FC<CreateMeetingModalProps> = ({ onClose,
                 throw result.error;
             }
 
-            toast.success('Meeting scheduled & invitation sent!');
+            toast.success(meetingProvider === 'teams' ? 'Teams meeting scheduled & invitation sent!' : 'Jitsi meeting scheduled & invitation sent!');
             onSuccess();
             onClose();
 

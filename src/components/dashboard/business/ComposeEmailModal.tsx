@@ -68,17 +68,17 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
             // Fetch available email integrations
             integrationsService.getUserIntegrations(userId).then(({ integrations }) => {
-                const emailTypes = ['gmail', 'sendgrid', 'resend', 'brevo', 'zoho'];
+                const emailTypes = ['microsoft', 'sendgrid', 'resend', 'brevo', 'zoho'];
                 const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
                 setAvailableProviders(filtered);
                 
-                // Set default provider (prefer Zoho, then Brevo, then Resend, then SendGrid, then Gmail, otherwise first one)
+                // Prefer Microsoft, then Zoho/Brevo/Resend/SendGrid, then first available provider.
+                const microsoft = filtered.find(p => p.type === 'microsoft');
                 const zoho = filtered.find(p => p.type === 'zoho');
                 const brevo = filtered.find(p => p.type === 'brevo');
                 const resend = filtered.find(p => p.type === 'resend');
                 const sendgrid = filtered.find(p => p.type === 'sendgrid');
-                const gmail = filtered.find(p => p.type === 'gmail');
-                setSelectedProvider(zoho || brevo || resend || sendgrid || gmail || filtered[0] || null);
+                setSelectedProvider(microsoft || zoho || brevo || resend || sendgrid || filtered[0] || null);
             });
 
             // Fetch user's email for the fallback From field
@@ -134,7 +134,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 
-                // Check file size (max 25MB for Gmail)
+                // Keep attachments within the smallest common provider limit.
                 if (file.size > 25 * 1024 * 1024) {
                     toast.error(`${file.name} exceeds 25MB limit`);
                     continue;
@@ -242,7 +242,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     tenantId: currentTenant?.id,
                     userId: userId,
                     from: from || undefined,
-                    provider: selectedProvider?.type || 'gmail',
+                    provider: selectedProvider?.type || 'microsoft',
                     attachments: attachments.length > 0 ? attachments.map(att => ({
                         filename: att.name,
                         data: att.data,
@@ -616,5 +616,4 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 };
 
 export default ComposeEmailModal;
-
 
