@@ -1,5 +1,24 @@
 # Update Log
 
+## Date: 2026-06-01 (MICROSOFT 365 OUTLOOK, TASKS AND MEETING EMBED INTEGRATION & BUILD FIXES)
+
+### Added/Modified
+- **Microsoft 365 OAuth & Authentication** ([MicrosoftCallback.tsx](file:///home/bonnie/alphaclone-nextjs/src/pages/auth/MicrosoftCallback.tsx), [page.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/auth/microsoft/callback/page.tsx), [microsoftAuthService.ts](file:///home/bonnie/alphaclone-nextjs/src/services/microsoftAuthService.ts)):
+  - Implemented the OAuth 2.0 authorization code flow handler for Microsoft 365, securely storing user connection credentials and establishing a React `Suspense` boundary for build-time safety.
+  - Added Edge functions `microsoft-oauth-exchange` and `microsoft-token-refresh` to securely exchange and refresh access tokens.
+- **Microsoft 365 Email & Tasks Hooks** ([useMicrosoftEmails.ts](file:///home/bonnie/alphaclone-nextjs/src/hooks/useMicrosoftEmails.ts), [useMicrosoftTasks.ts](file:///home/bonnie/alphaclone-nextjs/src/hooks/useMicrosoftTasks.ts), [microsoftGraphService.ts](file:///home/bonnie/alphaclone-nextjs/src/services/microsoftGraphService.ts)):
+  - Designed custom hooks using Microsoft Graph API to pull and query real-time Outlook emails and Outlook To-Do tasks dynamically.
+- **Microsoft Inbox & Meetings components** ([MicrosoftInboxView.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/business/MicrosoftInboxView.tsx), [MicrosoftMeetingEmbed.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/video/MicrosoftMeetingEmbed.tsx)):
+  - Built a sleek, high-density inbox reader view displaying tenant-synced Microsoft Outlook email threads.
+  - Implemented an embedded Teams meeting UI for direct, high-fidelity calling from the client portal.
+- **Database & Schema Setup** ([20260531120000_create_microsoft_connections.sql](file:///home/bonnie/alphaclone-nextjs/supabase/migrations/20260531120000_create_microsoft_connections.sql)):
+  - Created table schemas storing Microsoft Graph sync states and credentials.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. Suspense boundary added to OAuth callback page to resolve build-time Next.js static export errors.
+
+---
+
 ## Date: 2026-05-30 (MS TEAMS AND MICROSOFT 365 SUITE INTEGRATION)
 
 ### Added/Modified
