@@ -166,6 +166,141 @@ export const MCP_TOOLS = [
       required: ['to', 'subject', 'body'],
     },
   },
+  {
+    name: 'microsoft_get_emails',
+    description: 'Fetch recent Outlook inbox messages for the connected Microsoft account.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number', description: 'Max messages to fetch (default 20)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'microsoft_send_email',
+    description: 'Send an Outlook email from the connected Microsoft account.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        to: { type: 'array', items: { type: 'string' } },
+        subject: { type: 'string' },
+        body: { type: 'string' },
+      },
+      required: ['to', 'subject', 'body'],
+    },
+  },
+  {
+    name: 'microsoft_create_meeting',
+    description: 'Create a Microsoft Teams online meeting.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        subject: { type: 'string' },
+        start: { type: 'string' },
+        end: { type: 'string' },
+        attendees: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['subject', 'start', 'end'],
+    },
+  },
+  {
+    name: 'microsoft_get_tasks',
+    description: 'Fetch Microsoft To Do lists or tasks.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        list_id: { type: 'string' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'microsoft_create_task',
+    description: 'Create a Microsoft To Do task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        list_id: { type: 'string' },
+        title: { type: 'string' },
+        dueDateTime: { type: 'string' },
+      },
+      required: ['list_id', 'title'],
+    },
+  },
+  {
+    name: 'microsoft_get_calendar',
+    description: 'Fetch Microsoft calendar events.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        startDateTime: { type: 'string' },
+        endDateTime: { type: 'string' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'microsoft_create_event',
+    description: 'Create a Microsoft calendar event.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        subject: { type: 'string' },
+        start: { type: 'string' },
+        end: { type: 'string' },
+        attendees: { type: 'array', items: { type: 'string' } },
+        isOnlineMeeting: { type: 'boolean' },
+      },
+      required: ['subject', 'start', 'end'],
+    },
+  },
+  {
+    name: 'microsoft_get_contacts',
+    description: 'Fetch Outlook contacts.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'microsoft_upload_file',
+    description: 'Upload a file to OneDrive.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        file_name: { type: 'string' },
+        content_base64: { type: 'string' },
+        folder_path: { type: 'string' },
+      },
+      required: ['file_name', 'content_base64'],
+    },
+  },
+  {
+    name: 'microsoft_get_teams_messages',
+    description: 'Fetch Microsoft Teams channel messages.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        team_id: { type: 'string' },
+        channel_id: { type: 'string' },
+      },
+      required: ['team_id', 'channel_id'],
+    },
+  },
 
   // ── Leads Pipeline ─────────────────────────────────────────────────
   {

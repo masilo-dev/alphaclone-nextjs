@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { gmailServerService } from '@/services/server/gmailServerService';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
 import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
 import {
   createAdminSupabaseClientOrThrow,
@@ -17,7 +17,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL ||
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
   ? SITE_URL 
   : 'https://alphaclonesystems.com';
-type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
+type OutreachProvider = 'microsoft' | 'brevo' | 'resend' | 'sendgrid' | 'zoho';
 type ProviderConfig = {
   provider: OutreachProvider;
   apiKey: string;
@@ -25,18 +25,18 @@ type ProviderConfig = {
   fromName: string;
   dailyLimit: number;
 };
-const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'];
+const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['microsoft', 'brevo', 'resend', 'sendgrid', 'zoho'];
 const DEFAULT_PROVIDER_LIMITS: Record<OutreachProvider, number> = {
+  microsoft: 300,
   brevo: 300,
   resend: 300,
   sendgrid: 500,
   zoho: 200,
-  gmail: 150,
 };
 
 function normalizeProvider(value: unknown): OutreachProvider | null {
   const provider = String(value || '').trim().toLowerCase();
-  if (provider === 'brevo' || provider === 'resend' || provider === 'sendgrid' || provider === 'zoho' || provider === 'gmail') {
+  if (provider === 'microsoft' || provider === 'brevo' || provider === 'resend' || provider === 'sendgrid' || provider === 'zoho') {
     return provider;
   }
   return null;
@@ -105,27 +105,6 @@ function classifyProviderFailure(failureMessage: string): 'auth' | 'rate_limit' 
     return 'rate_limit';
   }
   return 'network_or_unknown';
-}
-
-function encodeGmailRawMessage(params: {
-  to: string;
-  subject: string;
-  html: string;
-  fromEmail: string;
-  fromName: string;
-}) {
-  const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
-  const message = [
-    `From: ${params.fromName} <${params.fromEmail}>`,
-    `To: ${params.to}`,
-    `Subject: ${utf8Subject}`,
-    'MIME-Version: 1.0',
-    'Content-Type: text/html; charset="UTF-8"',
-    '',
-    params.html,
-  ].join('\n');
-
-  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
@@ -298,7 +277,7 @@ export async function POST(request: Request) {
       .eq('tenant_id', tenantId)
       .eq('user_id', tenantCtx.user.id)
       .eq('enabled', true)
-      .in('type', ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail']);
+      .in('type', ['brevo', 'resend', 'sendgrid', 'zoho']);
     if (integrationsError) {
       return NextResponse.json({ success: false, status: 'failed', error: integrationsError.message }, { status: 500 });
     }
@@ -337,6 +316,25 @@ export async function POST(request: Request) {
         return acc;
       }, [] as ProviderConfig[]);
 
+    const microsoftConnection = await microsoftServerService.getConnection(tenantCtx.user.id).catch(() => null);
+    if (microsoftConnection) {
+      providerConfigs.unshift({
+        provider: 'microsoft',
+        apiKey: '',
+        fromEmail:
+          String(fromAddress || '').trim() ||
+          microsoftConnection.microsoft_email ||
+          tenantCtx.user.email ||
+          '',
+        fromName:
+          microsoftConnection.display_name ||
+          profileFromName ||
+          String(tenantCtx.user.user_metadata?.full_name || '').trim() ||
+          'AlphaClone Systems',
+        dailyLimit: DEFAULT_PROVIDER_LIMITS.microsoft,
+      });
+    }
+
     const activeProviders = providerConfigs.filter((p) =>
       selectedProviders.length > 0 ? selectedProviders.includes(p.provider) : true
     );
@@ -346,7 +344,7 @@ export async function POST(request: Request) {
           success: false,
           status: 'failed',
           code: 'PROVIDER_NOT_CONFIGURED_FOR_USER',
-          error: 'No active email provider is connected for your account. Connect Brevo, Resend, SendGrid, Zoho, or Gmail in Settings.',
+          error: 'No active email provider is connected for your account. Connect Microsoft 365, Brevo, Resend, SendGrid, or Zoho in Settings.',
         },
         { status: 400 }
       );
@@ -403,7 +401,7 @@ export async function POST(request: Request) {
 
     const invalidProviderConfigs = providerQueue
       .filter((provider) => {
-        if (provider.provider === 'gmail' || provider.provider === 'zoho') {
+        if (provider.provider === 'microsoft' || provider.provider === 'zoho') {
           return !provider.fromEmail;
         }
         return !provider.apiKey || !provider.fromEmail;
@@ -412,7 +410,7 @@ export async function POST(request: Request) {
         provider: provider.provider,
         missing: {
           apiKey:
-            provider.provider === 'gmail' || provider.provider === 'zoho'
+            provider.provider === 'microsoft' || provider.provider === 'zoho'
               ? false
               : !provider.apiKey,
           fromEmail: !provider.fromEmail,
@@ -444,7 +442,14 @@ export async function POST(request: Request) {
 
     for (const selectedProvider of providerQueue) {
       try {
-        if (selectedProvider.provider === 'zoho') {
+        if (selectedProvider.provider === 'microsoft') {
+          await microsoftServerService.sendEmail(tenantCtx.user.id, {
+            to: [leadEmail],
+            subject: normalizedSubject,
+            html: htmlBody,
+          });
+          providerMessageId = null;
+        } else if (selectedProvider.provider === 'zoho') {
           const zohoService = new ZohoMailService(tenantCtx.user.id);
           const sendResult = await zohoService.sendEmail({
             toAddress: leadEmail,
@@ -453,19 +458,6 @@ export async function POST(request: Request) {
             content: htmlBody,
           });
           providerMessageId = sendResult?.data?.messageId || null;
-        } else if (selectedProvider.provider === 'gmail') {
-          const raw = encodeGmailRawMessage({
-            to: leadEmail,
-            subject: normalizedSubject,
-            html: htmlBody,
-            fromEmail: selectedProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclonesystems.com',
-            fromName: selectedProvider.fromName || 'AlphaClone Systems',
-          });
-          const sendResult = await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
-            method: 'POST',
-            body: JSON.stringify({ raw }),
-          }) as any;
-          providerMessageId = sendResult?.id || null;
         } else if (selectedProvider.provider === 'brevo') {
           if (!selectedProvider.fromEmail) throw new Error('Brevo sender email missing. Set a verified From Email in Brevo integration.');
           const response = await fetch('https://api.brevo.com/v3/smtp/email', {

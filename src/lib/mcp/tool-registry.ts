@@ -122,6 +122,7 @@ export function initializeRegistry() {
   require('./tools/bonnie-orchestrate');
   require('./tools/bonnie-outcomes');
   require('./tools/google-workspace');
+  require('./tools/microsoft');
   require('./tools/api-health');
   require('./tools/documents');
 }

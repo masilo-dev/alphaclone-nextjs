@@ -26,6 +26,8 @@ export interface CreateMeetingData {
     startTime: string;
     duration: number;
     dailyRoomUrl: string;
+    meetingProvider?: 'daily' | 'teams' | 'jitsi';
+    providerMetadata?: Record<string, any>;
 }
 
 export const meetingService = {
@@ -79,7 +81,11 @@ export const meetingService = {
                     duration_minutes: data.duration,
                     title: data.title,
                     description: data.description,
-                    status: 'scheduled'
+                    status: 'scheduled',
+                    metadata: {
+                        video_provider: data.meetingProvider || 'daily',
+                        ...(data.providerMetadata || {}),
+                    },
                 })
                 .select()
                 .single();

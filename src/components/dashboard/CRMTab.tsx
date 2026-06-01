@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  UserPlus, Search, X, Phone, Mail, Building, Globe,
-  MessageCircle, Briefcase, CheckSquare, Clock, Filter,
-  UserCheck, Users, ArrowLeft, Star, Tag, AlertCircle, Plus,
+  UserPlus, Search, X, Phone, Mail, Building,
+  MessageCircle, Clock,
+  UserCheck, Users, ArrowLeft, Star, AlertCircle,
   ShieldCheck, DollarSign, Activity, Loader2, Smartphone, Video,
-  ChevronRight, ArrowUpRight, TrendingUp, Sparkles, AlertTriangle
+  ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -15,9 +15,10 @@ import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { churnPropensityService, ChurnRiskReport } from '@/services/intelligence/churnPropensityService';
-import { customer360Service, Customer360Profile, TimelineEvent } from '@/services/intelligence/customer360Service';
+import { customer360Service, Customer360Profile } from '@/services/intelligence/customer360Service';
 import { presenceService } from '@/services/presenceService';
 import { microsoft365Service } from '@/services/microsoft365Service';
+import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { missedCallsService } from '@/services/missedCallsService';
 import OnlineStatusBadge from './OnlineStatusBadge';
 
@@ -858,6 +859,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [isQualifyOpen, setIsQualifyOpen] = useState(false);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isSyncingContacts, setIsSyncingContacts] = useState(false);
 
   useEffect(() => {
     const checkTeamsConnection = async () => {
@@ -954,6 +956,91 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       setLoading(false);
     }
   }, [currentTenant?.id]);
+
+  const handleSyncOutlookContacts = async () => {
+    if (!currentTenant?.id) return;
+
+    setIsSyncingContacts(true);
+    try {
+      const contacts = await microsoftGraphService.getContacts(50);
+      const normalized = contacts
+        .map((contact: any) => ({
+          name:
+            contact.displayName ||
+            [contact.givenName, contact.surname].filter(Boolean).join(' ') ||
+            contact.emailAddresses?.[0]?.address ||
+            'Outlook Contact',
+          email: contact.emailAddresses?.[0]?.address || null,
+          phone: contact.businessPhones?.[0] || contact.mobilePhone || null,
+          industry: contact.companyName || contact.department || 'Outlook',
+          location: [
+            contact.businessAddress?.street,
+            contact.businessAddress?.city,
+            contact.businessAddress?.state,
+            contact.businessAddress?.countryOrRegion,
+          ]
+            .filter(Boolean)
+            .join(', '),
+        }))
+        .filter((contact: any) => contact.email);
+
+      const emails = normalized.map((contact: any) => contact.email);
+      const { data: existingClients } = await supabase
+        .from('business_clients')
+        .select('id, email')
+        .eq('tenant_id', currentTenant.id)
+        .in('email', emails);
+
+      const existingByEmail = new Map(
+        ((existingClients as any[]) || []).map((client) => [client.email, client.id])
+      );
+
+      const inserts = normalized
+        .filter((contact: any) => !existingByEmail.has(contact.email))
+        .map((contact: any) => ({
+          tenant_id: currentTenant.id,
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+          industry: contact.industry,
+          location: contact.location || null,
+          sales_stage: 'lead',
+          value: 0,
+          is_active: true,
+          description: 'Imported from Outlook contacts',
+        }));
+
+      const updates = normalized.filter((contact: any) => existingByEmail.has(contact.email));
+
+      if (inserts.length > 0) {
+        const { error: insertError } = await supabase.from('business_clients').insert(inserts);
+        if (insertError) throw insertError;
+      }
+
+      await Promise.all(
+        updates.map((contact: any) =>
+          supabase
+            .from('business_clients')
+            .update({
+              name: contact.name,
+              phone: contact.phone,
+              industry: contact.industry,
+              location: contact.location || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingByEmail.get(contact.email))
+            .eq('tenant_id', currentTenant.id)
+        )
+      );
+
+      toast.success(`Outlook sync complete: ${normalized.length} contacts processed`);
+      await loadCRMData();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sync Outlook contacts');
+    } finally {
+      setIsSyncingContacts(false);
+    }
+  };
 
   useEffect(() => {
     loadCRMData();
@@ -1162,11 +1249,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           client={selectedEntity.rawClient}
           user={user}
           onBack={() => setSelectedEntity(null)}
-          onNewDeal={(c) => {
+          onNewDeal={() => {
             setSelectedEntity(null);
             router.push('/dashboard/deals');
           }}
-          onDraftContract={(c) => {
+          onDraftContract={() => {
             setSelectedEntity(null);
             router.push('/dashboard/business/contracts');
           }}
@@ -1222,6 +1309,23 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
       {/* Control panel (Search & Filter) */}
       <div className="px-4 py-3 space-y-2.5 bg-slate-950/80 sticky top-0 z-10 backdrop-blur-md">
+        {isTeamsConnected && (
+          <div className="flex items-center justify-between rounded-xl border border-blue-500/10 bg-blue-500/5 px-3 py-2">
+            <div>
+              <p className="text-xs font-bold text-blue-200">Outlook Contact Sync</p>
+              <p className="text-[11px] text-slate-400">Import Microsoft contacts into the existing CRM.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSyncOutlookContacts}
+              disabled={isSyncingContacts}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+            >
+              {isSyncingContacts ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              Sync from Outlook
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2 bg-slate-900 border border-white/5 rounded-xl px-3 h-10 shadow-inner">
           <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
           <input

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 export async function GET(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -95,6 +96,11 @@ async function checkAllIntegrations(tenantId: string, userId: string, supabase: 
       name: 'Zoho',
       type: 'zoho',
       checkFunction: checkZohoIntegration
+    },
+    {
+      name: 'Microsoft 365',
+      type: 'microsoft',
+      checkFunction: checkMicrosoftIntegration
     }
   ];
 
@@ -788,6 +794,57 @@ async function checkZohoIntegration(_tenantId: string, supabase: any, userId: st
     actions,
     connected: true,
     lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkMicrosoftIntegration(_tenantId: string, supabase: any, userId: string) {
+  const { data: connection, error } = await supabase
+    .from('microsoft_connections')
+    .select('microsoft_email, display_name, token_expiry')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !connection) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Microsoft 365 is not connected'],
+      actions: ['Connect Microsoft 365'],
+      connected: false,
+    };
+  }
+
+  const issues = [];
+  const actions = [];
+  let percentage = 60;
+
+  if (connection.microsoft_email) percentage += 20;
+  else {
+    issues.push('Microsoft email missing');
+    actions.push('Reconnect Microsoft 365');
+  }
+
+  if (connection.token_expiry && new Date(connection.token_expiry).getTime() > Date.now()) {
+    percentage += 20;
+  } else {
+    try {
+      await microsoftServerService.getConnection(userId);
+      percentage += 20;
+    } catch {
+      issues.push('Microsoft token refresh required');
+      actions.push('Reconnect Microsoft 365');
+    }
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    email: connection.microsoft_email,
+    displayName: connection.display_name,
+    lastChecked: new Date().toISOString(),
   };
 }
 

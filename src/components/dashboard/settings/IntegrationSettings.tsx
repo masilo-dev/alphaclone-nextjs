@@ -15,6 +15,7 @@ import BusinessSendGridIntegration from '../business/SendGridIntegration';
 import BusinessResendIntegration from '../business/ResendIntegration';
 import BusinessBrevoIntegration from '../business/BrevoIntegration';
 import CustomEmailIntegration from '../business/CustomEmailIntegration';
+import Microsoft365Integration from '../business/Microsoft365Integration';
 import WhatsAppIntegration from '../business/WhatsAppIntegration';
 import { MessageCircle } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
@@ -132,6 +133,7 @@ export function IntegrationSettings() {
               </p>
             </div>
 
+            <Microsoft365Integration />
             <CustomEmailIntegration />
             <BusinessSendGridIntegration />
             <BusinessResendIntegration />

@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, ChevronDown, ChevronRight, X, Calendar, Briefcase,
-  User, Trash2, ArrowLeft
+  Plus, ChevronDown, ChevronRight, Calendar, Briefcase,
+  Trash2, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
+import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
 
 type Priority = 'low' | 'medium' | 'high';
@@ -241,8 +242,15 @@ const TaskSection: React.FC<{
 };
 
 // ── Main TasksTab ──────────────────────────────────────────────────────────────
-const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
+const TasksTab: React.FC<TasksTabProps> = () => {
   const { currentTenant } = useTenant();
+  const {
+    lists: microsoftLists,
+    connected: microsoftConnected,
+    loading: microsoftLoading,
+    error: microsoftError,
+    refresh: refreshMicrosoftTasks,
+  } = useMicrosoftTasks();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
@@ -321,6 +329,49 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   return (
     <div className="relative flex flex-col h-full">
       <div className="flex-1 overflow-y-auto pb-20 bg-slate-950">
+        {microsoftConnected && (
+          <div className="p-4 border-b border-white/5 bg-slate-900/40">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-sm font-bold text-white">Microsoft To Do</h3>
+                <p className="text-xs text-slate-400">Connected task lists appear alongside native Alphaclone tasks.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => refreshMicrosoftTasks()}
+                className="rounded-lg border border-white/5 bg-slate-950/50 p-2 text-slate-300 hover:text-white"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+            {microsoftLoading ? (
+              <div className="text-xs text-slate-500">Loading Microsoft To Do lists...</div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {microsoftLists.map((list) => (
+                  <div key={list.id} className="rounded-xl border border-blue-500/10 bg-slate-950/50 p-3">
+                    <p className="text-sm font-semibold text-white truncate">{list.displayName}</p>
+                    <p className="text-[11px] text-blue-300 mt-1">{list.tasks.length} Microsoft tasks</p>
+                    <div className="mt-3 space-y-2">
+                      {list.tasks.slice(0, 3).map((task: any) => (
+                        <div key={task.id} className="rounded-lg bg-slate-900/70 px-2.5 py-2">
+                          <p className="text-xs font-medium text-slate-200 truncate">{task.title}</p>
+                          <p className="text-[11px] text-slate-500">
+                            {task.status === 'completed' ? 'Completed' : 'Open in Microsoft To Do'}
+                          </p>
+                        </div>
+                      ))}
+                      {list.tasks.length === 0 && (
+                        <p className="text-[11px] text-slate-500">No Microsoft tasks in this list.</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {microsoftError && <p className="text-xs text-rose-400 mt-3">{microsoftError}</p>}
+          </div>
+        )}
         {loading ? (
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
         ) : (

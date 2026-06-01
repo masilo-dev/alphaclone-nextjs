@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface IntegrationConfig {
     id: string;
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook';
+    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook' | 'microsoft';
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -90,16 +90,39 @@ export const integrationsService = {
 
             if (error) throw error;
 
+            const { data: microsoftConnection } = await supabase
+                .from('microsoft_connections')
+                .select('id, microsoft_email, display_name, created_at')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            const integrations = (data || []).map((i: any) => ({
+                id: i.id,
+                type: i.type,
+                name: i.name,
+                enabled: i.enabled,
+                config: i.config,
+                userId: i.user_id,
+                createdAt: i.created_at,
+            }));
+
+            if (microsoftConnection) {
+                integrations.unshift({
+                    id: microsoftConnection.id,
+                    type: 'microsoft',
+                    name: 'Microsoft 365',
+                    enabled: true,
+                    config: {
+                        fromEmail: microsoftConnection.microsoft_email,
+                        displayName: microsoftConnection.display_name,
+                    },
+                    userId,
+                    createdAt: microsoftConnection.created_at,
+                });
+            }
+
             return {
-                integrations: (data || []).map((i: any) => ({
-                    id: i.id,
-                    type: i.type,
-                    name: i.name,
-                    enabled: i.enabled,
-                    config: i.config,
-                    userId: i.user_id,
-                    createdAt: i.created_at,
-                })),
+                integrations,
                 error: null,
             };
         } catch (error) {
@@ -330,6 +353,7 @@ export const integrationsService = {
             zoho: 'Zoho Mail',
             gmail: 'Gmail',
             facebook: 'Facebook',
+            microsoft: 'Microsoft 365',
         };
         return names[type] || type;
     },
@@ -376,4 +400,3 @@ export const integrationsService = {
         }
     },
 };
-

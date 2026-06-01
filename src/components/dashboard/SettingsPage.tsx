@@ -26,7 +26,6 @@ import CalendlySettings from './business/CalendlySettings';
 import HubspotIntegration from './business/HubspotIntegration';
 import StripeConnectSettings from './business/StripeConnectSettings';
 import ZohoIntegration from './business/ZohoIntegration';
-import GmailIntegration from './business/GmailIntegration';
 import TwilioIntegration from './business/TwilioIntegration';
 import SendGridIntegration from './business/SendGridIntegration';
 import ResendIntegration from './business/ResendIntegration';
@@ -305,8 +304,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     };
 
     const handleCopyApiKey = () => {
-        navigator.clipboard.writeText('sk_live_alpha_7f8392bcdefa028457283bc891');
-        toast.success('API key copied');
+        toast.error('API key is not configured yet');
     };
 
     return (
@@ -839,7 +837,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <span className="text-[10px] text-slate-500 uppercase font-black block">Publish credential keys</span>
                     <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
                         <span className="font-mono text-xs text-slate-400 select-all">
-                            {showApiKey ? 'sk_live_alpha_7f8392bcdefa028457283bc891' : 'sk_live_alpha_••••••••••••••••••••••••'}
+                            {showApiKey ? 'mcp_live_generate_in_settings' : 'mcp_live_••••••••••••••••••••••••'}
                         </span>
                         <div className="flex items-center gap-1.5 ml-2">
                             <button 

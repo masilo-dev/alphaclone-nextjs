@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
-import { gmailServerService } from '@/services/server/gmailServerService';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 const testProviderSchema = z.object({
   tenantId: z.string().uuid(),
-  provider: z.enum(['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']),
+  provider: z.enum(['sendgrid', 'resend', 'brevo', 'zoho', 'microsoft']),
   to: z.string().email(),
   subject: z.string().min(1).max(250).optional(),
   message: z.string().min(1).max(5000).optional(),
@@ -18,27 +18,6 @@ function getConfigString(config: Record<string, unknown>, ...keys: string[]) {
     if (value) return value;
   }
   return '';
-}
-
-function encodeGmailRawMessage(params: {
-  to: string;
-  subject: string;
-  content: string;
-  fromEmail: string;
-  fromName: string;
-}) {
-  const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
-  const message = [
-    `From: ${params.fromName} <${params.fromEmail}>`,
-    `To: ${params.to}`,
-    `Subject: ${utf8Subject}`,
-    'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset="UTF-8"',
-    '',
-    params.content,
-  ].join('\n');
-
-  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 export async function POST(request: NextRequest) {
@@ -71,17 +50,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }
 
-    if (provider === 'gmail') {
-      const raw = encodeGmailRawMessage({
-        to,
+    if (provider === 'microsoft') {
+      await microsoftServerService.sendEmail(tenantCtx.user.id, {
+        to: [to],
         subject,
-        content: message,
-        fromEmail: tenantCtx.user.email || 'noreply@alphaclonesystems.com',
-        fromName: String(tenantCtx.user.user_metadata?.full_name || 'AlphaClone Systems'),
-      });
-      await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
-        method: 'POST',
-        body: JSON.stringify({ raw }),
+        html: `<p>${message}</p>`,
       });
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }

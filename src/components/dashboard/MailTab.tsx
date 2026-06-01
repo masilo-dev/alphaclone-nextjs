@@ -11,8 +11,8 @@ interface MailTabProps {
 const MailTab: React.FC<MailTabProps> = () => {
     return (
         <ComingSoon 
-            title="Gmail & SMTP Mail" 
-            subtitle="Secure Gmail inbox synchronization, smart thread routing, and AI email triage assistant are currently under development."
+            title="Outlook & Provider Mail" 
+            subtitle="Secure Outlook inbox synchronization, smart thread routing, and AI email triage across connected providers are currently under development."
             icon={Mail}
         />
     );
