@@ -147,67 +147,108 @@ function LoginContent() {
                     return;
                 }
 
-                const { authService } = await import('@/services/authService');
-                const role = 'tenant_admin';
-                const { user: newUser, error: signUpError } = await authService.signUp(email, password, name, role);
+                const toastId = toast.loading('Creating your account...', { id: 'registration' });
+                let newUser = null;
 
-                if (signUpError) {
-                    console.error("SignUp Error:", signUpError);
-                    if (signUpError.toLowerCase().includes('user already registered') ||
-                        signUpError.toLowerCase().includes('already exists') ||
-                        signUpError.toLowerCase().includes('already been registered')) {
-                        setError('An account with this email already exists. Please sign in instead, or reset your password if you\'ve forgotten it.');
-                    } else if (signUpError.toLowerCase().includes('password')) {
-                        setError('Your password does not meet the security requirements. Please use at least 8 characters with uppercase, lowercase, a number, and a special character.');
-                    } else {
-                        setError(signUpError);
+                try {
+                    const { authService } = await import('@/services/authService');
+                    const role = 'tenant_admin';
+                    const signupResult = await authService.signUp(email, password, name, role);
+                    
+                    if (signupResult.error) {
+                        throw new Error(signupResult.error);
                     }
+                    newUser = signupResult.user;
+                    toast.success('Account created successfully!', { id: 'registration' });
+                } catch (signUpError: any) {
+                    const errorMsg = signUpError.message || 'Failed to register';
+                    console.error("SignUp Error:", errorMsg);
+                    if (errorMsg.toLowerCase().includes('user already registered') ||
+                        errorMsg.toLowerCase().includes('already exists') ||
+                        errorMsg.toLowerCase().includes('already been registered')) {
+                        setError('An account with this email already exists. Please sign in instead, or reset your password.');
+                    } else if (errorMsg.toLowerCase().includes('password')) {
+                        setError('Your password does not meet the security requirements. Use at least 8 characters.');
+                    } else {
+                        setError(errorMsg);
+                    }
+                    toast.error(`Registration failed: ${errorMsg}`, { id: 'registration' });
                     setIsLoading(false);
                     return;
                 }
 
                 if (newUser) {
-                    // 2. TENANT CREATION (If Business selected)
+                    const tenantToastId = toast.loading('Provisioning workspace...', { id: 'workspace' });
+                    let newTenant = null;
+                    const trialEndDate = new Date();
+                    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 Days Trial
+
+                    // 2. TENANT CREATION
                     if (isBusiness && businessName) {
                         try {
                             const { tenantService } = await import('@/services/tenancy/TenantService');
-                            const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                            const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 7);
 
                             // Create Tenant
-                            const newTenant = await tenantService.createTenant({
+                            newTenant = await tenantService.createTenant({
                                 name: businessName,
                                 slug: slug,
                                 adminUserId: newUser.id
                             });
-
-                            // Set Trial and Plan
-                            const trialEndDate = new Date();
-                            trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 Days Trial
-
-                            await tenantService.updateTenant(newTenant.id, {
-                                trial_ends_at: trialEndDate,
-                                subscription_status: 'trial',
-                                subscription_plan: selectedPlan
-                            });
-
-                            // 3. Welcome Email
-                            fetch('/api/email/welcome', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    email: newUser.email,
-                                    name: name,
-                                    trial_ends_at: trialEndDate,
-                                    workspace_name: businessName
-                                })
-                            }).catch(err => console.warn('Welcome email trigger failed:', err));
-
-                            void triggerOnboardingWorkflow(newTenant.id);
-                        } catch (tenantErr) {
+                            
+                            toast.success('Workspace provisioned!', { id: 'workspace' });
+                        } catch (tenantErr: any) {
+                            const errorMsg = tenantErr.message || 'Failed to create workspace';
                             console.error('Tenant creation failed:', tenantErr);
+                            toast.error(`Workspace provisioning failed: ${errorMsg}. Contact support.`, { id: 'workspace' });
+                        }
+
+                        // 2b. SET TRIAL AND PLAN
+                        if (newTenant) {
+                            const trialToastId = toast.loading('Initializing 14-day trial...', { id: 'trial' });
+                            try {
+                                const { tenantService } = await import('@/services/tenancy/TenantService');
+                                await tenantService.updateTenant(newTenant.id, {
+                                    trial_ends_at: trialEndDate,
+                                    subscription_status: 'trial',
+                                    subscription_plan: selectedPlan
+                                });
+                                toast.success('Subscription plan activated!', { id: 'trial' });
+                            } catch (trialErr: any) {
+                                const errorMsg = trialErr.message || 'Failed to setup trial';
+                                console.error('Subscription setup failed:', trialErr);
+                                toast.error(`Subscription setup failed: ${errorMsg}`, { id: 'trial' });
+                            }
+
+                            // 3. Welcome Email (Fire and forget, non-blocking)
+                            try {
+                                fetch('/api/email/welcome', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        email: newUser.email,
+                                        name: name,
+                                        trial_ends_at: trialEndDate,
+                                        workspace_name: businessName
+                                    })
+                                })
+                                .then(() => console.log('Welcome email triggered'))
+                                .catch(err => console.warn('Welcome email trigger failed:', err));
+                            } catch (emailErr) {
+                                console.warn('Failed to start welcome email network call:', emailErr);
+                            }
+
+                            // Start onboarding workflow (non-blocking)
+                            try {
+                                void triggerOnboardingWorkflow(newTenant.id);
+                            } catch (onboardErr) {
+                                console.warn('Failed to trigger onboarding workflow:', onboardErr);
+                            }
                         }
                     }
-                    // Redirect to dashboard for all successful registrations
+
+                    // Success redirect toast
+                    toast.success('Welcome to AlphaClone! Redirecting...');
                     router.push('/dashboard/business');
                     return;
                 }

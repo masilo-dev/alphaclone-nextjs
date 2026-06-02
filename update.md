@@ -1,5 +1,28 @@
 # Update Log
 
+## Date: 2026-06-02 (INVOICE EMAIL INFRASTRUCTURE, MICROSOFT 365 MIGRATION & ONBOARDING OPTIMIZATION)
+
+### Added/Modified
+- **Tenant-Aware Email Routing** ([MCPServer.ts](file:///home/bonnie/alphaclone-nextjs/src/services/mcp/MCPServer.ts)):
+  - Refactored `send_invoice` and `send_receipt` MCP tools to use the multi-provider, tenant-aware `sendEmailServer` dispatcher. This resolves hardcoded Resend provider limitations and dynamically routes outbound emails through Zoho, Brevo, SendGrid, or other configured tenant integrations.
+- **Robust Database Queries & White-Space Trimming**:
+  - Refactored `getInvoiceWithDetailsAdmin` and invoice parameter handlers in `MCPServer.ts` to automatically trim trailing spaces and newlines from `invoice_id` and `tenant_id` UUID parameters, resolving PostgREST UUID syntax errors (`22P02`) and restoring functional `send_invoice` capabilities.
+- **Unified Workspace Files Table & Dynamic Attachments**:
+  - Updated `supabase/migrations/20260524181600_mcp_power_upgrade.sql` to support nullable `anthropic_file_id` constraints and add crucial metadata columns (`file_name`, `file_type`, `file_size`, `storage_url`, `uploaded_by`).
+  - Upgraded the `upload_document` tool to automatically register files inside both `file_uploads` and the new `workspace_files` tables in a single transaction.
+  - Refactored `send_transactional_email` file attachment routing to search the `workspace_files` table first with fallback to `file_uploads`, including a dual relative-path/absolute-URL fetch and download capability.
+- **Microsoft 365 Outlook Migration & Gmail Cleanup** ([Dashboard.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/Dashboard.tsx), [MailTab.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/MailTab.tsx), [MicrosoftMailView.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/dashboard/MicrosoftMailView.tsx)):
+  - Decommissioned legacy Gmail-specific views (`GmailIntegrationView.tsx`, `GmailTab.tsx`) and integrated the new high-fidelity Microsoft 365 Outlook mail client (`MicrosoftMailView.tsx`).
+  - Enabled full mail reading and interaction functionality powered by the Microsoft Graph API.
+- **Registration Flow Optimization & One-Question Onboarding** ([page.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/auth/login/page.tsx), [OnboardingFlow.tsx](file:///home/bonnie/alphaclone-nextjs/src/components/onboarding/OnboardingFlow.tsx)):
+  - Hardened the `handleSubmit` signup logic with decoupled try/catch blocks for authentication, tenant creation, and onboarding emails to prevent auth drop-offs.
+  - Deployed `20260602000000_add_onboarding_role_to_profiles.sql` to track profile roles and integrated the new streamlined single-question onboarding experience.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. TypeScript type-safety build checks verified.
+
+---
+
 ## Date: 2026-06-01 (MICROSOFT 365 OUTLOOK, TASKS AND MEETING EMBED INTEGRATION & BUILD FIXES)
 
 ### Added/Modified

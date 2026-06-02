@@ -1097,7 +1097,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/mail':
-      case '/dashboard/gmail': // Keep for backward compatibility/redirect
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
             <MailTab user={user} />
@@ -1677,9 +1676,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         </header>
 
         {/* Main Content Area */}
-        <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail', '/dashboard/gmail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
+        <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
-          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${activeTab === '/dashboard/gmail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
+          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${activeTab === '/dashboard/mail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
             {/* Background decorative elements */}
             <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 max-w-7xl mx-auto min-h-full">

@@ -88,6 +88,7 @@ async function getInvoiceWithDetailsAdmin(
   tenantId?: string
 ): Promise<{ invoice: any | null; error: string | null }> {
   try {
+    const cleanInvoiceId = String(invoiceId || '').trim();
     let query = supabaseAdmin
       .from('business_invoices')
       .select(`
@@ -109,10 +110,10 @@ async function getInvoiceWithDetailsAdmin(
               name
           )
       `)
-      .eq('id', invoiceId);
+      .eq('id', cleanInvoiceId);
 
     if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
+      query = query.eq('tenant_id', String(tenantId || '').trim());
     }
 
     const { data, error } = await query.single();
@@ -3158,6 +3159,24 @@ class AlphaCloneMCPServer {
             throw new Error(uploadRes.error || 'Failed to upload document');
           }
 
+          // Save in workspace_files table
+          try {
+            await supabaseAdmin.from('workspace_files').insert({
+              id: uploadRes.fileId,
+              tenant_id: tenant_id,
+              user_id: user_id,
+              uploaded_by: user_id,
+              filename: filename.trim(),
+              file_name: filename.trim(),
+              mime_type: mime_type.trim(),
+              file_type: mime_type.trim(),
+              file_size: binary.length,
+              storage_url: uploadRes.proxiedUrl || uploadRes.url || '',
+            });
+          } catch (workspaceErr) {
+            console.error('Failed to write to workspace_files table:', workspaceErr);
+          }
+
           const response: Record<string, unknown> = {
             success: true,
             file_id: uploadRes.fileId,
@@ -4235,8 +4254,9 @@ class AlphaCloneMCPServer {
         // â”€â”€ send_invoice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'send_invoice': {
           const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { invoice_id, recipient_email, provider: preferredProvider } = a;
+          const tenant_id = String(this.requireTenant(a) || '').trim();
+          const invoice_id = String(a.invoice_id || '').trim();
+          const { recipient_email, provider: preferredProvider } = a;
           const user_id = this.ctx?.userId || null;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
@@ -4294,7 +4314,7 @@ class AlphaCloneMCPServer {
               updated_at: new Date().toISOString(),
             })
             .eq('tenant_id', tenant_id)
-            .eq('id', invoice_id.trim());
+            .eq('id', invoice_id);
           if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
 
           result = { content: [{ type: 'text', text: JSON.stringify({
@@ -4317,8 +4337,8 @@ class AlphaCloneMCPServer {
 
         case 'send_receipt': {
           const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const user_id = this.requireProfileUser(a);
+          const tenant_id = String(this.requireTenant(a) || '').trim();
+          const user_id = String(this.requireProfileUser(a) || '').trim();
           const { invoice_id, recipient_email, provider } = a;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
@@ -4338,24 +4358,67 @@ class AlphaCloneMCPServer {
           const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
           const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
 
-          const amount = `${invoice.currency || '$'}${invoice.total}`;
+          const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
           const receiptUrl = AppUrls.viewReceipt(invoice.id);
 
-          const sendResult = await emailHelpers.sendReceipt(
-            to,
-            invoice.invoice_number,
+          const variables = {
+            invoice_number: invoice.invoice_number,
             amount,
-            receiptUrl,
-            provider,
-            user_id,
-            {
-              filename: `Receipt_${invoice.invoice_number}.pdf`,
-              content: pdfBuffer,
-              contentType: 'application/pdf'
-            }
-          );
+            payment_date: new Date().toLocaleDateString(),
+            receipt_url: receiptUrl,
+          };
+          let html = `
+              <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                  <h2 style="color: #10B981;">Payment Confirmed ✓</h2>
+                  <p>Hi there,</p>
+                  <p>This is a formal receipt for your payment of <strong>{{amount}}</strong>.</p>
+                  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                      <tr>
+                          <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Invoice Number:</strong></td>
+                          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{invoice_number}}</td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Payment Date:</strong></td>
+                          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{payment_date}}</td>
+                      </tr>
+                      <tr>
+                          <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Amount Paid:</strong></td>
+                          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; color: #10B981;">{{amount}}</td>
+                      </tr>
+                  </table>
+                  <p>You can download the full PDF receipt here:</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                      <a href="{{receipt_url}}" style="background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                          Download Receipt
+                      </a>
+                  </div>
+                  <p style="color: #666; font-size: 12px;">Thank you for your business!</p>
+              </div>
+          `;
+          Object.entries(variables).forEach(([key, value]) => {
+            const placeholder = new RegExp(`{{${key}}}`, 'g');
+            html = html.replace(placeholder, String(value));
+          });
 
-          if (!sendResult.success) throw new Error(`Failed to send receipt: ${sendResult.error}`);
+          const dispatch = await sendEmailServer({
+            tenantId: tenant_id,
+            userId: user_id || undefined,
+            preferredProvider: provider as any,
+            to,
+            subject: `Payment Receipt - ${invoice.invoice_number}`,
+            fromName: invoice.tenant?.name || 'AlphaClone',
+            html,
+            attachments: [{
+              filename: `Receipt_${invoice.invoice_number}.pdf`,
+              content: pdfBuffer.toString('base64'),
+              contentType: 'application/pdf',
+            }],
+            templateName: 'mcpInvoiceReceipt',
+          });
+
+          if (!dispatch.success) {
+            throw new Error(`Receipt email delivery failed: ${dispatch.error || 'unknown error'} ${JSON.stringify(dispatch.errorDetails || [])}`);
+          }
 
           result = {
             content: [{
@@ -5241,40 +5304,111 @@ class AlphaCloneMCPServer {
           const publicDocumentLinks: Array<{ name: string; url: string; expiresAt: string }> = [];
 
           if (documentFileIds.length > 0) {
-            const { data: fileRows, error: fileError } = await supabaseAdmin
-              .from('file_uploads')
-              .select('id, storage_path, original_filename, file_type')
-              .eq('tenant_id', tenant_id)
-              .in('id', documentFileIds);
-            if (fileError) throw supabaseErrorToMcpClientError('send_transactional_email', fileError.message);
+            const resolvedFiles: Array<{ id: string; storage_path: string; original_filename: string; file_type: string }> = [];
 
-            for (const file of fileRows || []) {
-              const name = String(file.original_filename || 'AlphaClone document');
-              if (includePublicDocumentLinks) {
-                const share = await publicShareService.createShare({
-                  tenantId: tenant_id,
-                  bucket: 'uploads',
-                  filePath: String(file.storage_path),
-                  originalName: name,
-                  createdBy: user_id,
-                  expiresInHours: publicLinkExpiresHours,
+            // 1. Try querying workspace_files first
+            let workspaceFilesRows: any[] | null = null;
+            try {
+              const { data, error } = await supabaseAdmin
+                .from('workspace_files')
+                .select('id, storage_url, file_name, file_type')
+                .eq('tenant_id', tenant_id)
+                .in('id', documentFileIds);
+              if (!error && data && data.length > 0) {
+                workspaceFilesRows = data;
+              }
+            } catch (err) {
+              console.error('Error querying workspace_files table, falling back to file_uploads:', err);
+            }
+
+            if (workspaceFilesRows && workspaceFilesRows.length > 0) {
+              for (const file of workspaceFilesRows) {
+                resolvedFiles.push({
+                  id: file.id,
+                  storage_path: file.storage_url || '',
+                  original_filename: file.file_name || 'AlphaClone document',
+                  file_type: file.file_type || 'application/octet-stream',
                 });
-                publicDocumentLinks.push({ name, url: share.url, expiresAt: share.expiresAt });
+              }
+            } else {
+              // 2. Fallback to file_uploads
+              const { data: fileRows, error: fileError } = await supabaseAdmin
+                .from('file_uploads')
+                .select('id, storage_path, original_filename, file_type')
+                .eq('tenant_id', tenant_id)
+                .in('id', documentFileIds);
+              if (fileError) throw supabaseErrorToMcpClientError('send_transactional_email', fileError.message);
+
+              for (const file of fileRows || []) {
+                resolvedFiles.push({
+                  id: file.id,
+                  storage_path: file.storage_path || '',
+                  original_filename: file.original_filename || 'AlphaClone document',
+                  file_type: file.file_type || 'application/octet-stream',
+                });
+              }
+            }
+
+            // 3. Process resolved files (download or share link)
+            for (const file of resolvedFiles) {
+              const name = String(file.original_filename);
+              if (includePublicDocumentLinks) {
+                let shareUrl = '';
+                let shareExpiresAt = '';
+                if (file.storage_path.startsWith('http://') || file.storage_path.startsWith('https://')) {
+                  shareUrl = file.storage_path;
+                  shareExpiresAt = new Date(Date.now() + publicLinkExpiresHours * 3600000).toISOString();
+                } else {
+                  const share = await publicShareService.createShare({
+                    tenantId: tenant_id,
+                    bucket: 'uploads',
+                    filePath: String(file.storage_path),
+                    originalName: name,
+                    createdBy: user_id,
+                    expiresInHours: publicLinkExpiresHours,
+                  });
+                  shareUrl = share.url;
+                  shareExpiresAt = share.expiresAt;
+                }
+                publicDocumentLinks.push({ name, url: shareUrl, expiresAt: shareExpiresAt });
               } else {
-                const { data: blob, error: downloadError } = await supabaseAdmin.storage
-                  .from('uploads')
-                  .download(String(file.storage_path));
-                if (downloadError || !blob) {
+                let fileBuffer: Buffer | null = null;
+                let downloadErrorMsg: string | null = null;
+
+                if (file.storage_path.startsWith('http://') || file.storage_path.startsWith('https://')) {
+                  try {
+                    const response = await fetch(file.storage_path);
+                    if (!response.ok) {
+                      throw new Error(`Fetch failed with status ${response.status}`);
+                    }
+                    const arrayBuffer = await response.arrayBuffer();
+                    fileBuffer = Buffer.from(arrayBuffer);
+                  } catch (fetchErr: any) {
+                    downloadErrorMsg = fetchErr.message || String(fetchErr);
+                  }
+                } else {
+                  const { data: blob, error: downloadError } = await supabaseAdmin.storage
+                    .from('uploads')
+                    .download(String(file.storage_path));
+                  if (downloadError || !blob) {
+                    downloadErrorMsg = downloadError?.message || 'Download returned empty data';
+                  } else {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    fileBuffer = Buffer.from(arrayBuffer);
+                  }
+                }
+
+                if (!fileBuffer) {
                   throw supabaseErrorToMcpClientError(
                     'send_transactional_email',
-                    downloadError?.message || `Could not attach ${name}`
+                    downloadErrorMsg || `Could not attach ${name}`
                   );
                 }
-                const arrayBuffer = await blob.arrayBuffer();
+
                 attachments.push({
                   filename: name,
-                  content: Buffer.from(arrayBuffer).toString('base64'),
-                  contentType: String(file.file_type || 'application/octet-stream'),
+                  content: fileBuffer.toString('base64'),
+                  contentType: String(file.file_type),
                 });
               }
             }

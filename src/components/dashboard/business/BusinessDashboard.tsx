@@ -107,7 +107,6 @@ import MissedCallsNotification from '../MissedCallsNotification';
 /** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). CRM pipeline routes scroll with the main column so they are not listed here. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/mail',
-    '/dashboard/gmail',
     '/dashboard/business/projects',
     '/dashboard/tasks',
     '/dashboard/sales-agent',
@@ -546,7 +545,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             case '/dashboard/mail':
-            case '/dashboard/gmail':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={4} columns={1} />}>
                         <MailTab user={user} />
@@ -631,8 +629,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
             case '/dashboard/accounting': return t('Accounting Dashboard');
-            case '/dashboard/mail':
-            case '/dashboard/gmail': return t('Mail');
+            case '/dashboard/mail': return t('Mail');
             case '/dashboard/zoho/mail': return t('Zoho Mail');
             case '/dashboard/zoho/crm': return t('Zoho CRM Sync');
             case '/dashboard/marketplace': return t('Integration Marketplace');
