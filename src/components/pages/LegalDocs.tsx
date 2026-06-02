@@ -720,20 +720,126 @@ export function SLA() {
     return (
         <LegalLayout
             title="Service Level Agreement (SLA)"
-            subtitle="Our commitment to service availability and support response times."
-            lastUpdated="April 30, 2026"
+            subtitle="Our uptime commitment, support response targets, and service credit terms for AlphaClone Business OS customers."
+            lastUpdated="June 2, 2026"
             icon={Clock}
             color="indigo"
         >
-            <Section id="availability" title="1. Service Availability">
-                <p>AlphaClone Systems targets a 99.9% uptime for all core platform services, including CRM, Billing, and API access.</p>
-            </Section>
-            <Section id="support" title="2. Support Response Times">
+            <InfoBox>
+                <strong>Plain language summary:</strong> We target 99.9% monthly uptime. If we fall below 99.5%, you can claim a service credit. Support response times depend on your plan tier. Credits are the sole remedy for availability failures.
+            </InfoBox>
+
+            <Section id="uptime-commitment" title="1. Uptime Commitment">
+                <p>AlphaClone Systems ("AlphaClone") commits to a monthly uptime target of <strong className="text-white">99.9%</strong> for all core platform services, including:</p>
                 <BulletList items={[
-                    'P0 (Critical): 4 hours',
-                    'P1 (High): 12 hours',
-                    'P2 (Normal): 48 hours',
+                    'Dashboard and user-facing application (alphaclonesystems.com/dashboard)',
+                    'CRM, invoicing, contract, and project modules',
+                    'REST API and MCP endpoints',
+                    'Authentication and account management services',
+                    'Email delivery (transactional) via our platform',
                 ]} />
+                <p className="mt-3">Monthly uptime percentage is calculated as: <span className="text-white font-mono text-xs">((total minutes in month − downtime minutes) / total minutes in month) × 100</span>. Scheduled maintenance windows do not count as downtime if announced ≥48 hours in advance.</p>
+            </Section>
+
+            <Section id="definitions" title="2. Definitions">
+                <div className="space-y-3">
+                    {[
+                        { term: 'Downtime', def: 'A period during which the platform is completely inaccessible to all users due to a fault within AlphaClone\'s infrastructure. Partial degradation (slow performance, one feature unavailable) does not constitute downtime.' },
+                        { term: 'Scheduled Maintenance', def: 'Planned maintenance communicated via email and in-platform notice at least 48 hours in advance. Scheduled maintenance does not count toward downtime calculations.' },
+                        { term: 'Emergency Maintenance', def: 'Unplanned maintenance required to protect platform security or stability. AlphaClone will provide as much advance notice as practicable. Emergency maintenance counts as downtime if it exceeds 30 minutes.' },
+                        { term: 'Service Credit', def: 'A pro-rated credit applied to your next billing cycle as a remedy for verified downtime exceeding the SLA threshold. Credits are non-transferable and have no cash value.' },
+                    ].map((item, i) => (
+                        <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
+                            <p className="text-white font-semibold text-xs mb-1">{item.term}</p>
+                            <p className="text-slate-400 text-xs">{item.def}</p>
+                        </div>
+                    ))}
+                </div>
+            </Section>
+
+            <Section id="support-tiers" title="3. Support Response Times">
+                <p>Support response times are measured from the time a ticket is received during business hours (09:00–18:00 UTC, Monday–Friday), unless otherwise stated for your plan tier.</p>
+                <div className="mt-4 overflow-x-auto min-w-0">
+                    <table className="w-full min-w-[480px] text-xs border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-700">
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Priority</th>
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Condition</th>
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Starter</th>
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Pro</th>
+                                <th className="text-left py-2 text-slate-300 font-semibold">Enterprise</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                            {[
+                                { p: 'P0 — Critical', c: 'Platform completely inaccessible', s: '48h', pro: '12h', ent: '4h' },
+                                { p: 'P1 — High', c: 'Core feature broken, no workaround', s: '72h', pro: '24h', ent: '8h' },
+                                { p: 'P2 — Normal', c: 'Feature degraded, workaround exists', s: '5 days', pro: '48h', ent: '24h' },
+                                { p: 'P3 — Low', c: 'General question or feature request', s: '7 days', pro: '5 days', ent: '48h' },
+                            ].map((row, i) => (
+                                <tr key={i}>
+                                    <td className="py-2 pr-4 text-white font-semibold">{row.p}</td>
+                                    <td className="py-2 pr-4 text-slate-400">{row.c}</td>
+                                    <td className="py-2 pr-4 text-slate-400">{row.s}</td>
+                                    <td className="py-2 pr-4 text-indigo-400">{row.pro}</td>
+                                    <td className="py-2 text-teal-400">{row.ent}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <p className="mt-4 text-xs text-slate-500">Response time = time to first meaningful response, not time to resolution. Resolution times vary by issue complexity.</p>
+            </Section>
+
+            <Section id="service-credits" title="4. Service Credits">
+                <p>If monthly uptime falls below the thresholds below, you may request a service credit:</p>
+                <div className="mt-4 overflow-x-auto min-w-0">
+                    <table className="w-full min-w-[340px] text-xs border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-700">
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Monthly Uptime</th>
+                                <th className="text-left py-2 text-slate-300 font-semibold">Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                            {[
+                                { uptime: '99.0% – 99.5%', credit: '10% of monthly fee' },
+                                { uptime: '95.0% – 98.9%', credit: '25% of monthly fee' },
+                                { uptime: 'Below 95.0%', credit: '50% of monthly fee' },
+                            ].map((row, i) => (
+                                <tr key={i}>
+                                    <td className="py-2 pr-4 text-white">{row.uptime}</td>
+                                    <td className="py-2 text-indigo-400 font-semibold">{row.credit}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <Sub title="How to Claim a Credit">
+                    <p>Submit a credit request to <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a> within <strong className="text-white">30 calendar days</strong> of the incident, with the subject line "SLA Credit Request — [Month Year]". Include your account email, approximate downtime window, and any error messages observed. Credits will be applied to the next billing cycle within 10 business days of verification.</p>
+                </Sub>
+            </Section>
+
+            <Section id="exclusions" title="5. SLA Exclusions">
+                <p>The uptime SLA does not apply to downtime caused by:</p>
+                <BulletList items={[
+                    'Scheduled maintenance windows announced ≥48 hours in advance',
+                    'Actions taken by you or your team members (e.g., deleting data, misconfiguring integrations)',
+                    'Third-party service failures outside AlphaClone\'s control (e.g., Supabase, Stripe, Cloudflare, Google)',
+                    'Force majeure events (natural disasters, war, pandemics, internet infrastructure failures)',
+                    'Accounts suspended for violation of the Terms of Service or non-payment',
+                    'Issues arising from your use of unsupported browsers or unofficial API integrations',
+                    'Free trial accounts (SLA applies only to paid subscriptions)',
+                    'Beta features explicitly labeled as "experimental" or "preview"',
+                ]} />
+            </Section>
+
+            <Section id="monitoring" title="6. Status &amp; Monitoring">
+                <p>Real-time platform status is published at <a href="/platform-status" className="text-teal-400 hover:underline">/platform-status</a>. You can subscribe to status alerts by emailing <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a> with "Status Alerts" in the subject line. Incident post-mortems for P0 events are published within 5 business days of resolution.</p>
+            </Section>
+
+            <Section id="contact-sla" title="7. Contact">
+                <p>For SLA queries or credit claims: <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a></p>
             </Section>
         </LegalLayout>
     );
@@ -743,18 +849,217 @@ export function DPA() {
     return (
         <LegalLayout
             title="Data Processing Agreement (DPA)"
-            subtitle="Governance for the processing of personal data on behalf of our customers."
-            lastUpdated="April 30, 2026"
+            subtitle="This DPA governs AlphaClone's processing of personal data on behalf of business customers in compliance with GDPR, POPIA, and applicable data protection law."
+            lastUpdated="June 2, 2026"
             icon={Users}
             color="blue"
         >
-            <Section id="roles" title="1. Roles & Responsibilities">
-                <p>AlphaClone acts as a <strong>Data Processor</strong> for the Customer\'s business data, and as a <strong>Data Controller</strong> for account administration data.</p>
+            <InfoBox>
+                <strong>Who this applies to:</strong> This DPA applies to all paying AlphaClone customers who process personal data of their own customers, employees, or contacts through the AlphaClone platform. It forms part of and is incorporated into the AlphaClone Terms of Service.
+            </InfoBox>
+
+            <Section id="roles" title="1. Roles &amp; Responsibilities">
+                <div className="space-y-3">
+                    {[
+                        { role: 'Customer (Data Controller)', def: 'The business or individual subscribing to AlphaClone. The Controller determines the purposes and means of processing personal data of their clients, contacts, and team members. The Controller is responsible for ensuring their instructions to AlphaClone are lawful.' },
+                        { role: 'AlphaClone Systems LLC (Data Processor)', def: 'AlphaClone processes personal data only on behalf of and according to the documented instructions of the Controller. AlphaClone acts as a Controller only for its own account administration data (billing, authentication).' },
+                    ].map((item, i) => (
+                        <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
+                            <p className="text-white font-semibold text-xs mb-1">{item.role}</p>
+                            <p className="text-slate-400 text-xs">{item.def}</p>
+                        </div>
+                    ))}
+                </div>
             </Section>
-            <Section id="subprocessors" title="2. Sub-processors">
-                <p>Our sub-processors include Supabase, Stripe, Cloudflare, and Vercel. All data is processed in accordance with GDPR and relevant international standards.</p>
+
+            <Section id="processing-details" title="2. Processing Details">
+                <div className="mt-3 overflow-x-auto min-w-0">
+                    <table className="w-full min-w-[400px] text-xs border-collapse">
+                        <tbody className="divide-y divide-slate-800/50">
+                            {[
+                                { k: 'Subject Matter', v: 'Operation of the AlphaClone Business OS on behalf of the Customer' },
+                                { k: 'Duration', v: 'For the term of the subscription and post-termination retention period (90 days)' },
+                                { k: 'Nature', v: 'Storage, retrieval, display, transmission, and deletion of personal data' },
+                                { k: 'Purpose', v: 'To provide CRM, billing, contract, project management, and communication features to the Customer' },
+                                { k: 'Categories of Data', v: 'Names, email addresses, phone numbers, company info, financial records, contract data, correspondence' },
+                                { k: 'Data Subjects', v: "Customer's clients, leads, employees, team members, and contractors" },
+                            ].map((row, i) => (
+                                <tr key={i}>
+                                    <td className="py-2 pr-4 text-slate-300 font-semibold w-1/3">{row.k}</td>
+                                    <td className="py-2 text-slate-400">{row.v}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Section>
+
+            <Section id="processor-obligations" title="3. AlphaClone's Obligations as Processor">
+                <BulletList items={[
+                    'Process personal data only on documented instructions from the Customer, including transfers to third countries',
+                    'Ensure that all staff authorised to process personal data are bound by appropriate confidentiality obligations',
+                    'Implement appropriate technical and organisational security measures (see Section 6 of our Privacy Policy)',
+                    'Assist the Customer in responding to data subject rights requests (access, erasure, portability)',
+                    'Assist the Customer in meeting GDPR obligations regarding security, breach notification, DPIAs, and prior consultation',
+                    'Delete or return all personal data to the Customer on termination of the service, at the Customer\'s choice',
+                    'Make available all information necessary to demonstrate compliance with this DPA',
+                    'Notify the Customer without undue delay (and within 72 hours where possible) upon becoming aware of a personal data breach',
+                ]} />
+            </Section>
+
+            <Section id="subprocessors" title="4. Sub-processors">
+                <p>AlphaClone uses the following authorised sub-processors. All sub-processors are bound by data processing agreements no less protective than this DPA. The Customer grants general authorisation for AlphaClone to use these sub-processors.</p>
+                <div className="mt-4 overflow-x-auto min-w-0">
+                    <table className="w-full min-w-[520px] text-xs border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-700">
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Sub-processor</th>
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Purpose</th>
+                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Location</th>
+                                <th className="text-left py-2 text-slate-300 font-semibold">Safeguard</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                            {[
+                                { sp: 'Supabase, Inc.', pu: 'Database & authentication', loc: 'US (AWS us-east-1)', sg: 'SCCs + DPA' },
+                                { sp: 'Stripe, Inc.', pu: 'Payment processing', loc: 'US', sg: 'SCCs + DPA' },
+                                { sp: 'Cloudflare, Inc.', pu: 'CDN, DDoS, bot protection', loc: 'Global (US HQ)', sg: 'SCCs + DPA' },
+                                { sp: 'Vercel, Inc.', pu: 'Application hosting', loc: 'US (AWS)', sg: 'SCCs + DPA' },
+                                { sp: 'Resend / SendGrid', pu: 'Transactional email', loc: 'US', sg: 'SCCs + DPA' },
+                                { sp: 'Sentry, Inc.', pu: 'Error monitoring', loc: 'US', sg: 'SCCs + DPA' },
+                            ].map((row, i) => (
+                                <tr key={i}>
+                                    <td className="py-2 pr-4 text-white">{row.sp}</td>
+                                    <td className="py-2 pr-4 text-slate-400">{row.pu}</td>
+                                    <td className="py-2 pr-4 text-slate-400">{row.loc}</td>
+                                    <td className="py-2 text-blue-400">{row.sg}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <p className="mt-3 text-xs text-slate-500">AlphaClone will notify the Customer of any intended addition or replacement of sub-processors by updating this DPA and sending an email notification at least 14 days before the change takes effect. The Customer may object to a new sub-processor in writing within 14 days.</p>
+            </Section>
+
+            <Section id="transfers" title="5. International Data Transfers">
+                <p>Where personal data is transferred from the EEA, UK, or Switzerland to countries not recognised as providing adequate protection (including the United States), AlphaClone relies on the following safeguards:</p>
+                <BulletList items={[
+                    'Standard Contractual Clauses (SCCs) — EU Commission Decision 2021/914, Module 2 (Controller to Processor)',
+                    'UK International Data Transfer Addendum (IDTA) for transfers from the UK',
+                    'Binding Corporate Rules where applicable',
+                ]} />
+                <p className="mt-3">Copies of the applicable SCCs are available on request from <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>.</p>
+            </Section>
+
+            <Section id="audit-rights" title="6. Audit Rights">
+                <p>AlphaClone shall make available to the Customer all information reasonably necessary to demonstrate compliance with the obligations in this DPA. The Customer may conduct an audit (or commission a third-party auditor) of AlphaClone's data processing activities, subject to:</p>
+                <BulletList items={[
+                    'Giving at least 30 days\' written notice to legal@alphaclonesystems.com',
+                    'Audits being conducted during normal business hours and no more than once per calendar year',
+                    'The auditor executing a non-disclosure agreement acceptable to AlphaClone',
+                    'The Customer bearing all costs of the audit',
+                ]} />
+            </Section>
+
+            <Section id="breach-notification" title="7. Personal Data Breach Notification">
+                <p>Upon becoming aware of a personal data breach affecting data processed under this DPA, AlphaClone will:</p>
+                <BulletList items={[
+                    'Notify the Customer without undue delay, and where feasible within 72 hours of becoming aware',
+                    'Provide the Customer with: nature of the breach, categories and approximate number of data subjects affected, likely consequences, measures taken or proposed to address the breach',
+                    'Assist the Customer in notifying the relevant supervisory authority and affected data subjects as required',
+                ]} />
+            </Section>
+
+            <Section id="deletion" title="8. Data Deletion &amp; Return">
+                <p>Upon termination or expiry of the subscription, AlphaClone will, at the Customer's election:</p>
+                <BulletList items={[
+                    'Return all personal data to the Customer in CSV/JSON format within 30 days of a written request',
+                    'Securely delete all personal data within 90 days of account deletion',
+                    'Provide written confirmation of deletion upon request',
+                    'Backup snapshots containing personal data are purged within 30 days of account deletion',
+                ]} />
+            </Section>
+
+            <Section id="contact-dpa" title="9. Contact &amp; DPA Requests">
+                <p>To request a signed copy of this DPA, or for any data processing queries:</p>
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 text-sm mt-3">
+                    <p><strong className="text-white">Privacy &amp; DPA:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
+                    <p><strong className="text-white">Legal:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
+                </div>
             </Section>
         </LegalLayout>
     );
 }
 
+// ---------------------------------------------------------------------------
+// PRIVACY CHOICES (CCPA / Do Not Sell)
+// ---------------------------------------------------------------------------
+export function PrivacyChoices() {
+    return (
+        <LegalLayout
+            title="Your Privacy Choices"
+            subtitle="Manage your California Consumer Privacy Act (CCPA) rights and control how your personal information is used."
+            lastUpdated="June 2, 2026"
+            icon={Shield}
+            color="teal"
+        >
+            <InfoBox>
+                <strong>AlphaClone does not sell your personal data.</strong> We do not sell, rent, or trade your personal information to third parties for monetary consideration. This page explains your rights under the CCPA and how to exercise them.
+            </InfoBox>
+
+            <Section id="ccpa-rights" title="1. Your California Privacy Rights">
+                <p>If you are a California resident, the California Consumer Privacy Act (CCPA) and California Privacy Rights Act (CPRA) give you the following rights:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                    {[
+                        { right: 'Right to Know', desc: 'You have the right to know what personal information we collect, use, disclose, and sell (or share) about you.' },
+                        { right: 'Right to Delete', desc: 'You have the right to request that we delete personal information we have collected from you, subject to certain exceptions.' },
+                        { right: 'Right to Correct', desc: 'You have the right to request that we correct inaccurate personal information we maintain about you.' },
+                        { right: 'Right to Opt Out of Sale/Sharing', desc: 'You have the right to opt out of the sale or sharing of your personal information. AlphaClone does not sell personal data.' },
+                        { right: 'Right to Limit Use of Sensitive PI', desc: 'You have the right to limit our use and disclosure of your sensitive personal information to certain purposes.' },
+                        { right: 'Right to Non-Discrimination', desc: 'We will not discriminate against you for exercising any of your CCPA rights.' },
+                    ].map((item, i) => (
+                        <div key={i} className="p-3 bg-white/[0.04] rounded-lg border border-slate-800">
+                            <p className="text-white font-semibold text-xs mb-1">{item.right}</p>
+                            <p className="text-slate-500 text-xs">{item.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </Section>
+
+            <Section id="do-not-sell" title="2. Do Not Sell or Share My Personal Information">
+                <InfoBox>
+                    AlphaClone Systems does not sell your personal information to third parties for money. We do not share your personal information with third parties for cross-context behavioural advertising. No opt-out action is required for the sale of personal data because we do not engage in this practice.
+                </InfoBox>
+                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Vercel, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-teal-400 hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
+                <p className="mt-3">If you believe we have incorrectly categorised any data sharing as non-sale, or if you wish to formally record an opt-out preference, contact us at the address below.</p>
+            </Section>
+
+            <Section id="sensitive-pi" title="3. Sensitive Personal Information">
+                <p>AlphaClone does not collect or process sensitive personal information as defined by the CPRA (e.g., social security numbers, financial account credentials, precise geolocation, health data, biometric data) in the ordinary course of providing our service. If you believe sensitive data has been inadvertently collected, contact us immediately at <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>.</p>
+            </Section>
+
+            <Section id="exercise-rights" title="4. How to Exercise Your Rights">
+                <p>To submit a CCPA rights request, you may:</p>
+                <BulletList items={[
+                    'Email: privacy@alphaclonesystems.com with subject "CCPA Rights Request"',
+                    'For account deletion: use Settings → Account → Delete Account within the platform',
+                    'For data export: use Settings → Data → Export My Data within the platform',
+                ]} />
+                <p className="mt-4">We will respond to verified requests within <strong className="text-white">45 calendar days</strong>. If we need more time, we will notify you and may extend the response period by an additional 45 days. To verify your identity, we will ask you to confirm your registered email address and may request additional information to protect your data from unauthorised access.</p>
+                <p className="mt-3">You may designate an authorised agent to submit a request on your behalf. Authorised agents must provide written proof of their authorisation and you must verify your identity directly with us.</p>
+            </Section>
+
+            <Section id="shine-the-light" title="5. California Shine the Light (Civil Code § 1798.83)">
+                <p>California Civil Code § 1798.83 permits California residents to request information about disclosure of personal information to third parties for direct marketing purposes. AlphaClone does not disclose personal information to third parties for their direct marketing purposes. Accordingly, no annual disclosure is required. To make a request, contact <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>.</p>
+            </Section>
+
+            <Section id="contact-privacy-choices" title="6. Contact">
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 text-sm mt-3">
+                    <p><strong className="text-white">Privacy Requests:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
+                    <p><strong className="text-white">Subject line:</strong> CCPA Rights Request</p>
+                    <p className="text-slate-500 text-xs mt-2">We respond within 45 days. No discrimination will result from exercising your rights.</p>
+                </div>
+            </Section>
+        </LegalLayout>
+    );
+}
