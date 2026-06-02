@@ -518,7 +518,9 @@ function LoginContent() {
                     )}
                     <h1 className="text-lg font-bold text-white mb-1">AlphaClone Systems</h1>
                     <p className="text-slate-400 text-xs">
-                        {isRegistering ? 'Create your Business OS workspace' : 'Sign in to your Business OS dashboard'}
+                        {isRegistering
+                            ? 'Welcome! Set up your free 14-day workspace — no card needed.'
+                            : 'Welcome back! Sign in to your dashboard.'}
                     </p>
                 </div>
 
@@ -526,8 +528,8 @@ function LoginContent() {
                     {isRegistering && (
                         <div className="animate-slide-up space-y-2">
                             <div className="max-w-md mx-auto rounded-lg border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-center">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
-                                <p className="mt-0.5 text-xs text-slate-300">Business workspace provisioning enabled.</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">✓ 14 Days Free Trial</p>
+                                <p className="mt-0.5 text-xs text-slate-300">Your full workspace is ready in seconds. No credit card required.</p>
                             </div>
 
                             <div className="max-w-md mx-auto w-full">
@@ -659,9 +661,9 @@ function LoginContent() {
                                 </div>
                                 <span className="text-xs text-slate-400 leading-relaxed">
                                     By creating an account, you agree to our{' '}
-                                    <Link href="/legal?tab=terms" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Terms of Service</Link>
+                                    <Link href="/terms-of-service" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Terms of Service</Link>
                                     {' '}and{' '}
-                                    <Link href="/legal?tab=privacy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Privacy Policy</Link>.
+                                    <Link href="/privacy-policy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Privacy Policy</Link>.
                                 </span>
                             </label>
                         )}
@@ -792,11 +794,11 @@ function LoginContent() {
                     >
                         {isRegistering ? (
                             <>
-                                <LogIn className="w-4 h-4" /> Already have an account? Log In
+                                <LogIn className="w-4 h-4" /> Already have an account? Sign In
                             </>
                         ) : (
                             <>
-                                <UserPlus className="w-4 h-4" /> New Client? Create Account
+                                <UserPlus className="w-4 h-4" /> Don't have an account? Start Free Trial
                             </>
                         )}
                     </button>

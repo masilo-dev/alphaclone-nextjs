@@ -1,5 +1,26 @@
 # Update Log
 
+## Date: 2026-06-02 (CALENDLY FIX, LOGIN UX & LEGAL LINK CORRECTIONS)
+
+### Added/Modified
+- **Calendly Book-Demo Widget Fix** ([book-demo/page.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/book-demo/page.tsx)):
+  - Replaced `strategy="lazyOnload"` with `strategy="afterInteractive"` on the Calendly script tag to ensure the script loads while the page is interactive.
+  - Added `useEffect` hook to call `Calendly.initInlineWidget()` programmatically once the script confirms loading via `onLoad` callback, fixing the blank widget window.
+  - Added the required Calendly CSS stylesheet (`widget.css`) link in the page head.
+  - Added a loading spinner placeholder shown while the widget is initializing so users know something is loading.
+  - Widget container height now collapses to 0 while loading and expands to 700px once ready — preventing layout shift.
+- **Login/Signup Page UX Improvements** ([auth/login/page.tsx](file:///home/bonnie/alphaclone-nextjs/src/app/auth/login/page.tsx)):
+  - Replaced cold "Create your Business OS workspace" subtitle with warmer copy: "Welcome! Set up your free 14-day workspace — no card needed."
+  - Login subtitle updated to "Welcome back! Sign in to your dashboard." to feel more human.
+  - Registration banner now says "✓ 14 Days Free Trial — Your full workspace is ready in seconds. No credit card required." instead of technical jargon.
+  - Toggle button now reads "Don't have an account? Start Free Trial" (login → register) and "Already have an account? Sign In" (register → login) — clearer, friendlier calls-to-action.
+  - Fixed legal checkbox links: now correctly point to `/terms-of-service` and `/privacy-policy` instead of broken `?tab=` query params.
+
+### Production Readiness
+- **Vercel Safe**: No new dependencies introduced. All changes are client-side UI and script loading strategy adjustments. Vercel build unaffected.
+
+---
+
 ## Date: 2026-06-02 (INVOICE EMAIL INFRASTRUCTURE, MICROSOFT 365 MIGRATION & ONBOARDING OPTIMIZATION)
 
 ### Added/Modified
