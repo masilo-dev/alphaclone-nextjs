@@ -277,4 +277,39 @@ export const microsoftGraphService = {
     );
     return data.value;
   },
+
+  async getCurrentUser() {
+    return graphRequest('/me');
+  },
+
+  async getMessage(messageId: string) {
+    const data = await graphRequest<any>(`/me/messages/${messageId}`);
+    return mapEmail(data);
+  },
+
+  async getFolderMessages(folder: string, limit = 25) {
+    const folderPath = folder === 'sent' ? 'sentitems' : folder === 'trash' ? 'deleteditems' : folder === 'drafts' ? 'drafts' : 'inbox';
+    const data = await graphRequest<{ value: any[] }>(
+      `/me/mailFolders/${folderPath}/messages?$top=${limit}&$orderby=receivedDateTime DESC`
+    );
+    return data.value.map(mapEmail);
+  },
+
+  async getConversationMessages(conversationId: string) {
+    const data = await graphRequest<{ value: any[] }>(
+      `/me/messages?$filter=conversationId eq '${conversationId}'&$orderby=receivedDateTime ASC`
+    );
+    return data.value.map(mapEmail);
+  },
+
+  async replyToMessage(messageId: string, comment: string) {
+    await graphRequest(`/me/messages/${messageId}/reply`, {
+      method: 'POST',
+      body: {
+        comment,
+      },
+    });
+    return { success: true };
+  },
 };
+

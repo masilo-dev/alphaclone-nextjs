@@ -172,7 +172,7 @@ export const microsoft365Service = {
    */
   async testIntegration(tenantId: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      await microsoftGraphService.getTeams();
+      await microsoftGraphService.getCurrentUser();
       return { success: true, error: null };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };

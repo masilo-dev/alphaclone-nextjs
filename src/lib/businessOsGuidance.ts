@@ -285,15 +285,6 @@ export function getBusinessOsGuidance(activeTab: string): BusinessOsGuidance {
                 { label: 'Calendar', tab: '/dashboard/business/calendar' },
             ],
         },
-        '/dashboard/gmail': {
-            mindset: TASK_HINT_MINDSET,
-            outcome: TASK_HINT_OUTCOME,
-            actions: [
-                { label: 'Tasks', tab: '/dashboard/tasks' },
-                { label: 'Deals', tab: '/dashboard/deals' },
-                { label: 'Calendar', tab: '/dashboard/business/calendar' },
-            ],
-        },
         '/dashboard/zoho/mail': {
             mindset: TASK_HINT_MINDSET,
             outcome: TASK_HINT_OUTCOME,
