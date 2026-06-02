@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, CheckCircle2, Users, Zap, Shield } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Script from 'next/script';
+
+const CALENDLY_URL = 'https://calendly.com/bonniealphaclonesystems/30min';
 
 const WHAT_TO_EXPECT = [
   {
@@ -31,8 +33,42 @@ const WHAT_TO_EXPECT = [
 ];
 
 export default function BookDemoPage() {
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [widgetReady, setWidgetReady] = useState(false);
+
+  // Once the Calendly script is loaded, initialise the inline widget
+  useEffect(() => {
+    if (!scriptLoaded) return;
+    if (!widgetRef.current) return;
+
+    const win = window as any;
+
+    const init = () => {
+      if (win.Calendly && typeof win.Calendly.initInlineWidget === 'function') {
+        win.Calendly.initInlineWidget({
+          url: CALENDLY_URL,
+          parentElement: widgetRef.current!,
+          prefill: {},
+          utm: {},
+        });
+        setWidgetReady(true);
+      }
+    };
+
+    // Small delay to let Calendly finish its own setup
+    const t = setTimeout(init, 300);
+    return () => clearTimeout(t);
+  }, [scriptLoaded]);
+
   return (
     <div className="min-h-screen bg-[#020D1A] text-slate-200 selection:bg-teal-500/30 relative overflow-x-hidden">
+      {/* Calendly stylesheet */}
+      <link
+        href="https://assets.calendly.com/assets/external/widget.css"
+        rel="stylesheet"
+      />
+
       {/* Background Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-teal-500/8 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute top-[50%] -right-20 w-[400px] h-[400px] bg-blue-500/8 blur-[120px] rounded-full pointer-events-none" />
@@ -136,15 +172,18 @@ export default function BookDemoPage() {
                   <span className="text-xs text-slate-500 font-mono ml-2">calendly.com/bonniealphaclonesystems</span>
                 </div>
 
-                {/* Calendly Inline Widget */}
+                {/* Loading placeholder — hidden once widget is ready */}
+                {!widgetReady && (
+                  <div className="flex flex-col items-center justify-center gap-4 py-20 text-slate-500">
+                    <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm">Loading calendar…</p>
+                  </div>
+                )}
+
+                {/* Calendly Inline Widget target */}
                 <div
-                  className="calendly-inline-widget"
-                  data-url="https://calendly.com/bonniealphaclonesystems/30min?text_color=04241a&primary_color=4c53af"
-                  style={{ minWidth: '320px', height: '700px' }}
-                />
-                <Script
-                  src="https://assets.calendly.com/assets/external/widget.js"
-                  strategy="lazyOnload"
+                  ref={widgetRef}
+                  style={{ minWidth: '320px', height: widgetReady ? '700px' : '0px', overflow: 'hidden' }}
                 />
               </div>
             </motion.div>
@@ -223,6 +262,13 @@ export default function BookDemoPage() {
 
       {/* Footer background light */}
       <div className="absolute bottom-0 left-0 right-0 h-[200px] bg-gradient-to-t from-teal-500/5 to-transparent pointer-events-none" />
+
+      {/* Calendly script — load after page is interactive */}
+      <Script
+        src="https://assets.calendly.com/assets/external/widget.js"
+        strategy="afterInteractive"
+        onLoad={() => setScriptLoaded(true)}
+      />
     </div>
   );
 }
