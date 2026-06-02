@@ -464,6 +464,11 @@ const LandingPage = () => {
                      >
                         Login
                      </Link>
+                     <Link href="/book-demo" className="inline-flex items-center">
+                        <Button variant="outline" className="border-slate-600 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 px-4 h-10 text-sm font-semibold transition-all">
+                           Book Demo
+                        </Button>
+                     </Link>
                      <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
                         <Button className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 h-10">
                            Start Free
@@ -742,7 +747,7 @@ const LandingPage = () => {
                            <ArrowRight className="w-5 h-5 ml-2" />
                         </Button>
                         <button
-                           onClick={() => window.location.href = '/demo'}
+                           onClick={() => window.location.href = '/book-demo'}
                            className="h-14 px-8 text-lg font-medium text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
                         >
                            Book a Demo

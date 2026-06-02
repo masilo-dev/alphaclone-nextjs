@@ -186,6 +186,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             >
                                 Login
                             </Link>
+                            <Link href="/book-demo" className="inline-flex items-center">
+                                <Button variant="outline" size="sm" className="border-slate-600 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 font-semibold transition-all">
+                                    Book Demo
+                                </Button>
+                            </Link>
                             <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
                                 <Button size="sm" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20">
                                     Start Free Trial
@@ -271,6 +276,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                 <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
                                     <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base h-auto">
                                         Login
+                                    </Button>
+                                </Link>
+                                <Link href="/book-demo" onClick={() => setMobileMenuOpen(false)}>
+                                    <Button variant="outline" className="w-full py-3.5 text-center font-bold text-teal-400 border border-teal-500/40 rounded-xl hover:bg-teal-500/10 transition-colors text-base h-auto">
+                                        Book a Demo
                                     </Button>
                                 </Link>
                                 <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>

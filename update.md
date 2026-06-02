@@ -1158,3 +1158,22 @@
 ### Production Readiness
 - **Vercel Safe**: 100% type-safe compilation verified across CRM and shell layouts. Successfully executed `npm run typecheck` returning exit code 0.
 
+
+## [2026-06-02] Calendly Book Demo Integration
+
+### New Pages
+- **`/book-demo`** — Dedicated "Book a Demo" page with embedded Calendly inline widget (`bonniealphaclonesystems/30min`). Features a sticky sidebar with "What to Expect", platform badge grid, and self-serve trial fallback CTA.
+
+### Navigation Updates
+- Added **Book Demo** button to desktop nav in `LandingPage.tsx` and `PublicNavigation.tsx`
+- Added **Book a Demo** teal-outlined button to both mobile menus
+- Updated hero CTA in `LandingPage.tsx` — "Book a Demo" now routes to `/book-demo` (was `/demo`)
+- Updated `demo/page.tsx` bottom CTA to link to `/book-demo`
+
+### SEO
+- Added `/book-demo` and `/demo` to sitemap with `priority: 0.95`
+- Canonical metadata + OpenGraph + Twitter card configured in `book-demo/layout.tsx`
+
+### Calendly Integration
+- Public booking (Book Demo) uses embedded Calendly widget: `bonniealphaclonesystems/30min`
+- Tenant Calendly integration (dashboard) remains separate OAuth-based system with full API scope
