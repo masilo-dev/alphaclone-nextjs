@@ -67,7 +67,12 @@ const legalPages = [
   {
     title: 'Data Processing Agreement',
     href: '/dpa',
-    description: 'Legal framework for data processing and sub-processor management.',
+    description: 'Legal framework for data processing, SCCs, sub-processor table, and audit rights.',
+  },
+  {
+    title: 'Privacy Choices (CCPA)',
+    href: '/privacy-choices',
+    description: 'California privacy rights — Do Not Sell, opt-out, and CCPA/CPRA rights requests.',
   },
 ];
 
