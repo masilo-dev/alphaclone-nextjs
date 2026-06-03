@@ -91,6 +91,13 @@ const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCenter'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 const TeamsPage = React.lazy(() => import('./TeamsPage'));
+
+const UnifiedInboxTab = React.lazy(() => import('./UnifiedInboxTab'));
+const CashFlowForecastTab = React.lazy(() => import('./CashFlowForecastTab'));
+const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
+const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
+const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
+
 import { TrialBanner } from '../TrialBanner';
 
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -573,6 +580,41 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
+            case '/dashboard/business/unified-inbox':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <UnifiedInboxTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/cash-flow':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <CashFlowForecastTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/onboarding':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <ClientOnboardingTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/vault':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <DocumentVaultTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/tax-estimator':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <TaxEstimatorTab />
+                    </React.Suspense>
+                );
+
             // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
             case '/dashboard/finance': {
                 const FinanceTab = React.lazy(() => import('../FinanceTab'));
@@ -620,6 +662,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/instagram': return t('Instagram');
             case '/dashboard/business/x': return t('X (Twitter) Manager');
             case '/dashboard/business/whatsapp': return t('WhatsApp Accounts');
+
+            case '/dashboard/business/unified-inbox': return t('Unified Inbox');
+            case '/dashboard/business/cash-flow': return t('Cash Flow Forecast');
+            case '/dashboard/business/onboarding': return t('Client Onboarding');
+            case '/dashboard/business/vault': return t('Document Vault');
+            case '/dashboard/business/tax-estimator': return t('Tax Estimator');
 
             case '/dashboard/business/ingestion': return t('Lead Ingestion');
             case '/dashboard/business/quotes': return t('Quotes & Proposals');

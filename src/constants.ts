@@ -125,6 +125,17 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Workspace home', href: '/dashboard', icon: Zap },
 
   {
+    label: 'Back-Office OS', href: '#', icon: Bot,
+    subItems: [
+      { label: 'Unified Inbox', href: '/dashboard/business/unified-inbox', icon: MessageSquare },
+      { label: 'Cash Flow Forecast', href: '/dashboard/business/cash-flow', icon: TrendingUp },
+      { label: 'Client Onboarding', href: '/dashboard/business/onboarding', icon: Users },
+      { label: 'Document Vault', href: '/dashboard/business/vault', icon: ShieldCheck },
+      { label: 'Tax Estimator', href: '/dashboard/business/tax-estimator', icon: FileText },
+    ]
+  },
+
+  {
     label: 'Lead Operations', href: '#', icon: Search,
     subItems: [
       { label: 'Step 1: Find leads', href: '/dashboard/sales-agent?tab=finder', icon: Search },

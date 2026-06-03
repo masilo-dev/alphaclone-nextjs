@@ -1,5 +1,24 @@
 # Update Log
 
+## Date: 2026-06-03 (ALPHACLONE UNIFIED INBOX & BACK-OFFICE OPERATING SYSTEM INTEGRATION)
+
+### Added
+- **Back-Office OS Database Migrations**:
+  - Deployed SQL schema additions for `onboarding_steps`, `onboarding_submissions`, `cash_flow_projections`, `vault_documents`, and `tax_records` with strict Row-Level Security (RLS) policies and indexes.
+- **Unified Inbox Multi-Channel Webhooks**:
+  - Implemented `/api/inbox/zoho`, `/api/inbox/whatsapp`, `/api/inbox/facebook`, and `/api/inbox/instagram` webhook routes to securely capture client conversations.
+- **AI Intelligence Triage & Draft Endpoints**:
+  - Created `/api/inbox/process-intelligence` for automated message categorization and sentiment analysis.
+  - Created `/api/inbox/draft-reply` for context-aware AI response suggestions.
+- **OS Module Frontends & Routing**:
+  - Added 5 high-fidelity, premium tab components: `UnifiedInboxTab.tsx`, `CashFlowForecastTab.tsx` (with custom SVG interactive chart), `ClientOnboardingTab.tsx` (with AI-driven step generator), `DocumentVaultTab.tsx` (with zero-knowledge encryption simulation), and `TaxEstimatorTab.tsx` (with aggregate calculations & write-off evaluation).
+  - Dynamically registered all 5 modules in `BusinessDashboard.tsx` router and sidebar navigation.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. No new dependencies. Full type-safety validated with `npx tsc --noEmit`.
+
+---
+
 ## Date: 2026-06-03 (PRODUCTION INTELLIGENCE FOUNDATION & DATABASE REPAIR)
 
 ### Added
