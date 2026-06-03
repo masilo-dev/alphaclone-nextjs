@@ -127,7 +127,21 @@ async function resolveProviderConfigs(params: {
     .eq('id', params.tenantId)
     .maybeSingle();
 
-  const order = getProviderOrder((tenant?.settings || {}) as Record<string, any>, params.preferredProvider);
+  const { data: business } = await supabase
+    .from('business_settings')
+    .select('settings')
+    .eq('tenant_id', params.tenantId)
+    .maybeSingle();
+
+  const mergedSettings = {
+    ...(tenant?.settings || {}),
+    ...(business?.settings || {}),
+  };
+
+  const emailSettings = mergedSettings.email || mergedSettings.email_provider || mergedSettings.emailProviders || {};
+  const defaultProvider = normalizeProvider(emailSettings.default_provider || emailSettings.defaultProvider);
+
+  const order = getProviderOrder(mergedSettings, params.preferredProvider || defaultProvider || undefined);
   let lookupUserId = params.preferredUserId || tenant?.created_by || null;
 
   if (!lookupUserId) {
@@ -163,6 +177,11 @@ async function resolveProviderConfigs(params: {
   integrationRows.push(...((tenantIntegrations || []) as typeof integrationRows));
 
   const resolved: ProviderConfig[] = [];
+  
+  const hasConfiguredProvider = !!defaultProvider;
+  const hasIntegrations = integrationRows.length > 0;
+  const allowEnvFallback = params.forcePlatform || (params.fallbackToEnv !== false && !hasConfiguredProvider && !hasIntegrations);
+
   for (const provider of order) {
     const row = integrationRows.find((item) => item.type === provider);
     if (row) {
@@ -180,7 +199,7 @@ async function resolveProviderConfigs(params: {
       }
     }
 
-    if (params.fallbackToEnv !== false) {
+    if (allowEnvFallback) {
       const envConfig = envProviderConfig(provider);
       if (envConfig) resolved.push(envConfig);
     }
