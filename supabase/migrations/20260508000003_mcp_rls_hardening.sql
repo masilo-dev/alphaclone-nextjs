@@ -87,8 +87,23 @@ CREATE POLICY "Tenant isolation for deals"
 -- ────────────────────────────────────────────────────────────────────────────
 -- 3. VERIFY REALTIME SECURITY (Enable RLS for Realtime if not already)
 -- ────────────────────────────────────────────────────────────────────────────
-ALTER PUBLICATION supabase_realtime ADD TABLE mcp_oauth_tokens;
-ALTER PUBLICATION supabase_realtime ADD TABLE mcp_oauth_codes;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mcp_oauth_tokens'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE mcp_oauth_tokens;
+  END IF;
+  
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mcp_oauth_codes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE mcp_oauth_codes;
+  END IF;
+END $$;
+
 
 -- Log Completion
 DO $$

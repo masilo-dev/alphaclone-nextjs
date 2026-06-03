@@ -60,6 +60,8 @@ interface RunnerRules {
   high_risk_approval_required: boolean;
   stale_deal_days: number;
   social_inactivity_days: number;
+  lead_action_mode: 'draft_and_task' | 'task_only' | 'draft_only';
+  email_provider: 'system_default' | 'zoho' | 'brevo' | 'sendgrid' | 'resend' | 'microsoft365';
 }
 
 const PLAYBOOKS: Playbook[] = [
@@ -97,6 +99,8 @@ const AIAgentsTab: React.FC = () => {
     high_risk_approval_required: true,
     stale_deal_days: 7,
     social_inactivity_days: 3,
+    lead_action_mode: 'draft_and_task',
+    email_provider: 'system_default',
   });
   
   const [loading, setLoading] = useState(true);
@@ -128,6 +132,8 @@ const AIAgentsTab: React.FC = () => {
             high_risk_approval_required: rulesData.rules.high_risk_approval_required,
             stale_deal_days: rulesData.rules.stale_deal_days,
             social_inactivity_days: rulesData.rules.social_inactivity_days,
+            lead_action_mode: rulesData.rules.lead_action_mode || 'draft_and_task',
+            email_provider: rulesData.rules.email_provider || 'system_default',
           });
         }
       }
@@ -235,7 +241,9 @@ const AIAgentsTab: React.FC = () => {
           autoSendConfidenceThreshold: updated.auto_send_confidence_threshold,
           highRiskApprovalRequired: updated.high_risk_approval_required,
           staleDealDays: updated.stale_deal_days,
-          socialInactivityDays: updated.social_inactivity_days
+          socialInactivityDays: updated.social_inactivity_days,
+          leadActionMode: updated.lead_action_mode,
+          emailProvider: updated.email_provider,
         })
       });
       if (!res.ok) throw new Error();
@@ -275,6 +283,68 @@ const AIAgentsTab: React.FC = () => {
       lastRun: lastRunTime || undefined
     };
   });
+
+  // Extract all AI refusal/gate events from runs and approvals
+  const refusalLogs: Array<{
+    timestamp: string;
+    playbook: string;
+    reason: string;
+    type: 'skipped' | 'failed' | 'warning';
+  }> = [];
+
+  for (const run of runs) {
+    const runActions = run.summary?.actions || [];
+    for (const act of runActions) {
+      if (act.status === 'skipped' || act.status === 'failed') {
+        let isRefusal = false;
+        let refusalReason = act.details;
+
+        const payload = (act as any).payload || {};
+        if (payload.is_refusal) {
+          isRefusal = true;
+          refusalReason = payload.refusal_reason || act.details;
+        } else if (
+          act.details.toLowerCase().includes('skipped') || 
+          act.details.toLowerCase().includes('disabled') || 
+          act.details.toLowerCase().includes('low') ||
+          act.details.toLowerCase().includes('refused')
+        ) {
+          isRefusal = true;
+        }
+
+        if (isRefusal) {
+          refusalLogs.push({
+            timestamp: run.started_at,
+            playbook: act.key,
+            reason: refusalReason,
+            type: act.status as any
+          });
+        }
+      }
+    }
+  }
+
+  for (const app of approvals) {
+    if (app.status === 'pending') {
+      refusalLogs.push({
+        timestamp: app.created_at,
+        playbook: app.action_key,
+        reason: `Held for manual review: ${app.reason} (Confidence Score: ${app.confidence_score}%)`,
+        type: 'warning'
+      });
+    } else if (app.status === 'rejected') {
+      refusalLogs.push({
+        timestamp: app.created_at,
+        playbook: app.action_key,
+        reason: `Rejected by user review. Reason: ${app.reason}`,
+        type: 'failed'
+      });
+    }
+  }
+
+  const sortedRefusalLogs = refusalLogs
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 5);
 
   if (loading) {
     return (
@@ -630,6 +700,46 @@ const AIAgentsTab: React.FC = () => {
                 </button>
               </div>
 
+              {/* Behaviors Section */}
+              <div className="space-y-4 pt-2 border-t border-white/5">
+                {/* Lead Action Mode select */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 block">Autonomous Lead Qualifier Action Mode</label>
+                  <select
+                    value={rules.lead_action_mode || 'draft_and_task'}
+                    onChange={(e) => handleUpdateRules({ lead_action_mode: e.target.value as any })}
+                    className="w-full h-11 px-3 bg-slate-950 border border-white/5 hover:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 transition-all cursor-pointer font-bold"
+                  >
+                    <option value="draft_and_task">Draft reply & create follow-up task (Standard Mode)</option>
+                    <option value="task_only">Create follow-up task only (Strict AI Refusal of Direct Replies)</option>
+                    <option value="draft_only">Draft response only (Zero Task Pollution Mode)</option>
+                  </select>
+                  <span className="text-[10px] text-slate-500 block leading-relaxed">
+                    Controls how the AI responds when a buying signal is detected. You can require tasks only, draft messaging only, or both.
+                  </span>
+                </div>
+
+                {/* Email Provider Routing select */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 block">Dispatch Email Provider Routing</label>
+                  <select
+                    value={rules.email_provider || 'system_default'}
+                    onChange={(e) => handleUpdateRules({ email_provider: e.target.value as any })}
+                    className="w-full h-11 px-3 bg-slate-950 border border-white/5 hover:border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 transition-all cursor-pointer font-bold"
+                  >
+                    <option value="system_default">System Default Platform Route (Brevo)</option>
+                    <option value="zoho">Zoho Mail Integration</option>
+                    <option value="brevo">Brevo (Direct API Key Sync)</option>
+                    <option value="sendgrid">SendGrid SMTP Delivery</option>
+                    <option value="resend">Resend (Modern Dispatch)</option>
+                    <option value="gmail">Gmail / Google Workspace SMTP App Password</option>
+                  </select>
+                  <span className="text-[10px] text-slate-500 block leading-relaxed">
+                    Directs automated email dispatch to your active connected integrations. Falls back to platform defaults if not found.
+                  </span>
+                </div>
+              </div>
+
               {/* Sliders */}
               <div className="space-y-4 pt-2 border-t border-white/5">
                 {/* Confidence Threshold */}
@@ -685,6 +795,49 @@ const AIAgentsTab: React.FC = () => {
                   />
                   <div className="text-[9px] text-slate-500">Auto-triggers draft composition for LinkedIn if no marketing runs detected within this timeframe.</div>
                 </div>
+              </div>
+
+              {/* Real-time Diagnostics Terminal */}
+              <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Brain className="w-3.5 h-3.5 text-purple-400 animate-pulse" /> AI Agent Refusal & Dispatch Telemetry
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Real-time trace of recent execution gates, skipped actions, and manual review triggers.</p>
+                </div>
+
+                {sortedRefusalLogs.length === 0 ? (
+                  <div className="text-[11px] text-slate-500 italic p-3 bg-slate-950/40 rounded-xl border border-white/5">
+                    All active systems operational. No AI action refusals or gate events logged in the current window.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {sortedRefusalLogs.map((log, idx) => (
+                      <div key={idx} className="p-3 bg-slate-950 rounded-xl border border-white/5 flex flex-col gap-1 text-[11px]">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                            {log.playbook.replace(/_/g, ' ')}
+                          </span>
+                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
+                            log.type === 'failed' 
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/10' 
+                              : log.type === 'warning'
+                                ? 'bg-purple-500/10 text-purple-400 border border-purple-500/25'
+                                : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {log.type === 'warning' ? 'Gate (Pending)' : log.type === 'failed' ? 'Refused' : 'Skipped'}
+                          </span>
+                        </div>
+                        <p className="text-slate-300 leading-relaxed font-mono text-[10.5px] bg-slate-900/60 p-2 rounded-lg border border-white/5 mt-1">
+                          {log.reason}
+                        </p>
+                        <span className="text-[9px] text-slate-500 text-right mt-0.5">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

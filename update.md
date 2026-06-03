@@ -1295,3 +1295,14 @@
 ### Calendly Integration
 - Public booking (Book Demo) uses embedded Calendly widget: `bonniealphaclonesystems/30min`
 - Tenant Calendly integration (dashboard) remains separate OAuth-based system with full API scope
+
+## [2026-06-03] Tenant AI Controls Synchronization & Telemetry
+
+### Added/Modified
+- **Lead Action Mode & Preferred Email Provider**: Extended `autonomous_runner_rules` table with options for Lead Action Mode (`lead_action_mode`) and outreach email route (`email_provider`), bridging the configuration gap between Super Admin and Business Owner dashboards.
+- **Provider Resolution**: Integrated tenant email settings into `resolveEmailProviderConfig` to automatically respect tenant-wide preferred routes (e.g. Zoho, Resend, Brevo, SendGrid) for automated AI email dispatches.
+- **AI Agent Refusal Diagnostics Console**: Added a real-time, interactive **AI Agent Refusal & Dispatch Telemetry** console at the bottom of the Settings subtab in the `AIAgentsTab` dashboard component. This console extracts logs from history and approvals tables to explain exact reason gates (low confidence, stale deals, or disabled switches).
+- **Conditional SDR Pipeline**: Updated the autonomous execution service to respect the new modes (e.g., skip replies or tasks) and automatically log structured skips and refusals.
+
+### Production Readiness
+- **Vercel Safe**: Complete TypeScript type compilation validated cleanly (`npx tsc --noEmit` returning exit code 0).

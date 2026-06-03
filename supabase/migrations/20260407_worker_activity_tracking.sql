@@ -107,7 +107,15 @@ BEGIN;
   CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.worker_sessions;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'worker_sessions'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.worker_sessions;
+  END IF;
+END $$;
 
 -- Function to log worker activity (called from frontend)
 CREATE OR REPLACE FUNCTION public.log_worker_activity(

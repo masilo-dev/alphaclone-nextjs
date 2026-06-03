@@ -58,9 +58,9 @@ ON failed_logins
 FOR SELECT
 USING (
     EXISTS (
-        SELECT 1 FROM users
-        WHERE users.id = auth.uid()
-        AND users.role = 'admin'
+        SELECT 1 FROM profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role = 'admin'
     )
 );
 
@@ -70,9 +70,9 @@ ON error_logs
 FOR SELECT
 USING (
     EXISTS (
-        SELECT 1 FROM users
-        WHERE users.id = auth.uid()
-        AND users.role = 'admin'
+        SELECT 1 FROM profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role = 'admin'
     )
 );
 
