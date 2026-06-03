@@ -131,12 +131,21 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         const replyTo = (c.reply_to as string) || undefined;
         const campaignLanguage = toNonEmptyString(rawMeta?.language) || toNonEmptyString(rawMeta?.languageMode) || undefined;
 
-        const { data: integrationRows, error: integrationError } = await admin
+        const filters = [];
+        if (campaignCreatorId) filters.push(`user_id.eq.${campaignCreatorId}`);
+        if (c.tenant_id) filters.push(`tenant_id.eq.${c.tenant_id}`);
+
+        let query = admin
             .from('integrations')
             .select('type, enabled, config')
-            .eq('user_id', campaignCreatorId)
             .eq('enabled', true)
             .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
+
+        if (filters.length > 0) {
+            query = query.or(filters.join(','));
+        }
+
+        const { data: integrationRows, error: integrationError } = await query;
         if (integrationError) return { success: false, error: integrationError.message };
 
         const providerConfigs = (integrationRows || [])

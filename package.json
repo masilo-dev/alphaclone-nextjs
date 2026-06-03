@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev --webpack",
-      "build": "cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 NODE_OPTIONS=--max-old-space-size=4096 next build",
+    "build": "cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 NODE_OPTIONS=--max-old-space-size=4096 next build",
     "build:prod": "next build",
     "start": "next start",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
@@ -79,6 +79,7 @@
     "@vercel/analytics": "^1.6.1",
     "@vercel/functions": "^3.5.0",
     "@xyflow/react": "^12.10.2",
+    "@zernio/node": "^0.2.201",
     "axios": "^1.14.0",
     "botid": "^1.5.11",
     "canvas-confetti": "^1.9.4",

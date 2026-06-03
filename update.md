@@ -1,5 +1,31 @@
 # Update Log
 
+## Date: 2026-06-03 (ZERNIO WHATSAPP MIGRATION, EMAIL PROVIDER ROUTING, DB REPAIR)
+
+### Added/Modified
+- **Zernio WhatsApp Transport** (`src/lib/whatsapp/sendWhatsApp.ts`):
+  - Migrated primary WhatsApp dispatch to Zernio SDK (`@zernio/node`) via `createInboxConversation`.
+  - Reads tenant Zernio settings via `getTenantZernioSettings` for per-tenant account routing.
+  - Automatic fallback to legacy Green-API if Zernio is not configured or call fails.
+- **Zernio Client Factory** (`src/lib/zernio/client.ts`):
+  - Centralised SDK initialisation with `ZERNIO_API_KEY` environment variable.
+  - Exports `getZernioClient()` and `getTenantZernioSettings()` helpers used across the app.
+- **Email Provider Routing** (`src/lib/email/sendEmail.ts`):
+  - Email dispatch now reads the tenant's configured provider (Resend, Brevo, Zoho, SendGrid) instead of always routing through Resend.
+- **Scheduled Campaign Server** (`src/lib/server/sendScheduledCampaignServer.ts`):
+  - Updated to use tenant-aware email routing for campaign sends.
+- **Social Cron Publisher** (`src/lib/social/cronPublish.ts`):
+  - Fixed scheduled post publishing to handle missing `scheduled_posts` table gracefully.
+- **Database Repair Migration** (`supabase/migrations/20260602121000_database_repair.sql`):
+  - Creates `public.workspace_files` table with RLS if missing.
+  - Creates `public.scheduled_posts` table with RLS if missing.
+  - Fixes `public.secure_read_only_query` RPC to use `jsonb_agg` (resolves JSON/JSONB type mismatch).
+
+### Production Readiness
+- **Vercel Safe**: `@zernio/node` was already in `package.json` dependencies. No new runtime deps added. All changes are server-side only. Vercel build unaffected.
+
+---
+
 ## Date: 2026-06-02 (CALENDLY FIX, LOGIN UX & LEGAL LINK CORRECTIONS)
 
 ### Added/Modified

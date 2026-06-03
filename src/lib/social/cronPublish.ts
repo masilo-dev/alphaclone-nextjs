@@ -5,6 +5,8 @@ import {
   parseLinkedInUgcPostUrn,
   updateSocialPostLinkedInUrnWithRetry,
 } from '@/lib/social/linkedinPublishHelpers';
+import { getZernioClient, getTenantZernioSettings } from '@/lib/zernio/client';
+
 
 type PublishResult = {
   ok: boolean;
@@ -449,11 +451,97 @@ async function publishToLinkedIn(postId: string): Promise<PublishResult> {
   }
 }
 
+async function publishToZernio(
+  postId: string,
+  platform: 'instagram' | 'linkedin'
+): Promise<PublishResult> {
+  const adminClient = createSupabaseAdminClient();
+  try {
+    const postRes = await adminClient
+      .from('social_posts')
+      .select('id, tenant_id, caption, media_urls, media_types, link_url')
+      .eq('id', postId)
+      .single();
+
+    if (postRes.error || !postRes.data) {
+      return { ok: false, platform: platform as any, reason: 'post_not_found' };
+    }
+
+    const post = postRes.data;
+    const zernioSettings = await getTenantZernioSettings(post.tenant_id);
+    if (!zernioSettings) {
+      return { ok: false, platform: platform as any, reason: 'Zernio integration not configured for this tenant' };
+    }
+
+    let accountId: string | undefined;
+    if (platform === 'instagram') {
+      accountId = zernioSettings.instagramAccountId || zernioSettings.accountId;
+    } else if (platform === 'linkedin') {
+      accountId = zernioSettings.linkedinOrgAccountId || zernioSettings.accountId;
+    }
+
+    if (!accountId) {
+      return { ok: false, platform: platform as any, reason: `No Zernio account ID configured for platform: ${platform}` };
+    }
+
+    const zernio = getZernioClient();
+
+    // Map media items
+    const rawUrls: unknown = post.media_urls;
+    const mediaUrls: string[] = Array.isArray(rawUrls)
+      ? rawUrls.filter((url: unknown): url is string => typeof url === 'string' && !!url.trim())
+      : [];
+    const rawTypes: unknown = post.media_types;
+    const mediaTypes: string[] = Array.isArray(rawTypes)
+      ? rawTypes.map((t: unknown) => String(t || ''))
+      : [];
+    const mediaItems = mediaUrls.map((url: string, idx: number) => {
+      const typeStr = String(mediaTypes[idx] || '').toLowerCase();
+      const isVideo = typeStr === 'video' || /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(url);
+      return {
+        type: (isVideo ? 'video' : 'image') as 'video' | 'image',
+        url,
+      };
+    });
+
+    let content = post.caption || '';
+    if (platform === 'linkedin' && post.link_url) {
+      content += `\n\n${post.link_url}`;
+    }
+
+    const response = await zernio.posts.createPost({
+      body: {
+        content,
+        mediaItems: mediaItems.length > 0 ? mediaItems : undefined,
+        platforms: [{ platform, accountId }],
+        publishNow: true,
+      },
+    });
+
+    const resultId = (response as any).data?.id || (response as any).data?.postId || null;
+
+    if (platform === 'instagram') {
+      await adminClient.from('social_posts').update({
+        instagram_post_id: resultId,
+      }).eq('id', postId);
+    } else if (platform === 'linkedin') {
+      await adminClient.from('social_posts').update({
+        linkedin_post_urn: resultId ? `urn:li:ugcPost:${resultId}` : null,
+      }).eq('id', postId);
+    }
+
+    return { ok: true, platform: platform as any };
+  } catch (err: any) {
+    console.error(`[cron/social-publish] Zernio ${platform} publish error:`, err);
+    return { ok: false, platform: platform as any, reason: err?.message || `Zernio publish failed` };
+  }
+}
+
 export async function publishSocialPost(postId: string) {
   const adminClient = createSupabaseAdminClient();
   const { data: post } = await adminClient
     .from('social_posts')
-    .select('id, platforms')
+    .select('id, tenant_id, platforms, linkedin_organization_id, metadata')
     .eq('id', postId)
     .single();
 
@@ -462,8 +550,29 @@ export async function publishSocialPost(postId: string) {
   const platforms = Array.isArray(post.platforms) ? post.platforms : [];
   const jobs: Promise<PublishResult>[] = [];
 
+  // Fetch Zernio settings to determine LinkedIn Org page routing
+  const zernioSettings = await getTenantZernioSettings(post.tenant_id);
+
   if (platforms.includes('facebook')) jobs.push(publishToFacebook(postId));
-  if (platforms.includes('linkedin')) jobs.push(publishToLinkedIn(postId));
+  if (platforms.includes('linkedin')) {
+    const requestedOrganizationId =
+      typeof post.linkedin_organization_id === 'string' && post.linkedin_organization_id
+        ? post.linkedin_organization_id
+        : typeof post.metadata?.linkedin_organization_id === 'string'
+          ? String(post.metadata.linkedin_organization_id)
+          : null;
+
+    if (requestedOrganizationId && zernioSettings?.linkedinOrgAccountId) {
+      // Post to LinkedIn Org via Zernio
+      jobs.push(publishToZernio(postId, 'linkedin'));
+    } else {
+      // Post natively
+      jobs.push(publishToLinkedIn(postId));
+    }
+  }
+  if (platforms.includes('instagram')) {
+    jobs.push(publishToZernio(postId, 'instagram'));
+  }
 
   if (jobs.length === 0) {
     if (platforms.includes('platform')) {
@@ -516,6 +625,7 @@ export async function publishSocialPost(postId: string) {
     error_message: null,
   });
 }
+
 
 export async function publishDueSocialPosts(limit = 25) {
   const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
