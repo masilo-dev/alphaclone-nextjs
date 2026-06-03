@@ -16,7 +16,10 @@ type TenantRunnerRules = {
   high_risk_approval_required: boolean;
   stale_deal_days: number;
   social_inactivity_days: number;
+  lead_action_mode?: string;
+  email_provider?: string;
 };
+
 
 const BUYING_SIGNAL_PATTERNS = [
   /\bprice\b/i,
@@ -198,10 +201,12 @@ export const autonomousRunnerService = {
           high_risk_approval_required: true,
           stale_deal_days: 7,
           social_inactivity_days: 3,
+          lead_action_mode: 'draft_and_task',
+          email_provider: 'system_default',
         };
         const { data: rulesRow } = await admin
           .from('autonomous_runner_rules')
-          .select('enabled, auto_send_enabled, auto_send_confidence_threshold, high_risk_approval_required, stale_deal_days, social_inactivity_days')
+          .select('enabled, auto_send_enabled, auto_send_confidence_threshold, high_risk_approval_required, stale_deal_days, social_inactivity_days, lead_action_mode, email_provider')
           .eq('tenant_id', tenantId)
           .maybeSingle();
         const rules = { ...defaultRules, ...(rulesRow || {}) } as TenantRunnerRules;
@@ -268,6 +273,10 @@ export const autonomousRunnerService = {
             .limit(50);
 
           const buyingSignals = (recentMessages || []).filter((m: any) => hasBuyingSignal(String(m.text || '')));
+          const actionMode = rules.lead_action_mode || 'draft_and_task';
+          const shouldDraft = actionMode === 'draft_and_task' || actionMode === 'draft_only';
+          const shouldCreateTask = actionMode === 'draft_and_task' || actionMode === 'task_only';
+
           let createdTasks = 0;
           let autoReplies = 0;
           for (const msg of buyingSignals.slice(0, 5)) {
@@ -275,44 +284,73 @@ export const autonomousRunnerService = {
             const confidence = Math.min(98, 55 + (BUYING_SIGNAL_PATTERNS.filter((p) => p.test(text)).length * 9));
             const riskLevel: 'low' | 'medium' | 'high' = confidence >= 90 ? 'high' : confidence >= 75 ? 'medium' : 'low';
             const canAutoSend = rules.auto_send_enabled && confidence >= rules.auto_send_confidence_threshold && riskLevel !== 'high';
-            if (canAutoSend && msg.sender_id) {
-              const replyText = `Thank you for your message. We can move this forward today. I have prepared the next step and can send pricing and implementation options immediately.`;
-              const { error: replyError } = await admin.from('messages').insert({
-                tenant_id: tenantId,
-                sender_id: null,
-                sender_name: 'Alpha AI Operator',
-                sender_role: 'ai',
-                recipient_id: msg.sender_id,
-                text: replyText,
-                priority: 'high',
-                reply_to: msg.id,
-              });
-              if (!replyError) {
-                autoReplies += 1;
-                await recordAction('auto_reply_buying_signal', 'success', `Auto-replied to message ${msg.id}`, { confidence, riskLevel });
+            
+            if (shouldDraft) {
+              if (canAutoSend && msg.sender_id) {
+                const replyText = `Thank you for your message. We can move this forward today. I have prepared the next step and can send pricing and implementation options immediately.`;
+                const { error: replyError } = await admin.from('messages').insert({
+                  tenant_id: tenantId,
+                  sender_id: null,
+                  sender_name: 'Alpha AI Operator',
+                  sender_role: 'ai',
+                  recipient_id: msg.sender_id,
+                  text: replyText,
+                  priority: 'high',
+                  reply_to: msg.id,
+                });
+                if (!replyError) {
+                  autoReplies += 1;
+                  await recordAction('auto_reply_buying_signal', 'success', `Auto-replied to message ${msg.id}`, { confidence, riskLevel });
+                } else {
+                  await recordAction('auto_reply_buying_signal', 'failed', `Failed reply on message ${msg.id}: ${replyError.message}`);
+                }
               } else {
-                await recordAction('auto_reply_buying_signal', 'failed', `Failed reply on message ${msg.id}: ${replyError.message}`);
+                // Log refusal reason when auto send fails confidence threshold or risk level requires approval
+                const refusalReason = !rules.auto_send_enabled 
+                  ? 'Sovereign Autopilot not engaged'
+                  : confidence < rules.auto_send_confidence_threshold
+                    ? `Confidence score ${confidence}% below threshold of ${rules.auto_send_confidence_threshold}%`
+                    : `High risk level (${riskLevel}) requires manual approval`;
+
+                await createApproval(
+                  'auto_reply_buying_signal',
+                  riskLevel,
+                  confidence,
+                  refusalReason,
+                  { messageId: msg.id, senderId: msg.sender_id || null, confidence, is_refusal: true, refusal_reason: refusalReason }
+                );
+
+                await recordAction('auto_reply_buying_signal', 'skipped', `Direct auto-reply skipped: ${refusalReason}. Created approval request.`, {
+                  is_refusal: true,
+                  refusal_reason: refusalReason,
+                  confidence
+                });
               }
             } else {
-              await createApproval(
-                'auto_reply_buying_signal',
-                riskLevel,
-                confidence,
-                'Auto-send rule not met or high-risk response requires approval',
-                { messageId: msg.id, senderId: msg.sender_id || null, confidence }
-              );
+              await recordAction('auto_reply_buying_signal', 'skipped', `Message reply skipped (Lead Action Mode set to '${actionMode}')`, {
+                is_refusal: true,
+                refusal_reason: `Lead Action Mode set to '${actionMode}'`
+              });
             }
-            const taskTitle = `Follow up on buying-signal message`;
-            const taskDescription = `[AI LOG] ${new Date().toISOString()} Buying-signal detected in message ${msg.id}. Draft response and advance lead context.`;
-            const { error: taskError } = await admin.from('tasks').insert({
-              tenant_id: tenantId,
-              title: taskTitle,
-              description: taskDescription,
-              priority: 'high',
-              status: 'todo',
-              due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-            });
-            if (!taskError) createdTasks += 1;
+
+            if (shouldCreateTask) {
+              const taskTitle = `Follow up on buying-signal message`;
+              const taskDescription = `[AI LOG] ${new Date().toISOString()} Buying-signal detected in message ${msg.id}. Draft response and advance lead context.`;
+              const { error: taskError } = await admin.from('tasks').insert({
+                tenant_id: tenantId,
+                title: taskTitle,
+                description: taskDescription,
+                priority: 'high',
+                status: 'todo',
+                due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+              });
+              if (!taskError) createdTasks += 1;
+            } else {
+              await recordAction('create_task_buying_signal', 'skipped', `Task creation skipped (Lead Action Mode set to '${actionMode}')`, {
+                is_refusal: true,
+                refusal_reason: `Lead Action Mode set to '${actionMode}'`
+              });
+            }
           }
           await recordAction('unread_buying_signal_inbox', 'success', `Detected ${buyingSignals.length} signals, created ${createdTasks} tasks, sent ${autoReplies} auto-replies`, {
             detected: buyingSignals.length,

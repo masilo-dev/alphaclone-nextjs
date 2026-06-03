@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         high_risk_approval_required: true,
         stale_deal_days: 7,
         social_inactivity_days: 3,
+        lead_action_mode: 'draft_and_task',
+        email_provider: 'system_default',
       },
     });
   } catch (error) {
@@ -49,6 +51,8 @@ export async function PUT(request: NextRequest) {
       high_risk_approval_required: body.highRiskApprovalRequired !== false,
       stale_deal_days: Number(body.staleDealDays || 7),
       social_inactivity_days: Number(body.socialInactivityDays || 3),
+      lead_action_mode: String(body.leadActionMode || 'draft_and_task'),
+      email_provider: String(body.emailProvider || 'system_default'),
       updated_by: access.user.id,
       updated_at: new Date().toISOString(),
     };
@@ -65,4 +69,5 @@ export async function PUT(request: NextRequest) {
     return routeErrorResponse(error, 'Failed to update autonomous rules');
   }
 }
+
 

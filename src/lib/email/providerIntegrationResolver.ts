@@ -57,6 +57,23 @@ export async function resolveEmailProviderConfig(params: {
   const supabase = createSupabaseAdminClient();
   const tenantId = params.tenantId || null;
   let lookupUserId = params.preferredUserId || null;
+  let preferredProvider = params.preferredProvider;
+
+  // If tenant has a preferred email provider set in autonomous_runner_rules, use it
+  if (tenantId && (!preferredProvider || (preferredProvider as string) === 'system_default')) {
+    try {
+      const { data: rules } = await supabase
+        .from('autonomous_runner_rules')
+        .select('email_provider')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      if (rules?.email_provider && rules.email_provider !== 'system_default') {
+        preferredProvider = rules.email_provider as EmailProvider;
+      }
+    } catch (err) {
+      console.warn('[resolveEmailProviderConfig] Failed to fetch preferred email provider from rules:', err);
+    }
+  }
 
   // 1. If forcePlatform is set, skip DB lookups and go straight to Env
   if (params.forcePlatform) {
@@ -100,7 +117,7 @@ export async function resolveEmailProviderConfig(params: {
       .in('type', ['brevo', 'sendgrid', 'resend', 'zoho', 'gmail']);
     const resolved = pickProvider(
       (data || []) as Array<{ type: string; config: Record<string, unknown> }>,
-      params.preferredProvider
+      preferredProvider
     );
     if (resolved) return { ...resolved, ownerUserId: lookupUserId };
   }
@@ -115,7 +132,7 @@ export async function resolveEmailProviderConfig(params: {
       .order('updated_at', { ascending: false });
 
     const grouped = (data || []) as Array<{ type: string; config: Record<string, unknown>; user_id?: string }>;
-    const resolved = pickProvider(grouped, params.preferredProvider);
+    const resolved = pickProvider(grouped, preferredProvider);
     if (resolved) {
       const source = grouped.find((row) => row.type === resolved.provider);
       return { ...resolved, ownerUserId: source?.user_id || null };
@@ -123,21 +140,21 @@ export async function resolveEmailProviderConfig(params: {
   }
 
   if (params.fallbackToEnv) {
-    if ((!params.preferredProvider || params.preferredProvider === 'brevo') && (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY)) {
+    if ((!preferredProvider || preferredProvider === 'brevo') && (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY)) {
       return {
         provider: 'brevo',
         apiKey: String(process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY || ''),
         fromEmail: process.env.BREVO_FROM_EMAIL || undefined,
       };
     }
-    if ((!params.preferredProvider || params.preferredProvider === 'sendgrid') && process.env.SENDGRID_API_KEY) {
+    if ((!preferredProvider || preferredProvider === 'sendgrid') && process.env.SENDGRID_API_KEY) {
       return {
         provider: 'sendgrid',
         apiKey: process.env.SENDGRID_API_KEY,
         fromEmail: process.env.SENDGRID_FROM_EMAIL || undefined,
       };
     }
-    if ((!params.preferredProvider || params.preferredProvider === 'resend') && process.env.RESEND_API_KEY) {
+    if ((!preferredProvider || preferredProvider === 'resend') && process.env.RESEND_API_KEY) {
       return {
         provider: 'resend',
         apiKey: process.env.RESEND_API_KEY,
@@ -147,3 +164,4 @@ export async function resolveEmailProviderConfig(params: {
 
   return null;
 }
+
