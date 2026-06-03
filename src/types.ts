@@ -95,6 +95,14 @@ export interface Project {
   risk?: 'Low' | 'Medium' | 'High';
   health?: 'On Track' | 'At Risk' | 'Delayed';
   resources?: string[];
+  budgetTotal?: number;
+  budgetUsed?: number;
+  velocityScore?: number;
+  healthScore?: number;
+  portalToken?: string;
+  portalEnabled?: boolean;
+  estimatedCompletionDate?: string;
+  autoInvoiceEnabled?: boolean;
   createdAt?: string; // ISO Date
 }
 

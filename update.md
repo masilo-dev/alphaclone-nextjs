@@ -1,5 +1,28 @@
 # Update Log
 
+## Date: 2026-06-03 (PRODUCTION INTELLIGENCE FOUNDATION & DATABASE REPAIR)
+
+### Added
+- **Database Schema & Migrations**:
+  - Manually applied pending core migrations to the production Supabase database:
+    - `20260524181600_mcp_power_upgrade.sql` (Creates `workspace_files`, `crm_contacts`, etc.)
+    - `20260525000000_create_bonnie_dream_sessions.sql`
+    - `20260528000000_fix_contract_tables.sql`
+    - `20260529000000_create_whatsapp_standalone_messages.sql`
+    - `20260531120000_create_microsoft_connections.sql`
+    - `20260602000000_add_onboarding_role_to_profiles.sql`
+    - `20260602121000_database_repair.sql`
+    - `20260603_invoice_intelligence.sql` (Fixed invalid `CREATE POLICY IF NOT EXISTS` syntax and incorrect `tenant_members` table references).
+    - `sprint1_intelligence_foundation.sql` (Creates `project_snapshots`, project intelligence columns, RLS, etc.)
+  - Invalidated PostgREST API schema cache via a SQL notify reload schema call.
+- **Project Intelligence Integration** (`src/services/projectService.ts`, `src/types.ts`):
+  - Completed mapping of new platform intelligence columns on Project models (`budgetTotal`, `velocityScore`, `portalToken`, `portalEnabled`).
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. No new dependencies. Removed all temporary execution scripts. Verified connection stability.
+
+---
+
 ## Date: 2026-06-03 (INVOICE INTELLIGENCE UPGRADE)
 
 ### Added
