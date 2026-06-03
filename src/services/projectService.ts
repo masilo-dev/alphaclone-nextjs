@@ -68,6 +68,14 @@ export const projectService = {
                 risk: p.risk,
                 health: p.health,
                 resources: p.resources || [],
+                budgetTotal: p.budget_total,
+                budgetUsed: p.budget_used,
+                velocityScore: p.velocity_score,
+                healthScore: p.health_score,
+                portalToken: p.portal_token,
+                portalEnabled: p.portal_enabled,
+                estimatedCompletionDate: p.estimated_completion_date,
+                autoInvoiceEnabled: p.auto_invoice_enabled,
                 createdAt: p.created_at,
             }));
 
@@ -209,6 +217,14 @@ export const projectService = {
                     risk: project.risk,
                     health: project.health,
                     resources: project.resources,
+                    budget_total: project.budgetTotal,
+                    budget_used: project.budgetUsed || 0,
+                    velocity_score: project.velocityScore,
+                    health_score: project.healthScore,
+                    portal_token: project.portalToken,
+                    portal_enabled: project.portalEnabled || false,
+                    estimated_completion_date: project.estimatedCompletionDate,
+                    auto_invoice_enabled: project.autoInvoiceEnabled || false,
                 })
                 .select()
                 .single();
@@ -241,6 +257,14 @@ export const projectService = {
                 risk: data.risk,
                 health: data.health,
                 resources: data.resources || [],
+                budgetTotal: data.budget_total,
+                budgetUsed: data.budget_used,
+                velocityScore: data.velocity_score,
+                healthScore: data.health_score,
+                portalToken: data.portal_token,
+                portalEnabled: data.portal_enabled,
+                estimatedCompletionDate: data.estimated_completion_date,
+                autoInvoiceEnabled: data.auto_invoice_enabled,
                 createdAt: data.created_at,
             };
 
@@ -299,6 +323,16 @@ export const projectService = {
             if (updates.risk !== undefined) updateData.risk = updates.risk;
             if (updates.health !== undefined) updateData.health = updates.health;
             if (updates.resources !== undefined) updateData.resources = updates.resources;
+            if (updates.budgetTotal !== undefined) updateData.budget_total = updates.budgetTotal;
+            if (updates.budgetUsed !== undefined) updateData.budget_used = updates.budgetUsed;
+            if (updates.velocityScore !== undefined) updateData.velocity_score = updates.velocityScore;
+            if (updates.healthScore !== undefined) updateData.health_score = updates.healthScore;
+            if (updates.portalToken !== undefined) updateData.portal_token = updates.portalToken;
+            if (updates.portalEnabled !== undefined) updateData.portal_enabled = updates.portalEnabled;
+            if (updates.estimatedCompletionDate !== undefined) {
+                updateData.estimated_completion_date = this.normalizeDateField(updates.estimatedCompletionDate);
+            }
+            if (updates.autoInvoiceEnabled !== undefined) updateData.auto_invoice_enabled = updates.autoInvoiceEnabled;
 
             // Build update query
             let updateQuery = supabase
@@ -448,6 +482,14 @@ export const projectService = {
                         risk: p.risk,
                         health: p.health,
                         resources: p.resources || [],
+                        budgetTotal: p.budget_total,
+                        budgetUsed: p.budget_used,
+                        velocityScore: p.velocity_score,
+                        healthScore: p.health_score,
+                        portalToken: p.portal_token,
+                        portalEnabled: p.portal_enabled,
+                        estimatedCompletionDate: p.estimated_completion_date,
+                        autoInvoiceEnabled: p.auto_invoice_enabled,
                         createdAt: p.created_at,
                     };
                     callback(project);

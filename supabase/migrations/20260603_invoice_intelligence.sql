@@ -43,10 +43,12 @@ CREATE INDEX IF NOT EXISTS idx_invoice_views_tenant_id ON public.invoice_views(t
 ALTER TABLE public.invoice_views ENABLE ROW LEVEL SECURITY;
 
 -- Service role can insert; tenant members can read their own
-CREATE POLICY IF NOT EXISTS "invoice_views_service_insert"
+DROP POLICY IF EXISTS "invoice_views_service_insert" ON public.invoice_views;
+CREATE POLICY "invoice_views_service_insert"
   ON public.invoice_views FOR INSERT TO service_role WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "invoice_views_tenant_select"
+DROP POLICY IF EXISTS "invoice_views_tenant_select" ON public.invoice_views;
+CREATE POLICY "invoice_views_tenant_select"
   ON public.invoice_views FOR SELECT
   USING (tenant_id = (SELECT id FROM public.tenants WHERE id = tenant_id LIMIT 1));
 
@@ -70,13 +72,15 @@ CREATE INDEX IF NOT EXISTS idx_invoice_audit_event_type ON public.invoice_audit_
 ALTER TABLE public.invoice_audit_log ENABLE ROW LEVEL SECURITY;
 
 -- INSERT-only for service_role (no UPDATE, no DELETE)
-CREATE POLICY IF NOT EXISTS "invoice_audit_log_service_insert"
+DROP POLICY IF EXISTS "invoice_audit_log_service_insert" ON public.invoice_audit_log;
+CREATE POLICY "invoice_audit_log_service_insert"
   ON public.invoice_audit_log FOR INSERT TO service_role WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "invoice_audit_log_tenant_select"
+DROP POLICY IF EXISTS "invoice_audit_log_tenant_select" ON public.invoice_audit_log;
+CREATE POLICY "invoice_audit_log_tenant_select"
   ON public.invoice_audit_log FOR SELECT
   USING (tenant_id IN (
-    SELECT tenant_id FROM public.tenant_members
+    SELECT tenant_id FROM public.tenant_users
     WHERE user_id = auth.uid()
   ));
 
@@ -99,7 +103,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_tax_rules_country_type
 
 ALTER TABLE public.tax_rules ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "tax_rules_public_read"
+DROP POLICY IF EXISTS "tax_rules_public_read" ON public.tax_rules;
+CREATE POLICY "tax_rules_public_read"
   ON public.tax_rules FOR SELECT USING (true);
 
 -- Seed with major country tax rates
@@ -156,15 +161,18 @@ CREATE INDEX IF NOT EXISTS idx_invoice_delivery_invoice_id
 
 ALTER TABLE public.invoice_delivery_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "invoice_delivery_service_insert"
+DROP POLICY IF EXISTS "invoice_delivery_service_insert" ON public.invoice_delivery_log;
+CREATE POLICY "invoice_delivery_service_insert"
   ON public.invoice_delivery_log FOR INSERT TO service_role WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "invoice_delivery_service_update"
+DROP POLICY IF EXISTS "invoice_delivery_service_update" ON public.invoice_delivery_log;
+CREATE POLICY "invoice_delivery_service_update"
   ON public.invoice_delivery_log FOR UPDATE TO service_role USING (true);
 
-CREATE POLICY IF NOT EXISTS "invoice_delivery_tenant_select"
+DROP POLICY IF EXISTS "invoice_delivery_tenant_select" ON public.invoice_delivery_log;
+CREATE POLICY "invoice_delivery_tenant_select"
   ON public.invoice_delivery_log FOR SELECT
   USING (tenant_id IN (
-    SELECT tenant_id FROM public.tenant_members
+    SELECT tenant_id FROM public.tenant_users
     WHERE user_id = auth.uid()
   ));
