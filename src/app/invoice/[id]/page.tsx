@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { businessInvoiceService, BusinessInvoice } from '@/services/businessInvoiceService';
 import { Card, Button, Badge } from '@/components/ui/UIComponents';
 import { FileText, CreditCard, Calendar, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import InvoiceStatusPipeline, { InvoiceStatus } from '@/components/invoice/InvoiceStatusPipeline';
 
 export default function PublicInvoicePage() {
     const params = useParams();
@@ -18,6 +19,13 @@ export default function PublicInvoicePage() {
     useEffect(() => {
         if (invoiceId) {
             loadInvoice();
+        }
+    }, [invoiceId]);
+
+    // Fire read receipt silently on mount (web portal view)
+    useEffect(() => {
+        if (invoiceId) {
+            fetch(`/api/invoices/${invoiceId}/view`).catch(() => {});
         }
     }, [invoiceId]);
 
@@ -143,15 +151,27 @@ export default function PublicInvoicePage() {
                         </div>
                     </div>
 
+                    {/* Status Pipeline */}
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Invoice Status</p>
+                        <InvoiceStatusPipeline
+                            status={(invoice.status || 'draft') as InvoiceStatus}
+                            timestamps={{
+                                created_at: invoice.created_at,
+                                sent_at: invoice.sent_at,
+                                viewed_at: invoice.viewed_at,
+                                paid_at: invoice.paid_at,
+                                disputed_at: invoice.disputed_at,
+                            }}
+                        />
+                    </div>
+
                     <Card className="p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
                         <div className="flex justify-between items-start mb-12">
                             <div>
                                 <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
                                 <h2 className="text-3xl font-mono font-bold text-white">{invoice.invoice_number || invoice.invoiceNumber}</h2>
                             </div>
-                            <Badge variant={isPaid ? 'success' : 'neutral'} className="px-4 py-1.5 text-sm uppercase">
-                                {invoice.status}
-                            </Badge>
                         </div>
 
                         <div className="grid grid-cols-2 gap-8 mb-12">
@@ -224,7 +244,7 @@ export default function PublicInvoicePage() {
                                 </div>
                                 <h3 className="text-2xl font-bold">Payment Confirmed</h3>
                                 <p className="text-slate-400 text-sm leading-relaxed">
-                                    Thank you for your business. Your payment for {invoice.invoice_number || invoice.invoiceNumber} has been successfully processed and verified on the blockchain.
+                                    Thank you for your business. Your payment for {invoice.invoice_number || invoice.invoiceNumber} has been successfully processed and verified.
                                 </p>
                                 <div className="pt-4 mt-4 border-t border-teal-500/20">
                                     <p className="text-xs text-teal-500 font-mono uppercase tracking-widest">Transaction Verified</p>
@@ -291,7 +311,7 @@ export default function PublicInvoicePage() {
                 <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-widest">
                     <span>AlphaClone Core</span>
                     <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
-                    <span>Finance Engine v2.0</span>
+                    <span>Finance Engine v3.0</span>
                     <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
                     <span>GDPR Compliant</span>
                 </div>

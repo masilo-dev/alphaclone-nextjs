@@ -4,6 +4,7 @@ import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
+import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 
 async function renderInvoicePdf(invoice: any): Promise<Buffer> {
   const items = Array.isArray(invoice.items) ? invoice.items : [];
@@ -86,6 +87,11 @@ export async function POST(req: NextRequest) {
 
     const pdf = await renderInvoicePdf(invoice);
 
+    // Build tracking pixel URL (base64url encoded invoice ID)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+    const trackingToken = Buffer.from(invoiceId).toString('base64url');
+    const trackingPixelUrl = `${appUrl}/api/invoices/track/${trackingToken}`;
+
     const emailResponse = await fetch(`${req.nextUrl.origin}/api/email/send`, {
       method: 'POST',
       headers: {
@@ -111,22 +117,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: payload?.error || 'Failed to send invoice email' }, { status: 502 });
     }
 
+    const now = new Date().toISOString();
+    const recipientEmail = Array.isArray(recipients) ? recipients[0] : String(recipients);
+
+    // Update invoice sent_at
     await supabase
       .from('invoices')
-      .update({ status: 'sent', sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .update({ status: 'sent', sent_at: now, updated_at: now })
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
+
+    // Create delivery log entry for e-delivery proof
+    await supabase.from('invoice_delivery_log').insert({
+      invoice_id: invoiceId,
+      tenant_id: tenantId,
+      sent_at: now,
+      sent_to_email: recipientEmail,
+      delivery_status: 'PENDING',
+    });
+
+    // Audit log
+    await logInvoiceEvent({
+      invoiceId,
+      tenantId,
+      eventType: 'sent',
+      eventData: {
+        recipients,
+        invoice_number: invoice.invoice_number,
+        tracking_pixel_url: trackingPixelUrl,
+      },
+      performedBy: user.id,
+    });
 
     const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId, tenantId }]);
 
     return NextResponse.json({ 
       success: true, 
       message: 'Invoice sent successfully',
-      runId
+      runId,
+      trackingPixelUrl,
     });
   } catch (error) {
     console.error('[invoices/send] error:', error);
     return routeErrorResponse(error, 'Failed to send invoice', req);
   }
 }
-

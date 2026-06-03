@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
+
 
 const invoiceRouteSchema = z.object({
     tenantId: z.string().uuid(),
@@ -84,17 +86,24 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
         if (updateError) throw updateError;
 
-        // 5. Audit Log
-        await admin.from('audit_logs').insert({
-            tenant_id: tenantId,
-            user_id: user.id,
-            action: 'invoice_updated',
-            entity_type: 'invoice',
-            entity_id: id,
-            new_values: finalPayload,
-            old_values: existing,
-            created_at: new Date().toISOString()
-        });
+        // Audit log — invoice_audit_log for invoice-specific events
+        if (updatePayload.status && existing.status !== updatePayload.status) {
+            await logInvoiceEvent({
+                invoiceId: id,
+                tenantId,
+                eventType: 'status_changed',
+                eventData: { from: existing.status, to: updatePayload.status },
+                performedBy: user.id,
+            });
+        } else if (Object.keys(finalPayload).filter((k: string) => k !== 'updated_at').length > 0) {
+            await logInvoiceEvent({
+                invoiceId: id,
+                tenantId,
+                eventType: 'edited',
+                eventData: { fields: Object.keys(finalPayload) },
+                performedBy: user.id,
+            });
+        }
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
