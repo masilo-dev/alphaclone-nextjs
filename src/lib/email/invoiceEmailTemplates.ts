@@ -12,6 +12,7 @@ export interface InvoiceEmailData {
     workspaceName: string;
     senderName?: string;
     notes?: string;
+    trackingPixelUrl?: string; // Optional 1x1 tracking pixel
 }
 
 const baseHtml = (content: string, workspaceName: string) => `
@@ -75,6 +76,9 @@ function formatDate(dateString?: string) {
 
 export const invoiceEmailTemplates = {
     invoiceSent(data: InvoiceEmailData): string {
+        const pixel = data.trackingPixelUrl
+            ? `<img src="${data.trackingPixelUrl}" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />`
+            : '';
         const content = `
         <div class="header">
           <h1>New Invoice</h1>
@@ -82,26 +86,25 @@ export const invoiceEmailTemplates = {
         <div class="content">
           <p class="text">Hi ${data.recipientName},</p>
           <p class="text">${data.senderName || data.workspaceName} has sent you a new invoice.</p>
-          
-          <div class="amount">
-            ${formatCurrency(data.amount, data.currency)}
-          </div>
-
+          <div class="amount">${formatCurrency(data.amount, data.currency)}</div>
           <div class="card">
             <div class="row">Invoice Number <span class="val">${data.invoiceNumber}</span></div>
             <div class="row">Due Date <span class="val">${formatDate(data.dueDate)}</span></div>
-            ${data.notes ? `<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;"><p style="margin: 0; color: #475569; font-size: 14px; font-style: italic;">"${data.notes}"</p></div>` : ''}
+            ${data.notes ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;"><p style="margin:0;color:#475569;font-size:14px;font-style:italic;">"${data.notes}"</p></div>` : ''}
           </div>
-          
           <div class="btn-container">
-            <a href="${data.actionUrl}" class="btn">View & Pay Invoice</a>
+            <a href="${data.actionUrl}" class="btn">View &amp; Pay Invoice</a>
           </div>
+          ${pixel}
         </div>
         `;
         return baseHtml(content, data.workspaceName);
     },
 
     invoiceOverdue(data: InvoiceEmailData): string {
+        const pixel = data.trackingPixelUrl
+            ? `<img src="${data.trackingPixelUrl}" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />`
+            : '';
         const content = `
         <div class="header" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
           <h1>Invoice Overdue</h1>
@@ -109,19 +112,61 @@ export const invoiceEmailTemplates = {
         <div class="content">
           <p class="text">Hi ${data.recipientName},</p>
           <p class="text">This is a friendly reminder that an invoice from ${data.senderName || data.workspaceName} is now past due.</p>
-          
-          <div class="amount" style="color: #ef4444;">
-            ${formatCurrency(data.amount, data.currency)}
-          </div>
-
+          <div class="amount" style="color: #ef4444;">${formatCurrency(data.amount, data.currency)}</div>
           <div class="card">
             <div class="row">Invoice Number <span class="val">${data.invoiceNumber}</span></div>
             <div class="row">Due Date <span class="val" style="color: #ef4444; font-weight: bold;">${formatDate(data.dueDate)}</span></div>
           </div>
-          
           <div class="btn-container">
-            <a href="${data.actionUrl}" class="btn">View & Pay Invoice</a>
+            <a href="${data.actionUrl}" class="btn">View &amp; Pay Invoice</a>
           </div>
+          ${pixel}
+        </div>
+        `;
+        return baseHtml(content, data.workspaceName);
+    },
+
+    invoiceViewedReminder(data: InvoiceEmailData): string {
+        const pixel = data.trackingPixelUrl
+            ? `<img src="${data.trackingPixelUrl}" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />`
+            : '';
+        const content = `
+        <div class="header" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);">
+          <h1>Quick Reminder</h1>
+        </div>
+        <div class="content">
+          <p class="text">Hi ${data.recipientName},</p>
+          <p class="text">We noticed you recently viewed invoice ${data.invoiceNumber} from ${data.senderName || data.workspaceName}. We wanted to make it easy for you to complete payment.</p>
+          <div class="amount">${formatCurrency(data.amount, data.currency)}</div>
+          <div class="card">
+            <div class="row">Invoice Number <span class="val">${data.invoiceNumber}</span></div>
+            <div class="row">Due Date <span class="val">${formatDate(data.dueDate)}</span></div>
+          </div>
+          <div class="btn-container"><a href="${data.actionUrl}" class="btn">Complete Payment</a></div>
+          ${pixel}
+        </div>
+        `;
+        return baseHtml(content, data.workspaceName);
+    },
+
+    invoiceNotOpenedReminder(data: InvoiceEmailData): string {
+        const pixel = data.trackingPixelUrl
+            ? `<img src="${data.trackingPixelUrl}" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />`
+            : '';
+        const content = `
+        <div class="header" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+          <h1>Following Up on Your Invoice</h1>
+        </div>
+        <div class="content">
+          <p class="text">Hi ${data.recipientName},</p>
+          <p class="text">We wanted to make sure you received invoice ${data.invoiceNumber} from ${data.senderName || data.workspaceName}.</p>
+          <div class="amount">${formatCurrency(data.amount, data.currency)}</div>
+          <div class="card">
+            <div class="row">Invoice Number <span class="val">${data.invoiceNumber}</span></div>
+            <div class="row">Due Date <span class="val">${formatDate(data.dueDate)}</span></div>
+          </div>
+          <div class="btn-container"><a href="${data.actionUrl}" class="btn">View Invoice</a></div>
+          ${pixel}
         </div>
         `;
         return baseHtml(content, data.workspaceName);

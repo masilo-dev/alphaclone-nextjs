@@ -1,5 +1,34 @@
 # Update Log
 
+## Date: 2026-06-03 (INVOICE INTELLIGENCE UPGRADE)
+
+### Added
+- **DB Migration** (): ,  (INSERT-only),  (25 countries seeded),  tables. Extended  with , , , , , , new statuses //.
+- **Read Receipt API** (): Page-load view logging,  status transition.
+- **Tracking Pixel API** (): 1x1 GIF endpoint for email-open tracking.
+- **Audit Log API** (): Authenticated GET for full event trail.
+- **Delivery Webhook** (): Brevo/Zoho callbacks update .
+- **Delivery Certificate** (): jsPDF legal e-delivery certificate.
+- **Follow-Up Settings** (): Toggle  per invoice.
+- **Audit Logger** ():  fire-and-forget to .
+- **Tax Rules** ():  with in-memory cache (25 countries).
+- **Status Pipeline UI** (): 8-state visual progress bar with timestamps.
+- **Intelligence Panel** (): Read receipts, delivery badge, audit timeline, action buttons.
+
+### Modified
+- **Email Templates**: Added  field + tracking pixel embed; new  and  templates.
+- **Send Route**: Creates delivery log row + emits audit event + builds tracking pixel URL on send.
+- **Invoice ID Route**: Emits / audit events on PATCH.
+- **Invoice Server Service**: Emits  audit event in .
+- **Public Invoice Page**: Fires web-portal read receipt on mount; renders .
+- **Overdue Cron**: Upgraded to behaviour-triggered logic —  (48h+),  (72h+),  escalations. Respects per-invoice .
+
+### Production Readiness
+- **Vercel Safe**:  = 0 errors. No new dependencies. All tables use . All routes follow existing auth patterns.
+
+---
+
+
 ## Date: 2026-06-03 (ZERNIO WHATSAPP MIGRATION, EMAIL PROVIDER ROUTING, DB REPAIR)
 
 ### Added/Modified

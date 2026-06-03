@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const invoiceServerService = {
@@ -33,6 +34,15 @@ export const invoiceServerService = {
 
             // 3. Post to General Ledger (DR Cash, CR AR)
             await this.postPaymentToGL(invoiceId, invoice);
+
+            // Audit log
+            await logInvoiceEvent({
+                invoiceId,
+                tenantId: invoice.tenant_id,
+                eventType: 'payment_received',
+                eventData: { amount: invoice.total, invoice_number: invoice.invoice_number },
+                performedBy: 'system',
+            });
 
             return { success: true, error: null };
         } catch (err: any) {
