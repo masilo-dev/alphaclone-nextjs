@@ -417,15 +417,37 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
                     {/* Row 3: MFA / 2FA toggle */}
                     <div>
-                        <div className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none">
+                        <div
+                            onClick={() => toggleRow('mfa')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                                 </div>
                                 <span className="text-[13px] font-bold text-slate-200">Two-Factor Authentication (2FA)</span>
                             </div>
-                            <button onClick={() => window.location.href = '/dashboard/security/2fa'} className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-black uppercase">Enable</button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); toggleRow('mfa'); }}
+                                className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-black uppercase"
+                            >
+                                {expandedRows['mfa'] ? 'Close' : 'Manage'}
+                            </button>
                         </div>
+                        <AnimatePresence>
+                            {expandedRows['mfa'] && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="px-4 pb-4">
+                                        <MFAEnrollment />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>

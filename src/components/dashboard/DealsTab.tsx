@@ -10,6 +10,8 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
+import { dealService, DealProduct } from '../../services/dealService';
+import { businessInvoiceService } from '../../services/businessInvoiceService';
 import toast from 'react-hot-toast';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
@@ -113,9 +115,87 @@ const SwipeableDealRow: React.FC<{
 };
 
 // ── Deal Detail ────────────────────────────────────────────────────────────────
-const DealDetail: React.FC<{ deal: Deal; onBack: () => void; onStageChange: (id: string, stage: DealStage) => void }> = ({ deal, onBack, onStageChange }) => {
+const DealDetail: React.FC<{
+  deal: Deal;
+  user: UserType;
+  onBack: () => void;
+  onStageChange: (id: string, stage: DealStage) => void;
+}> = ({ deal, user, onBack, onStageChange }) => {
   const col = STAGE_COLORS[deal.stage];
   const stageIdx = STAGES.indexOf(deal.stage);
+
+  const [products, setProducts] = useState<DealProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState({ productName: '', quantity: '1', unitPrice: '' });
+  const [logging, setLogging] = useState(false);
+  const [activityNote, setActivityNote] = useState('');
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+
+  const loadProducts = useCallback(async () => {
+    setProductsLoading(true);
+    const { products: rows } = await dealService.getDealProducts(deal.id);
+    setProducts(rows);
+    setProductsLoading(false);
+  }, [deal.id]);
+
+  useEffect(() => { loadProducts(); }, [loadProducts]);
+
+  const productsTotal = products.reduce((s, p) => s + (p.total || 0), 0);
+
+  const handleAddProduct = async () => {
+    const qty = parseFloat(newProduct.quantity) || 0;
+    const price = parseFloat(newProduct.unitPrice) || 0;
+    if (!newProduct.productName.trim() || qty <= 0) {
+      toast.error('Enter a product name and quantity');
+      return;
+    }
+    const { error } = await dealService.addDealProduct(deal.id, {
+      productName: newProduct.productName.trim(),
+      quantity: qty,
+      unitPrice: price,
+    });
+    if (error) { toast.error('Could not add product'); return; }
+    toast.success('Product added');
+    setNewProduct({ productName: '', quantity: '1', unitPrice: '' });
+    setShowAddProduct(false);
+    loadProducts();
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    const { error } = await dealService.deleteDealProduct(id);
+    if (error) { toast.error('Could not remove product'); return; }
+    setProducts(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleLogActivity = async () => {
+    if (!activityNote.trim()) { toast.error('Write a note first'); return; }
+    const { error } = await dealService.addDealActivity(deal.id, user.id, 'note', activityNote.trim());
+    if (error) { toast.error('Could not log activity'); return; }
+    toast.success('Activity logged');
+    setActivityNote('');
+    setLogging(false);
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!deal.tenant_id) { toast.error('Missing tenant'); return; }
+    setCreatingInvoice(true);
+    const lineItems = products.length > 0
+      ? products.map(p => ({ description: p.productName, quantity: p.quantity, rate: p.unitPrice, amount: p.total }))
+      : [{ description: deal.name, quantity: 1, rate: deal.value || 0, amount: deal.value || 0 }];
+    const subtotal = lineItems.reduce((s, li) => s + (li.amount || 0), 0);
+    const { error } = await businessInvoiceService.createInvoice(deal.tenant_id, {
+      status: 'draft',
+      issueDate: new Date().toISOString().split('T')[0],
+      lineItems,
+      subtotal,
+      total: subtotal,
+      notes: `Generated from deal: ${deal.name}`,
+    });
+    setCreatingInvoice(false);
+    if (error) { toast.error(error); return; }
+    toast.success('Draft invoice created in Billing');
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -155,13 +235,90 @@ const DealDetail: React.FC<{ deal: Deal; onBack: () => void; onStageChange: (id:
             <p className="text-[15px] text-slate-300 leading-relaxed">{deal.description}</p>
           </div>
         )}
+
+        {/* Line items */}
+        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-black uppercase tracking-wider text-slate-400">Products / Line Items</span>
+            <button onClick={() => setShowAddProduct(v => !v)} className="text-[12px] font-bold text-emerald-400 flex items-center gap-1">
+              <Plus className="w-3.5 h-3.5" /> Add
+            </button>
+          </div>
+
+          {productsLoading ? (
+            <div className="space-y-2">{[...Array(2)].map((_, i) => <div key={i} className="h-9 bg-slate-800/50 rounded animate-pulse" />)}</div>
+          ) : products.length === 0 ? (
+            <p className="text-[13px] text-slate-500">No products added yet.</p>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {products.map(p => (
+                <div key={p.id} className="flex items-center justify-between py-2.5 gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[14px] text-slate-200 font-medium truncate">{p.productName}</p>
+                    <p className="text-[12px] text-slate-500">{p.quantity} × ${p.unitPrice.toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-[14px] font-bold text-teal-400">${(p.total || 0).toLocaleString()}</span>
+                    <button onClick={() => handleDeleteProduct(p.id)} className="text-slate-600 hover:text-red-400 text-[12px]">Remove</button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2.5">
+                <span className="text-[13px] font-bold text-slate-300">Total</span>
+                <span className="text-[15px] font-black text-teal-400">${productsTotal.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+
+          {showAddProduct && (
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              <input
+                value={newProduct.productName}
+                onChange={e => setNewProduct(p => ({ ...p, productName: e.target.value }))}
+                placeholder="Product / service name"
+                className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-emerald-500"
+              />
+              <div className="flex gap-2">
+                <input
+                  value={newProduct.quantity}
+                  onChange={e => setNewProduct(p => ({ ...p, quantity: e.target.value }))}
+                  placeholder="Qty"
+                  type="number"
+                  className="w-20 bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-emerald-500"
+                />
+                <input
+                  value={newProduct.unitPrice}
+                  onChange={e => setNewProduct(p => ({ ...p, unitPrice: e.target.value }))}
+                  placeholder="Unit price"
+                  type="number"
+                  className="flex-1 bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <button onClick={handleAddProduct} className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-[13px] font-bold text-white">Add product</button>
+            </div>
+          )}
+        </div>
+
+        {/* Log activity */}
+        {logging && (
+          <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-2">
+            <textarea
+              value={activityNote}
+              onChange={e => setActivityNote(e.target.value)}
+              placeholder="Log a call, email, or note…"
+              className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-teal-500 resize-none h-20"
+            />
+            <button onClick={handleLogActivity} className="w-full py-2 bg-teal-600 hover:bg-teal-500 rounded-lg text-[13px] font-bold text-white">Save activity</button>
+          </div>
+        )}
       </div>
 
       {/* Fixed actions */}
       <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
-        {['Edit', 'Log Activity', 'Create Invoice'].map(lbl => (
-          <button key={lbl} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">{lbl}</button>
-        ))}
+        <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
+        <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 text-[13px] text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
+          {creatingInvoice ? 'Creating…' : 'Create Invoice'}
+        </button>
       </div>
     </div>
   );
@@ -173,6 +330,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newDeal, setNewDeal] = useState({ name: '', value: '', stage: 'lead' as DealStage, contact_name: '', contact_email: '' });
 
   // View mode states
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'mobile-stage'>('board');
@@ -338,7 +498,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }, [deals, searchTerm, filterStage, sortBy, sortOrder]);
 
   if (selectedDeal) {
-    return <DealDetail deal={selectedDeal} onBack={() => setSelectedDeal(null)} onStageChange={handleStageChange} />;
+    return <DealDetail deal={selectedDeal} user={user} onBack={() => setSelectedDeal(null)} onStageChange={handleStageChange} />;
   }
 
   // ── RENDER BOARD VIEW ──────────────────────────────────────────────────────────

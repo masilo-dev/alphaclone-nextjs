@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { businessClientService } from './businessClientService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
 import { assertLeadStageTransition } from '../lib/stageProgression';
@@ -965,44 +966,146 @@ export const leadService = {
         tone: string;
         customContext: string;
         deliveryProvider?: string;
-    }): Promise<{ success: boolean; error: string | null }> {
+        source?: 'leads' | 'clients';
+    }): Promise<{ success: boolean; error: string | null; sent?: number; total?: number }> {
         try {
             const tenantId = this.getTenantId();
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Authentication required');
+            if (!options.leadIds.length) throw new Error('No recipients selected');
 
-            // 1. Fire-and-forget MCP call
-            // We use the same fetch pattern as deal intelligence to avoid blocking
-            void fetch('/api/mcp-server', {
+            type Recipient = { id: string; businessName: string; email?: string; industry?: string; phone?: string; website?: string; location?: string };
+            let recipients: Recipient[] = [];
+
+            if (options.source === 'clients') {
+                const { clients, error } = await businessClientService.getClients(tenantId, 1, 200);
+                if (error) throw new Error(error);
+                recipients = (clients || [])
+                    .filter((c) => options.leadIds.includes(c.id))
+                    .map((c) => ({
+                        id: c.id,
+                        businessName: c.name,
+                        email: c.email,
+                        industry: c.industry,
+                        phone: c.phone,
+                        website: c.website,
+                        location: c.location,
+                    }));
+            } else {
+                for (const id of options.leadIds) {
+                    const { lead } = await this.getLeadById(id);
+                    if (lead) {
+                        recipients.push({
+                            id: lead.id,
+                            businessName: lead.businessName,
+                            email: (lead as any).email,
+                            industry: lead.industry,
+                            phone: lead.phone,
+                            website: lead.website,
+                            location: lead.location,
+                        });
+                    }
+                }
+            }
+
+            const inferEmail = (r: Recipient): string => {
+                const direct = String(r.email || '').trim();
+                if (direct.includes('@')) return direct.toLowerCase();
+                const website = String(r.website || '').trim();
+                if (!website) return '';
+                try {
+                    const url = website.startsWith('http') ? website : `https://${website}`;
+                    const host = new URL(url).hostname.replace(/^www\./i, '');
+                    return host.includes('.') ? `info@${host}` : '';
+                } catch {
+                    return '';
+                }
+            };
+
+            const generationResponse = await fetch('/api/outreach/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    method: 'call_tool',
-                    params: {
-                        name: 'send_batch_outreach',
-                        arguments: {
-                            tenant_id: tenantId,
-                            lead_ids: options.leadIds,
-                            tone: options.tone,
-                            custom_context: options.customContext,
-                            delivery_provider: options.deliveryProvider || 'sendgrid'
-                        }
-                    }
-                })
-            }).catch(err => console.error('[LeadService] Batch outreach background trigger failed:', err));
+                    leads: recipients.map((r) => {
+                        const email = inferEmail(r);
+                        return {
+                            business_name: r.businessName || 'Unknown',
+                            email,
+                            phone: r.phone || '',
+                            website: r.website || '',
+                            address: r.location || '',
+                            category: r.industry || '',
+                            rating: 0,
+                            pitchAngle: email ? 'growth-opportunity' : 'no-email-follow-up',
+                            insights: [],
+                            score: 75,
+                        };
+                    }),
+                    industry: 'mixed',
+                    tone: options.tone,
+                    customContext: options.customContext,
+                    senderName: user.email || 'AlphaClone Systems',
+                    tenantId,
+                }),
+            });
 
-            // 2. Update local metadata for visual feedback (last_contacted_at)
+            const generationData = await generationResponse.json().catch(() => ({}));
+            if (!generationResponse.ok || !generationData.success) {
+                throw new Error(generationData.error || 'Outreach generation failed');
+            }
+
+            const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
+            const provider = options.deliveryProvider || 'zoho';
+            const sendResults = await Promise.all(
+                drafts.map(async (draft: any) => {
+                    const recipient = String(draft.recipientEmail || '').trim();
+                    if (!recipient.includes('@')) return { ok: false };
+                    const sendResponse = await fetch('/api/outreach/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenantId,
+                            leadEmail: recipient,
+                            leadName: draft.business_name,
+                            subject: draft.subject,
+                            body: draft.body,
+                            pitchAngle: draft.pitchAngle || 'growth-opportunity',
+                            industry: 'mixed',
+                            score: 75,
+                            autoSend: true,
+                            consentGranted: true,
+                            confidenceScore: 100,
+                            deliveryProviders: [provider],
+                            preferredProvider: provider,
+                            balanceByDailyLimit: false,
+                        }),
+                    });
+                    const sendData = await sendResponse.json().catch(() => ({}));
+                    return { ok: sendResponse.ok && sendData.success };
+                })
+            );
+
+            const sent = sendResults.filter((r) => r.ok).length;
             const now = new Date().toISOString();
-            await Promise.all(options.leadIds.map(id => 
-                this.getLeadById(id).then(({ lead }) => {
-                    if (lead) {
-                        const metadata = { ...lead.metadata, last_contacted_at: now };
-                        return this.updateLead(id, { metadata });
-                    }
-                })
-            ));
 
-            return { success: true, error: null };
+            if (options.source !== 'clients') {
+                await Promise.all(
+                    options.leadIds.map((id) =>
+                        this.getLeadById(id).then(({ lead }) => {
+                            if (lead) {
+                                const metadata = { ...lead.metadata, last_contacted_at: now };
+                                return this.updateLead(id, { metadata });
+                            }
+                        })
+                    )
+                );
+            }
+
+            if (sent === 0) {
+                return { success: false, error: 'All outreach sends failed', sent: 0, total: options.leadIds.length };
+            }
+
+            return { success: true, error: null, sent, total: options.leadIds.length };
         } catch (err: any) {
             console.error('Error in sendBatchOutreach:', err);
             return { success: false, error: err.message };

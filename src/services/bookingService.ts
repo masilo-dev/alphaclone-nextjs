@@ -76,7 +76,7 @@ export const bookingService = {
         startTime: string,
         endTime: string,
         clientDetails: { name: string; email: string; phone?: string; topic?: string; notes?: string; customFields?: Record<string, unknown> },
-        options?: { turnstileToken?: string | null }
+        options?: { turnstileToken?: string | null; meetingTypeName?: string }
     ): Promise<{ bookingId: string | null; roomUrl: string | null; error: string | null }> {
         try {
             const response = await fetch('/api/booking/create', {
@@ -94,6 +94,7 @@ export const bookingService = {
                     client_phone: clientDetails.phone,
                     client_notes: clientDetails.notes,
                     time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    ...(options?.meetingTypeName ? { booking_type_name: options.meetingTypeName } : {}),
                     ...(options?.turnstileToken ? { turnstile_token: options.turnstileToken } : {}),
                 })
             });

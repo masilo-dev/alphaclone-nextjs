@@ -3,6 +3,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
+import { notifyTenantOwners } from '@/lib/notifyTenantOwners';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -120,15 +121,31 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // EMIT AUTOMATION EVENT
-        if (updatedContract && updatedContract.status === 'fully_signed') {
-            const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
-            await emitBusinessEvent(updatedContract.tenant_id, 'contract_signed', {
-                contractId: updatedContract.id,
-                title: updatedContract.title,
-                clientId: updatedContract.client_id,
-                projectId: updatedContract.project_id
-            }).catch(err => console.error('Failed to emit contract_signed event:', err));
+        // EMIT AUTOMATION EVENT + notify owner
+        if (updatedContract) {
+            if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed') {
+                const origin = req.nextUrl.origin;
+                await notifyTenantOwners({
+                    tenantId: updatedContract.tenant_id,
+                    type: 'contract',
+                    title:
+                        updatedContract.status === 'fully_signed'
+                            ? `Contract fully signed: ${updatedContract.title}`
+                            : `Client signed contract: ${updatedContract.title}`,
+                    message: `Contract "${updatedContract.title}" was signed by the client.`,
+                    link: `${origin}/dashboard/contracts`,
+                    fallbackUserId: updatedContract.created_by || undefined,
+                }).catch((err) => console.error('Contract sign owner notify failed:', err));
+            }
+            if (updatedContract.status === 'fully_signed') {
+                const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
+                await emitBusinessEvent(updatedContract.tenant_id, 'contract_signed', {
+                    contractId: updatedContract.id,
+                    title: updatedContract.title,
+                    clientId: updatedContract.client_id,
+                    projectId: updatedContract.project_id
+                }).catch(err => console.error('Failed to emit contract_signed event:', err));
+            }
         }
 
         return NextResponse.json({ success: true, contract: updatedContract });

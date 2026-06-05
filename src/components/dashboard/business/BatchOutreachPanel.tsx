@@ -9,9 +9,10 @@ interface BatchOutreachPanelProps {
     onClose: () => void;
     selectedIds: string[];
     onSuccess: () => void;
+    recipientSource?: 'leads' | 'clients';
 }
 
-export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, onClose, selectedIds, onSuccess }) => {
+export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, onClose, selectedIds, onSuccess, recipientSource = 'leads' }) => {
     const [tone, setTone] = useState('professional');
     const [context, setContext] = useState('');
     const [provider, setProvider] = useState('zoho');
@@ -21,16 +22,17 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
         if (selectedIds.length === 0) return;
         
         setIsSending(true);
-        const { success, error } = await leadService.sendBatchOutreach({
+        const { success, error, sent, total } = await leadService.sendBatchOutreach({
             leadIds: selectedIds,
             tone,
             customContext: context,
-            deliveryProvider: provider
+            deliveryProvider: provider,
+            source: recipientSource,
         });
 
         setIsSending(false);
         if (success) {
-            toast.success(`Successfully queued outreach for ${selectedIds.length} contacts!`);
+            toast.success(`Sent ${sent ?? selectedIds.length} of ${total ?? selectedIds.length} outreach emails`);
             onSuccess();
             onClose();
         } else {

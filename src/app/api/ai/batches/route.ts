@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMessageBatch, getBatchStatus, getBatchResults, cancelBatch } from '@/services/ai/messageBatchService';
+import { requireAuthenticatedUser } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+function errorStatus(err: any): number {
+  return typeof err?.status === 'number' ? err.status : 500;
+}
+
 /** POST /api/ai/batches — Create a new message batch */
 export async function POST(req: NextRequest) {
   try {
+    await requireAuthenticatedUser();
     const body = await req.json();
     const { requests, model, system_prompt } = body;
 
@@ -17,13 +23,14 @@ export async function POST(req: NextRequest) {
     const batchId = await createMessageBatch(requests, model, system_prompt);
     return NextResponse.json({ success: true, batch_id: batchId });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
   }
 }
 
 /** GET /api/ai/batches?batch_id=xxx — Check batch status; add &results=true for results */
 export async function GET(req: NextRequest) {
   try {
+    await requireAuthenticatedUser();
     const { searchParams } = new URL(req.url);
     const batchId = searchParams.get('batch_id');
     const fetchResults = searchParams.get('results') === 'true';
@@ -41,13 +48,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(status);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
   }
 }
 
 /** DELETE /api/ai/batches?batch_id=xxx — Cancel a batch */
 export async function DELETE(req: NextRequest) {
   try {
+    await requireAuthenticatedUser();
     const { searchParams } = new URL(req.url);
     const batchId = searchParams.get('batch_id');
 
@@ -58,6 +66,6 @@ export async function DELETE(req: NextRequest) {
     await cancelBatch(batchId);
     return NextResponse.json({ success: true, cancelled: batchId });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
   }
 }

@@ -38,6 +38,27 @@ function hasBuyingSignal(text: string): boolean {
   return BUYING_SIGNAL_PATTERNS.some((pattern) => pattern.test(text));
 }
 
+/**
+ * Idempotency guard for auto-generated tasks. The autonomous runner executes on a
+ * cron (every few minutes); without this check it re-inserts the same task for the
+ * same source entity on every run, which is what caused duplicate tasks.
+ * Returns true if a task for this source key already exists for the tenant.
+ */
+async function autoTaskAlreadyExists(admin: any, tenantId: string, sourceKey: string): Promise<boolean> {
+  try {
+    const { data } = await admin
+      .from('tasks')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .contains('metadata', { autoSourceKey: sourceKey })
+      .limit(1);
+    return Array.isArray(data) && data.length > 0;
+  } catch {
+    // On lookup failure, err on the side of NOT duplicating.
+    return true;
+  }
+}
+
 function toIsoDate(date: Date): string {
   return date.toISOString().split('T')[0] || '';
 }
@@ -336,15 +357,19 @@ export const autonomousRunnerService = {
             if (shouldCreateTask) {
               const taskTitle = `Follow up on buying-signal message`;
               const taskDescription = `[AI LOG] ${new Date().toISOString()} Buying-signal detected in message ${msg.id}. Draft response and advance lead context.`;
-              const { error: taskError } = await admin.from('tasks').insert({
-                tenant_id: tenantId,
-                title: taskTitle,
-                description: taskDescription,
-                priority: 'high',
-                status: 'todo',
-                due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-              });
-              if (!taskError) createdTasks += 1;
+              const sourceKey = `buying_signal:${msg.id}`;
+              if (!(await autoTaskAlreadyExists(admin, tenantId, sourceKey))) {
+                const { error: taskError } = await admin.from('tasks').insert({
+                  tenant_id: tenantId,
+                  title: taskTitle,
+                  description: taskDescription,
+                  priority: 'high',
+                  status: 'todo',
+                  due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+                  metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
+                });
+                if (!taskError) createdTasks += 1;
+              }
             } else {
               await recordAction('create_task_buying_signal', 'skipped', `Task creation skipped (Lead Action Mode set to '${actionMode}')`, {
                 is_refusal: true,
@@ -374,6 +399,8 @@ export const autonomousRunnerService = {
 
           let createdTasks = 0;
           for (const deal of staleDeals || []) {
+            const sourceKey = `stale_deal:${deal.id}`;
+            if (await autoTaskAlreadyExists(admin, tenantId, sourceKey)) continue;
             const { error: taskError } = await admin.from('tasks').insert({
               tenant_id: tenantId,
               title: `Advance stale deal: ${deal.name || deal.id}`,
@@ -381,6 +408,8 @@ export const autonomousRunnerService = {
               priority: 'high',
               status: 'todo',
               due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+              related_to_deal: deal.id,
+              metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
             });
             if (!taskError) createdTasks += 1;
           }
@@ -518,6 +547,8 @@ export const autonomousRunnerService = {
 
           let prepTasks = 0;
           for (const event of upcomingEvents || []) {
+            const sourceKey = `calendar_prep:${event.id}`;
+            if (await autoTaskAlreadyExists(admin, tenantId, sourceKey)) continue;
             const { error: taskError } = await admin.from('tasks').insert({
               tenant_id: tenantId,
               assigned_to: event.user_id || null,
@@ -526,6 +557,7 @@ export const autonomousRunnerService = {
               priority: 'medium',
               status: 'todo',
               due_date: event.start_time,
+              metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
             });
             if (!taskError) prepTasks += 1;
           }
@@ -551,6 +583,7 @@ export const autonomousRunnerService = {
           for (const invoice of candidates || []) {
             const paymentIntentId = (invoice.metadata as Record<string, unknown> | null)?.stripe_payment_intent;
             if (typeof paymentIntentId === 'string' && paymentIntentId.trim()) {
+              const reconcileKey = `reconcile_invoice:${invoice.id}`;
               if (stripe) {
                 try {
                   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -561,7 +594,7 @@ export const autonomousRunnerService = {
                       .eq('id', invoice.id)
                       .eq('tenant_id', tenantId);
                     reconciledPaid += 1;
-                  } else {
+                  } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
                     const { error: taskError } = await admin.from('tasks').insert({
                       tenant_id: tenantId,
                       title: `Reconcile payment status for invoice ${invoice.id}`,
@@ -569,21 +602,25 @@ export const autonomousRunnerService = {
                       priority: 'high',
                       status: 'todo',
                       due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                      metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
                     });
                     if (!taskError) reconcileTasks += 1;
                   }
                 } catch {
-                  const { error: taskError } = await admin.from('tasks').insert({
-                    tenant_id: tenantId,
-                    title: `Reconcile payment status for invoice ${invoice.id}`,
-                    description: `[AI LOG] ${new Date().toISOString()} Stripe reconciliation failed, manual verification required.`,
-                    priority: 'high',
-                    status: 'todo',
-                    due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-                  });
-                  if (!taskError) reconcileTasks += 1;
+                  if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
+                    const { error: taskError } = await admin.from('tasks').insert({
+                      tenant_id: tenantId,
+                      title: `Reconcile payment status for invoice ${invoice.id}`,
+                      description: `[AI LOG] ${new Date().toISOString()} Stripe reconciliation failed, manual verification required.`,
+                      priority: 'high',
+                      status: 'todo',
+                      due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                      metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
+                    });
+                    if (!taskError) reconcileTasks += 1;
+                  }
                 }
-              } else {
+              } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
                 const { error: taskError } = await admin.from('tasks').insert({
                   tenant_id: tenantId,
                   title: `Reconcile payment status for invoice ${invoice.id}`,
@@ -591,6 +628,7 @@ export const autonomousRunnerService = {
                   priority: 'high',
                   status: 'todo',
                   due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                  metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
                 });
                 if (!taskError) reconcileTasks += 1;
               }
@@ -751,15 +789,19 @@ export const autonomousRunnerService = {
           }
           const taskTitle = `Follow up on buying-signal message`;
           const taskDescription = `[AI LOG] ${new Date().toISOString()} Buying-signal detected in message ${msg.id}. Draft response and advance lead context.`;
-          const { error: taskError } = await admin.from('tasks').insert({
-            tenant_id: tenantId,
-            title: taskTitle,
-            description: taskDescription,
-            priority: 'high',
-            status: 'todo',
-            due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          });
-          if (!taskError) createdTasks += 1;
+          const sourceKey = `buying_signal:${msg.id}`;
+          if (!(await autoTaskAlreadyExists(admin, tenantId, sourceKey))) {
+            const { error: taskError } = await admin.from('tasks').insert({
+              tenant_id: tenantId,
+              title: taskTitle,
+              description: taskDescription,
+              priority: 'high',
+              status: 'todo',
+              due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+              metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
+            });
+            if (!taskError) createdTasks += 1;
+          }
         }
         await recordAction('unread_buying_signal_inbox', 'success', `Detected ${buyingSignals.length} signals, created ${createdTasks} tasks, sent ${autoReplies} auto-replies`, {
           detected: buyingSignals.length,
@@ -783,6 +825,8 @@ export const autonomousRunnerService = {
 
         let createdTasks = 0;
         for (const deal of staleDeals || []) {
+          const sourceKey = `stale_deal:${deal.id}`;
+          if (await autoTaskAlreadyExists(admin, tenantId, sourceKey)) continue;
           const { error: taskError } = await admin.from('tasks').insert({
             tenant_id: tenantId,
             title: `Advance stale deal: ${deal.name || deal.id}`,
@@ -790,6 +834,8 @@ export const autonomousRunnerService = {
             priority: 'high',
             status: 'todo',
             due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            related_to_deal: deal.id,
+            metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
           });
           if (!taskError) createdTasks += 1;
         }
@@ -927,6 +973,8 @@ export const autonomousRunnerService = {
 
         let prepTasks = 0;
         for (const event of upcomingEvents || []) {
+          const sourceKey = `calendar_prep:${event.id}`;
+          if (await autoTaskAlreadyExists(admin, tenantId, sourceKey)) continue;
           const { error: taskError } = await admin.from('tasks').insert({
             tenant_id: tenantId,
             assigned_to: event.user_id || null,
@@ -935,6 +983,7 @@ export const autonomousRunnerService = {
             priority: 'medium',
             status: 'todo',
             due_date: event.start_time,
+            metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
           });
           if (!taskError) prepTasks += 1;
         }
@@ -960,6 +1009,7 @@ export const autonomousRunnerService = {
         for (const invoice of candidates || []) {
           const paymentIntentId = (invoice.metadata as Record<string, unknown> | null)?.stripe_payment_intent;
           if (typeof paymentIntentId === 'string' && paymentIntentId.trim()) {
+            const reconcileKey = `reconcile_invoice:${invoice.id}`;
             if (stripe) {
               try {
                 const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -970,7 +1020,7 @@ export const autonomousRunnerService = {
                     .eq('id', invoice.id)
                     .eq('tenant_id', tenantId);
                   reconciledPaid += 1;
-                } else {
+                } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
                   const { error: taskError } = await admin.from('tasks').insert({
                     tenant_id: tenantId,
                     title: `Reconcile payment status for invoice ${invoice.id}`,
@@ -978,21 +1028,25 @@ export const autonomousRunnerService = {
                     priority: 'high',
                     status: 'todo',
                     due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                    metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
                   });
                   if (!taskError) reconcileTasks += 1;
                 }
               } catch {
-                const { error: taskError } = await admin.from('tasks').insert({
-                  tenant_id: tenantId,
-                  title: `Reconcile payment status for invoice ${invoice.id}`,
-                  description: `[AI LOG] ${new Date().toISOString()} Stripe reconciliation failed, manual verification required.`,
-                  priority: 'high',
-                  status: 'todo',
-                  due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-                });
-                if (!taskError) reconcileTasks += 1;
+                if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
+                  const { error: taskError } = await admin.from('tasks').insert({
+                    tenant_id: tenantId,
+                    title: `Reconcile payment status for invoice ${invoice.id}`,
+                    description: `[AI LOG] ${new Date().toISOString()} Stripe reconciliation failed, manual verification required.`,
+                    priority: 'high',
+                    status: 'todo',
+                    due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                    metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
+                  });
+                  if (!taskError) reconcileTasks += 1;
+                }
               }
-            } else {
+            } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
               const { error: taskError } = await admin.from('tasks').insert({
                 tenant_id: tenantId,
                 title: `Reconcile payment status for invoice ${invoice.id}`,
@@ -1000,6 +1054,7 @@ export const autonomousRunnerService = {
                 priority: 'high',
                 status: 'todo',
                 due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
               });
               if (!taskError) reconcileTasks += 1;
             }

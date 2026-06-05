@@ -136,7 +136,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Start live calls',
             icon: Video,
             color: 'bg-rose-500',
-            action: () => router.push('/dashboard/business/video')
+            action: () => router.push('/dashboard/business/meetings')
         },
         {
             id: 'whatsapp-bot',
@@ -392,39 +392,43 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     streak={stats?.loginStreak ?? 1}
                     activity24h={stats?.activity24h ?? 0}
                     newLeads={stats?.newLeads24h ?? 0}
-                    actionsCompleted={stats?.activity24h ?? 0}
-                    rewardsUnlocked={0}
+                    actionsCompleted={stats?.completedTasks ?? 0}
+                    rewardsUnlocked={stats?.rewardsUnlocked ?? 0}
                     variant="full"
                 />
             </motion.div>
 
-            {/* Quick Actions (PWA App Launcher Grid) */}
+            {/* Quick Actions — native-style PWA app launcher */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800"
+                className="bg-slate-900/40 rounded-3xl p-4 sm:p-5 border border-slate-800/80"
             >
-                <div className="flex items-center gap-2 mb-6">
-                    <Zap className="w-4 h-4 text-teal-400" />
-                    <span className="pwa-section-label text-slate-400">App Launcher</span>
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <div className="flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 text-teal-400" />
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Apps</span>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-600">{quickActions.length} tools</span>
                 </div>
-                
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-y-6 gap-x-4 justify-items-center">
+
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-x-2 gap-y-4">
                     {quickActions.map((action, index) => (
                         <motion.button
                             key={action.id}
-                            initial={{ opacity: 0, scale: 0.8 }}
+                            initial={{ opacity: 0, scale: 0.85 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.1 + index * 0.03 }}
+                            transition={{ delay: 0.05 + index * 0.025, type: 'spring', stiffness: 320, damping: 22 }}
                             onClick={action.action}
-                            className="flex flex-col items-center justify-center text-center group cursor-pointer touch-manipulation"
+                            className="flex flex-col items-center gap-1.5 group select-none touch-manipulation active:scale-90 transition-transform duration-150"
                         >
-                            <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-white transition-all transform group-hover:scale-105 group-hover:border-teal-500/50 shadow-md relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 to-slate-900 group-hover:from-slate-900 group-hover:to-slate-850" />
-                                <action.icon className="w-7 h-7 text-teal-400 group-hover:text-teal-300 relative z-10 transition-colors" />
+                            <div className={`w-[54px] h-[54px] sm:w-14 sm:h-14 rounded-[17px] ${action.color} flex items-center justify-center relative overflow-hidden shadow-lg shadow-black/40 ring-1 ring-white/10 group-hover:ring-white/25 transition-all`}>
+                                {/* glossy top highlight like a real app icon */}
+                                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
+                                <action.icon className="w-[22px] h-[22px] text-white relative z-10 drop-shadow-sm" strokeWidth={2.1} />
                             </div>
-                            <span className="text-[11px] font-bold mt-2 text-slate-350 group-hover:text-teal-400 transition-colors leading-tight line-clamp-1">
+                            <span className="text-[10.5px] font-medium text-slate-300 group-hover:text-white leading-tight text-center line-clamp-1 w-full px-0.5 transition-colors">
                                 {action.title}
                             </span>
                         </motion.button>

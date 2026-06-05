@@ -39,6 +39,9 @@ import { NavItem, DashboardStat } from './types';
 
 export const APP_NAME = "AlphaClone Systems";
 
+/** Platform Calendly link for sales/demo calls (marketing + dashboard). */
+export const PLATFORM_CALENDLY_URL = 'https://calendly.com/bonniealphaclonesystems/30min';
+
 /** Shown in Settings; keep in sync with package.json version. */
 export const APP_VERSION = '1.0.0';
 
@@ -156,8 +159,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
       { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
       { label: 'LinkedIn Manager', href: '/dashboard/business/linkedin', icon: Linkedin },
-      { label: 'X (Twitter) Manager', href: '/dashboard/business/x', icon: Twitter, comingSoon: true },
-      { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram, comingSoon: true },
+      { label: 'X (Twitter) Manager', href: '/dashboard/business/x', icon: Twitter },
+      { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
       { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
     ]
   },

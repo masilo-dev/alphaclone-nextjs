@@ -27,24 +27,28 @@ export const ServicesCatalog: React.FC = () => {
         s.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.name) {
             toast.error("Service name is required");
             return;
         }
 
-        if (editingId) {
-            updateService(editingId, form);
-            toast.success("Service updated");
-            setEditingId(null);
-        } else {
-            addService(form);
-            toast.success("Service added to catalog");
-            setIsAdding(false);
+        try {
+            if (editingId) {
+                await updateService(editingId, form);
+                toast.success("Service updated");
+                setEditingId(null);
+            } else {
+                await addService(form);
+                toast.success("Service added to catalog");
+                setIsAdding(false);
+            }
+            setForm({ name: '', description: '', defaultPrice: 0, unit: 'flat' });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to save service';
+            toast.error(message);
         }
-
-        setForm({ name: '', description: '', defaultPrice: 0, unit: 'flat' });
     };
 
     const startEdit = (service: ServiceItem) => {
@@ -191,8 +195,15 @@ export const ServicesCatalog: React.FC = () => {
                                                 <Edit2 size={14} />
                                             </button>
                                             <button 
-                                                onClick={() => {
-                                                    if (confirm("Are you sure?")) deleteService(service.id);
+                                                onClick={async () => {
+                                                    if (!confirm("Are you sure?")) return;
+                                                    try {
+                                                        await deleteService(service.id);
+                                                        toast.success("Service removed");
+                                                    } catch (err: unknown) {
+                                                        const message = err instanceof Error ? err.message : 'Failed to delete';
+                                                        toast.error(message);
+                                                    }
                                                 }}
                                                 className="p-2 bg-white/5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-all"
                                             >

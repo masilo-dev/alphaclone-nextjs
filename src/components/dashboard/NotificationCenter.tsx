@@ -3,17 +3,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Bell, X, Check, Trash2, ExternalLink,
-    MessageCircle, FolderOpen, CreditCard, Settings, AlertTriangle, BellOff
+    MessageCircle, FolderOpen, CreditCard, Settings, AlertTriangle, BellOff, Smartphone
 } from 'lucide-react';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 interface NotificationCenterProps {
     userId: string;
     tenantId: string;
 }
 
-import { notificationService, Notification } from '../../services/dashboardService';
+import { notificationService, type Notification } from '../../services/dashboardService';
 
 const TYPE_CONFIG: Record<string, { Icon: any; color: string; bg: string; label: string }> = {
     message: { Icon: MessageCircle, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', label: 'Message' },
@@ -35,6 +36,41 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const { isSubscribed, subscribeToPush } = usePushNotifications();
+    const [pushBusy, setPushBusy] = useState(false);
+    const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+            setPushPermission('unsupported');
+            return;
+        }
+        setPushPermission(Notification.permission);
+    }, []);
+
+    // If the user already granted permission but the device lost its subscription
+    // (e.g. new device / reinstall), silently re-subscribe so push keeps working.
+    useEffect(() => {
+        if (pushPermission === 'granted' && !isSubscribed) {
+            void subscribeToPush();
+        }
+    }, [pushPermission, isSubscribed, subscribeToPush]);
+
+    const handleEnablePush = useCallback(async () => {
+        setPushBusy(true);
+        try {
+            const ok = await subscribeToPush();
+            if (typeof window !== 'undefined' && 'Notification' in window) {
+                setPushPermission(Notification.permission);
+            }
+            return ok;
+        } finally {
+            setPushBusy(false);
+        }
+    }, [subscribeToPush]);
+
+    const showPushPrompt = pushPermission !== 'unsupported' && pushPermission !== 'denied' && !isSubscribed;
 
     const loadNotifications = useCallback(async () => {
         const { notifications: loaded } = await notificationService.getNotifications(userId, tenantId);
@@ -166,6 +202,26 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Enable push on this device */}
+                            {showPushPrompt && (
+                                <div className="px-4 py-3 border-b border-white/5 bg-gradient-to-r from-teal-500/10 to-violet-500/10 flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center flex-shrink-0">
+                                        <Smartphone className="w-4 h-4 text-teal-300" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-white">Get alerts on this device</p>
+                                        <p className="text-[11px] text-slate-400 leading-snug">Receive messages &amp; updates even when the app is closed.</p>
+                                    </div>
+                                    <button
+                                        onClick={handleEnablePush}
+                                        disabled={pushBusy}
+                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white text-xs font-black uppercase tracking-wide transition-colors flex-shrink-0"
+                                    >
+                                        {pushBusy ? '…' : 'Enable'}
+                                    </button>
+                                </div>
+                            )}
 
                             {/* List */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar">

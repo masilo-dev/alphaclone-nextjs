@@ -50,6 +50,7 @@ const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
 const ReportsPage = React.lazy(() => import('./ReportsPage'));
 const SettingsPage = React.lazy(() => import('./SettingsPage'));
 const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
+const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
 const BookingTab = React.lazy(() => import('./BookingTab'));
 // New CRM Components - Lazy loaded to prevent Error #306
 const CRMTab = React.lazy(() => import('../CRMTab'));
@@ -137,6 +138,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const currentTenant = propTenant || contextTenant;
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const {
         activeMeetingCallId,
         isMeetingMinimized,
@@ -163,6 +165,24 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             };
         }
     }, [user?.id]);
+
+    // Live unread direct-message count for the sidebar/bottom-nav badges.
+    React.useEffect(() => {
+        if (!currentTenant?.id) return;
+        let active = true;
+        const fetchUnread = async () => {
+            const { count } = await supabase
+                .from('messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', currentTenant.id)
+                .eq('recipient_id', user.id)
+                .is('read_at', null);
+            if (active) setUnreadMessageCount(count || 0);
+        };
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 30000);
+        return () => { active = false; clearInterval(interval); };
+    }, [currentTenant?.id, user.id]);
 
     // -- PERSISTENT VIDEO CALL STATE --
     const { tasks: bgTasks } = useBackgroundTasks();
@@ -402,15 +422,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/business/referrals':
-                return (
-                    <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
-                        <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6">
-                            <TrendingUp className="w-10 h-10 text-teal-400" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Referrals Coming Soon</h3>
-                        <p className="text-slate-400 max-w-md">The referral and affiliate tracking module is currently being provisioned.</p>
-                    </div>
-                );
+                return <ReferralsPage user={user} tenant={currentTenant} />;
             case '/dashboard/leads':
             case '/dashboard/contacts':
             case '/dashboard/business/clients':
@@ -737,7 +749,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 navItems={TENANT_ADMIN_NAV_ITEMS}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                unreadMessageCount={0}
+                unreadMessageCount={unreadMessageCount}
                 onLogout={onLogout}
             />
 
@@ -828,7 +840,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 }}
                             />
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
-                            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group relative">
+                            <button
+                                onClick={() => setActiveTab('/dashboard/business/settings')}
+                                title="Profile & settings"
+                                aria-label="Profile and settings"
+                                className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group relative active:scale-95"
+                            >
                                 <Image
                                     src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`}
                                     alt="Profile"
@@ -836,7 +853,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     className="object-cover group-hover:scale-110 transition-transform duration-300"
                                     sizes="40px"
                                 />
-                            </div>
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -907,7 +924,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 activeTab={activeTab}
                 onNavigate={(href) => setActiveTab(href)}
                 onToggleMenu={() => setSidebarOpen(true)}
-                unreadCount={0}
+                unreadCount={unreadMessageCount}
                 userRole="tenant_admin"
             />
 

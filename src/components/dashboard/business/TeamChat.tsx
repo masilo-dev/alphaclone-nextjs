@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Send, MessageCircle, CheckCircle, User as UserIcon, PlusCircle, Target } from 'lucide-react';
+import { Send, MessageCircle, CheckCircle } from 'lucide-react';
 import { User } from '../../../types';
 import { format } from 'date-fns';
 import { taskService } from '../../../services/taskService';
+import { messageService } from '../../../services/messageService';
 import toast from 'react-hot-toast';
+
+const TEAM_GROUP_ID = 'team';
 
 interface TeamMember {
     user_id: string;
@@ -36,92 +39,112 @@ interface TeamChatProps {
 export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
-    const [showMentions, setShowMentions] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // Initial dummy message
+    const mapMessage = (m: any): ChatMessage => ({
+        id: m.id,
+        userId: m.role === 'system' ? 'system' : m.senderId,
+        userName: m.senderName || 'Unknown',
+        content: m.text,
+        timestamp: m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp),
+        type: m.role === 'system' ? 'task_created' : 'text',
+    });
+
+    // Load persisted team messages and subscribe to realtime updates.
     useEffect(() => {
-        setMessages([
-            {
-                id: '1',
-                userId: 'system',
-                userName: 'System',
-                content: 'Welcome to the Team Communication Hub! Tag members with @ to assign tasks.',
-                timestamp: new Date(),
-                type: 'text'
-            }
-        ]);
-    }, []);
+        let active = true;
+        (async () => {
+            setLoading(true);
+            const { messages: rows } = await messageService.getGroupMessages(TEAM_GROUP_ID);
+            if (!active) return;
+            setMessages(rows.map(mapMessage));
+            setLoading(false);
+        })();
+
+        // isAdmin=true so the callback receives all tenant inserts; we filter to the team group.
+        const unsubscribe = messageService.subscribeToMessages(user.id, true, (message, eventType) => {
+            if (eventType !== 'INSERT') return;
+            if (message.group_id !== TEAM_GROUP_ID) return;
+            setMessages(prev => {
+                if (prev.some(m => m.id === message.id)) return prev;
+                return [...prev, mapMessage(message)];
+            });
+        });
+
+        return () => { active = false; unsubscribe(); };
+    }, [user.id]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    const persistMessage = async (
+        text: string,
+        role: 'user' | 'system' = 'user',
+        senderName?: string,
+    ) => {
+        const { message, error } = await messageService.sendMessage(
+            role === 'system' ? user.id : user.id,
+            senderName || (role === 'system' ? 'System' : (user.name || 'You')),
+            role === 'system' ? 'system' : 'user',
+            text,
+            undefined,
+            [],
+            'normal',
+            undefined,
+            TEAM_GROUP_ID,
+        );
+        if (error) {
+            toast.error('Message failed to send');
+            return;
+        }
+        if (message) {
+            setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, mapMessage(message)]);
+        }
+    };
+
     const handleSendMessage = async () => {
-        if (!input.trim()) return;
-
-        const newMessage: ChatMessage = {
-            id: Date.now().toString(),
-            userId: user.id,
-            userName: user.name || 'You',
-            userAvatar: user.avatar,
-            content: input,
-            timestamp: new Date(),
-            type: 'text'
-        };
-
-        // Check for commands/mentions
-        if (input.includes('@')) {
-            const mentionMatch = input.match(/@(\w+)/); // Simple match
-            if (mentionMatch) {
-                // In a real app, parse this more robustly
+        if (!input.trim() || sending) return;
+        const text = input;
+        setInput('');
+        setSending(true);
+        try {
+            // @mention task assignment: "@name assign task <title>"
+            const mentionMatch = text.match(/@(\w+)/);
+            if (mentionMatch && (text.toLowerCase().includes('assign') || text.toLowerCase().includes('task'))) {
                 const mentionedName = mentionMatch[1].toLowerCase();
-                const targetMember = teamMembers.find(m => 
-                    m.user.name?.toLowerCase().includes(mentionedName) || 
+                const targetMember = teamMembers.find(m =>
+                    m.user.name?.toLowerCase().includes(mentionedName) ||
                     m.user.email?.toLowerCase().includes(mentionedName)
                 );
-
                 if (targetMember) {
-                    // Detect intent
-                    if (input.toLowerCase().includes('assign') || input.toLowerCase().includes('task')) {
-                        // Create Task
-                        try {
-                            // Smart parsing: Remove mention and command keywords from the start
-                            let taskTitle = input.replace(/@\w+/g, '').trim();
-                            taskTitle = taskTitle.replace(/^(assign\s+task|assign\s+to|assign|task\s+to|task)\s+/i, '').trim();
-                            
-                            if (taskTitle) {
-                                await taskService.createTask(user.id, {
-                                    assignedTo: targetMember.user_id,
-                                    title: taskTitle,
-                                    description: `Assigned via chat by ${user.name}`,
-                                    priority: 'medium',
-                                    dueDate: new Date(Date.now() + 86400000).toISOString() // Tomorrow
-                                });
-                                
-                                const systemMsg: ChatMessage = {
-                                    id: Date.now().toString() + '_sys',
-                                    userId: 'system',
-                                    userName: 'System',
-                                    content: `Task "${taskTitle}" assigned to ${targetMember.user.name}`,
-                                    timestamp: new Date(),
-                                    type: 'task_created'
-                                };
-                                setMessages(prev => [...prev, newMessage, systemMsg]);
-                                setInput('');
-                                return;
-                            }
-                        } catch (e) {
-                            console.error(e);
-                        }
+                    let taskTitle = text.replace(/@\w+/g, '').trim();
+                    taskTitle = taskTitle.replace(/^(assign\s+task|assign\s+to|assign|task\s+to|task)\s+/i, '').trim();
+                    if (taskTitle) {
+                        await taskService.createTask(user.id, {
+                            assignedTo: targetMember.user_id,
+                            title: taskTitle,
+                            description: `Assigned via chat by ${user.name}`,
+                            priority: 'medium',
+                            dueDate: new Date(Date.now() + 86400000).toISOString(),
+                        });
+                        await persistMessage(text, 'user');
+                        await persistMessage(`Task "${taskTitle}" assigned to ${targetMember.user.name}`, 'system');
+                        return;
                     }
                 }
             }
-        }
 
-        setMessages(prev => [...prev, newMessage]);
-        setInput('');
+            await persistMessage(text, 'user');
+        } catch (e) {
+            console.error(e);
+            toast.error('Could not send message');
+        } finally {
+            setSending(false);
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -160,7 +183,15 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((msg) => {
+                    {loading ? (
+                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-slate-800/40 rounded-xl animate-pulse" />)}</div>
+                    ) : messages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 gap-2">
+                            <MessageCircle className="w-8 h-8 text-slate-700" />
+                            <p className="text-sm">No messages yet. Say hello to your team!</p>
+                            <p className="text-xs">Tip: type <span className="font-mono text-slate-400">@name assign task …</span> to create a task.</p>
+                        </div>
+                    ) : messages.map((msg) => {
                         const isMe = msg.userId === user.id;
                         const isSystem = msg.userId === 'system';
 

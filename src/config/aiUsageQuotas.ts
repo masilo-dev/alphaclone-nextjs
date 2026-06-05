@@ -24,6 +24,8 @@ export function unitsForTextGeneration(maxTokens?: number): number {
 
 export const UNITS_PER_CHAT_TURN = 4;
 export const UNITS_PER_IMAGE = 25;
+// Video generation is by far the most expensive AI operation (long polling, GPU minutes).
+export const UNITS_PER_VIDEO = 80;
 export const UNITS_PER_VISION = 10;
 export const UNITS_PER_LEAD_AI_PASS = 14;
 export const UNITS_PER_OUTREACH_EMAIL = 4;

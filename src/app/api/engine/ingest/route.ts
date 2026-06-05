@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { waitUntil } from '@vercel/functions';
 
 /**
@@ -10,11 +11,6 @@ import { waitUntil } from '@vercel/functions';
  * Accepts raw content, runs processing, stores event, triggers workflows
  */
 export async function POST(req: NextRequest) {
-    const internalKey = req.headers.get('x-internal-api-key');
-    if (!internalKey || internalKey !== process.env.INTERNAL_API_KEY) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const supabase = createSupabaseAdminClient();
 
     try {
@@ -23,6 +19,16 @@ export async function POST(req: NextRequest) {
 
         if (!tenant_id) return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
         if (!source)    return NextResponse.json({ error: 'source required' }, { status: 400 });
+
+        const internalKey = req.headers.get('x-internal-api-key');
+        const hasInternalKey =
+            Boolean(internalKey) &&
+            Boolean(process.env.INTERNAL_API_KEY) &&
+            internalKey === process.env.INTERNAL_API_KEY;
+
+        if (!hasInternalKey) {
+            await requireTenantAccess(tenant_id);
+        }
 
         // Run processing engine
         const processed = processContent(raw_content || '');
@@ -128,6 +134,6 @@ export async function POST(req: NextRequest) {
 
     } catch (err) {
         console.error('Ingestion error:', err);
-        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+        return routeErrorResponse(err, 'Ingestion failed');
     }
 }

@@ -478,18 +478,23 @@ export default function EnhancedInvoiceModal({
             ${item.amount.toFixed(2)}
           </div>
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!item.description) {
                 toast.error("Add a description first");
                 return;
               }
-              addService({
-                name: item.description,
-                description: '',
-                defaultPrice: item.rate,
-                unit: 'flat'
-              });
-              toast.success("Saved to catalog");
+              try {
+                await addService({
+                  name: item.description,
+                  description: '',
+                  defaultPrice: item.rate,
+                  unit: 'flat'
+                });
+                toast.success("Saved to catalog");
+              } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Failed to save service';
+                toast.error(message);
+              }
             }}
             className="p-2 text-slate-500 hover:text-teal-400 hover:bg-teal-400/10 rounded-lg transition-all"
             title="Save as Service"

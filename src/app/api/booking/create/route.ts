@@ -159,10 +159,10 @@ export async function POST(req: Request) {
             };
         }
 
-        // 3b. Construct Masked URL
+        // 3b. Base URL for the masked meeting link (filled in after we have the
+        // video_calls UUID, since /meet/[id] resolves a UUID — not the Daily room name).
         const host = req.headers.get('host') || 'localhost:3000';
         const protocol = host.includes('localhost') ? 'http' : 'https';
-        const maskedUrl = roomId ? `${protocol}://${host}/meet/${roomId}` : '';
 
         // 4. Insert Video Call
         let videoCallId = null;
@@ -176,9 +176,11 @@ export async function POST(req: Request) {
                     host_id: host_id,
                     title: `Meeting with ${client_name}`,
                     status: 'scheduled',
-                    is_public: false,
+                    // Public so the booked client can join from the email link without an account.
+                    is_public: true,
                     video_provider: meetingProvider,
                     provider_metadata: providerMetadata,
+                    metadata: { source: 'booking', start_time, end_time, client_email },
                 })
                 .select('id')
                 .single();
@@ -193,6 +195,10 @@ export async function POST(req: Request) {
         }
 
         let microsoftEventId: string | null = null;
+        // The client-facing meeting link MUST point at the video_calls UUID so /meet/[id]
+        // resolves the room (a Daily room name would be misread as a tenant slug → "Business not found").
+        const maskedUrl = videoCallId ? `${protocol}://${host}/meet/${videoCallId}` : '';
+
         // 4.5 NATIVE CRM INTEGRATION (Lead, Calendar Event, Task)
         let leadId = null;
         try {
@@ -363,6 +369,35 @@ export async function POST(req: Request) {
             });
             if (!emailResult.success) {
                 console.error('Booking confirmation email failed:', emailResult.error);
+            }
+
+            // Notify host + follow-up task so the owner sees the booking off-platform too
+            try {
+                const { data: hostProfile } = await supabase
+                    .from('profiles')
+                    .select('email, name')
+                    .eq('id', host_id)
+                    .maybeSingle();
+
+                if (hostProfile?.email) {
+                    await sendEmailServer({
+                        tenantId: tenant_id,
+                        to: hostProfile.email,
+                        subject: `New booking: ${client_name} — ${booking_type_name || 'Meeting'}`,
+                        html: `
+                            <div style="font-family:sans-serif;padding:20px;color:#333;">
+                                <h2 style="color:#0d9488;">New client booking</h2>
+                                <p><strong>${client_name}</strong> (${client_email}) booked <strong>${booking_type_name || 'Meeting'}</strong>.</p>
+                                <p><strong>When:</strong> ${dateStr}</p>
+                                ${maskedUrl ? `<p><a href="${maskedUrl}" style="display:inline-block;padding:10px 20px;background:#0d9488;color:#fff;text-decoration:none;border-radius:6px;">Join meeting</a></p>` : ''}
+                                ${client_notes ? `<p><strong>Notes:</strong> ${client_notes}</p>` : ''}
+                            </div>
+                        `,
+                        isPlatformNotification: true,
+                    });
+                }
+            } catch (hostEmailErr) {
+                console.error('Host booking notification failed:', hostEmailErr);
             }
         }
 

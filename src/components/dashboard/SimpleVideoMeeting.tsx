@@ -257,10 +257,9 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
                         <Zap className="w-8 h-8 text-amber-500" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">AlphaClone Capacity Notice</h3>
+                    <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">You've used your free meetings</h3>
                     <p className="text-amber-200/90 max-w-sm mx-auto mb-8 text-lg leading-relaxed">
-                        Due to extremely high volume right now, free previews are limited.
-                        <span className="block mt-2 font-medium text-white italic">Subscribe to unlock unlimited HD meetings & priority access.</span>
+                        Upgrade to unlock unlimited HD meetings &amp; priority access.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs">
                         <Button

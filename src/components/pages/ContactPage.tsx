@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
-import { contactService } from '../../services/contactFormService';
 import { contactSchema } from '../../schemas/validation';
+import { PLATFORM_CALENDLY_URL } from '@/constants';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
@@ -41,19 +41,25 @@ const ContactPage: React.FC = () => {
             return;
         }
 
-        const { error } = await contactService.submitContact(
-            formData.name,
-            formData.email,
-            `${formData.subject}\n\n${formData.message}`
-        );
+        const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: formData.name,
+                email: formData.email,
+                subject: formData.subject || 'General Inquiry',
+                message: formData.message,
+            }),
+        });
+        const payload = await response.json().catch(() => ({}));
 
-        if (!error) {
+        if (response.ok && payload?.success) {
             setStatus('success');
             setFormData({ name: '', email: '', subject: '', message: '' });
             setTimeout(() => setStatus('idle'), 5000);
         } else {
             setStatus('error');
-            setValidationError(error);
+            setValidationError(payload?.error || 'Failed to send message');
             setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
         }
     };
@@ -95,7 +101,7 @@ const ContactPage: React.FC = () => {
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Button
-                                onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                                onClick={() => window.open(PLATFORM_CALENDLY_URL, '_blank')}
                                 className="bg-teal-600 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight button-fill-hover"
                             >
                                 <span className="relative z-10">Book a Consultation</span>

@@ -147,7 +147,7 @@ export default function DemoPage() {
                                     Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                        <Link href="/book-demo" className="w-full sm:w-auto">
+                            <Link href="https://calendly.com/bonniealphaclonesystems/30min" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                                 <Button size="lg" variant="outline" className="border-slate-700 hover:bg-slate-800 text-white px-12 h-14 w-full">
                                     Book a Demo
                                 </Button>

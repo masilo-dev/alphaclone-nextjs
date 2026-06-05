@@ -13,7 +13,8 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { dailyService } from '../../services/dailyService';
 import { churnPropensityService, ChurnRiskReport } from '@/services/intelligence/churnPropensityService';
 import { customer360Service, Customer360Profile } from '@/services/intelligence/customer360Service';
 import { presenceService } from '@/services/presenceService';
@@ -354,14 +355,32 @@ const Client360Detail: React.FC<{
   }, [client, currentTenant?.id]);
 
   const handleStartVideoCall = async () => {
-    const roomId = `room-${client.id.slice(0, 8)}`;
-    if (status === 'online') {
-      toast.success('Meeting launched! Redirecting to call room...');
-      router.push(`/dashboard/call/${roomId}`);
-    } else {
-      toast.error(`${client.name} is offline. Missed call notification sent.`);
-      await missedCallsService.createMissedCall(user.id, client.id, 'video', roomId);
-      await missedCallsService.createCallAttempt(user.id, client.id, 'video', roomId);
+    const toastId = toast.loading('Creating secure call room…');
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        toast.error('You must be signed in to start a call', { id: toastId });
+        return;
+      }
+      if (status !== 'online') {
+        toast.error(`${client.name} is offline. Missed call notification sent.`, { id: toastId });
+        await missedCallsService.createMissedCall(user.id, client.id, 'video', client.id);
+        await missedCallsService.createCallAttempt(user.id, client.id, 'video', client.id);
+        return;
+      }
+      const { call, error } = await dailyService.createVideoCall({
+        hostId: authUser.id,
+        title: `Call with ${client.name}`,
+        isPublic: false,
+      });
+      if (error || !call) {
+        toast.error(error === 'LIMIT_EXCEEDED_TEASER' ? 'You\u2019ve used your free meetings. Upgrade to continue.' : (error || 'Could not create call'), { id: toastId });
+        return;
+      }
+      toast.success('Meeting room ready', { id: toastId });
+      router.push(`/dashboard/call/${call.id}`);
+    } catch (err) {
+      toast.error('Failed to start call', { id: toastId });
     }
   };
 
@@ -841,6 +860,7 @@ const STATUS_FILTERS: { label: string; value: LeadStatus | 'all' }[] = [
 const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Unified State Management
   const [subView, setSubView] = useState<SubView>('leads');
@@ -916,6 +936,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       fetchTeamsPresences();
     }
   }, [isTeamsConnected, currentTenant?.id, leads, clients]);
+
+  // Open the create drawer automatically when arriving via "Quick Add" (?quickAdd=true)
+  useEffect(() => {
+    if (searchParams?.get('quickAdd') === 'true') {
+      setIsCreateOpen(true);
+    }
+  }, [searchParams]);
 
   // Fetch data across leads & business_clients
   const loadCRMData = useCallback(async () => {

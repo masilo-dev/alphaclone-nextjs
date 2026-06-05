@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { xService } from '@/services/xService';
+
+export async function GET(req: NextRequest) {
+  try {
+    const tenantId = req.nextUrl.searchParams.get('tenantId');
+    if (!tenantId) {
+      return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+    }
+    await requireTenantAccess(tenantId);
+    const data = await xService.getUserTweets(tenantId);
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    return routeErrorResponse(err, 'Failed to load X timeline');
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { tenantId, text, mediaIds } = await req.json();
+    if (!tenantId || !text?.trim()) {
+      return NextResponse.json({ error: 'tenantId and text are required' }, { status: 400 });
+    }
+    await requireTenantAccess(tenantId);
+    const result = await xService.postTweet(tenantId, {
+      text: String(text).trim(),
+      media_ids: Array.isArray(mediaIds) ? mediaIds : undefined,
+    });
+    return NextResponse.json({ success: true, result });
+  } catch (err) {
+    return routeErrorResponse(err, 'Failed to post to X');
+  }
+}
