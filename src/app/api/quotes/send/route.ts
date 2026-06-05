@@ -95,6 +95,26 @@ export async function POST(req: NextRequest) {
         (quote.metadata as Record<string, string> | null)?.public_token || crypto.randomUUID();
     const responseLink = `${req.nextUrl.origin}/quote/${publicToken}`;
 
+    // Resolve tenant sender so quotes go out from the business email, not platform default.
+    const { data: integrationRows } = await supabase
+        .from('integrations')
+        .select('type, config')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', user.id)
+        .eq('enabled', true);
+    let fromName = String(user.user_metadata?.full_name || user.email?.split('@')[0] || '').trim();
+    let fromEmail = String(user.email || '').trim();
+    for (const row of integrationRows || []) {
+        const cfg = (row.config || {}) as Record<string, unknown>;
+        if (cfg.fromName || cfg.from_name) fromName = String(cfg.fromName || cfg.from_name).trim();
+        if (cfg.fromEmail || cfg.from_email) fromEmail = String(cfg.fromEmail || cfg.from_email).trim();
+    }
+
+    const quoteMeta = (quote.metadata || {}) as Record<string, unknown>;
+    const clientEmail =
+        (quote as { client_email?: string }).client_email ||
+        (quoteMeta.client_email as string | undefined);
+
     const pdfBuffer = await renderQuotePdfBuffer(quote, items || []);
     const emailBody = [
       message || `Please find attached quote ${quote.quote_number}.`,
@@ -111,6 +131,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         tenantId,
         userId: user.id,
+        fromName: fromName || undefined,
+        fromEmail: fromEmail || undefined,
         to: recipients,
         subject: subject || `Quote ${quote.quote_number}`,
         text: emailBody,
@@ -137,7 +159,11 @@ export async function POST(req: NextRequest) {
       .update({
         status: 'sent',
         sent_at: new Date().toISOString(),
-        metadata: { ...(quote.metadata || {}), public_token: publicToken },
+        metadata: {
+          ...(quote.metadata || {}),
+          public_token: publicToken,
+          ...(clientEmail ? { client_email: clientEmail } : {}),
+        },
       })
       .eq('id', quoteId)
       .eq('tenant_id', tenantId);

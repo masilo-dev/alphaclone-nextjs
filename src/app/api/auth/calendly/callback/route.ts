@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import {
+    pullAndSyncCalendlyEvents,
+    registerCalendlyWebhook,
+    resolveTenantHostUser,
+} from '@/lib/calendly/syncToNative';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -79,16 +84,28 @@ export async function GET(req: NextRequest) {
             throw new Error('Tenant not found');
         }
 
+        const appOrigin = (ENV.NEXT_PUBLIC_APP_URL || new URL(req.url).origin).replace(/\/$/, '');
+        const webhookUrl = `${appOrigin}/api/webhooks/calendly`;
+        const webhookSubscriptionUri = await registerCalendlyWebhook(
+            tokens.access_token,
+            userUri,
+            webhookUrl
+        );
+
+        const calendlyConfig = {
+            enabled: true,
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            expiresAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+            calendlyUserUri: userUri,
+            eventUrl: schedulingUrl,
+            webhookSubscriptionUri: webhookSubscriptionUri || undefined,
+            webhookUrl,
+        };
+
         const updatedSettings = {
             ...tenant.settings,
-            calendly: {
-                enabled: true,
-                accessToken: tokens.access_token,
-                refreshToken: tokens.refresh_token,
-                expiresAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-                calendlyUserUri: userUri,
-                eventUrl: schedulingUrl
-            }
+            calendly: calendlyConfig,
         };
 
         const { error: updateError } = await supabaseAdmin
@@ -98,7 +115,15 @@ export async function GET(req: NextRequest) {
 
         if (updateError) throw updateError;
 
-        // Redirect back to settings
+        const hostUserId = await resolveTenantHostUser(tenantId);
+        if (hostUserId) {
+            try {
+                await pullAndSyncCalendlyEvents(tenantId, hostUserId, calendlyConfig);
+            } catch (syncErr) {
+                console.error('[Calendly] Initial sync after OAuth failed:', syncErr);
+            }
+        }
+
         return NextResponse.redirect(new URL('/dashboard/settings?tab=booking&success=calendly_connected', req.url));
 
     } catch (err: any) {

@@ -5,10 +5,10 @@ import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
 // Import workflows
 import { dealStageChangedWorkflow } from '@/workflows/deal-flows';
-import { invoiceOverdueWorkflow } from '@/workflows/invoice-flows';
+import { invoiceOverdueWorkflow, invoiceCreatedWorkflow } from '@/workflows/invoice-flows';
 import { leadCreatedWorkflow } from '@/workflows/lead-flows';
 import { contractSignedWorkflow } from '@/workflows/contract-flows';
-import { taskOverdueWorkflow } from '@/workflows/task-flows';
+import { taskOverdueWorkflow, taskCreatedWorkflow } from '@/workflows/task-flows';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +63,12 @@ export async function GET(request: NextRequest) {
           case 'task_overdue':
             workflowToStart = taskOverdueWorkflow;
             break;
+          case 'invoice_created':
+            workflowToStart = invoiceCreatedWorkflow;
+            break;
+          case 'task_created':
+            workflowToStart = taskCreatedWorkflow;
+            break;
           default:
             console.warn(`[Automation] No workflow mapping for event type: ${event.event_type}`);
         }
@@ -84,16 +90,15 @@ export async function GET(request: NextRequest) {
             status: 'running'
           });
 
+          await supabase
+            .from('business_automation_events')
+            .update({ processed: true })
+            .eq('id', event.id);
+
           results.push({ eventId: event.id, status: 'dispatched', runId });
         } else {
           results.push({ eventId: event.id, status: 'skipped', reason: 'no_workflow' });
         }
-
-        // 3. Mark as processed
-        await supabase
-          .from('business_automation_events')
-          .update({ processed: true })
-          .eq('id', event.id);
 
       } catch (err: any) {
         console.error(`[Automation] Error processing event ${event.id}:`, err.message);

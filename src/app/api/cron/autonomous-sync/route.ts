@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { autonomousRunnerService } from '@/services/autonomousRunnerService';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  try {
-    // Standard Vercel Cron header validation
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
+  const denied = denyIfCronUnauthorized(request);
+  if (denied) return denied;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  try {
 
     console.log('[Cron Sync] Starting autonomous background run for all active tenants...');
     const result = await autonomousRunnerService.runOnce();

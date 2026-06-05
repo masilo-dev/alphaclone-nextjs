@@ -3,24 +3,16 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
-function authorized(req: NextRequest): boolean {
-    const headerSecret = req.headers.get('x-cron-secret') || req.headers.get('authorization')?.replace('Bearer ', '');
-    const secret = process.env.CRON_SECRET;
-    return Boolean(secret && headerSecret && headerSecret === secret);
-}
+export const dynamic = 'force-dynamic';
 
 /** Returns base64url-encoded token for tracking pixel */
 function trackingToken(invoiceId: string): string {
     return Buffer.from(invoiceId).toString('base64url');
 }
 
-export async function POST(req: NextRequest) {
-    if (!authorized(req)) {
-        return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 });
-    }
-
-    try {
+async function processInvoiceOverdueReminders() {
         const admin = createSupabaseAdminClient();
         const now = new Date();
         const nowIso = now.toISOString();
@@ -231,6 +223,26 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true, markedOverdue, remindersSent });
+}
+
+export async function GET(req: NextRequest) {
+    const denied = denyIfCronUnauthorized(req);
+    if (denied) return denied;
+
+    try {
+        return await processInvoiceOverdueReminders();
+    } catch (error) {
+        console.error('[cron/process-invoice-overdue-reminders] failed:', error);
+        return NextResponse.json({ error: 'Failed to process invoice reminders', code: 'CRON_FAILED' }, { status: 500 });
+    }
+}
+
+export async function POST(req: NextRequest) {
+    const denied = denyIfCronUnauthorized(req);
+    if (denied) return denied;
+
+    try {
+        return await processInvoiceOverdueReminders();
     } catch (error) {
         console.error('[cron/process-invoice-overdue-reminders] failed:', error);
         return NextResponse.json({ error: 'Failed to process invoice reminders', code: 'CRON_FAILED' }, { status: 500 });

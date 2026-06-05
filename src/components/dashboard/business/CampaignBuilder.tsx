@@ -6,7 +6,7 @@ import DOMPurify from 'dompurify';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
     ChevronDown, ChevronUp, ChevronRight, Sparkles, Tag, FileText, CheckCircle2, Loader2, Upload, Search,
-    History, X, ArrowLeft, Check, Database, Inbox, AlertCircle, Repeat, Layers, Languages
+    History, X, ArrowLeft, Check, Database, Inbox, AlertCircle, Repeat, Layers, Languages, MessageCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emailCampaignService, EmailCampaign, EmailTemplate, MarketingContact } from '../../../services/emailCampaignService';
@@ -91,6 +91,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         scheduleEnabled: false,
         skipPreviouslyContacted: true,
         selectedProviders: ['zoho'] as string[],
+        deliveryChannel: 'email' as 'email' | 'whatsapp' | 'both',
         balanceByDailyLimit: true,
         sendImmediately: false,
         languageMode: 'auto' as CampaignLanguageMode,
@@ -122,6 +123,27 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const [editorTab, setEditorTab] = useState<'preview' | 'code'>('preview');
 
     useEffect(() => { loadData(); }, []);
+
+    useEffect(() => {
+        const loadSender = async () => {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return;
+            try {
+                const res = await fetch(`/api/email/sender-profile?tenantId=${encodeURIComponent(tenantId)}`);
+                const data = await res.json();
+                if (data?.profile?.fromEmail || data?.profile?.fromName) {
+                    setForm((f) => ({
+                        ...f,
+                        fromName: data.profile.fromName || f.fromName,
+                        fromEmail: data.profile.fromEmail || f.fromEmail,
+                    }));
+                }
+            } catch {
+                // Non-fatal
+            }
+        };
+        loadSender();
+    }, []);
 
     const loadData = async () => {
         setLoading(true);
@@ -206,61 +228,57 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         setCopilotInput('');
         setCopilotLoading(true);
         
-        setTimeout(async () => {
-            const prompt = userMsg.toLowerCase();
-            let name = "AI Generated Outreach";
-            let subject = "Quick question for you";
-            let html = `<h2>Hello {{firstName}},</h2><p>I noticed you are running operations in your sector and wanted to reach out. We help companies automate their workflows to save 15+ hours a week.</p><p>Would you be open to a brief 10-minute demo next week?</p><p>Best regards,<br/>The AlphaClone Team</p>`;
-            let recipientTypeOption = 'all';
-            let parsedLeads: string[] = [];
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            const aiRes = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `You are an email campaign strategist. Based on this request, return JSON only with keys: name, subject, html, recipientType (all|specific|import), leads (string[] emails if found in prompt).
+Request: ${userMsg}`,
+                    tenantId,
+                    mode: 'structured',
+                }),
+            });
+            const aiData = await aiRes.json().catch(() => ({}));
+            let suggestion = {
+                name: 'AI Generated Outreach',
+                subject: 'Quick question for you',
+                html: `<h2>Hello {{firstName}},</h2><p>We help businesses like yours save time with an all-in-one operating system.</p>`,
+                recipientType: 'all' as string,
+                leads: [] as string[],
+            };
 
-            if (prompt.includes('healthcare') || prompt.includes('medical') || prompt.includes('doctor')) {
-                name = "Healthcare Automated Outreach";
-                subject = "Improving patient workflow efficiency at your clinic";
-                html = `<h2>Hello {{firstName}},</h2><p>Managing patient charts and follow-ups can easily drain hours from your day.</p><p>AlphaClone helps medical practice leaders automate patient onboarding and billing integrations securely.</p><p>Let me know if you have 10 minutes to discuss this next Tuesday.</p><p>Best regards,<br/>The AlphaClone Team</p>`;
-                recipientTypeOption = 'specific';
-            } else if (prompt.includes('tech') || prompt.includes('software') || prompt.includes('saas')) {
-                name = "SaaS Re-engagement Campaign";
-                subject = "Scaling developer operations automatically";
-                html = `<h2>Hello {{firstName}},</h2><p>I saw your engineering team has been expanding. We help software companies automate CI/CD pipeline notifications and database backups into a single dashboard.</p><p>Are you open to a brief sync next week?</p><p>Best regards,<br/>The AlphaClone Team</p>`;
-                recipientTypeOption = 'specific';
-            } else if (prompt.includes('discount') || prompt.includes('price') || prompt.includes('sale') || prompt.includes('offer')) {
-                name = "Special Re-engagement Offer";
-                subject = "🎁 Special 25% discount on your AlphaClone workspace";
-                html = `<h2>Hey {{firstName}},</h2><p>We want to thank you for being a part of our early community. Here is a limited-time 25% off coupon code for your subscription: <strong>ALPHAGROW25</strong></p><p>Claim it inside your billing settings today!</p><p>Best,<br/>AlphaClone Team</p>`;
+            if (aiData?.text) {
+                try {
+                    const parsed = JSON.parse(aiData.text);
+                    suggestion = { ...suggestion, ...parsed };
+                } catch {
+                    suggestion.subject = userMsg.slice(0, 80);
+                    suggestion.html = `<p>${aiData.text}</p>`;
+                }
             }
 
             const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
             const matches = userMsg.match(emailRegex);
-            if (matches && matches.length > 0) {
-                parsedLeads = matches;
-                recipientTypeOption = 'import';
+            if (matches?.length) {
+                suggestion.leads = matches;
+                suggestion.recipientType = 'import';
             }
 
-            const suggestion = {
-                name,
-                subject,
-                html,
-                recipientType: recipientTypeOption,
-                leads: parsedLeads
-            };
-
-            let aiText = `I have engineered a customized high-converting campaign template for you!\n\n📋 **Draft Details:**\n• **Name:** ${name}\n• **Subject:** ${subject}\n\n`;
-            if (parsedLeads.length > 0) {
-                aiText += `💡 **Leads Detected:** I found ${parsedLeads.length} email address(es) in your prompt and will configure the recipient type to 'Import'.`;
-            } else {
-                aiText += `💡 **Audience Target:** Configured to target '${recipientTypeOption === 'all' ? 'All Contacts' : 'Industry Segment'}'.`;
-            }
-
-            setCopilotMessages(prev => [...prev, {
+            setCopilotMessages((prev) => [...prev, {
                 sender: 'assistant',
-                text: aiText,
-                suggestion
+                text: `Campaign draft ready: **${suggestion.name}** — ${suggestion.subject}`,
+                suggestion,
             }]);
-            setCopilotLoading(false);
-            
             toast.success('AI campaign configuration ready!', { icon: '🤖' });
-        }, 1500);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'AI copilot failed';
+            setCopilotMessages((prev) => [...prev, { sender: 'assistant', text: message }]);
+            toast.error(message);
+        } finally {
+            setCopilotLoading(false);
+        }
     };
 
     const applyCopilotSuggestion = async (suggestion: any) => {
@@ -298,9 +316,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             fromName: form.fromName,
             fromEmail: form.fromEmail || 'notifications@alphaclonesystems.com',
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
-            metadata: { 
+                metadata: { 
                 bodyHtml: form.bodyHtml,
                 provider: form.selectedProviders[0] || 'resend',
+                deliveryChannel: form.deliveryChannel,
                 languageMode: form.languageMode,
                 languageInstruction: getCampaignLanguageInstruction({ languageMode: form.languageMode }),
                 deliverySettings: {
@@ -314,7 +333,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         if (campaign) {
             let finalIds = selectedContactIds;
             if (recipientType === 'all') finalIds = contacts.map(c => c.id);
-            await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds);
+            await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds, {
+                skipPreviouslyContacted: form.skipPreviouslyContacted,
+            });
 
             if (!form.scheduleEnabled || !form.scheduledAt) {
                 toast.loading('Dispatching campaign emails...', { id: toastId });
@@ -417,6 +438,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             scheduleEnabled: false,
             skipPreviouslyContacted: true,
             selectedProviders: [(camp.metadata as any)?.provider || 'resend'],
+            deliveryChannel: ((camp.metadata as any)?.deliveryChannel || 'email') as 'email' | 'whatsapp' | 'both',
             balanceByDailyLimit: true,
             sendImmediately: false,
             languageMode: ((camp.metadata as any)?.languageMode || 'auto') as CampaignLanguageMode,
@@ -437,6 +459,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             scheduleEnabled: false,
             skipPreviouslyContacted: true,
             selectedProviders: ['resend'],
+            deliveryChannel: 'email',
             balanceByDailyLimit: true,
             sendImmediately: false,
             languageMode: 'auto',
@@ -701,7 +724,35 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                             />
                                         </div>
 
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Delivery Channel</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {[
+                                                    { id: 'email' as const, label: 'Email', icon: Mail },
+                                                    { id: 'whatsapp' as const, label: 'WhatsApp', icon: MessageCircle },
+                                                    { id: 'both' as const, label: 'Both', icon: Layers },
+                                                ].map((ch) => {
+                                                    const isSelected = form.deliveryChannel === ch.id;
+                                                    return (
+                                                        <button
+                                                            key={ch.id}
+                                                            type="button"
+                                                            onClick={() => setForm((f) => ({ ...f, deliveryChannel: ch.id }))}
+                                                            className={`p-3 rounded-xl border text-left flex items-center gap-2 transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                        >
+                                                            <ch.icon className="w-4 h-4" />
+                                                            <span className="text-[10px] font-bold uppercase">{ch.label}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            {form.deliveryChannel !== 'email' && (
+                                                <p className="text-[10px] text-slate-500 px-1">WhatsApp uses phone numbers from leads, clients, or contacts matched by email.</p>
+                                            )}
+                                        </div>
+
                                         {/* Email Provider select cards */}
+                                        {(form.deliveryChannel === 'email' || form.deliveryChannel === 'both') && (
                                         <div className="space-y-2">
                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Email Provider Service</label>
                                             <div className="grid grid-cols-2 gap-3">
@@ -726,6 +777,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                                 })}
                                             </div>
                                         </div>
+                                        )}
 
                                         <div className="space-y-1.5">
                                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Language</label>
@@ -747,6 +799,17 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
                                 {activeStep === 2 && (
                                     <div className="space-y-5 animate-in fade-in duration-300">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-xs text-slate-400">Recipients include CRM contacts, saved leads, and clients with email.</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => router.push('/dashboard/sales-agent?tab=finder')}
+                                                className="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-teal-500/10 border border-teal-500/30 text-teal-400 hover:bg-teal-500/20"
+                                            >
+                                                Open Lead Finder
+                                            </button>
+                                        </div>
+
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             {[
                                                 { id: 'all', title: 'Entire Database', icon: Database },
@@ -768,6 +831,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                         {recipientType === 'specific' && (
                                             <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase">Select Industry Target</span>
+                                                {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && (
+                                                    <p className="text-xs text-slate-500">No industry tags yet — find leads in Lead Finder, then return here to segment by industry.</p>
+                                                )}
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => {
                                                         const isChecked = contacts.filter(c => c.industry === industry).every(c => selectedContactIds.includes(c.id));
@@ -958,11 +1024,40 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                                             </div>
                                         </div>
 
+                                        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.scheduleEnabled}
+                                                    onChange={(e) => setForm((f) => ({ ...f, scheduleEnabled: e.target.checked }))}
+                                                    className="rounded border-slate-600"
+                                                />
+                                                <span className="text-sm text-white font-medium">Schedule for later</span>
+                                            </label>
+                                            {form.scheduleEnabled && (
+                                                <input
+                                                    type="datetime-local"
+                                                    value={form.scheduledAt}
+                                                    onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
+                                                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+                                                />
+                                            )}
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.skipPreviouslyContacted}
+                                                    onChange={(e) => setForm((f) => ({ ...f, skipPreviouslyContacted: e.target.checked }))}
+                                                    className="rounded border-slate-600"
+                                                />
+                                                <span className="text-sm text-slate-400">Skip contacts already emailed</span>
+                                            </label>
+                                        </div>
+
                                         <button
                                             onClick={handleCreate}
                                             className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-teal-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                                         >
-                                            🚀 Launch Email Campaign Now
+                                            {form.scheduleEnabled && form.scheduledAt ? '📅 Schedule Campaign' : '🚀 Launch Email Campaign Now'}
                                         </button>
                                     </div>
                                 )}

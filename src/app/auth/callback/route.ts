@@ -42,6 +42,57 @@ export async function GET(request: Request) {
                 const user = session.user
                 const provider = (session as any)?.user?.app_metadata?.provider as string | undefined
 
+                // Ensure tenant exists BEFORE integration syncs (LinkedIn, etc.)
+                let tenantId = user.user_metadata?.tenant_id as string | undefined;
+                if (!tenantId) {
+                    try {
+                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                        const admin = createSupabaseAdminClient();
+
+                        const { data: existingMembership } = await admin
+                            .from('tenant_users')
+                            .select('tenant_id')
+                            .eq('user_id', user.id)
+                            .maybeSingle();
+
+                        if (existingMembership?.tenant_id) {
+                            tenantId = existingMembership.tenant_id;
+                        } else {
+                            const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
+                            const workspaceName = `${name}'s Workspace`;
+                            const trialEndDate = new Date();
+                            trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+                            const { data: newTenant, error: createError } = await admin
+                                .from('tenants')
+                                .insert({
+                                    name: workspaceName,
+                                    slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 7),
+                                    subscription_status: 'trial',
+                                    subscription_plan: 'starter',
+                                    trial_ends_at: trialEndDate.toISOString(),
+                                    admin_user_id: user.id
+                                })
+                                .select()
+                                .single();
+
+                            if (newTenant && !createError) {
+                                await admin.from('tenant_users').insert({
+                                    tenant_id: newTenant.id,
+                                    user_id: user.id,
+                                    role: 'owner'
+                                });
+                                await admin.auth.admin.updateUserById(user.id, {
+                                    user_metadata: { ...user.user_metadata, tenant_id: newTenant.id }
+                                });
+                                tenantId = newTenant.id;
+                            }
+                        }
+                    } catch (tenantErr) {
+                        console.error('[auth/callback] Failed to ensure tenant for OAuth user:', tenantErr);
+                    }
+                }
+
                 if (provider === 'linkedin_oidc') {
                     try {
                         const providerToken = (session as any).provider_token as string | undefined
@@ -61,21 +112,13 @@ export async function GET(request: Request) {
                                     .map((s) => s.trim())
                                     .filter(Boolean)
 
-                                const { data: tenantUser } = await supabase
-                                    .from('tenant_users')
-                                    .select('tenant_id')
-                                    .eq('user_id', user.id)
-                                    .order('created_at', { ascending: true })
-                                    .limit(1)
-                                    .maybeSingle()
-
-                                const tenantId = tenantUser?.tenant_id || (user.user_metadata?.tenant_id as string | undefined)
-                                if (tenantId) {
+                                const resolvedTenantId = tenantId || user.user_metadata?.tenant_id as string | undefined;
+                                if (resolvedTenantId) {
                                     await supabase
                                         .from('linkedin_integrations')
                                         .upsert(
                                             {
-                                                tenant_id: tenantId,
+                                                tenant_id: resolvedTenantId,
                                                 user_id: user.id,
                                                 linkedin_member_id: memberId,
                                                 linkedin_person_urn: personUrn,
@@ -100,60 +143,6 @@ export async function GET(request: Request) {
                     }
                 }
 
-                // Ensure new OAuth users have a tenant (Task 7B)
-                const tenantId = user.user_metadata?.tenant_id;
-                if (!tenantId) {
-                    try {
-                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
-                        const admin = createSupabaseAdminClient();
-                        
-                        // Check if they already have a tenant through tenant_users (just in case)
-                        const { data: existingMembership } = await admin
-                            .from('tenant_users')
-                            .select('tenant_id')
-                            .eq('user_id', user.id)
-                            .maybeSingle();
-                        
-                        if (!existingMembership) {
-                            const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
-                            const workspaceName = `${name}'s Workspace`;
-                            const trialEndDate = new Date();
-                            trialEndDate.setDate(trialEndDate.getDate() + 14);
-
-                            // Create the tenant
-                            const { data: newTenant, error: createError } = await admin
-                                .from('tenants')
-                                .insert({
-                                    name: workspaceName,
-                                    slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 7),
-                                    subscription_status: 'trial',
-                                    subscription_plan: 'starter',
-                                    trial_ends_at: trialEndDate.toISOString(),
-                                    admin_user_id: user.id
-                                })
-                                .select()
-                                .single();
-
-                            if (newTenant && !createError) {
-                                // Link user to tenant
-                                await admin.from('tenant_users').insert({
-                                    tenant_id: newTenant.id,
-                                    user_id: user.id,
-                                    role: 'owner'
-                                });
-
-                                // Update user metadata
-                                await admin.auth.admin.updateUserById(user.id, {
-                                    user_metadata: { ...user.user_metadata, tenant_id: newTenant.id }
-                                });
-                                
-                                console.log(`[auth/callback] Created default tenant for new OAuth user: ${newTenant.id}`);
-                            }
-                        }
-                    } catch (tenantErr) {
-                        console.error('[auth/callback] Failed to ensure tenant for OAuth user:', tenantErr);
-                    }
-                }
                 if (user.email && !user.user_metadata?.welcome_email_sent_at) {
                     try {
                         const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')

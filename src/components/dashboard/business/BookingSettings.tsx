@@ -219,6 +219,16 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <ExternalLink className="w-5 h-5" />
                                             </button>
                                         </div>
+                                        {settings.slug && (
+                                            <a
+                                                href={`${typeof window !== 'undefined' ? window.location.origin : ''}/book/${settings.slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="block text-sm text-teal-400 hover:text-teal-300 px-1 truncate"
+                                            >
+                                                {typeof window !== 'undefined' ? `${window.location.origin}/book/${settings.slug}` : `/book/${settings.slug}`}
+                                            </a>
+                                        )}
                                         <p className="text-xs text-slate-500 px-1">Tip: Keep your slug short and simple.</p>
                                     </div>
                                 </div>

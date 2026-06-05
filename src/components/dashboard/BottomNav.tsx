@@ -31,7 +31,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
     const { t } = useLanguage();
 
     const mobileNavItems = useMemo(() => {
-        const crmPath = userRole === 'tenant_admin' ? '/dashboard/business/clients' : '/dashboard/crm';
+        const crmPath = '/dashboard/crm';
         const messagesPath = userRole === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages';
         return [
             { labelKey: 'Home', href: '/dashboard', icon: LayoutDashboard },

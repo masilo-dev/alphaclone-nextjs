@@ -1,44 +1,77 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
 
 const X_CLIENT_ID = process.env.X_CLIENT_ID;
 const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/callback/x`;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     if (!X_CLIENT_ID) {
         return NextResponse.json({ error: 'X_CLIENT_ID not configured' }, { status: 500 });
     }
 
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // PKCE implementation
-    // For simplicity in this implementation, we use a random state
-    const state = Math.random().toString(36).substring(7);
-    const codeChallenge = 'challenge'; // In production, generate a real PKCE challenge
-    
-    // Scopes required for read, write, and direct messages
+    const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
+    let resolvedTenantId = tenantId;
+
+    if (!resolvedTenantId) {
+        const { data: tenantUser } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+        resolvedTenantId = tenantUser?.tenant_id || '';
+    }
+
+    if (!resolvedTenantId) {
+        return NextResponse.json({ error: 'No workspace found for your account' }, { status: 403 });
+    }
+
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+    const stateNonce = crypto.randomUUID();
+
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { error: stateError } = await supabaseAdmin.from('oauth_states').insert({
+        id: stateNonce,
+        user_id: user.id,
+        tenant_id: resolvedTenantId,
+        metadata: {
+            code_verifier: codeVerifier,
+            provider: 'x',
+        },
+    });
+
+    if (stateError) {
+        console.error('[X OAuth] Failed to store state:', stateError);
+        return NextResponse.json({ error: 'Failed to start OAuth flow' }, { status: 500 });
+    }
+
     const scopes = [
         'tweet.read',
         'tweet.write',
         'users.read',
         'direct_messages.read',
         'direct_messages.write',
-        'offline.access' // For refresh token
+        'offline.access',
     ].join(' ');
 
     const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('client_id', X_CLIENT_ID);
-    authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-    authUrl.searchParams.append('scope', scopes);
-    authUrl.searchParams.append('state', state);
-    authUrl.searchParams.append('code_challenge', codeChallenge);
-    authUrl.searchParams.append('code_challenge_method', 'plain');
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('client_id', X_CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
+    authUrl.searchParams.set('scope', scopes);
+    authUrl.searchParams.set('state', stateNonce);
+    authUrl.searchParams.set('code_challenge', codeChallenge);
+    authUrl.searchParams.set('code_challenge_method', 'S256');
 
     return NextResponse.redirect(authUrl.toString());
 }

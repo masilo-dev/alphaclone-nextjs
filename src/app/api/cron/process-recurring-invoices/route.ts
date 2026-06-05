@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { start } from "workflow/api";
 import { processRecurringInvoices } from "@/workflows/cron-workflows";
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = denyIfCronUnauthorized(request);
+  if (denied) return denied;
 
   try {
     const { runId } = await start(processRecurringInvoices);

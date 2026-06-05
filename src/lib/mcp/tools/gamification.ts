@@ -36,8 +36,8 @@ registerTool('gamification', {
   name: 'get_user_points',
   description: 'Retrieve the gamification profile, XP level, and streak details for a user.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
-    user_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(),
+    user_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -45,11 +45,13 @@ registerTool('gamification', {
       tenant_id: { type: 'string', format: 'uuid' },
       user_id: { type: 'string', format: 'uuid' },
     },
-    required: ['tenant_id', 'user_id'],
+    required: [],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    const profile = await ensureGamificationProfile(supabase, args.tenant_id, args.user_id);
+    const tenantId = args.tenant_id || ctx.tenantId;
+    const userId = args.user_id || ctx.userId;
+    const profile = await ensureGamificationProfile(supabase, tenantId, userId);
     return profile;
   },
 });
@@ -74,15 +76,17 @@ registerTool('gamification', {
     },
     required: ['tenant_id', 'user_id', 'points', 'reason'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const tenantId = args.tenant_id || ctx.tenantId;
+    const userId = args.user_id || ctx.userId;
 
     // 1. Log the points award
     const { error: logError } = await supabase
       .from('gamification_logs')
       .insert({
-        tenant_id: args.tenant_id,
-        user_id: args.user_id,
+        tenant_id: tenantId,
+        user_id: userId,
         points: args.points,
         reason: args.reason,
       });
@@ -90,7 +94,7 @@ registerTool('gamification', {
     if (logError) throw logError;
 
     // 2. Ensure profile exists and increment XP
-    const currentProfile = await ensureGamificationProfile(supabase, args.tenant_id, args.user_id);
+    const currentProfile = await ensureGamificationProfile(supabase, tenantId, userId);
     const newXp = (currentProfile.xp || 0) + args.points;
 
     const { data: updatedProfile, error: updateError } = await supabase
@@ -99,8 +103,8 @@ registerTool('gamification', {
         xp: newXp,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', args.user_id)
-      .eq('tenant_id', args.tenant_id)
+      .eq('user_id', userId)
+      .eq('tenant_id', tenantId)
       .select()
       .single();
 

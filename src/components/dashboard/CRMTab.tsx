@@ -1297,7 +1297,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const totalClientValue = clients.filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 select-none relative">
+    <div className="flex flex-col h-full min-h-0 bg-slate-950 select-none relative">
       {/* Metric Cards Banner */}
       <div className="grid grid-cols-3 gap-3 p-4 bg-slate-900/20 border-b border-white/5">
         <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 flex flex-col gap-0.5">
@@ -1424,7 +1424,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       {/* FAB (Add Entity drawer trigger) */}
       <button
         onClick={() => setIsCreateOpen(true)}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/20 z-30 hover:bg-teal-400 active:scale-95 transition-all"
+        className="fixed bottom-20 right-4 md:absolute md:bottom-6 md:right-6 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/20 z-40 hover:bg-teal-400 active:scale-95 transition-all"
       >
         <UserPlus className="w-6 h-6 text-white" />
       </button>

@@ -28,8 +28,16 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
           }}
           className={`fixed inset-0 z-[9999] flex items-center justify-center bg-[#050B1E] overflow-hidden ${className}`}
         >
-          {/* Animated Background Gradient */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent" />
+          {/* Animated Background */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/15 via-transparent to-transparent" />
+          <motion.div
+            className="absolute inset-0 opacity-30"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+            style={{
+              background: 'conic-gradient(from 0deg, transparent, rgba(20,184,166,0.25), transparent, rgba(59,130,246,0.15), transparent)',
+            }}
+          />
           
           <div className="relative flex flex-col items-center">
             {/* Logo Wrapper */}
@@ -53,9 +61,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               <Image 
                 src="/logo.png" 
                 alt="AlphaClone" 
-                width={128}
-                height={128}
-                className="object-contain relative z-10"
+                width={96}
+                height={96}
+                className="object-contain relative z-10 sm:w-28 sm:h-28"
                 priority
               />
             </motion.div>

@@ -8,6 +8,7 @@ import {
     Users,
     Briefcase,
     Settings,
+    Globe,
     CreditCard,
     FileText,
     Bell,
@@ -108,11 +109,11 @@ import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import NotificationCenter from '../NotificationCenter';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 
-/** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). CRM pipeline routes scroll with the main column so they are not listed here. */
+/** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). Home + CRM scroll with the main column — not listed here. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/mail',
     '/dashboard/business/projects',
@@ -133,7 +134,7 @@ interface BusinessDashboardProps {
 export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { t } = useLanguage();
+    const { t, language, setLanguage } = useLanguage();
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const currentTenant = propTenant || contextTenant;
     const [activeSection, setActiveSection] = useState('profile');
@@ -840,6 +841,27 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 }}
                             />
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
+                            <div className="hidden sm:flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-full pl-2 pr-1 py-1">
+                                <Globe className="w-3.5 h-3.5 text-slate-400" />
+                                <select
+                                    value={language}
+                                    onChange={(e) => setLanguage(e.target.value as typeof language)}
+                                    aria-label="Language"
+                                    className="bg-transparent text-[11px] font-semibold text-slate-300 outline-none cursor-pointer pr-1"
+                                >
+                                    {LANGUAGES.map((lang) => (
+                                        <option key={lang.code} value={lang.code} className="bg-slate-900">{lang.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button
+                                onClick={() => setActiveTab('/dashboard/business/settings')}
+                                title="Settings"
+                                aria-label="Settings"
+                                className="hidden sm:flex w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 items-center justify-center text-slate-300 hover:text-white hover:border-teal-500/40 transition-all active:scale-95"
+                            >
+                                <Settings className="w-4 h-4" />
+                            </button>
                             <button
                                 onClick={() => setActiveTab('/dashboard/business/settings')}
                                 title="Profile & settings"

@@ -138,16 +138,12 @@ export async function POST(req: NextRequest) {
 
   // 2. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
-    const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-    const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
-    initializeRegistry();
-    const newTools = listTools();
-    const newToolNames = new Set(newTools.map(t => t.name));
-    const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
+    const { listAllMcpTools } = await import('@/lib/mcp/listAllTools');
+    const tools = await listAllMcpTools();
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: { tools: [...newTools, ...legacyFiltered] }
+      result: { tools }
     }, { headers: getMcpCorsHeaders(req) });
   }
 

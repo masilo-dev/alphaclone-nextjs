@@ -83,7 +83,49 @@ export async function GET(request: NextRequest) {
                 name: String(row.full_name || row.email || '').trim(),
                 email: String(row.email || '').trim(),
                 website: row.company?.website || row.company?.name || null,
+                industry: null as string | null,
             }));
+
+            const { data: leads } = await admin
+                .from('leads')
+                .select('id, business_name, email, industry, website')
+                .eq('tenant_id', tenantId)
+                .not('email', 'is', null)
+                .limit(500);
+
+            const { data: bizClients } = await admin
+                .from('business_clients')
+                .select('id, name, email, industry, website')
+                .eq('tenant_id', tenantId)
+                .not('email', 'is', null)
+                .limit(500);
+
+            const seen = new Set(contacts.map((c) => c.email.toLowerCase()));
+            for (const lead of leads || []) {
+                const email = String(lead.email || '').trim();
+                if (!email || seen.has(email.toLowerCase())) continue;
+                seen.add(email.toLowerCase());
+                contacts.push({
+                    id: `lead:${lead.id}`,
+                    name: String(lead.business_name || email),
+                    email,
+                    website: lead.website || null,
+                    industry: lead.industry || null,
+                });
+            }
+            for (const client of bizClients || []) {
+                const email = String(client.email || '').trim();
+                if (!email || seen.has(email.toLowerCase())) continue;
+                seen.add(email.toLowerCase());
+                contacts.push({
+                    id: `client:${client.id}`,
+                    name: String(client.name || email),
+                    email,
+                    website: client.website || null,
+                    industry: client.industry || null,
+                });
+            }
+
             return NextResponse.json({ success: true, contacts });
         }
 
@@ -127,32 +169,52 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'campaignId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
             }
 
-            const { data: contacts, error: contactsError } = await admin
-                .from('contacts')
-                .select('id, email')
-                .eq('tenant_id', tenantId)
-                .in('id', contactIds);
-            if (contactsError) return NextResponse.json({ error: contactsError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
+            const contactUuids: string[] = [];
+            const leadUuids: string[] = [];
+            const clientUuids: string[] = [];
+            for (const raw of contactIds) {
+                const id = String(raw || '').trim();
+                if (!id) continue;
+                if (id.startsWith('lead:')) leadUuids.push(id.slice(5));
+                else if (id.startsWith('client:')) clientUuids.push(id.slice(7));
+                else contactUuids.push(id);
+            }
 
-            let validContacts = (contacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0);
-            const unresolvedContactIds = contactIds.filter(
-                (id) => !validContacts.some((contact: any) => String(contact.id) === String(id))
-            );
-            if (unresolvedContactIds.length > 0) {
+            type ResolvedRecipient = { contactId: string | null; email: string; metadata?: Record<string, unknown> };
+            const byEmail = new Map<string, ResolvedRecipient>();
+            const foundContactIds = new Set<string>();
+
+            if (contactUuids.length > 0) {
+                const { data: contacts, error: contactsError } = await admin
+                    .from('contacts')
+                    .select('id, email')
+                    .eq('tenant_id', tenantId)
+                    .in('id', contactUuids);
+                if (contactsError) return NextResponse.json({ error: contactsError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
+                for (const c of contacts || []) {
+                    const email = String(c.email || '').trim();
+                    if (!email) continue;
+                    foundContactIds.add(String(c.id));
+                    byEmail.set(email.toLowerCase(), { contactId: String(c.id), email });
+                }
+            }
+
+            const allClientIds = [...new Set([
+                ...clientUuids,
+                ...contactUuids.filter((id) => !foundContactIds.has(id)),
+            ])];
+            if (allClientIds.length > 0) {
                 const { data: legacyClients, error: legacyError } = await admin
                     .from('business_clients')
                     .select('id, email')
                     .eq('tenant_id', tenantId)
-                    .in('id', unresolvedContactIds);
+                    .in('id', allClientIds);
                 if (legacyError) return NextResponse.json({ error: legacyError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
 
-                const legacyEmails = Array.from(
-                    new Set(
-                        (legacyClients || [])
-                            .map((client: any) => String(client.email || '').trim().toLowerCase())
-                            .filter(Boolean)
-                    )
-                );
+                const legacyEmails = (legacyClients || [])
+                    .map((client: { email?: string | null }) => String(client.email || '').trim().toLowerCase())
+                    .filter(Boolean);
+                const emailToContactId = new Map<string, string>();
                 if (legacyEmails.length > 0) {
                     const { data: mappedContacts, error: mappedError } = await admin
                         .from('contacts')
@@ -160,18 +222,41 @@ export async function POST(request: NextRequest) {
                         .eq('tenant_id', tenantId)
                         .in('email', legacyEmails);
                     if (mappedError) return NextResponse.json({ error: mappedError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
-                    validContacts = [...validContacts, ...((mappedContacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0))];
+                    for (const row of mappedContacts || []) {
+                        const email = String(row.email || '').trim().toLowerCase();
+                        if (email) emailToContactId.set(email, String(row.id));
+                    }
+                }
+                for (const client of legacyClients || []) {
+                    const email = String(client.email || '').trim();
+                    if (!email || byEmail.has(email.toLowerCase())) continue;
+                    byEmail.set(email.toLowerCase(), {
+                        contactId: emailToContactId.get(email.toLowerCase()) || null,
+                        email,
+                        metadata: { source: 'business_client', client_id: client.id },
+                    });
                 }
             }
 
-            const uniqueContactsById = new Map<string, { id: string; email: string }>();
-            for (const contact of validContacts) {
-                const id = String(contact.id || '').trim();
-                const email = String(contact.email || '').trim();
-                if (!id || !email) continue;
-                uniqueContactsById.set(id, { id, email });
+            if (leadUuids.length > 0) {
+                const { data: leads, error: leadsError } = await admin
+                    .from('leads')
+                    .select('id, email')
+                    .eq('tenant_id', tenantId)
+                    .in('id', leadUuids);
+                if (leadsError) return NextResponse.json({ error: leadsError.message, code: 'LEADS_FETCH_FAILED' }, { status: 500 });
+                for (const lead of leads || []) {
+                    const email = String(lead.email || '').trim();
+                    if (!email || byEmail.has(email.toLowerCase())) continue;
+                    byEmail.set(email.toLowerCase(), {
+                        contactId: null,
+                        email,
+                        metadata: { source: 'lead', lead_id: lead.id },
+                    });
+                }
             }
-            const normalizedContacts = Array.from(uniqueContactsById.values());
+
+            const normalizedContacts = Array.from(byEmail.values());
             const emails = normalizedContacts.map((c) => c.email.toLowerCase());
 
             const { data: existingCampaignRows, error: existingError } = await admin
@@ -199,12 +284,13 @@ export async function POST(request: NextRequest) {
                     const normalizedEmail = String(c.email).trim().toLowerCase();
                     return !existingCampaignEmails.has(normalizedEmail) && !previouslyContactedEmails.has(normalizedEmail);
                 })
-                .map((c: any) => ({
+                .map((c) => ({
                     tenant_id: tenantId,
                     campaign_id: campaignId,
-                    contact_id: c.id,
+                    contact_id: c.contactId,
                     email: String(c.email).trim(),
                     status: 'pending',
+                    metadata: c.metadata || {},
                 }));
 
             if (rowsToInsert.length > 0) {

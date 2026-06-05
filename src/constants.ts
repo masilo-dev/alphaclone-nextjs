@@ -33,7 +33,9 @@ import {
   Search,
   Star,
   Twitter,
-  MessageCircle
+  MessageCircle,
+  Database,
+  Target,
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -128,31 +130,22 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Workspace home', href: '/dashboard', icon: Zap },
 
   {
-    label: 'Back-Office OS', href: '#', icon: Bot,
+    label: 'CRM & Growth', href: '#', icon: Users,
     subItems: [
-      { label: 'Unified Inbox', href: '/dashboard/business/unified-inbox', icon: MessageSquare },
-      { label: 'Cash Flow Forecast', href: '/dashboard/business/cash-flow', icon: TrendingUp },
-      { label: 'Client Onboarding', href: '/dashboard/business/onboarding', icon: Users },
-      { label: 'Document Vault', href: '/dashboard/business/vault', icon: ShieldCheck },
-      { label: 'Tax Estimator', href: '/dashboard/business/tax-estimator', icon: FileText },
-    ]
-  },
-
-  {
-    label: 'Lead Operations', href: '#', icon: Search,
-    subItems: [
-      { label: 'Step 1: Find leads', href: '/dashboard/sales-agent?tab=finder', icon: Search },
-      { label: 'Step 2: Capture contacts', href: '/dashboard/contacts', icon: Users },
-      { label: 'Step 3: Qualify leads', href: '/dashboard/leads?source=mcp', icon: TrendingUp },
-      { label: 'Step 4: Move to deals', href: '/dashboard/deals', icon: TrendingUp },
-      { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
+      { label: 'CRM Overview', href: '/dashboard/crm', icon: Users },
+      { label: 'Find Leads', href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Lead Ingestion', href: '/dashboard/business/ingestion', icon: Database },
+      { label: 'Leads Board', href: '/dashboard/leads', icon: TrendingUp },
+      { label: 'Deals Pipeline', href: '/dashboard/deals', icon: Target },
+      { label: 'AI Growth Agent', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
     ]
   },
 
   {
     label: 'Social & Outreach', href: '#', icon: Globe,
     subItems: [
-      { label: 'Outlook / Provider Mail', href: '/dashboard/mail', icon: Mail, comingSoon: true },
+      { label: 'Unified Inbox', href: '/dashboard/business/unified-inbox', icon: MessageSquare },
+      { label: 'Outlook / Provider Mail', href: '/dashboard/mail', icon: Mail },
       { label: 'WhatsApp Accounts', href: '/dashboard/business/whatsapp', icon: MessageCircle },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },
@@ -181,6 +174,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Active Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
       { label: 'Billing Center', href: '/dashboard/business/billing', icon: DollarSign },
       { label: 'Accounting Hub', href: '/dashboard/accounting', icon: BarChart3 },
+      { label: 'Cash Flow Forecast', href: '/dashboard/business/cash-flow', icon: TrendingUp },
+      { label: 'Tax Estimator', href: '/dashboard/business/tax-estimator', icon: FileText },
       { label: 'Business OS', href: '/dashboard/performance', icon: Zap },
       { label: 'Revenue Analytics', href: '/dashboard/business/reports', icon: TrendingUp },
     ]
@@ -192,6 +187,8 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Active Projects', href: '/dashboard/business/projects', icon: Layers },
       { label: 'Production Tasks', href: '/dashboard/tasks', icon: CheckSquare },
       { label: 'Shared Documents', href: '/dashboard/business/documents', icon: FolderOpen },
+      { label: 'Document Vault', href: '/dashboard/business/vault', icon: ShieldCheck },
+      { label: 'Client Onboarding', href: '/dashboard/business/onboarding', icon: Users },
       { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe },
       { label: 'Marketing Campaigns', href: '/dashboard/business/campaigns', icon: Presentation },
       { label: 'System Settings', href: '/dashboard/business/settings', icon: Settings },

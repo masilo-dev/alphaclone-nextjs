@@ -71,7 +71,10 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
                     <Mail className="w-12 h-12 text-white -rotate-3" />
                 </div>
 
-                <h2 className="text-4xl font-black text-white mb-4 tracking-tight">Microsoft 365 Outlook Mail</h2>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-4">
+                    Live · Available Now
+                </span>
+                <h2 className="text-2xl sm:text-4xl font-black text-white mb-4 tracking-tight">Microsoft 365 Outlook Mail</h2>
                 <p className="text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
                     Connect your Microsoft Outlook or work/school account to read threads, draft replies with AI, and manage conversations directly from your dashboard.
                 </p>

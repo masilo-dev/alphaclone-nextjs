@@ -65,7 +65,64 @@ function buildOAuth1Header(
     return headerValue;
 }
 
+async function refreshXAccessToken(integration: XIntegration): Promise<XIntegration> {
+    const clientId = process.env.X_CLIENT_ID;
+    const clientSecret = process.env.X_CLIENT_SECRET;
+    if (!integration.refresh_token || !clientId || !clientSecret) {
+        throw new Error('X token expired. Reconnect your X account.');
+    }
+
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+        method: 'POST',
+        headers: {
+            Authorization: `Basic ${basicAuth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: integration.refresh_token,
+            client_id: clientId,
+        }),
+    });
+
+    if (!tokenResponse.ok) {
+        const err = await tokenResponse.json().catch(() => ({}));
+        throw new Error(`X token refresh failed: ${JSON.stringify(err)}`);
+    }
+
+    const tokens = await tokenResponse.json();
+    const updated: Partial<XIntegration> = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || integration.refresh_token,
+        expires_at: new Date(Date.now() + (tokens.expires_in || 7200) * 1000).toISOString(),
+        scopes: typeof tokens.scope === 'string' ? tokens.scope.split(' ').filter(Boolean) : integration.scopes,
+    };
+
+    const supabase = createSupabaseAdminClient();
+    const { data } = await supabase
+        .from('x_integrations')
+        .update({ ...updated, updated_at: new Date().toISOString() })
+        .eq('tenant_id', integration.tenant_id)
+        .select('*')
+        .single();
+
+    return (data as XIntegration) || { ...integration, ...updated };
+}
+
 export const xService = {
+    async ensureValidAccessToken(tenantId: string): Promise<XIntegration> {
+        const integration = await this.getXIntegration(tenantId);
+        if (!integration) throw new Error('X integration not found');
+
+        const expiresAt = integration.expires_at ? new Date(integration.expires_at).getTime() : 0;
+        if (!expiresAt || expiresAt > Date.now() + 60_000) {
+            return integration;
+        }
+
+        return refreshXAccessToken(integration);
+    },
+
     /**
      * Get X integration for a tenant
      */
@@ -166,8 +223,7 @@ export const xService = {
      * Post a tweet (v2) — now supports media_ids for image/video attachments.
      */
     async postTweet(tenantId: string, tweet: XTweet) {
-        const integration = await this.getXIntegration(tenantId);
-        if (!integration) throw new Error('X integration not found');
+        const integration = await this.ensureValidAccessToken(tenantId);
 
         const body: Record<string, unknown> = {
             text: tweet.text,
@@ -253,8 +309,7 @@ export const xService = {
      * Read Tweets (v2) - User Timeline
      */
     async getUserTweets(tenantId: string) {
-        const integration = await this.getXIntegration(tenantId);
-        if (!integration) throw new Error('X integration not found');
+        const integration = await this.ensureValidAccessToken(tenantId);
 
         const response = await fetch(`https://api.twitter.com/2/users/${integration.x_user_id}/tweets`, {
             method: 'GET',

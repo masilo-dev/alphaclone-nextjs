@@ -3,6 +3,7 @@ import { emailCampaignService } from '@/services/emailCampaignService';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
 type ProviderConfig = {
@@ -51,6 +52,50 @@ function resolveProviderConfig(provider: CampaignProvider, config: Record<string
         fromName: toNonEmptyString(config.fromName) || toNonEmptyString(config.from_name) || undefined,
         dailyLimit: toNumberOrDefault(config.dailyLimit ?? config.daily_limit, DEFAULT_DAILY_LIMITS[provider]),
     };
+}
+
+function stripHtml(html: string): string {
+    return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function resolvePhoneForRecipient(
+    admin: ReturnType<typeof createSupabaseAdminClient>,
+    tenantId: string,
+    email: string
+): Promise<string | null> {
+    const normalized = String(email || '').trim().toLowerCase();
+    if (!normalized) return null;
+
+    const { data: lead } = await admin
+        .from('leads')
+        .select('phone')
+        .eq('tenant_id', tenantId)
+        .ilike('email', normalized)
+        .limit(1)
+        .maybeSingle();
+    if (lead?.phone) return String(lead.phone);
+
+    const { data: client } = await admin
+        .from('business_clients')
+        .select('phone')
+        .eq('tenant_id', tenantId)
+        .ilike('email', normalized)
+        .limit(1)
+        .maybeSingle();
+    if (client?.phone) return String(client.phone);
+
+    const { data: contact } = await admin
+        .from('contacts')
+        .select('phone, custom_fields')
+        .eq('tenant_id', tenantId)
+        .ilike('email', normalized)
+        .limit(1)
+        .maybeSingle();
+    if (contact?.phone) return String(contact.phone);
+
+    const customFields = parseJsonObject(contact?.custom_fields);
+    const customPhone = toNonEmptyString(customFields.phone) || toNonEmptyString(customFields.mobile);
+    return customPhone;
 }
 
 function selectProviderForRecipient(
@@ -130,6 +175,9 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         const campaignFromName = String(c.from_name || 'AlphaClone Systems');
         const replyTo = (c.reply_to as string) || undefined;
         const campaignLanguage = toNonEmptyString(rawMeta?.language) || toNonEmptyString(rawMeta?.languageMode) || undefined;
+        const deliveryChannel = toNonEmptyString(rawMeta?.deliveryChannel) || 'email';
+        const sendEmailChannel = deliveryChannel === 'email' || deliveryChannel === 'both';
+        const sendWhatsappChannel = deliveryChannel === 'whatsapp' || deliveryChannel === 'both';
 
         const filters = [];
         if (campaignCreatorId) filters.push(`user_id.eq.${campaignCreatorId}`);
@@ -160,11 +208,27 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             selectedProviders.length > 0 ? selectedProviders.includes(provider.id) : true
         );
 
-        if (!activeProviders.length) {
+        if (sendEmailChannel && !activeProviders.length) {
             return {
                 success: false,
                 error: 'No active email providers are connected for this campaign. Connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.',
             };
+        }
+
+        if (sendWhatsappChannel) {
+            const { data: waIntegration } = await admin
+                .from('whatsapp_integrations')
+                .select('id')
+                .eq('tenant_id', c.tenant_id)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle();
+            if (!waIntegration?.id) {
+                return {
+                    success: false,
+                    error: 'WhatsApp is not connected. Configure Green API or Zernio under Business → WhatsApp before sending WhatsApp campaigns.',
+                };
+            }
         }
 
         const startOfDay = new Date();
@@ -189,8 +253,81 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             .eq('id', campaignId);
 
         let sentCount = 0;
+        const tenantId = String(c.tenant_id || '');
+        const whatsappBodyBase = `${String(c.subject || '').trim()}\n\n${stripHtml(bodySource)}`.trim();
 
-        for (const recipient of recipients) {
+        if (sendWhatsappChannel) {
+            for (const recipient of recipients) {
+                const phone = await resolvePhoneForRecipient(admin, tenantId, recipient.email);
+                if (!phone) {
+                    if (!sendEmailChannel) {
+                        await admin
+                            .from('campaign_recipients')
+                            .update({
+                                status: 'failed',
+                                error_message: 'No phone number on file for WhatsApp delivery',
+                            })
+                            .eq('id', recipient.id);
+                    }
+                    continue;
+                }
+
+                const waResult = await sendWhatsAppMessage({
+                    tenantId,
+                    phone,
+                    message: whatsappBodyBase.slice(0, 4000),
+                    contactId: recipient.contact_id || null,
+                    metadata: { campaign_id: campaignId, channel: 'whatsapp_campaign' },
+                });
+
+                if (waResult.success) {
+                    sentCount++;
+                    await admin
+                        .from('campaign_recipients')
+                        .update({
+                            status: sendEmailChannel ? 'pending' : 'sent',
+                            sent_at: sendEmailChannel ? null : new Date().toISOString(),
+                            metadata: {
+                                ...(parseJsonObject(recipient.metadata)),
+                                whatsapp_sent: true,
+                                whatsapp_provider: waResult.provider,
+                            },
+                        })
+                        .eq('id', recipient.id);
+                } else if (!sendEmailChannel) {
+                    await admin
+                        .from('campaign_recipients')
+                        .update({
+                            status: 'failed',
+                            error_message: waResult.error || 'WhatsApp send failed',
+                            metadata: { whatsapp_provider: waResult.provider },
+                        })
+                        .eq('id', recipient.id);
+                }
+            }
+        }
+
+        if (!sendEmailChannel) {
+            await admin
+                .from('email_campaigns')
+                .update({
+                    status: 'sent',
+                    total_sent: sentCount,
+                    completed_at: new Date().toISOString(),
+                })
+                .eq('id', campaignId);
+            return { success: true, error: null };
+        }
+
+        const emailRecipients = sendWhatsappChannel
+            ? (await admin
+                .from('campaign_recipients')
+                .select('*')
+                .eq('campaign_id', campaignId)
+                .eq('status', 'pending'))?.data || []
+            : recipients;
+
+        for (const recipient of emailRecipients) {
             if (await isEmailSuppressed(String(c.tenant_id || ''), recipient.email)) {
                 await admin
                     .from('campaign_recipients')

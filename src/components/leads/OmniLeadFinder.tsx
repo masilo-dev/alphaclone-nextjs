@@ -326,12 +326,12 @@ export default function OmniLeadFinder() {
   const [filterText,   setFilterText  ] = useState('');
   const [filterRating, setFilterRating] = useState(0);
   const [filterSource, setFilterSource] = useState<SourceFilter>('all');
-  const [filterPhone,  setFilterPhone ] = useState(false);
+  const [filterPhone,  setFilterPhone ] = useState(true);
   const [filterEmail,  setFilterEmail ] = useState(false);
   const [filterTier,   setFilterTier  ] = useState<'all' | 'hot' | 'warm' | 'cold' | 'skip'>('all');
 
   const activeFilterCount = [filterText.length > 0, filterRating > 0, filterSource !== 'all', filterPhone, filterEmail, filterTier !== 'all'].filter(Boolean).length;
-  const clearFilters = () => { setFilterText(''); setFilterRating(0); setFilterSource('all'); setFilterPhone(false); setFilterEmail(false); setFilterTier('all'); };
+  const clearFilters = () => { setFilterText(''); setFilterRating(0); setFilterSource('all'); setFilterPhone(true); setFilterEmail(false); setFilterTier('all'); };
 
   const filteredResults = useMemo(() => {
     const q = filterText.toLowerCase();
@@ -1254,8 +1254,14 @@ export default function OmniLeadFinder() {
                   </div>
                 </div>
 
-                {qual && qual.insights.length > 0 && (
-                  <div className="mb-2 space-y-0.5">
+                {qual && (
+                  <div className="mb-2 space-y-1">
+                    {qual.pitchAngle && (
+                      <p className="text-[11px] text-teal-400/90 font-medium flex items-center gap-1">
+                        <Target className="w-3 h-3 flex-shrink-0" />
+                        Why: {qual.pitchAngle.replace(/-/g, ' ')}
+                      </p>
+                    )}
                     {qual.insights.slice(0, 2).map((insight, i) => (
                       <p key={i} className="text-xs text-slate-500 flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-slate-600 flex-shrink-0" /> {insight}

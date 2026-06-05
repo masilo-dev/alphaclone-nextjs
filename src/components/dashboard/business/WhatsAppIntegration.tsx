@@ -7,16 +7,19 @@ import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function WhatsAppIntegration() {
     const { user } = useAuth();
-    const { currentTenant } = useTenant();
+    const { currentTenant, refreshTenants } = useTenant();
     const router = useRouter();
     
     const [integrations, setIntegrations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [zernioAccountId, setZernioAccountId] = useState('');
+    const [savingZernio, setSavingZernio] = useState(false);
     
     const [showAddForm, setShowAddForm] = useState(false);
     const [newIntegration, setNewIntegration] = useState({
@@ -28,8 +31,35 @@ export default function WhatsAppIntegration() {
     useEffect(() => {
         if (currentTenant?.id) {
             fetchIntegrations();
+            const zernio = (currentTenant.settings as any)?.zernio;
+            setZernioAccountId(zernio?.whatsappAccountId || zernio?.accountId || '');
         }
-    }, [currentTenant?.id]);
+    }, [currentTenant?.id, currentTenant?.settings]);
+
+    const handleSaveZernio = async () => {
+        if (!currentTenant?.id) return;
+        setSavingZernio(true);
+        try {
+            const updatedSettings = {
+                ...(currentTenant.settings as any),
+                zernio: {
+                    ...((currentTenant.settings as any)?.zernio || {}),
+                    whatsappAccountId: zernioAccountId.trim() || undefined,
+                },
+            };
+            const { error } = await supabase
+                .from('tenants')
+                .update({ settings: updatedSettings })
+                .eq('id', currentTenant.id);
+            if (error) throw error;
+            await refreshTenants();
+            toast.success('Zernio WhatsApp account saved');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save Zernio settings');
+        } finally {
+            setSavingZernio(false);
+        }
+    };
 
     const fetchIntegrations = async () => {
         if (!currentTenant?.id) return;
@@ -128,8 +158,8 @@ export default function WhatsAppIntegration() {
                         <MessageCircle className="w-6 h-6 text-teal-400" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-white">WhatsApp Green API</h2>
-                        <p className="text-sm text-slate-400">Manage multiple WhatsApp connections for omnichannel outreach.</p>
+                        <h2 className="text-lg font-bold text-white">WhatsApp (Green API + Zernio)</h2>
+                        <p className="text-sm text-slate-400">Green API for multi-instance chat. Zernio uses <code className="text-teal-400">ZERNIO_API_KEY</code> plus tenant settings <code className="text-teal-400">settings.zernio.whatsappAccountId</code> for full inbox + outbound.</p>
                     </div>
                 </div>
                 <Button 
@@ -197,6 +227,28 @@ export default function WhatsAppIntegration() {
                     </motion.form>
                 )}
             </AnimatePresence>
+
+            <div className="px-6 py-4 border-b border-white/5 bg-slate-950/40">
+                <h3 className="text-sm font-bold text-white mb-2">Zernio WhatsApp (full inbox)</h3>
+                <p className="text-xs text-slate-500 mb-3">Set your Zernio account ID. Server needs <span className="text-teal-400">ZERNIO_API_KEY</span> in Vercel env.</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                        type="text"
+                        value={zernioAccountId}
+                        onChange={(e) => setZernioAccountId(e.target.value)}
+                        placeholder="Zernio WhatsApp account ID"
+                        className="flex-1 rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+                    />
+                    <Button
+                        onClick={handleSaveZernio}
+                        disabled={savingZernio}
+                        className="bg-teal-600 hover:bg-teal-500 text-white font-bold shrink-0"
+                    >
+                        {savingZernio ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        Save Zernio
+                    </Button>
+                </div>
+            </div>
 
             <div className="p-6">
                 {integrations.length === 0 ? (
