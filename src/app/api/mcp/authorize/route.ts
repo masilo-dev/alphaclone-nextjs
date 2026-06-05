@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { isRedirectUriAllowed } from '@/lib/mcp/oauthRedirect';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -320,7 +321,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   // For unknown clients, allow if is_public OR if client_id matches redirect_uri domain pattern
   if (client) {
     const allowedRedirects: string[] = client.redirect_uris || [];
-    if (!allowedRedirects.includes(redirectUri)) {
+    if (!isRedirectUriAllowed(redirectUri, allowedRedirects)) {
       console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
       return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
     }

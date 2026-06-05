@@ -42,13 +42,20 @@ export async function sendWhatsAppMessage(params: {
 
   const { data: integration } = await query.maybeSingle();
 
-  const isZernio = !!zernioAccountId || integration?.metadata?.provider === 'zernio' || !!integration?.metadata?.whatsappAccountId;
+  const preferGreenApi =
+    integration?.metadata?.provider === 'green-api' ||
+    (!!integration?.waba_id && !!integration?.metadata?.apiTokenInstance);
+  const hasZernioKey = !!process.env.ZERNIO_API_KEY;
+  const isZernio =
+    !preferGreenApi &&
+    hasZernioKey &&
+    (!!zernioAccountId || integration?.metadata?.provider === 'zernio' || !!integration?.metadata?.whatsappAccountId);
 
   if (isZernio) {
     try {
       const activeAccountId = zernioAccountId || integration?.metadata?.whatsappAccountId || integration?.waba_id;
       if (!activeAccountId) {
-        return { success: false, provider: 'zernio', error: 'Zernio WhatsApp account ID is not configured' };
+        throw new Error('Zernio WhatsApp account ID is not configured');
       }
 
       const zernio = getZernioClient();
@@ -61,17 +68,6 @@ export async function sendWhatsAppMessage(params: {
       });
 
       const messageId = (response as any).data?.messageId || `wa_out_${Date.now()}`;
-
-      // Insert message and outreach logs
-      const { data: contact } = params.contactId
-        ? { data: { id: params.contactId } }
-        : await supabase
-          .from('contacts')
-          .select('id')
-          .eq('tenant_id', params.tenantId)
-          .or(`phone.ilike.%${cleanTo}%,mobile.ilike.%${cleanTo}%`)
-          .maybeSingle();
-
       await supabase.from('whatsapp_messages').insert({
         tenant_id: params.tenantId,
         integration_id: integration?.id || null,
@@ -81,32 +77,22 @@ export async function sendWhatsAppMessage(params: {
         direction: 'outbound',
         message_type: 'text',
         body: params.message,
-        contact_id: contact?.id || null,
+        contact_id: params.contactId || null,
         client_id: params.clientId || null,
         status: 'sent',
-        sent_by: params.metadata?.source === 'auto_outreach' ? 'bot' : params.metadata?.source === 'mcp' ? 'api' : 'human',
+        sent_by: 'api',
         needs_response: false,
         sent_at: new Date().toISOString(),
-        metadata: params.metadata || {},
+        metadata: { ...(params.metadata || {}), provider: 'zernio' },
       });
-
-      await supabase.from('whatsapp_outreach_logs').insert({
-        tenant_id: params.tenantId,
-        lead_id: params.clientId || params.contactId || null,
-        phone_number: cleanTo,
-        status: 'sent',
-        message_content: params.message,
-        sent_at: new Date().toISOString(),
-      });
-
       return { success: true, provider: 'zernio', messageId, to: cleanTo };
     } catch (err: any) {
-      console.error('[whatsapp/send] Zernio send failed:', err);
-      return { success: false, provider: 'zernio', error: err?.message || 'Zernio WhatsApp send failed' };
+      console.error('[whatsapp/send] Zernio send failed, falling back to Green API:', err);
+      // Fall through to Green API when configured.
     }
   }
 
-  // Fallback to legacy Green-API
+  // Green API (primary for most tenants)
   if (!integration) {
     return { success: false, provider: 'green-api', error: 'No active WhatsApp integration found' };
   }
@@ -124,7 +110,12 @@ export async function sendWhatsAppMessage(params: {
       body: JSON.stringify({ chatId: `${cleanTo}@c.us`, message: params.message }),
     });
     const bodyText = await response.text();
-    const body = bodyText ? JSON.parse(bodyText) : {};
+    let body: Record<string, unknown> = {};
+    try {
+      body = bodyText ? JSON.parse(bodyText) : {};
+    } catch {
+      body = { raw: bodyText };
+    }
     if (!response.ok) {
       return { success: false, provider: 'green-api', to: cleanTo, error: bodyText || `Green API rejected request (${response.status})` };
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Twitter, Link2, RefreshCw, Send, Loader2 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +15,7 @@ interface XIntegrationRow {
 }
 
 export default function XIntegrationTab() {
+  const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
   const [integration, setIntegration] = useState<XIntegrationRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,8 +73,20 @@ export default function XIntegrationTab() {
     if (integration) loadTweets();
   }, [integration, loadTweets]);
 
+  useEffect(() => {
+    const connected = searchParams?.get('x_connected');
+    const err = searchParams?.get('x_error');
+    if (connected === '1') {
+      toast.success('X account connected');
+      loadIntegration();
+    } else if (err) {
+      toast.error(`X connection failed: ${err.replace(/_/g, ' ')}`);
+    }
+  }, [searchParams, loadIntegration]);
+
   const handleConnect = () => {
-    window.location.href = '/api/auth/x';
+    const tenantId = currentTenant?.id ? `?tenantId=${encodeURIComponent(currentTenant.id)}` : '';
+    window.location.href = `/api/auth/x${tenantId}`;
   };
 
   const handlePost = async (e: React.FormEvent) => {

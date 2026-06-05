@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { notifyTenantOwners } from '@/lib/notifyTenantOwners';
+import { convertQuoteToInvoice } from '@/lib/quotes/convertQuoteToInvoice';
 
 async function findQuoteByToken(admin: ReturnType<typeof createSupabaseAdminClient>, token: string) {
     const { data: quote, error } = await admin
@@ -121,16 +122,34 @@ export async function POST(req: NextRequest) {
                 ? `${acceptedBy || 'Client'} accepted quote ${quote.quote_number}${note ? ` — Note: ${note}` : ''}.`
                 : `Quote ${quote.quote_number} was declined${note ? `: "${note}"` : '.'}`;
 
+        let invoiceId: string | null = null;
+        if (action === 'accept') {
+            const converted = await convertQuoteToInvoice(quote.id, quote.tenant_id);
+            invoiceId = converted.invoiceId;
+            if (converted.error) {
+                console.error('[quotes/respond] auto-invoice failed:', converted.error);
+            }
+        }
+
+        const notifyMessage =
+            action === 'accept' && invoiceId
+                ? `${message} Invoice ${invoiceId.slice(0, 8)}… was created automatically.`
+                : message;
+
         await notifyTenantOwners({
             tenantId: quote.tenant_id,
             type: 'quote',
             title,
-            message,
-            link: `${origin}/dashboard/quotes`,
+            message: notifyMessage,
+            link: invoiceId ? `${origin}/dashboard/accounting` : `${origin}/dashboard/quotes`,
             fallbackUserId: quote.created_by || undefined,
         });
 
-        return NextResponse.json({ success: true, status: updatePayload.status });
+        return NextResponse.json({
+            success: true,
+            status: action === 'accept' && invoiceId ? 'converted' : updatePayload.status,
+            invoiceId,
+        });
     } catch (error: any) {
         console.error('Quote respond error:', error);
         return clientErrorResponse(error, { request: req, scope: 'quotes/respond.POST' });

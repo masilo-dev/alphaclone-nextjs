@@ -1,6 +1,39 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 /**
+ * Task Created Workflow
+ * Triggered when a new task is added to the workspace.
+ */
+export async function taskCreatedWorkflow({ tenantId, payload }: { tenantId: string; payload: any }) {
+  "use workflow";
+  await notifyTaskCreatedStep(tenantId, payload);
+}
+
+async function notifyTaskCreatedStep(tenantId: string, payload: any) {
+  "use step";
+  const supabase = createSupabaseAdminClient();
+  const taskId = payload?.taskId;
+  if (!taskId) return;
+
+  const { data: task } = await supabase
+    .from('tasks')
+    .select('title, assigned_to, due_date')
+    .eq('id', taskId)
+    .maybeSingle();
+
+  if (task?.assigned_to) {
+    await supabase.from('notifications').insert({
+      user_id: task.assigned_to,
+      tenant_id: tenantId,
+      title: 'New task assigned',
+      message: `You were assigned: "${task.title}"${task.due_date ? ` (due ${task.due_date})` : ''}.`,
+      type: 'task',
+      metadata: { taskId },
+    });
+  }
+}
+
+/**
  * Task Overdue Workflow
  * Triggered when a task status is not 'completed' and passes its due date.
  */

@@ -149,6 +149,19 @@ export default function BookDemoPage() {
             </div>
           </motion.div>
 
+          <div className="text-center mb-8">
+            <a
+              href={CALENDLY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-10 py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black rounded-2xl text-lg shadow-xl shadow-teal-500/25 transition-colors"
+            >
+              <Calendar className="w-5 h-5" />
+              Book your 30-minute call
+            </a>
+            <p className="text-xs text-slate-500 mt-3">Opens Calendly in a new tab — works even if the embed below is blocked.</p>
+          </div>
+
           {/* Main Layout: Calendly + Sidebar */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10 items-start">
             {/* Calendly Widget */}
@@ -169,7 +182,14 @@ export default function BookDemoPage() {
                     <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
                     <div className="w-3 h-3 rounded-full bg-green-500/60" />
                   </div>
-                  <span className="text-xs text-slate-500 font-mono ml-2">calendly.com/bonniealphaclonesystems</span>
+                  <a
+                    href={CALENDLY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-teal-400 hover:text-teal-300 ml-2 underline underline-offset-2"
+                  >
+                    Book a 30-minute call
+                  </a>
                 </div>
 
                 {/* Loading placeholder — hidden once widget is ready */}

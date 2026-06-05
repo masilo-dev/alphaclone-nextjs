@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linkedin, RefreshCw, ExternalLink, MessageCircle, ThumbsUp, AlertTriangle, Loader2, Sparkles, X, Plus, Calendar, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
@@ -137,6 +138,7 @@ function isLinkedInPostSchemaBehind(selectUsed: string | null): boolean {
 }
 
 export default function LinkedInManagementTab() {
+  const router = useRouter();
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const { isMobile, isTablet, isDesktop } = useBreakpoint();
@@ -853,6 +855,35 @@ ${parentContext}Return only the comment text.`;
 
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
+      {/* Action-first strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <button
+          onClick={() => (isMobile ? setShowComposeSheet(true) : document.getElementById('compose-section')?.scrollIntoView({ behavior: 'smooth' }))}
+          disabled={!canComposeLinkedIn}
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold disabled:opacity-40 transition-colors"
+        >
+          <Send className="w-4 h-4" /> Post Now
+        </button>
+        <button
+          onClick={() => router.push('/dashboard/campaigns')}
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" /> Outreach
+        </button>
+        <button
+          onClick={() => router.push('/dashboard/crm')}
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
+        >
+          <ThumbsUp className="w-4 h-4" /> CRM Leads
+        </button>
+        <button
+          onClick={loadData}
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" /> Sync
+        </button>
+      </div>
+
       {/* ── Topbar ────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">

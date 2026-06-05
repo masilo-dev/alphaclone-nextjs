@@ -23,13 +23,22 @@ interface QuoteRow {
   tenant_id: string;
 }
 
+function extractClientEmail(raw: Record<string, unknown>): string | undefined {
+  if (raw.client_email) return String(raw.client_email);
+  const meta = (raw.metadata || {}) as Record<string, unknown>;
+  if (meta.client_email) return String(meta.client_email);
+  const notes = String(raw.notes || '');
+  const match = notes.match(/Recipient:\s*([^\s]+@[^\s]+)/i);
+  return match?.[1];
+}
+
 function mapQuoteRow(raw: Record<string, unknown>): QuoteRow {
   const status = String(raw.status || 'draft') as QuoteStatus;
   return {
     id: String(raw.id),
     number: raw.quote_number ? String(raw.quote_number) : undefined,
     client_name: String(raw.name || raw.client_name || 'Unnamed Client'),
-    client_email: raw.client_email ? String(raw.client_email) : undefined,
+    client_email: extractClientEmail(raw),
     amount: Number(raw.total_amount ?? raw.amount ?? 0),
     status: ['draft', 'sent', 'accepted', 'rejected', 'expired'].includes(status) ? status : 'draft',
     valid_until: raw.valid_until ? String(raw.valid_until) : undefined,
@@ -158,11 +167,16 @@ const CreateQuoteModal: React.FC<{
       if (error || !quote) throw new Error(error || 'Failed to create quote');
 
       const amt = parseFloat(amount) || 0;
+      const metaPatch: Record<string, unknown> = {
+        ...(quote.metadata || {}),
+        ...(email.trim() ? { client_email: email.trim() } : {}),
+      };
+      await supabase.from('quotes').update({
+        ...(amt > 0 ? { total_amount: amt, subtotal: amt } : {}),
+        metadata: metaPatch,
+      }).eq('id', quote.id);
+
       if (amt > 0) {
-        await supabase
-          .from('quotes')
-          .update({ total_amount: amt, subtotal: amt })
-          .eq('id', quote.id);
         await quoteService.addQuoteItem(quote.id, {
           productName: name.trim(),
           description: 'Professional services',

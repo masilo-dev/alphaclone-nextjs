@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { MCPTool, MCPToolExecutionResult } from '@/types/mcp';
+import { mergeSessionArgs, sanitizeToolSchemaForClient } from '@/lib/mcp/sanitizeToolSchema';
 
 const registry = new Map<string, MCPTool>();
 
@@ -15,11 +16,13 @@ export function hasTool(name: string): boolean {
   return registry.has(name);
 }
 
-export function listTools() {
+export function listTools(sanitizeForClient = false) {
   return Array.from(registry.values()).map((tool) => ({
     name: tool.name,
     description: tool.description,
-    inputSchema: tool.jsonSchema,
+    inputSchema: sanitizeForClient
+      ? sanitizeToolSchemaForClient(tool.jsonSchema as Record<string, unknown>)
+      : tool.jsonSchema,
   }));
 }
 
@@ -39,11 +42,10 @@ export async function executeTool(
   let errorMessage: string | undefined;
 
   try {
-    // 1. Validate input schema using Zod
-    const validatedArgs = tool.inputSchema.parse({
-      ...args,
-      tenant_id: tenantId, // Enforce tenant_id
-    });
+    // 1. Merge session context (tenant + user) before Zod validation
+    const validatedArgs = tool.inputSchema.parse(
+      mergeSessionArgs(args, { tenantId, userId })
+    );
 
     // 2. Call handler
     const rawResult = await tool.handler(validatedArgs, { tenantId, userId });

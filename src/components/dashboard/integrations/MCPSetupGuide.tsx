@@ -86,12 +86,12 @@ const SETUP_STEPS = [
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 interface MCPSetupGuideProps {
-  initialType?: 'claude' | 'manus' | 'grok';
+  initialType?: 'claude' | 'manus' | 'grok' | 'chatgpt';
 }
 
 const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
-  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok'>(initialType ?? 'claude');
+  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok' | 'chatgpt'>(initialType ?? 'claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
@@ -114,6 +114,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         setSetupType('claude');
       } else if (mcpParam === 'grok') {
         setSetupType('grok');
+      } else if (mcpParam === 'chatgpt') {
+        setSetupType('chatgpt');
       }
     }
   }, [initialType]);
@@ -125,14 +127,21 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const mcpOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com')
     .replace('//www.', '//');
 
+  const agentLabel =
+    setupType === 'claude' ? 'Claude'
+    : setupType === 'manus' ? 'Manus'
+    : setupType === 'chatgpt' ? 'ChatGPT'
+    : 'Grok';
+
   /** Single-query URL: tenant and user are resolved from the key server-side. */
   const buildConnectionUrl = (token: string | null) => {
+    const path = (setupType === 'claude' || setupType === 'grok' || setupType === 'chatgpt') ? '/api/mcp' : '/api/mcp/sse';
+    if (setupType === 'chatgpt') {
+      return `${mcpOrigin}${path}`;
+    }
     const params = new URLSearchParams({
       api_key: token || 'YOUR_KEY_HERE',
     });
-    // Claude web and Grok expect the modern single-endpoint pattern
-    // Manus still uses the classic SSE 2-endpoint pattern
-    const path = (setupType === 'claude' || setupType === 'grok') ? '/api/mcp' : '/api/mcp/sse';
     return `${mcpOrigin}${path}?${params.toString()}`;
   };
 
@@ -254,7 +263,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} AI to Your Account</h1>
+            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : 'Grok'} AI to Your Account</h1>
             <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
@@ -279,12 +288,30 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           >
             Grok AI
           </button>
+          <button
+            onClick={() => setSetupType('chatgpt')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            ChatGPT
+          </button>
         </div>
+
+        {setupType === 'chatgpt' && (
+          <div className="mb-6 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
+            <p className="text-slate-200 text-sm">
+              In ChatGPT, go to <strong>Settings → Connectors → MCP</strong> and add your AlphaClone server URL below.
+              When ChatGPT asks you to sign in, approve access — your workspace and user ID are attached automatically (no manual IDs).
+            </p>
+            <p className="text-xs text-slate-400">
+              OAuth authorize URL: <code className="text-emerald-400">{typeof window !== 'undefined' ? `${window.location.origin}/api/mcp/authorize` : '/api/mcp/authorize'}</code>
+            </p>
+          </div>
+        )}
 
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
           <p className="text-slate-200 text-sm leading-relaxed">
-            <span className="text-white font-semibold">What does this do?</span> When you connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
+            <span className="text-white font-semibold">What does this do?</span> When you connect {agentLabel} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
           </p>
         </div>
 
@@ -306,7 +333,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe</p>
-            <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
+            <p className="text-slate-400 text-xs leading-relaxed">{agentLabel} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace. Workspace and user IDs are injected automatically — you never pass tenant_id or user_id manually.</p>
           </div>
         </div>
       </div>
@@ -316,27 +343,35 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         <h2 className="text-lg font-bold text-white mb-5">Step-by-step setup guide</h2>
         <div className="space-y-4">
           {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 3, 6].includes(s.number)).map((step, idx) => {
+            const isWebAgent = setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt';
             const displayNum = idx + 1;
             const isDone = completedSteps.has(step.number);
             const isOpen = expandedStep === step.number;
 
             // Adjust title/body/action for Manus
-            const stepTitle = setupType === 'manus' || setupType === 'grok'
-              ? step.number === 1 ? `Open ${setupType === 'manus' ? 'Manus' : 'Grok'} AI`
-              : step.number === 2 ? 'Copy your Connection URL'
-              : step.number === 3 ? `Add AlphaClone to ${setupType === 'manus' ? 'Manus' : 'Grok'} MCP Settings`
+            const stepTitle = isWebAgent
+              ? step.number === 1 ? `Open ${agentLabel}`
+              : step.number === 2 ? (setupType === 'chatgpt' ? 'Copy your MCP Server URL' : 'Copy your Connection URL')
+              : step.number === 3 ? (setupType === 'chatgpt' ? 'Add AlphaClone connector in ChatGPT' : `Add AlphaClone to ${agentLabel} MCP Settings`)
               : 'Test your connection'
               : step.title;
 
-            const stepBody = setupType === 'manus' || setupType === 'grok'
-              ? step.number === 1 ? `${setupType === 'manus' ? 'Manus' : 'Grok'} AI is a powerful autonomous agent. Open the ${setupType === 'manus' ? 'Manus' : 'Grok'} dashboard to get started — you'll need to be logged in.`
-              : step.number === 2 ? `Copy your unique Connection URL below. This is what tells ${setupType === 'manus' ? 'Manus' : 'Grok'} which AlphaClone account to connect to. Keep it private.`
-              : step.number === 3 ? `In your ${setupType === 'manus' ? 'Manus' : 'Grok'} dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.`
-              : `In ${setupType === 'manus' ? 'Manus' : 'Grok'}, start a new conversation and try one of these prompts to verify everything is connected:`
+            const stepBody = isWebAgent
+              ? step.number === 1 ? `Open ${agentLabel} and sign in to your account.`
+              : step.number === 2 ? (setupType === 'chatgpt'
+                ? 'Copy your MCP Server URL below (no API key in the URL — ChatGPT uses OAuth). When you approve access, your workspace and user are attached automatically.'
+                : `Copy your unique Connection URL below. This is what tells ${agentLabel} which AlphaClone account to connect to. Keep it private.`)
+              : step.number === 3 ? (setupType === 'chatgpt'
+                ? 'In ChatGPT: Settings → Connectors → MCP → Add connector. Paste the MCP Server URL from Step 2. Choose OAuth when prompted, then sign in on the AlphaClone consent page with your connection key.'
+                : `In your ${agentLabel} dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.`)
+              : `In ${agentLabel}, start a new conversation and try one of these prompts to verify everything is connected:`
               : step.body;
 
-            const actionLabel = (setupType === 'manus' || setupType === 'grok') && step.number === 1 ? `Open ${setupType === 'manus' ? 'Manus' : 'Grok'} AI` : step.action?.label;
-            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im' : setupType === 'grok' && step.number === 1 ? 'https://grok.com' : step.action?.url;
+            const actionLabel = isWebAgent && step.number === 1 ? `Open ${agentLabel}` : step.action?.label;
+            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im'
+              : setupType === 'grok' && step.number === 1 ? 'https://grok.com'
+              : setupType === 'chatgpt' && step.number === 1 ? 'https://chatgpt.com'
+              : step.action?.url;
 
             // For Manus: don't show the Claude config JSON or Mac/Windows file paths
             const showSubSteps = setupType === 'claude' && step.subSteps;
@@ -573,7 +608,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <div className="text-4xl mb-3">🎉</div>
           <h3 className="text-xl font-bold text-white mb-2">You're connected!</h3>
           <p className="text-slate-300 text-sm leading-relaxed max-w-md mx-auto">
-            {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
+            {agentLabel} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
           </p>
         </motion.div>
       )}

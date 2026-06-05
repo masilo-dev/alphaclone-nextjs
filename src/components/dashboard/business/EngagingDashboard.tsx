@@ -173,7 +173,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     ], [router]);
 
     return (
-        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <div className="px-2 py-3 sm:p-6 max-w-7xl mx-auto space-y-3 sm:space-y-6">
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
@@ -204,7 +204,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/30 transition-colors group relative overflow-hidden"
+                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-teal-500/30 transition-colors group relative overflow-hidden"
                 >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-teal-500/10 transition-colors" />
                     <div className="flex items-center gap-4 relative z-10">
@@ -224,7 +224,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.15 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-blue-500/30 transition-colors group relative overflow-hidden"
+                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-blue-500/30 transition-colors group relative overflow-hidden"
                 >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-blue-500/10 transition-colors" />
                     <div className="flex items-center gap-4 relative z-10">
@@ -244,7 +244,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-purple-500/30 transition-colors group relative overflow-hidden"
+                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-purple-500/30 transition-colors group relative overflow-hidden"
                 >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-purple-500/10 transition-colors" />
                     <div className="flex items-center gap-4 relative z-10">
@@ -264,7 +264,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-orange-500/30 transition-colors group relative overflow-hidden"
+                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-orange-500/30 transition-colors group relative overflow-hidden"
                 >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-orange-500/10 transition-colors" />
                     <div className="flex items-center gap-4 relative z-10">
@@ -281,12 +281,12 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </motion.div>
             </div>
             
-            {/* Database Engine Summary - High Density Row */}
+            {/* Database Engine Summary — desktop only (mobile uses KPI row above) */}
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/20 transition-all group"
+                className="hidden md:block bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/20 transition-all group"
             >
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2">
@@ -361,8 +361,8 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </div>
             </motion.div>
 
-            {/* Detailed Stats Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Detailed Stats Row — tablet+ */}
+            <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Campaigns</p>
                     <p className="text-lg font-bold text-white mt-1">{stats?.activeCampaigns || 0}</p>
@@ -394,7 +394,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     newLeads={stats?.newLeads24h ?? 0}
                     actionsCompleted={stats?.completedTasks ?? 0}
                     rewardsUnlocked={stats?.rewardsUnlocked ?? 0}
-                    variant="full"
+                    variant="global"
                 />
             </motion.div>
 
@@ -413,8 +413,8 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     <span className="text-[11px] font-medium text-slate-600">{quickActions.length} tools</span>
                 </div>
 
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-x-2 gap-y-4">
-                    {quickActions.map((action, index) => (
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-x-1.5 sm:gap-x-2 gap-y-3 sm:gap-y-4">
+                    {quickActions.slice(0, 8).map((action, index) => (
                         <motion.button
                             key={action.id}
                             initial={{ opacity: 0, scale: 0.85 }}
@@ -423,7 +423,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                             onClick={action.action}
                             className="flex flex-col items-center gap-1.5 group select-none touch-manipulation active:scale-90 transition-transform duration-150"
                         >
-                            <div className={`w-[54px] h-[54px] sm:w-14 sm:h-14 rounded-[17px] ${action.color} flex items-center justify-center relative overflow-hidden shadow-lg shadow-black/40 ring-1 ring-white/10 group-hover:ring-white/25 transition-all`}>
+                            <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-[15px] sm:rounded-[17px] ${action.color} flex items-center justify-center relative overflow-hidden shadow-lg shadow-black/40 ring-1 ring-white/10 group-hover:ring-white/25 transition-all`}>
                                 {/* glossy top highlight like a real app icon */}
                                 <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
                                 <action.icon className="w-[22px] h-[22px] text-white relative z-10 drop-shadow-sm" strokeWidth={2.1} />

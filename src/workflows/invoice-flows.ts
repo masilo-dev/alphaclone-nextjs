@@ -1,6 +1,36 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 /**
+ * Invoice Created Workflow
+ * Triggered when a new invoice is created or sent.
+ */
+export async function invoiceCreatedWorkflow({ tenantId, payload }: { tenantId: string; payload: any }) {
+  "use workflow";
+  await notifyInvoiceCreatedStep(tenantId, payload);
+}
+
+async function notifyInvoiceCreatedStep(tenantId: string, payload: any) {
+  "use step";
+  const supabase = createSupabaseAdminClient();
+  const invoiceId = payload?.invoiceId;
+  if (!invoiceId) return;
+
+  const { data: invoice } = await supabase
+    .from('business_invoices')
+    .select('invoice_number, total_amount, client_id')
+    .eq('id', invoiceId)
+    .maybeSingle();
+
+  await supabase.from('notifications').insert({
+    tenant_id: tenantId,
+    title: 'Invoice created',
+    message: `Invoice ${invoice?.invoice_number || invoiceId} was created${invoice?.total_amount ? ` for $${invoice.total_amount}` : ''}.`,
+    type: 'info',
+    metadata: { invoiceId, clientId: invoice?.client_id || null },
+  });
+}
+
+/**
  * Invoice Overdue Workflow
  * Triggered when an invoice passes its due date.
  */

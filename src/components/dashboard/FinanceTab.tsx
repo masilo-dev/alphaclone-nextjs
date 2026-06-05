@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   FilePlus, X, Send, Download, CheckCircle, Trash2,
   ArrowLeft, Search, ChevronRight, Receipt, Camera, Plus,
-  ShoppingBag, TrendingDown, TrendingUp
+  ShoppingBag, TrendingDown, TrendingUp, Sparkles, Loader2
 } from 'lucide-react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -195,6 +195,41 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
   const [invFilter, setInvFilter] = useState<InvoiceStatus | 'all'>('all');
   const [expCat, setExpCat] = useState('All');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [aiExpenseInsight, setAiExpenseInsight] = useState<string | null>(null);
+  const [aiExpenseLoading, setAiExpenseLoading] = useState(false);
+
+  const handleAiExpenseReview = async () => {
+    if (!currentTenant?.id || expenses.length === 0) {
+      toast.error('Add expenses first to get AI insights');
+      return;
+    }
+    setAiExpenseLoading(true);
+    setAiExpenseInsight(null);
+    try {
+      const summary = expenses.slice(0, 20).map((e) =>
+        `${e.description} | $${e.amount} | ${e.category} | ${e.vendor || 'no vendor'}`
+      ).join('\n');
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          prompt: `Analyze these business expenses and return 3 bullet points: top spend category, one cost-saving tip, and one anomaly to review.\n\n${summary}`,
+          systemPrompt: 'You are a CFO assistant. Be concise and actionable.',
+          maxTokens: 300,
+          temperature: 0.4,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.text) throw new Error(data.error || 'AI request failed');
+      setAiExpenseInsight(String(data.text).trim());
+      toast.success('AI expense review ready');
+    } catch (err: any) {
+      toast.error(err.message || 'AI expense review failed');
+    } finally {
+      setAiExpenseLoading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -311,12 +346,29 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
           <>
             {/* Monthly total card */}
             <div className="mx-4 mt-4 mb-3 bg-slate-900 border border-white/5 rounded-2xl p-4">
-              <div className="text-[13px] text-slate-400 mb-1">This Month</div>
-              <div className="text-[32px] font-bold text-white">${thisTotal.toLocaleString()}</div>
-              <div className="text-[13px] text-slate-500 opacity-55 flex items-center gap-1 mt-0.5">
-                <TrendingDown className="w-3 h-3" />
-                <span>{thisMonth.length} transactions</span>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[13px] text-slate-400 mb-1">This Month</div>
+                  <div className="text-2xl sm:text-[32px] font-bold text-white">${thisTotal.toLocaleString()}</div>
+                  <div className="text-[13px] text-slate-500 opacity-55 flex items-center gap-1 mt-0.5">
+                    <TrendingDown className="w-3 h-3" />
+                    <span>{thisMonth.length} transactions</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleAiExpenseReview}
+                  disabled={aiExpenseLoading}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 text-xs font-bold hover:bg-purple-500/25 disabled:opacity-50"
+                >
+                  {aiExpenseLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  AI Review
+                </button>
               </div>
+              {aiExpenseInsight && (
+                <div className="mt-3 pt-3 border-t border-white/5 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  {aiExpenseInsight}
+                </div>
+              )}
             </div>
             {/* Category filter */}
             <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">

@@ -118,6 +118,21 @@ export const IntegrationMarketplace: React.FC = () => {
       actionPoints: 20
     },
     {
+      id: 'microsoft365',
+      name: 'Microsoft 365 / Outlook',
+      description: 'Outlook mail, Teams, Calendar, and contacts',
+      icon: Mail,
+      category: 'communication',
+      status: 'available',
+      features: [
+        'Unified Outlook inbox',
+        'AI draft replies',
+        'Teams presence sync',
+        'Calendar and To Do'
+      ],
+      actionPoints: 30
+    },
+    {
       id: 'playwright',
       name: 'Lead Discovery',
       description: 'Find business leads from any website',
@@ -168,7 +183,7 @@ export const IntegrationMarketplace: React.FC = () => {
       description: 'Built-in workflow automation',
       icon: Zap,
       category: 'productivity',
-      status: 'coming_soon',
+      status: 'available',
       features: [
         'Workflow builder',
         'Trigger-based actions',

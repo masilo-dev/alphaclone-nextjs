@@ -1644,11 +1644,11 @@ export const MCP_TOOLS = [
   // ── Analytics & Momentum ───────────────────────────────────────────
   {
     name: 'get_momentum_score',
-    description: 'Get the gamification XP, level, and momentum score for a user.',
+    description: 'Get the gamification XP, level, and momentum score for the authenticated user (resolved from MCP session).',
     inputSchema: {
       type: 'object',
-      properties: { user_id: { type: 'string' } },
-      required: ['user_id'],
+      properties: { user_id: { type: 'string', description: 'Optional — defaults to authenticated MCP user' } },
+      required: [],
     },
   },
   {
