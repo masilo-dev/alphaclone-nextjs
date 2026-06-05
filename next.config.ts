@@ -13,7 +13,7 @@ const withSerwist = withSerwistInit({
   // Inject our push + notificationclick handlers into the generated service
   // worker so push notifications display even when the app is closed.
   importScripts: ["/push-handler.js"],
-});
+} as Parameters<typeof withSerwistInit>[0]);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
