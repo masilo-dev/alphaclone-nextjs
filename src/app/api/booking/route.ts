@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes } from 'date-fns';
 import { PLAN_PRICING } from '@/services/tenancy/types';
+import { isLaunchFreeWindow } from '@/lib/launchWindow';
 
 
 // Helper to get Supabase Admin Client
@@ -76,13 +77,14 @@ export async function POST(req: NextRequest) {
             }, { status: 403 });
         }
 
-        if (status === 'trial') {
+        // Meeting caps are waived during the free launch window; afterwards trial
+        // plans are limited and prompted to upgrade.
+        if (status === 'trial' && !isLaunchFreeWindow()) {
             const { count } = await supabaseAdmin
                 .from('video_calls')
                 .select('*', { count: 'exact', head: true })
                 .eq('host_id', hostId);
 
-            // Get limits from PLAN_PRICING
             const plan = tenant.subscription_plan || 'free';
             const planLimits = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
             const MAX_MEETINGS = planLimits?.maxVideoMeetingsPerMonth || 2;

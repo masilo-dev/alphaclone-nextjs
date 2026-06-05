@@ -1,0 +1,138 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { notifyTenantOwners } from '@/lib/notifyTenantOwners';
+
+async function findQuoteByToken(admin: ReturnType<typeof createSupabaseAdminClient>, token: string) {
+    const { data: quote, error } = await admin
+        .from('quotes')
+        .select('*, tenant:tenants(name)')
+        .eq('metadata->>public_token', token)
+        .maybeSingle();
+
+    if (error) throw error;
+    return quote;
+}
+
+export async function GET(req: NextRequest) {
+    try {
+        const token = req.nextUrl.searchParams.get('token');
+        if (!token) {
+            return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+        }
+
+        const admin = createSupabaseAdminClient();
+        const quote = await findQuoteByToken(admin, token);
+        if (!quote) {
+            return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
+        }
+
+        const { data: items } = await admin
+            .from('quote_items')
+            .select('*')
+            .eq('quote_id', quote.id)
+            .order('item_order', { ascending: true });
+
+        if (quote.status === 'sent' && !quote.viewed_at) {
+            await admin
+                .from('quotes')
+                .update({ status: 'viewed', viewed_at: new Date().toISOString(), view_count: (quote.view_count || 0) + 1 })
+                .eq('id', quote.id);
+        }
+
+        return NextResponse.json({
+            success: true,
+            quote: {
+                id: quote.id,
+                quoteNumber: quote.quote_number,
+                name: quote.name,
+                status: quote.status,
+                subtotal: quote.subtotal,
+                taxAmount: quote.tax_amount,
+                totalAmount: quote.total_amount,
+                currency: quote.currency,
+                validUntil: quote.valid_until,
+                termsAndConditions: quote.terms_and_conditions,
+                tenantName: quote.tenant?.name,
+            },
+            items: (items || []).map((item: Record<string, unknown>) => ({
+                productName: item.product_name,
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unit_price,
+                lineTotal: item.line_total,
+            })),
+        });
+    } catch (error: any) {
+        console.error('Quote fetch error:', error);
+        return clientErrorResponse(error, { request: req, scope: 'quotes/respond.GET' });
+    }
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const token = String(body.token || '').trim();
+        const action = String(body.action || '').trim();
+        const note = String(body.note || '').trim();
+        const acceptedBy = String(body.acceptedBy || '').trim();
+
+        if (!token) {
+            return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+        }
+        if (!['accept', 'reject'].includes(action)) {
+            return NextResponse.json({ error: 'action must be accept or reject' }, { status: 400 });
+        }
+
+        const admin = createSupabaseAdminClient();
+        const quote = await findQuoteByToken(admin, token);
+        if (!quote) {
+            return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
+        }
+        if (['accepted', 'rejected', 'converted', 'expired'].includes(quote.status)) {
+            return NextResponse.json({ error: `Quote already ${quote.status}` }, { status: 409 });
+        }
+
+        const now = new Date().toISOString();
+        const updatePayload =
+            action === 'accept'
+                ? {
+                      status: 'accepted',
+                      accepted_at: now,
+                      accepted_by: acceptedBy || 'Client',
+                      notes: note || quote.notes,
+                  }
+                : {
+                      status: 'rejected',
+                      rejected_at: now,
+                      rejection_reason: note || 'Declined by client',
+                  };
+
+        const { error: updateError } = await admin.from('quotes').update(updatePayload).eq('id', quote.id);
+        if (updateError) throw updateError;
+
+        const origin = req.nextUrl.origin;
+        const title =
+            action === 'accept'
+                ? `Quote accepted: ${quote.quote_number}`
+                : `Quote declined: ${quote.quote_number}`;
+        const message =
+            action === 'accept'
+                ? `${acceptedBy || 'Client'} accepted quote ${quote.quote_number}${note ? ` — Note: ${note}` : ''}.`
+                : `Quote ${quote.quote_number} was declined${note ? `: "${note}"` : '.'}`;
+
+        await notifyTenantOwners({
+            tenantId: quote.tenant_id,
+            type: 'quote',
+            title,
+            message,
+            link: `${origin}/dashboard/quotes`,
+            fallbackUserId: quote.created_by || undefined,
+        });
+
+        return NextResponse.json({ success: true, status: updatePayload.status });
+    } catch (error: any) {
+        console.error('Quote respond error:', error);
+        return clientErrorResponse(error, { request: req, scope: 'quotes/respond.POST' });
+    }
+}

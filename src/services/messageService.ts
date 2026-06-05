@@ -329,6 +329,26 @@ export const messageService = {
                 group_id: data.group_id
             };
 
+            // Fan out to the recipient off-platform (web push + email + in-app bell)
+            // so they're notified even when the app is closed. Skip self-messages.
+            if (validated.recipientId && validated.recipientId !== senderId) {
+                const preview = validated.text.length > 140
+                    ? `${validated.text.substring(0, 140)}…`
+                    : validated.text;
+                void fetch('/api/notifications/dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: validated.recipientId,
+                        tenantId,
+                        type: 'message',
+                        title: `New message from ${senderName}`,
+                        message: preview,
+                        link: '/dashboard/business/messages',
+                    }),
+                }).catch(() => { /* best-effort; never block sending */ });
+            }
+
             return { message, error: null };
         } catch (err) {
             return { message: null, error: err instanceof Error ? err.message : 'Unknown error' };

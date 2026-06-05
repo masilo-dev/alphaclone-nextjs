@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button, Badge } from '../../ui/UIComponents';
 import { leadService, Lead } from '../../../services/leadService';
+import { businessClientService } from '../../../services/businessClientService';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -28,6 +29,8 @@ interface AIOutreachModalProps {
     onClose: () => void;
     userId: string;
     initialSelectedLeads?: string[];
+    /** When opened from Contacts, IDs are business_clients — not CRM leads */
+    recipientSource?: 'leads' | 'clients';
 }
 
 const TONES = [
@@ -37,7 +40,7 @@ const TONES = [
     { id: 'marketing', label: 'Creative', description: 'Persuasive & Bold' },
 ];
 
-const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [] }) => {
+const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [], recipientSource = 'leads' }) => {
     const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
@@ -61,7 +64,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 setSelectedLeads(initialSelectedLeads.slice(0, 20));
             }
         }
-    }, [isOpen, userId, initialSelectedLeads]);
+    }, [isOpen, userId, initialSelectedLeads, recipientSource, currentTenant?.id]);
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -98,11 +101,26 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const fetchLeads = async () => {
         setLoading(true);
         try {
-            const { leads: fetchedLeads, error } = await leadService.getLeads();
-            if (error) throw new Error(error);
-            setLeads(fetchedLeads || []);
+            if (recipientSource === 'clients' && currentTenant?.id) {
+                const { clients, error } = await businessClientService.getClients(currentTenant.id, 1, 100);
+                if (error) throw new Error(error);
+                const mapped = (clients || []).map((c) => ({
+                    id: c.id,
+                    businessName: c.name,
+                    email: c.email,
+                    industry: c.industry,
+                    phone: c.phone,
+                    website: c.website,
+                    location: c.location,
+                })) as Lead[];
+                setLeads(mapped);
+            } else {
+                const { leads: fetchedLeads, error } = await leadService.getLeads();
+                if (error) throw new Error(error);
+                setLeads(fetchedLeads || []);
+            }
         } catch (err: any) {
-            toast.error('Failed to load leads: ' + err.message);
+            toast.error('Failed to load recipients: ' + err.message);
         } finally {
             setLoading(false);
         }

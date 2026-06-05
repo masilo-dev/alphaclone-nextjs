@@ -10,6 +10,9 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV !== "production",
   register: false,
+  // Inject our push + notificationclick handlers into the generated service
+  // worker so push notifications display even when the app is closed.
+  importScripts: ["/push-handler.js"],
 });
 
 const nextConfig: NextConfig = {

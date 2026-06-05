@@ -374,8 +374,37 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                         </div>
                         <iframe src={showPDFPreview} className="flex-1 w-full rounded-2xl border border-white/10" />
                         <div className="mt-4 flex gap-2">
-                            <button className="flex-1 h-12 bg-teal-600 text-white rounded-xl font-black uppercase text-xs">Send Invoice</button>
-                            <button className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white"><Download size={20} /></button>
+                            <button
+                                onClick={async () => {
+                                    if (!selectedInvoiceForOptions) return;
+                                    const toastId = toast.loading('Sending invoice...');
+                                    try {
+                                        const { callMcpTool } = await import('@/services/mcp/toolCaller');
+                                        await callMcpTool('send_invoice', { invoice_id: selectedInvoiceForOptions.id });
+                                        toast.success('Invoice dispatched successfully!', { id: toastId });
+                                        setShowPDFPreview(null);
+                                    } catch (err: any) {
+                                        toast.error(`Failed: ${err.message}`, { id: toastId });
+                                    }
+                                }}
+                                className="flex-1 h-12 bg-teal-600 text-white rounded-xl font-black uppercase text-xs"
+                            >
+                                Send Invoice
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!selectedInvoiceForOptions) return;
+                                    const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
+                                    const client = selectedInvoiceForOptions.clientId
+                                        ? { name: clientMap[selectedInvoiceForOptions.clientId] || selectedInvoiceForOptions.clientId, email: '' }
+                                        : { name: metadata?.clientName || 'Walk-in', email: '' };
+                                    const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
+                                    doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
+                                }}
+                                className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white"
+                            >
+                                <Download size={20} />
+                            </button>
                         </div>
                     </motion.div>
                 )}

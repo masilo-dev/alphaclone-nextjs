@@ -1269,6 +1269,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 onClose={() => setShowOutreachModal(false)}
                 userId={user.id}
                 initialSelectedLeads={selectedClientIds}
+                recipientSource="clients"
             />
 
             {/* Batch Outreach FAB and Panel */}
@@ -1282,6 +1283,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 isOpen={showOutreachPanel}
                 onClose={() => setShowOutreachPanel(false)}
                 selectedIds={selectedClientIds}
+                recipientSource="clients"
                 onSuccess={() => {
                     setSelectedClientIds([]);
                     loadClients(true);

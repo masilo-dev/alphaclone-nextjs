@@ -260,7 +260,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     </span>
 
                                     {/* Unread badge */}
-                                    {item.href === '/dashboard/messages' && unreadMessageCount > 0 && (
+                                    {(item.href === '/dashboard/messages' || item.href === '/dashboard/business/messages') && unreadMessageCount > 0 && (
                                         <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
                                             {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
                                         </span>

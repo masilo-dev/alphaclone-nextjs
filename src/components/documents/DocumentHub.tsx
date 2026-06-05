@@ -10,7 +10,9 @@ import {
     Image as ImageIcon,
     Type,
     FileQuestion,
-    Quote
+    Quote,
+    Mail,
+    Send
 } from 'lucide-react';
 import { googleDriveService } from '../../services/googleDriveService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -110,8 +112,62 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [storageUsed, setStorageUsed] = useState(0);
     const { user: authUser } = useAuth();
     const [isSavingToDrive, setIsSavingToDrive] = useState<string | null>(null);
+    const [emailFile, setEmailFile] = useState<HubFile | null>(null);
+    const [emailTo, setEmailTo] = useState('');
+    const [emailSubject, setEmailSubject] = useState('');
+    const [emailMessage, setEmailMessage] = useState('');
+    const [isEmailing, setIsEmailing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scanInputRef = useRef<HTMLInputElement>(null);
+
+    const openEmailModal = useCallback((file: HubFile) => {
+        setEmailFile(file);
+        setEmailTo('');
+        setEmailSubject(`Document: ${file.original_filename}`);
+        setEmailMessage(`Hi,\n\nPlease find attached "${file.original_filename}".\n\nBest regards`);
+    }, []);
+
+    const handleEmailDocument = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!emailFile) return;
+        if (!currentTenant?.id) {
+            toast.error('No active workspace');
+            return;
+        }
+        const recipient = emailTo.trim();
+        if (!recipient) {
+            toast.error('Enter a recipient email');
+            return;
+        }
+        setIsEmailing(true);
+        const toastId = toast.loading('Sending document...');
+        try {
+            const safeMessage = emailMessage.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;line-height:1.6;white-space:pre-wrap;">${safeMessage}</div>`;
+            const response = await fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    to: recipient,
+                    subject: emailSubject.trim() || `Document: ${emailFile.original_filename}`,
+                    html,
+                    document_file_ids: [emailFile.id],
+                }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.success === false) {
+                throw new Error(data?.error || 'Failed to send');
+            }
+            toast.success('Document sent', { id: toastId });
+            setEmailFile(null);
+        } catch (err: any) {
+            console.error('Email document error:', err);
+            toast.error(err?.message || 'Failed to send document', { id: toastId });
+        } finally {
+            setIsEmailing(false);
+        }
+    }, [emailFile, emailTo, emailSubject, emailMessage, currentTenant?.id]);
 
     const loadFiles = useCallback(async () => {
         if (!currentTenant?.id) {
@@ -611,6 +667,77 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
     const storagePercent = Math.min((storageUsed / (100 * BYTES_TO_MB)) * 100, 100);
 
+    const renderEmailModal = () => {
+        if (!emailFile) return null;
+        return (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+                <form
+                    onSubmit={handleEmailDocument}
+                    className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+                >
+                    <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-400 flex items-center justify-center shrink-0">
+                                <Mail className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <h3 className="text-white font-bold text-base">Email Document</h3>
+                                <p className="text-slate-500 text-xs truncate">{emailFile.original_filename} will be attached</p>
+                            </div>
+                        </div>
+                        <button type="button" onClick={() => setEmailFile(null)} className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors shrink-0">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="p-5 sm:p-6 space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">To</label>
+                            <input
+                                type="email"
+                                required
+                                value={emailTo}
+                                onChange={(e) => setEmailTo(e.target.value)}
+                                placeholder="client@example.com"
+                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Subject</label>
+                            <input
+                                type="text"
+                                value={emailSubject}
+                                onChange={(e) => setEmailSubject(e.target.value)}
+                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Message</label>
+                            <textarea
+                                value={emailMessage}
+                                onChange={(e) => setEmailMessage(e.target.value)}
+                                rows={5}
+                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none resize-none"
+                            />
+                        </div>
+                    </div>
+                    <div className="p-5 sm:p-6 border-t border-white/5 flex items-center justify-end gap-3">
+                        <button type="button" onClick={() => setEmailFile(null)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-bold hover:bg-slate-700 transition-colors">
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isEmailing}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                        >
+                            {isEmailing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            Send
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    };
+
     // ── VIEWER / EDITOR MODE ──────────────────────────────────────────────────
     if (viewMode !== 'list' && selectedFile) {
         const isPdf = selectedFile.file_type === 'application/pdf';
@@ -657,8 +784,17 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         >
                             <Download className="w-4 h-4" /> Download
                         </button>
+                        {selectedFile.storage_path && (
+                            <button
+                                onClick={() => openEmailModal(selectedFile)}
+                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-xs font-bold transition-all border border-white/5"
+                            >
+                                <Mail className="w-4 h-4" /> Email
+                            </button>
+                        )}
                     </div>
                 </div>
+                {renderEmailModal()}
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-slate-950">
@@ -969,6 +1105,13 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                             <Printer className="w-5 h-5 sm:w-4 sm:h-4" />
                                         </button>
                                         <button
+                                            onClick={() => openEmailModal(file)}
+                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
+                                            title="Email document"
+                                        >
+                                            <Mail className="w-5 h-5 sm:w-4 sm:h-4" />
+                                        </button>
+                                        <button
                                             onClick={() => handleSaveToDrive(file)}
                                             disabled={isSavingToDrive === file.id}
                                             className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
@@ -1071,6 +1214,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 </div>
             </div>
         )}
+        {renderEmailModal()}
         </>
     );
 };

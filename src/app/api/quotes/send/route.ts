@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
@@ -90,7 +91,17 @@ export async function POST(req: NextRequest) {
       .eq('quote_id', quoteId)
       .order('item_order', { ascending: true });
 
+    const publicToken =
+        (quote.metadata as Record<string, string> | null)?.public_token || crypto.randomUUID();
+    const responseLink = `${req.nextUrl.origin}/quote/${publicToken}`;
+
     const pdfBuffer = await renderQuotePdfBuffer(quote, items || []);
+    const emailBody = [
+      message || `Please find attached quote ${quote.quote_number}.`,
+      '',
+      `Review and respond online: ${responseLink}`,
+    ].join('\n');
+
     const emailResponse = await fetch(`${req.nextUrl.origin}/api/email/send`, {
       method: 'POST',
       headers: {
@@ -102,7 +113,12 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         to: recipients,
         subject: subject || `Quote ${quote.quote_number}`,
-        text: message || `Please find attached quote ${quote.quote_number}.`,
+        text: emailBody,
+        html: `
+          <p>${message || `Please find attached quote ${quote.quote_number}.`}</p>
+          <p><a href="${responseLink}" style="display:inline-block;padding:12px 24px;background:#0d9488;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Review &amp; Respond</a></p>
+          <p style="color:#64748b;font-size:12px;">Or copy this link: ${responseLink}</p>
+        `,
         attachments: [{
           filename: `Quote_${quote.quote_number}.pdf`,
           content: pdfBuffer.toString('base64'),
@@ -118,11 +134,15 @@ export async function POST(req: NextRequest) {
 
     await supabase
       .from('quotes')
-      .update({ status: 'sent', sent_at: new Date().toISOString() })
+      .update({
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        metadata: { ...(quote.metadata || {}), public_token: publicToken },
+      })
       .eq('id', quoteId)
       .eq('tenant_id', tenantId);
 
-    return NextResponse.json({ success: true, message: 'Quote sent successfully' });
+    return NextResponse.json({ success: true, message: 'Quote sent successfully', responseLink });
   } catch (error) {
     console.error('[quotes/send] error:', error);
     return routeErrorResponse(error, 'Failed to send quote', req);

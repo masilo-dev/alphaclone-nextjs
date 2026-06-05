@@ -9,6 +9,7 @@ import {
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
+import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -198,11 +199,21 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
     setLoading(true);
-    const [{ data: invData }, { data: expData }] = await Promise.all([
-      supabase.from('invoices').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
+    const [{ invoices: bizInvoices }, { data: expData }] = await Promise.all([
+      businessInvoiceService.getInvoices(currentTenant.id),
       supabase.from('expenses').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
     ]);
-    setInvoices((invData as Invoice[]) || []);
+    const mapped: Invoice[] = (bizInvoices || []).map((inv) => ({
+      id: inv.id,
+      number: inv.invoiceNumber,
+      client_name: inv.senderName || 'Client',
+      amount: inv.total,
+      status: (['draft', 'sent', 'paid', 'overdue'].includes(inv.status) ? inv.status : 'draft') as InvoiceStatus,
+      due_date: inv.dueDate,
+      created_at: inv.createdAt,
+      tenant_id: currentTenant.id,
+    }));
+    setInvoices(mapped);
     setExpenses((expData as Expense[]) || []);
     setLoading(false);
   }, [currentTenant?.id]);
@@ -210,12 +221,20 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
   useEffect(() => { load(); }, [load]);
 
   const deleteInvoice = async (id: string) => {
-    await supabase.from('invoices').delete().eq('id', id);
+    const { error } = await businessInvoiceService.deleteInvoice(id);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     setInvoices(prev => prev.filter(i => i.id !== id));
     toast.success('Invoice deleted');
   };
   const markPaid = async (id: string) => {
-    await supabase.from('invoices').update({ status: 'paid' }).eq('id', id);
+    const { error } = await businessInvoiceService.updateInvoice(id, { status: 'paid' });
+    if (error) {
+      toast.error(error);
+      return;
+    }
     setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'paid' as InvoiceStatus } : i));
     toast.success('Invoice marked paid');
   };
@@ -230,7 +249,11 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       invoice={selectedInvoice}
       onBack={() => setSelectedInvoice(null)}
       onSend={async (id) => {
-        await supabase.from('invoices').update({ status: 'sent' }).eq('id', id);
+        const { error } = await businessInvoiceService.updateInvoice(id, { status: 'sent' });
+        if (error) {
+          toast.error(error);
+          return;
+        }
         setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'sent' } : i));
         setSelectedInvoice(prev => prev ? { ...prev, status: 'sent' } : null);
         toast.success('Invoice marked as sent');

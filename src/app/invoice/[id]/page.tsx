@@ -131,7 +131,7 @@ export default function PublicInvoicePage() {
     const isPaid = invoice.status === 'paid';
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12 font-sans selection:bg-teal-500/30">
+        <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-6 md:p-12 font-sans selection:bg-teal-500/30">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none opacity-20">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/20 blur-[150px] rounded-full"></div>
@@ -141,13 +141,13 @@ export default function PublicInvoicePage() {
             <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-8 relative z-10">
                 {/* Left: Invoice Details */}
                 <div className="md:col-span-3 space-y-6">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-16 h-16 bg-white flex items-center justify-center rounded-2xl shadow-xl shadow-white/5">
-                            <span className="text-black font-black text-2xl">A</span>
+                    <div className="flex items-center gap-3 sm:gap-4 mb-8">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white flex items-center justify-center rounded-2xl shadow-xl shadow-white/5 shrink-0">
+                            <span className="text-black font-black text-xl sm:text-2xl">A</span>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">AlphaClone Systems</h1>
-                            <p className="text-slate-500 text-sm font-mono">FINANCIAL SETTLEMENT PORTAL</p>
+                        <div className="min-w-0">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">AlphaClone Systems</h1>
+                            <p className="text-slate-500 text-xs sm:text-sm font-mono">FINANCIAL SETTLEMENT PORTAL</p>
                         </div>
                     </div>
 
@@ -166,15 +166,15 @@ export default function PublicInvoicePage() {
                         />
                     </div>
 
-                    <Card className="p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
-                        <div className="flex justify-between items-start mb-12">
-                            <div>
+                    <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+                        <div className="flex flex-wrap justify-between items-start gap-3 mb-8 sm:mb-12">
+                            <div className="min-w-0">
                                 <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
-                                <h2 className="text-3xl font-mono font-bold text-white">{invoice.invoice_number || invoice.invoiceNumber}</h2>
+                                <h2 className="text-2xl sm:text-3xl font-mono font-bold text-white break-all">{invoice.invoice_number || invoice.invoiceNumber}</h2>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-8 mb-12">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
                             <div>
                                 <p className="text-slate-500 text-xs uppercase font-bold mb-2">Issue Date</p>
                                 <p className="text-lg font-medium">{new Date(invoice.issue_date || invoice.issueDate).toLocaleDateString()}</p>
@@ -190,12 +190,12 @@ export default function PublicInvoicePage() {
                             <p className="text-slate-500 text-xs uppercase font-bold mb-4">Billing Summary</p>
                             <div className="space-y-3">
                                 {normalizedItems.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-center bg-slate-950/30 p-4 rounded-xl border border-white/5">
-                                        <div>
-                                            <p className="font-semibold text-slate-200">{item.description}</p>
+                                    <div key={idx} className="flex justify-between items-center gap-3 bg-slate-950/30 p-4 rounded-xl border border-white/5">
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-slate-200 break-words">{item.description}</p>
                                             <p className="text-xs text-slate-500">Qty: {item.quantity} &times; ${item.rate.toFixed(2)}</p>
                                         </div>
-                                        <p className="font-mono font-bold text-teal-400">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                        <p className="font-mono font-bold text-teal-400 shrink-0">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                     </div>
                                 ))}
                             </div>
@@ -217,9 +217,9 @@ export default function PublicInvoicePage() {
                                     <span className="font-mono">-${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between items-center text-white pt-4">
-                                <span className="text-xl font-bold">Total Amount Due</span>
-                                <span className="text-4xl font-mono font-black text-teal-500">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <div className="flex flex-wrap justify-between items-center gap-2 text-white pt-4">
+                                <span className="text-lg sm:text-xl font-bold">Total Amount Due</span>
+                                <span className="text-3xl sm:text-4xl font-mono font-black text-teal-500 break-all">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </Card>
@@ -238,7 +238,7 @@ export default function PublicInvoicePage() {
                 <div className="md:col-span-2 space-y-6">
                     <div className="sticky top-12">
                         {isPaid ? (
-                            <Card className="p-8 border-teal-500/30 bg-teal-500/10 text-center space-y-6">
+                            <Card className="p-5 sm:p-8 border-teal-500/30 bg-teal-500/10 text-center space-y-6">
                                 <div className="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(20,184,166,0.5)]">
                                     <CheckCircle2 className="w-12 h-12 text-white" />
                                 </div>
@@ -252,7 +252,7 @@ export default function PublicInvoicePage() {
                             </Card>
                         ) : (
                             <div className="space-y-6">
-                                <Card className="p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-8">
+                                <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-8">
                                     <div className="text-center">
                                         <h3 className="text-xl font-bold mb-2">Checkout Securely</h3>
                                         <p className="text-slate-500 text-xs uppercase tracking-widest flex items-center justify-center gap-2">
@@ -307,8 +307,8 @@ export default function PublicInvoicePage() {
             </div>
 
             {/* Global Footer */}
-            <div className="max-w-5xl mx-auto mt-24 pt-12 border-t border-slate-900 flex flex-col items-center gap-8 text-slate-600">
-                <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-widest">
+            <div className="max-w-5xl mx-auto mt-12 sm:mt-24 pt-12 border-t border-slate-900 flex flex-col items-center gap-8 text-slate-600">
+                <div className="flex flex-wrap justify-center text-center items-center gap-3 sm:gap-4 font-mono text-xs uppercase tracking-widest">
                     <span>AlphaClone Core</span>
                     <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
                     <span>Finance Engine v3.0</span>

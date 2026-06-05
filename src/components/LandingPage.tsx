@@ -44,6 +44,8 @@ const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
    </div>
 );
 
+import { PLATFORM_CALENDLY_URL } from '@/constants';
+
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
 const LOGIN_HREF = '/auth/login';
 
@@ -747,10 +749,16 @@ const LandingPage = () => {
                            <ArrowRight className="w-5 h-5 ml-2" />
                         </Button>
                         <button
-                           onClick={() => window.location.href = '/book-demo'}
+                           onClick={() => window.open(PLATFORM_CALENDLY_URL, '_blank', 'noopener,noreferrer')}
                            className="h-14 px-8 text-lg font-medium text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
                         >
                            Book a Demo
+                        </button>
+                        <button
+                           onClick={() => window.location.href = '/demo'}
+                           className="h-14 px-8 text-lg font-medium text-slate-400 hover:text-white transition-all"
+                        >
+                           Watch Demo
                         </button>
                      </div>
 

@@ -7,9 +7,10 @@ import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { MicrosoftMailView } from './MicrosoftMailView';
 import { Button } from '../ui/UIComponents';
 import { toast } from 'react-hot-toast';
+import { User } from '../../types';
 
 interface MailTabProps {
-    user: any;
+    user: User;
 }
 
 const MailTab: React.FC<MailTabProps> = ({ user }) => {

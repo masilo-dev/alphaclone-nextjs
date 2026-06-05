@@ -75,7 +75,7 @@ export default function WhoWeServePage() {
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                                 <Button
-                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                                    onClick={() => window.open('https://calendly.com/bonniealphaclonesystems/30min', '_blank')}
                                     className="bg-transparent text-white border-white/20 hover:border-teal-500 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover"
                                 >
                                     <span className="relative z-10">Book Strategy Call</span>
@@ -313,7 +313,7 @@ export default function WhoWeServePage() {
                         </p>
                          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Button
-                                onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                                onClick={() => window.open('https://calendly.com/bonniealphaclonesystems/30min', '_blank')}
                                 className="bg-transparent text-white border-white/20 hover:border-teal-500 font-bold px-12 py-5 h-auto text-xl rounded-2xl button-fill-hover"
                             >
                                 <span className="relative z-10">Book Strategy Call</span>

@@ -138,7 +138,7 @@ export default function BookingPage() {
                 selectedSlot.start,
                 selectedSlot.end,
                 { name: formData.name, email: formData.email, phone: formData.phone, notes: formData.notes },
-                { turnstileToken: null }
+                { turnstileToken: null, meetingTypeName: service.name }
             );
 
             if (bookingError) throw new Error(bookingError);

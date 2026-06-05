@@ -183,7 +183,6 @@ class DailyService {
         tenantId?: string;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
-            // ENFORCE PLAN LIMITS
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('No tenant context found');
 
@@ -198,45 +197,26 @@ class DailyService {
 
             const plan = (tenantData?.subscription_plan as any) || 'free';
             const { PLAN_PRICING } = await import('./tenancy/types');
-            const planFeatures = { ...PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features }; // Clone features
+            const planFeatures = { ...PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features };
 
-            // SUPER ADMIN or SPECIFIC BYPASS: No limits
-            if (isSuperAdminTenant || isUnlimitedUser) {
-                planFeatures.maxVideoMeetingsPerMonth = -1;
-                planFeatures.maxVideoMinutesPerMeeting = -1;
-            }
+            // During the free launch window (and for super-admin / unlimited users),
+            // meetings are uncapped. After the window closes, plan limits apply.
+            const { isLaunchFreeWindow } = await import('../lib/launchWindow');
+            const limitsWaived = isSuperAdminTenant || isUnlimitedUser || isLaunchFreeWindow();
 
-            // 1. Enforce Video Teaser Limit for New Users
-            // For NEW users (created on or after Feb 13, 2026) on FREE plan:
-            // Cap at 2 videos total to tease subscription due to "high volume".
-            const NEW_USER_CUTOFF = new Date('2026-02-13T00:00:00Z');
+            if (!limitsWaived && plan === 'free') {
+                const { count } = await supabase
+                    .from('video_calls')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('host_id', data.hostId);
 
-            if (plan === 'free' && !isSuperAdminTenant && !isUnlimitedUser) {
-                const { data: tenant } = await supabase
-                    .from('tenants')
-                    .select('created_at')
-                    .eq('id', tenantId)
-                    .single();
-
-                const createdAt = new Date(tenant?.created_at || '');
-
-                if (createdAt >= NEW_USER_CUTOFF) {
-                    const { count } = await supabase
-                        .from('video_calls')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('host_id', data.hostId);
-
-                    if (count !== null && count >= 2) {
-                        return {
-                            call: null,
-                            error: 'LIMIT_EXCEEDED_TEASER'
-                        };
-                    }
+                const maxMeetings = planFeatures.maxVideoMeetingsPerMonth;
+                if (maxMeetings !== -1 && count !== null && count >= maxMeetings) {
+                    return { call: null, error: 'LIMIT_EXCEEDED_TEASER' };
                 }
             }
 
-            // 2. Determine Duration Limit
-            const durationLimit = planFeatures.maxVideoMinutesPerMeeting === -1
+            const durationLimit = limitsWaived || planFeatures.maxVideoMinutesPerMeeting === -1
                 ? (data.duration || 1440)
                 : Math.min(data.duration || 1440, planFeatures.maxVideoMinutesPerMeeting);
 

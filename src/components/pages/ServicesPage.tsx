@@ -297,7 +297,7 @@ const ServicesPage: React.FC = () => {
                                                 <Button
                                                     variant="outline"
                                                     className="w-full py-4 rounded-xl button-fill-hover"
-                                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                                                    onClick={() => window.open('https://calendly.com/bonniealphaclonesystems/30min', '_blank')}
                                                 >
                                                     <span className="relative z-10">Book a Demo Call</span>
                                                 </Button>
@@ -403,7 +403,7 @@ const ServicesPage: React.FC = () => {
                                 <Button
                                     variant="outline"
                                     className="text-lg px-10 py-5 h-auto rounded-2xl button-fill-hover"
-                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
+                                    onClick={() => window.open('https://calendly.com/bonniealphaclonesystems/30min', '_blank')}
                                 >
                                     <span className="relative z-10 flex items-center">
                                         <Phone className="w-5 h-5 mr-2" />

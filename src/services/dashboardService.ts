@@ -56,7 +56,13 @@ export const notificationService = {
             .order('created_at', { ascending: false })
             .limit(limit);
 
-        return { notifications: data, error };
+        // DB stores the destination in `action_url`; expose it as `link` for the UI.
+        const notifications = (data || []).map((n: any) => ({
+            ...n,
+            link: n.link ?? n.action_url ?? undefined,
+        }));
+
+        return { notifications, error };
     },
 
     async getUnreadCount(userId: string, tenantId: string) {
@@ -122,7 +128,8 @@ export const notificationService = {
                 },
                 (payload: RealtimePostgresChangesPayload<Notification>) => {
                     if (payload.new && 'tenant_id' in payload.new && payload.new.tenant_id === tenantId) {
-                        callback(payload.new as Notification);
+                        const row = payload.new as any;
+                        callback({ ...row, link: row.link ?? row.action_url ?? undefined } as Notification);
                     }
                 }
             )

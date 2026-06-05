@@ -80,7 +80,7 @@ export default function PublicBusinessProjectPage() {
                         <CheckCircle2 className="w-4 h-4" />
                         Live Implementation Tracking
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-500">
+                    <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-500 break-words">
                         {project.name}
                     </h1>
                     <div className="flex flex-wrap items-center justify-center gap-6 text-slate-400">
@@ -98,7 +98,7 @@ export default function PublicBusinessProjectPage() {
                 </div>
 
                 {/* Progress Visualizer */}
-                <Card className="p-8 md:p-12 border-slate-800 bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden group">
+                <Card className="p-5 sm:p-8 md:p-12 border-slate-800 bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Briefcase className="w-32 h-32" />
                     </div>
@@ -108,13 +108,13 @@ export default function PublicBusinessProjectPage() {
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="text-center md:text-left">
                                 <p className="text-slate-500 text-sm font-medium uppercase tracking-widest mb-2">Overall Completion</p>
-                                <div className="text-8xl font-black text-white flex items-baseline">
+                                <div className="text-6xl sm:text-8xl font-black text-white flex items-baseline">
                                     {project.progress}
-                                    <span className="text-teal-500 text-4xl ml-2">%</span>
+                                    <span className="text-teal-500 text-3xl sm:text-4xl ml-2">%</span>
                                 </div>
                             </div>
 
-                            <div className="w-48 h-4( bg-slate-800/50 rounded-2xl p-6 border border-white/5 text-center">
+                            <div className="w-full sm:w-48 bg-slate-800/50 rounded-2xl p-6 border border-white/5 text-center">
                                 <p className="text-slate-500 text-xs uppercase mb-2">Current Phase</p>
                                 <p className={`text-lg font-bold capitalize ${statusColors[project.status].split(' ')[0]}`}>
                                     {project.status.replace('_', ' ')}

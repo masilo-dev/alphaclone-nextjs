@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { jsPDF } from 'jspdf';
-import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2, XCircle } from 'lucide-react';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
@@ -24,6 +24,10 @@ export default function PublicContractPage() {
     const [legalName, setLegalName] = useState<string>('');
     const [signerEmail, setSignerEmail] = useState<string>('');
     const [consentAccepted, setConsentAccepted] = useState(false);
+    const [declining, setDeclining] = useState(false);
+    const [declined, setDeclined] = useState(false);
+    const [declineNote, setDeclineNote] = useState('');
+    const [showDeclineForm, setShowDeclineForm] = useState(false);
 
     useEffect(() => {
         if (signingToken) {
@@ -46,11 +50,36 @@ export default function PublicContractPage() {
             if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
                 setSigned(true);
             }
+            if (payload.contract.status === 'rejected') {
+                setDeclined(true);
+            }
         } catch (error) {
             console.error('Error loading contract:', error);
             toast.error('Contract not found or access denied.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        setDeclining(true);
+        try {
+            const response = await fetch('/api/contracts/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: signingToken, action: 'decline', note: declineNote.trim() }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error || 'Failed to decline contract');
+            }
+            setDeclined(true);
+            setShowDeclineForm(false);
+            toast.success('Contract declined — the sender has been notified.');
+        } catch (error: any) {
+            toast.error(error.message || 'Unable to decline contract');
+        } finally {
+            setDeclining(false);
         }
     };
 
@@ -229,7 +258,14 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Signature Section */}
-                {!signed ? (
+                {declined ? (
+                    <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20">
+                            <XCircle className="w-5 h-5" />
+                            <span className="font-bold text-sm">Contract Declined</span>
+                        </div>
+                    </div>
+                ) : !signed ? (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800">
                         {/* ESIGN Disclosure */}
                         <div className="mb-8 p-6 bg-slate-900 border border-slate-700 rounded-xl">
@@ -302,6 +338,46 @@ export default function PublicContractPage() {
                             )}
                             {!signatureData ? 'Confirm Signature First' : (signing ? 'Signing...' : 'Sign Contract')}
                         </button>
+
+                        <div className="mt-6 pt-6 border-t border-slate-800">
+                            {!showDeclineForm ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeclineForm(true)}
+                                    className="text-sm text-slate-500 hover:text-red-400 transition-colors"
+                                >
+                                    Decline this contract instead
+                                </button>
+                            ) : (
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-medium text-slate-300">Reason for declining (optional)</label>
+                                    <textarea
+                                        value={declineNote}
+                                        onChange={(e) => setDeclineNote(e.target.value)}
+                                        placeholder="Let us know why you're declining..."
+                                        className="w-full h-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
+                                    />
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleDecline}
+                                            disabled={declining}
+                                            className="flex-1 py-3 px-4 bg-slate-800 hover:bg-red-900/40 border border-red-500/30 rounded-xl font-bold text-red-400 flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            {declining ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                                            Confirm Decline
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeclineForm(false)}
+                                            className="px-4 py-3 text-slate-500 hover:text-white text-sm"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">

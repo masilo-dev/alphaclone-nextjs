@@ -181,7 +181,7 @@ export default function PublicSignPage() {
                 <FileText className="w-4 h-4 text-slate-400" />
                 <span className="text-sm font-medium text-slate-700">{contract.title || 'Agreement'}</span>
               </div>
-              <div className="p-8 md:p-12 min-h-[600px] prose prose-slate max-w-none">
+              <div className="p-4 sm:p-8 md:p-12 min-h-[300px] sm:min-h-[600px] prose prose-slate max-w-none overflow-x-auto break-words [&_*]:max-w-full">
                 <div dangerouslySetInnerHTML={{ __html: contract.content || '' }} />
               </div>
             </div>
