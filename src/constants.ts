@@ -137,6 +137,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Lead Ingestion', href: '/dashboard/business/ingestion', icon: Database },
       { label: 'Leads Board', href: '/dashboard/leads', icon: TrendingUp },
       { label: 'Deals Pipeline', href: '/dashboard/deals', icon: Target },
+      { label: 'Branded Forms', href: '/dashboard/business/forms', icon: FileText },
       { label: 'AI Growth Agent', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
     ]
   },

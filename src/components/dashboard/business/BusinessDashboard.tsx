@@ -78,6 +78,7 @@ const QuotaManager = React.lazy(() => import('./QuotaManager'));
 
 const PagesTab = React.lazy(() => import('@/components/pages/PagesTab'));
 const ContactSubmissionsTab = React.lazy(() => import('../ContactSubmissionsTab'));
+const FormsHub = React.lazy(() => import('./FormsHub'));
 const CampaignBuilder = React.lazy(() => import('./CampaignBuilder'));
 const FacebookIntegrationTab = React.lazy(() => import('../facebook/FacebookIntegrationTab'));
 const ExpenseTrackerTab = React.lazy(() => import('./ExpenseTrackerTab'));
@@ -482,6 +483,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <ContactSubmissionsTab />
                     </React.Suspense>
                 );
+            case '/dashboard/business/forms':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <FormsHub />
+                    </React.Suspense>
+                );
             case '/dashboard/business/campaigns':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -664,6 +671,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/documents': return t('Document Hub');
             case '/dashboard/business/pages': return t('Pages');
             case '/dashboard/business/contact-submissions': return t('Contact Submissions');
+            case '/dashboard/business/forms': return t('Branded Forms');
             case '/dashboard/business/campaigns': return t('Campaigns');
             case '/dashboard/business/facebook': return t('Facebook');
             case '/dashboard/business/expenses': return t('Expense Tracker');
