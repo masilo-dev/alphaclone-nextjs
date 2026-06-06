@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import BrandedFormClient from './BrandedFormClient';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Contact Form',
+  robots: { index: false, follow: false },
+};
 
 interface PageProps {
   params: Promise<{ slug: string }>;

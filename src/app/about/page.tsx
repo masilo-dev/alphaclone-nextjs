@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import AboutPage from '@/components/pages/AboutPage';
+import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
+import { absoluteUrl } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
     title: 'About AlphaClone Systems | Unified CRM, Billing, Scheduling, and Operations',
@@ -15,11 +17,11 @@ export const metadata: Metadata = {
         'business workflow automation platform',
         'small business operations software',
     ],
-    alternates: { canonical: 'https://alphaclonesystems.com/about' },
+    alternates: { canonical: absoluteUrl('/about') },
     openGraph: {
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
-        url: 'https://alphaclonesystems.com/about',
+        url: absoluteUrl('/about'),
         type: 'website',
     },
     twitter: {
@@ -29,14 +31,10 @@ export const metadata: Metadata = {
     },
 };
 
-const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
-        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://alphaclonesystems.com/about' },
-    ],
-};
+const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+]);
 
 export default function Page() {
     return (

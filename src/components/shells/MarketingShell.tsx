@@ -16,7 +16,8 @@ export default function MarketingShell({ children }: { children: React.ReactNode
         pathname?.startsWith('/register') ||
         pathname?.startsWith('/contract') ||
         pathname?.startsWith('/project') ||
-        pathname?.startsWith('/invoice');
+        pathname?.startsWith('/invoice') ||
+        pathname?.startsWith('/form');
 
     // Pass-through shell for standard web users.
     // Landing page handles its own background for better isolation.

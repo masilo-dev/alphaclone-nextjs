@@ -26,7 +26,7 @@ export default function BrandedFormClient({
         const res = await fetch(
           `/api/forms/public?tenantSlug=${encodeURIComponent(tenantSlug)}&formSlug=${encodeURIComponent(formSlug)}`
         );
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) throw new Error(data.error || 'Form not found');
         if (!cancelled) setPayload({ tenant: data.tenant, form: data.form });
       } catch (err: any) {

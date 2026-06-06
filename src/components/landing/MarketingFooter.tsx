@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Github, Twitter, Linkedin, Mail, Shield, Globe, Lock } from 'lucide-react';
+import { Twitter, Linkedin, Mail, Shield, Globe } from 'lucide-react';
 import Image from 'next/image';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
+import { SOCIAL_PROFILES } from '@/lib/seo/siteEntity';
 
 const MarketingFooter: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -79,14 +80,30 @@ const MarketingFooter: React.FC = () => {
                             The all-in-one platform for business operations. Built for agencies and service teams with transparent legal policies and clear data controls.
                         </p>
                         <div className="flex gap-4">
-                            <a href="#" className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all">
+                            <a
+                                href={SOCIAL_PROFILES.twitter}
+                                rel="me noopener noreferrer"
+                                target="_blank"
+                                aria-label="AlphaClone on X (Twitter)"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                            >
                                 <Twitter className="w-5 h-5" />
                             </a>
-                            <a href="#" className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all">
+                            <a
+                                href={SOCIAL_PROFILES.linkedin}
+                                rel="me noopener noreferrer"
+                                target="_blank"
+                                aria-label="AlphaClone on LinkedIn"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                            >
                                 <Linkedin className="w-5 h-5" />
                             </a>
-                            <a href="#" className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all">
-                                <Github className="w-5 h-5" />
+                            <a
+                                href="mailto:support@alphaclonesystems.com"
+                                aria-label="Email AlphaClone support"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                            >
+                                <Mail className="w-5 h-5" />
                             </a>
                         </div>
                     </div>
