@@ -26,7 +26,7 @@ interface OnboardingSubmission {
   contact_id: string | null;
   step_id: string;
   submitted_data: Record<string, any> | null;
-  status: 'pending' | 'submitted' | 'approved';
+  status: 'pending' | 'submitted' | 'approved' | 'rejected';
   completed_at: string | null;
   created_at: string;
   contacts?: {
@@ -134,7 +134,7 @@ export default function ClientOnboardingTab() {
     }
   };
 
-  const handleReviewSubmission = async (id: string, status: 'approved' | 'pending') => {
+  const handleReviewSubmission = async (id: string, status: 'approved' | 'pending' | 'rejected') => {
     try {
       const { error } = await supabase
         .from('onboarding_submissions')
@@ -145,7 +145,13 @@ export default function ClientOnboardingTab() {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success(status === 'approved' ? 'Submission approved' : 'Submission sent back for revision');
+      toast.success(
+        status === 'approved'
+          ? 'Submission approved'
+          : status === 'rejected'
+            ? 'Submission rejected'
+            : 'Submission sent back for revision'
+      );
       loadOnboardingData();
     } catch (err: any) {
       toast.error(err.message);
@@ -328,12 +334,13 @@ export default function ClientOnboardingTab() {
                           {sub.contacts ? `${sub.contacts.first_name || ''} ${sub.contacts.last_name || ''}`.trim() || sub.contacts.email : 'Anonymous'}
                         </p>
                         <p className="text-[9px] text-slate-400 mt-0.5">
-                          Step: {sub.onboarding_steps?.title || 'Unknown step'}
+                          Step: {sub.onboarding_steps?.step_name || 'Unknown step'}
                         </p>
                       </div>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded capitalize ${
                         sub.status === 'approved' ? 'bg-teal-500/10 text-teal-400' :
                         sub.status === 'submitted' ? 'bg-violet-500/10 text-violet-400' :
+                        sub.status === 'rejected' ? 'bg-rose-500/10 text-rose-400' :
                         'bg-amber-500/10 text-amber-400'
                       }`}>
                         {sub.status}

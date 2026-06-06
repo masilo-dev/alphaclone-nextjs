@@ -66,7 +66,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         );
 
         return () => {
-            missedCallsService.unsubscribe(unsubscribe);
+            unsubscribe();
         };
     }, [userId, loadUnseenCount, onCallBack]);
 

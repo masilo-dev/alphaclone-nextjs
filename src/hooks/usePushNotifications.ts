@@ -22,9 +22,14 @@ export function usePushNotifications() {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
-    // Register Service Worker
+    // Register Service Worker (generated at production build time)
     useEffect(() => {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        if (
+            process.env.NODE_ENV === 'production' &&
+            typeof window !== 'undefined' &&
+            'serviceWorker' in navigator &&
+            'PushManager' in window
+        ) {
             navigator.serviceWorker
                 .register('/sw.js')
                 .then((reg) => {

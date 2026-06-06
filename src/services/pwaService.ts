@@ -62,6 +62,10 @@ export const pwaService = {
                 window.localStorage?.setItem(purgeKey, '1');
             }
 
+            if (process.env.NODE_ENV !== 'production') {
+                return { success: false, error: 'Service worker is only available in production builds' };
+            }
+
             const registration = await navigator.serviceWorker.register('/sw.js', {
                 scope: '/',
             });

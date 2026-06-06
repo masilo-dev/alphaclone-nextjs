@@ -1,3 +1,5 @@
+import { ENV } from '@/config/env';
+import { cleanupRealtimeChannel } from '../lib/realtime';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -208,7 +210,7 @@ class PresenceService {
     subscribeToPresence(
         onPresenceChange: (presence: UserPresence) => void
     ): () => void {
-        const subscription = supabase
+        const channel = supabase
             .channel('user-presence-changes')
             .on(
                 'postgres_changes',
@@ -226,7 +228,7 @@ class PresenceService {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(subscription);
+            cleanupRealtimeChannel(channel);
         };
     }
 
@@ -237,7 +239,7 @@ class PresenceService {
         userId: string,
         onPresenceChange: (presence: UserPresence) => void
     ): () => void {
-        const subscription = supabase
+        const channel = supabase
             .channel(`user-presence-${userId}`)
             .on(
                 'postgres_changes',
@@ -256,7 +258,7 @@ class PresenceService {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(subscription);
+            cleanupRealtimeChannel(channel);
         };
     }
 

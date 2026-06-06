@@ -1,3 +1,4 @@
+import { cleanupRealtimeChannel } from '../lib/realtime';
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { addMinutes } from 'date-fns';
@@ -398,8 +399,8 @@ export const calendarService = {
             .subscribe();
     },
 
-    unsubscribe(channel: any) {
-        supabase.removeChannel(channel);
+    unsubscribe(channel: unknown) {
+        cleanupRealtimeChannel(channel);
     },
 
     /**
