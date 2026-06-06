@@ -13,21 +13,21 @@ import toast from 'react-hot-toast';
 interface OnboardingStep {
   id: string;
   tenant_id: string;
-  title: string;
-  description: string | null;
-  sort_order: number;
+  step_name: string;
+  step_description: string | null;
+  step_order: number;
+  step_type: 'form' | 'contract' | 'payment' | 'upload';
   is_required: boolean;
   created_at: string;
 }
 
 interface OnboardingSubmission {
   id: string;
-  tenant_id: string;
   contact_id: string | null;
   step_id: string;
   submitted_data: Record<string, any> | null;
-  status: 'pending' | 'approved' | 'rejected';
-  reviewed_at: string | null;
+  status: 'pending' | 'submitted' | 'approved';
+  completed_at: string | null;
   created_at: string;
   contacts?: {
     first_name: string | null;
@@ -48,9 +48,10 @@ export default function ClientOnboardingTab() {
   const [vertical, setVertical] = useState('Consulting');
 
   const [stepForm, setStepForm] = useState({
-    title: '',
-    description: '',
-    sort_order: 1,
+    step_name: '',
+    step_description: '',
+    step_order: 1,
+    step_type: 'form' as OnboardingStep['step_type'],
     is_required: true
   });
 
@@ -63,11 +64,11 @@ export default function ClientOnboardingTab() {
           .from('onboarding_steps')
           .select('*')
           .eq('tenant_id', tenant.id)
-          .order('sort_order', { ascending: true }),
+          .order('step_order', { ascending: true }),
         supabase
           .from('onboarding_submissions')
-          .select('*, contacts(first_name, last_name, email), onboarding_steps(*)')
-          .eq('tenant_id', tenant.id)
+          .select('*, contacts!inner(first_name, last_name, email, tenant_id), onboarding_steps(*)')
+          .eq('contacts.tenant_id', tenant.id)
           .order('created_at', { ascending: false })
       ]);
 
@@ -90,7 +91,7 @@ export default function ClientOnboardingTab() {
   const handleCreateStep = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tenant?.id) return;
-    if (!stepForm.title.trim()) return toast.error('Step title is required');
+    if (!stepForm.step_name.trim()) return toast.error('Step title is required');
 
     setSavingStep(true);
     try {
@@ -98,16 +99,17 @@ export default function ClientOnboardingTab() {
         .from('onboarding_steps')
         .insert({
           tenant_id: tenant.id,
-          title: stepForm.title,
-          description: stepForm.description || null,
-          sort_order: stepForm.sort_order,
+          step_name: stepForm.step_name,
+          step_description: stepForm.step_description || null,
+          step_order: stepForm.step_order,
+          step_type: stepForm.step_type,
           is_required: stepForm.is_required
         });
 
       if (error) throw error;
       toast.success('Onboarding step registered');
       setShowStepModal(false);
-      setStepForm({ title: '', description: '', sort_order: steps.length + 1, is_required: true });
+      setStepForm({ step_name: '', step_description: '', step_order: steps.length + 1, step_type: 'form', is_required: true });
       loadOnboardingData();
     } catch (err: any) {
       toast.error(err.message);
@@ -132,18 +134,18 @@ export default function ClientOnboardingTab() {
     }
   };
 
-  const handleReviewSubmission = async (id: string, status: 'approved' | 'rejected') => {
+  const handleReviewSubmission = async (id: string, status: 'approved' | 'pending') => {
     try {
       const { error } = await supabase
         .from('onboarding_submissions')
         .update({
           status,
-          reviewed_at: new Date().toISOString()
+          completed_at: status === 'approved' ? new Date().toISOString() : null
         })
         .eq('id', id);
 
       if (error) throw error;
-      toast.success(`Submission marked as ${status}`);
+      toast.success(status === 'approved' ? 'Submission approved' : 'Submission sent back for revision');
       loadOnboardingData();
     } catch (err: any) {
       toast.error(err.message);
@@ -160,7 +162,7 @@ export default function ClientOnboardingTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: `Define 3 required onboarding steps for a ${vertical} client.`,
-          context: 'Return only a JSON array of steps without any markdown formatting. Example format: [{"title": "Step 1 name", "description": "Short explanation", "sort_order": 1, "is_required": true}]'
+          context: 'Return only a JSON array of steps without any markdown formatting. Example format: [{"step_name": "Step 1 name", "step_description": "Short explanation", "step_order": 1, "step_type": "form", "is_required": true}]'
         })
       });
       const data = await res.json();
@@ -173,9 +175,10 @@ export default function ClientOnboardingTab() {
             .from('onboarding_steps')
             .insert({
               tenant_id: tenant.id,
-              title: step.title,
-              description: step.description,
-              sort_order: step.sort_order || 1,
+              step_name: step.step_name || step.title,
+              step_description: step.step_description || step.description || null,
+              step_order: step.step_order || step.sort_order || 1,
+              step_type: step.step_type || 'form',
               is_required: step.is_required !== undefined ? step.is_required : true
             });
         }
@@ -206,7 +209,7 @@ export default function ClientOnboardingTab() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              setStepForm({ title: '', description: '', sort_order: steps.length + 1, is_required: true });
+              setStepForm({ step_name: '', step_description: '', step_order: steps.length + 1, step_type: 'form', is_required: true });
               setShowStepModal(true);
             }}
             className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl text-xs font-bold transition-all active:scale-95"
@@ -245,16 +248,16 @@ export default function ClientOnboardingTab() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold text-xs">
-                          {step.sort_order}
+                          {step.step_order}
                         </span>
-                        <h4 className="text-xs font-bold text-white">{step.title}</h4>
+                        <h4 className="text-xs font-bold text-white">{step.step_name}</h4>
                         {step.is_required && (
                           <span className="text-[9px] font-bold bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">
                             Required
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1 pl-7">{step.description || 'No description provided'}</p>
+                      <p className="text-[10px] text-slate-400 mt-1 pl-7">{step.step_description || 'No description provided'}</p>
                     </div>
 
                     <button
@@ -330,7 +333,7 @@ export default function ClientOnboardingTab() {
                       </div>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded capitalize ${
                         sub.status === 'approved' ? 'bg-teal-500/10 text-teal-400' :
-                        sub.status === 'rejected' ? 'bg-rose-500/10 text-rose-400' :
+                        sub.status === 'submitted' ? 'bg-violet-500/10 text-violet-400' :
                         'bg-amber-500/10 text-amber-400'
                       }`}>
                         {sub.status}
@@ -383,8 +386,8 @@ export default function ClientOnboardingTab() {
                   type="text"
                   required
                   placeholder="e.g. Schedule Kickoff Call"
-                  value={stepForm.title}
-                  onChange={e => setStepForm(f => ({ ...f, title: e.target.value }))}
+                  value={stepForm.step_name}
+                  onChange={e => setStepForm(f => ({ ...f, step_name: e.target.value }))}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-teal-500"
                 />
               </div>
@@ -393,8 +396,8 @@ export default function ClientOnboardingTab() {
                 <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Description</label>
                 <textarea
                   placeholder="Tell the client what they need to do for this step"
-                  value={stepForm.description}
-                  onChange={e => setStepForm(f => ({ ...f, description: e.target.value }))}
+                  value={stepForm.step_description}
+                  onChange={e => setStepForm(f => ({ ...f, step_description: e.target.value }))}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-teal-500 resize-none"
                   rows={3}
                 />
@@ -407,8 +410,8 @@ export default function ClientOnboardingTab() {
                     type="number"
                     required
                     min="1"
-                    value={stepForm.sort_order}
-                    onChange={e => setStepForm(f => ({ ...f, sort_order: parseInt(e.target.value) || 1 }))}
+                    value={stepForm.step_order}
+                    onChange={e => setStepForm(f => ({ ...f, step_order: parseInt(e.target.value) || 1 }))}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-teal-500"
                   />
                 </div>
