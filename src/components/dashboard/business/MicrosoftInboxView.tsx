@@ -24,7 +24,9 @@ export default function MicrosoftInboxView() {
   );
 
   const handleConnect = () => {
-    microsoftAuthService.initiateOAuth();
+    void microsoftAuthService.initiateOAuth().catch((error: any) => {
+      toast.error(error.message || 'Unable to start Microsoft connection');
+    });
   };
 
   const handleSend = async () => {

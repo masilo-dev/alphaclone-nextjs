@@ -19,7 +19,8 @@ export default function MicrosoftCallback() {
 
       const code = searchParams.get('code');
       const state = searchParams.get('state') || undefined;
-      const error = searchParams.get('error_description') || searchParams.get('error');
+      const rawError = searchParams.get('error_description') || searchParams.get('error');
+      const error = rawError ? decodeURIComponent(rawError.replace(/\+/g, ' ')) : null;
 
       if (error) {
         setMessage(error);
@@ -33,9 +34,11 @@ export default function MicrosoftCallback() {
 
       try {
         await microsoftAuthService.handleCallback(code, state);
-        setMessage('Microsoft 365 connected. Redirecting back to settings...');
+        const returnPath = microsoftAuthService.getOAuthReturnPath();
+        sessionStorage.removeItem('alphaclone.microsoft.oauth.return');
+        setMessage('Microsoft 365 connected. Redirecting...');
         window.setTimeout(() => {
-          router.replace('/dashboard/settings');
+          router.replace(returnPath);
         }, 900);
       } catch (callbackError) {
         setMessage(

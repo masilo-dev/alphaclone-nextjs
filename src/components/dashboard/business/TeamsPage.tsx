@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { microsoft365Service } from '@/services/microsoft365Service';
+import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { tenantService } from '@/services/tenancy/TenantService';
 import {
     Video,
@@ -43,14 +44,17 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
         }
     }, [currentTenant?.id]);
 
+    const handleConnect = () => {
+        void microsoftAuthService.initiateOAuth('/dashboard/business/teams').catch((err: any) => {
+            toast.error(err.message || 'Unable to start Microsoft connection');
+        });
+    };
+
     const loadTeamsStatus = async () => {
         if (!currentTenant?.id) return;
         setLoading(true);
         try {
-            const { config, error } = await microsoft365Service.getMicrosoft365Config(currentTenant.id);
-            if (error) throw new Error(error);
-
-            const connected = !!(config?.enabled && config?.services?.teams);
+            const connected = await microsoftAuthService.isConnected();
             setIsConnected(connected);
 
             // Fetch team members
@@ -165,15 +169,15 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
                             {isConnected
-                                ? 'Your MS Teams integration is fully synchronized. Presence signals will appear automatically across contact timelines and the CRM workspace.'
-                                : 'Connect Microsoft 365 in settings to activate Teams presence sync and register workspace endpoints.'}
+                                ? 'Your Microsoft account is connected once for your profile. Outlook, Calendar, Teams, and OneDrive stay available across every workspace you open.'
+                                : 'Connect Microsoft 365 once to unlock Teams, Outlook, Calendar, and OneDrive across all your workspaces.'}
                         </p>
                     </div>
                 </div>
 
                 {!isConnected && (
-                    <Button onClick={() => setActiveTab('/dashboard/business/settings')} className="bg-blue-600 hover:bg-blue-500 text-white font-bold shrink-0">
-                        Connect Teams
+                    <Button onClick={handleConnect} className="bg-blue-600 hover:bg-blue-500 text-white font-bold shrink-0">
+                        Connect Microsoft 365
                     </Button>
                 )}
             </div>

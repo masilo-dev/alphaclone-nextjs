@@ -35,11 +35,9 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
     }, [user?.id]);
 
     const handleConnect = () => {
-        try {
-            microsoftAuthService.initiateOAuth();
-        } catch (error: any) {
-            toast.error(error.message || 'Unable to start Microsoft 365 connection');
-        }
+        void microsoftAuthService.initiateOAuth().catch((error: any) => {
+            toast.error(error.message || 'Unable to start Microsoft connection');
+        });
     };
 
     if (isLoading) {
