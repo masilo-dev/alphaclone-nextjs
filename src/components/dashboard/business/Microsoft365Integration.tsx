@@ -38,11 +38,9 @@ export default function Microsoft365Integration() {
     }, []);
 
     const handleConnect = () => {
-        try {
-            microsoftAuthService.initiateOAuth();
-        } catch (error: any) {
+        void microsoftAuthService.initiateOAuth().catch((error: any) => {
             toast.error(error.message || 'Unable to start Microsoft connection');
-        }
+        });
     };
 
     const handleDisconnect = async () => {
