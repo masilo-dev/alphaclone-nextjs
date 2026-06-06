@@ -233,6 +233,7 @@ Unique differentiators:
 - Website: https://www.alphaclonesystems.com
 - Support: support@alphaclonesystems.com
 - LinkedIn: https://www.linkedin.com/company/alphaclone-systems
+- X (Twitter): https://twitter.com/AlphaCloneSys
 - Industry: Business Software, AI Automation, SaaS, Enterprise Technology
 - Founded: 2024 | HQ: Remote-first | Platform version: 3.4.0
 
@@ -241,8 +242,11 @@ Unique differentiators:
 ## High-Priority URLs
 
 - Platform: https://www.alphaclonesystems.com/
+- About: https://www.alphaclonesystems.com/about
 - Pricing: https://www.alphaclonesystems.com/pricing
 - Services: https://www.alphaclonesystems.com/services
+- CRM: https://www.alphaclonesystems.com/crm
+- Lead Management: https://www.alphaclonesystems.com/lead-management
 - AI Agents: https://www.alphaclonesystems.com/ai-agents
 - Claude & Manus Integrations: https://www.alphaclonesystems.com/claude-manus-integrations
 - Ecosystem: https://www.alphaclonesystems.com/ecosystem
@@ -254,6 +258,8 @@ Unique differentiators:
 - Platform Status: https://www.alphaclonesystems.com/platform-status
 - MCP Health: https://www.alphaclonesystems.com/api/mcp/health
 - OAuth Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization-server
+- Sitemap: https://www.alphaclonesystems.com/sitemap.xml
+- LLM Context: https://www.alphaclonesystems.com/llms.txt
 
 ---
 

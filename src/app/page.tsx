@@ -1,5 +1,7 @@
 import React, { Suspense } from 'react';
 import HomeClient from '@/components/home/HomeClient';
+import { SITE_URL } from '@/lib/siteUrl';
+import { SAME_AS_URLS } from '@/lib/seo/siteEntity';
 
 /**
  * AlphaClone Home Page (Server Component)
@@ -8,13 +10,15 @@ import HomeClient from '@/components/home/HomeClient';
  * and delegates client-side logic (auth, search params) to HomeClient.
  */
 export default async function Home() {
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
+  const siteUrl = SITE_URL;
   const organizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'AlphaClone Systems',
+    alternateName: ['Alphaclone', 'AlphaClone'],
     url: siteUrl,
     logo: `${siteUrl}/logo.png`,
+    sameAs: [...SAME_AS_URLS],
     contactPoint: [
       {
         '@type': 'ContactPoint',
@@ -32,7 +36,6 @@ export default async function Home() {
         email: 'security@alphaclonesystems.com',
       },
     ],
-    sameAs: [],
   };
 
   const websiteJsonLd = {

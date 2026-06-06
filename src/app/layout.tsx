@@ -12,6 +12,7 @@ import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
 import PrismBackground from "@/components/common/PrismBackground";
 import { SITE_URL } from "@/lib/siteUrl";
+import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/seo/siteEntity";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -135,19 +136,8 @@ const websiteSchema = {
   },
 };
 
-const navigationSchema = {
-  "@context": "https://schema.org",
-  "@type": "ItemList",
-  name: "Primary Site Navigation",
-  itemListElement: [
-    { "@type": "SiteNavigationElement", position: 1, name: "About", url: `${SITE_URL}/about` },
-    { "@type": "SiteNavigationElement", position: 2, name: "Documentation", url: `${SITE_URL}/docs` },
-    { "@type": "SiteNavigationElement", position: 3, name: "Pricing", url: `${SITE_URL}/pricing` },
-    { "@type": "SiteNavigationElement", position: 4, name: "Contact", url: `${SITE_URL}/contact` },
-    { "@type": "SiteNavigationElement", position: 5, name: "Login", url: `${SITE_URL}/login` },
-    { "@type": "SiteNavigationElement", position: 6, name: "Start Free Trial", url: `${SITE_URL}/register` },
-  ],
-};
+const navigationSchema = buildSiteNavigationSchema();
+const organizationEntitySchema = buildOrganizationEntitySchema();
 
 import Script from "next/script";
 
@@ -162,6 +152,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://challenges.cloudflare.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
         <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
       </head>
       <body
@@ -178,6 +169,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationEntitySchema) }}
         />
         <WebVitals />
         <Providers>
