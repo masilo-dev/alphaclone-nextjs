@@ -1,33 +1,17 @@
 {
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 800
+      "maxDuration": 60
     }
   },
   "crons": [
     {
-      "path": "/api/cron/process-events",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/retry-failed",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/process-campaigns",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/sequence-worker",
-      "schedule": "*/5 * * * *"
+      "path": "/api/cron/daily",
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/bonnie-dream",
       "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/process-scheduled-ai-tasks",
-      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/process-recurring-invoices",
@@ -38,52 +22,8 @@
       "schedule": "0 1 * * *"
     },
     {
-      "path": "/api/cron/process-task-reminders",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/autonomous-runner",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/autonomous-sync",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/reconcile-social-posts",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/social-publish",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/linkedin-inbox-sync",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/cron/daily",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/deal-intelligence",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/contact-psychology",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/entanglement-model",
-      "schedule": "0 * * * *"
-    },
-    {
       "path": "/api/cron/intelligence-snapshots",
       "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/cron/calendly-sync",
-      "schedule": "*/30 * * * *"
     }
   ]
 }
