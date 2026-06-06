@@ -1,3 +1,4 @@
+import { cleanupRealtimeChannel } from '../lib/realtime';
 import { supabase } from '../lib/supabase';
 import { Project, UserRole } from '../types';
 import { activityService } from './activityService';
@@ -513,7 +514,7 @@ export const projectService = {
             });
 
         return () => {
-            supabase.removeChannel(channel);
+            cleanupRealtimeChannel(channel);
         };
     },
 };

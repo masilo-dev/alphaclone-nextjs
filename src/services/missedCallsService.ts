@@ -1,3 +1,4 @@
+import { cleanupRealtimeChannel } from '../lib/realtime';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -228,7 +229,7 @@ class MissedCallsService {
         userId: string,
         onNewMissedCall: (missedCall: MissedCall) => void
     ): () => void {
-        const subscription = supabase
+        const channel = supabase
             .channel(`missed-calls-${userId}`)
             .on(
                 'postgres_changes',
@@ -247,12 +248,12 @@ class MissedCallsService {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(subscription);
+            cleanupRealtimeChannel(channel);
         };
     }
 
-    unsubscribe(channel: any) {
-        supabase.removeChannel(channel);
+    unsubscribe(channel: unknown) {
+        cleanupRealtimeChannel(channel);
     }
 
     /**

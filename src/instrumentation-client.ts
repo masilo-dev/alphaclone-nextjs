@@ -27,6 +27,8 @@ Sentry.init({
                 'ResizeObserver loop limit exceeded',
                 'Non-Error promise rejection captured',
                 'cancelled',
+                'e.unsubscribe is not a function',
+                'unsubscribe is not a function',
             ];
 
             if (ignoredErrors.some(msg => errorMessage.includes(msg))) {
@@ -46,6 +48,8 @@ Sentry.init({
         'Load failed',
         'AbortError',
         'The operation was aborted',
+        /unsubscribe is not a function/i,
+        /ERR_BLOCKED_BY_CLIENT/i,
     ],
     debug: ENVIRONMENT === 'development',
     initialScope: {

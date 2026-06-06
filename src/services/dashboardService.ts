@@ -1,3 +1,4 @@
+import { cleanupRealtimeChannel } from '../lib/realtime';
 import { supabase } from '../lib/supabase';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
@@ -116,7 +117,7 @@ export const notificationService = {
     },
 
     subscribeToNotifications(userId: string, tenantId: string, callback: (notification: Notification) => void) {
-        const subscription = supabase
+        const channel = supabase
             .channel(`notifications:${userId}:${tenantId}`)
             .on(
                 'postgres_changes',
@@ -136,7 +137,7 @@ export const notificationService = {
             .subscribe();
 
         return () => {
-            subscription.unsubscribe();
+            cleanupRealtimeChannel(channel);
         };
     },
 };
