@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
-const MCP_PROTOCOL_VERSION = '2025-03-26';
+const MCP_PROTOCOL_VERSION = '2025-11-25';
 
 /**
  * Unified MCP Endpoint (/api/mcp)
@@ -158,6 +159,12 @@ export async function POST(req: NextRequest) {
             name: 'Business Snapshot',
             description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
             mimeType: 'application/json'
+          },
+          {
+            uri: 'mcp://business/ai-state',
+            name: 'Business AI State',
+            description: 'Current AI operating posture, model preference, and audit mode for this workspace.',
+            mimeType: 'application/json'
           }
         ] 
       } 
@@ -219,6 +226,8 @@ export async function POST(req: NextRequest) {
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
+            business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
+            business_ai_state: DEFAULT_BUSINESS_AI_STATE,
           },
         })
         .select('id')

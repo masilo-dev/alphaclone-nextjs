@@ -73,7 +73,7 @@ async function refreshXAccessToken(integration: XIntegration): Promise<XIntegrat
     }
 
     const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+    const tokenResponse = await fetch('https://api.x.com/2/oauth2/token', {
         method: 'POST',
         headers: {
             Authorization: `Basic ${basicAuth}`,
@@ -183,7 +183,7 @@ export const xService = {
             );
         }
 
-        const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+        const uploadUrl = 'https://upload.x.com/1.1/media/upload.json';
         const authHeader = buildOAuth1Header('POST', uploadUrl, oauth1Token, oauth1Secret);
 
         const formData = new FormData();
@@ -233,7 +233,7 @@ export const xService = {
             }),
         };
 
-        const response = await fetch('https://api.twitter.com/2/tweets', {
+        const response = await fetch('https://api.x.com/2/tweets', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`,
@@ -270,7 +270,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-        const response = await fetch(`https://api.twitter.com/2/dm_conversations/with/${recipientId}/messages`, {
+            const response = await fetch(`https://api.x.com/2/dm_conversations/with/${recipientId}/messages`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`,
@@ -311,7 +311,7 @@ export const xService = {
     async getUserTweets(tenantId: string) {
         const integration = await this.ensureValidAccessToken(tenantId);
 
-        const response = await fetch(`https://api.twitter.com/2/users/${integration.x_user_id}/tweets`, {
+        const response = await fetch(`https://api.x.com/2/users/${integration.x_user_id}/tweets`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`
@@ -333,7 +333,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-        const response = await fetch('https://api.twitter.com/2/tweets', {
+        const response = await fetch('https://api.x.com/2/tweets', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`,
@@ -376,7 +376,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-        const url = new URL('https://api.twitter.com/2/tweets/search/recent');
+        const url = new URL('https://api.x.com/2/tweets/search/recent');
         url.searchParams.append('query', query);
         url.searchParams.append('max_results', maxResults.toString());
         url.searchParams.append('tweet.fields', 'created_at,author_id,public_metrics,entities');
@@ -441,7 +441,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-        const response = await fetch(`https://api.twitter.com/2/users/${integration.x_user_id}/mentions`, {
+        const response = await fetch(`https://api.x.com/2/users/${integration.x_user_id}/mentions`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`
@@ -465,8 +465,8 @@ export const xService = {
 
         const identifier = usernameOrId || integration.x_user_id;
         const url = usernameOrId && isNaN(Number(usernameOrId))
-            ? `https://api.twitter.com/2/users/by/username/${usernameOrId}`
-            : `https://api.twitter.com/2/users/${identifier}`;
+            ? `https://api.x.com/2/users/by/username/${usernameOrId}`
+            : `https://api.x.com/2/users/${identifier}`;
 
         const response = await fetch(`${url}?user.fields=description,public_metrics,profile_image_url,location`, {
             method: 'GET',
@@ -492,7 +492,7 @@ export const xService = {
 
         // Note: User search in v2 is currently limited to certain access levels or specific endpoints.
         // If not available, we can fallback to searching tweets and extracting users.
-        const url = new URL('https://api.twitter.com/2/users/search');
+        const url = new URL('https://api.x.com/2/users/search');
         url.searchParams.append('query', query);
         url.searchParams.append('max_results', maxResults.toString());
         url.searchParams.append('user.fields', 'username,name,description,profile_image_url,location,public_metrics');

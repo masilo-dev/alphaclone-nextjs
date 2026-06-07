@@ -74,6 +74,7 @@ import { AlphaNexus } from '../../lib/social/alphaNexus';
 import { gmailServerService } from '../server/gmailServerService';
 import { taskAutomationService } from '../automation/taskAutomationService';
 import { sendWhatsAppMessage } from '../../lib/whatsapp/sendWhatsApp';
+import { mcpStore } from './mcpStore';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -693,6 +694,12 @@ class AlphaCloneMCPServer {
           name: 'Business Snapshot',
           description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
           mimeType: 'application/json'
+        },
+        {
+          uri: 'mcp://business/ai-state',
+          name: 'Business AI State',
+          description: 'The current AI operating state for this workspace: autonomy, risk, model preference, and audit posture.',
+          mimeType: 'application/json'
         }
       ],
     }));
@@ -710,9 +717,32 @@ class AlphaCloneMCPServer {
             {
               uri,
               mimeType: 'application/json',
-              text: JSON.stringify(snapshot, null, 2)
-            }
-          ]
+              text: JSON.stringify(snapshot, null, 2),
+            },
+          ],
+        };
+      }
+      if (uri === 'mcp://business/ai-state') {
+        const tenantId = this.ctx?.tenantId;
+        if (!tenantId) throw new Error('Tenant context missing for resource read. Connect via workspace MCP URL.');
+        const state = await mcpStore.getBusinessAIState(tenantId, this.ctx?.userId || undefined);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: JSON.stringify({
+                state,
+                summary: {
+                  primary_domain: state.primary_domain,
+                  agent_mode: state.agent_mode,
+                  preferred_model: state.preferred_model,
+                  owner_profile: state.owner_profile,
+                  memory_summary: state.memory_summary,
+                },
+              }, null, 2)
+            },
+          ],
         };
       }
       throw new Error(`Resource not found: ${uri}`);

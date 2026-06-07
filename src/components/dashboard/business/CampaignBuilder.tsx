@@ -61,12 +61,37 @@ const PRESET_TEMPLATES = [
     }
 ];
 
+const QUICK_STARTS = [
+    {
+        id: 'announcement',
+        label: 'Share an update',
+        prompt: 'Write a friendly announcement email for existing contacts.',
+        subject: 'A quick update from AlphaClone',
+        bodyHtml: `<h2>Hello {{firstName}},</h2><p>I wanted to share a quick update with you and keep things simple.</p><p>If you have any questions, reply to this email and we’ll help.</p>`,
+    },
+    {
+        id: 'followup',
+        label: 'Follow up leads',
+        prompt: 'Write a short follow-up email for warm leads who already know us.',
+        subject: 'Just checking in',
+        bodyHtml: `<h2>Hi {{firstName}},</h2><p>Just checking in to see if this is still a good time to chat about how we can help {{company}}.</p><p>If not, no problem - just let me know.</p>`,
+    },
+    {
+        id: 'reengage',
+        label: 'Re-engage contacts',
+        prompt: 'Write a warm re-engagement email for contacts who have not replied in a while.',
+        subject: 'Still interested in improving your workflow?',
+        bodyHtml: `<h2>Hello {{firstName}},</h2><p>It has been a little while, and I wanted to reach out with something useful.</p><p>If you are still exploring better ways to run your business, I would be happy to help.</p>`,
+    },
+] as const;
+
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const router = useRouter();
     const { isMobile } = useBreakpoint();
     
     // View state: 'list' is main feed list, 'detail' is single detail view, 'compose' is wizard flow
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'compose'>('list');
+    const [campaignMode, setCampaignMode] = useState<'simple' | 'advanced'>('simple');
     
     const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
     const [loading, setLoading] = useState(true);
@@ -90,7 +115,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         scheduledAt: '',
         scheduleEnabled: false,
         skipPreviouslyContacted: true,
-        selectedProviders: ['zoho'] as string[],
+        selectedProviders: ['resend'] as string[],
         deliveryChannel: 'email' as 'email' | 'whatsapp' | 'both',
         balanceByDailyLimit: true,
         sendImmediately: false,
@@ -110,9 +135,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
     const [pasteLeadsText, setPasteLeadsText] = useState('');
     const [importingLeads, setImportingLeads] = useState(false);
+    const [campaignGoal, setCampaignGoal] = useState('');
     
     // AI Copilot State
-    const [showCopilot, setShowCopilot] = useState(false);
+    const [showCopilot, setShowCopilot] = useState(true);
     const [copilotMessages, setCopilotMessages] = useState<Array<{ sender: 'user' | 'assistant', text: string, suggestion?: any }>>([
         { sender: 'assistant', text: 'Hi! I am your AI Campaign Copilot. Tell me who you want to target (e.g. "healthcare leads"), what you want to write, or paste your leads directly here. I will configure the entire campaign!' }
     ]);
@@ -234,7 +260,8 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `You are an email campaign strategist. Based on this request, return JSON only with keys: name, subject, html, recipientType (all|specific|import), leads (string[] emails if found in prompt).
+                    prompt: `You are a plain-language campaign assistant. Based on this request, return JSON only with keys: name, subject, html, recipientType (all|specific|import), leads (string[] emails if found in prompt).
+User goal: ${campaignGoal || 'No goal provided'}
 Request: ${userMsg}`,
                     tenantId,
                     mode: 'structured',
@@ -309,6 +336,23 @@ Request: ${userMsg}`,
             toast.error('Choose a campaign language before launch, or switch language to Auto.');
             return;
         }
+        if (!recipientType) {
+            toast.error('Choose who should receive the campaign');
+            return;
+        }
+
+        const resolvedRecipients =
+            recipientType === 'all'
+                ? contacts
+                : recipientType === 'import' || recipientType === 'few' || recipientType === 'specific'
+                    ? contacts.filter((contact) => selectedContactIds.includes(contact.id))
+                    : [];
+
+        if (!resolvedRecipients.length) {
+            toast.error('Add at least one recipient before launching the campaign');
+            return;
+        }
+
         const toastId = toast.loading('Creating campaign...');
         const { campaign, error } = await emailCampaignService.createCampaign(userId, {
             name: form.name,
@@ -331,8 +375,9 @@ Request: ${userMsg}`,
 
         if (error) { toast.error(error, { id: toastId }); return; }
         if (campaign) {
-            let finalIds = selectedContactIds;
-            if (recipientType === 'all') finalIds = contacts.map(c => c.id);
+            let finalIds = recipientType === 'all'
+                ? contacts.map(c => c.id)
+                : selectedContactIds;
             await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds, {
                 skipPreviouslyContacted: form.skipPreviouslyContacted,
             });
@@ -369,7 +414,10 @@ Request: ${userMsg}`,
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a high-converting HTML campaign email body about: "${form.subject}". ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
+                    prompt: `Write a plain-language, high-converting HTML campaign email body.
+Campaign goal: ${campaignGoal || 'Keep it simple and useful.'}
+Subject: "${form.subject}"
+${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
                 })
             });
             const data = await response.json();
@@ -464,10 +512,27 @@ Request: ${userMsg}`,
             sendImmediately: false,
             languageMode: 'auto',
         });
+        setCampaignMode('simple');
+        setCampaignGoal('');
         setRecipientType(null);
         setSelectedContactIds([]);
         setActiveStep(1);
         setViewMode('compose');
+        setShowCopilot(true);
+    };
+
+    const applyQuickStart = (preset: typeof QUICK_STARTS[number]) => {
+        setCampaignGoal(preset.prompt);
+        setForm((f) => ({
+            ...f,
+            name: preset.label,
+            subject: preset.subject,
+            bodyHtml: preset.bodyHtml,
+            languageMode: 'auto',
+        }));
+        setShowCopilot(true);
+        setEditorTab('preview');
+        toast.success(`${preset.label} ready`);
     };
 
     if (loading) return <div className="p-8 text-slate-400 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" /> Loading Campaigns...</div>;
@@ -492,7 +557,7 @@ Request: ${userMsg}`,
                     )}
                     <div>
                         <h1 className="text-sm font-black tracking-widest text-white uppercase">Campaigns</h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Email outreach command</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Plain-English campaign builder</p>
                     </div>
                 </div>
                 {viewMode === 'list' && (
@@ -500,18 +565,31 @@ Request: ${userMsg}`,
                         onClick={startNewCompose} 
                         className="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-wider"
                     >
-                        New Campaign
+                        Create Campaign
                     </button>
                 )}
                 {viewMode === 'compose' && (
-                    <button 
-                        onClick={() => setShowCopilot(prev => !prev)}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${
-                            showCopilot ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'bg-slate-900 text-slate-400 border border-white/5'
-                        }`}
-                    >
-                        <Sparkles className="w-3.5 h-3.5" /> Copilot {showCopilot ? 'ON' : 'OFF'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center rounded-xl border border-white/5 bg-slate-950 p-1">
+                            {(['simple', 'advanced'] as const).map((mode) => (
+                                <button
+                                    key={mode}
+                                    onClick={() => setCampaignMode(mode)}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${campaignMode === mode ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    {mode}
+                                </button>
+                            ))}
+                        </div>
+                        <button 
+                            onClick={() => setShowCopilot(prev => !prev)}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                                showCopilot ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'bg-slate-900 text-slate-400 border border-white/5'
+                            }`}
+                        >
+                            <Sparkles className="w-3.5 h-3.5" /> Copilot {showCopilot ? 'ON' : 'OFF'}
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -525,8 +603,8 @@ Request: ${userMsg}`,
                             {campaigns.length === 0 ? (
                                 <div className="py-16 text-center border border-dashed border-white/5 rounded-2xl">
                                     <Inbox className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                                    <h3 className="text-sm font-bold text-slate-400">No campaigns launched</h3>
-                                    <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">Ready to start email marketing? Craft your first outreach flow now.</p>
+                                    <h3 className="text-sm font-bold text-slate-400">No campaigns yet</h3>
+                                    <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">Create a simple campaign, choose who should receive it, and let the Copilot write the first draft.</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-white/5 border border-white/5 rounded-2xl bg-slate-900/30 overflow-hidden">
@@ -683,6 +761,39 @@ Request: ${userMsg}`,
                             
                             {/* Main wizard step builder panel */}
                             <div className="flex-1 w-full space-y-6">
+                                <div className="bg-slate-900/70 border border-white/5 rounded-3xl p-5 space-y-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-teal-400">Plain-English Start</p>
+                                            <h3 className="text-white text-lg font-black">Tell us what you want to say and who should hear it.</h3>
+                                            <p className="text-sm text-slate-400 max-w-2xl">
+                                                Pick a starter, describe the goal in one sentence, or let the Copilot write the first draft for you.
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {QUICK_STARTS.map((preset) => (
+                                                <button
+                                                    key={preset.id}
+                                                    type="button"
+                                                    onClick={() => applyQuickStart(preset)}
+                                                    className="px-3 py-2 rounded-xl border border-white/5 bg-slate-950 text-slate-300 text-xs font-bold hover:border-teal-500/40 hover:text-white transition-all"
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Goal</label>
+                                        <textarea
+                                            value={campaignGoal}
+                                            onChange={(e) => setCampaignGoal(e.target.value)}
+                                            placeholder="Example: Re-engage cold leads who haven’t replied in 60 days."
+                                            className="w-full min-h-[88px] bg-slate-950 border border-white/5 rounded-2xl p-4 text-sm text-white outline-none resize-y"
+                                        />
+                                    </div>
+                                </div>
+
                                 {/* Thin Progress bar indicator */}
                                 <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
                                     <div 
@@ -724,76 +835,100 @@ Request: ${userMsg}`,
                                             />
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Delivery Channel</label>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {[
-                                                    { id: 'email' as const, label: 'Email', icon: Mail },
-                                                    { id: 'whatsapp' as const, label: 'WhatsApp', icon: MessageCircle },
-                                                    { id: 'both' as const, label: 'Both', icon: Layers },
-                                                ].map((ch) => {
-                                                    const isSelected = form.deliveryChannel === ch.id;
-                                                    return (
-                                                        <button
-                                                            key={ch.id}
-                                                            type="button"
-                                                            onClick={() => setForm((f) => ({ ...f, deliveryChannel: ch.id }))}
-                                                            className={`p-3 rounded-xl border text-left flex items-center gap-2 transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
-                                                        >
-                                                            <ch.icon className="w-4 h-4" />
-                                                            <span className="text-[10px] font-bold uppercase">{ch.label}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                            {form.deliveryChannel !== 'email' && (
-                                                <p className="text-[10px] text-slate-500 px-1">WhatsApp uses phone numbers from leads, clients, or contacts matched by email.</p>
-                                            )}
-                                        </div>
+                                        {campaignMode === 'advanced' ? (
+                                            <>
+                                                <div className="space-y-2">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Delivery Channel</label>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {[
+                                                            { id: 'email' as const, label: 'Email', icon: Mail },
+                                                            { id: 'whatsapp' as const, label: 'WhatsApp', icon: MessageCircle },
+                                                            { id: 'both' as const, label: 'Both', icon: Layers },
+                                                        ].map((ch) => {
+                                                            const isSelected = form.deliveryChannel === ch.id;
+                                                            return (
+                                                                <button
+                                                                    key={ch.id}
+                                                                    type="button"
+                                                                    onClick={() => setForm((f) => ({ ...f, deliveryChannel: ch.id }))}
+                                                                    className={`p-3 rounded-xl border text-left flex items-center gap-2 transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                                >
+                                                                    <ch.icon className="w-4 h-4" />
+                                                                    <span className="text-[10px] font-bold uppercase">{ch.label}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {form.deliveryChannel !== 'email' && (
+                                                        <p className="text-[10px] text-slate-500 px-1">WhatsApp uses phone numbers from leads, clients, or contacts matched by email.</p>
+                                                    )}
+                                                </div>
 
-                                        {/* Email Provider select cards */}
-                                        {(form.deliveryChannel === 'email' || form.deliveryChannel === 'both') && (
-                                        <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Email Provider Service</label>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {[
-                                                    { id: 'resend', label: 'Resend.com' },
-                                                    { id: 'sendgrid', label: 'SendGrid' },
-                                                    { id: 'brevo', label: 'Brevo (Sendinblue)' },
-                                                    { id: 'zoho', label: 'Zoho Mail Client' }
-                                                ].map((provider) => {
-                                                    const isSelected = form.selectedProviders.includes(provider.id);
-                                                    return (
-                                                        <button
-                                                            key={provider.id}
-                                                            type="button"
-                                                            onClick={() => setForm(f => ({ ...f, selectedProviders: [provider.id] }))}
-                                                            className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                {/* Email Provider select cards */}
+                                                {(form.deliveryChannel === 'email' || form.deliveryChannel === 'both') && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Email Provider Service</label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        {[
+                                                            { id: 'resend', label: 'Resend.com' },
+                                                            { id: 'sendgrid', label: 'SendGrid' },
+                                                            { id: 'brevo', label: 'Brevo (Sendinblue)' },
+                                                            { id: 'zoho', label: 'Zoho Mail Client' }
+                                                        ].map((provider) => {
+                                                            const isSelected = form.selectedProviders.includes(provider.id);
+                                                            return (
+                                                                <button
+                                                                    key={provider.id}
+                                                                    type="button"
+                                                                    onClick={() => setForm(f => ({ ...f, selectedProviders: [provider.id] }))}
+                                                                    className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                                >
+                                                                    <span className="text-xs font-bold uppercase">{provider.label}</span>
+                                                                    {isSelected && <Check className="w-4 h-4 text-teal-400" />}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                                )}
+
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Language</label>
+                                                    <div className="relative">
+                                                        <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                                        <select
+                                                            value={form.languageMode}
+                                                            onChange={e => setForm(f => ({ ...f, languageMode: e.target.value as CampaignLanguageMode }))}
+                                                            className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl pl-9 pr-4 text-xs text-white outline-none focus:border-teal-500/50"
                                                         >
-                                                            <span className="text-xs font-bold uppercase">{provider.label}</span>
-                                                            {isSelected && <Check className="w-4 h-4 text-teal-400" />}
-                                                        </button>
-                                                    );
-                                                })}
+                                                            {CAMPAIGN_LANGUAGE_OPTIONS.map(option => (
+                                                                <option key={option.code} value={option.code}>{option.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="rounded-2xl border border-white/5 bg-slate-900 p-4 space-y-3">
+                                                <p className="text-sm text-slate-300">
+                                                    Simple mode keeps the setup focused on the essentials: name, message, audience, then send or schedule.
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                    <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
+                                                        <p className="text-[10px] uppercase font-black text-slate-500">Delivery</p>
+                                                        <p className="text-sm text-white font-semibold mt-1">Email by default</p>
+                                                    </div>
+                                                    <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
+                                                        <p className="text-[10px] uppercase font-black text-slate-500">Language</p>
+                                                        <p className="text-sm text-white font-semibold mt-1">Auto-detected</p>
+                                                    </div>
+                                                    <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
+                                                        <p className="text-[10px] uppercase font-black text-slate-500">Provider</p>
+                                                        <p className="text-sm text-white font-semibold mt-1">{form.selectedProviders[0] || 'resend'}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
                                         )}
-
-                                        <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Language</label>
-                                            <div className="relative">
-                                                <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                                                <select
-                                                    value={form.languageMode}
-                                                    onChange={e => setForm(f => ({ ...f, languageMode: e.target.value as CampaignLanguageMode }))}
-                                                    className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl pl-9 pr-4 text-xs text-white outline-none focus:border-teal-500/50"
-                                                >
-                                                    {CAMPAIGN_LANGUAGE_OPTIONS.map(option => (
-                                                        <option key={option.code} value={option.code}>{option.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
                                     </div>
                                 )}
 
@@ -1008,7 +1143,15 @@ Request: ${userMsg}`,
                                                 <div>
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase">Recipients</span>
                                                     <p className="text-xs text-white font-bold">
-                                                        {recipientType === 'all' ? 'All contacts' : `${selectedContactIds.length} leads`}
+                                                        {recipientType === 'all'
+                                                            ? 'All contacts'
+                                                            : recipientType === 'specific'
+                                                                ? `${selectedContactIds.length} industry match(es)`
+                                                                : recipientType === 'few'
+                                                                    ? `${selectedContactIds.length} selected contact(s)`
+                                                                    : recipientType === 'import'
+                                                                        ? `${selectedContactIds.length} imported contact(s)`
+                                                                        : 'Not selected'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -1079,7 +1222,7 @@ Request: ${userMsg}`,
                                                 if (activeStep === 1 && (!form.name || !form.subject)) {
                                                     return toast.error('Name and subject are required');
                                                 }
-                                                if (activeStep === 2 && !recipientType) {
+                                                if (activeStep === 2 && (!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0))) {
                                                     return toast.error('Choose a recipient segment');
                                                 }
                                                 setActiveStep(prev => prev + 1);
@@ -1187,7 +1330,7 @@ Request: ${userMsg}`,
                                 if (activeStep === 1 && (!form.name || !form.subject)) {
                                     return toast.error('Name and subject are required');
                                 }
-                                if (activeStep === 2 && !recipientType) {
+                                if (activeStep === 2 && (!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0))) {
                                     return toast.error('Choose a recipient segment');
                                 }
                                 setActiveStep(prev => prev + 1);

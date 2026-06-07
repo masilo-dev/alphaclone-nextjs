@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText
+  Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText, CheckSquare
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -36,15 +36,21 @@ export default function FormsHub() {
   const [fields, setFields] = useState<FormField[]>(DEFAULT_CONTACT_FIELDS);
   const [thankYou, setThankYou] = useState('Thank you! We will be in touch soon.');
   const [isActive, setIsActive] = useState(true);
+  const [isDefault, setIsDefault] = useState(true);
 
   const appOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const tenantSlug = currentTenant?.slug || '';
 
   const publicUrl = useMemo(() => {
     if (!tenantSlug) return '';
-    if (slug === 'contact') return `${appOrigin}/form/${tenantSlug}`;
+    if (isDefault || slug === 'contact') return `${appOrigin}/form/${tenantSlug}`;
     return `${appOrigin}/form/${tenantSlug}/${slug}`;
-  }, [appOrigin, tenantSlug, slug]);
+  }, [appOrigin, tenantSlug, slug, isDefault]);
+
+  const submitEndpointUrl = useMemo(() => {
+    if (!appOrigin) return '';
+    return `${appOrigin}/api/forms/submit`;
+  }, [appOrigin]);
 
   const loadForms = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -69,6 +75,7 @@ export default function FormsHub() {
         setFields(pick.fields?.length ? pick.fields : DEFAULT_CONTACT_FIELDS);
         setThankYou(String((pick.settings as any)?.thankYouMessage || thankYou));
         setIsActive(pick.is_active);
+        setIsDefault(pick.is_default);
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to load forms');
@@ -87,24 +94,33 @@ export default function FormsHub() {
     setFields(form.fields?.length ? form.fields : DEFAULT_CONTACT_FIELDS);
     setThankYou(String((form.settings as any)?.thankYouMessage || 'Thank you! We will be in touch soon.'));
     setIsActive(form.is_active);
+    setIsDefault(form.is_default);
   };
 
   const handleSave = async () => {
     if (!currentTenant?.id) return;
     setSaving(true);
     try {
+      const normalizedSlug = slug.trim().toLowerCase();
+      const conflictingForm = forms.find((f) => f.slug === normalizedSlug && f.id !== selectedId);
+      if (conflictingForm) {
+        toast.error(`Slug "${normalizedSlug}" is already in use by "${conflictingForm.title}"`);
+        return;
+      }
+
+      const nextIsDefault = isDefault;
       const res = await fetch('/api/forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: currentTenant.id,
           id: selectedId || undefined,
-          slug,
+          slug: normalizedSlug,
           title,
           description,
           fields,
           is_active: isActive,
-          is_default: slug === 'contact',
+          is_default: nextIsDefault,
           settings: { thankYouMessage: thankYou, createLead: true },
         }),
       });
@@ -121,18 +137,25 @@ export default function FormsHub() {
   };
 
   const handleNewForm = () => {
-    setSelectedId(null);
-    setTitle('New Form');
-    setDescription('');
-    setSlug(`form-${Date.now().toString(36).slice(-4)}`);
-    setFields(DEFAULT_CONTACT_FIELDS);
-    setIsActive(true);
-  };
+      setSelectedId(null);
+      setTitle('New Form');
+      setDescription('');
+      setSlug(`form-${Date.now().toString(36).slice(-4)}`);
+      setFields(DEFAULT_CONTACT_FIELDS);
+      setIsActive(true);
+      setIsDefault(false);
+    };
 
   const copyLink = async () => {
     if (!publicUrl) return;
     await navigator.clipboard.writeText(publicUrl);
     toast.success('Form link copied');
+  };
+
+  const copySubmitEndpoint = async () => {
+    if (!submitEndpointUrl) return;
+    await navigator.clipboard.writeText(submitEndpointUrl);
+    toast.success('Submit endpoint copied');
   };
 
   if (loading) {
@@ -188,6 +211,14 @@ export default function FormsHub() {
                 <ExternalLink className="w-4 h-4" />
               </a>
             )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <CheckSquare className="w-4 h-4 text-teal-400 shrink-0" />
+            <code className="text-xs text-slate-300 truncate flex-1">{submitEndpointUrl || '/api/forms/submit'}</code>
+            <button onClick={copySubmitEndpoint} className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white" title="Copy submit endpoint">
+              <Copy className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -246,6 +277,11 @@ export default function FormsHub() {
           <label className="flex items-center gap-2 text-sm text-slate-300">
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
             Form is live (public link works)
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-slate-300">
+            <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />
+            Set as default contact form
           </label>
 
           <button

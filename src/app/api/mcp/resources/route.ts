@@ -19,7 +19,22 @@ async function handleDiscovery(req: NextRequest, method: string) {
 
   try {
     if (method === 'resources/list') {
-      return NextResponse.json({ resources: [] }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
+      return NextResponse.json({
+        resources: [
+          {
+            uri: 'mcp://business/snapshot',
+            name: 'Business Snapshot',
+            description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
+            mimeType: 'application/json',
+          },
+          {
+            uri: 'mcp://business/ai-state',
+            name: 'Business AI State',
+            description: 'Current AI operating posture, model preference, and audit mode for this workspace.',
+            mimeType: 'application/json',
+          },
+        ],
+      }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
     }
 
     if (method === 'tools/list') {

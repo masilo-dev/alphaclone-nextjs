@@ -4,7 +4,6 @@ import {
   createDiscoveryOptionsResponse,
 } from '@/lib/mcpWellKnown';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
