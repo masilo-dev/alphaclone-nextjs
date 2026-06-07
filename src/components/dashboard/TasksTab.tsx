@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, Calendar, Briefcase,
-  Trash2, RefreshCw
+  Trash2, RefreshCw, LayoutGrid, List
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -11,6 +11,8 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
+import { KanbanView } from './tasks/KanbanView';
+import type { Task as KanbanTask } from '../../services/taskService';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -51,7 +53,31 @@ const groupTasks = (tasks: Task[]) => {
   return groups;
 };
 
-const PAGE_SIZE = 200;
+type ViewMode = 'list' | 'board';
+
+const toKanbanStatus = (status: TaskStatus): KanbanTask['status'] => {
+  if (status === 'in_progress') return 'in_progress';
+  if (status === 'completed') return 'completed';
+  return 'todo';
+};
+
+const fromKanbanStatus = (status: KanbanTask['status']): TaskStatus => {
+  if (status === 'in_progress' || status === 'review') return 'in_progress';
+  if (status === 'completed') return 'completed';
+  return 'todo';
+};
+
+const toKanbanTask = (t: Task): KanbanTask => ({
+  id: t.id,
+  title: t.title,
+  priority: t.priority,
+  status: toKanbanStatus(t.status),
+  dueDate: t.due_date,
+  relatedToProject: t.project_id,
+  createdAt: t.created_at,
+  updatedAt: t.created_at,
+  description: t.notes,
+});
 
 // ── Swipeable Task Row ─────────────────────────────────────────────────────────
 const SwipeableTaskRow: React.FC<{
@@ -257,6 +283,9 @@ const TasksTab: React.FC<TasksTabProps> = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  const PAGE_SIZE = 200;
 
   const loadPage = useCallback(async (pageIndex: number) => {
     if (!currentTenant?.id) return;
@@ -322,12 +351,32 @@ const TasksTab: React.FC<TasksTabProps> = () => {
     toast.success('Task updated');
   };
 
+  const handleKanbanStatus = async (taskId: string, newStatus: KanbanTask['status']) => {
+    await handleUpdate(taskId, { status: fromKanbanStatus(newStatus) });
+  };
+
   const groups = groupTasks(tasks);
   const ORDER = ['Today', 'This Week', 'Later', 'No Due Date', 'Completed'];
   const isTruncated = totalCount !== null && tasks.length < totalCount;
 
   return (
     <div className="relative flex flex-col h-full">
+      <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
+        <button
+          type="button"
+          onClick={() => setViewMode('list')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'list' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
+        >
+          <List className="w-3.5 h-3.5" /> List
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode('board')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'board' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
+        >
+          <LayoutGrid className="w-3.5 h-3.5" /> Board
+        </button>
+      </div>
       <div className="flex-1 overflow-y-auto pb-20 bg-slate-950">
         {microsoftConnected && (
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
@@ -374,6 +423,17 @@ const TasksTab: React.FC<TasksTabProps> = () => {
         )}
         {loading ? (
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : viewMode === 'board' ? (
+          <div className="p-4">
+            <KanbanView
+              tasks={tasks.map(toKanbanTask)}
+              onUpdateStatus={handleKanbanStatus}
+              onEditTask={(kt) => {
+                const original = tasks.find((t) => t.id === kt.id);
+                if (original) setDetailTask(original);
+              }}
+            />
+          </div>
         ) : (
           <div>
             {isTruncated && (

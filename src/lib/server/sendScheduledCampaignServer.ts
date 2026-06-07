@@ -3,7 +3,7 @@ import { emailCampaignService } from '@/services/emailCampaignService';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { sendEmail } from '@/lib/email/sendEmail';
-import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
+import { sendWhatsAppMessage, isWhatsAppConfigured } from '@/lib/whatsapp/sendWhatsApp';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
 type ProviderConfig = {
@@ -216,17 +216,11 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         }
 
         if (sendWhatsappChannel) {
-            const { data: waIntegration } = await admin
-                .from('whatsapp_integrations')
-                .select('id')
-                .eq('tenant_id', c.tenant_id)
-                .eq('is_active', true)
-                .limit(1)
-                .maybeSingle();
-            if (!waIntegration?.id) {
+            const waReady = await isWhatsAppConfigured(String(c.tenant_id || ''));
+            if (!waReady) {
                 return {
                     success: false,
-                    error: 'WhatsApp is not connected. Configure Green API or Zernio under Business → WhatsApp before sending WhatsApp campaigns.',
+                    error: 'WhatsApp is not connected. Add your Zernio account ID under Settings → Integrations → WhatsApp.',
                 };
             }
         }

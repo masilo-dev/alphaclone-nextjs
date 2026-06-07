@@ -5,20 +5,17 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const { invoiceId, successUrl, cancelUrl } = await req.json();
+        const { invoiceId, publicToken, successUrl, cancelUrl } = await req.json();
 
         if (!invoiceId) {
             return NextResponse.json({ error: 'Missing invoiceId' }, { status: 400 });
         }
 
         const supabaseAdmin = createSupabaseAdminClient();
+        const authClient = await createSupabaseServerClient();
+        const { data: { user } } = await authClient.auth.getUser();
 
-        // 1. Fetch invoice details
         const { data: invoice, error: invoiceError } = await supabaseAdmin
             .from('business_invoices')
             .select('*, tenant:tenant_id(name)')
@@ -26,12 +23,24 @@ export async function POST(req: Request) {
             .single();
 
         if (invoiceError || !invoice) {
-            console.error('Invoice fetch error:', invoiceError);
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
-        // 2. Check if tenant has a connected Stripe account for Direct Charges
-        const { data: tenantData, error: tenantError } = await supabaseAdmin
+        const metadata = (invoice.metadata || {}) as Record<string, string>;
+        const isPublicAccess =
+            invoice.is_public &&
+            publicToken &&
+            metadata.public_token === publicToken;
+
+        if (!user && !isPublicAccess) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (invoice.status === 'paid') {
+            return NextResponse.json({ error: 'Invoice already paid' }, { status: 409 });
+        }
+
+        const { data: tenantData } = await supabaseAdmin
             .from('tenants')
             .select('stripe_connect_id, stripe_connect_onboarded')
             .eq('id', invoice.tenant_id)
@@ -41,7 +50,9 @@ export async function POST(req: Request) {
             ? tenantData.stripe_connect_id
             : null;
 
-        // 3. Create Stripe Checkout Session
+        const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || '';
+        const tokenQuery = publicToken ? `&token=${publicToken}` : '';
+
         const sessionOptions: any = {
             payment_method_types: ['card'],
             line_items: [
@@ -50,28 +61,22 @@ export async function POST(req: Request) {
                         currency: 'usd',
                         product_data: {
                             name: `Invoice #${invoice.invoice_number}`,
-                            description: `Payment for services - ${invoice.tenant?.name || 'AlphaClone Business'}`,
+                            description: `Payment for services - ${invoice.tenant?.name || 'Business'}`,
                         },
-                        unit_amount: Math.round(invoice.total * 100), // Stripe expects cents
+                        unit_amount: Math.round(Number(invoice.total || 0) * 100),
                     },
                     quantity: 1,
                 },
             ],
-            mode: 'payment', // One-time payment
-            success_url: successUrl || `${req.headers.get('origin')}/invoice/${invoiceId}?payment=success`,
-            cancel_url: cancelUrl || `${req.headers.get('origin')}/invoice/${invoiceId}?payment=cancelled`,
+            mode: 'payment',
+            success_url: successUrl || `${origin}/invoice/${invoiceId}?payment=success${tokenQuery}`,
+            cancel_url: cancelUrl || `${origin}/invoice/${invoiceId}?payment=cancelled${tokenQuery}`,
             metadata: {
                 invoiceId: invoice.id,
                 tenantId: invoice.tenant_id,
-                type: 'business_invoice'
+                type: 'business_invoice',
             },
         };
-
-        // If using Stripe Connect (Direct Charge)
-        if (stripeConnectId) {
-            console.log(`Using Direct Charge for Connect Account: ${stripeConnectId}`);
-            // No platform fee for now as requested
-        }
 
         const session = await stripe.checkout.sessions.create(
             sessionOptions,

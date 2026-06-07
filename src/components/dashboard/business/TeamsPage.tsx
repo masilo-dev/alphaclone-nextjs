@@ -42,12 +42,32 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
         if (currentTenant?.id) {
             void loadTeamsStatus();
         }
+
+        const params = new URLSearchParams(window.location.search);
+        const oauthStatus = params.get('microsoft');
+        if (!oauthStatus) {
+            return;
+        }
+
+        const reason = params.get('reason');
+        if (oauthStatus === 'connected') {
+            toast.success('Microsoft 365 connected');
+            if (currentTenant?.id) {
+                void loadTeamsStatus();
+            }
+        } else if (oauthStatus === 'error') {
+            toast.error(reason || 'Microsoft connection failed');
+        }
+
+        params.delete('microsoft');
+        params.delete('reason');
+        const nextSearch = params.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
+        window.history.replaceState({}, '', nextUrl);
     }, [currentTenant?.id]);
 
     const handleConnect = () => {
-        void microsoftAuthService.initiateOAuth('/dashboard/business/teams').catch((err: any) => {
-            toast.error(err.message || 'Unable to start Microsoft connection');
-        });
+        microsoftAuthService.initiateOAuth('/dashboard/business/teams');
     };
 
     const loadTeamsStatus = async () => {

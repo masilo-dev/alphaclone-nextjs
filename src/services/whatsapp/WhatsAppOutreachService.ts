@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
+import { sendWhatsAppMessage, isWhatsAppConfigured } from '@/lib/whatsapp/sendWhatsApp';
 import { aiService } from '../ai/aiService';
 
 export class WhatsAppOutreachService {
@@ -28,27 +28,13 @@ export class WhatsAppOutreachService {
       return;
     }
 
-    // 3. Check Green API setup
-    const { data: integration } = await supabase
-      .from('whatsapp_integrations')
-      .select('waba_id, metadata')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (!integration || !integration.metadata?.apiTokenInstance) {
+    // 3. Check Zernio WhatsApp setup
+    const waReady = await isWhatsAppConfigured(tenantId);
+    if (!waReady) {
       return;
     }
 
-    // Check Limits (Mock check)
     const phoneToContact = lead.phone.replace(/[^0-9]/g, '');
-
-    // 4. Verify WhatsApp number
-    const isValid = await this.checkWhatsAppNumber(integration.waba_id, integration.metadata.apiTokenInstance, phoneToContact);
-    if (!isValid) {
-      console.log(`[WhatsAppOutreach] Number not on WhatsApp: ${phoneToContact}`);
-      return;
-    }
 
     // 5. Generate Outreach Message
     const msg = await this.generateOutreachMessage(tenantId, lead, settings.persona_prompt);

@@ -277,6 +277,40 @@ export class WhatsAppChatbotService {
       console.error('[WhatsAppChatbot] Request Error:', error);
     }
   }
+
+  /** Auto-reply for Zernio inbound messages (message already saved by webhook). */
+  async maybeAutoReplyZernio(tenantId: string, phone: string, messageText: string) {
+    const supabase = createSupabaseAdminClient();
+    const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
+    if (!tenantId || !cleanPhone || !messageText.trim()) return;
+
+    const { data: settings } = await supabase
+      .from('whatsapp_chatbot_settings')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    if (!settings?.chatbot_enabled) return;
+
+    const { data: client } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .or(`phone.ilike.%${cleanPhone}%,mobile.ilike.%${cleanPhone}%`)
+      .maybeSingle();
+
+    const replyText = await this.generateReply(tenantId, cleanPhone, messageText, settings.persona_prompt, client);
+    if (!replyText) return;
+
+    const { sendWhatsAppMessage } = await import('@/lib/whatsapp/sendWhatsApp');
+    await sendWhatsAppMessage({
+      tenantId,
+      phone: cleanPhone,
+      message: replyText,
+      contactId: client?.id || null,
+      metadata: { source: 'ai_auto_reply', provider: 'zernio' },
+    });
+  }
 }
 
 export const whatsAppChatbotService = new WhatsAppChatbotService();

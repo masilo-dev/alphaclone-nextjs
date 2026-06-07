@@ -7,7 +7,7 @@ import { convertQuoteToInvoice } from '@/lib/quotes/convertQuoteToInvoice';
 async function findQuoteByToken(admin: ReturnType<typeof createSupabaseAdminClient>, token: string) {
     const { data: quote, error } = await admin
         .from('quotes')
-        .select('*, tenant:tenants(name)')
+        .select('*, tenant:tenants(name, settings)')
         .eq('metadata->>public_token', token)
         .maybeSingle();
 
@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
                 validUntil: quote.valid_until,
                 termsAndConditions: quote.terms_and_conditions,
                 tenantName: quote.tenant?.name,
+                tenantSettings: (quote.tenant as any)?.settings || null,
             },
             items: (items || []).map((item: Record<string, unknown>) => ({
                 productName: item.product_name,
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
         const action = String(body.action || '').trim();
         const note = String(body.note || '').trim();
         const acceptedBy = String(body.acceptedBy || '').trim();
+        const signatureUrl = String(body.signatureUrl || '').trim() || null;
 
         if (!token) {
             return NextResponse.json({ error: 'Token is required' }, { status: 400 });
@@ -93,6 +95,10 @@ export async function POST(req: NextRequest) {
         if (['accepted', 'rejected', 'converted', 'expired'].includes(quote.status)) {
             return NextResponse.json({ error: `Quote already ${quote.status}` }, { status: 409 });
         }
+        if (quote.valid_until && new Date(quote.valid_until) < new Date()) {
+            await admin.from('quotes').update({ status: 'expired' }).eq('id', quote.id);
+            return NextResponse.json({ error: 'Quote has expired' }, { status: 410 });
+        }
 
         const now = new Date().toISOString();
         const updatePayload =
@@ -102,6 +108,7 @@ export async function POST(req: NextRequest) {
                       accepted_at: now,
                       accepted_by: acceptedBy || 'Client',
                       notes: note || quote.notes,
+                      signature_url: signatureUrl,
                   }
                 : {
                       status: 'rejected',
@@ -123,9 +130,14 @@ export async function POST(req: NextRequest) {
                 : `Quote ${quote.quote_number} was declined${note ? `: "${note}"` : '.'}`;
 
         let invoiceId: string | null = null;
+        let publicToken: string | null = null;
         if (action === 'accept') {
-            const converted = await convertQuoteToInvoice(quote.id, quote.tenant_id);
+            const converted = await convertQuoteToInvoice(quote.id, quote.tenant_id, {
+                autoSend: true,
+                origin: req.nextUrl.origin,
+            });
             invoiceId = converted.invoiceId;
+            publicToken = converted.publicToken;
             if (converted.error) {
                 console.error('[quotes/respond] auto-invoice failed:', converted.error);
             }
@@ -149,6 +161,7 @@ export async function POST(req: NextRequest) {
             success: true,
             status: action === 'accept' && invoiceId ? 'converted' : updatePayload.status,
             invoiceId,
+            publicToken,
         });
     } catch (error: any) {
         console.error('Quote respond error:', error);

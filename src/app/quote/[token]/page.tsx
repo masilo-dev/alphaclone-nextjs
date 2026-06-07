@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { SignaturePad } from '@/components/contracts/SignaturePad';
+import { extractTenantBranding } from '@/lib/tenantBranding';
 
 type QuotePayload = {
     quoteNumber: string;
@@ -14,6 +16,7 @@ type QuotePayload = {
     validUntil?: string;
     termsAndConditions?: string;
     tenantName?: string;
+    tenantSettings?: Record<string, unknown> | null;
 };
 
 type QuoteItem = {
@@ -35,6 +38,8 @@ export default function PublicQuotePage() {
     const [responded, setResponded] = useState<'accepted' | 'rejected' | null>(null);
     const [note, setNote] = useState('');
     const [acceptedBy, setAcceptedBy] = useState('');
+    const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+    const [invoiceLink, setInvoiceLink] = useState<string | null>(null);
 
     useEffect(() => {
         if (token) loadQuote();
@@ -68,13 +73,22 @@ export default function PublicQuotePage() {
             const response = await fetch('/api/quotes/respond', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, action, note: note.trim(), acceptedBy: acceptedBy.trim() }),
+                body: JSON.stringify({
+                    token,
+                    action,
+                    note: note.trim(),
+                    acceptedBy: acceptedBy.trim(),
+                    signatureUrl: action === 'accept' ? signatureUrl : undefined,
+                }),
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.success) {
                 throw new Error(payload.error || 'Failed to submit response');
             }
             setResponded(action === 'accept' ? 'accepted' : 'rejected');
+            if (payload.invoiceId) {
+                setInvoiceLink(`/invoice/${payload.invoiceId}`);
+            }
             toast.success(action === 'accept' ? 'Quote accepted — thank you!' : 'Response recorded');
         } catch (err: any) {
             toast.error(err.message || 'Something went wrong');
@@ -100,18 +114,23 @@ export default function PublicQuotePage() {
     }
 
     const isFinal = responded || quote.status === 'accepted' || quote.status === 'rejected';
+    const branding = extractTenantBranding({ name: quote.tenantName, settings: quote.tenantSettings });
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 py-8 px-4">
             <Toaster position="top-center" />
             <div className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-                    <div className="p-3 bg-teal-500/10 rounded-xl">
-                        <FileText className="w-7 h-7 text-teal-400" />
-                    </div>
+                <div className="p-6 border-b border-slate-800 flex items-center gap-3" style={{ borderTopColor: branding.primaryColor, borderTopWidth: 3 }}>
+                    {branding.logoUrl ? (
+                        <img src={branding.logoUrl} alt="" className="h-10 w-auto object-contain" />
+                    ) : (
+                        <div className="p-3 bg-teal-500/10 rounded-xl">
+                            <FileText className="w-7 h-7 text-teal-400" />
+                        </div>
+                    )}
                     <div>
                         <h1 className="text-xl font-bold text-white">Quote {quote.quoteNumber}</h1>
-                        <p className="text-sm text-slate-400">{quote.name} · {quote.tenantName || 'AlphaClone'}</p>
+                        <p className="text-sm text-slate-400">{quote.name} · {branding.name}</p>
                     </div>
                 </div>
 
@@ -168,6 +187,11 @@ export default function PublicQuotePage() {
                                 <><XCircle className="w-5 h-5" /> Quote declined</>
                             )}
                         </div>
+                        {invoiceLink && (
+                            <a href={invoiceLink} className="mt-4 inline-block text-teal-400 font-bold hover:underline">
+                                View & pay your invoice →
+                            </a>
+                        )}
                     </div>
                 ) : (
                     <div className="p-6 border-t border-slate-800 space-y-4">
@@ -182,6 +206,13 @@ export default function PublicQuotePage() {
                             />
                         </div>
                         <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Signature (required to accept)</label>
+                            <SignaturePad
+                                onSave={(dataUrl) => setSignatureUrl(dataUrl)}
+                                onClear={() => setSignatureUrl(null)}
+                            />
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Note (optional)</label>
                             <textarea
                                 value={note}
@@ -192,7 +223,13 @@ export default function PublicQuotePage() {
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <button
-                                onClick={() => handleRespond('accept')}
+                                onClick={() => {
+                                    if (!signatureUrl) {
+                                        toast.error('Please sign to accept the quote');
+                                        return;
+                                    }
+                                    handleRespond('accept');
+                                }}
                                 disabled={responding}
                                 className="flex-1 py-3 px-4 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 rounded-xl font-bold text-white flex items-center justify-center gap-2"
                             >

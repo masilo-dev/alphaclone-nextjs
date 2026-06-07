@@ -44,8 +44,7 @@ export default function WhatsAppChatHub() {
     const [replyText, setReplyText] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [aiGenerating, setAiGenerating] = useState(false);
-    const [activeIntegrationId, setActiveIntegrationId] = useState<string | null>(null);
-    const [integrations, setIntegrations] = useState<any[]>([]);
+    const [zernioConnected, setZernioConnected] = useState(false);
 
     // Chatbot settings toggle
     const [chatbotEnabled, setChatbotEnabled] = useState(false);
@@ -74,15 +73,15 @@ export default function WhatsAppChatHub() {
 
     const fetchIntegrations = async () => {
         try {
-            const res = await fetch(`/api/integrations/whatsapp?tenantId=${currentTenant?.id}`);
-            const data = await res.json();
-            if (data.success && data.integrations?.length > 0) {
-                setIntegrations(data.integrations);
-                const active = data.integrations.find((i: any) => i.state === 'authorized') || data.integrations[0];
-                setActiveIntegrationId(active?.id || null);
-            }
+            const zernio = (currentTenant?.settings as any)?.zernio;
+            const accountId = zernio?.whatsappAccountId || zernio?.accountId;
+            setZernioConnected(!!accountId);
+
+            const statusRes = await fetch('/api/integrations/whatsapp/status');
+            const statusData = await statusRes.json().catch(() => ({}));
+            if (!statusData.zernioConfigured) setZernioConnected(false);
         } catch (err) {
-            console.error('Failed to fetch integrations', err);
+            console.error('Failed to fetch WhatsApp status', err);
         }
     };
 
@@ -269,7 +268,6 @@ export default function WhatsAppChatHub() {
                     tenantId: currentTenant.id,
                     phone: selectedPhone,
                     message: textToSend,
-                    integrationId: activeIntegrationId
                 }),
             });
 

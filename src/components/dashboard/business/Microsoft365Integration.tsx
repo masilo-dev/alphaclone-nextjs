@@ -35,12 +35,30 @@ export default function Microsoft365Integration() {
 
     useEffect(() => {
         void loadConnection();
+
+        const params = new URLSearchParams(window.location.search);
+        const oauthStatus = params.get('microsoft');
+        if (!oauthStatus) {
+            return;
+        }
+
+        const reason = params.get('reason');
+        if (oauthStatus === 'connected') {
+            toast.success('Microsoft 365 connected');
+            void loadConnection();
+        } else if (oauthStatus === 'error') {
+            toast.error(reason || 'Microsoft connection failed');
+        }
+
+        params.delete('microsoft');
+        params.delete('reason');
+        const nextSearch = params.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`;
+        window.history.replaceState({}, '', nextUrl);
     }, []);
 
     const handleConnect = () => {
-        void microsoftAuthService.initiateOAuth().catch((error: any) => {
-            toast.error(error.message || 'Unable to start Microsoft connection');
-        });
+        microsoftAuthService.initiateOAuth();
     };
 
     const handleDisconnect = async () => {
@@ -156,7 +174,7 @@ export default function Microsoft365Integration() {
                 </div>
 
                 <p className="text-[11px] text-slate-500 border-t border-white/5 pt-4">
-                    Uses Microsoft delegated OAuth. `AZURE_CLIENT_SECRET` stays server-side inside Supabase Edge Functions.
+                    Uses Microsoft delegated OAuth with PKCE. Token exchange runs server-side; `AZURE_CLIENT_SECRET` never reaches the browser.
                 </p>
             </div>
         </motion.div>
