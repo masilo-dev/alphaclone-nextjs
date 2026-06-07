@@ -70,15 +70,10 @@ export async function GET(req: NextRequest) {
       return redirectWithStatus(appUrl, defaultReturn, 'error', 'invalid_state');
     }
 
-    const codeVerifier = stateData.metadata?.code_verifier as string | undefined;
     const returnTo = (stateData.metadata?.return_to as string | undefined) || defaultReturn;
     const redirectUri =
       (stateData.metadata?.redirect_uri as string | undefined) || getMicrosoftRedirectUri(appUrl);
     const userId = stateData.user_id;
-
-    if (!codeVerifier) {
-      return redirectWithStatus(appUrl, returnTo, 'error', 'missing_pkce_verifier');
-    }
 
     const clientId = ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID;
     const clientSecret = ENV.AZURE_CLIENT_SECRET;
@@ -96,7 +91,7 @@ export async function GET(req: NextRequest) {
         grant_type: 'authorization_code',
         code,
         redirect_uri: redirectUri,
-        code_verifier: codeVerifier,
+        // NOTE: No code_verifier — Web redirect URI flow uses client_secret, not PKCE.
       }),
     });
 
