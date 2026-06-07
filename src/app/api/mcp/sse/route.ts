@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -67,7 +68,11 @@ export async function GET(req: NextRequest) {
         tenant_id, 
         user_id, 
         expires_at: expiresAt,
-        metadata: { client_label: 'sse-handshake-app' } 
+        metadata: {
+          client_label: 'sse-handshake-app',
+          business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
+          business_ai_state: DEFAULT_BUSINESS_AI_STATE,
+        } 
       })
       .select('id')
       .single();

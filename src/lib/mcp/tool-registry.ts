@@ -125,6 +125,13 @@ export function initializeRegistry() {
   require('./tools/bonnie-outcomes');
   require('./tools/google-workspace');
   require('./tools/microsoft');
+  require('./tools/microsoft-diagnostics');
+  require('./tools/x');
+  require('./tools/accounting');
+  require('./tools/campaigns');
+  require('./tools/business-state');
+  require('./tools/solo-owner');
+  require('./tools/platform-advantage');
   require('./tools/api-health');
   require('./tools/documents');
 }

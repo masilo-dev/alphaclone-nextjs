@@ -65,8 +65,23 @@ export async function POST(req: NextRequest) {
     const payload = parsed.data;
     await requireTenantAccess(payload.tenantId);
     const admin = createAdminSupabaseClientOrThrow();
+    const normalizedSlug = payload.slug || slugify(payload.title);
 
     if (payload.id) {
+      const { data: slugConflict } = await admin
+        .from('tenant_forms')
+        .select('id, title')
+        .eq('tenant_id', payload.tenantId)
+        .eq('slug', normalizedSlug)
+        .neq('id', payload.id)
+        .maybeSingle();
+      if (slugConflict) {
+        return NextResponse.json(
+          { error: `Form slug already exists for this workspace: ${String(slugConflict.title || slugConflict.id)}` },
+          { status: 409 }
+        );
+      }
+
       const { data, error } = await admin
         .from('tenant_forms')
         .update({
@@ -76,6 +91,7 @@ export async function POST(req: NextRequest) {
           settings: payload.settings || {},
           is_active: payload.is_active ?? true,
           is_default: payload.is_default ?? false,
+          slug: normalizedSlug,
           updated_at: new Date().toISOString(),
         })
         .eq('id', payload.id)
@@ -83,15 +99,35 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
       if (error) throw error;
+      if (payload.is_default) {
+        await admin
+          .from('tenant_forms')
+          .update({ is_default: false, updated_at: new Date().toISOString() })
+          .eq('tenant_id', payload.tenantId)
+          .neq('id', payload.id)
+          .eq('is_default', true);
+      }
       return NextResponse.json({ success: true, form: data });
     }
 
-    const slug = payload.slug || slugify(payload.title);
+    const { data: slugConflict } = await admin
+      .from('tenant_forms')
+      .select('id, title')
+      .eq('tenant_id', payload.tenantId)
+      .eq('slug', normalizedSlug)
+      .maybeSingle();
+    if (slugConflict) {
+      return NextResponse.json(
+        { error: `Form slug already exists for this workspace: ${String(slugConflict.title || slugConflict.id)}` },
+        { status: 409 }
+      );
+    }
+
     const { data, error } = await admin
       .from('tenant_forms')
       .insert({
         tenant_id: payload.tenantId,
-        slug,
+        slug: normalizedSlug,
         title: payload.title,
         description: payload.description || null,
         fields: payload.fields,
@@ -106,6 +142,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Form slug already exists for this workspace' }, { status: 409 });
       }
       throw error;
+    }
+    if (payload.is_default) {
+      await admin
+        .from('tenant_forms')
+        .update({ is_default: false, updated_at: new Date().toISOString() })
+        .eq('tenant_id', payload.tenantId)
+        .neq('id', data.id)
+        .eq('is_default', true);
     }
     return NextResponse.json({ success: true, form: data });
   } catch (err) {

@@ -112,6 +112,8 @@ const ALLOWED_MCP_ORIGINS = [
   'https://claude.ai',
   'https://manus.ai',
   'https://grok.x.ai',
+  'https://chatgpt.com',
+  'https://chat.openai.com',
 ];
 
 export const MCP_CORS_HEADERS = {

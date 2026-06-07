@@ -9,6 +9,8 @@ const APP_URL = 'https://alphaclonesystems.com';
 const REDIRECT_URI = `${APP_URL}/api/auth/callback/x`;
 const DASHBOARD_X = `${APP_URL}/dashboard/business/x`;
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const code = searchParams.get('code');
@@ -50,7 +52,7 @@ export async function GET(req: NextRequest) {
         }
 
         const basicAuth = Buffer.from(`${X_CLIENT_ID}:${X_CLIENT_SECRET}`).toString('base64');
-        const tokenResponse = await fetch('https://api.twitter.com/2/oauth2/token', {
+        const tokenResponse = await fetch('https://api.x.com/2/oauth2/token', {
             method: 'POST',
             headers: {
                 Authorization: `Basic ${basicAuth}`,
@@ -59,6 +61,7 @@ export async function GET(req: NextRequest) {
             body: new URLSearchParams({
                 code,
                 grant_type: 'authorization_code',
+                client_id: X_CLIENT_ID,
                 redirect_uri: REDIRECT_URI,
                 code_verifier: codeVerifier,
             }),
@@ -72,7 +75,7 @@ export async function GET(req: NextRequest) {
 
         const tokens = await tokenResponse.json();
 
-        const userResponse = await fetch('https://api.twitter.com/2/users/me', {
+        const userResponse = await fetch('https://api.x.com/2/users/me', {
             headers: { Authorization: `Bearer ${tokens.access_token}` },
         });
 

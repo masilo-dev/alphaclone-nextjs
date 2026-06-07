@@ -698,6 +698,186 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'get_business_ai_state',
+    description: 'Read the current business AI connection state, model preference, audit posture, and recommended mode for this workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'Optional task to evaluate' },
+        task_category: { type: 'string', description: 'Optional category such as research, audit, drafting, execution' },
+        touches_sensitive_data: { type: 'boolean', description: 'Whether the task uses sensitive data' },
+        requires_external_action: { type: 'boolean', description: 'Whether the task needs an external system action' },
+        requires_financial_action: { type: 'boolean', description: 'Whether the task affects money or accounting' },
+        requires_legal_action: { type: 'boolean', description: 'Whether the task affects legal/contracts' },
+        requires_customer_facing_action: { type: 'boolean', description: 'Whether the task directly affects customers' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'update_business_ai_state',
+    description: 'Update the business AI connection state so the MCP session remembers model preferences, audit settings, and review thresholds.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch: {
+          type: 'object',
+          properties: {
+            primary_domain: { type: 'string', enum: ['crm', 'finance', 'contracts', 'marketing', 'support', 'operations', 'strategy'] },
+            secondary_domains: { type: 'array', items: { type: 'string' } },
+            agent_mode: { type: 'string', enum: ['observe', 'draft', 'act_with_approval', 'autonomous'] },
+            preferred_model: { type: 'string', enum: ['claude', 'openai', 'hybrid', 'auto'] },
+            preferred_model_by_task: { type: 'object' },
+            audit: { type: 'object' },
+            compliance: { type: 'object' },
+            scores: { type: 'object' },
+            thresholds: { type: 'object' },
+            owner_profile: { type: 'object' },
+            memory_summary: { type: 'string' },
+            kpi_targets: { type: 'array', items: { type: 'string' } },
+            last_policy_review_at: { type: 'string' },
+          },
+          required: [],
+        },
+      },
+      required: ['patch'],
+    },
+  },
+  {
+    name: 'evaluate_business_ai_readiness',
+    description: 'Score whether this workspace should observe, draft, act with approval, or operate autonomously for a specific business task.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'Describe the business task to evaluate' },
+        task_category: { type: 'string', description: 'Optional category such as research, audit, drafting, execution' },
+        touches_sensitive_data: { type: 'boolean', description: 'Whether the task uses sensitive data' },
+        requires_external_action: { type: 'boolean', description: 'Whether the task needs an external system action' },
+        requires_financial_action: { type: 'boolean', description: 'Whether the task affects money or accounting' },
+        requires_legal_action: { type: 'boolean', description: 'Whether the task affects legal/contracts' },
+        requires_customer_facing_action: { type: 'boolean', description: 'Whether the task directly affects customers' },
+      },
+      required: ['task'],
+    },
+  },
+  {
+    name: 'solo_owner_operator_brief',
+    description: 'Future-facing operating brief for solo business owners: cash pressure, client follow-ups, admin load, and next best owner-time actions.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lookback_days: { type: 'number', description: 'Lookback window in days (default 30)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'solo_owner_value_map',
+    description: 'Map where AlphaClone creates the most leverage for a one-person business: time saved, cash recovered, leads converted, and decisions made faster.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'owner_autopilot_queue',
+    description: 'Rank the next best actions for a solo owner or small team by cash impact, time saved, risk, approval requirement, and recommended MCP tool.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lookback_days: { type: 'number', description: 'Lookback window in days (default 30)' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'revenue_recovery_agent',
+    description: 'Find recoverable revenue from overdue invoices, draft invoices, stale quotes, and dormant deals. Returns owner-approval actions instead of sending automatically.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lookback_days: { type: 'number', description: 'Lookback window in days (default 60)' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'business_memory_graph',
+    description: 'Build a compact memory graph of clients, deals, invoices, leads, and recent agent activity so AI co-workers can reason with business context.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number', description: 'Max nodes per type' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'trust_ledger',
+    description: 'Return recent AI/tool decisions and audit evidence from MCP sessions and audit logs. Use before high-risk autonomous action.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        hours: { type: 'number', description: 'Lookback window in hours' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'solo_owner_time_savings_meter',
+    description: 'Estimate owner time saved, money surfaced, and admin work compressed from recent MCP activity and operating signals.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lookback_days: { type: 'number', description: 'Lookback window in days' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'deal_to_cash_flow',
+    description: 'Map the path from active deals to quotes, contracts, invoices, and cash so owners can see where revenue is stuck.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'ai_business_readiness_score',
+    description: 'Score whether the workspace is ready for more automation using business AI state, tool reliability, data signals, and audit posture.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'client_pulse',
+    description: 'Identify clients or contacts that need attention based on unpaid invoices, open deals, recent intake, and stale activity.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        limit: { type: 'number', description: 'Max pulse items' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
     name: 'generate_business_report',
     description: 'Executive Performance Reporting: Generate a comprehensive business performance report including revenue trends, conversion rates, automation throughput, and strategic insights.',
     inputSchema: {

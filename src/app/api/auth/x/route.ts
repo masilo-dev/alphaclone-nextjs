@@ -8,6 +8,8 @@ const X_CLIENT_ID = process.env.X_CLIENT_ID;
 const CANONICAL_APP_URL = 'https://alphaclonesystems.com';
 const REDIRECT_URI = `${CANONICAL_APP_URL}/api/auth/callback/x`;
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
     if (!X_CLIENT_ID) {
         return NextResponse.json({ error: 'X_CLIENT_ID not configured' }, { status: 500 });

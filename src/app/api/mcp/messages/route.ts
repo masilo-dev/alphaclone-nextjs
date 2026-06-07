@@ -3,13 +3,14 @@ import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
-const MCP_PROTOCOL_VERSION = '2025-03-26';
+const MCP_PROTOCOL_VERSION = '2025-11-25';
 
 export async function POST(req: NextRequest) {
   const cors = handleCorsApp(req);
@@ -185,6 +186,8 @@ export async function POST(req: NextRequest) {
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-messages-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
+            business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
+            business_ai_state: DEFAULT_BUSINESS_AI_STATE,
           },
         })
         .select('id')
