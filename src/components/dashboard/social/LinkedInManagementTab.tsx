@@ -33,6 +33,7 @@ interface LinkedInIntegrationRow {
   linkedin_person_urn: string;
   scopes: string[] | null;
   is_active: boolean;
+  token_expires_at?: string | null;
   metadata?: {
     company_pages?: Array<{
       id: string;
@@ -173,6 +174,7 @@ export default function LinkedInManagementTab() {
   const [aiContentType, setAiContentType] = useState<'linkedin_post' | 'linkedin_article'>('linkedin_post');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [showComposeSheet, setShowComposeSheet] = useState(false);
+  const [capturingLead, setCapturingLead] = useState<Record<string, boolean>>({});
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
@@ -182,7 +184,7 @@ export default function LinkedInManagementTab() {
       loadLinkedInPostsWithSchemaFallback(currentTenant.id),
       supabase
         .from('linkedin_integrations')
-        .select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata')
+        .select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata,token_expires_at')
         .eq('tenant_id', currentTenant.id)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
@@ -280,6 +282,16 @@ export default function LinkedInManagementTab() {
     return normalizeScopes(scopes).includes('w_organization_social');
   }, [integrations, selectedLinkedInMemberId]);
   const canPostAsSelectedCompany = !selectedLinkedInOrganizationId || hasOrganizationWriteScope;
+
+  const linkedInTokenExpiryWarning = useMemo(() => {
+    const exp = selectedIntegration?.token_expires_at;
+    if (!exp) return null;
+    const expires = new Date(exp);
+    const daysLeft = Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (daysLeft <= 0) return 'Your LinkedIn connection has expired. Reconnect to keep posting and syncing comments.';
+    if (daysLeft <= 7) return `LinkedIn token expires in ${daysLeft} day(s). Reconnect now to avoid interruption (LinkedIn may require 2FA on reconnect).`;
+    return null;
+  }, [selectedIntegration?.token_expires_at]);
 
   const handleConnectLinkedIn = async () => {
     try {
@@ -484,6 +496,31 @@ ${parentContext}Return only the comment text.`;
       toast.error('Failed to load LinkedIn comments');
     } finally {
       setCommentsLoading((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
+  const captureCommentLead = async (post: LinkedInPostRow, comment: LinkedInCommentRow) => {
+    if (!currentTenant?.id) return;
+    const key = comment.commentUrn;
+    setCapturingLead((prev) => ({ ...prev, [key]: true }));
+    try {
+      const res = await fetch('/api/linkedin/capture-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          actorUrn: comment.actor,
+          commentText: comment.text,
+          postCaption: post.caption,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed');
+      toast.success('Added to CRM as lead');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to capture lead');
+    } finally {
+      setCapturingLead((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -884,6 +921,18 @@ ${parentContext}Return only the comment text.`;
         </button>
       </div>
 
+      {linkedInTokenExpiryWarning && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p>{linkedInTokenExpiryWarning}</p>
+            <button onClick={handleConnectLinkedIn} className="mt-2 text-xs font-bold underline hover:text-white">
+              Reconnect LinkedIn (includes LinkedIn login + 2FA if enabled)
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Topbar ────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -1109,6 +1158,16 @@ ${parentContext}Return only the comment text.`;
                                 <span className="text-xs text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
                               </div>
                               <p className="text-sm text-slate-300 leading-relaxed">{c.text}</p>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => captureCommentLead(post, c)}
+                                  disabled={capturingLead[c.commentUrn]}
+                                  className="h-9 px-3 rounded-lg bg-violet-600/80 text-white text-xs font-bold hover:bg-violet-500 disabled:opacity-50"
+                                >
+                                  {capturingLead[c.commentUrn] ? 'Adding…' : 'Add as Lead'}
+                                </button>
+                              </div>
                               <div className="flex flex-col sm:flex-row gap-2">
                                 <input 
                                   value={replyByComment[c.commentUrn] || ''}

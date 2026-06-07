@@ -17,6 +17,7 @@ import BusinessBrevoIntegration from '../business/BrevoIntegration';
 import CustomEmailIntegration from '../business/CustomEmailIntegration';
 import Microsoft365Integration from '../business/Microsoft365Integration';
 import WhatsAppIntegration from '../business/WhatsAppIntegration';
+import ZernioIntegration from '../business/ZernioIntegration';
 import { MessageCircle } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { useTenant } from '@/contexts/TenantContext';
@@ -145,6 +146,7 @@ export function IntegrationSettings() {
         {activeTab === 'whatsapp' && (
           <div className="space-y-6">
             <WhatsAppIntegration />
+            <ZernioIntegration />
           </div>
         )}
 

@@ -66,6 +66,8 @@ const envSchema = z.object({
 
     // Microsoft OAuth
     VITE_AZURE_CLIENT_ID: z.string().optional(),
+    AZURE_CLIENT_ID: z.string().optional(),
+    AZURE_CLIENT_SECRET: z.string().optional(),
 
     // HubSpot OAuth
     HUBSPOT_CLIENT_ID: z.string().optional(),
@@ -172,6 +174,8 @@ function validateEnv() {
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
         VITE_AZURE_CLIENT_ID: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || process.env.VITE_AZURE_CLIENT_ID || process.env.AZURE_CLIENT_ID,
+        AZURE_CLIENT_ID: process.env.AZURE_CLIENT_ID || process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || process.env.VITE_AZURE_CLIENT_ID,
+        AZURE_CLIENT_SECRET: process.env.AZURE_CLIENT_SECRET,
 
         HUBSPOT_CLIENT_ID: process.env.HUBSPOT_CLIENT_ID || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID,
         HUBSPOT_CLIENT_SECRET: process.env.HUBSPOT_CLIENT_SECRET,

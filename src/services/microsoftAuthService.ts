@@ -1,15 +1,5 @@
 import { ENV } from '@/config/env';
-import {
-  buildMicrosoftAuthorizeUrl,
-  generateMicrosoftPkcePair,
-  getMicrosoftRedirectUri,
-} from '@/config/microsoft';
 import { supabase } from '@/lib/supabase';
-
-const MICROSOFT_OAUTH_STATE_KEY = 'alphaclone.microsoft.oauth.state';
-const MICROSOFT_OAUTH_REDIRECT_KEY = 'alphaclone.microsoft.oauth.redirect';
-const MICROSOFT_OAUTH_RETURN_KEY = 'alphaclone.microsoft.oauth.return';
-const MICROSOFT_OAUTH_VERIFIER_KEY = 'alphaclone.microsoft.oauth.verifier';
 
 export interface MicrosoftConnection {
   id: string;
@@ -84,72 +74,20 @@ export const microsoftAuthService = {
     return !!connection?.access_token;
   },
 
-  async initiateOAuth(returnTo?: string) {
-    const state =
-      typeof crypto !== 'undefined' && 'randomUUID' in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}`;
-
-    if (typeof window !== 'undefined') {
-      const redirectUri = getMicrosoftRedirectUri(window.location.origin);
-      const { verifier, challenge } = await generateMicrosoftPkcePair();
-      sessionStorage.setItem(MICROSOFT_OAUTH_STATE_KEY, state);
-      sessionStorage.setItem(MICROSOFT_OAUTH_REDIRECT_KEY, redirectUri);
-      sessionStorage.setItem(MICROSOFT_OAUTH_VERIFIER_KEY, verifier);
-      if (returnTo) {
-        sessionStorage.setItem(MICROSOFT_OAUTH_RETURN_KEY, returnTo);
-      } else {
-        sessionStorage.removeItem(MICROSOFT_OAUTH_RETURN_KEY);
-      }
-      window.location.href = buildMicrosoftAuthorizeUrl(state, {
-        origin: window.location.origin,
-        codeChallenge: challenge,
-      });
-    }
-
-    return state;
-  },
-
-  getOAuthReturnPath() {
+  initiateOAuth(returnTo?: string) {
     if (typeof window === 'undefined') {
-      return '/dashboard/settings';
+      return;
     }
 
-    return sessionStorage.getItem(MICROSOFT_OAUTH_RETURN_KEY) || '/dashboard/settings';
-  },
-
-  async handleCallback(code: string, state?: string) {
-    if (!code) {
-      throw new Error('Missing Microsoft authorization code.');
+    const params = new URLSearchParams();
+    if (returnTo) {
+      params.set('returnTo', returnTo);
     }
 
-    let redirectUri = getMicrosoftRedirectUri();
-    let codeVerifier: string | null = null;
-
-    if (typeof window !== 'undefined') {
-      const expectedState = sessionStorage.getItem(MICROSOFT_OAUTH_STATE_KEY);
-      if (expectedState && state && expectedState !== state) {
-        throw new Error('Microsoft OAuth state validation failed.');
-      }
-      redirectUri = sessionStorage.getItem(MICROSOFT_OAUTH_REDIRECT_KEY) || redirectUri;
-      codeVerifier = sessionStorage.getItem(MICROSOFT_OAUTH_VERIFIER_KEY);
-      sessionStorage.removeItem(MICROSOFT_OAUTH_STATE_KEY);
-      sessionStorage.removeItem(MICROSOFT_OAUTH_REDIRECT_KEY);
-      sessionStorage.removeItem(MICROSOFT_OAUTH_VERIFIER_KEY);
-    }
-
-    if (!codeVerifier) {
-      throw new Error('Missing Microsoft PKCE verifier. Please start the connection again.');
-    }
-
-    return invokeSupabaseFunction<{
-      success: boolean;
-      connection: MicrosoftConnection;
-    }>('microsoft-oauth-exchange', {
-      code,
-      redirectUri,
-      codeVerifier,
-    });
+    const query = params.toString();
+    window.location.href = query
+      ? `/api/auth/microsoft/connect?${query}`
+      : '/api/auth/microsoft/connect';
   },
 
   async refreshAccessToken(refreshToken?: string) {
