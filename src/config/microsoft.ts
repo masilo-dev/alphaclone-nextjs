@@ -48,7 +48,7 @@ export function getMicrosoftScopes() {
 
 export function buildMicrosoftAuthorizeUrl(
   state: string,
-  options: { origin?: string; loginHint?: string; codeChallenge: string }
+  options: { origin?: string; loginHint?: string }
 ) {
   const url = new URL(MICROSOFT_OAUTH_AUTHORIZE_URL);
   url.searchParams.set('client_id', getMicrosoftClientId());
@@ -58,8 +58,8 @@ export function buildMicrosoftAuthorizeUrl(
   url.searchParams.set('scope', getMicrosoftScopes().join(' '));
   url.searchParams.set('state', state);
   url.searchParams.set('prompt', 'select_account');
-  url.searchParams.set('code_challenge', options.codeChallenge);
-  url.searchParams.set('code_challenge_method', 'S256');
+  // NOTE: No code_challenge/code_challenge_method — Azure app uses Web redirect URIs
+  // (not SPA), so the server-side confidential-client flow with client_secret is used.
   if (options.loginHint) {
     url.searchParams.set('login_hint', options.loginHint);
   }

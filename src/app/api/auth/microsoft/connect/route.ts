@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { buildMicrosoftAuthorizeUrl, getMicrosoftRedirectUri } from '@/config/microsoft';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { generateCodeChallenge, generateCodeVerifier } from '@/lib/pkce';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
@@ -35,8 +34,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const codeVerifier = generateCodeVerifier();
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
     const stateNonce = crypto.randomUUID();
     const supabaseAdmin = createSupabaseAdminClient();
 
@@ -44,7 +41,6 @@ export async function GET(req: NextRequest) {
       id: stateNonce,
       user_id: user.id,
       metadata: {
-        code_verifier: codeVerifier,
         provider: 'microsoft',
         return_to: returnTo,
         redirect_uri: getMicrosoftRedirectUri(appUrl),
@@ -57,7 +53,6 @@ export async function GET(req: NextRequest) {
 
     const authUrl = buildMicrosoftAuthorizeUrl(stateNonce, {
       origin: appUrl,
-      codeChallenge,
     });
 
     return NextResponse.redirect(authUrl);

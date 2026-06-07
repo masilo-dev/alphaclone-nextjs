@@ -31,8 +31,7 @@ async function getAuthenticatedUser(request: Request) {
 
 async function exchangeCodeForTokens(
   code: string,
-  redirectUri: string,
-  codeVerifier?: string
+  redirectUri: string
 ) {
   const clientId = Deno.env.get('AZURE_CLIENT_ID') ?? '';
   const clientSecret = Deno.env.get('AZURE_CLIENT_SECRET') ?? '';
@@ -47,9 +46,8 @@ async function exchangeCodeForTokens(
   if (clientSecret) {
     params.set('client_secret', clientSecret);
   }
-  if (codeVerifier) {
-    params.set('code_verifier', codeVerifier);
-  }
+  // NOTE: No code_verifier — Azure app registration uses Web redirect URIs
+  // (not SPA), so the confidential-client flow with client_secret is used.
 
   const response = await fetch(
     'https://login.microsoftonline.com/common/oauth2/v2.0/token',
@@ -75,15 +73,12 @@ Deno.serve(async (request) => {
 
   try {
     const user = await getAuthenticatedUser(request);
-    const { code, redirectUri, codeVerifier } = await request.json();
+    const { code, redirectUri } = await request.json();
     if (!code || !redirectUri) {
       throw new Error('code and redirectUri are required');
     }
-    if (!codeVerifier) {
-      throw new Error('codeVerifier is required for Microsoft OAuth');
-    }
 
-    const tokenPayload = await exchangeCodeForTokens(code, redirectUri, codeVerifier);
+    const tokenPayload = await exchangeCodeForTokens(code, redirectUri);
     const profileResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
       headers: {
         Authorization: `Bearer ${tokenPayload.access_token}`,
