@@ -22,8 +22,9 @@ export interface XTweet {
 }
 
 // ── OAuth 1.0a helpers (required for v1.1 media upload) ──────────────────────
-const X_API_KEY    = process.env.X_API_KEY    || process.env.TWITTER_API_KEY    || '';
-const X_API_SECRET = process.env.X_API_SECRET || process.env.TWITTER_API_SECRET || '';
+// Supports both X_API_KEY and X_CONSUMER_KEY naming conventions (Vercel uses X_CONSUMER_KEY)
+const X_API_KEY    = process.env.X_API_KEY    || process.env.X_CONSUMER_KEY    || process.env.TWITTER_API_KEY    || '';
+const X_API_SECRET = process.env.X_API_SECRET || process.env.X_CONSUMER_SECRET || process.env.TWITTER_API_SECRET || '';
 
 function buildOAuth1Header(
     method: string,

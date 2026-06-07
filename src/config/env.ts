@@ -69,6 +69,13 @@ const envSchema = z.object({
     AZURE_CLIENT_ID: z.string().optional(),
     AZURE_CLIENT_SECRET: z.string().optional(),
 
+    // X (Twitter) OAuth 2.0
+    X_CLIENT_ID: z.string().optional(),
+    X_CLIENT_SECRET: z.string().optional(),
+    // OAuth 1.0a consumer keys (for media upload v1.1)
+    X_API_KEY: z.string().optional(),
+    X_API_SECRET: z.string().optional(),
+
     // HubSpot OAuth
     HUBSPOT_CLIENT_ID: z.string().optional(),
     HUBSPOT_CLIENT_SECRET: z.string().optional(),
@@ -176,6 +183,12 @@ function validateEnv() {
         VITE_AZURE_CLIENT_ID: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || process.env.VITE_AZURE_CLIENT_ID || process.env.AZURE_CLIENT_ID,
         AZURE_CLIENT_ID: process.env.AZURE_CLIENT_ID || process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || process.env.VITE_AZURE_CLIENT_ID,
         AZURE_CLIENT_SECRET: process.env.AZURE_CLIENT_SECRET,
+
+        // X (Twitter) — support both X_API_KEY and X_CONSUMER_KEY naming conventions
+        X_CLIENT_ID: process.env.X_CLIENT_ID,
+        X_CLIENT_SECRET: process.env.X_CLIENT_SECRET,
+        X_API_KEY: process.env.X_API_KEY || process.env.X_CONSUMER_KEY || process.env.TWITTER_API_KEY,
+        X_API_SECRET: process.env.X_API_SECRET || process.env.X_CONSUMER_SECRET || process.env.TWITTER_API_SECRET,
 
         HUBSPOT_CLIENT_ID: process.env.HUBSPOT_CLIENT_ID || process.env.NEXT_PUBLIC_HUBSPOT_CLIENT_ID,
         HUBSPOT_CLIENT_SECRET: process.env.HUBSPOT_CLIENT_SECRET,
