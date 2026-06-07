@@ -4,7 +4,9 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
 
 const X_CLIENT_ID = process.env.X_CLIENT_ID;
-const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/callback/x`;
+// Always use the canonical non-www origin — X Developer Portal callback must match exactly.
+const CANONICAL_APP_URL = 'https://alphaclonesystems.com';
+const REDIRECT_URI = `${CANONICAL_APP_URL}/api/auth/callback/x`;
 
 export async function GET(req: NextRequest) {
     if (!X_CLIENT_ID) {

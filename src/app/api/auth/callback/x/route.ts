@@ -4,7 +4,8 @@ import { xService } from '@/services/xService';
 
 const X_CLIENT_ID = process.env.X_CLIENT_ID;
 const X_CLIENT_SECRET = process.env.X_CLIENT_SECRET;
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
+// Always use the canonical non-www origin — must match X Developer Portal registration exactly.
+const APP_URL = 'https://alphaclonesystems.com';
 const REDIRECT_URI = `${APP_URL}/api/auth/callback/x`;
 const DASHBOARD_X = `${APP_URL}/dashboard/business/x`;
 
