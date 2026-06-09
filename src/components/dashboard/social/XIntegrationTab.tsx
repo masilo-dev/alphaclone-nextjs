@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Twitter, Link2, RefreshCw, Send, Loader2 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +15,7 @@ interface XIntegrationRow {
 }
 
 export default function XIntegrationTab() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
   const [integration, setIntegration] = useState<XIntegrationRow | null>(null);
@@ -86,7 +87,7 @@ export default function XIntegrationTab() {
 
   const handleConnect = () => {
     const tenantId = currentTenant?.id ? `?tenantId=${encodeURIComponent(currentTenant.id)}` : '';
-    window.location.href = `/api/auth/x${tenantId}`;
+    router.push(`/api/auth/x${tenantId}`);
   };
 
   const handlePost = async (e: React.FormEvent) => {
@@ -130,8 +131,13 @@ export default function XIntegrationTab() {
           <Twitter className="w-12 h-12 text-sky-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Connect X (Twitter)</h1>
           <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
-            Authorize your X account to publish posts and manage outreach from your workspace.
+            Authorize your X account to publish posts and read public profile data from your workspace.
           </p>
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 mb-6">
+            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-300">Posting access</span>
+            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-300">Public profile data</span>
+            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-300">No DMs</span>
+          </div>
           <button
             type="button"
             onClick={handleConnect}
@@ -140,6 +146,9 @@ export default function XIntegrationTab() {
             <Link2 className="w-5 h-5" />
             Connect X Account
           </button>
+          <p className="text-slate-500 text-xs mt-4 max-w-md mx-auto">
+            The connection requests the minimum permissions needed for posting, reading public account data, and keeping your session active.
+          </p>
         </div>
       </div>
     );
@@ -150,7 +159,7 @@ export default function XIntegrationTab() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">@{integration.x_username}</h1>
-          <p className="text-slate-500 text-sm">Connected X account</p>
+          <p className="text-slate-500 text-sm">Connected for posts and public profile access</p>
         </div>
         <button
           type="button"

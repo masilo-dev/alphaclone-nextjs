@@ -59,12 +59,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to start OAuth flow' }, { status: 500 });
     }
 
+    // Keep the grant as small as possible for review and user trust.
+    // DM scopes are intentionally omitted because the current integration flow
+    // only needs posting, reading public data, and refresh token access.
     const scopes = [
         'tweet.read',
         'tweet.write',
         'users.read',
-        'direct_messages.read',
-        'direct_messages.write',
         'offline.access',
     ].join(' ');
 
