@@ -32,14 +32,14 @@ export default function robots(): MetadataRoute.Robots {
                     'cohere-ai',
                     'BytesSpider'
                 ],
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/faq', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
+                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/search', '/onboarding/create-business', '/docs', '/faq', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
                 disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
             },
 
             // General fallback — all other bots get full marketing access, no sensitive routes
             {
                 userAgent: '*',
-                allow: ['/api/mcp/', '/api/mcp', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
+                allow: ['/api/mcp/', '/api/mcp', '/auth/login', '/guide', '/search', '/onboarding/create-business', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
                 disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/admin/'],
             },
         ],

@@ -5,7 +5,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/contexts/PWAContext";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
-import CookieConsent from "@/components/common/CookieConsent";
+import CookieBanner from "@/components/legal/CookieBanner";
 import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
@@ -186,7 +186,7 @@ export default function RootLayout({
             </ShellSwitcher>
             {/* <GlobalAlpha /> */}
           </PWAProvider>
-          <CookieConsent />
+          <CookieBanner />
         </Providers>
         <ConsentAwareAnalytics />
       </body>
