@@ -50,6 +50,26 @@ const legalPages = [
     description: 'Access, correction, export, or deletion requests.',
   },
   {
+    title: 'Refund Policy',
+    href: '/legal/refund',
+    description: 'Monthly and annual plan refund rules and exceptions.',
+  },
+  {
+    title: 'Service Level Agreement',
+    href: '/legal/sla',
+    description: 'Uptime commitment, exclusions, and service credit process.',
+  },
+  {
+    title: 'AI Disclaimer',
+    href: '/legal/ai-disclaimer',
+    description: 'How to use Bonnie AI safely and responsibly.',
+  },
+  {
+    title: 'Data Processing Agreement',
+    href: '/legal/dpa',
+    description: 'GDPR and UK GDPR DPA with sub-processor list and transfer safeguards.',
+  },
+  {
     title: 'Platform Status',
     href: '/platform-status',
     description: 'Service health communication and operational reliability posture.',

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { Button } from './ui/UIComponents';
 import MarketingFooter from './landing/MarketingFooter';
 import { ServiceCard } from './landing/ServiceCard';
@@ -295,6 +296,7 @@ const ClaudeHudSimulator = () => {
 };
 
 const LandingPage = () => {
+   const router = useRouter();
    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
    const [mobilePlatformOpen, setMobilePlatformOpen] = useState(false);
    const [mobileResourcesOpen, setMobileResourcesOpen] = useState(false);
@@ -308,7 +310,6 @@ const LandingPage = () => {
       subject: '',
       message: ''
    });
-   const [selectedMobileCompetitor, setSelectedMobileCompetitor] = useState<'hubspot' | 'quickbooks' | 'asana' | 'others'>('hubspot');
 
    // Smooth scroll function
    const scrollToSection = useCallback((sectionId: string) => {
@@ -319,8 +320,8 @@ const LandingPage = () => {
          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
          return;
       }
-      window.location.href = `/#${sectionId}`;
-   }, []);
+      router.push(`/#${sectionId}`);
+   }, [router]);
 
    const platformMenuItems = useMemo(() => ([
       { label: 'CRM and Pipeline', action: () => scrollToSection('services') },
@@ -328,6 +329,18 @@ const LandingPage = () => {
       { label: 'Finance and Billing', action: () => scrollToSection('pricing') },
       { label: 'Lead Operations', action: () => scrollToSection('services') },
    ]), [scrollToSection]);
+
+   const heroOutcomePoints = [
+      'Replace CRM, invoicing, contracts, and project tools',
+      'Keep every client workflow in one workspace',
+      'Start free for 14 days, no card required',
+   ];
+
+   const heroTrustPoints = [
+      'Built for service businesses',
+      'GDPR-friendly controls',
+      'Live demo available anytime',
+   ];
 
    // Scroll handling for navbar styling only.
    useEffect(() => {
@@ -667,7 +680,7 @@ const LandingPage = () => {
                      {/* Mobile Menu Footer CTA */}
                      <div className="border-t border-slate-800 p-4">
                         <button
-                           onClick={() => { window.location.href = BUSINESS_SIGNUP_HREF; }}
+                           onClick={() => { router.push(BUSINESS_SIGNUP_HREF); }}
                            className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-black text-lg rounded-2xl transition-all shadow-xl shadow-teal-500/30"
                         >
                            Start Free Trial
@@ -705,47 +718,40 @@ const LandingPage = () => {
 
                      {/* Headline */}
                      <h1 className="font-marketing-heading font-black text-white mb-6 tracking-tight">
-                        Your entire business.{' '}
-                        <span className="text-cyan-400">One AI.</span>
+                        Run your business from{' '}
+                        <span className="text-cyan-400">one AI workspace.</span>
                      </h1>
 
                      {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        AlphaClone gives founders and small teams one system for CRM, projects, finance, and automation. Replace tool sprawl, reduce admin work, and run daily operations from a single workspace.
+                        AlphaClone replaces scattered CRM, billing, contracts, and project tools with one system that helps founders move faster and keep every client workflow connected.
                      </p>
                      <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
-                        Built for service businesses. Social automation supports LinkedIn pages and Facebook business pages — no personal account required.
+                        Built for service businesses. Social automation supports LinkedIn pages and Facebook business pages, without needing a personal account.
                      </p>
 
-                     {/* Platform modules — branded keyword pills */}
-                     <div className="flex flex-wrap justify-center gap-2 mb-10 sm:mb-12 max-w-2xl mx-auto">
-                        {[
-                           'CRM & Pipeline',
-                           'Lead Operations',
-                           'Invoicing',
-                           'Proposals',
-                           'Contracts',
-                           'Projects',
-                           'AI Sales Agent',
-                           'AI Agents',
-                           'Meetings',
-                           'Email Campaigns',
-                           'Analytics',
-                           'Team Chat',
-                        ].map(label => (
-                           <div key={label} className="bg-cyan-500/10 border border-cyan-500/30 rounded-full px-3.5 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-colors">
-                              {label}
+                     {/* Outcome bullets */}
+                     <div className="grid gap-3 sm:grid-cols-3 mb-10 sm:mb-12 max-w-4xl mx-auto text-left">
+                        {heroOutcomePoints.map((point) => (
+                           <div
+                              key={point}
+                              className="flex items-start gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/40 px-4 py-3 shadow-[0_0_30px_-18px_rgba(34,211,238,0.25)]"
+                           >
+                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-400">
+                                 <Check className="h-3.5 w-3.5" />
+                              </div>
+                              <span className="text-sm leading-relaxed text-slate-200">{point}</span>
                            </div>
                         ))}
                      </div>
 
                      {/* CTAs */}
-                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
                         <Button
-                           onClick={() => window.location.href = BUSINESS_SIGNUP_HREF}
+                           onClick={() => router.push(BUSINESS_SIGNUP_HREF)}
                            className="h-14 px-8 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xl shadow-cyan-500/20"
                         >
-                           Start Free Trial
+                           Start 14-Day Trial
                            <ArrowRight className="w-5 h-5 ml-2" />
                         </Button>
                         <button
@@ -754,23 +760,57 @@ const LandingPage = () => {
                         >
                            Book a Demo
                         </button>
-                        <button
-                           onClick={() => window.location.href = '/demo'}
-                           className="h-14 px-8 text-lg font-medium text-slate-400 hover:text-white transition-all"
-                        >
-                           Watch Demo
-                        </button>
+                     </div>
+
+                     <div className="flex flex-wrap justify-center gap-2 mb-10">
+                        {heroTrustPoints.map((point) => (
+                           <div key={point} className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/40 px-3.5 py-1.5 text-xs font-medium text-slate-300">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                              {point}
+                           </div>
+                        ))}
+                     </div>
+
+                     {/* Offer block */}
+                     <div className="mb-10 rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 via-slate-950/60 to-blue-500/10 px-5 py-5 sm:px-6 sm:py-6 text-left max-w-4xl mx-auto">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                           <div>
+                              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300 mb-3">
+                                 Limited-time offer
+                              </div>
+                              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                                 Get set up in minutes, not weeks.
+                              </h2>
+                              <p className="mt-2 max-w-2xl text-sm sm:text-base text-slate-300 leading-relaxed">
+                                 Start a 14-day trial, see your business workspace in one place, and decide after you’ve tested the CRM, billing, contracts, and workflow tools.
+                              </p>
+                           </div>
+                           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                              <Button
+                                 onClick={() => router.push(BUSINESS_SIGNUP_HREF)}
+                                 className="h-12 px-6 text-sm sm:text-base font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xl shadow-cyan-500/20"
+                              >
+                                 Start Free Trial
+                              </Button>
+                              <button
+                                 onClick={() => window.open(PLATFORM_CALENDLY_URL, '_blank', 'noopener,noreferrer')}
+                                 className="h-12 px-6 text-sm sm:text-base font-semibold text-slate-200 border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
+                              >
+                                 Book a Demo
+                              </button>
+                           </div>
+                        </div>
                      </div>
 
                      {/* Proof stats */}
-                     <div className="flex flex-wrap justify-center gap-6 sm:gap-10 text-center">
+                     <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-center">
                         {[
-                           { value: '12', label: 'core modules' },
+                           { value: '12', label: 'modules in one place' },
                            { value: '1', label: 'shared workspace' },
-                           { value: '14', label: 'trial days' },
+                           { value: '14', label: 'free trial days' },
                            { value: '$0', label: 'card required' },
                         ].map(({ value, label }) => (
-                           <div key={label} className="px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/15">
+                           <div key={label} className="px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/15 min-w-[140px]">
                               <div className="text-2xl sm:text-3xl font-black text-cyan-400 font-marketing-data">{value}</div>
                               <div className="text-xs text-slate-400 mt-0.5 font-medium uppercase tracking-wide">{label}</div>
                            </div>
@@ -806,189 +846,47 @@ const LandingPage = () => {
                whileInView={{ opacity: 1, y: 0 }}
                viewport={{ once: true }}
                transition={{ duration: 0.8 }}
-               className="py-24 relative overflow-hidden bg-slate-950/40 border-y border-slate-900"
+               className="py-16 relative overflow-hidden bg-slate-950/40 border-y border-slate-900"
             >
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                  <div className="text-center mb-16">
+                  <div className="text-center mb-10">
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
-                        Compare the Tools Behind <span className="text-red-400">Daily Operations</span>
+                        One workspace beats <span className="text-cyan-400">tool sprawl</span>
                      </h2>
                      <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        See which operating workflows AlphaClone brings into one workspace.
+                        AlphaClone combines the core systems most founders need, so you can act faster without switching apps all day.
                      </p>
                   </div>
 
-                  {/* Desktop Table View */}
-                  <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm">
-                     <table className="w-full min-w-[800px]">
-                        <thead>
-                           <tr className="border-b border-slate-800">
-                              <th className="text-left p-4 text-slate-400 font-medium">Feature</th>
-                              <th className="text-center p-4">
-                                 <div className="flex items-center justify-center gap-2">
-                                    <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
-                                       <span className="text-white font-black text-xs">AC</span>
-                                    </div>
-                                    <span className="text-white font-bold">AlphaClone</span>
-                                 </div>
-                              </th>
-                              <th className="text-center p-4 text-slate-400 font-medium">HubSpot</th>
-                              <th className="text-center p-4 text-slate-400 font-medium">QuickBooks</th>
-                              <th className="text-center p-4 text-slate-400 font-medium">Asana</th>
-                              <th className="text-center p-4 text-slate-400 font-medium">Others</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {[
-                              { feature: 'CRM & Pipeline', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
-                              { feature: 'Invoicing & Payments', ac: true, hubspot: false, quickbooks: true, asana: false, others: 'Often separate' },
-                              { feature: 'Contract Management', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                              { feature: 'Project Management', ac: true, hubspot: false, quickbooks: false, asana: true, others: 'Often separate' },
-                              { feature: 'Video Conferencing', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                              { feature: 'Email Campaigns', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
-                              { feature: 'AI Sales Assistant', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                              { feature: 'Team Chat', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                              { feature: 'Analytics & Reports', ac: true, hubspot: true, quickbooks: true, asana: true, others: 'Often separate' },
-                              { feature: 'Calendar & Bookings', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
-                           ].map((row, idx) => (
-                              <tr key={idx} className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
-                                 <td className="p-4 text-white font-medium">{row.feature}</td>
-                                 <td className="p-4 text-center">
-                                    <div className="inline-flex items-center justify-center w-8 h-8 bg-teal-500/20 text-teal-400 rounded-lg">
-                                       <Check className="w-4.5 h-4.5" />
-                                    </div>
-                                 </td>
-                                 <td className="p-4 text-center">
-                                    {row.hubspot ? <Check className="w-4.5 h-4.5 text-teal-400 mx-auto" /> : <X className="w-4.5 h-4.5 text-slate-700 mx-auto" />}
-                                 </td>
-                                 <td className="p-4 text-center">
-                                    {row.quickbooks ? <Check className="w-4.5 h-4.5 text-teal-400 mx-auto" /> : <X className="w-4.5 h-4.5 text-slate-700 mx-auto" />}
-                                 </td>
-                                 <td className="p-4 text-center">
-                                    {row.asana ? <Check className="w-4.5 h-4.5 text-teal-400 mx-auto" /> : <X className="w-4.5 h-4.5 text-slate-700 mx-auto" />}
-                                 </td>
-                                 <td className="p-4 text-center text-slate-500 text-sm font-semibold">{row.others}</td>
-                              </tr>
-                           ))}
-                        </tbody>
-                        <tfoot>
-                           <tr className="border-t-2 border-slate-700 bg-slate-900/60">
-                              <td className="p-4 text-white font-bold">Starting Price</td>
-                              <td className="p-4 text-center">
-                                 <div className="inline-flex items-center justify-center px-3 py-1 bg-green-500/20 text-green-400 rounded-lg font-black">
-                                    $15/mo
-                                 </div>
-                              </td>
-                              <td className="p-4 text-center text-slate-400 font-semibold">Varies</td>
-                              <td className="p-4 text-center text-slate-400 font-semibold">Varies</td>
-                              <td className="p-4 text-center text-slate-400 font-semibold">Varies</td>
-                              <td className="p-4 text-center text-red-400 font-bold">Varies</td>
-                           </tr>
-                        </tfoot>
-                     </table>
-                  </div>
-
-                  {/* Mobile Interactive Comparison View */}
-                  <div className="block md:hidden">
-                     {/* Tab selector */}
-                     <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none snap-x justify-start">
-                        {(['hubspot', 'quickbooks', 'asana', 'others'] as const).map((comp) => (
-                           <button
-                              key={comp}
-                              onClick={() => setSelectedMobileCompetitor(comp)}
-                              className={`px-4 py-2 rounded-full text-xs font-bold border transition-all capitalize whitespace-nowrap snap-center ${
-                                 selectedMobileCompetitor === comp
-                                    ? 'bg-teal-500/20 text-teal-400 border-teal-500/40 shadow-sm shadow-teal-500/10'
-                                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-white'
-                              }`}
-                           >
-                              {comp === 'others' ? 'Others' : comp.charAt(0).toUpperCase() + comp.slice(1)}
-                           </button>
-                        ))}
-                     </div>
-
-                     {/* Features comparison stack */}
-                     <div className="space-y-3">
-                        {[
-                           { feature: 'CRM & Pipeline', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
-                           { feature: 'Invoicing & Payments', ac: true, hubspot: false, quickbooks: true, asana: false, others: 'Often separate' },
-                           { feature: 'Contract Management', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                           { feature: 'Project Management', ac: true, hubspot: false, quickbooks: false, asana: true, others: 'Often separate' },
-                           { feature: 'Video Conferencing', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                           { feature: 'Email Campaigns', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
-                           { feature: 'AI Sales Assistant', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                           { feature: 'Team Chat', ac: true, hubspot: false, quickbooks: false, asana: false, others: 'Often separate' },
-                           { feature: 'Analytics & Reports', ac: true, hubspot: true, quickbooks: true, asana: true, others: 'Often separate' },
-                           { feature: 'Calendar & Bookings', ac: true, hubspot: true, quickbooks: false, asana: false, others: 'Often separate' },
-                        ].map((row, idx) => {
-                           const val = row[selectedMobileCompetitor];
-                           let compValue;
-                           if (typeof val === 'boolean') {
-                              compValue = val ? (
-                                 <Check className="w-4 h-4 text-teal-400" />
-                              ) : (
-                                 <X className="w-4 h-4 text-slate-700" />
-                              );
-                           } else {
-                              compValue = <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{val}</span>;
-                           }
-
-                           return (
-                              <div key={idx} className="flex items-center justify-between p-3.5 bg-slate-900/30 border border-slate-800/85 rounded-xl">
-                                 <span className="text-xs font-semibold text-slate-350">{row.feature}</span>
-                                 <div className="flex items-center gap-4">
-                                    <div className="flex flex-col items-center gap-0.5">
-                                       <span className="text-[8px] uppercase tracking-widest text-slate-500 font-mono">AlphaClone</span>
-                                       <div className="w-7 h-7 bg-teal-500/10 border border-teal-500/25 rounded-md flex items-center justify-center">
-                                          <Check className="w-3.5 h-3.5 text-teal-400" />
-                                       </div>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-0.5">
-                                       <span className="text-[8px] uppercase tracking-widest text-slate-500 font-mono capitalize truncate max-w-[48px]">{selectedMobileCompetitor}</span>
-                                       <div className="w-7 h-7 bg-slate-950 border border-slate-900 rounded-md flex items-center justify-center">
-                                          {compValue}
-                                       </div>
-                                    </div>
-                                 </div>
-                              </div>
-                           );
-                        })}
-
-                        {/* Starting Price Card */}
-                        <div className="flex items-center justify-between p-3.5 bg-slate-900/60 border border-teal-500/20 rounded-xl">
-                           <span className="text-xs font-bold text-white">Starting Price</span>
-                           <div className="flex items-center gap-4">
-                              <div className="flex flex-col items-center gap-0.5">
-                                 <span className="text-[8px] uppercase tracking-widest text-slate-400 font-mono">AlphaClone</span>
-                                 <div className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-md text-[10px] font-black">
-                                    $15/mo
-                                 </div>
-                              </div>
-                              <div className="flex flex-col items-center gap-0.5">
-                                 <span className="text-[8px] uppercase tracking-widest text-slate-500 font-mono capitalize">{selectedMobileCompetitor}</span>
-                                 <div className="px-2 py-0.5 bg-slate-950 text-slate-400 border border-slate-900 rounded-md text-[10px] font-semibold">
-                                    Varies
-                                 </div>
-                              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                     {[
+                        {
+                           title: 'Replace the stack',
+                           body: 'CRM, invoicing, contracts, projects, and meetings live in one workflow instead of five separate tools.',
+                        },
+                        {
+                           title: 'Sell and deliver faster',
+                           body: 'Move from lead to proposal to invoice without losing context or creating duplicate work.',
+                        },
+                        {
+                           title: 'See value quickly',
+                           body: 'Start a free trial, explore the workspace, and decide with a live system instead of a slide deck.',
+                        },
+                     ].map((item) => (
+                        <div key={item.title} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+                           <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
+                              <Check className="h-5 w-5" />
                            </div>
+                           <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                           <p className="text-sm leading-relaxed text-slate-300">{item.body}</p>
                         </div>
-                     </div>
+                     ))}
                   </div>
 
-                  <div className="mt-12 text-center">
-                     <div className="inline-flex flex-col sm:flex-row items-center gap-6 bg-gradient-to-r from-teal-500/10 to-blue-500/10 border border-teal-500/20 rounded-2xl p-6">
-                        <div className="text-left">
-                           <div className="text-sm text-slate-400 mb-1">Starting plan</div>
-                           <div className="text-3xl font-black text-green-400">$15/mo</div>
-                           <div className="text-xs text-slate-500 mt-1">14-day trial, no card required</div>
-                        </div>
-                        <div className="hidden sm:block w-px h-16 bg-slate-700" />
-                        <div className="text-left">
-                           <div className="text-sm text-slate-400 mb-1">Core modules</div>
-                           <div className="text-3xl font-black text-teal-400">12</div>
-                           <div className="text-xs text-slate-500 mt-1">One login for daily operations</div>
-                        </div>
-                     </div>
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400">
+                     <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1">14-day free trial</span>
+                     <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1">No card required</span>
+                     <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1">$15/month starter plan</span>
                   </div>
                </div>
             </motion.section>
@@ -1358,7 +1256,7 @@ const LandingPage = () => {
                               ))}
                            </ul>
                            <Button
-                              onClick={() => window.location.href = BUSINESS_SIGNUP_HREF}
+                              onClick={() => router.push(BUSINESS_SIGNUP_HREF)}
                               className={`h-12 sm:h-14 w-full text-base sm:text-lg font-bold ${plan.popular ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
                            >
                               Start Free Trial

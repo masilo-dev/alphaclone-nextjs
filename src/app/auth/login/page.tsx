@@ -59,6 +59,10 @@ function LoginContent() {
     const [isBusiness] = useState(true);
     const [selectedPlan] = useState<SubscriptionPlan>('starter');
     const [legalAccepted, setLegalAccepted] = useState(false);
+    const [marketingOptIn, setMarketingOptIn] = useState(false);
+    const [euConsent, setEuConsent] = useState(false);
+    const [ageConfirmed, setAgeConfirmed] = useState(false);
+    const [isEuLikeRegistration, setIsEuLikeRegistration] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPayment, setShowPayment] = useState(false);
@@ -92,6 +96,20 @@ function LoginContent() {
         };
         loadPolicy();
     }, []);
+
+    useEffect(() => {
+        if (!isRegistering) return;
+        const loadRegistrationContext = async () => {
+            try {
+                const response = await fetch('/api/account/registration-context', { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                setIsEuLikeRegistration(Boolean(payload?.requiresGdprConsent));
+            } catch {
+                setIsEuLikeRegistration(false);
+            }
+        };
+        loadRegistrationContext();
+    }, [isRegistering]);
 
 
 
@@ -141,6 +159,12 @@ function LoginContent() {
                     return;
                 }
 
+                if (isEuLikeRegistration && (!euConsent || !ageConfirmed)) {
+                    setError('EU/UK consent and age confirmation are required to continue.');
+                    setIsLoading(false);
+                    return;
+                }
+
                 if (isBusiness && !businessName) {
                     setError('Business Name is required.');
                     setIsLoading(false);
@@ -159,6 +183,37 @@ function LoginContent() {
                         throw new Error(signupResult.error);
                     }
                     newUser = signupResult.user;
+
+                    try {
+                        const { supabase } = await import('@/lib/supabase');
+                        const { data: sessionData } = await supabase.auth.getSession();
+                        const sessionToken = sessionData.session?.access_token;
+                        if (sessionToken) {
+                            await fetch('/api/account/communication-prefs', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${sessionToken}`,
+                                },
+                                body: JSON.stringify({
+                                    communicationPrefs: {
+                                        transactional: true,
+                                        product_updates: true,
+                                        marketing: marketingOptIn,
+                                        sms: false,
+                                    },
+                                    acceptedLegal: true,
+                                    marketingOptIn,
+                                    euConsent,
+                                    ageConfirmed,
+                                    isRegistration: true,
+                                }),
+                            });
+                        }
+                    } catch (consentErr) {
+                        console.warn('Failed to persist registration consent:', consentErr);
+                    }
+
                     toast.success('Account created successfully!', { id: 'registration' });
                 } catch (signUpError: any) {
                     const errorMsg = signUpError.message || 'Failed to register';
@@ -542,11 +597,11 @@ function LoginContent() {
                                 />
                             </div>
 
-                            <div className="animate-slide-up space-y-4">
-                                <div className="max-w-md mx-auto w-full">
-                                    <Input
-                                        label="Business Name"
-                                        value={businessName}
+                        <div className="animate-slide-up space-y-4">
+                            <div className="max-w-md mx-auto w-full">
+                                <Input
+                                    label="Business Name"
+                                    value={businessName}
                                         onChange={(e) => setBusinessName(e.target.value)}
                                         placeholder="AlphaCorp Industries"
                                         required={isBusiness}
@@ -666,6 +721,60 @@ function LoginContent() {
                                     <Link href="/privacy-policy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Privacy Policy</Link>.
                                 </span>
                             </label>
+                        )}
+
+                        {isRegistering && (
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <div className="relative flex-shrink-0 mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={marketingOptIn}
+                                        onChange={(e) => setMarketingOptIn(e.target.checked)}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
+                                    <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-xs text-slate-400 leading-relaxed">
+                                    I&apos;d like to receive product updates and news from AlphaClone Systems.
+                                </span>
+                            </label>
+                        )}
+
+                        {isRegistering && isEuLikeRegistration && (
+                            <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300">EU / UK consent</p>
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <div className="relative flex-shrink-0 mt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            checked={euConsent}
+                                            onChange={(e) => setEuConsent(e.target.checked)}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                    </div>
+                                    <span className="text-xs text-slate-400 leading-relaxed">
+                                        I consent to my data being processed as described in the Privacy Policy.
+                                    </span>
+                                </label>
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <div className="relative flex-shrink-0 mt-0.5">
+                                        <input
+                                            type="checkbox"
+                                            checked={ageConfirmed}
+                                            onChange={(e) => setAgeConfirmed(e.target.checked)}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                    </div>
+                                    <span className="text-xs text-slate-400 leading-relaxed">
+                                        I am 16 years of age or older.
+                                    </span>
+                                </label>
+                            </div>
                         )}
 
                         {error && (
@@ -813,4 +922,3 @@ function LoginContent() {
         </div>
     );
 }
-

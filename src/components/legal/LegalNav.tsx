@@ -9,6 +9,10 @@ const LINKS = [
   { href: '/legal/cookies', label: 'Cookie Policy' },
   { href: '/legal/acceptable-use', label: 'Acceptable Use' },
   { href: '/legal/data-request', label: 'Data Requests' },
+  { href: '/legal/refund', label: 'Refund Policy' },
+  { href: '/legal/sla', label: 'SLA' },
+  { href: '/legal/dpa', label: 'DPA' },
+  { href: '/legal/ai-disclaimer', label: 'AI Disclaimer' },
 ];
 
 export default function LegalNav() {
