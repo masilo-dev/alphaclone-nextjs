@@ -1,5 +1,24 @@
 # Update Log
 
+## Date: 2026-06-09 (LEGAL COMPLIANCE & CHATGPT MCP INTEGRATION)
+
+### Added
+- **Legal Compliance Suite & Data Requests Flow**:
+  - Implemented the `/legal` routes including specialized shells and layouts for standard compliance policies.
+  - Added `/legal/data-request` route allowing users to submit data portability, correction, or deletion requests.
+  - Created `data_requests` table to audit and record incoming privacy and data control requests.
+- **ChatGPT Connector (MCP)** (`src/services/integrationService.ts`):
+  - Registered ChatGPT Connector to the Integrations Catalog, supporting separate OAuth credentials so users can run ChatGPT and Claude/Manus agents concurrently without conflict.
+
+### Modified
+- **DPA Route Fix** (`src/app/legal/dpa/download/route.ts`):
+  - Fixed PDF generation route payload by converting raw bytes to Node.js `Buffer` before returning the response. This resolves runtime errors when streaming document attachments on Next.js/Vercel.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation. No new dependencies. Ensured buffer conversion uses web/Vercel serverless compatible runtime elements.
+
+---
+
 ## Date: 2026-06-03 (ALPHACLONE UNIFIED INBOX & BACK-OFFICE OPERATING SYSTEM INTEGRATION)
 
 ### Added
