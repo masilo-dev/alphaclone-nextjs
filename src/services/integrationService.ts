@@ -176,6 +176,15 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     oauthFlow: false,
     new: true,
   },
+  {
+    id: 'chatgpt-mcp',
+    name: 'ChatGPT Connector (MCP)',
+    description: 'Connect ChatGPT to your workspace with OAuth so it can access tools without disturbing existing Claude or Manus connections.',
+    category: 'productivity',
+    features: ['OAuth connection', 'Workspace-safe access', 'Tool usage', 'ChatGPT connector setup'],
+    oauthFlow: false,
+    new: true,
+  },
 ];
 
 // ── DB row shape (mirrors tenant_integrations table) ───────────────────────────
@@ -218,6 +227,7 @@ export const integrationService = {
     );
 
     let mcpKeyRow: { api_key: string } | null = null;
+    let chatgptTokenRow: { access_token: string } | null = null;
     if (currentUserId) {
       const { data } = await supabase
         .from('mcp_api_keys')
@@ -226,6 +236,15 @@ export const integrationService = {
         .eq('user_id', currentUserId)
         .maybeSingle();
       mcpKeyRow = data;
+
+      const { data: chatgptData } = await supabase
+        .from('mcp_oauth_tokens')
+        .select('access_token')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', currentUserId)
+        .eq('client_id', 'chatgpt-connector')
+        .maybeSingle();
+      chatgptTokenRow = chatgptData;
     }
 
     return INTEGRATION_CATALOG.map((entry) => {
@@ -235,6 +254,9 @@ export const integrationService = {
         (row?.status as IntegrationStatus) ?? entry.defaultStatus ?? 'available';
 
       if ((entry.id === 'claude-mcp' || entry.id === 'manus-mcp') && mcpKeyRow?.api_key) {
+        status = 'connected';
+      }
+      if (entry.id === 'chatgpt-mcp' && chatgptTokenRow?.access_token) {
         status = 'connected';
       }
 
@@ -277,6 +299,10 @@ export const integrationService = {
     if (integrationId === 'claude-mcp' || integrationId === 'manus-mcp') {
       const mcp = integrationId === 'manus-mcp' ? 'manus' : 'claude';
       return { success: true, redirectUrl: `/dashboard/marketplace?mcp=${mcp}` };
+    }
+
+    if (integrationId === 'chatgpt-mcp') {
+      return { success: true, redirectUrl: '/dashboard/marketplace?mcp=chatgpt' };
     }
 
     if (integrationId === 'facebook-leads') {
@@ -347,6 +373,31 @@ export const integrationService = {
         ti = ti.eq('configured_by', currentUserId);
       }
       await ti;
+      return { success: true };
+    }
+
+    if (integrationId === 'chatgpt-mcp') {
+      let chatgptRevoke = supabase
+        .from('mcp_oauth_tokens')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('client_id', 'chatgpt-connector');
+      if (currentUserId) {
+        chatgptRevoke = chatgptRevoke.eq('user_id', currentUserId);
+      }
+
+      const { error } = await chatgptRevoke;
+
+      if (error) {
+        console.error('[integrationService] chatgpt revoke:', error.message);
+      }
+
+      await supabase
+        .from('tenant_integrations')
+        .update({ status: 'available', metadata: {} })
+        .eq('tenant_id', tenantId)
+        .eq('integration_id', 'chatgpt-mcp');
+
       return { success: true };
     }
 

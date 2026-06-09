@@ -26,23 +26,28 @@ export const metadata: Metadata = {
 const legalPages = [
   {
     title: 'Privacy Policy',
-    href: '/privacy-policy',
+    href: '/legal/privacy',
     description: 'Data collection, processing, retention, and user rights.',
   },
   {
     title: 'Terms of Service',
-    href: '/terms-of-service',
+    href: '/legal/terms',
     description: 'Commercial terms, usage boundaries, and platform responsibilities.',
   },
   {
     title: 'Cookie Policy',
-    href: '/cookie-policy',
+    href: '/legal/cookies',
     description: 'Cookie categories, usage purpose, and preference controls.',
   },
   {
-    title: 'Data Deletion',
-    href: '/data-deletion',
-    description: 'Process for account data deletion and formal removal requests.',
+    title: 'Acceptable Use',
+    href: '/legal/acceptable-use',
+    description: 'Rules for safe and lawful platform use.',
+  },
+  {
+    title: 'Data Requests',
+    href: '/legal/data-request',
+    description: 'Access, correction, export, or deletion requests.',
   },
   {
     title: 'Platform Status',
@@ -101,4 +106,3 @@ export default function LegalHubPage() {
     </main>
   );
 }
-
