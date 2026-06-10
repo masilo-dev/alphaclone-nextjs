@@ -1,5 +1,29 @@
 # Update Log
 
+## Date: 2026-06-10 (APOLLO ENRICHMENT, IMMEDIATE FACEBOOK PUBLISHING & MICROSOFT AUTH REFACTOR)
+
+### Added
+- **Apollo People Enrichment Integration** (`src/services/apolloService.ts`):
+  - Created `apolloService.ts` with `matchPerson` support to match and enrich people via Apollo.io's API, utilizing `APOLLO_API_KEY`.
+- **Microsoft Refresh Endpoint** (`src/app/api/auth/microsoft/refresh/route.ts`):
+  - Added a dedicated Node.js runtime API route to handle Microsoft 365 Outlook token exchange and refreshes, replacing legacy serverless functions.
+
+### Modified
+- **Scraper API & Schema Integration** (`src/app/api/scraper/affordable/route.ts`, `src/schemas/validation.ts`, `src/config/env.ts`):
+  - Integrated Apollo lookup to verify and append top emails during domain scraping.
+  - Added schema validation fields for firstName, lastName, organizationName, and linkedinUrl.
+  - Registered `APOLLO_API_KEY` environment variable in the global config.
+- **Immediate Facebook Publishing** (`src/components/dashboard/business/TaskScheduler.tsx`, `src/services/engine/WorkflowExecutor.ts`):
+  - Updated `runSocialTask` to immediately publish to the connected Facebook Page when "facebook" is targeted, preventing redundant scheduling loops.
+  - Added support for the `post_to_facebook` action type in the unified `WorkflowExecutor`.
+- **Microsoft Auth Client Service** (`src/services/microsoftAuthService.ts`):
+  - Refactored `microsoftAuthService` token refresh logic to call the new `/api/auth/microsoft/refresh` endpoint instead of the legacy Supabase function.
+
+### Production Readiness
+- **Vercel Safe**: Complete type safety verified via `npx tsc --noEmit`. Verified that token refresh API route runs on `nodejs` runtime for proper Node/Buffer compatibility. No external build issues.
+
+---
+
 ## Date: 2026-06-09 (LEGAL COMPLIANCE & CHATGPT MCP INTEGRATION)
 
 ### Added

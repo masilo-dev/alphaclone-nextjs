@@ -1,4 +1,3 @@
-import { ENV } from '@/config/env';
 import { supabase } from '@/lib/supabase';
 
 export interface MicrosoftConnection {
@@ -24,33 +23,6 @@ async function getCurrentUserId() {
   }
 
   return user.id;
-}
-
-async function invokeSupabaseFunction<T>(name: string, body: Record<string, unknown>) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.access_token) {
-    throw new Error('Missing authenticated session.');
-  }
-
-  const response = await fetch(`${ENV.VITE_SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: ENV.VITE_SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(payload?.error || `Failed calling ${name}`);
-  }
-
-  return payload as T;
 }
 
 export const microsoftAuthService = {
@@ -97,10 +69,23 @@ export const microsoftAuthService = {
       throw new Error('No Microsoft refresh token available.');
     }
 
-    return invokeSupabaseFunction<{
+    const response = await fetch('/api/auth/microsoft/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken: token }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload?.error || 'Failed to refresh Microsoft access token.');
+    }
+
+    return payload as {
       success: boolean;
       connection: MicrosoftConnection;
-    }>('microsoft-token-refresh', { refreshToken: token });
+    };
   },
 
   async getValidAccessToken() {
