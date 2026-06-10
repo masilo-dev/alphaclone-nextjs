@@ -177,6 +177,63 @@ export async function executeAction(
                 return { type, status: res.ok ? 'success' : 'failed', result: { statusCode: res.status } };
             }
 
+            case 'post_to_facebook': {
+                const message = resolveTemplate(
+                    String(config.message || config.caption || config.text || ''),
+                    context.data
+                ).trim();
+                if (!message) {
+                    return { type, status: 'failed', error: 'No Facebook message configured' };
+                }
+
+                const mediaUrl = config.mediaUrl
+                    ? resolveTemplate(String(config.mediaUrl), context.data).trim()
+                    : '';
+                const mediaType = String(config.mediaType || '').toLowerCase() === 'video' ? 'video' : 'image';
+
+                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                const supabase = createSupabaseAdminClient();
+
+                let pageId = String(config.pageId || config.page_id || '').trim();
+                if (!pageId) {
+                    const { data: pages, error: pagesError } = await supabase
+                        .from('facebook_integrations')
+                        .select('page_id, page_name')
+                        .eq('tenant_id', context.tenantId)
+                        .eq('is_active', true)
+                        .limit(1);
+
+                    if (pagesError) {
+                        return { type, status: 'failed', error: pagesError.message };
+                    }
+
+                    pageId = String(pages?.[0]?.page_id || '').trim();
+                }
+
+                if (!pageId) {
+                    return { type, status: 'failed', error: 'No connected Facebook Page found' };
+                }
+
+                const { facebookService } = await import('../facebookService');
+                const publishResult = await facebookService.publishPost(
+                    context.tenantId,
+                    pageId,
+                    message,
+                    mediaUrl || undefined,
+                    mediaType
+                );
+
+                return {
+                    type,
+                    status: 'success',
+                    result: {
+                        pageId,
+                        published: true,
+                        publishResult,
+                    },
+                };
+            }
+
             default:
                 return { type, status: 'failed', error: `Unknown action type: ${type}` };
         }

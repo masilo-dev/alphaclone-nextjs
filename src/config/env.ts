@@ -19,6 +19,7 @@ const envSchema = z.object({
     GROK_API_KEY: z.string().optional(),
     XAI_IMAGE_MODEL: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
+    APOLLO_API_KEY: z.string().optional(),
     VITE_GEMINI_API_KEY: z.string().optional(),
     GOOGLE_API_KEY: z.string().optional(),
     /** Browser Maps SDK only; use NEXT_PUBLIC_GOOGLE_MAPS_API_KEY with referrer restrictions */
@@ -154,6 +155,7 @@ function validateEnv() {
         GROK_API_KEY: process.env.GROK_API_KEY || process.env.XAI_API_KEY,
         XAI_IMAGE_MODEL: process.env.XAI_IMAGE_MODEL || process.env.GROK_IMAGE_MODEL,
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+        APOLLO_API_KEY: process.env.APOLLO_API_KEY,
         VITE_GEMINI_API_KEY:
             process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
             process.env.VITE_GEMINI_API_KEY ||

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { freePlacesService } from '@/services/freePlacesService';
+import { apolloService } from '@/services/apolloService';
 import { scraperAffordableSchema } from '@/schemas/validation';
 
 // Affordable Scraping Tools Integration
@@ -37,6 +38,22 @@ interface GooglePlaceResult {
   reviews?: number;
   place_id: string;
   maps_url?: string;
+}
+
+interface ApolloEnrichmentResult {
+  matched: boolean;
+  raw: unknown;
+  person: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    title?: string;
+    email?: string;
+    phone?: string;
+    linkedinUrl?: string;
+    organizationName?: string;
+    domain?: string;
+  } | null;
 }
 
 /**
@@ -204,7 +221,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
-    const { action, domain, email, query, location, tenant_id } = parsed.data;
+    const { action, domain, email, query, location, tenant_id, first_name, last_name, organization_name, linkedin_url } = parsed.data;
 
     let results: any = {};
 
@@ -274,9 +291,19 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Domain required for enrichment' }, { status: 400 });
         }
 
-        const [emails, techData] = await Promise.all([
+        const [emails, techData, apolloMatch] = await Promise.all([
           hunterDomainSearch(domain),
-          builtWithLookup(domain)
+          builtWithLookup(domain),
+          (first_name || last_name || email || organization_name || linkedin_url || domain)
+            ? apolloService.matchPerson({
+                firstName: first_name,
+                lastName: last_name,
+                email,
+                domain,
+                organizationName: organization_name,
+                linkedinUrl: linkedin_url,
+              })
+            : Promise.resolve(null),
         ]);
 
         // Verify top emails
@@ -287,15 +314,35 @@ export async function POST(request: Request) {
           })
         );
 
+        const apolloPerson = (apolloMatch as ApolloEnrichmentResult | null)?.person || null;
+        if (apolloPerson?.email) {
+          verifiedEmails.unshift({
+            email: apolloPerson.email,
+            score: 90,
+            type: 'apollo',
+            first_name: apolloPerson.firstName,
+            last_name: apolloPerson.lastName,
+            position: apolloPerson.title,
+            valid: true,
+          });
+        }
+
         results = {
           success: true,
           domain,
           emails: verifiedEmails,
           technology: techData,
+          apollo: apolloMatch
+            ? {
+                matched: apolloMatch.matched,
+                person: apolloPerson,
+              }
+            : null,
           cost_estimate: {
             hunter: '$0.50-1.00',
             builtwith: 'Free tier',
-            total: '~$1.00 vs Apollo $5-10'
+            apollo: apolloMatch ? '$0 (internal enrichment)' : '$0 (not used)',
+            total: '~$1.00 vs external Apollo enrichment'
           },
           savings: 'Cost varies by provider and usage'
         };

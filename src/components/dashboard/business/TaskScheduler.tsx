@@ -160,8 +160,67 @@ async function runSocialTask(task: Task, tenantId?: string): Promise<TaskResults
   // Step 1: Generate caption with AI
   const aiResult = await runWithAI(task);
   const caption = aiResult.output || '';
+  const platforms = (task.target?.criteria || 'facebook')
+    .split(',')
+    .map((s: string) => s.trim().toLowerCase())
+    .filter(Boolean);
 
-  // Step 2: Schedule via social API
+  // Step 2: Publish Facebook posts immediately when Facebook is selected.
+  // This task runner already runs on a schedule, so creating another scheduled
+  // social post would only queue the content instead of actually publishing it.
+  if (tenantId && platforms.includes('facebook')) {
+    try {
+      const { data: pages, error: pagesError } = await supabase
+        .from('facebook_integrations')
+        .select('page_id, page_name')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (pagesError) {
+        throw pagesError;
+      }
+
+      const page = pages?.[0];
+      if (!page?.page_id) {
+        return {
+          ...aiResult,
+          successful: 0,
+          failed: 1,
+          output: `Facebook publish failed — no connected Facebook Page was found.\n\n---\n\n${caption}`,
+        };
+      }
+
+      const res = await fetch('/api/facebook/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pageId: page.page_id,
+          message: caption,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const ok = res.ok && !!data.success;
+
+      return {
+        ...aiResult,
+        successful: ok ? 1 : 0,
+        failed: ok ? 0 : 1,
+        output: ok
+          ? `Posted to Facebook${page.page_name ? ` (${page.page_name})` : ''}.\n\n---\n\n${caption}`
+          : `Facebook publish failed${data.error ? `: ${data.error}` : ''}.\n\n---\n\n${caption}`,
+      };
+    } catch (err: any) {
+      return {
+        ...aiResult,
+        successful: 0,
+        failed: 1,
+        output: `Facebook publish failed: ${err?.message || 'Unknown error'}\n\n---\n\n${caption}`,
+      };
+    }
+  }
+
+  // Step 3: Fallback to the social scheduling API for non-Facebook platforms.
   if (tenantId) {
     try {
       const res = await fetch('/api/social/schedule', {
@@ -171,8 +230,9 @@ async function runSocialTask(task: Task, tenantId?: string): Promise<TaskResults
           tenantId,
           title: task.title,
           caption,
-          platforms: (task.target?.criteria || 'facebook').split(',').map((s: string) => s.trim()),
+          platforms,
           status: 'scheduled',
+          publish_now: false,
         }),
       });
       const ok = res.ok;
@@ -181,7 +241,7 @@ async function runSocialTask(task: Task, tenantId?: string): Promise<TaskResults
         successful: ok ? 1 : 0,
         failed: ok ? 0 : 1,
         output: ok
-          ? `Scheduled to ${task.target?.criteria || 'facebook'}.\n\n---\n\n${caption}`
+          ? `Scheduled to ${platforms.join(', ') || 'facebook'}.\n\n---\n\n${caption}`
           : `Social post created (scheduling failed):\n\n${caption}`,
       };
     } catch {
@@ -743,7 +803,7 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
                     <option value="facebook,instagram">Facebook + Instagram</option>
                     <option value="instagram">Instagram</option>
                   </select>
-                  <p className="text-[11px] text-slate-600 mt-1">AI writes the caption and schedules the post automatically.</p>
+                  <p className="text-[11px] text-slate-600 mt-1">AI writes the caption and publishes to Facebook automatically when the task runs.</p>
                 </div>
               )}
 
@@ -883,4 +943,3 @@ const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
 };
 
 export default TaskScheduler;
-
