@@ -70,21 +70,6 @@ export class WhatsAppOutreachService {
     }).eq('id', leadId);
   }
 
-  async checkWhatsAppNumber(idInstance: string, apiToken: string, phone: string): Promise<boolean> {
-    const url = `https://api.green-api.com/waInstance${idInstance}/checkWhatsapp/${apiToken}`;
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber: phone })
-      });
-      const data = await res.json();
-      return data?.existsWhatsapp === true;
-    } catch {
-      return false;
-    }
-  }
-
   async generateOutreachMessage(tenantId: string, lead: any, persona: string | null) {
     const systemPrompt = `
       ${persona || 'You are an AI assistant.'}
@@ -108,18 +93,6 @@ export class WhatsAppOutreachService {
     } catch {
       return null;
     }
-  }
-
-  async sendMessage(idInstance: string, apiToken: string, phone: string, text: string) {
-    const url = `https://api.green-api.com/waInstance${idInstance}/sendMessage/${apiToken}`;
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chatId: `${phone}@c.us`,
-        message: text
-      })
-    });
   }
 }
 
