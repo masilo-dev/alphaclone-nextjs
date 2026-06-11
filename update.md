@@ -1,5 +1,22 @@
 # Update Log
 
+## Date: 2026-06-11 (MICROSOFT REFRESH FLOW, BOOKING MEETING PROVIDER & EMAIL UNSUBSCRIBE FIXES)
+
+### Modified
+- **Microsoft Refresh Endpoint** (`src/app/api/auth/microsoft/refresh/route.ts`):
+  - Updated token refresh flow for Azure AD v2.0 confidential clients to pass `client_id` and `client_secret` in the POST body instead of using Basic Auth headers to prevent authentication errors.
+- **Booking Creation Route** (`src/app/api/booking/create/route.ts`):
+  - Changed `meetingProvider` from a typed mutable variable to a constant `external` to satisfy compiler const-safety rules.
+- **Email Unsubscribe Endpoint** (`src/app/api/email/unsubscribe/route.ts`):
+  - Corrected the Supabase client helper call from `createSupabaseAdminClientOrThrow` to `createAdminSupabaseClientOrThrow`.
+- **Global Types** (`src/types.ts`):
+  - Added `'super_admin'` to the `UserRole` union type to support elevated administrative roles.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation. No new dependencies. All changes are server-side API or type definitions. Vercel build unaffected.
+
+---
+
 ## Date: 2026-06-10 (APOLLO ENRICHMENT, IMMEDIATE FACEBOOK PUBLISHING & MICROSOFT AUTH REFACTOR)
 
 ### Added
