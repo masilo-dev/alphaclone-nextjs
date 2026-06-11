@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   BadgeCheck,
   Loader2,
@@ -9,6 +9,7 @@ import {
   Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 
@@ -21,6 +22,10 @@ export default function MicrosoftInboxView() {
   const selectedEmail = useMemo(
     () => emails.find((email) => email.id === selectedId) || emails[0] || null,
     [emails, selectedId]
+  );
+  const selectedEmailHtml = useMemo(
+    () => buildSafeEmailBodyHtml(selectedEmail?.body, selectedEmail?.snippet),
+    [selectedEmail]
   );
 
   const handleConnect = () => {
@@ -137,7 +142,7 @@ export default function MicrosoftInboxView() {
           {selectedEmail ? (
             <div
               className="prose prose-invert max-w-none prose-p:text-slate-300 prose-pre:bg-slate-950/60"
-              dangerouslySetInnerHTML={{ __html: selectedEmail.body || `<p>${selectedEmail.snippet}</p>` }}
+              dangerouslySetInnerHTML={{ __html: selectedEmailHtml }}
             />
           ) : (
             <div className="text-sm text-slate-400">Choose a message to view its body.</div>

@@ -23,6 +23,7 @@ import { EmailBody } from '../common/EmailBody';
 import { Button, Badge } from '../ui/UIComponents';
 import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { UnifiedEmailService } from '@/services/email/UnifiedEmailService';
+import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -73,11 +74,6 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     const [threadSummary, setThreadSummary] = useState<string | null>(null);
     const [isSummarizing, setIsSummarizing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-
-    const cleanEmailBody = (html?: string) => {
-        if (!html) return '';
-        return html.replace(/src="cid:[^"]+"/g, 'src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" style="display:none;"');
-    };
 
     const fetchMessages = async (folder: string = activeLabel) => {
         setIsLoading(true);
@@ -450,7 +446,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                                     </div>
                                                 </div>
                                                 <div className="mt-4">
-                                                    <EmailBody content={cleanEmailBody(msg.body)} />
+                                                    <EmailBody content={buildSafeEmailBodyHtml(msg.body, msg.snippet)} />
                                                 </div>
                                             </div>
                                         </div>
