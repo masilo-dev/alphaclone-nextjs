@@ -10,6 +10,7 @@ import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { buildEmailUnsubscribeUrl } from '@/lib/email/unsubscribe';
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -206,9 +207,11 @@ export async function POST(request: Request) {
     // Default policy: manual approval required unless explicitly auto-send.
     // Auto-send is allowed only if consent is present and confidence passes threshold.
     const shouldAutoSend = autoSend === true;
+    if (consentGranted !== true) {
+      return NextResponse.json({ error: 'Marketing consent is required to send outreach emails.' }, { status: 400 });
+    }
     const policyQueueOnly =
       !shouldAutoSend ||
-      consentGranted !== true ||
       Number(confidenceScore || 0) < autoSendThreshold;
 
     // 1. Generate tracking ID
@@ -216,6 +219,10 @@ export async function POST(request: Request) {
 
     // 2. Inject tracking pixel
     const htmlBody = injectTrackingPixel(bodyWithFooter, trackingId);
+    const unsubscribeUrl = buildEmailUnsubscribeUrl({ tenantId, email: leadEmail });
+    const htmlWithComplianceFooter = unsubscribeUrl
+      ? `${htmlBody}\n\n<div style="margin-top:16px;border-top:1px solid #334155;padding-top:12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;text-align:center;">\n<div>AlphaClone Systems LLC</div>\n<div>1621 Central Ave, Cheyenne, WY 82001, USA</div>\n<div><a href="https://alphaclonesystems.com" style="color:#94a3b8;text-decoration:none;">alphaclonesystems.com</a></div>\n<div><a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:none;">Unsubscribe</a> | <a href="https://alphaclonesystems.com/legal/privacy" style="color:#94a3b8;text-decoration:none;">Privacy</a> | <a href="https://alphaclonesystems.com/legal/terms" style="color:#94a3b8;text-decoration:none;">Terms</a></div>\n</div>`
+      : htmlBody;
 
     // 3. Pre-insert log row as 'queued'
     const { data: logRow, error: logErr } = await admin
@@ -226,7 +233,7 @@ export async function POST(request: Request) {
         lead_name:    leadName,
         lead_email:   leadEmail,
         subject: normalizedSubject,
-        body_html:    htmlBody,
+        body_html:    htmlWithComplianceFooter,
         tracking_id:  trackingId,
         pitch_angle:  pitchAngle,
         industry,
@@ -446,7 +453,7 @@ export async function POST(request: Request) {
           await microsoftServerService.sendEmail(tenantCtx.user.id, {
             to: [leadEmail],
             subject: normalizedSubject,
-            html: htmlBody,
+            html: htmlWithComplianceFooter,
           });
           providerMessageId = null;
         } else if (selectedProvider.provider === 'zoho') {
@@ -455,7 +462,7 @@ export async function POST(request: Request) {
             toAddress: leadEmail,
             fromAddress: selectedProvider.fromEmail || fromAddress,
             subject: normalizedSubject,
-            content: htmlBody,
+            content: htmlWithComplianceFooter,
           });
           providerMessageId = sendResult?.data?.messageId || null;
         } else if (selectedProvider.provider === 'brevo') {
@@ -470,7 +477,11 @@ export async function POST(request: Request) {
               sender: { email: selectedProvider.fromEmail || fromAddress, name: selectedProvider.fromName || 'AlphaClone Systems' },
               to: [{ email: leadEmail }],
               subject: normalizedSubject,
-              htmlContent: htmlBody,
+              htmlContent: htmlWithComplianceFooter,
+              headers: unsubscribeUrl ? {
+                'List-Unsubscribe': `<${unsubscribeUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              } : undefined,
             }),
           });
           if (!response.ok) {
@@ -491,7 +502,11 @@ export async function POST(request: Request) {
               from: `${selectedProvider.fromName || 'AlphaClone Systems'} <${selectedProvider.fromEmail || fromAddress}>`,
               to: leadEmail,
               subject: normalizedSubject,
-              html: htmlBody,
+              html: htmlWithComplianceFooter,
+              headers: unsubscribeUrl ? {
+                'List-Unsubscribe': `<${unsubscribeUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              } : undefined,
             }),
           });
           if (!response.ok) {
@@ -517,7 +532,11 @@ export async function POST(request: Request) {
                 name: selectedProvider.fromName || 'AlphaClone Systems',
               },
               subject: normalizedSubject,
-              content: [{ type: 'text/html', value: htmlBody }],
+              headers: unsubscribeUrl ? {
+                'List-Unsubscribe': `<${unsubscribeUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              } : undefined,
+              content: [{ type: 'text/html', value: htmlWithComplianceFooter }],
             }),
           });
           if (!response.ok) {

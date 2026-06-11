@@ -44,6 +44,7 @@ const MarketingFooter: React.FC = () => {
                 { label: 'Privacy Policy', href: '/legal/privacy' },
                 { label: 'Terms of Service', href: '/legal/terms' },
                 { label: 'Cookie Policy', href: '/legal/cookies' },
+                { label: 'Refund Policy', href: '/legal/refund' },
                 { label: 'Acceptable Use', href: '/legal/acceptable-use' },
                 { label: 'Data Requests', href: '/legal/data-request' },
                 { label: 'Platform Status', href: '/platform-status' },

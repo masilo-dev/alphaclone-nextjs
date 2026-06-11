@@ -10,6 +10,7 @@ import { SignaturePad } from '../../../components/contracts/SignaturePad';
 import { contractService } from '../../../services/contractService';
 import { esignatureComplianceService } from '../../../services/esignatureComplianceService';
 import toast, { Toaster } from 'react-hot-toast';
+import AIOutputDisclaimer from '../../../components/ai/AIOutputDisclaimer';
 
 export default function PublicContractPage() {
     const params = useParams();
@@ -250,6 +251,9 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Content */}
+                <div className="p-6 bg-slate-950/40 border-y border-slate-800">
+                    <AIOutputDisclaimer type="contract" />
+                </div>
                 <div className="p-8 bg-white border-y border-slate-800 print-content">
                     <div
                         className="font-serif text-slate-900 leading-relaxed"

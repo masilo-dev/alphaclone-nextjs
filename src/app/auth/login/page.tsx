@@ -242,13 +242,17 @@ function LoginContent() {
                     if (isBusiness && businessName) {
                         try {
                             const { tenantService } = await import('@/services/tenancy/TenantService');
-                            const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 7);
+                            const randomSuffix = Array.from({ length: 5 }, () =>
+                                String.fromCharCode(97 + Math.floor(Math.random() * 26))
+                            ).join('');
+                            const slug = businessName.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
                             // Create Tenant
                             newTenant = await tenantService.createTenant({
                                 name: businessName,
                                 slug: slug,
-                                adminUserId: newUser.id
+                                adminUserId: newUser.id,
+                                plan: selectedPlan
                             });
                             
                             toast.success('Workspace provisioned!', { id: 'workspace' });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 import { Card, Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
 import { aiGenerationService } from '../../services/aiGenerationService';
@@ -458,6 +459,9 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                             <div className="text-sm font-semibold text-teal-400 mb-4">Generated Result</div>
                             {activeTab === 'content' ? (
                                 <div className="prose prose-invert max-w-none">
+                                    <div className="mb-3">
+                                        <AIOutputDisclaimer type={contentType === 'email' ? 'email' : contentType === 'social' ? 'social' : 'generic'} />
+                                    </div>
                                     <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg">
                                         {generatedResult}
                                     </pre>
@@ -611,4 +615,3 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 };
 
 export default AIStudioTab;
-

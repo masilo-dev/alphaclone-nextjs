@@ -46,6 +46,12 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
             to: normalizeRecipients(input.to),
             subject: input.subject,
         };
+        if (input.listUnsubscribeUrl) {
+            resendPayload.headers = {
+                'List-Unsubscribe': `<${input.listUnsubscribeUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            };
+        }
         if (input.html) resendPayload.html = input.html;
         if (input.text) resendPayload.text = input.text;
         if (!input.html && !input.text) resendPayload.text = '';
@@ -144,6 +150,12 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
             replyTo: input.replyTo ? { email: input.replyTo } : undefined,
             cc: input.cc?.map((email) => ({ email })),
             bcc: input.bcc?.map((email) => ({ email })),
+            headers: input.listUnsubscribeUrl
+                ? {
+                    'List-Unsubscribe': `<${input.listUnsubscribeUrl}>`,
+                    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+                }
+                : undefined,
             attachment: input.attachments?.map((attachment) => ({
                 name: attachment.filename,
                 content: attachment.content instanceof Buffer ? attachment.content.toString('base64') : String(attachment.content),
@@ -255,6 +267,12 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
         if (input.replyTo) mailOptions.replyTo = input.replyTo;
         if (input.cc?.length) mailOptions.cc = input.cc.join(', ');
         if (input.bcc?.length) mailOptions.bcc = input.bcc.join(', ');
+        if (input.listUnsubscribeUrl) {
+            mailOptions.headers = {
+                'List-Unsubscribe': `<${input.listUnsubscribeUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            };
+        }
 
         if (input.attachments?.length) {
             mailOptions.attachments = input.attachments.map((att) => {

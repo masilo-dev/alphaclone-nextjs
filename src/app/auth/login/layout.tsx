@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import AppLegalFooter from '@/components/legal/AppLegalFooter';
 
 export const metadata: Metadata = {
     title: 'Login | AlphaClone',
@@ -31,5 +32,10 @@ export default function LoginLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return children;
+    return (
+        <>
+            {children}
+            <AppLegalFooter />
+        </>
+    );
 }

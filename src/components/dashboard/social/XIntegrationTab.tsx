@@ -24,6 +24,8 @@ export default function XIntegrationTab() {
   const [posting, setPosting] = useState(false);
   const [tweets, setTweets] = useState<Array<{ id: string; text: string }>>([]);
   const [loadingTweets, setLoadingTweets] = useState(false);
+  const connectedAt = integration?.created_at ? new Date(integration.created_at) : null;
+  const remainingChars = 280 - postText.length;
 
   const loadIntegration = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -155,37 +157,85 @@ export default function XIntegrationTab() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 p-4 pb-20">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">@{integration.x_username}</h1>
-          <p className="text-slate-500 text-sm">Connected for posts and public profile access</p>
+    <div className="max-w-5xl mx-auto space-y-6 p-4 pb-20">
+      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+              <Twitter className="w-6 h-6 text-sky-400" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-extrabold text-white truncate">@{integration.x_username}</h1>
+              <p className="text-slate-400 text-sm">
+                Connected {connectedAt ? `since ${connectedAt.toLocaleDateString()}` : 'to post and read your timeline'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={loadTweets}
+              disabled={loadingTweets}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-900 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingTweets ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <button
+              type="button"
+              onClick={handleConnect}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold"
+            >
+              <Link2 className="w-4 h-4" />
+              Reconnect
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={loadTweets}
-          disabled={loadingTweets}
-          className="p-2 rounded-lg border border-slate-700 text-slate-400 hover:text-white"
-        >
-          <RefreshCw className={`w-4 h-4 ${loadingTweets ? 'animate-spin' : ''}`} />
-        </button>
+
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+            <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Workspace</div>
+            <div className="mt-1 text-sm text-slate-200 truncate">{currentTenant?.name || 'Current workspace'}</div>
+          </div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+            <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Posts Loaded</div>
+            <div className="mt-1 text-sm text-slate-200">{tweets.length}</div>
+          </div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+            <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Account ID</div>
+            <div className="mt-1 text-sm text-slate-200 truncate">{integration.x_user_id}</div>
+          </div>
+        </div>
       </div>
 
-      <form onSubmit={handlePost} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <form onSubmit={handlePost} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-bold text-white">Compose</div>
+          <div className={`text-xs font-semibold ${remainingChars < 20 ? 'text-amber-300' : 'text-slate-400'}`}>
+            {remainingChars} left
+          </div>
+        </div>
+
         <textarea
           value={postText}
           onChange={(e) => setPostText(e.target.value)}
           placeholder="Write a post..."
           maxLength={280}
           rows={4}
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm resize-none focus:outline-none focus:border-sky-500"
+          className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-white text-sm resize-none focus:outline-none focus:border-sky-500"
         />
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-slate-500">{postText.length}/280</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div
+              className="h-full bg-sky-500"
+              style={{ width: `${Math.min(100, (postText.length / 280) * 100)}%` }}
+            />
+          </div>
           <button
             type="submit"
             disabled={posting || !postText.trim()}
-            className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold text-sm"
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-extrabold text-sm shrink-0"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Post
@@ -193,9 +243,14 @@ export default function XIntegrationTab() {
         </div>
       </form>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl divide-y divide-slate-800">
-        <div className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Recent posts
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+        <div className="px-5 py-4 flex items-center justify-between border-b border-slate-800">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Recent posts
+          </div>
+          <div className="text-xs text-slate-500">
+            {loadingTweets ? 'Loading…' : `${tweets.length} items`}
+          </div>
         </div>
         {loadingTweets ? (
           <div className="p-8 text-center text-slate-500 text-sm">Loading...</div>
@@ -203,8 +258,13 @@ export default function XIntegrationTab() {
           <div className="p-8 text-center text-slate-500 text-sm">No posts yet.</div>
         ) : (
           tweets.map((t) => (
-            <div key={t.id} className="px-4 py-4">
-              <p className="text-sm text-slate-200 whitespace-pre-wrap">{t.text}</p>
+            <div key={t.id} className="px-5 py-4 border-b border-slate-800 last:border-b-0">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+                  <Twitter className="w-4 h-4 text-sky-400" />
+                </div>
+                <p className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">{t.text}</p>
+              </div>
             </div>
           ))
         )}

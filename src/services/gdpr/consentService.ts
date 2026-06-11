@@ -18,8 +18,8 @@ export interface ConsentRecord {
     id: string;
     user_id: string;
     consent_type: ConsentType;
-    granted: boolean;
-    granted_at: string;
+    consent_given: boolean;
+    given_at: string;
     ip_address?: string;
     user_agent?: string;
 }
@@ -41,8 +41,8 @@ export const consentService = {
             const { error } = await supabase.from('user_consents').upsert({
                 user_id: userId,
                 consent_type: consentType,
-                granted,
-                granted_at: new Date().toISOString(),
+                consent_given: granted,
+                given_at: new Date().toISOString(),
                 ip_address: metadata?.ip_address,
                 user_agent: metadata?.user_agent,
             });
@@ -66,7 +66,7 @@ export const consentService = {
             .from('user_consents')
             .select('*')
             .eq('user_id', userId)
-            .order('granted_at', { ascending: false });
+            .order('given_at', { ascending: false });
 
         if (error) {
             console.error('Error fetching consents:', error);
@@ -82,14 +82,14 @@ export const consentService = {
     async hasConsent(userId: string, consentType: ConsentType): Promise<boolean> {
         const { data } = await supabase
             .from('user_consents')
-            .select('granted')
+            .select('consent_given')
             .eq('user_id', userId)
             .eq('consent_type', consentType)
-            .order('granted_at', { ascending: false })
+            .order('given_at', { ascending: false })
             .limit(1)
             .single();
 
-        return data?.granted || false;
+        return data?.consent_given || false;
     },
 
     /**

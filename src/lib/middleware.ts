@@ -139,7 +139,7 @@ export async function updateSession(request: NextRequest) {
                 // Assuming RLS allows users to see their own tenant record.
                 const { data: tenant } = await supabase
                     .from('tenants')
-                    .select('subscription_status, trial_ends_at')
+                    .select('subscription_status, trial_ends_at, subscription_plan')
                     .eq('id', tenantId)
                     .single();
 
@@ -150,8 +150,10 @@ export async function updateSession(request: NextRequest) {
                         new Date(tenant.trial_ends_at) < new Date();
                     
                     const isInactive = ['suspended', 'cancelled', 'past_due'].includes(tenant.subscription_status);
+                    const isFreePlan = String((tenant as any).subscription_plan || 'free') === 'free';
+                    const isFreeBlocked = isFreePlan && tenant.subscription_status !== 'trial';
 
-                    if (isTrialExpired || isInactive) {
+                    if (isTrialExpired || isInactive || isFreeBlocked) {
                         console.log(`[Middleware] Hard Gate: Redirecting tenant ${tenantId} (Status: ${tenant.subscription_status}) to upgrade.`);
                         const url = request.nextUrl.clone();
                         url.pathname = '/billing/upgrade';

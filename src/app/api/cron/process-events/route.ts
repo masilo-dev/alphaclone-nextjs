@@ -9,6 +9,7 @@ import { invoiceOverdueWorkflow, invoiceCreatedWorkflow } from '@/workflows/invo
 import { leadCreatedWorkflow } from '@/workflows/lead-flows';
 import { contractSignedWorkflow } from '@/workflows/contract-flows';
 import { taskOverdueWorkflow, taskCreatedWorkflow } from '@/workflows/task-flows';
+import { tenantCreatedWorkflow } from '@/workflows/tenant-flows';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,9 @@ export async function GET(request: NextRequest) {
         let workflowToStart: any = null;
 
         switch (event.event_type) {
+          case 'tenant_created':
+            workflowToStart = tenantCreatedWorkflow;
+            break;
           case 'deal_stage_changed':
             workflowToStart = dealStageChangedWorkflow;
             break;
