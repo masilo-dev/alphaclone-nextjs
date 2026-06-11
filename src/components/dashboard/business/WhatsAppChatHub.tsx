@@ -44,7 +44,7 @@ export default function WhatsAppChatHub() {
     const [replyText, setReplyText] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [aiGenerating, setAiGenerating] = useState(false);
-    const [zernioConnected, setZernioConnected] = useState(false);
+    const [metaConnected, setMetaConnected] = useState(false);
 
     // Chatbot settings toggle
     const [chatbotEnabled, setChatbotEnabled] = useState(false);
@@ -73,15 +73,12 @@ export default function WhatsAppChatHub() {
 
     const fetchIntegrations = async () => {
         try {
-            const zernio = (currentTenant?.settings as any)?.zernio;
-            const accountId = zernio?.whatsappAccountId || zernio?.accountId;
-            setZernioConnected(!!accountId);
-
-            const statusRes = await fetch('/api/integrations/whatsapp/status');
-            const statusData = await statusRes.json().catch(() => ({}));
-            if (!statusData.zernioConfigured) setZernioConnected(false);
+            const res = await fetch(`/api/integrations/whatsapp?tenantId=${currentTenant?.id}`);
+            const data = await res.json().catch(() => ({}));
+            setMetaConnected(data?.success && data?.integrations?.length > 0);
         } catch (err) {
             console.error('Failed to fetch WhatsApp status', err);
+            setMetaConnected(false);
         }
     };
 

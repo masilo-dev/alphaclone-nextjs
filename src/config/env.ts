@@ -50,6 +50,8 @@ const envSchema = z.object({
     FACEBOOK_VERIFY_TOKEN: z.string().optional(),
     FACEBOOK_APP_SECRET: z.string().optional(),
     FACEBOOK_PAGE_ACCESS_TOKEN: z.string().optional(),
+    WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+    WHATSAPP_ACCESS_TOKEN: z.string().optional(),
 
     // Optional
     VITE_SENTRY_DSN: z.string().url().optional(),
@@ -204,6 +206,8 @@ function validateEnv() {
         FACEBOOK_VERIFY_TOKEN: process.env.FACEBOOK_VERIFY_TOKEN || process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
         FACEBOOK_APP_SECRET: process.env.FACEBOOK_APP_SECRET,
         FACEBOOK_PAGE_ACCESS_TOKEN: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
+        WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
+        WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
 
         SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 

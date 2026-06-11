@@ -1,9 +1,9 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { getZernioClient, getTenantZernioSettings } from '@/lib/zernio/client';
+import { ENV } from '@/config/env';
 
 export interface SendWhatsAppResult {
   success: boolean;
-  provider: 'zernio';
+  provider: 'meta-whatsapp';
   messageId?: string;
   to?: string;
   error?: string;
@@ -14,9 +14,21 @@ function cleanPhone(phone: string): string {
 }
 
 export async function isWhatsAppConfigured(tenantId: string): Promise<boolean> {
-  if (!process.env.ZERNIO_API_KEY) return false;
-  const zernioSettings = await getTenantZernioSettings(tenantId);
-  return !!(zernioSettings?.whatsappAccountId || zernioSettings?.accountId);
+  // Configured if we have global fallback environment variables or active tenant-specific integration
+  if (ENV.WHATSAPP_PHONE_NUMBER_ID && ENV.WHATSAPP_ACCESS_TOKEN) return true;
+
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from('whatsapp_integrations')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .not('phone_number_id', 'is', null)
+    .not('access_token', 'is', null)
+    .limit(1)
+    .maybeSingle();
+
+  return !!data;
 }
 
 export async function sendWhatsAppMessage(params: {
@@ -31,34 +43,72 @@ export async function sendWhatsAppMessage(params: {
   const supabase = createSupabaseAdminClient();
   const cleanTo = cleanPhone(params.phone);
   if (!params.tenantId || !cleanTo || !params.message.trim()) {
-    return { success: false, provider: 'zernio', error: 'tenantId, phone, and message are required' };
+    return { success: false, provider: 'meta-whatsapp', error: 'tenantId, phone, and message are required' };
   }
 
-  if (!process.env.ZERNIO_API_KEY) {
-    return { success: false, provider: 'zernio', error: 'ZERNIO_API_KEY is not configured on the server' };
+  // 1. Resolve credentials (first try DB integrations, then fall back to env vars)
+  let phoneNumberId = ENV.WHATSAPP_PHONE_NUMBER_ID;
+  let accessToken = ENV.WHATSAPP_ACCESS_TOKEN;
+  let activeIntegrationId: string | null = params.integrationId || null;
+
+  const { data: waIntegration } = await supabase
+    .from('whatsapp_integrations')
+    .select('id, phone_number_id, access_token')
+    .eq('tenant_id', params.tenantId)
+    .eq('is_active', true)
+    .not('phone_number_id', 'is', null)
+    .not('access_token', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (waIntegration) {
+    phoneNumberId = waIntegration.phone_number_id;
+    accessToken = waIntegration.access_token;
+    activeIntegrationId = waIntegration.id;
   }
 
-  const zernioSettings = await getTenantZernioSettings(params.tenantId);
-  const zernioAccountId = zernioSettings?.whatsappAccountId || zernioSettings?.accountId;
-  if (!zernioAccountId) {
+  if (!phoneNumberId || !accessToken) {
     return {
       success: false,
-      provider: 'zernio',
-      error: 'WhatsApp is not connected. Add your Zernio account ID under Settings → Integrations → WhatsApp.',
+      provider: 'meta-whatsapp',
+      error: 'WhatsApp integration is not configured. Please add your Phone Number ID and Access Token under Integration Settings.',
     };
   }
 
   try {
-    const zernio = getZernioClient();
-    const response = await zernio.messages.createInboxConversation({
-      body: {
-        accountId: zernioAccountId,
-        participantId: cleanTo,
-        message: params.message,
+    // 2. Send request to Meta Cloud API (v18.0)
+    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanTo,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: params.message,
+        },
+      }),
     });
 
-    const messageId = (response as any).data?.messageId || `wa_out_${Date.now()}`;
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('[WhatsApp send failed] Meta API response:', result);
+      return {
+        success: false,
+        provider: 'meta-whatsapp',
+        error: result.error?.message || 'Failed to send WhatsApp message via Meta Cloud API',
+      };
+    }
+
+    const messageId = result.messages?.[0]?.id || `wa_out_${Date.now()}`;
 
     const { data: contact } = params.contactId
       ? { data: { id: params.contactId } }
@@ -71,9 +121,10 @@ export async function sendWhatsAppMessage(params: {
 
     await supabase.from('whatsapp_messages').insert({
       tenant_id: params.tenantId,
-      integration_id: null,
+      integration_id: activeIntegrationId,
+      provider: 'meta-whatsapp',
       provider_message_id: messageId,
-      chat_id: `${cleanTo}@c.us`,
+      chat_id: cleanTo,
       phone_number: cleanTo,
       direction: 'outbound',
       message_type: 'text',
@@ -84,7 +135,7 @@ export async function sendWhatsAppMessage(params: {
       sent_by: params.metadata?.source === 'auto_outreach' ? 'bot' : params.metadata?.source === 'mcp' ? 'api' : 'human',
       needs_response: false,
       sent_at: new Date().toISOString(),
-      metadata: { ...(params.metadata || {}), provider: 'zernio' },
+      metadata: { ...(params.metadata || {}), provider: 'meta-whatsapp' },
     });
 
     await supabase.from('whatsapp_outreach_logs').insert({
@@ -96,9 +147,9 @@ export async function sendWhatsAppMessage(params: {
       sent_at: new Date().toISOString(),
     });
 
-    return { success: true, provider: 'zernio', messageId, to: cleanTo };
+    return { success: true, provider: 'meta-whatsapp', messageId, to: cleanTo };
   } catch (err: any) {
-    console.error('[whatsapp/send] Zernio send failed:', err);
-    return { success: false, provider: 'zernio', error: err?.message || 'Zernio WhatsApp send failed' };
+    console.error('[whatsapp/send] Meta send failed:', err);
+    return { success: false, provider: 'meta-whatsapp', error: err?.message || 'Meta WhatsApp send failed' };
   }
 }

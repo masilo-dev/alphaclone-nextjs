@@ -2,6 +2,46 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
+const META_GRAPH_VERSION = 'v18.0';
+const APP_WEBHOOK_PATH = '/api/webhooks/facebook/whatsapp';
+
+/**
+ * Subscribe a phone number to the app's webhook via Meta Graph API.
+ * Each tenant does this independently — data stays fully isolated.
+ */
+async function subscribePhoneToWebhook(
+  phoneNumberId: string,
+  accessToken: string,
+  webhookUrl: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Subscribe the WhatsApp Business Account to the app webhooks
+    const res = await fetch(
+      `https://graph.facebook.com/${META_GRAPH_VERSION}/${phoneNumberId}/subscribed_apps`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ subscribed_fields: 'messages' }),
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('[Meta webhook subscribe] Failed:', data);
+      return { success: false, error: data?.error?.message || 'Meta API subscription failed' };
+    }
+    console.log(`[Meta webhook subscribe] Subscribed phone ${phoneNumberId} -> ${webhookUrl}`);
+    return { success: true };
+  } catch (err: any) {
+    console.error('[Meta webhook subscribe] Error:', err);
+    return { success: false, error: err?.message || 'Unknown error' };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,85 +64,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Enrich integrations with real-time Green API details
-    const enrichedIntegrations = await Promise.all((data || []).map(async (item: any) => {
-      const apiToken = item.metadata?.apiTokenInstance;
-      if (apiToken && item.waba_id) {
-        try {
-          // Fetch settings for phone number (wid) and current webhook
-          const settingsUrl = `https://api.green-api.com/waInstance${item.waba_id}/getSettings/${apiToken}`;
-          const settingsResp = await fetch(settingsUrl, { signal: AbortSignal.timeout(1500) });
-          let phoneNumber = null;
-          let country = null;
-          let currentWebhookUrl = '';
-
-          if (settingsResp.ok) {
-            const settingsData = await settingsResp.json();
-            if (settingsData) {
-              if (settingsData.wid) {
-                phoneNumber = settingsData.wid.split('@')[0];
-              }
-              country = settingsData.countryTelegram || null;
-              currentWebhookUrl = settingsData.webhookUrl || '';
-            }
-          }
-
-          // Target Webhook URL
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://alphaclonesystems.com';
-          const targetWebhookUrl = `${baseUrl}/api/webhooks/whatsapp`;
-
-          // Self-heal: If webhook url is missing or incorrect on Green API instance, fix it programmatically
-          if (currentWebhookUrl !== targetWebhookUrl) {
-            try {
-              const setSettingsUrl = `https://api.green-api.com/waInstance${item.waba_id}/setSettings/${apiToken}`;
-              const setSettingsResp = await fetch(setSettingsUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  webhookUrl: targetWebhookUrl,
-                  incomingWebhook: 'yes',
-                  outgoingWebhook: 'yes',
-                  outgoingMessageWebhook: 'yes',
-                  outgoingAPIMessageWebhook: 'yes',
-                  stateWebhook: 'yes',
-                  statusInstanceChangedWebhook: 'yes'
-                }),
-                signal: AbortSignal.timeout(1500)
-              });
-              if (setSettingsResp.ok) {
-                console.log(`[Self-Heal Webhook] Automatically registered Green API Webhook URL for instance ${item.waba_id} -> ${targetWebhookUrl}`);
-              }
-            } catch (err) {
-              console.error(`Failed to self-heal Green API Webhook for ${item.waba_id}:`, err);
-            }
-          }
-
-          // Fetch state (authorized, etc.)
-          const stateUrl = `https://api.green-api.com/waInstance${item.waba_id}/getStateInstance/${apiToken}`;
-          const stateResp = await fetch(stateUrl, { signal: AbortSignal.timeout(1500) });
-          let state = 'unknown';
-
-          if (stateResp.ok) {
-            const stateData = await stateResp.json();
-            if (stateData && stateData.stateInstance) {
-              state = stateData.stateInstance;
-            }
-          }
-
-          return {
-            ...item,
-            phone_number: phoneNumber,
-            state: state,
-            country: country
-          };
-        } catch (err) {
-          console.error(`Failed to fetch Green API details for ${item.waba_id}:`, err);
-        }
-      }
-      return item;
+    // Mask access token for safety — only last 4 chars shown
+    const integrations = (data || []).map((item: any) => ({
+      ...item,
+      access_token: item.access_token ? `••••${item.access_token.slice(-4)}` : null,
+      alias: item.metadata?.alias || 'Meta WhatsApp',
     }));
 
-    return NextResponse.json({ success: true, integrations: enrichedIntegrations });
+    return NextResponse.json({ success: true, integrations });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to fetch WhatsApp integrations', request);
   }
@@ -111,60 +80,51 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantId, wabaId, apiToken, alias } = body;
+    const { tenantId, wabaId, phoneNumberId, accessToken, alias } = body;
 
-    if (!tenantId || !wabaId || !apiToken) {
-      return NextResponse.json({ error: 'tenantId, wabaId, and apiToken are required' }, { status: 400 });
+    if (!tenantId || !wabaId || !phoneNumberId || !accessToken) {
+      return NextResponse.json(
+        { error: 'tenantId, wabaId, phoneNumberId, and accessToken are required' },
+        { status: 400 }
+      );
     }
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
 
-    // Construct the absolute Webhook URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://alphaclonesystems.com';
-    const webhookUrl = `${baseUrl}/api/webhooks/whatsapp`;
+    // Build the absolute webhook URL for this deployment
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'https://alphaclonesystems.com';
+    const webhookUrl = `${baseUrl}${APP_WEBHOOK_PATH}`;
 
-    // 1. Programmatically register webhook URL in Green API settings
-    try {
-      const setSettingsUrl = `https://api.green-api.com/waInstance${wabaId}/setSettings/${apiToken}`;
-      const setSettingsResp = await fetch(setSettingsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          webhookUrl: webhookUrl,
-          incomingWebhook: 'yes',
-          outgoingWebhook: 'yes',
-          outgoingMessageWebhook: 'yes',
-          outgoingAPIMessageWebhook: 'yes',
-          stateWebhook: 'yes',
-          statusInstanceChangedWebhook: 'yes'
-        }),
-        signal: AbortSignal.timeout(3000)
-      });
+    // 1. Auto-register webhook with Meta — no manual Meta Dashboard step needed
+    const webhookResult = await subscribePhoneToWebhook(phoneNumberId.trim(), accessToken.trim(), webhookUrl);
 
-      if (!setSettingsResp.ok) {
-        console.warn(`Green API Webhook setSettings failed for instance ${wabaId}:`, await setSettingsResp.text());
-      } else {
-        console.log(`✓ Programmatically registered Green API Webhook URL: ${webhookUrl}`);
-      }
-    } catch (webhookErr) {
-      console.error('Failed to configure Green API webhook url automatically:', webhookErr);
-    }
-
-    // 2. Insert into database
+    // 2. Upsert integration record (even if webhook sub fails, store credentials)
     const { data, error } = await supabase
       .from('whatsapp_integrations')
-      .insert({
-        tenant_id: tenantId,
-        user_id: tenantCtx.user.id,
-        waba_id: wabaId,
-        is_active: true,
-        metadata: {
-          apiTokenInstance: apiToken,
-          alias: alias || 'WhatsApp API',
-          webhookUrl: webhookUrl
-        }
-      })
+      .upsert(
+        {
+          tenant_id: tenantId,
+          user_id: tenantCtx.user.id,
+          waba_id: wabaId.trim(),
+          phone_number_id: phoneNumberId.trim(),
+          access_token: accessToken.trim(),
+          is_active: true,
+          webhook_verified: webhookResult.success,
+          metadata: {
+            alias: alias || 'Meta WhatsApp API',
+            webhook_url: webhookUrl,
+            webhook_subscribed_at: webhookResult.success ? new Date().toISOString() : null,
+            webhook_error: webhookResult.error || null,
+            updated_at: new Date().toISOString(),
+          },
+        },
+        { onConflict: 'tenant_id,waba_id' }
+      )
       .select()
       .single();
 
@@ -172,9 +132,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, integration: data });
+    return NextResponse.json({
+      success: true,
+      integration: data,
+      webhookSubscribed: webhookResult.success,
+      webhookWarning: webhookResult.success ? null : `Webhook auto-subscribe failed: ${webhookResult.error}. You may need to subscribe manually in the Meta Developer Portal.`,
+    });
   } catch (error) {
-    return routeErrorResponse(error, 'Failed to add WhatsApp integration', request);
+    return routeErrorResponse(error, 'Failed to save WhatsApp integration', request);
   }
 }
 

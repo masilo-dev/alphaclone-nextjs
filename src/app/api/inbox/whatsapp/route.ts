@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log('[UnifiedInboxWhatsAppWebhook] Received payload:', JSON.stringify(body));
 
-    const { tenantId, from, to, text, externalId, threadId, idInstance, receiptId } = body;
+    const { tenantId, from, to, text, externalId, threadId } = body;
 
     // 1. Simplified testing payload
     if (tenantId && from && text) {
@@ -27,15 +27,11 @@ export async function POST(req: NextRequest) {
         text,
         receivedAt: new Date().toISOString()
       });
-      return NextResponse.json({ success: true, messageId: message.id });
-    }
 
-    // 2. Production Green API webhook
-    if (idInstance && receiptId) {
-      whatsAppChatbotService.handleInboundMessage(body).catch((e) => {
-        console.error('[UnifiedInboxWhatsAppWebhook] Chatbot error:', e);
-      });
-      return NextResponse.json({ status: 'ok' });
+      // Auto reply test
+      await whatsAppChatbotService.maybeAutoReplyMeta(tenantId, from, text);
+
+      return NextResponse.json({ success: true, messageId: message.id });
     }
 
     return NextResponse.json({ error: 'Invalid payload parameters' }, { status: 400 });

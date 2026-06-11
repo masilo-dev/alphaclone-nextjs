@@ -157,10 +157,41 @@ export async function POST(req: NextRequest) {
                                 received_at: new Date().toISOString()
                             }, { onConflict: 'tenant_id,provider_message_id' });
 
-                            // TODO: Add your business logic here
-                            // - Auto-reply to messages
-                            // - Create leads from WhatsApp conversations
-                            // - Trigger workflows
+                            // Sync message to universal inbox
+                            try {
+                                const { captureUnifiedMessageFromWebhook } = await import('@/services/intelligence/signalCaptureAdminService');
+                                await captureUnifiedMessageFromWebhook({
+                                    supabase: supabaseAdmin as any,
+                                    tenantId: waIntegration.tenant_id,
+                                    source: 'whatsapp',
+                                    channel: 'chat',
+                                    direction: 'inbound',
+                                    externalId: message.id,
+                                    threadId: message.from,
+                                    from: message.from,
+                                    to: phoneNumberId || wabaId,
+                                    subject: null,
+                                    text: message.text?.body || `[WhatsApp ${message.type || 'message'}]`,
+                                    html: null,
+                                    receivedAt: new Date().toISOString(),
+                                    metadata: { provider: 'meta-whatsapp' },
+                                });
+                            } catch (captureErr) {
+                                console.error('[Facebook/WhatsApp Webhook] Signal capture error:', captureErr);
+                            }
+
+                            // Trigger AI chatbot auto-reply
+                            try {
+                                const { whatsAppChatbotService } = await import('@/services/whatsapp/WhatsAppChatbotService');
+                                await whatsAppChatbotService.maybeAutoReplyMeta(
+                                    waIntegration.tenant_id,
+                                    message.from,
+                                    message.text?.body || '',
+                                    waIntegration.id
+                                );
+                            } catch (chatbotErr) {
+                                console.error('[Facebook/WhatsApp Webhook] Chatbot auto-reply error:', chatbotErr);
+                            }
                         }
                     }
 
