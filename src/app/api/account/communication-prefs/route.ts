@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
     if (payload.isRegistration || payload.captureConsent || acceptedLegal) {
       updatePayload.gdpr_consent_date = new Date().toISOString();
-      updatePayload.gdpr_consent_ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || req.headers.get('x-vercel-ip-country') || null;
+      updatePayload.gdpr_consent_ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || null;
     }
 
     const { error } = await admin.from('profiles').update(updatePayload).eq('id', user.id);

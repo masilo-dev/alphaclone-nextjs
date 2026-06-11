@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
@@ -589,6 +590,9 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                             <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
                                 Encrypted Transmission Status: READY
                             </div>
+                            <div className="hidden sm:block max-w-[320px]">
+                                <AIOutputDisclaimer type="email" />
+                            </div>
                             <div className="flex items-center gap-4 w-full sm:w-auto">
                                 <button
                                     onClick={onClose}
@@ -616,4 +620,3 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 };
 
 export default ComposeEmailModal;
-

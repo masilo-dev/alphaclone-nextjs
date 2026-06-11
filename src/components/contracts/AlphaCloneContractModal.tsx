@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 import { X, Calendar, DollarSign, FileText, Send, MessageCircle, CheckCircle, Edit3, Save, Printer, Share2 } from 'lucide-react';
 import { Button, Input, Badge } from '../ui/UIComponents';
 import { SignaturePad } from './SignaturePad';
@@ -729,6 +730,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                     {/* STEP 2: Preview Contract */}
                     {step === 'preview' && (
                         <div className="space-y-6">
+                            <AIOutputDisclaimer type="contract" />
                             {/* Contract Preview */}
                             <div className="bg-white text-black p-10 rounded-lg border-4 border-slate-700 max-h-[600px] overflow-y-auto shadow-inner prose prose-slate max-w-none">
                                 <ReactMarkdown
@@ -950,4 +952,3 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 };
 
 export default AlphaCloneContractModal;
-

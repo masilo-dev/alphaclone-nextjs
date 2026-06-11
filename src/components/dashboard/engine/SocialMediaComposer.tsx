@@ -15,6 +15,7 @@ import { userLearningPreferencesService } from '@/services/userLearningPreferenc
 import VideoEditor from '../../video/VideoEditor';
 import { cn, cleanAIJSONResponse } from '../../../lib/utils';
 import toast from 'react-hot-toast';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 
 interface MediaAsset {
     id: string;
@@ -1344,6 +1345,9 @@ Return only the comment text.`;
                         {/* Schedule */}
                         <div className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4">
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Schedule</p>
+                            <div className="mb-3">
+                                <AIOutputDisclaimer type="social" />
+                            </div>
                             <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm mb-3" />
 

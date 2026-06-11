@@ -116,16 +116,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     await supabase.from('sms_campaigns').update({ recipients_total: recipients.length }).eq('id', campaignId);
 
+    const { data: optOutRows } = await supabase
+        .from('sms_opt_outs')
+        .select('phone_number')
+        .eq('tenant_id', campaign.tenant_id);
+    const optOutSet = new Set<string>((optOutRows || []).map((row: any) => String(row.phone_number || '').trim()).filter(Boolean));
+
+    const baseMessage = String(campaign.message_body || '').trim();
+    const messageBody = /(^|\s)stop(\s|$)/i.test(baseMessage)
+        ? baseMessage
+        : `${baseMessage}\n\nReply STOP to unsubscribe.`;
+
     // Send messages with a small delay between each to avoid Twilio rate limits
     let sent = 0, failed = 0;
 
     for (const recipient of recipients) {
         try {
             const toNormalized = normalizePhoneNumber(recipient.phone);
+            if (optOutSet.has(toNormalized)) {
+                await supabase.from('sms_messages').insert({
+                    tenant_id: campaign.tenant_id,
+                    campaign_id: campaignId,
+                    lead_id: recipient.leadId || null,
+                    from_number: fromNumber,
+                    to_number: toNormalized,
+                    body: messageBody,
+                    status: 'failed',
+                    twilio_sid: null,
+                    error_message: 'Recipient opted out (STOP)',
+                    sent_at: null,
+                });
+                failed++;
+                continue;
+            }
             const params = new URLSearchParams({
                 To:   toNormalized,
                 From: fromNumber,
-                Body: campaign.message_body,
+                Body: messageBody,
             });
 
             const twilioRes = await fetch(
@@ -152,7 +179,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
                 lead_id: recipient.leadId || null,
                 from_number: fromNumber,
                 to_number: toNormalized,
-                body: campaign.message_body,
+                body: messageBody,
                 status: success ? 'sent' : 'failed',
                 twilio_sid: result.sid || null,
                 error_message: success ? null : 'Twilio send failed',

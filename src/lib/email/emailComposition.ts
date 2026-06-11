@@ -1,4 +1,9 @@
-const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [];
+const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [
+  'AlphaClone Systems LLC',
+  '1621 Central Ave, Cheyenne, WY 82001, USA',
+  'Privacy: https://alphaclonesystems.com/legal/privacy',
+  'Terms: https://alphaclonesystems.com/legal/terms',
+];
 
 export function normalizeEmailSubject(subject: string): string {
   return String(subject || '').trim().replace(/\s+/g, ' ');
@@ -20,4 +25,3 @@ export function ensureFooter(content: string): string {
   if (body.includes(footer)) return body;
   return `${body}\n\n${footer}`;
 }
-

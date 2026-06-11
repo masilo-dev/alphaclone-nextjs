@@ -41,7 +41,7 @@ export async function POST(req: Request) {
             .eq('id', user.id)
             .single();
 
-        const isSuperAdmin = profile?.role === 'admin';
+        const isSuperAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
 
         // Check if user belongs to this tenant in tenant_users table
         const { data: tenantUser } = await serviceClient

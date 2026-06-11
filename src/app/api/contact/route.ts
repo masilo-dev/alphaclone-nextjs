@@ -16,12 +16,15 @@ export async function POST(request: NextRequest) {
     const { name, email, subject, message, company } = parsed.data;
 
     const supabase = createAdminSupabaseClientOrThrow();
+    const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();
+    const tenantId = process.env.CONTACT_TENANT_ID?.trim();
 
     // Insert contact form submission into database
     const { data, error } = await supabase
       .from('contact_submissions')
       .insert([
         {
+          tenant_id: tenantId || null,
           name,
           email,
           subject: subject || 'General Inquiry',
@@ -43,8 +46,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();
-    const tenantId = process.env.CONTACT_TENANT_ID?.trim();
     if (salesInbox && tenantId) {
       try {
         await sendEmailServer({

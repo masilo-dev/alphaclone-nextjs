@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,11 +39,14 @@ export async function POST(req: NextRequest) {
       if (!ok) return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    const from = String(payload.From || '').trim();
-    const to = String(payload.To || '').trim();
+    const fromRaw = String(payload.From || '').trim();
+    const toRaw = String(payload.To || '').trim();
     const body = String(payload.Body || '').trim();
     const sid = String(payload.MessageSid || payload.SmsMessageSid || '').trim();
-    if (!from || !to) return NextResponse.json({ error: 'Missing From/To' }, { status: 400 });
+    if (!fromRaw || !toRaw) return NextResponse.json({ error: 'Missing From/To' }, { status: 400 });
+
+    const from = normalizePhoneNumber(fromRaw);
+    const to = normalizePhoneNumber(toRaw);
 
     const admin = createSupabaseAdminClient();
     const { data: integration } = await admin
@@ -54,6 +58,17 @@ export async function POST(req: NextRequest) {
 
     if (!integration?.tenant_id) {
       return NextResponse.json({ success: true, ignored: true });
+    }
+
+    const keyword = body.trim().toUpperCase();
+    const isStopKeyword = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'].includes(keyword);
+    if (isStopKeyword) {
+      await admin.from('sms_opt_outs').upsert({
+        tenant_id: integration.tenant_id,
+        phone_number: from,
+        keyword,
+        source: 'twilio',
+      });
     }
 
     await admin.from('sms_messages').insert({
@@ -83,9 +98,8 @@ export async function POST(req: NextRequest) {
       metadata: { twilio: true },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, optOut: isStopKeyword });
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
-

@@ -124,7 +124,7 @@ const Sidebar = React.memo<SidebarProps>(({
                 }
             }
         }
-        if (user.role === 'admin') {
+        if (user.role === 'admin' || user.role === 'super_admin') {
             out.push({ label: t('Operations console'), href: '/dashboard/admin/operations' });
         }
         return out;
@@ -202,7 +202,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
                 <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 custom-scrollbar transform-gpu">
                     {/* Admin badge */}
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'super_admin') && (
                         <div className="mb-3 px-1 space-y-1">
                             <button
                                 onClick={() => navigate('/dashboard/admin/tenants')}
@@ -441,4 +441,3 @@ const Sidebar = React.memo<SidebarProps>(({
 
 Sidebar.displayName = 'Sidebar';
 export default Sidebar;
-

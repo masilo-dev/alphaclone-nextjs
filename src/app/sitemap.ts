@@ -6,11 +6,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = SITE_URL;
 
     // 1. Static Marketing Routes
-    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/search', '/onboarding/create-business', '/docs', '/faq', '/pricing', '/contact', '/demo', '/book-demo', '/tools/ai-architect', '/auth/login', '/login', '/register'].map((route) => ({
+    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/search', '/onboarding/create-business', '/docs', '/faq', '/pricing', '/contact', '/demo', '/book-demo', '/tools/ai-architect', '/auth/login'].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1.0 : (route === '/book-demo' || route === '/demo') ? 0.95 : (route === '/auth/login' || route === '/login' || route === '/register' || route === '/tools/ai-architect') ? 0.8 : route === '/search' ? 0.7 : route === '/onboarding/create-business' ? 0.6 : 0.9,
+        priority: route === '' ? 1.0 : (route === '/book-demo' || route === '/demo') ? 0.95 : (route === '/auth/login' || route === '/tools/ai-architect') ? 0.8 : route === '/search' ? 0.7 : route === '/onboarding/create-business' ? 0.6 : 0.9,
     }));
 
     const standardRoutes = [

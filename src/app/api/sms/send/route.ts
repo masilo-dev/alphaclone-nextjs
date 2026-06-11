@@ -86,12 +86,29 @@ export async function POST(req: NextRequest) {
             }, { status: 503 });
         }
 
+        if (tenantId) {
+            const { data: optOut } = await supabase
+                .from('sms_opt_outs')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .eq('phone_number', toNormalized)
+                .maybeSingle();
+            if (optOut) {
+                return NextResponse.json({ error: 'Recipient has opted out of SMS (STOP)' }, { status: 400 });
+            }
+        }
+
+        const baseMessage = String(message || '').trim();
+        const withStopNotice = /(^|\s)stop(\s|$)/i.test(baseMessage)
+            ? baseMessage
+            : `${baseMessage}\n\nReply STOP to unsubscribe.`;
+
         // 2. Call Twilio REST API
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
         const params = new URLSearchParams({
             To:   toNormalized,
             From: fromNormalized,
-            Body: message,
+            Body: withStopNotice,
         });
 
         const twilioRes = await fetch(twilioUrl, {
@@ -115,7 +132,7 @@ export async function POST(req: NextRequest) {
                     lead_id: leadId || null,
                     from_number: fromNormalized,
                     to_number: toNormalized,
-                    body: message,
+                    body: withStopNotice,
                     status: 'failed',
                     twilio_sid: twilioData.sid || null,
                     error_message: 'Twilio send failed',
@@ -139,7 +156,7 @@ export async function POST(req: NextRequest) {
                 lead_id: leadId || null,
                 from_number: fromNormalized,
                 to_number: toNormalized,
-                body: message,
+                body: withStopNotice,
                 status: 'sent',
                 twilio_sid: twilioData.sid,
                 sent_at: new Date().toISOString(),

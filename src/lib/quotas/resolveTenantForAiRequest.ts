@@ -73,7 +73,7 @@ export async function isPlatformSuperAdmin(
         .select('role')
         .eq('id', userId)
         .maybeSingle();
-    return profile?.role === 'admin';
+    return profile?.role === 'admin' || profile?.role === 'super_admin';
 }
 
 export function skipAiQuotaForAdminMode(

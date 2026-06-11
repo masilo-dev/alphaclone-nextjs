@@ -1,23 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Mail, Clock, CheckCircle, MessageSquare } from 'lucide-react';
-import { contactService, ContactSubmission } from '../../services/contactFormService';
+import { inboxService, type InboxSubmission, type InboxStatus } from '../../services/inboxService';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 
 const ContactSubmissionsTab: React.FC = () => {
-    const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
+    const [submissions, setSubmissions] = useState<InboxSubmission[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'New' | 'Read' | 'Replied'>('all');
+    const [filter, setFilter] = useState<'all' | InboxStatus>('all');
 
     const loadSubmissions = useCallback(async () => {
         setLoading(true);
-        const { submissions: data } = await contactService.getContactSubmissions();
+        const { submissions: data } = await inboxService.getInbox();
         setSubmissions(data);
         setLoading(false);
     }, []);
 
-    const handleStatusChange = useCallback(async (id: string, status: 'New' | 'Read' | 'Replied') => {
-        await contactService.updateSubmissionStatus(id, status);
+    const handleStatusChange = useCallback(async (id: string, source: 'contact' | 'form', status: InboxStatus) => {
+        await inboxService.updateStatus(id, source, status);
         loadSubmissions();
     }, [loadSubmissions]);
 
@@ -31,9 +31,9 @@ const ContactSubmissionsTab: React.FC = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'New': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-            case 'Read': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-            case 'Replied': return 'bg-green-500/10 text-green-400 border-green-500/20';
+            case 'new': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            case 'read': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+            case 'replied': return 'bg-green-500/10 text-green-400 border-green-500/20';
             default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
         }
     };
@@ -56,7 +56,7 @@ const ContactSubmissionsTab: React.FC = () => {
                     <p className="text-slate-400 text-xs sm:text-sm mt-1">Messages from your contact form</p>
                 </div>
                 <div className="flex gap-2">
-                    {['all', 'New', 'Read', 'Replied'].map((status) => (
+                    {['all', 'new', 'read', 'replied'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilter(status as any)}
@@ -65,7 +65,7 @@ const ContactSubmissionsTab: React.FC = () => {
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                 }`}
                         >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                            {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
                             {status !== 'all' && (
                                 <span className="ml-2 opacity-60">
                                     ({submissions.filter(s => s.status === status).length})
@@ -80,7 +80,7 @@ const ContactSubmissionsTab: React.FC = () => {
                 <EmptyState
                     icon={Mail}
                     title="No contact submissions"
-                    description={filter === 'all' ? 'No one has submitted the contact form yet' : `No ${filter.toLowerCase()} submissions`}
+                    description={filter === 'all' ? 'No one has submitted a form yet' : `No ${filter.toLowerCase()} submissions`}
                 />
             ) : (
                 <div className="grid gap-4">
@@ -97,11 +97,16 @@ const ContactSubmissionsTab: React.FC = () => {
                                     <div>
                                         <h3 className="font-bold text-white">{submission.name}</h3>
                                         <p className="text-sm text-slate-400">{submission.email}</p>
+                                        {submission.source === 'form' && (submission.formTitle || submission.formSlug) && (
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {submission.formTitle || submission.formSlug}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(submission.status)}`}>
-                                        {submission.status}
+                                        {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
                                     </span>
                                     <div className="flex items-center gap-1 text-xs text-slate-500">
                                         <Clock className="w-3 h-3" />
@@ -115,18 +120,18 @@ const ContactSubmissionsTab: React.FC = () => {
                             </div>
 
                             <div className="flex gap-2">
-                                {submission.status !== 'Read' && (
+                                {submission.status !== 'read' && (
                                     <button
-                                        onClick={() => handleStatusChange(submission.id, 'Read')}
+                                        onClick={() => handleStatusChange(submission.id, submission.source, 'read')}
                                         className="px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
                                     >
                                         <CheckCircle className="w-4 h-4" />
                                         Mark as Read
                                     </button>
                                 )}
-                                {submission.status !== 'Replied' && (
+                                {submission.status !== 'replied' && (
                                     <button
-                                        onClick={() => handleStatusChange(submission.id, 'Replied')}
+                                        onClick={() => handleStatusChange(submission.id, submission.source, 'replied')}
                                         className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
                                     >
                                         <MessageSquare className="w-4 h-4" />

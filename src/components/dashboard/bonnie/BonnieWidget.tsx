@@ -7,6 +7,7 @@ import {
 import { bonnieService, BonnieLog, BonnieRule } from '../../../services/bonnieService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { toast } from 'react-hot-toast';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 
 export default function BonnieWidget() {
   const { currentTenant } = useTenant();
@@ -245,6 +246,9 @@ export default function BonnieWidget() {
                 <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-teal-400">
                   <Sparkles className="h-3.5 w-3.5" />
                   Bonnie says:
+                </div>
+                <div className="mb-2">
+                  <AIOutputDisclaimer type="generic" />
                 </div>
                 <p className="leading-relaxed text-[13px]">{chatResponse}</p>
               </div>

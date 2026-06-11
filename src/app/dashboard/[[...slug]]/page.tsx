@@ -12,6 +12,7 @@ import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
+import AppLegalFooter from '@/components/legal/AppLegalFooter';
 
 export default function DashboardPage() {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -64,6 +65,7 @@ export default function DashboardPage() {
                 onExtendSession={extendSession}
                 onLogout={handleLogout}
             />
+            <AppLegalFooter />
         </SubscriptionGuard>
     );
 }

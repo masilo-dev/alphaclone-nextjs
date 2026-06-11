@@ -60,32 +60,23 @@ export async function GET(request: Request) {
                         } else {
                             const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
                             const workspaceName = `${name}'s Workspace`;
-                            const trialEndDate = new Date();
-                            trialEndDate.setDate(trialEndDate.getDate() + 14);
+                            const randomSuffix = Array.from({ length: 5 }, () =>
+                                String.fromCharCode(97 + Math.floor(Math.random() * 26))
+                            ).join('');
+                            const slug = name.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
-                            const { data: newTenant, error: createError } = await admin
-                                .from('tenants')
-                                .insert({
-                                    name: workspaceName,
-                                    slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.random().toString(36).substring(2, 7),
-                                    subscription_status: 'trial',
-                                    subscription_plan: 'starter',
-                                    trial_ends_at: trialEndDate.toISOString(),
-                                    admin_user_id: user.id
-                                })
-                                .select()
-                                .single();
+                            const { data: newTenantId, error: createError } = await admin.rpc('create_tenant', {
+                                p_name: workspaceName,
+                                p_slug: slug,
+                                p_admin_user_id: user.id,
+                                p_plan: 'starter',
+                            });
 
-                            if (newTenant && !createError) {
-                                await admin.from('tenant_users').insert({
-                                    tenant_id: newTenant.id,
-                                    user_id: user.id,
-                                    role: 'owner'
-                                });
+                            if (newTenantId && !createError) {
                                 await admin.auth.admin.updateUserById(user.id, {
-                                    user_metadata: { ...user.user_metadata, tenant_id: newTenant.id }
+                                    user_metadata: { ...user.user_metadata, tenant_id: newTenantId }
                                 });
-                                tenantId = newTenant.id;
+                                tenantId = newTenantId;
                             }
                         }
                     } catch (tenantErr) {
