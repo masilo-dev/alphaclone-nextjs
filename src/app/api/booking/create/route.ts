@@ -121,7 +121,7 @@ export async function POST(req: Request) {
         const jitsiRoomName = `alphaclone-${roomName}`;
         let dailyRoomUrl = '';
         let roomId = '';
-        let meetingProvider: 'external' = 'external';
+        const meetingProvider = 'external';
         let providerMetadata: Record<string, unknown> = {
             room_name: jitsiRoomName,
         };

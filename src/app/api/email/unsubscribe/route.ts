@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClientOrThrow } from '@/lib/apiAuth';
+import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { verifyEmailUnsubscribeSignature } from '@/lib/email/unsubscribe';
 import { SITE_URL } from '@/lib/siteUrl';
 
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid unsubscribe link' }, { status: 400 });
   }
 
-  const supabase = createSupabaseAdminClientOrThrow();
+  const supabase = createAdminSupabaseClientOrThrow();
   await supabase.from('email_suppressions').upsert({
     tenant_id: tenantId,
     email,

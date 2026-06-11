@@ -45,17 +45,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    // Azure AD v2.0 confidential-client flow: send client_id + client_secret
+    // in the POST body. Do NOT use Basic Auth — that causes an auth error.
     const tokenResponse = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${basicAuth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
         client_id: clientId,
+        client_secret: clientSecret,
       }),
     });
 
