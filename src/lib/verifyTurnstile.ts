@@ -4,8 +4,7 @@
  */
 
 export function isTurnstileEnforced(): boolean {
-    // Cloudflare Turnstile is disabled system-wide as per user request.
-    return false;
+    return !!process.env.TURNSTILE_SECRET_KEY && process.env.TURNSTILE_SECRET_KEY !== 'placeholder';
 }
 
 export async function verifyTurnstileToken(token: string | undefined): Promise<boolean> {

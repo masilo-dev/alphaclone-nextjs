@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
@@ -13,7 +14,10 @@ import {
     Layout,
     MessageSquare,
     BarChart3,
-    Network
+    Network,
+    Inbox,
+    CheckSquare,
+    ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ResourceAllocationView from '../ResourceAllocationView';
@@ -25,6 +29,7 @@ interface TeamPageProps {
 }
 
 const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [showInviteModal, setShowInviteModal] = useState(false);
@@ -226,9 +231,90 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full flex flex-col"
+                            className="h-full"
                         >
-                            <TeamChat user={user} teamMembers={teamMembers} />
+                            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 h-full min-h-0">
+                                <div className="min-h-0">
+                                    <TeamChat user={user} teamMembers={teamMembers} tenantId={currentTenant?.id} />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
+                                                <Inbox className="w-4 h-4 text-teal-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-white">Connected work</h3>
+                                                <p className="text-xs text-slate-500">Keep chat, email, and tasks linked.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-2 mb-3">
+                                            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-2.5">
+                                                <div className="text-[11px] uppercase tracking-widest text-slate-500">Members</div>
+                                                <div className="text-lg font-black text-white">{teamMembers.length}</div>
+                                            </div>
+                                            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-2.5">
+                                                <div className="text-[11px] uppercase tracking-widest text-slate-500">Chat</div>
+                                                <div className="text-lg font-black text-white">Live</div>
+                                            </div>
+                                            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-2.5">
+                                                <div className="text-[11px] uppercase tracking-widest text-slate-500">Email</div>
+                                                <div className="text-lg font-black text-white">On</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={() => router.push('/dashboard/business/messages')}
+                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 hover:bg-slate-900 px-3 py-2.5 text-left transition-colors"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <Mail className="w-4 h-4 text-sky-400 shrink-0" />
+                                                    <span className="text-sm font-medium text-white truncate">Open inbox</span>
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
+                                            </button>
+                                            <button
+                                                onClick={() => router.push('/dashboard/zoho/mail')}
+                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 hover:bg-slate-900 px-3 py-2.5 text-left transition-colors"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <Inbox className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                    <span className="text-sm font-medium text-white truncate">Open Zoho Mail</span>
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
+                                            </button>
+                                            <button
+                                                onClick={() => router.push('/dashboard/tasks')}
+                                                className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/50 hover:bg-slate-900 px-3 py-2.5 text-left transition-colors"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <CheckSquare className="w-4 h-4 text-orange-400 shrink-0" />
+                                                    <span className="text-sm font-medium text-white truncate">Open tasks</span>
+                                                </div>
+                                                <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
+                                            </button>
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {teamMembers.slice(0, 4).map((member) => (
+                                                <div key={member.user_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-slate-950/60 border border-slate-800">
+                                                    <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-black text-white">
+                                                        {member.user?.name?.charAt(0) || '?'}
+                                                    </div>
+                                                    <span className="text-xs text-slate-300 max-w-[120px] truncate">{member.user?.name || member.user?.email}</span>
+                                                </div>
+                                            ))}
+                                            {teamMembers.length > 4 && (
+                                                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-slate-950/60 border border-slate-800">
+                                                    <span className="text-xs text-slate-400">+{teamMembers.length - 4} more</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -368,4 +454,3 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
 };
 
 export default TeamPage;
-

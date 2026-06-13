@@ -18,6 +18,7 @@ import {
   parseLinkedInUgcPostUrn,
   updateSocialPostLinkedInUrnWithRetry,
 } from '../../lib/social/linkedinPublishHelpers';
+import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
@@ -767,12 +768,26 @@ class AlphaCloneMCPServer {
 
     // ── Tool Execution ──────────────────────────────────────────────────────
     this.server.setRequestHandler(CallToolRequestSchema, async (request: unknown) => {
-      const { name, arguments: args } = (request as {
-        params: { name: string; arguments?: Record<string, unknown> };
+      const params = (request as {
+        params?: { name?: unknown; arguments?: Record<string, unknown> };
       }).params;
+      const name = typeof params?.name === 'string' ? params.name.trim() : '';
+      if (!name) {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              error: true,
+              message: 'Tool name is required.',
+            }),
+          }],
+          isError: true,
+        };
+      }
+      const args = params?.arguments || {};
       const traceId = crypto.randomUUID();
       const supabaseAdmin = createSupabaseAdminClient();
-      return this.executeToolInternal(name, args || {}, traceId, supabaseAdmin);
+      return this.executeToolInternal(name, args, traceId, supabaseAdmin);
     });
   }
 
@@ -3393,8 +3408,7 @@ class AlphaCloneMCPServer {
           } = a;
           const cleanCaption = cleanProfessionalContent(caption || '');
           if (!cleanCaption) throw new Error('caption is required');
-          const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
-          if (publish_now && !publishEnabled) {
+          if (publish_now && !isSocialPublishEnabled()) {
             throw new Error('Publishing disabled');
           }
 
@@ -7740,13 +7754,29 @@ Return ONLY a JSON array of 60 objects:
             throw new Error('No authenticated user found in MCP session. Ensure you are connected with a valid API key or OAuth token.');
           }
 
-          const { data: profile, error: profileError } = await supabaseAdmin
-            .from('user_profiles')
-            .select('id, email, display_name, full_name, avatar_url, created_at')
-            .eq('id', sessionUserId)
-            .maybeSingle();
+          const profileFields = 'id, email, name, display_name, full_name, avatar_url, created_at';
+          const profileQueries = [
+            supabaseAdmin.from('profiles').select(profileFields).eq('id', sessionUserId).maybeSingle(),
+            supabaseAdmin.from('user_profiles').select(profileFields).eq('id', sessionUserId).maybeSingle(),
+          ];
 
-          if (profileError) throw supabaseErrorToMcpClientError('get_current_user', profileError.message);
+          let profile: any = null;
+          let profileError: any = null;
+          for (const query of profileQueries) {
+            const res = await query;
+            if (res.data) {
+              profile = res.data;
+              profileError = null;
+              break;
+            }
+            if (!profileError && res.error) {
+              profileError = res.error;
+            }
+          }
+
+          if (profileError && !profile) {
+            console.warn('[get_current_user] profile lookup failed, returning session context only:', profileError.message);
+          }
 
           result = {
             content: [{
@@ -7755,7 +7785,7 @@ Return ONLY a JSON array of 60 objects:
                 user_id: sessionUserId,
                 tenant_id: sessionTenantId,
                 email: profile?.email || null,
-                display_name: profile?.display_name || profile?.full_name || null,
+                display_name: profile?.display_name || profile?.full_name || profile?.name || null,
                 avatar_url: profile?.avatar_url || null,
                 note: 'Use user_id in tools that require an internal AlphaClone user reference (e.g. get_momentum_score).',
               }, null, 2),

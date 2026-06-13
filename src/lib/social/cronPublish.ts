@@ -6,6 +6,7 @@ import {
   updateSocialPostLinkedInUrnWithRetry,
 } from '@/lib/social/linkedinPublishHelpers';
 import { getZernioClient, getTenantZernioSettings } from '@/lib/zernio/client';
+import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 
 
 type PublishResult = {
@@ -628,8 +629,7 @@ export async function publishSocialPost(postId: string) {
 
 
 export async function publishDueSocialPosts(limit = 25) {
-  const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
-  if (!publishEnabled) return 0;
+  if (!isSocialPublishEnabled()) return 0;
 
   const adminClient = createSupabaseAdminClient();
   const nowIso = new Date().toISOString();
@@ -653,8 +653,7 @@ export async function publishDueSocialPosts(limit = 25) {
 }
 
 export async function publishScheduledPosts(limit = 25) {
-  const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
-  if (!publishEnabled) return 0;
+  if (!isSocialPublishEnabled()) return 0;
 
   const adminClient = createSupabaseAdminClient();
   const nowIso = new Date().toISOString();

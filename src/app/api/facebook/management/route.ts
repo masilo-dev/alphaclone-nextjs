@@ -4,10 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
-
-function isSocialPublishEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
-}
+import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();

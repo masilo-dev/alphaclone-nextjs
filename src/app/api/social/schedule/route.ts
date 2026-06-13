@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import {
   enqueueSocialPostSync,
   findRecentDuplicateLinkedInCaption,
@@ -24,10 +25,6 @@ type SchedulePayload = {
   linkedin_organization_id?: string | null;
   publish_now?: boolean;
 };
-
-function isSocialPublishEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
-}
 
 function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name: string | null }> {
   if (!raw || typeof raw !== 'object') return [];

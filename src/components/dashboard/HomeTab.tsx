@@ -207,6 +207,36 @@ const HomeTab: React.FC<HomeTabProps> = ({
   ];
   const primaryModules = MODULES.slice(0, 12);
   const secondaryModules = MODULES.slice(12);
+  const starterSteps = [
+    {
+      step: '1',
+      title: 'Finish onboarding',
+      description: 'Set up your workspace, services, and defaults.',
+      href: '/dashboard/onboarding',
+      icon: LayoutDashboard,
+    },
+    {
+      step: '2',
+      title: 'Open the inbox',
+      description: 'Check messages and keep replies tied to clients.',
+      href: '/dashboard/messages',
+      icon: Mail,
+    },
+    {
+      step: '3',
+      title: 'Review tasks',
+      description: 'Turn replies into follow-up work and due dates.',
+      href: '/dashboard/tasks',
+      icon: CheckSquare,
+    },
+    {
+      step: '4',
+      title: 'Add contacts',
+      description: 'Bring in clients or leads before you start outreach.',
+      href: '/dashboard/crm',
+      icon: Users,
+    },
+  ];
 
   return (
     <div className="space-y-4 pb-24">
@@ -240,6 +270,39 @@ const HomeTab: React.FC<HomeTabProps> = ({
             </div>
           );
         })}
+      </div>
+
+      <div className="bg-slate-900/55 border border-white/5 rounded-2xl p-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-teal-400">Start here</div>
+            <p className="text-sm text-slate-400 mt-1">Follow these steps if you just landed and want the next click to be obvious.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {starterSteps.map((step) => {
+            const StepIcon = step.icon;
+            return (
+              <button
+                key={step.step}
+                onClick={() => router.push(step.href)}
+                className="group text-left rounded-2xl border border-slate-800 bg-slate-950/55 hover:bg-slate-900 transition-all p-4 flex items-start gap-4"
+              >
+                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+                  <span className="text-[11px] font-black text-teal-400">{step.step}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <StepIcon className="w-4 h-4 text-slate-400" />
+                    <h3 className="text-sm font-semibold text-white truncate">{step.title}</h3>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-1 leading-relaxed">{step.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)] gap-4 items-start">

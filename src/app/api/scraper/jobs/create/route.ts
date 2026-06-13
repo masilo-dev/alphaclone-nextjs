@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
-    const { tenantId, niche, location, sortBy, usePlaywright, radiusKm } = parsed.data;
+    const { tenantId, niche, location, sortBy, usePlaywright, radiusKm, sources, useApollo } = parsed.data;
 
     const { data: membership } = await supabase
       .from('tenant_users')
@@ -91,6 +91,8 @@ export async function POST(req: NextRequest) {
       radius_km: Number.isFinite(radiusKm) ? Math.min(Math.max(radiusKm, 1), 100) : 25,
       sort_by: sortBy,
       use_playwright: usePlaywright,
+      sources,
+      use_apollo: useApollo,
       status: 'pending',
       progress: 5,
       current_step: 'init',
