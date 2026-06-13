@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
     let lastError: unknown = null;
@@ -27,8 +28,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
-    if (!publishEnabled) {
+    if (!isSocialPublishEnabled()) {
         return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
     }
 

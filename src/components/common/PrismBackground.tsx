@@ -11,13 +11,6 @@ import { usePathname } from 'next/navigation';
  */
 const PrismBackground = React.memo(() => {
     const pathname = usePathname();
-    const [mounted, setMounted] = React.useState(false);
-
-    React.useEffect(() => {
-        // Defer animation start to avoid blocking first paint
-        const timer = setTimeout(() => setMounted(true), 100);
-        return () => clearTimeout(timer);
-    }, []);
 
     // Exclude background from app workflows where readability is critical.
     if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/contract/')) {
@@ -32,27 +25,16 @@ const PrismBackground = React.memo(() => {
         >
             {/* Base image background shared across marketing pages */}
             <div
-                className="absolute inset-0 bg-cover bg-center opacity-58"
+                className="absolute inset-0 bg-cover bg-center opacity-42"
                 style={{ backgroundImage: "url('/marketing-bg-v2.jpg')" }}
             />
-            <div className="absolute inset-0 bg-slate-950/38" />
+            <div className="absolute inset-0 bg-slate-950/48" />
 
-            {/* Animated gradient orbs — deferred for performance */}
-            {mounted && (
-                <>
-                    <div
-                        className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-400/12 blur-[40px] md:blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu"
-                        style={{ animationDuration: '20s' }}
-                    />
-                    <div
-                        className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-500/12 blur-[40px] md:blur-[80px] animate-blob mix-blend-screen will-change-transform transform-gpu"
-                        style={{ animationDelay: '6s', animationDuration: '25s' }}
-                    />
-                </>
-            )}
+            {/* Very light atmospheric glow without motion */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.10),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_28%)]" />
 
             {/* Subtle grid pattern overlay */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-6" />
         </div>
     );
 });

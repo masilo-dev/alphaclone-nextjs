@@ -29,7 +29,14 @@ import {
     Mail,
     Video,
     Bot,
-    MessageSquare
+    MessageSquare,
+    Inbox,
+    ArrowRight,
+    CheckCircle2,
+    Clock3,
+    ChevronRight,
+    CalendarCheck2,
+    MessagesSquare
 } from 'lucide-react';
 import { MomentumHUD } from '../MomentumHUD';
 
@@ -172,8 +179,134 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         }
     ], [router]);
 
+    const starterSteps = useMemo(() => [
+        {
+            step: '1',
+            title: 'Set up your workspace',
+            description: 'Finish onboarding so your company, services, and team data are ready.',
+            href: '/dashboard/business/onboarding',
+            icon: CheckCircle2,
+        },
+        {
+            step: '2',
+            title: 'Open the inbox',
+            description: 'Review Zoho Mail or the unified inbox so replies stay connected to clients.',
+            href: '/dashboard/business/messages',
+            icon: Inbox,
+        },
+        {
+            step: '3',
+            title: 'Start team chat',
+            description: 'Use chat for internal coordination and hand off follow-ups without clutter.',
+            href: '/dashboard/business/team',
+            icon: MessageSquare,
+        },
+        {
+            step: '4',
+            title: 'Review tasks',
+            description: 'Turn conversations into clear next actions and see updates in one place.',
+            href: '/dashboard/tasks',
+            icon: ArrowRight,
+        }
+    ], []);
+
+    const workspaceLinks = useMemo(() => [
+        {
+            title: 'Open team chat',
+            href: '/dashboard/business/team',
+            icon: MessageSquare,
+            note: 'Keep internal updates in one place',
+        },
+        {
+            title: 'Open inbox',
+            href: '/dashboard/business/messages',
+            icon: Mail,
+            note: 'Reply to client mail with context',
+        },
+        {
+            title: 'Open Zoho Mail',
+            href: '/dashboard/zoho/mail',
+            icon: Inbox,
+            note: 'Review mail inside the platform',
+        },
+        {
+            title: 'Review tasks',
+            href: '/dashboard/tasks',
+            icon: CheckSquare,
+            note: 'Turn updates into clear follow-up work',
+        },
+    ], []);
+
+    const isNewWorkspace = useMemo(() => {
+        return [
+            stats?.totalLeads,
+            stats?.clientCount,
+            stats?.activeProjects,
+            stats?.totalTasks,
+            stats?.unreadMessages,
+            stats?.activeCampaigns,
+        ].every((value) => Number(value || 0) === 0);
+    }, [stats]);
+
+    const todayActions = useMemo(() => [
+        {
+            time: 'Now',
+            title: 'Finish setup',
+            detail: 'Open onboarding and confirm your workspace basics.',
+            href: '/dashboard/business/onboarding',
+            icon: CheckCircle2,
+        },
+        {
+            time: 'Next',
+            title: 'Check messages',
+            detail: `${Number(stats?.unreadMessages || 0)} unread messages and replies waiting.`,
+            href: '/dashboard/business/messages',
+            icon: MessagesSquare,
+        },
+        {
+            time: 'Then',
+            title: 'Clear tasks',
+            detail: `${Number(stats?.totalTasks || 0)} tasks are ready to review.`,
+            href: '/dashboard/tasks',
+            icon: CalendarCheck2,
+        },
+    ], [stats]);
+
     return (
         <div className="px-2 py-3 sm:p-6 max-w-7xl mx-auto space-y-3 sm:space-y-6">
+
+            {isNewWorkspace && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="relative overflow-hidden rounded-3xl border border-teal-500/20 bg-gradient-to-br from-teal-500/15 via-slate-900 to-slate-950 p-5 sm:p-6"
+                >
+                    <div className="absolute inset-y-0 right-0 w-1/3 bg-[radial-gradient(circle_at_center,rgba(45,212,191,0.18),transparent_65%)]" />
+                    <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="max-w-2xl">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Clock3 className="w-4 h-4 text-teal-400" />
+                                <span className="text-[11px] font-black uppercase tracking-[0.28em] text-teal-400">New tenant setup</span>
+                            </div>
+                            <h2 className="text-2xl sm:text-3xl font-black text-white">Continue setup and launch your workspace</h2>
+                            <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-xl">
+                                Start with onboarding, then connect inbox, chat, and tasks so the business OS feels ready instead of empty.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3 shrink-0">
+                            <button
+                                onClick={() => router.push('/dashboard/business/onboarding')}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-500 px-5 py-4 text-sm font-black text-white shadow-xl shadow-teal-500/25 hover:bg-teal-400 active:scale-95 transition-all"
+                            >
+                                Continue setup
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                            <div className="text-[11px] text-slate-400 text-center md:text-right">Takes you straight to the first setup steps.</div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
@@ -197,6 +330,156 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </button>
                 </div>
             </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+                className="bg-slate-900/55 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5"
+            >
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black uppercase tracking-[0.28em] text-teal-400">Start here</span>
+                            <span className="text-[11px] text-slate-500">Step-by-step setup</span>
+                        </div>
+                        <p className="text-sm text-slate-400 mt-1">If you just landed here, follow these steps in order. It keeps the workspace simple and the next click obvious.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {starterSteps.map((step) => {
+                        const StepIcon = step.icon;
+                        return (
+                            <button
+                                key={step.step}
+                                onClick={() => router.push(step.href)}
+                                className="group text-left rounded-2xl border border-slate-800 bg-slate-950/50 hover:bg-slate-900 transition-all p-4 flex items-start gap-4"
+                            >
+                                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+                                    <span className="text-[11px] font-black text-teal-400">{step.step}</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <StepIcon className="w-4 h-4 text-slate-400" />
+                                        <h3 className="text-sm font-semibold text-white truncate">{step.title}</h3>
+                                    </div>
+                                    <p className="text-sm text-slate-400 mt-1 leading-relaxed">{step.description}</p>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </motion.div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-slate-900/50 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5"
+            >
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.28em] text-sky-400">Today&apos;s first 3 actions</div>
+                        <p className="text-sm text-slate-400 mt-1">A short list to get momentum without clutter.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+                    <div className="space-y-3">
+                        {starterSteps.slice(0, 3).map((step) => {
+                            const StepIcon = step.icon;
+                            return (
+                                <button
+                                    key={step.step}
+                                    onClick={() => router.push(step.href)}
+                                    className="group w-full text-left rounded-2xl border border-slate-800 bg-slate-950/50 hover:bg-slate-900 transition-all p-4 flex items-start gap-4"
+                                >
+                                    <div className="w-10 h-10 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+                                        <span className="text-[11px] font-black text-sky-400">{step.step}</span>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <StepIcon className="w-4 h-4 text-slate-400" />
+                                            <h3 className="text-sm font-semibold text-white truncate">{step.title}</h3>
+                                        </div>
+                                        <p className="text-sm text-slate-400 mt-1 leading-relaxed">{step.description}</p>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-slate-500 mt-1 shrink-0 group-hover:text-sky-400 transition-colors" />
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="w-full lg:w-[320px] rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Clock3 className="w-4 h-4 text-teal-400" />
+                            <h3 className="text-sm font-semibold text-white">Activity timeline</h3>
+                        </div>
+
+                        <div className="space-y-4">
+                            {todayActions.map((item, index) => {
+                                const ItemIcon = item.icon;
+                                return (
+                                    <button
+                                        key={item.title}
+                                        onClick={() => router.push(item.href)}
+                                        className="w-full flex items-start gap-3 text-left group"
+                                    >
+                                        <div className="flex flex-col items-center shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
+                                                <ItemIcon className="w-4 h-4 text-sky-400" />
+                                            </div>
+                                            {index < todayActions.length - 1 && <div className="w-px h-8 bg-slate-800 mt-2" />}
+                                        </div>
+                                        <div className="min-w-0 flex-1 pb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">{item.time}</span>
+                                                <h4 className="text-sm font-semibold text-white truncate">{item.title}</h4>
+                                            </div>
+                                            <p className="text-sm text-slate-400 mt-1 leading-relaxed">{item.detail}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.11 }}
+                className="bg-slate-900/45 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5"
+            >
+                <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.28em] text-sky-400">Connected work</div>
+                        <p className="text-sm text-slate-400 mt-1">Business OS shortcuts that keep chat, inbox, and tasks tied together.</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                    {workspaceLinks.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.title}
+                                onClick={() => router.push(item.href)}
+                                className="group rounded-2xl border border-slate-800 bg-slate-950/55 hover:bg-slate-900 transition-all p-4 text-left flex items-start gap-3"
+                            >
+                                <div className="w-10 h-10 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+                                    <Icon className="w-4 h-4 text-sky-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-sm font-semibold text-white truncate">{item.title}</div>
+                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.note}</p>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </motion.div>
 
             {/* KPI Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -441,4 +724,3 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 };
 
 export default EngagingDashboard;
-

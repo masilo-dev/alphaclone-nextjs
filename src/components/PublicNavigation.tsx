@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/UIComponents';
 
@@ -13,6 +13,7 @@ interface PublicNavigationProps {
 
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
 const LOGIN_HREF = '/auth/login';
+const BOOK_DEMO_HREF = '/book-demo';
 
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -92,6 +93,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
         { label: 'Pricing', path: '/pricing' },
         { label: 'Contact', path: '/contact' },
     ];
+
+    const primaryMobileItems = navItems.filter((item) =>
+        ['Home', 'Services', 'Pricing', 'About', 'Contact'].includes(item.label)
+    );
+    const secondaryMobileItems = navItems.filter((item) => !primaryMobileItems.some((primary) => primary.path === item.path));
 
     const isActive = (path: string) => pathname === path;
     const showMobileBack = pathname !== '/';
@@ -201,7 +207,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
 
                     {/* Mobile Menu Button and Early CTAs */}
-                    <div className="lg:hidden relative z-[140] pointer-events-auto flex items-center gap-3 h-full">
+                    <div className="lg:hidden relative z-[140] pointer-events-auto flex items-center gap-2 h-full">
                         {showMobileBack && (
                             <button
                                 onClick={handleMobileBack}
@@ -211,11 +217,16 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                 <ArrowLeft className="w-4 h-4" />
                             </button>
                         )}
+                        <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
+                            <Button size="sm" className="h-9 px-3 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/20">
+                                Start Free
+                            </Button>
+                        </Link>
                         
                         {/* Burger Button with Morphing Icon */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className={`relative w-11 h-11 flex flex-col items-center justify-center rounded-xl border transition-all duration-300 ml-1 ${mobileMenuOpen
+                            className={`relative w-11 h-11 flex flex-col items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
                                     ? 'bg-slate-900 border-teal-500/50 text-teal-400 shadow-lg shadow-teal-500/10'
                                     : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400 hover:border-teal-500/30'
                                 }`}
@@ -251,45 +262,82 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                 className="flex-1 overflow-y-auto"
                                 onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside list
                             >
-                                <div className="space-y-1 pb-6">
-                                    {navItems.map((item) => (
-                                        <motion.div key={item.path} variants={itemVariants}>
-                                            <Link
-                                                href={item.path}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className={`block text-lg font-bold py-3.5 border-b border-slate-900/50 transition-colors ${isActive(item.path)
-                                                    ? 'text-teal-400'
-                                                    : 'text-slate-300 hover:text-white'
-                                                    }`}
-                                            >
-                                                {item.label}
-                                            </Link>
-                                        </motion.div>
-                                    ))}
+                                <div className="mb-5 rounded-2xl border border-teal-500/15 bg-teal-500/5 p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-300 mb-2">
+                                        New here?
+                                    </p>
+                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                        Start free if you want to explore on your own, or book a demo if you want a guided walkthrough.
+                                    </p>
+                                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
+                                            <Button className="w-full h-11 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 text-sm">
+                                                Start Free Trial
+                                            </Button>
+                                        </Link>
+                                        <Link href={BOOK_DEMO_HREF} onClick={() => setMobileMenuOpen(false)}>
+                                            <Button variant="outline" className="w-full h-11 border-teal-500/30 text-teal-300 hover:text-white hover:border-teal-400 rounded-xl text-sm font-semibold">
+                                                Book Demo
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pb-6">
+                                    <div>
+                                        <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500 font-semibold mb-2 px-1">
+                                            Explore
+                                        </div>
+                                        <div className="space-y-1">
+                                            {primaryMobileItems.map((item) => (
+                                                <motion.div key={item.path} variants={itemVariants}>
+                                                    <Link
+                                                        href={item.path}
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                        className={`block text-lg font-bold py-3.5 border-b border-slate-900/50 transition-colors ${isActive(item.path)
+                                                            ? 'text-teal-400'
+                                                            : 'text-slate-300 hover:text-white'
+                                                            }`}
+                                                    >
+                                                        {item.label}
+                                                    </Link>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500 font-semibold mb-2 px-1">
+                                            More
+                                        </div>
+                                        <div className="space-y-1">
+                                            {secondaryMobileItems.map((item) => (
+                                                <motion.div key={item.path} variants={itemVariants}>
+                                                    <Link
+                                                        href={item.path}
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                        className={`flex items-center justify-between text-base font-semibold py-3 px-4 rounded-xl border border-slate-900/50 transition-colors ${isActive(item.path)
+                                                            ? 'text-teal-400 bg-teal-500/5'
+                                                            : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                                                            }`}
+                                                    >
+                                                        <span>{item.label}</span>
+                                                        <ArrowRight className="w-4 h-4" />
+                                                    </Link>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-800/80">
+                                        <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
+                                            <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base h-auto">
+                                                Login
+                                            </Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <motion.div 
-                                variants={itemVariants}
-                                className="pt-4 pb-6 flex flex-col gap-3 mt-auto border-t border-slate-800/80"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
-                                    <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base h-auto">
-                                        Login
-                                    </Button>
-                                </Link>
-                                <Link href="/book-demo" onClick={() => setMobileMenuOpen(false)}>
-                                    <Button variant="outline" className="w-full py-3.5 text-center font-bold text-teal-400 border border-teal-500/40 rounded-xl hover:bg-teal-500/10 transition-colors text-base h-auto">
-                                        Book a Demo
-                                    </Button>
-                                </Link>
-                                <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
-                                    <Button className="w-full py-3.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 text-base h-auto">
-                                        Start Free Trial
-                                    </Button>
-                                </Link>
-                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -183,6 +183,8 @@ export const scraperSearchSchema = z.object({
     sortBy: z.string().optional().default('default'),
     radiusKm: z.number().min(1).max(100).optional().default(25),
     tenantId: tenantIdSchema,
+    sources: z.array(z.string()).optional(),
+    useApollo: z.boolean().optional(),
 });
 
 export const scraperAffordableSchema = z.object({
@@ -232,6 +234,8 @@ export const scraperJobCreateSchema = z.object({
     sortBy: z.string().optional().default('default'),
     usePlaywright: z.boolean().optional().default(false),
     radiusKm: z.number().min(1).max(100).optional().default(25),
+    sources: z.array(z.string()).optional(),
+    useApollo: z.boolean().optional(),
 });
 
 /**

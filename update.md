@@ -1393,3 +1393,28 @@
 
 ### Production Readiness
 - **Vercel Safe**: Complete TypeScript type compilation validated cleanly (`npx tsc --noEmit` returning exit code 0).
+
+
+## [2026-06-11] Meta WhatsApp Cloud API Migration & Webhook Subscriptions
+
+### Added/Modified
+- **Meta WhatsApp Cloud API Integration**: Replaced Zernio/Green API with native Meta WhatsApp Cloud API (v18.0) endpoints, enabling RLS data isolation for multi-tenant credential security.
+- **Webhook Subscriptions Flow**: Implemented automatic webhook subscriptions with the Meta Graph API on tenant connect.
+- **Send Document Endpoint**: Added a new `/api/integrations/whatsapp/send-document` endpoint to send quotes, invoices, and files.
+- **Chatbot & Frontend Updates**: Refactored `WhatsAppChatbotService`, `WhatsAppIntegration.tsx`, and `WhatsAppChatHub.tsx` to handle native Meta webhook payloads and state checks.
+
+### Production Readiness
+- **Vercel Safe**: Verified 100% type-safe compilation across integration routers and UI flows.
+
+
+## [2026-06-13] Dual-Table Cron Publishing, Unified AI Routing & Team Collaboration UI
+
+### Added/Modified
+- **Dual-Table Publishing Pipeline**: Added `publishScheduledPosts` to support dual-table scheduling (scheduled_posts and social_posts) and updated `/api/cron/social-publish` for automated dispatching.
+- **Unified AI Router**: Integrated `src/lib/ai/router.ts` and `src/lib/ai/deepseek.ts` to route cost-sensitive/high-volume tasks to DeepSeek and complex tasks to Claude.
+- **Team Message Receipts**: Created a database migration to track delivery and read receipts (`message_receipts`) under strict RLS policies.
+- **Onboarding & Team Collaboration UI**: Overhauled `EngagingDashboard.tsx`, `TeamPage.tsx`, and `TeamChat.tsx` to display workspace onboarding guides, linked tool integrations (Zoho Mail, inbox, tasks), and message-receipt indicator badging.
+
+### Production Readiness
+- **Vercel Safe**: Successfully executed `npm run typecheck` returning exit code 0.
+

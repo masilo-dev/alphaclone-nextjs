@@ -493,7 +493,11 @@ const LandingPage = () => {
 
                   {/* Mobile Menu Trigger */}
                   <div className="lg:hidden flex items-center gap-2">
-                    {/* Buttons removed from mobile header to avoid crowding, they are in the burger menu */}
+                    <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
+                       <Button className="h-9 px-3 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/20">
+                          Start Free
+                       </Button>
+                    </Link>
                      <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}

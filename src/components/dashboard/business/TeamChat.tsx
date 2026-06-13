@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Send, MessageCircle, CheckCircle } from 'lucide-react';
+import { Send, MessageCircle, CheckCircle, CheckCheck } from 'lucide-react';
 import { User } from '../../../types';
 import { format } from 'date-fns';
+import { supabase } from '../../../lib/supabase';
 import { taskService } from '../../../services/taskService';
 import { messageService } from '../../../services/messageService';
 import toast from 'react-hot-toast';
@@ -27,17 +28,27 @@ interface ChatMessage {
     userAvatar?: string;
     content: string;
     timestamp: Date;
+    readAt?: Date | null;
+    deliveredAt?: Date | null;
     type: 'text' | 'task_created' | 'goal_created';
     metadata?: any;
 }
 
+type DeliverySummary = {
+    recipientCount: number;
+    deliveredCount: number;
+    readCount: number;
+};
+
 interface TeamChatProps {
     user: User;
     teamMembers: TeamMember[];
+    tenantId?: string;
 }
 
-export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
+export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [deliverySummaries, setDeliverySummaries] = useState<Record<string, DeliverySummary>>({});
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -50,6 +61,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
         userName: m.senderName || 'Unknown',
         content: m.text,
         timestamp: m.timestamp instanceof Date ? m.timestamp : new Date(m.timestamp),
+        readAt: m.readAt || null,
+        deliveredAt: m.deliveredAt || null,
         type: m.role === 'system' ? 'task_created' : 'text',
     });
 
@@ -62,6 +75,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
             if (!active) return;
             setMessages(rows.map(mapMessage));
             setLoading(false);
+            await syncMyReceipts(rows.map((row) => row.id));
+            await loadReceiptSummaries(rows.map((row) => row.id));
         })();
 
         // isAdmin=true so the callback receives all tenant inserts; we filter to the team group.
@@ -72,6 +87,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                 if (prev.some(m => m.id === message.id)) return prev;
                 return [...prev, mapMessage(message)];
             });
+            void syncMyReceipts([message.id]);
+            void loadReceiptSummaries([message.id]);
         });
 
         return () => { active = false; unsubscribe(); };
@@ -80,6 +97,27 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        const unread = messages
+            .filter(msg => msg.userId !== user.id && msg.type === 'text' && !msg.readAt)
+            .slice(0, 10);
+
+        if (unread.length === 0) return;
+
+        let cancelled = false;
+        (async () => {
+            for (const msg of unread) {
+                if (cancelled) break;
+                await messageService.markAsRead(msg.id);
+                updateMessageDelivery(msg.id, { readAt: new Date() });
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [messages, user.id]);
 
     const persistMessage = async (
         text: string,
@@ -104,6 +142,124 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
         if (message) {
             setMessages(prev => prev.some(m => m.id === message.id) ? prev : [...prev, mapMessage(message)]);
         }
+    };
+
+    const updateMessageDelivery = (messageId: string, updates: Partial<ChatMessage>) => {
+        setMessages(prev => prev.map(msg => msg.id === messageId ? { ...msg, ...updates } : msg));
+    };
+
+    const loadReceiptSummaries = async (messageIds: string[]) => {
+        if (!tenantId || messageIds.length === 0) return;
+
+        const { data, error } = await supabase
+            .from('message_receipts')
+            .select('message_id, user_id, delivered_at, read_at')
+            .eq('tenant_id', tenantId)
+            .in('message_id', messageIds);
+
+        if (error || !data) return;
+
+        const grouped: Record<string, DeliverySummary> = {};
+        for (const receipt of data as any[]) {
+            const current = grouped[receipt.message_id] || { recipientCount: 0, deliveredCount: 0, readCount: 0 };
+            current.recipientCount += 1;
+            if (receipt.delivered_at) current.deliveredCount += 1;
+            if (receipt.read_at) current.readCount += 1;
+            grouped[receipt.message_id] = current;
+        }
+
+        setDeliverySummaries(prev => ({ ...prev, ...grouped }));
+    };
+
+    const syncMyReceipts = async (messageIds: string[]) => {
+        if (!tenantId || messageIds.length === 0) return;
+
+        const nowIso = new Date().toISOString();
+        await supabase
+            .from('message_receipts')
+            .update({ read_at: nowIso })
+            .eq('tenant_id', tenantId)
+            .eq('user_id', user.id)
+            .in('message_id', messageIds)
+            .is('read_at', null);
+
+        await loadReceiptSummaries(messageIds);
+    };
+
+    const sendTeamEmail = async (messageText: string, senderMessageId: string) => {
+        if (!tenantId) return;
+
+        const recipientMembers = teamMembers.filter((m) => m.user?.email && m.user_id !== user.id);
+        const recipients = recipientMembers.map((m) => m.user.email).filter((email): email is string => Boolean(email));
+
+        if (recipients.length === 0) {
+            await persistMessage('Saved to chat, but no teammate emails were found.', 'system');
+            return;
+        }
+
+        const subject = `Team update: ${messageText.slice(0, 60).replace(/\s+/g, ' ').trim()}${messageText.length > 60 ? '…' : ''}`;
+        const intro = `${user.name || user.email} posted an internal team update in AlphaClone.`;
+        const response = await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: recipients,
+                subject,
+                text: `${intro}\n\nUpdate:\n${messageText}\n\nOpen AlphaClone to reply in context.`,
+                html: `
+                    <div style="font-family: Inter, Arial, sans-serif; color: #e2e8f0; background: #020617; padding: 24px;">
+                        <div style="max-width: 720px; margin: 0 auto; background: linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.92)); border: 1px solid #1f2937; border-radius: 20px; overflow: hidden;">
+                            <div style="padding: 20px 24px; border-bottom: 1px solid #1f2937; background: rgba(15, 118, 110, 0.10);">
+                                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: #2dd4bf; margin-bottom: 8px;">Internal team memo</div>
+                                <div style="font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.25;">${subject}</div>
+                                <div style="margin-top: 8px; color: #94a3b8; font-size: 13px;">From ${user.name || user.email} inside AlphaClone</div>
+                            </div>
+                            <div style="padding: 24px;">
+                                <div style="background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 20px;">
+                                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 10px;">Message</div>
+                                    <div style="white-space: pre-wrap; color: #e2e8f0; font-size: 15px; line-height: 1.7;">${messageText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                                </div>
+                                <div style="margin-top: 16px; display: grid; gap: 10px;">
+                                    <div style="color: #cbd5e1; font-size: 13px;">Use the business OS to reply, convert this into a task, or check the related inbox thread.</div>
+                                    <div style="color: #94a3b8; font-size: 12px;">This email was sent to ${recipients.length} teammates.</div>
+                                </div>
+                            </div>
+                            <div style="padding: 16px 24px; border-top: 1px solid #1f2937; color: #64748b; font-size: 12px;">
+                                AlphaClone team communication
+                            </div>
+                        </div>
+                    </div>
+                `,
+                tenantId,
+                userId: user.id,
+                fromName: user.name || 'AlphaClone',
+                replyTo: user.email,
+                isPlatformNotification: false,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Email delivery failed');
+        }
+
+        const deliveredAt = new Date();
+        updateMessageDelivery(senderMessageId, { deliveredAt });
+        await supabase.from('messages').update({ delivered_at: deliveredAt.toISOString() }).eq('id', senderMessageId);
+        const receiptRows = recipientMembers.map((member) => ({
+            tenant_id: tenantId,
+            message_id: senderMessageId,
+            user_id: member.user_id,
+            delivery_channel: 'email',
+            delivered_at: deliveredAt.toISOString(),
+            read_at: null,
+        }));
+        if (receiptRows.length > 0) {
+            await supabase
+                .from('message_receipts')
+                .upsert(receiptRows, { onConflict: 'message_id,user_id,delivery_channel' });
+        }
+        await loadReceiptSummaries([senderMessageId]);
+        await persistMessage(`Emailed ${recipients.length} teammate${recipients.length === 1 ? '' : 's'}.`, 'system');
     };
 
     const handleSendMessage = async () => {
@@ -131,20 +287,74 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                             priority: 'medium',
                             dueDate: new Date(Date.now() + 86400000).toISOString(),
                         });
-                        await persistMessage(text, 'user');
+                        const { message: sentMessage } = await messageService.sendMessage(
+                            user.id,
+                            user.name || 'You',
+                            'user',
+                            text,
+                            undefined,
+                            [],
+                            'normal',
+                            undefined,
+                            TEAM_GROUP_ID
+                        );
+
+                        if (!sentMessage) {
+                            throw new Error('Message could not be saved');
+                        }
+
+                        setMessages(prev => prev.some(m => m.id === sentMessage.id) ? prev : [...prev, mapMessage(sentMessage)]);
                         await persistMessage(`Task "${taskTitle}" assigned to ${targetMember.user.name}`, 'system');
+                        await sendTeamEmail(text, sentMessage.id);
                         return;
                     }
                 }
             }
 
-            await persistMessage(text, 'user');
+            const { message: sentMessage } = await messageService.sendMessage(
+                user.id,
+                user.name || 'You',
+                'user',
+                text,
+                undefined,
+                [],
+                'normal',
+                undefined,
+                TEAM_GROUP_ID
+            );
+
+            if (!sentMessage) {
+                throw new Error('Message could not be saved');
+            }
+
+            setMessages(prev => prev.some(m => m.id === sentMessage.id) ? prev : [...prev, mapMessage(sentMessage)]);
+
+            await sendTeamEmail(text, sentMessage.id);
         } catch (e) {
             console.error(e);
             toast.error('Could not send message');
         } finally {
             setSending(false);
         }
+    };
+
+    const getDeliveryLabel = (msg: ChatMessage) => {
+        const summary = deliverySummaries[msg.id];
+        if (msg.userId === user.id && summary) {
+            if (summary.readCount > 0) {
+                return { label: `Seen by ${summary.readCount}/${summary.recipientCount}`, icon: CheckCheck, color: 'text-teal-400' };
+            }
+            if (summary.deliveredCount > 0) {
+                return { label: `Delivered to ${summary.deliveredCount}/${summary.recipientCount}`, icon: CheckCircle, color: 'text-sky-400' };
+            }
+        }
+        if (msg.readAt) {
+            return { label: 'Seen', icon: CheckCheck, color: 'text-teal-400' };
+        }
+        if (msg.deliveredAt) {
+            return { label: 'Delivered by email', icon: CheckCircle, color: 'text-sky-400' };
+        }
+        return { label: 'Sending...', icon: Send, color: 'text-slate-500' };
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -162,11 +372,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                         <div className="p-2 bg-indigo-500/10 rounded-lg">
                             <MessageCircle className="w-5 h-5 text-indigo-400" />
                         </div>
-                        <div>
-                            <h3 className="font-bold text-white">Team Stream</h3>
-                            <p className="text-xs text-slate-400">Real-time collaboration & tasking</p>
-                        </div>
+                    <div>
+                        <h3 className="font-bold text-white">Team Stream</h3>
+                        <p className="text-xs text-slate-400">Internal chat, task handoff, and email delivery</p>
                     </div>
+                </div>
                     <div className="flex -space-x-2">
                         {teamMembers.slice(0, 5).map(m => (
                             <div key={m.user_id} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-bold text-white" title={m.user.name}>
@@ -206,8 +416,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                             );
                         }
 
-                        return (
-                            <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                            return (
+                                <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
                                 <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs relative overflow-hidden">
                                     {msg.userAvatar ? (
                                         <Image src={msg.userAvatar} fill className="object-cover" alt="" sizes="32px" />
@@ -226,6 +436,18 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                                             : 'bg-slate-800 text-slate-200 rounded-tl-sm'
                                     }`}>
                                         {msg.content}
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 text-[10px] ${isMe ? 'justify-end' : 'justify-start'} text-slate-500`}>
+                                        {(() => {
+                                            const status = getDeliveryLabel(msg);
+                                            const StatusIcon = status.icon;
+                                            return (
+                                                <>
+                                                    <StatusIcon className={`w-3 h-3 ${status.color}`} />
+                                                    <span>{status.label}</span>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
@@ -256,6 +478,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers }) => {
                         <div className="flex items-center gap-1">
                             <span className="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">@name assign task</span>
                             <span>to create task</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Email</span>
+                            <span>delivers to teammates automatically</span>
                         </div>
                     </div>
                 </div>

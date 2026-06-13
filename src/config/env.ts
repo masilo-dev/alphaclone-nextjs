@@ -22,6 +22,7 @@ const envSchema = z.object({
     APOLLO_API_KEY: z.string().optional(),
     VITE_GEMINI_API_KEY: z.string().optional(),
     GOOGLE_API_KEY: z.string().optional(),
+    DEEPSEEK_API_KEY: z.string().optional(),
     /** Browser Maps SDK only; use NEXT_PUBLIC_GOOGLE_MAPS_API_KEY with referrer restrictions */
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
     MANUS_API_KEY: z.string().optional(),
@@ -167,6 +168,7 @@ function validateEnv() {
             process.env.GOOGLE_API_KEY,
         GOOGLE_API_KEY:
             process.env.GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
+        DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
         NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
         MANUS_API_KEY: process.env.MANUS_API_KEY,
 
