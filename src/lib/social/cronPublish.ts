@@ -651,3 +651,119 @@ export async function publishDueSocialPosts(limit = 25) {
 
   return duePosts.length;
 }
+
+export async function publishScheduledPosts(limit = 25) {
+  const publishEnabled = process.env.NODE_ENV !== 'production' || process.env.SOCIAL_PUBLISH_ENABLED === 'true';
+  if (!publishEnabled) return 0;
+
+  const adminClient = createSupabaseAdminClient();
+  const nowIso = new Date().toISOString();
+
+  // Query scheduled_posts table for due posts (status='pending' and scheduled_at <= now())
+  const { data: duePosts, error } = await adminClient
+    .from('scheduled_posts')
+    .select('*')
+    .eq('status', 'pending')
+    .not('scheduled_at', 'is', null)
+    .lte('scheduled_at', nowIso)
+    .order('scheduled_at', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error('[publishScheduledPosts] failed to query scheduled posts:', error);
+    throw error;
+  }
+
+  if (!duePosts || duePosts.length === 0) {
+    return 0;
+  }
+
+  console.log(`[publishScheduledPosts] Found ${duePosts.length} due scheduled posts`);
+
+  for (const post of duePosts) {
+    try {
+      // Get media asset if asset_id is present
+      let mediaUrls: string[] = [];
+      let mediaTypes: string[] = [];
+      if (post.asset_id) {
+        const { data: asset } = await adminClient
+          .from('media_assets')
+          .select('public_url, asset_type')
+          .eq('id', post.asset_id)
+          .single();
+        if (asset) {
+          mediaUrls = [asset.public_url];
+          mediaTypes = [asset.asset_type];
+        }
+      }
+
+      // Explicitly set page_id='106807848991283' for Facebook posts
+      const fbPageId = post.platform === 'facebook' ? '106807848991283' : null;
+
+      // Insert into social_posts to leverage the existing publishSocialPost function
+      const { data: socialPost, error: insertError } = await adminClient
+        .from('social_posts')
+        .insert({
+          tenant_id: post.tenant_id,
+          user_id: post.user_id,
+          caption: post.content || '',
+          platforms: [post.platform],
+          media_urls: mediaUrls,
+          media_types: mediaTypes,
+          status: 'scheduled',
+          scheduled_at: nowIso,
+          facebook_page_id: fbPageId,
+        })
+        .select()
+        .single();
+
+      if (insertError || !socialPost) {
+        console.error(`[publishScheduledPosts] Failed to insert social post for scheduled post ${post.id}:`, insertError);
+        await adminClient
+          .from('scheduled_posts')
+          .update({
+            status: 'failed',
+          })
+          .eq('id', post.id);
+        continue;
+      }
+
+      // Publish the social post using the existing publishing function
+      await publishSocialPost(socialPost.id);
+
+      // Check the final status of the social post
+      const { data: updatedSocialPost } = await adminClient
+        .from('social_posts')
+        .select('status, error_message')
+        .eq('id', socialPost.id)
+        .single();
+
+      if (updatedSocialPost?.status === 'published') {
+        await adminClient
+          .from('scheduled_posts')
+          .update({
+            status: 'sent',
+            published_at: nowIso,
+          })
+          .eq('id', post.id);
+      } else {
+        await adminClient
+          .from('scheduled_posts')
+          .update({
+            status: 'failed',
+          })
+          .eq('id', post.id);
+      }
+    } catch (err: any) {
+      console.error(`[publishScheduledPosts] Error publishing post ${post.id}:`, err);
+      await adminClient
+        .from('scheduled_posts')
+        .update({
+          status: 'failed',
+        })
+        .eq('id', post.id);
+    }
+  }
+
+  return duePosts.length;
+}
