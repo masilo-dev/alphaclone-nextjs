@@ -1,5 +1,32 @@
 # Update Log
 
+## Date: 2026-06-13 (SOCIAL AUTOMATION PIPELINE RESTORED — SCHEDULED POSTS PUBLISHER)
+
+### Fixed
+- **Root Cause**: Scheduled posts were being written to `scheduled_posts` table with `status='pending'` but never consumed — the pipeline was broken at the cron/trigger layer. `automation_runs` showed 0 runs in 24 hours.
+- **`publishScheduledPosts` function** (`src/lib/social/cronPublish.ts`):
+  - Added new exported `publishScheduledPosts(limit)` function that queries the `scheduled_posts` table for `status='pending'` posts whose `scheduled_at <= now()`.
+  - For each due post: fetches media assets via `asset_id`, inserts a matching row into `social_posts`, calls the existing `publishSocialPost()` pipeline (Facebook/LinkedIn/Instagram), then updates the `scheduled_posts` record to `status='sent'` or `status='failed'` based on the outcome.
+  - Explicit Facebook page ID override hardcoded for `106807848991283` for `platform='facebook'` posts.
+  - Added `published_at` column via `ALTER TABLE` if missing.
+- **`social-publish` cron route updated** (`src/app/api/cron/social-publish/route.ts`):
+  - Now invokes both `publishDueSocialPosts()` (processes `social_posts` table) AND `publishScheduledPosts()` (processes `scheduled_posts` table) in sequence.
+  - Returns combined counts: `publishedCount`, `scheduledPublishedCount`, `totalCount`.
+- **New dedicated route** (`src/app/api/cron/publish-scheduled-posts/route.ts`):
+  - Standalone endpoint at `/api/cron/publish-scheduled-posts` invoking only `publishScheduledPosts()`, for explicit targeting.
+
+### Added
+- **pg_cron jobs deployed to Supabase** (via `supabase db query --linked`):
+  - `social-publish`: fires `*/5 * * * *` (every 5 minutes) — active ✓
+  - `publish-scheduled-posts`: fires `*/5 * * * *` (every 5 minutes) — active ✓
+- **Vercel cron added** (`vercel.json`):
+  - Added `/api/cron/social-publish` on `*/5 * * * *` schedule as a dual-trigger backup to pg_cron.
+
+### Production Readiness
+- **Vercel Safe**: New functions are pure TypeScript using existing Supabase admin client and `cronPublish` patterns. No new dependencies. Both new route files follow the existing `denyIfCronUnauthorized` auth pattern.
+
+---
+
 ## Date: 2026-06-11 (MICROSOFT REFRESH FLOW, BOOKING MEETING PROVIDER & EMAIL UNSUBSCRIBE FIXES)
 
 ### Modified
