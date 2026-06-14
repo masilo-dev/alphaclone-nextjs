@@ -371,3 +371,161 @@ registerTool('microsoft', {
   handler: async (args, context) =>
     graphRequest(context.userId, `/teams/${args.team_id}/channels/${args.channel_id}/messages`),
 });
+
+registerTool('microsoft', {
+  name: 'microsoft_get_joined_teams',
+  description: 'List teams the connected user is a member of.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args, context) =>
+    graphRequest(context.userId, '/me/joinedTeams'),
+});
+
+registerTool('microsoft', {
+  name: 'microsoft_get_team_channels',
+  description: 'List channels in a Microsoft Team.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    team_id: z.string(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      team_id: { type: 'string' },
+    },
+    required: ['tenant_id', 'team_id'],
+  },
+  handler: async (args, context) =>
+    graphRequest(context.userId, `/teams/${args.team_id}/channels`),
+});
+
+registerTool('microsoft', {
+  name: 'microsoft_send_channel_message',
+  description: 'Send a message to a Microsoft Teams channel.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    team_id: z.string(),
+    channel_id: z.string(),
+    message: z.string(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      team_id: { type: 'string' },
+      channel_id: { type: 'string' },
+      message: { type: 'string' },
+    },
+    required: ['tenant_id', 'team_id', 'channel_id', 'message'],
+  },
+  handler: async (args, context) =>
+    graphRequest(context.userId, `/teams/${args.team_id}/channels/${args.channel_id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        body: {
+          content: args.message,
+          contentType: 'text',
+        },
+      }),
+    }),
+});
+
+registerTool('microsoft', {
+  name: 'microsoft_get_chats',
+  description: 'List 1-on-1 or group chats the user is part of.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args, context) =>
+    graphRequest(context.userId, '/me/chats'),
+});
+
+registerTool('microsoft', {
+  name: 'microsoft_create_chat',
+  description: 'Create a new Microsoft Teams chat (1-on-1 or group).',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    userIds: z.array(z.string()),
+    chatType: z.enum(['oneOnOne', 'group']).optional().default('oneOnOne'),
+    topic: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      userIds: { type: 'array', items: { type: 'string' } },
+      chatType: { type: 'string', enum: ['oneOnOne', 'group'] },
+      topic: { type: 'string' },
+    },
+    required: ['tenant_id', 'userIds'],
+  },
+  handler: async (args, context) => {
+    const me = await graphRequest(context.userId, '/me');
+    const myId = me.id;
+    const members = [
+      {
+        '@odata.type': '#microsoft.graph.aadUserConversationMember',
+        roles: ['owner'],
+        'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${myId}')`,
+      },
+      ...args.userIds.map((userId) => ({
+        '@odata.type': '#microsoft.graph.aadUserConversationMember',
+        roles: ['owner'],
+        'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${userId}')`,
+      })),
+    ];
+    return graphRequest(context.userId, '/chats', {
+      method: 'POST',
+      body: JSON.stringify({
+        chatType: args.chatType,
+        topic: args.topic,
+        members,
+      }),
+    });
+  },
+});
+
+registerTool('microsoft', {
+  name: 'microsoft_send_chat_message',
+  description: 'Send a message to a Microsoft Teams chat.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    chat_id: z.string(),
+    message: z.string(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      chat_id: { type: 'string' },
+      message: { type: 'string' },
+    },
+    required: ['tenant_id', 'chat_id', 'message'],
+  },
+  handler: async (args, context) =>
+    graphRequest(context.userId, `/chats/${args.chat_id}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        body: {
+          content: args.message,
+          contentType: 'text',
+        },
+      }),
+    }),
+});

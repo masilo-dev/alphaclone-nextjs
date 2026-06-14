@@ -14,7 +14,7 @@ import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 
 export default function MicrosoftInboxView() {
-  const { emails, loading, connected, error, refresh, sendEmail } = useMicrosoftEmails(30);
+  const { emails, loading, connected, error, refresh, sendEmail, folder, setFolder } = useMicrosoftEmails(30);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [compose, setCompose] = useState({ to: '', subject: '', body: '' });
@@ -84,11 +84,11 @@ export default function MicrosoftInboxView() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[360px,1fr,360px] gap-4 h-full">
-      <div className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden">
+      <div className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-white/5">
           <div>
-            <h3 className="text-white font-semibold">Outlook Inbox</h3>
-            <p className="text-xs text-slate-400">Microsoft mail in Alphaclone</p>
+            <h3 className="text-white font-semibold">Outlook Mail</h3>
+            <p className="text-xs text-slate-400 capitalize">{folder} Items</p>
           </div>
           <button
             type="button"
@@ -98,7 +98,29 @@ export default function MicrosoftInboxView() {
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
-        <div className="divide-y divide-white/5 max-h-[70vh] overflow-y-auto">
+        
+        {/* Premium Folder Tabs Selector */}
+        <div className="flex gap-1 p-2 bg-slate-950/30 border-b border-white/5 overflow-x-auto">
+          {(['inbox', 'sent', 'drafts', 'trash'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => {
+                setFolder(f);
+                setSelectedId(null);
+              }}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg capitalize transition-all whitespace-nowrap ${
+                folder === f
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div className="divide-y divide-white/5 flex-1 overflow-y-auto max-h-[70vh]">
           {emails.length === 0 ? (
             <div className="p-6 text-sm text-slate-400">No Outlook messages found yet.</div>
           ) : (

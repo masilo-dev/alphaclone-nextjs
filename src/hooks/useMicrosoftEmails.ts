@@ -18,6 +18,7 @@ export interface MicrosoftEmailMessage {
 
 export function useMicrosoftEmails(limit = 25) {
   const [emails, setEmails] = useState<MicrosoftEmailMessage[]>([]);
+  const [folder, setFolder] = useState<'inbox' | 'sent' | 'drafts' | 'trash'>('inbox');
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,14 +34,14 @@ export function useMicrosoftEmails(limit = 25) {
         return;
       }
 
-      const inbox = await microsoftGraphService.getInboxMessages(limit);
-      setEmails(inbox);
+      const messages = await microsoftGraphService.getFolderMessages(folder, limit);
+      setEmails(messages);
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : 'Failed to load Outlook inbox');
+      setError(refreshError instanceof Error ? refreshError.message : `Failed to load Outlook ${folder} messages`);
     } finally {
       setLoading(false);
     }
-  }, [limit]);
+  }, [limit, folder]);
 
   useEffect(() => {
     void refresh();
@@ -64,5 +65,7 @@ export function useMicrosoftEmails(limit = 25) {
     error,
     refresh,
     sendEmail,
+    folder,
+    setFolder,
   };
 }

@@ -217,11 +217,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                 <ArrowLeft className="w-4 h-4" />
                             </button>
                         )}
-                        <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
-                            <Button size="sm" className="h-9 px-3 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/20">
-                                Start Free
-                            </Button>
-                        </Link>
                         
                         {/* Burger Button with Morphing Icon */}
                         <button
@@ -267,14 +262,9 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                         New here?
                                     </p>
                                     <p className="text-sm text-slate-300 leading-relaxed">
-                                        Start free if you want to explore on your own, or book a demo if you want a guided walkthrough.
+                                        Book a demo if you want a guided walkthrough of our platforms and systems.
                                     </p>
-                                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
-                                            <Button className="w-full h-11 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20 text-sm">
-                                                Start Free Trial
-                                            </Button>
-                                        </Link>
+                                    <div className="mt-4">
                                         <Link href={BOOK_DEMO_HREF} onClick={() => setMobileMenuOpen(false)}>
                                             <Button variant="outline" className="w-full h-11 border-teal-500/30 text-teal-300 hover:text-white hover:border-teal-400 rounded-xl text-sm font-semibold">
                                                 Book Demo
