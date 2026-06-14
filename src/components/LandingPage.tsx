@@ -22,6 +22,64 @@ import {
    ChevronDown,
 } from 'lucide-react';
 
+/* ─────────────────────────── Integrations Marquee ─────────────────────────── */
+const INTEGRATIONS = [
+  { name: 'Microsoft Teams', color: '#6264A7', bg: '#1a1a3a', letter: 'T' },
+  { name: 'Stripe', color: '#635BFF', bg: '#1a183d', letter: 'S' },
+  { name: 'Gmail', color: '#EA4335', bg: '#2a1010', letter: 'G' },
+  { name: 'WhatsApp', color: '#25D366', bg: '#0a2d1a', letter: 'W' },
+  { name: 'Outlook', color: '#0078D4', bg: '#0a1e2d', letter: 'O' },
+  { name: 'Facebook', color: '#1877F2', bg: '#0a1a2d', letter: 'F' },
+  { name: 'LinkedIn', color: '#0A66C2', bg: '#0a1a2d', letter: 'L' },
+  { name: 'Supabase', color: '#3FCF8E', bg: '#0a2d1f', letter: 'SB' },
+  { name: 'Claude AI', color: '#F7A06A', bg: '#2d1a0a', letter: 'AI' },
+  { name: 'Gemini', color: '#4285F4', bg: '#0a1a2d', letter: 'G' },
+  { name: 'OpenAI', color: '#10A37F', bg: '#0a2d22', letter: 'O' },
+  { name: 'Google Calendar', color: '#4285F4', bg: '#0a1a2d', letter: 'GC' },
+];
+
+const IntegrationChip = ({ item }: { item: typeof INTEGRATIONS[0] }) => (
+  <div
+    className="flex-shrink-0 flex items-center gap-3 px-5 py-3 rounded-2xl border mx-3"
+    style={{
+      background: item.bg,
+      borderColor: `${item.color}30`,
+      boxShadow: `0 0 20px ${item.color}12`,
+    }}
+  >
+    <span
+      className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black"
+      style={{ background: `${item.color}22`, color: item.color }}
+    >
+      {item.letter}
+    </span>
+    <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{item.name}</span>
+    <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: item.color }} />
+  </div>
+);
+
+const InfiniteMarquee = () => {
+  // Duplicate list for seamless loop
+  const items = [...INTEGRATIONS, ...INTEGRATIONS, ...INTEGRATIONS];
+  return (
+    <div className="relative overflow-hidden w-full" aria-hidden="true">
+      {/* Left/right fade masks */}
+      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 z-10" style={{ background: 'linear-gradient(to right, #020D1A, transparent)' }} />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 z-10" style={{ background: 'linear-gradient(to left, #020D1A, transparent)' }} />
+      <div
+        className="flex w-max"
+        style={{
+          animation: 'marquee-scroll 38s linear infinite',
+        }}
+      >
+        {items.map((item, i) => (
+          <IntegrationChip key={`${item.name}-${i}`} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/UIComponents';
@@ -662,8 +720,8 @@ const LandingPage = () => {
                               </AnimatePresence>
                            </div>
 
-                           {/* Login - prominent in nav */}
-                           <div className="pt-4 mt-4 border-t border-slate-800">
+                           {/* Login + Start Free Trial - prominent in nav */}
+                           <div className="pt-4 mt-4 border-t border-slate-800 space-y-3">
                               <Link
                                  href={LOGIN_HREF}
                                  onClick={() => setMobileMenuOpen(false)}
@@ -671,6 +729,14 @@ const LandingPage = () => {
                               >
                                  Log In
                                  <ArrowRight className="w-5 h-5" />
+                              </Link>
+                              <Link
+                                 href={BUSINESS_SIGNUP_HREF}
+                                 onClick={() => setMobileMenuOpen(false)}
+                                 className="flex items-center justify-center gap-2 w-full px-4 py-4 text-lg font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 rounded-xl transition-colors shadow-lg shadow-teal-500/20"
+                              >
+                                 Start Free Trial
+                                 <Zap className="w-5 h-5" />
                               </Link>
                            </div>
                         </nav>
@@ -806,6 +872,16 @@ const LandingPage = () => {
                      </div>
                   </motion.div>
                </motion.div>
+            </section>
+
+            {/* ─── Integrations Marquee Strip ─── */}
+            <section className="py-10 border-y border-slate-800/60 bg-slate-950/60 overflow-hidden">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
+                  <p className="text-[11px] uppercase tracking-[0.28em] font-bold text-slate-500">
+                     Connected to the tools your business already uses
+                  </p>
+               </div>
+               <InfiniteMarquee />
             </section>
 
             {/* Run your business from Claude HUD Section */}
