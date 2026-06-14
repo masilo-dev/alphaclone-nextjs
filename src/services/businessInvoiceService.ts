@@ -710,8 +710,8 @@ export const businessInvoiceService = {
         doc.rect(0, 0, pageWidth, 45, 'F');
 
         // --- HEADER SECTION ---
-        const logoUrl = tenant.logo_url || tenant.settings?.branding?.logo;
-        const senderName = invoice.senderName || tenant.name || 'AlphaClone Partner';
+        const logoUrl = tenant?.logo_url || tenant?.settings?.branding?.logo;
+        const senderName = invoice.senderName || tenant?.name || 'AlphaClone Partner';
 
         // Logo
         if (logoUrl) {

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
+import { AppUrls } from '@/lib/urls';
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -153,7 +154,7 @@ registerTool('contracts', {
       contract_id: data.id,
       title: data.title,
       signing_token: data.signing_token,
-      signing_link: `/sign-contract?token=${data.signing_token}`,
+      signing_link: AppUrls.signContract(data.signing_token),
     };
   },
 });

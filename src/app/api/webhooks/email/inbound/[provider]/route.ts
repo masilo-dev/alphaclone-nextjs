@@ -33,6 +33,25 @@ function firstEmailFromMixed(value: unknown): string {
     return '';
 }
 
+function extractProjectThreadMarker(...values: Array<string | null | undefined>): string | null {
+    const pattern = /\bAC-PROJ:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i;
+    for (const value of values) {
+        const text = String(value || '');
+        const match = text.match(pattern);
+        if (match?.[1]) return match[1];
+    }
+    return null;
+}
+
+function displayNameFromEmail(email: string): string {
+    const trimmed = String(email || '').trim();
+    const angleMatch = trimmed.match(/^(.*)<([^>]+)>$/);
+    const cleaned = angleMatch?.[1]?.trim();
+    if (cleaned) return cleaned.replace(/^"|"$/g, '') || trimmed;
+    const [localPart] = trimmed.split('@');
+    return localPart ? localPart.replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : trimmed;
+}
+
 async function parseWebhookBody(req: NextRequest): Promise<{ raw: unknown; items: Record<string, unknown>[] }> {
     const contentType = req.headers.get('content-type') || '';
     if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
@@ -154,8 +173,35 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                 metadata: {
                     provider,
                     integrationId: integration.id,
+                    projectId: extractProjectThreadMarker(message.subject, message.text, message.html),
                 },
             });
+
+            const projectId = extractProjectThreadMarker(message.subject, message.text, message.html);
+            if (projectId) {
+                const { data: project } = await admin
+                    .from('projects')
+                    .select('id, tenant_id, name')
+                    .eq('id', projectId)
+                    .eq('tenant_id', integration.tenant_id)
+                    .maybeSingle();
+
+                if (project) {
+                    const senderName = displayNameFromEmail(message.from);
+                    const messageBody = message.text || message.html || '(empty reply)';
+                    const replyNote = messageBody.length > 4000 ? `${messageBody.slice(0, 4000)}...` : messageBody;
+
+                    await admin.from('project_comments').insert({
+                        tenant_id: integration.tenant_id,
+                        project_id: project.id,
+                        author_name: senderName || message.from,
+                        author_email: message.from,
+                        content: replyNote,
+                        is_client: true,
+                    });
+                }
+            }
+
             await admin.from('notifications').insert({
                 user_id: integration.user_id,
                 type: 'message',

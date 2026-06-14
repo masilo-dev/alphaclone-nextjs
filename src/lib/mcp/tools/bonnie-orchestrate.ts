@@ -98,6 +98,8 @@ registerTool('bonnie-orchestrate', {
         tool_name: 'orchestrate_task',
         success: subagentResults.every(r => r.success),
         duration_ms: 0,
+        tool_success: subagentResults.every(r => r.success),
+        tool_latency_ms: 0,
         expires_at: new Date(Date.now() + 60000).toISOString(),
       });
     } catch (_) { /* non-critical */ }

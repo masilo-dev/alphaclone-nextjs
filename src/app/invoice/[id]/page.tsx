@@ -178,19 +178,22 @@ export default function PublicInvoicePage() {
     const total = Number(invoice.total ?? 0) || Math.round(((subtotal - discount) + taxAmount) * 100) / 100;
     const isPaid = invoice.status === 'paid';
     const pendingBank = invoice.paymentPendingConfirmation;
+    const bankDetails = String(invoice.bankDetails || '').trim();
+    const mobilePaymentDetails = String(invoice.mobilePaymentDetails || '').trim();
+    const hasManualPaymentDetails = Boolean(bankDetails || mobilePaymentDetails);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-6 md:p-12 font-sans selection:bg-teal-500/30">
+        <div className="min-h-screen overflow-x-hidden bg-slate-950 text-white p-3 sm:p-6 md:p-12 font-sans selection:bg-teal-500/30">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none opacity-20">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/20 blur-[150px] rounded-full"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[150px] rounded-full"></div>
             </div>
 
-            <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-8 relative z-10">
+            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-6 sm:gap-8 relative z-10">
                 {/* Left: Invoice Details */}
-                <div className="md:col-span-3 space-y-6">
-                    <div className="flex items-center gap-3 sm:gap-4 mb-8">
+                <div className="md:col-span-3 space-y-6 order-1">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
                         {branding.logoUrl ? (
                             <img src={branding.logoUrl} alt="" className="h-12 sm:h-16 w-auto object-contain rounded-xl" />
                         ) : (
@@ -219,7 +222,7 @@ export default function PublicInvoicePage() {
                         />
                     </div>
 
-                    <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+                    <Card className="p-4 sm:p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
                         <div className="flex flex-wrap justify-between items-start gap-3 mb-8 sm:mb-12">
                             <div className="min-w-0">
                                 <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
@@ -227,7 +230,7 @@ export default function PublicInvoicePage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8 mb-8 sm:mb-12">
                             <div>
                                 <p className="text-slate-500 text-xs uppercase font-bold mb-2">Issue Date</p>
                                 <p className="text-lg font-medium">{new Date(invoice.issueDate).toLocaleDateString()}</p>
@@ -277,7 +280,7 @@ export default function PublicInvoicePage() {
                         </div>
                     </Card>
 
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         <Button variant="outline" className="flex-1 gap-2 border-slate-800 bg-slate-900/50" onClick={handleDownloadPDF}>
                             <Download className="w-4 h-4" /> Download PDF
                         </Button>
@@ -285,8 +288,8 @@ export default function PublicInvoicePage() {
                 </div>
 
                 {/* Right: Payment Sidebar */}
-                <div className="md:col-span-2 space-y-6">
-                    <div className="sticky top-12">
+                <div className="md:col-span-2 space-y-6 order-2">
+                    <div className="md:sticky md:top-12">
                         {isPaid ? (
                             <Card className="p-5 sm:p-8 border-teal-500/30 bg-teal-500/10 text-center space-y-6">
                                 <div className="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(20,184,166,0.5)]">
@@ -301,14 +304,14 @@ export default function PublicInvoicePage() {
                                 </div>
                             </Card>
                         ) : pendingBank ? (
-                            <Card className="p-8 border-amber-500/30 bg-amber-500/10 text-center space-y-4">
+                            <Card className="p-6 sm:p-8 border-amber-500/30 bg-amber-500/10 text-center space-y-4">
                                 <Building2 className="w-10 h-10 text-amber-400 mx-auto" />
                                 <h3 className="text-xl font-bold">Payment submitted</h3>
                                 <p className="text-slate-400 text-sm">Your bank transfer confirmation was sent. The team will verify and mark this invoice paid.</p>
                             </Card>
                         ) : (
                             <div className="space-y-6">
-                                <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-8">
+                                <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-7">
                                     <div className="text-center">
                                         <h3 className="text-xl font-bold mb-2">Checkout Securely</h3>
                                         <p className="text-slate-500 text-xs uppercase tracking-widest flex items-center justify-center gap-2">
@@ -342,6 +345,30 @@ export default function PublicInvoicePage() {
                                             ) : `Pay $${total.toLocaleString()} Now`}
                                         </button>
                                     </div>
+
+                                    {hasManualPaymentDetails && (
+                                        <Card className="p-5 border-slate-800 bg-slate-950/50 space-y-4">
+                                            <p className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                                                <Building2 className="w-4 h-4" /> Alternative payment details
+                                            </p>
+                                            {bankDetails && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs uppercase tracking-widest text-slate-500">Bank transfer</p>
+                                                    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 text-sm text-slate-200 whitespace-pre-wrap break-words">
+                                                        {bankDetails}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {mobilePaymentDetails && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs uppercase tracking-widest text-slate-500">Mobile payment</p>
+                                                    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 text-sm text-slate-200 whitespace-pre-wrap break-words">
+                                                        {mobilePaymentDetails}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Card>
+                                    )}
 
                                     <Card className="p-5 border-slate-800 bg-slate-950/50 space-y-3">
                                         <p className="text-sm font-bold text-slate-300 flex items-center gap-2">

@@ -46,11 +46,16 @@ async function graphRequest<T = any>(
     return (await response.blob()) as T;
   }
 
-  if (response.status === 204) {
+  if (response.status === 204 || response.status === 202) {
     return {} as T;
   }
 
-  return response.json() as Promise<T>;
+  const body = await response.text().catch(() => '');
+  if (!body.trim()) {
+    return {} as T;
+  }
+
+  return JSON.parse(body) as T;
 }
 
 function mapEmail(item: any) {
@@ -371,4 +376,3 @@ export const microsoftGraphService = {
     return { success: true };
   },
 };
-

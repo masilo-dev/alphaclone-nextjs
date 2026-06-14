@@ -8,69 +8,75 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
-    const brandColor = tenant.brand_color_primary || '#0f172a';
-    const secondaryColor = tenant.brand_color_secondary || '#14b8a6';
+    const brandColor = tenant?.brand_color_primary || '#0f172a';
+    const accentColor = tenant?.brand_color_secondary || '#14b8a6';
 
     // --- Header ---
-    // Logo or Name
-    if (tenant.logo_url) {
+    const logoUrl = tenant?.logo_url && typeof tenant.logo_url === 'string' ? tenant.logo_url.trim() : '';
+
+    if (logoUrl) {
         // Simple image add attempt - might need pre-fetching in real app due to async issues in synchronous jspdf flow
         // For now, we assume it works or falls back. In a robust app, we'd load the image to base64 first.
         try {
-            doc.addImage(tenant.logo_url, 'PNG', 20, 15, 30, 30, undefined, 'FAST');
+            doc.addImage(logoUrl, 'PNG', 20, 15, 30, 30, undefined, 'FAST');
         } catch (e) {
             console.warn("Could not load logo", e);
             doc.setFontSize(24);
             doc.setTextColor(brandColor);
-            doc.text(tenant.legal_name || tenant.name, 20, 25);
+            doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 25);
         }
     } else {
         doc.setFontSize(24);
         doc.setTextColor(brandColor);
-        doc.text(tenant.legal_name || tenant.name, 20, 25);
+        doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 25);
     }
 
-    // Header Right (Quote Info)
-    doc.setFontSize(24);
-    doc.setTextColor(33, 33, 33);
-    doc.text('QUOTE', pageWidth - 20, 20, { align: 'right' });
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`#${quote.quoteNumber}`, pageWidth - 20, 25, { align: 'right' });
-
-    // Dates
-    doc.text(`Date: ${new Date(quote.createdAt).toLocaleDateString()}`, pageWidth - 20, 35, { align: 'right' });
-    if (quote.validUntil) {
-        doc.text(`Valid Until: ${new Date(quote.validUntil).toLocaleDateString()}`, pageWidth - 20, 40, { align: 'right' });
-    }
-
-    // Tenant Address (Left, under logo/name)
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageWidth, 34, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('QUOTE', pageWidth - 20, 16, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`#${quote.quoteNumber}`, pageWidth - 20, 24, { align: 'right' });
     doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    const startY = tenant.logo_url ? 50 : 35;
-    const addressLines = (tenant.business_address || '').split('\n');
+    doc.text(`Prepared ${new Date(quote.createdAt).toLocaleDateString()}`, pageWidth - 20, 29, { align: 'right' });
+
+    const startY = logoUrl ? 50 : 40;
+    const addressLines = (tenant?.business_address || '').split('\n').filter(Boolean);
     let currentY = startY;
 
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
     addressLines.forEach(line => {
         doc.text(line, 20, currentY);
         currentY += 5;
     });
 
-    if (tenant.tax_id) {
-        doc.text(`Tax ID: ${tenant.tax_id}`, 20, currentY + 5);
-        currentY += 5;
+    if (tenant?.tax_id) {
+        doc.text(`Tax ID: ${tenant.tax_id}`, 20, currentY + 4);
+        currentY += 4;
     }
 
-    // --- Client Info ---
-    const clientY = currentY + 15;
-    doc.setFontSize(11);
-    doc.setTextColor(brandColor);
-    doc.text('Prepared For:', 20, clientY);
+    const chipY = currentY + 12;
+    const chip = (label: string, value: string, x: number, width: number) => {
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(x, chipY, width, 16, 3, 3);
+        doc.setFontSize(7);
+        doc.setTextColor(100, 116, 139);
+        doc.text(label.toUpperCase(), x + 3, chipY + 5);
+        doc.setFontSize(9);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.text(value, x + 3, chipY + 11.5);
+        doc.setFont('helvetica', 'normal');
+    };
 
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text(quote.name, 20, clientY + 6);
+    chip('Client', quote.name, 20, 55);
+    chip('Valid until', quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : 'Open', 78, 44);
+    chip('Currency', quote.currency || 'USD', 124, 30);
+    chip('Status', quote.status, 156, 34);
 
     // --- Line Items Table ---
     const tableColumn = ["Item", "Description", "Quantity", "Unit Price", "Total"];
@@ -85,9 +91,10 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
     autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: clientY + 15,
+        startY: chipY + 22,
         theme: 'grid',
-        headStyles: { fillColor: brandColor },
+        headStyles: { fillColor: brandColor, textColor: '#ffffff' },
+        alternateRowStyles: { fillColor: '#f8fafc' },
         styles: { fontSize: 9 },
     });
 
@@ -95,7 +102,7 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
     const finalY = (doc as any).lastAutoTable.finalY + 10;
 
     doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(71, 85, 105);
     doc.text(`Subtotal:`, pageWidth - 60, finalY);
     doc.text(new Intl.NumberFormat('en-US', { style: 'currency', currency: quote.currency }).format(quote.subtotal), pageWidth - 20, finalY, { align: 'right' });
 
@@ -114,7 +121,7 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
     // Total
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(brandColor);
+    doc.setTextColor(accentColor);
     doc.text(`Total:`, pageWidth - 60, finalY + 20);
     doc.text(new Intl.NumberFormat('en-US', { style: 'currency', currency: quote.currency }).format(quote.totalAmount), pageWidth - 20, finalY + 20, { align: 'right' });
 
@@ -124,7 +131,7 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
     if (quote.notes) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(15, 23, 42);
         doc.text('Notes:', 20, noteY);
         doc.setTextColor(60, 60, 60); // Slate-600
 
@@ -135,7 +142,7 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
 
     if (quote.termsAndConditions) {
         doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(15, 23, 42);
         doc.text('Terms & Conditions:', 20, noteY);
         doc.setTextColor(60, 60, 60);
 
@@ -199,12 +206,12 @@ export const generatePnLPDF = (
 ) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    const brandColor = tenant.brand_color_primary || '#0f172a';
+    const brandColor = tenant?.brand_color_primary || '#0f172a';
 
     // Header
     doc.setFontSize(22);
     doc.setTextColor(brandColor);
-    doc.text(tenant.legal_name || tenant.name, 20, 25);
+    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 25);
 
     doc.setFontSize(16);
     doc.setTextColor(33, 33, 33);
@@ -266,12 +273,12 @@ export const generateBalanceSheetPDF = (
 ) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    const brandColor = tenant.brand_color_primary || '#0f172a';
+    const brandColor = tenant?.brand_color_primary || '#0f172a';
 
     // Header
     doc.setFontSize(22);
     doc.setTextColor(brandColor);
-    doc.text(tenant.legal_name || tenant.name, 20, 25);
+    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 25);
 
     doc.setFontSize(16);
     doc.setTextColor(33, 33, 33);

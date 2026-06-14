@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X } from 'lucide-react';
+import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
@@ -9,7 +9,7 @@ import { quoteService } from '../../services/quoteService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 
-type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
 interface QuoteRow {
   id: string;
@@ -40,7 +40,7 @@ function mapQuoteRow(raw: Record<string, unknown>): QuoteRow {
     client_name: String(raw.name || raw.client_name || 'Unnamed Client'),
     client_email: extractClientEmail(raw),
     amount: Number(raw.total_amount ?? raw.amount ?? 0),
-    status: ['draft', 'sent', 'accepted', 'rejected', 'expired'].includes(status) ? status : 'draft',
+    status: ['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'].includes(status) ? status : 'draft',
     valid_until: raw.valid_until ? String(raw.valid_until) : undefined,
     created_at: String(raw.created_at || new Date().toISOString()),
     tenant_id: String(raw.tenant_id),
@@ -53,9 +53,10 @@ const STATUS_COLORS: Record<QuoteStatus, string> = {
   accepted: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
   rejected: 'bg-red-500/15 text-red-400 border-red-500/20',
   expired:  'bg-slate-500/15 text-slate-300 border-slate-500/20',
+  converted: 'bg-teal-500/15 text-teal-300 border-teal-500/20',
 };
 
-const FILTERS: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired'];
+const FILTERS: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'];
 
 const QuoteListRow: React.FC<{ quote: QuoteRow; onDelete: (id: string) => void; onTap: (q: QuoteRow) => void }> = ({ quote, onDelete, onTap }) => {
   const x = useMotionValue(0);
@@ -93,8 +94,9 @@ const QuoteDetail: React.FC<{
   onBack: () => void;
   onSend: (q: QuoteRow) => void;
   onConvert: (quote: QuoteRow) => void;
+  onEdit: (quote: QuoteRow) => void;
   onDelete: (id: string) => void;
-}> = ({ quote, onBack, onSend, onConvert, onDelete }) => {
+}> = ({ quote, onBack, onSend, onConvert, onEdit, onDelete }) => {
   const clientName = quote.client_name?.trim() || 'Unnamed Client';
   const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
 
@@ -122,6 +124,10 @@ const QuoteDetail: React.FC<{
         )}
       </div>
       <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 native-bottom-bar pb-safe">
+        <button onClick={() => onEdit(quote)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors text-slate-400">
+          <Edit3 className="w-4 h-4 text-violet-400" />
+          <span className="text-[11px] font-bold">Edit</span>
+        </button>
         <button onClick={() => onSend(quote)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors text-slate-400">
           <Send className="w-4 h-4 text-sky-400" />
           <span className="text-[11px] font-bold">Send Quote</span>
@@ -243,6 +249,285 @@ const CreateQuoteModal: React.FC<{
   );
 };
 
+type EditableQuoteItem = {
+  id?: string;
+  productName: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  discountPercent: string;
+  taxPercent: string;
+};
+
+const QuoteEditModal: React.FC<{
+  open: boolean;
+  quote: QuoteRow | null;
+  onClose: () => void;
+  onSaved: () => void;
+}> = ({ open, quote, onClose, onSaved }) => {
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<QuoteStatus>('draft');
+  const [name, setName] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [notes, setNotes] = useState('');
+  const [terms, setTerms] = useState('');
+  const [currency, setCurrency] = useState('USD');
+  const [items, setItems] = useState<EditableQuoteItem[]>([]);
+  const [originalItemIds, setOriginalItemIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open || !quote) return;
+
+    let cancelled = false;
+    setLoading(true);
+
+    (async () => {
+      const [quoteResult, quoteItemsResult] = await Promise.all([
+        quoteService.getQuoteById(quote.id),
+        quoteService.getQuoteItems(quote.id),
+      ]);
+
+      if (cancelled) return;
+
+      if (quoteResult.error || !quoteResult.quote) {
+        toast.error(quoteResult.error || 'Failed to load quote');
+        setLoading(false);
+        return;
+      }
+
+      const fullQuote = quoteResult.quote;
+      setStatus((fullQuote.status as QuoteStatus) || 'draft');
+      setName(fullQuote.name || '');
+      setValidUntil(fullQuote.validUntil ? String(fullQuote.validUntil).slice(0, 10) : '');
+      setNotes(fullQuote.notes || '');
+      setTerms(fullQuote.termsAndConditions || '');
+      setCurrency(fullQuote.currency || 'USD');
+
+      const loadedItems = (quoteItemsResult.items || []).map((item) => ({
+        id: item.id,
+        productName: item.productName || '',
+        description: item.description || '',
+        quantity: String(item.quantity ?? 1),
+        unitPrice: String(item.unitPrice ?? 0),
+        discountPercent: String(item.discountPercent ?? 0),
+        taxPercent: String(item.taxPercent ?? 0),
+      }));
+      setItems(loadedItems.length > 0 ? loadedItems : [{
+        productName: fullQuote.name || 'Service',
+        description: '',
+        quantity: '1',
+        unitPrice: String(fullQuote.totalAmount || 0),
+        discountPercent: '0',
+        taxPercent: '0',
+      }]);
+      setOriginalItemIds((quoteItemsResult.items || []).map((item) => item.id));
+      setLoading(false);
+    })().catch((err) => {
+      if (!cancelled) {
+        toast.error(err instanceof Error ? err.message : 'Failed to load quote');
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, quote?.id]);
+
+  if (!open || !quote) return null;
+
+  const total = items.reduce((sum, item) => {
+    const quantity = Number(item.quantity || 0);
+    const unitPrice = Number(item.unitPrice || 0);
+    const discountPercent = Number(item.discountPercent || 0);
+    const taxPercent = Number(item.taxPercent || 0);
+    const lineBase = quantity * unitPrice;
+    const lineNet = lineBase * (1 - discountPercent / 100);
+    return sum + (lineNet * (1 + taxPercent / 100));
+  }, 0);
+
+  const updateItem = (index: number, patch: Partial<EditableQuoteItem>) => {
+    setItems((prev) => prev.map((item, idx) => idx === index ? { ...item, ...patch } : item));
+  };
+
+  const addItem = () => {
+    setItems((prev) => [...prev, {
+      productName: '',
+      description: '',
+      quantity: '1',
+      unitPrice: '0',
+      discountPercent: '0',
+      taxPercent: '0',
+    }]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error('Quote name is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await quoteService.updateQuote(quote.id, {
+        name: name.trim(),
+        status,
+        validUntil: validUntil || undefined,
+        notes,
+        termsAndConditions: terms,
+        currency,
+      });
+      if (error) throw new Error(error);
+
+      const seenIds = new Set<string>();
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        if (!item.productName.trim()) continue;
+        const payload = {
+          productName: item.productName.trim(),
+          description: item.description.trim() || undefined,
+          quantity: Number(item.quantity || 0) || 1,
+          unitPrice: Number(item.unitPrice || 0) || 0,
+          discountPercent: Number(item.discountPercent || 0) || 0,
+          taxPercent: Number(item.taxPercent || 0) || 0,
+          itemOrder: i + 1,
+        };
+
+        if (item.id) {
+          seenIds.add(item.id);
+          const { error: updateError } = await quoteService.updateQuoteItem(item.id, payload);
+          if (updateError) throw new Error(updateError);
+        } else {
+          const { item: created, error: createError } = await quoteService.addQuoteItem(quote.id, payload);
+          if (createError) throw new Error(createError);
+          if (created?.id) seenIds.add(created.id);
+        }
+      }
+
+      for (const itemId of originalItemIds) {
+        if (!seenIds.has(itemId)) {
+          const { error: deleteError } = await quoteService.deleteQuoteItem(itemId);
+          if (deleteError) throw new Error(deleteError);
+        }
+      }
+
+      await quoteService.recalculateQuoteTotals(quote.id);
+      toast.success('Quote updated');
+      onSaved();
+      onClose();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update quote';
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 p-4 overflow-y-auto">
+      <div className="mx-auto my-4 max-w-5xl rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-white">Edit Quote</h2>
+            <p className="text-xs text-slate-400">{quote.number || quote.id.slice(0, 8)}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full border border-slate-800 p-2 text-slate-400 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Quote name</label>
+                <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white" />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Status</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value as QuoteStatus)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white">
+                  {(['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'] as QuoteStatus[]).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Currency</label>
+                <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white" />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Valid until</label>
+                <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Line items</h3>
+                <button type="button" onClick={addItem} className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs font-bold text-white">
+                  <Plus className="h-4 w-4" /> Add item
+                </button>
+              </div>
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={item.id || index} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Item {index + 1}</div>
+                      <button type="button" onClick={() => removeItem(index)} className="inline-flex items-center gap-1 rounded-lg border border-slate-800 px-2 py-1 text-xs font-bold text-slate-400 hover:text-red-400">
+                        <Minus className="h-3.5 w-3.5" /> Remove
+                      </button>
+                    </div>
+                    <input value={item.productName} onChange={(e) => updateItem(index, { productName: e.target.value })} placeholder="Product or service" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                    <textarea value={item.description} onChange={(e) => updateItem(index, { description: e.target.value })} placeholder="Description" rows={2} className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white resize-none" />
+                    <div className="grid gap-3 sm:grid-cols-4">
+                      <input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, { quantity: e.target.value })} placeholder="Qty" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                      <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(index, { unitPrice: e.target.value })} placeholder="Unit price" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                      <input type="number" min="0" step="0.01" value={item.discountPercent} onChange={(e) => updateItem(index, { discountPercent: e.target.value })} placeholder="Discount %" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                      <input type="number" min="0" step="0.01" value={item.taxPercent} onChange={(e) => updateItem(index, { taxPercent: e.target.value })} placeholder="Tax %" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Notes</label>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white resize-none" />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Terms & conditions</label>
+              <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white resize-none" />
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+              <div className="flex items-center justify-between text-sm text-slate-400">
+                <span>Estimated total</span>
+                <span className="font-mono text-white">{Number(total).toFixed(2)} {currency || 'USD'}</span>
+              </div>
+              <p className="text-xs text-slate-500">Totals are recalculated from the current line items when you save.</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || loading}
+              className="w-full rounded-2xl bg-teal-500 px-4 py-3 text-sm font-black uppercase tracking-widest text-black disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Quote'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface QuotesTabProps { user: User; }
 
 const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
@@ -252,6 +537,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   const [filter, setFilter] = useState<QuoteStatus | 'all'>('all');
   const [selected, setSelected] = useState<QuoteRow | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<QuoteRow | null>(null);
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -350,8 +636,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   if (selected) {
     return (
       <>
-        <QuoteDetail quote={selected} onBack={() => setSelected(null)} onSend={sendQuote} onConvert={convertToInvoice} onDelete={deleteQuote} />
+        <QuoteDetail quote={selected} onBack={() => setSelected(null)} onSend={sendQuote} onConvert={convertToInvoice} onEdit={(q) => setEditing(q)} onDelete={deleteQuote} />
         <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
+        <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
       </>
     );
   }
@@ -379,6 +666,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
         <FilePlus className="w-6 h-6 text-white" />
       </button>
       <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
+      <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
     </div>
   );
 };

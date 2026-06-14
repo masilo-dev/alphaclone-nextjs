@@ -81,8 +81,10 @@ async function graphRequest<T = any>(
     throw new Error(await response.text().catch(() => 'Microsoft Graph request failed.'));
   }
 
-  if (response.status === 204) return {} as T;
-  return response.json() as Promise<T>;
+  if (response.status === 204 || response.status === 202) return {} as T;
+  const body = await response.text().catch(() => '');
+  if (!body.trim()) return {} as T;
+  return JSON.parse(body) as T;
 }
 
 export const microsoftServerService = {

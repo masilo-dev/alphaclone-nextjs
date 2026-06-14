@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
+import { syncSuppressionCleanup } from '@/lib/email/suppression';
 
 type SupportedProvider = 'resend' | 'sendgrid' | 'brevo' | 'zoho' | 'gmail';
 
@@ -148,7 +149,7 @@ export async function POST(
     for (const event of parsedEvents) {
       let lookup = admin
         .from('lead_outreach_log')
-        .select('id, tenant_id, user_id')
+        .select('id, tenant_id, user_id, lead_email')
         .eq('provider', event.provider)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -162,6 +163,9 @@ export async function POST(
       }
 
       const mappedStatus = mapDeliveryStatus(event.eventType);
+      const eventTypeLower = event.eventType.toLowerCase();
+      const isBounceLike = eventTypeLower.includes('bounce') || eventTypeLower.includes('spam') || eventTypeLower.includes('reject') || eventTypeLower.includes('drop');
+      const isFailureLike = eventTypeLower.includes('defer') || eventTypeLower.includes('fail');
 
       await admin
         .from('email_webhook_events')
@@ -184,7 +188,15 @@ export async function POST(
       if (mappedStatus === 'delivered' || mappedStatus === 'sent') patch.status = 'sent';
       if (mappedStatus === 'opened') patch.opened_at = event.eventTimestamp || new Date().toISOString();
       if (mappedStatus === 'clicked') patch.clicked_at = event.eventTimestamp || new Date().toISOString();
-      if (mappedStatus === 'failed') {
+      if (isBounceLike) {
+        patch.status = 'bounced';
+        patch.provider_event_status = 'bounced';
+        patch.error_message = `Provider webhook reported bounce (${event.eventType}).`;
+      } else if (eventTypeLower.includes('unsubscribe')) {
+        patch.status = 'unsubscribed';
+        patch.provider_event_status = 'unsubscribed';
+        patch.error_message = `Recipient unsubscribed (${event.eventType}).`;
+      } else if (isFailureLike || mappedStatus === 'failed') {
         patch.status = 'failed';
         patch.error_message = `Provider webhook reported failure (${event.eventType}).`;
       }
@@ -194,6 +206,17 @@ export async function POST(
         .update(patch)
         .eq('tenant_id', logRow.tenant_id)
         .eq('id', logRow.id);
+
+      if (isBounceLike || eventTypeLower.includes('unsubscribe')) {
+        await syncSuppressionCleanup({
+          tenantId: logRow.tenant_id,
+          email: String(logRow.lead_email || '').trim(),
+          reason: eventTypeLower.includes('unsubscribe') ? 'unsubscribe' : 'bounce',
+          provider: event.provider,
+          eventId: event.providerMessageId || event.trackingId || undefined,
+          metadata: event.payload,
+        });
+      }
 
       processed += 1;
     }
@@ -210,4 +233,3 @@ export async function POST(
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
-

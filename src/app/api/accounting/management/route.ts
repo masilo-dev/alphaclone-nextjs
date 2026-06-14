@@ -79,6 +79,10 @@ async function createInvoice(tenantId: string, config: any, supabase: any) {
       dueDate,
       notes,
       terms,
+      bankDetails,
+      bank_details,
+      mobilePaymentDetails,
+      mobile_payment_details,
       currency = 'USD',
       template = 'standard'
     } = config;
@@ -119,6 +123,8 @@ async function createInvoice(tenantId: string, config: any, supabase: any) {
         notes: notes,
         terms: terms,
         template: template,
+        bank_details: bankDetails ?? bank_details ?? null,
+        mobile_payment_details: mobilePaymentDetails ?? mobile_payment_details ?? null,
         status: 'draft',
         created_at: new Date().toISOString()
       })
@@ -397,6 +403,13 @@ async function updateInvoice(tenantId: string, config: any, supabase: any) {
         total: subtotal + taxAmount - discountAmount,
         updated_at: new Date().toISOString()
       };
+    }
+
+    if (updates.bankDetails !== undefined || updates.bank_details !== undefined) {
+      updateData.bank_details = updates.bankDetails ?? updates.bank_details ?? null;
+    }
+    if (updates.mobilePaymentDetails !== undefined || updates.mobile_payment_details !== undefined) {
+      updateData.mobile_payment_details = updates.mobilePaymentDetails ?? updates.mobile_payment_details ?? null;
     }
 
     // Update invoice
@@ -1029,4 +1042,3 @@ async function createDefaultChartOfAccounts(tenantId: string, supabase: any) {
     return operationFailed('accounting/management', error);
   }
 }
-

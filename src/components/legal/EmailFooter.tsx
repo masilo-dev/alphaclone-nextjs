@@ -10,12 +10,11 @@ const wrapperStyle: CSSProperties = {
 
 export const emailFooterText = [
   'AlphaClone Systems LLC',
-  '1621 Central Ave, Cheyenne, WY 82001, USA',
   'alphaclonesystems.com',
   'Unsubscribe: {{{unsubscribe_url}}}',
   'Privacy Policy: https://alphaclonesystems.com/legal/privacy',
   'Terms: https://alphaclonesystems.com/legal/terms',
-  'This email was sent from AlphaClone Systems LLC. If you received it in error, please disregard and delete it.',
+  'If you received this email in error, please disregard and delete it.',
 ].join('\n');
 
 export default function EmailFooter({ marketing = false }: { marketing?: boolean }) {
@@ -23,7 +22,6 @@ export default function EmailFooter({ marketing = false }: { marketing?: boolean
     <div style={wrapperStyle}>
       <div style={{ borderTop: '1px solid #334155', margin: '16px 0', width: '100%' }} />
       <div>AlphaClone Systems LLC</div>
-      <div>1621 Central Ave, Cheyenne, WY 82001, USA</div>
       <div>
         <a href="https://alphaclonesystems.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>
           alphaclonesystems.com
@@ -42,7 +40,7 @@ export default function EmailFooter({ marketing = false }: { marketing?: boolean
           Terms
         </a>
       </div>
-      <div>This email was sent from AlphaClone Systems LLC. If you received it in error, please disregard and delete it.</div>
+      <div>If you received this email in error, please disregard and delete it.</div>
       {marketing && (
         <div>You are receiving this because you signed up at alphaclonesystems.com or opted in to our communications.</div>
       )}

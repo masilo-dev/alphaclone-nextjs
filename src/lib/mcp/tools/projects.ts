@@ -190,6 +190,21 @@ registerTool('projects', {
       .single();
 
     if (error) throw error;
+
+    if (data?.related_to_project) {
+      try {
+        await supabase.from('project_comments').insert({
+          tenant_id: args.tenant_id,
+          project_id: args.project_id,
+          author_name: 'AlphaClone System',
+          content: `Task created: ${data.title}${data.due_date ? `, due ${data.due_date}` : ''}.`,
+          is_client: false,
+        });
+      } catch (_) {
+        // Non-critical: the task itself was created successfully.
+      }
+    }
+
     return data;
   },
 });
