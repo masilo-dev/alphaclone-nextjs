@@ -2,12 +2,14 @@ import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { rateLimitService } from './rateLimitService';
 
+const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
+
 /**
  * AI Generation Service
  *
  * Handles AI-powered content generation:
- * - Logo generation (DALL-E 3)
- * - Image generation (DALL-E 3)
+ * - Logo generation (OpenAI GPT Image)
+ * - Image generation (OpenAI GPT Image)
  * - Content generation (Claude API)
  *
  * Rate Limited: 3 generations/day for clients, unlimited for admin
@@ -25,7 +27,7 @@ class AIGenerationService {
     private readonly OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
     /**
-     * Generate logo using DALL-E 3
+     * Generate logo using OpenAI GPT Image
      */
     async generateLogo(
         userId: string,
@@ -43,7 +45,7 @@ class AIGenerationService {
                     'Authorization': `Bearer ${this.OPENAI_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: 'dall-e-3',
+                    model: OPENAI_IMAGE_MODEL,
                     prompt: enhancedPrompt,
                     n: 1,
                     size: '1024x1024',
@@ -69,7 +71,7 @@ class AIGenerationService {
                 asset_type: 'logo',
                 prompt: prompt,
                 url: imageUrl,
-                metadata: { style, model: 'dall-e-3' },
+                metadata: { style, model: OPENAI_IMAGE_MODEL },
                 tenant_id: tenantService.getCurrentTenantId()
             });
 
@@ -90,7 +92,7 @@ class AIGenerationService {
     }
 
     /**
-     * Generate image using DALL-E 3 and store it permanently.
+     * Generate image using OpenAI GPT Image and store it permanently.
      */
     async generateImage(
         userId: string,
@@ -133,7 +135,7 @@ class AIGenerationService {
                         'Authorization': `Bearer ${this.OPENAI_API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: 'dall-e-3',
+                        model: OPENAI_IMAGE_MODEL,
                         prompt: prompt,
                         n: 1,
                         size: size,
@@ -186,7 +188,7 @@ class AIGenerationService {
                 asset_type: 'image',
                 prompt: prompt,
                 url: finalUrl,
-                metadata: { size, model: 'dall-e-3', openai_temp_url: tempUrl },
+                metadata: { size, model: OPENAI_IMAGE_MODEL, openai_temp_url: tempUrl },
                 tenant_id: tenantService.getCurrentTenantId(),
                 storage_path: fileName,
                 bucket_id: 'social-assets'
@@ -326,4 +328,3 @@ class AIGenerationService {
 }
 
 export const aiGenerationService = new AIGenerationService();
-

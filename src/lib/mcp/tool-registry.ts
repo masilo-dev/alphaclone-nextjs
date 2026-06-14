@@ -87,7 +87,9 @@ export async function executeTool(
         expires_at: expiresAt,
         tool_name: toolName,
         duration_ms: durationMs,
+        tool_latency_ms: durationMs,
         success,
+        tool_success: success,
         error_message: errorMessage || null,
       });
     } catch (logErr) {

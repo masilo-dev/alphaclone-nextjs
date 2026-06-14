@@ -115,12 +115,14 @@ export default function PublicQuotePage() {
 
     const isFinal = responded || quote.status === 'accepted' || quote.status === 'rejected';
     const branding = extractTenantBranding({ name: quote.tenantName, settings: quote.tenantSettings });
+    const pdfUrl = `/api/quotes/${encodeURIComponent(token)}/pdf`;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 py-8 px-4">
+        <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-200 py-6 sm:py-8 px-4">
             <Toaster position="top-center" />
-            <div className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-slate-800 flex items-center gap-3" style={{ borderTopColor: branding.primaryColor, borderTopWidth: 3 }}>
+            <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div className="p-6 sm:p-7 border-b border-slate-800 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4" style={{ borderTopColor: branding.primaryColor, borderTopWidth: 3 }}>
+                    <div className="flex items-center gap-3">
                     {branding.logoUrl ? (
                         <img src={branding.logoUrl} alt="" className="h-10 w-auto object-contain" />
                     ) : (
@@ -128,13 +130,50 @@ export default function PublicQuotePage() {
                             <FileText className="w-7 h-7 text-teal-400" />
                         </div>
                     )}
-                    <div>
-                        <h1 className="text-xl font-bold text-white">Quote {quote.quoteNumber}</h1>
-                        <p className="text-sm text-slate-400">{quote.name} · {branding.name}</p>
+                        <div>
+                            <h1 className="text-xl font-bold text-white">Quote {quote.quoteNumber}</h1>
+                            <p className="text-sm text-slate-400">{quote.name} · {branding.name}</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <a
+                            href={pdfUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-bold text-slate-200 hover:border-teal-500/50 hover:text-white"
+                        >
+                            View PDF
+                        </a>
+                        <a
+                            href={pdfUrl}
+                            download
+                            className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-4 py-2 text-sm font-black text-black hover:bg-teal-400"
+                        >
+                            Download PDF
+                        </a>
                     </div>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-6 sm:p-8 space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-500">Status</div>
+                            <div className="mt-1 text-lg font-bold text-white capitalize">{quote.status}</div>
+                        </div>
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-500">Total</div>
+                            <div className="mt-1 text-lg font-bold text-teal-400">
+                                {Number(quote.totalAmount).toFixed(2)} {quote.currency || 'USD'}
+                            </div>
+                        </div>
+                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-500">Valid until</div>
+                            <div className="mt-1 text-lg font-bold text-white">
+                                {quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : 'Open'}
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -194,7 +233,7 @@ export default function PublicQuotePage() {
                         )}
                     </div>
                 ) : (
-                    <div className="p-6 border-t border-slate-800 space-y-4">
+                    <div className="p-6 border-t border-slate-800 space-y-4 bg-slate-950/40">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Your name (required to accept)</label>
                             <input

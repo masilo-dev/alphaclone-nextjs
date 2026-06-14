@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
       tool_name: 'define_outcome',
       success: status === 'success',
       duration_ms: 0,
+      tool_success: status === 'success',
+      tool_latency_ms: 0,
       expires_at: new Date(Date.now() + 60000).toISOString(),
       error_message: status === 'failure' ? `Outcome failure. Notes: ${notes || 'none'}` : null,
     });

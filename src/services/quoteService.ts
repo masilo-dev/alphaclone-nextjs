@@ -394,9 +394,18 @@ export const quoteService = {
             if (updates.contactId !== undefined) updateData.contact_id = updates.contactId;
             if (updates.dealId !== undefined) updateData.deal_id = updates.dealId;
             if (updates.status !== undefined) updateData.status = updates.status;
+            if (updates.currency !== undefined) updateData.currency = updates.currency;
+            if (updates.validUntil !== undefined) updateData.valid_until = updates.validUntil;
+            if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
             if (updates.discountAmount !== undefined) updateData.discount_amount = updates.discountAmount;
             if (updates.discountPercent !== undefined) updateData.discount_percent = updates.discountPercent;
+            if (updates.taxAmount !== undefined) updateData.tax_amount = updates.taxAmount;
+            if (updates.taxPercent !== undefined) updateData.tax_percent = updates.taxPercent;
+            if (updates.totalAmount !== undefined) updateData.total_amount = updates.totalAmount;
             if (updates.notes !== undefined) updateData.notes = updates.notes;
+            if (updates.termsAndConditions !== undefined) updateData.terms_and_conditions = updates.termsAndConditions;
+            if (updates.signatureUrl !== undefined) updateData.signature_url = updates.signatureUrl;
+            if (updates.pdfUrl !== undefined) updateData.pdf_url = updates.pdfUrl;
             if (updates.rejectionReason !== undefined) updateData.rejection_reason = updates.rejectionReason;
             if (updates.acceptedBy !== undefined) updateData.accepted_by = updates.acceptedBy;
 
@@ -449,6 +458,101 @@ export const quoteService = {
             };
 
             return { quote, error: null };
+        } catch (err) {
+            return { quote: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    async recalculateQuoteTotals(quoteId: string): Promise<{ quote: Quote | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { error: quoteError } = await supabase
+                .from('quotes')
+                .select('*')
+                .eq('id', quoteId)
+                .eq('tenant_id', tenantId)
+                .single();
+            if (quoteError) throw quoteError;
+
+            const { data: items, error: itemsError } = await supabase
+                .from('quote_items')
+                .select('*')
+                .eq('quote_id', quoteId)
+                .order('item_order', { ascending: true });
+            if (itemsError) throw itemsError;
+
+            const itemRows = Array.isArray(items) ? items : [];
+            const subtotal = itemRows.reduce((sum: number, item: any) => {
+                const quantity = Number(item.quantity || 0);
+                const unitPrice = Number(item.unit_price || 0);
+                return sum + (quantity * unitPrice);
+            }, 0);
+            const discountAmount = itemRows.reduce((sum: number, item: any) => {
+                const quantity = Number(item.quantity || 0);
+                const unitPrice = Number(item.unit_price || 0);
+                const discountPercent = Number(item.discount_percent || 0);
+                return sum + (quantity * unitPrice * (discountPercent / 100));
+            }, 0);
+            const taxAmount = itemRows.reduce((sum: number, item: any) => {
+                const quantity = Number(item.quantity || 0);
+                const unitPrice = Number(item.unit_price || 0);
+                const discountPercent = Number(item.discount_percent || 0);
+                const taxPercent = Number(item.tax_percent || 0);
+                const taxableBase = quantity * unitPrice * (1 - discountPercent / 100);
+                return sum + (taxableBase * (taxPercent / 100));
+            }, 0);
+            const totalAmount = subtotal - discountAmount + taxAmount;
+
+            const { data, error } = await supabase
+                .from('quotes')
+                .update({
+                    subtotal,
+                    discount_amount: discountAmount,
+                    tax_amount: taxAmount,
+                    total_amount: totalAmount,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', quoteId)
+                .eq('tenant_id', tenantId)
+                .select('*')
+                .single();
+            if (error) throw error;
+
+            return {
+                quote: {
+                    id: data.id,
+                    quoteNumber: data.quote_number,
+                    name: data.name,
+                    contactId: data.contact_id,
+                    dealId: data.deal_id,
+                    templateId: data.template_id,
+                    status: data.status,
+                    subtotal: data.subtotal,
+                    discountAmount: data.discount_amount,
+                    discountPercent: data.discount_percent,
+                    taxAmount: data.tax_amount,
+                    taxPercent: data.tax_percent,
+                    totalAmount: data.total_amount,
+                    currency: data.currency,
+                    validUntil: data.valid_until,
+                    sentAt: data.sent_at,
+                    viewedAt: data.viewed_at,
+                    viewCount: data.view_count,
+                    acceptedAt: data.accepted_at,
+                    acceptedBy: data.accepted_by,
+                    rejectedAt: data.rejected_at,
+                    rejectionReason: data.rejection_reason,
+                    notes: data.notes,
+                    termsAndConditions: data.terms_and_conditions,
+                    signatureUrl: data.signature_url,
+                    pdfUrl: data.pdf_url,
+                    createdBy: data.created_by,
+                    metadata: data.metadata || {},
+                    createdAt: data.created_at,
+                    updatedAt: data.updated_at,
+                },
+                error: null,
+            };
         } catch (err) {
             return { quote: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -551,6 +655,8 @@ export const quoteService = {
 
             if (error) throw error;
 
+            await this.recalculateQuoteTotals(quoteId).catch(() => undefined);
+
             const item: QuoteItem = {
                 id: data.id,
                 quoteId: data.quote_id,
@@ -593,6 +699,8 @@ export const quoteService = {
 
             if (error) throw error;
 
+            await this.recalculateQuoteTotals(data.quote_id).catch(() => undefined);
+
             const item: QuoteItem = {
                 id: data.id,
                 quoteId: data.quote_id,
@@ -619,9 +727,20 @@ export const quoteService = {
      */
     async deleteQuoteItem(itemId: string): Promise<{ success: boolean; error: string | null }> {
         try {
+            const { data: item, error: lookupError } = await supabase
+                .from('quote_items')
+                .select('quote_id')
+                .eq('id', itemId)
+                .single();
+            if (lookupError) throw lookupError;
+
             const { error } = await supabase.from('quote_items').delete().eq('id', itemId);
 
             if (error) throw error;
+
+            if (item?.quote_id) {
+                await this.recalculateQuoteTotals(item.quote_id).catch(() => undefined);
+            }
 
             return { success: true, error: null };
         } catch (err) {

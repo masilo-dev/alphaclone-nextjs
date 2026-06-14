@@ -24,6 +24,7 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
 interface Project { id: string; name: string; status: ProjectStatus; progress: number; task_count: number; completed_tasks: number; due_date?: string; description?: string; budget?: number; tenant_id: string; created_at: string; }
 interface Milestone { id: string; project_id: string; name: string; due_date?: string; status: 'done' | 'in_progress' | 'pending'; }
 interface Task { id: string; project_id: string; title: string; status: string; priority: string; due_date?: string; }
+interface TimelineEvent { id: string; type: 'milestone' | 'task' | 'comment'; date?: string; title: string; status?: string; priority?: string; author_name?: string; content?: string; }
 
 interface ProjectsTabProps { user: User; }
 
@@ -56,10 +57,58 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
-    supabase.from('milestones').select('*').eq('project_id', project.id).order('due_date').then(({ data }: { data: any[] | null }) => setMilestones((data as Milestone[]) || []));
-    supabase.from('tasks').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).then(({ data }: { data: any[] | null }) => setTasks((data as Task[]) || []));
+    Promise.all([
+      supabase
+        .from('project_milestones')
+        .select('id, project_id, name, due_date, status')
+        .eq('project_id', project.id)
+        .order('due_date'),
+      supabase
+        .from('tasks')
+        .select('id, related_to_project, title, status, priority, due_date, created_at')
+        .eq('related_to_project', project.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('project_comments')
+        .select('id, author_name, content, created_at')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false }),
+    ]).then(([milestonesRes, tasksRes, commentsRes]) => {
+      const milestoneRows = (milestonesRes.data || []).map((m: any) => ({
+        id: m.id,
+        project_id: m.project_id,
+        name: m.name,
+        due_date: m.due_date || undefined,
+        status: m.status === 'completed' ? 'done' : m.status === 'in_progress' ? 'in_progress' : 'pending',
+      })) as Milestone[];
+      const taskRows = (tasksRes.data || []).map((t: any) => ({
+        id: t.id,
+        project_id: t.related_to_project,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        due_date: t.due_date || undefined,
+      })) as Task[];
+      const commentRows = (commentsRes.data || []).map((c: any) => ({
+        id: c.id,
+        type: 'comment' as const,
+        date: c.created_at,
+        title: c.content,
+        author_name: c.author_name,
+        content: c.content,
+      })) as TimelineEvent[];
+
+      setMilestones(milestoneRows);
+      setTasks(taskRows);
+      setTimelineEvents([
+        ...milestoneRows.map((m) => ({ id: m.id, type: 'milestone' as const, date: m.due_date, title: m.name, status: m.status })),
+        ...taskRows.map((t) => ({ id: t.id, type: 'task' as const, date: t.due_date || undefined, title: t.title, status: t.status, priority: t.priority })),
+        ...commentRows,
+      ].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime()));
+    });
   }, [project.id]);
 
   const TABS: ProjectTab[] = ['overview', 'tasks', 'milestones', 'timeline'];
@@ -150,17 +199,17 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
 
         {activeTab === 'timeline' && (
           <div className="overflow-x-auto -mx-4 px-4">
-            {milestones.map(m => (
-              <div key={m.id} className="flex items-center gap-3 py-3 border-b border-white/5">
-                {m.due_date && (
+            {timelineEvents.map(event => (
+              <div key={event.id} className="flex items-center gap-3 py-3 border-b border-white/5">
+                {event.date && (
                   <span className="flex-shrink-0 px-2.5 py-1 bg-slate-800 rounded-full text-[11px] font-bold text-slate-400">
-                    {new Date(m.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 )}
-                <span className="text-[15px] text-white">{m.name}</span>
+                <span className="text-[15px] text-white">{event.type === 'comment' ? `${event.author_name || 'System'}: ${event.title}` : event.title}</span>
               </div>
             ))}
-            {milestones.length === 0 && <div className="py-8 text-center text-[13px] text-slate-500">No timeline events yet.</div>}
+            {timelineEvents.length === 0 && <div className="py-8 text-center text-[13px] text-slate-500">No timeline events yet.</div>}
           </div>
         )}
       </div>

@@ -351,7 +351,7 @@ export class ZohoMailService extends ZohoService {
 
     async searchMessages(query: string): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
-        const data = await this.callZohoAPI(`${base}/messages/search?searchFilter=${encodeURIComponent(query)}`);
+        const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(query)}`);
         return (data?.data ?? []) as ZohoMessage[];
     }
 

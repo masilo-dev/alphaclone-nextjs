@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { projectService } from '../../../services/projectService';
+import { supabase } from '../../../lib/supabase';
+import { businessClientService } from '../../../services/businessClientService';
 import { Project as BusinessProject } from '../../../types';
 import { contractService } from '../../../services/contractService';
-import { businessClientService } from '../../../services/businessClientService';
 import { milestoneService } from '../../../services/milestoneService';
 import {
     Plus,
@@ -321,6 +322,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewingProject && (
                     <ProjectDetailsDrawer
                         project={viewingProject}
+                        tenantId={currentTenant?.id || ''}
+                        currentUser={user}
                         onClose={() => setViewingProject(null)}
                         onEdit={setEditingProject}
                     />
@@ -747,6 +750,8 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
 
 interface ProjectDetailsDrawerProps {
     project: BusinessProject;
+    tenantId: string;
+    currentUser: User;
     onClose: () => void;
     onEdit: (project: BusinessProject) => void;
 }
@@ -761,10 +766,25 @@ const DEFAULT_MILESTONE_LABELS = [
     'Production Launch & Handover',
 ];
 
-const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, onClose, onEdit }) => {
+const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, tenantId, currentUser, onClose, onEdit }) => {
     const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
     const [milestonesLoading, setMilestonesLoading] = useState(true);
     const [sharing, setSharing] = useState(false);
+    const [comments, setComments] = useState<Array<{
+        id: string;
+        author_name: string;
+        author_email?: string | null;
+        content: string;
+        is_client: boolean;
+        created_at: string;
+    }>>([]);
+    const [commentsLoading, setCommentsLoading] = useState(true);
+    const [commentDraft, setCommentDraft] = useState('');
+    const [commentAuthorName, setCommentAuthorName] = useState(currentUser.name || '');
+    const [commentAuthorEmail, setCommentAuthorEmail] = useState(currentUser.email || '');
+    const [postingComment, setPostingComment] = useState(false);
+    const [clientEmail, setClientEmail] = useState('');
+    const [clientName, setClientName] = useState('');
 
     const handleShareWithClient = async () => {
         setSharing(true);
@@ -826,6 +846,48 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
         return () => { cancelled = true; };
     }, [project.id]);
 
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadComments = async () => {
+            setCommentsLoading(true);
+            const { data, error } = await supabase
+                .from('project_comments')
+                .select('id, author_name, author_email, content, is_client, created_at')
+                .eq('project_id', project.id)
+                .order('created_at', { ascending: true });
+
+            if (!cancelled && !error) {
+                setComments((data || []) as any[]);
+            }
+            if (!cancelled) {
+                setCommentsLoading(false);
+            }
+        };
+
+        loadComments();
+        return () => { cancelled = true; };
+    }, [project.id]);
+
+    useEffect(() => {
+        let cancelled = false;
+        const loadClient = async () => {
+            if (!project.clientId) {
+                setClientEmail('');
+                setClientName('');
+                return;
+            }
+
+            const { client } = await businessClientService.getClient(project.clientId);
+            if (cancelled) return;
+            setClientEmail(client?.email || '');
+            setClientName(client?.name || '');
+        };
+
+        loadClient();
+        return () => { cancelled = true; };
+    }, [project.clientId]);
+
     const toggleMilestone = async (id: string) => {
         const target = milestones.find(m => m.id === id);
         if (!target) return;
@@ -852,6 +914,87 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
         if (health === 'At Risk') return 'bg-red-500';
         if (health === 'Delayed') return 'bg-amber-500';
         return 'bg-emerald-500';
+    };
+
+    const handleAddComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!tenantId) return;
+        const authorName = commentAuthorName.trim();
+        const content = commentDraft.trim();
+        if (!authorName || !content) return;
+
+        setPostingComment(true);
+        try {
+            const { data, error } = await supabase
+                .from('project_comments')
+                .insert({
+                    tenant_id: tenantId,
+                    project_id: project.id,
+                    author_name: authorName,
+                    author_email: commentAuthorEmail.trim() || null,
+                    content,
+                    is_client: false,
+                })
+                .select('id, author_name, author_email, content, is_client, created_at')
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                setComments((prev) => [...prev, data as any]);
+                setCommentDraft('');
+
+                if (clientEmail) {
+                    const threadTag = `AC-PROJ:${project.id}`;
+                    const subject = `Project update: ${project.name} [${threadTag}]`;
+                    const publicUrl = project.isPublic ? `${window.location.origin}/p/${project.id}` : '';
+                    const updateLines = [
+                        `Hi ${clientName || 'there'},`,
+                        '',
+                        `We have a new project update for "${project.name}".`,
+                        '',
+                        content,
+                        '',
+                        `Thread marker: ${threadTag}`,
+                        publicUrl ? `View project portal: ${publicUrl}` : '',
+                        '',
+                        `Sent by ${authorName} via AlphaClone Systems.`,
+                    ].filter(Boolean);
+
+                    const emailRes = await fetch('/api/email/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenantId,
+                            to: clientEmail,
+                            subject,
+                            message: updateLines.join('\n'),
+                            fromName: currentUser.name || 'AlphaClone Systems',
+                            replyTo: commentAuthorEmail.trim() || currentUser.email,
+                            isPlatformNotification: false,
+                        }),
+                    });
+
+                    if (!emailRes.ok) {
+                        const payload = await emailRes.json().catch(() => ({}));
+                        import('react-hot-toast').then(({ toast }) => {
+                            toast.error(payload.error || 'Note saved, but email delivery failed');
+                        });
+                    } else {
+                        import('react-hot-toast').then(({ toast }) => {
+                            toast.success('Note saved and emailed to the client');
+                        });
+                    }
+                } else {
+                    import('react-hot-toast').then(({ toast }) => {
+                        toast.success('Note saved');
+                    });
+                }
+            }
+        } catch (err: any) {
+            import('react-hot-toast').then(({ toast }) => toast.error(err?.message || 'Failed to add note'));
+        } finally {
+            setPostingComment(false);
+        }
     };
 
     return (
@@ -995,6 +1138,89 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                             <span className="text-xs text-slate-300 font-medium">Open Document Hub to manage project files</span>
                         </a>
                     </div>
+
+                    {(clientEmail || clientName) && (
+                        <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 space-y-1">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Client Inbox</p>
+                            <p className="text-sm text-white font-semibold truncate">{clientName || 'Linked client'}</p>
+                            {clientEmail ? (
+                                <a href={`mailto:${clientEmail}`} className="text-xs text-teal-300 hover:text-teal-200 break-all">
+                                    {clientEmail}
+                                </a>
+                            ) : (
+                                <p className="text-xs text-slate-500">No email address on file yet.</p>
+                            )}
+                            <p className="text-[11px] text-slate-500">
+                                Project notes will be emailed here automatically when available.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Project Notes</span>
+                            <span className="text-[11px] text-slate-500">{comments.length} messages</span>
+                        </div>
+                        <div className="space-y-2 bg-slate-950/20 rounded-2xl p-3 border border-white/5 max-h-72 overflow-y-auto custom-scrollbar">
+                            {commentsLoading ? (
+                                [...Array(3)].map((_, i) => <div key={i} className="h-16 bg-slate-900/60 rounded-xl animate-pulse" />)
+                            ) : comments.length === 0 ? (
+                                <p className="text-xs text-slate-500 py-2 text-center">No notes yet. Add the first project update below.</p>
+                            ) : (
+                                comments.map((comment) => (
+                                    <div key={comment.id} className={`rounded-xl border p-3 ${comment.is_client ? 'border-teal-500/20 bg-teal-500/5' : 'border-white/5 bg-slate-900/60'}`}>
+                                        <div className="flex items-start justify-between gap-3 mb-2">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-white truncate">
+                                                    {comment.author_name}
+                                                    {comment.is_client ? ' (Client)' : ' (Team)'}
+                                                </p>
+                                                {comment.author_email && (
+                                                    <a href={`mailto:${comment.author_email}`} className="text-[11px] text-slate-500 hover:text-teal-300 break-all">
+                                                        {comment.author_email}
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <span className="text-[11px] text-slate-500 shrink-0">
+                                                {new Date(comment.created_at).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <form onSubmit={handleAddComment} className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                                <input
+                                    value={commentAuthorName}
+                                    onChange={(e) => setCommentAuthorName(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-violet-400"
+                                    placeholder="Your name"
+                                />
+                                <input
+                                    value={commentAuthorEmail}
+                                    onChange={(e) => setCommentAuthorEmail(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-violet-400"
+                                    placeholder="Your email"
+                                    type="email"
+                                />
+                            </div>
+                            <textarea
+                                value={commentDraft}
+                                onChange={(e) => setCommentDraft(e.target.value)}
+                                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-violet-400 resize-none min-h-[96px]"
+                                placeholder="Leave a note, ask a question, or record a client update..."
+                            />
+                            <button
+                                type="submit"
+                                disabled={postingComment || !commentDraft.trim() || !commentAuthorName.trim()}
+                                className="w-full px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all"
+                            >
+                                {postingComment ? 'Saving...' : 'Add Note'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 {/* Sticky Action Footer */}
@@ -1021,4 +1247,3 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
 };
 
 export default ProjectsPage;
-

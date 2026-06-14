@@ -76,12 +76,111 @@ import { gmailServerService } from '../server/gmailServerService';
 import { taskAutomationService } from '../automation/taskAutomationService';
 import { sendWhatsAppMessage } from '../../lib/whatsapp/sendWhatsApp';
 import { mcpStore } from './mcpStore';
+import { routeAIRequest } from '../aiRouter';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+async function generateContractDraftText(contractType: string, clientName: string, keyTerms?: string) {
+  const response = await routeAIRequest({
+    prompt: `Draft a professional ${contractType} for a client named "${clientName}". Key terms and scope: ${keyTerms || 'Standard professional terms'}. Write a complete, legally-structured contract with all standard sections (parties, recitals, terms, obligations, payment, termination, governing law). Use plain, professional language.`,
+    model: 'claude-sonnet-4-6-20260217',
+    maxTokens: 2048,
+  });
+
+  if (!response.success) {
+    throw new Error(response.error || MCP_GENERIC_OPERATION_ERROR);
+  }
+
+  return response.content;
+}
+
+async function loadProjectMilestonesOrFallback(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  projectId: string
+) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('project_milestones')
+      .select('id, name, description, status, due_date, completed_at, order_index, created_at, updated_at')
+      .eq('tenant_id', tenantId)
+      .eq('project_id', projectId)
+      .order('due_date', { ascending: true });
+
+    if (error) throw error;
+
+    return {
+      milestones: (data || []).map((milestone: any) => ({
+        id: milestone.id,
+        title: milestone.name,
+        name: milestone.name,
+        description: milestone.description,
+        status: milestone.status,
+        due_date: milestone.due_date,
+        completed_at: milestone.completed_at,
+        order_index: milestone.order_index,
+        created_at: milestone.created_at,
+        updated_at: milestone.updated_at,
+        source: 'project_milestones',
+      })),
+      fallback: false,
+    };
+  } catch (error: any) {
+    const { data: tasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, title, description, status, priority, due_date, completed_at, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('related_to_project', projectId)
+      .order('due_date', { ascending: true });
+
+    const syntheticMilestones = (tasks || []).map((task: any, index: number) => ({
+      id: task.id,
+      title: task.title,
+      name: task.title,
+      description: task.description || `Task milestone derived from ${task.status || 'todo'} task`,
+      status: task.status === 'completed' ? 'completed' : task.status === 'in_progress' ? 'in_progress' : 'pending',
+      due_date: task.due_date,
+      completed_at: task.completed_at || null,
+      order_index: index,
+      created_at: task.created_at,
+      updated_at: task.created_at,
+      source: 'synthetic_task_fallback',
+    }));
+
+    return {
+      milestones: syntheticMilestones,
+      fallback: true,
+      error: error?.message || 'Unable to load project milestones',
+    };
+  }
+}
+
+async function createProjectTimelineComment(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  projectId: string,
+  content: string,
+  authorName = 'AlphaClone System'
+) {
+  try {
+    const { error } = await supabaseAdmin.from('project_comments').insert({
+      tenant_id: tenantId,
+      project_id: projectId,
+      author_name: authorName,
+      content,
+      is_client: false,
+    });
+    if (error) {
+      console.warn('[project timeline] comment insert skipped:', error.message);
+    }
+  } catch (err) {
+    console.warn('[project timeline] comment insert failed:', err);
+  }
 }
 
 async function getInvoiceWithDetailsAdmin(
@@ -2565,6 +2664,14 @@ class AlphaCloneMCPServer {
               notificationSent = Boolean(emailResult.success);
             }
           }
+          if (data?.related_to_project) {
+            await createProjectTimelineComment(
+              supabaseAdmin,
+              tenant_id,
+              String(data.related_to_project),
+              `Task created: ${data.title}${data.due_date ? `, due ${data.due_date}` : ''}.`
+            );
+          }
           result = { content: [{ type: 'text', text: `Task created: ${JSON.stringify({ ...data, assignee_notified: notificationSent })}` }] };
           break;
         }
@@ -2977,7 +3084,20 @@ class AlphaCloneMCPServer {
         case 'create_invoice': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { client_id, issue_date, due_date, subtotal = 0, tax = 0, total, notes, line_items = [] } = a;
+          const {
+            client_id,
+            issue_date,
+            due_date,
+            subtotal = 0,
+            tax = 0,
+            total,
+            notes,
+            line_items = [],
+            bank_details,
+            bankDetails,
+            mobile_payment_details,
+            mobilePaymentDetails,
+          } = a;
           if (!isUuidString(client_id)) {
             throw new Error('client_id must be a valid UUID from get_clients');
           }
@@ -3004,8 +3124,10 @@ class AlphaCloneMCPServer {
               total: totalNum,
               notes: typeof notes === 'string' ? notes : null,
               line_items: Array.isArray(line_items) ? line_items : [],
+              bank_details: typeof bank_details === 'string' ? bank_details : typeof bankDetails === 'string' ? bankDetails : null,
+              mobile_payment_details: typeof mobile_payment_details === 'string' ? mobile_payment_details : typeof mobilePaymentDetails === 'string' ? mobilePaymentDetails : null,
             })
-            .select('id, invoice_number, status, total, due_date')
+            .select('id, invoice_number, status, total, due_date, bank_details, mobile_payment_details')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_invoice', error.message);
           result = { content: [{ type: 'text', text: `Invoice created: ${JSON.stringify(data)}` }] };
@@ -3084,7 +3206,20 @@ class AlphaCloneMCPServer {
         case 'update_invoice': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { invoice_id, due_date, subtotal, tax, total, notes, status, line_items } = a;
+          const {
+            invoice_id,
+            due_date,
+            subtotal,
+            tax,
+            total,
+            notes,
+            status,
+            line_items,
+            bank_details,
+            bankDetails,
+            mobile_payment_details,
+            mobilePaymentDetails,
+          } = a;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID from get_invoices');
           }
@@ -3095,6 +3230,16 @@ class AlphaCloneMCPServer {
           if (total !== undefined) update.total = Number(total);
           if (notes !== undefined) update.notes = notes || null;
           if (line_items !== undefined) update.line_items = Array.isArray(line_items) ? line_items : [];
+          if (bank_details !== undefined || bankDetails !== undefined) {
+            update.bank_details = typeof bank_details === 'string' ? bank_details : typeof bankDetails === 'string' ? bankDetails : null;
+          }
+          if (mobile_payment_details !== undefined || mobilePaymentDetails !== undefined) {
+            update.mobile_payment_details = typeof mobile_payment_details === 'string'
+              ? mobile_payment_details
+              : typeof mobilePaymentDetails === 'string'
+                ? mobilePaymentDetails
+                : null;
+          }
           if (status !== undefined) {
             const normalized = String(status).toLowerCase();
             if (!INVOICE_STATUSES.has(normalized)) {
@@ -3111,7 +3256,7 @@ class AlphaCloneMCPServer {
             .update(update)
             .eq('tenant_id', tenant_id)
             .eq('id', invoice_id.trim())
-            .select('id, invoice_number, status, total, due_date, sent_at, paid_at, updated_at')
+            .select('id, invoice_number, status, total, due_date, sent_at, paid_at, updated_at, bank_details, mobile_payment_details')
             .single();
           if (error) throw supabaseErrorToMcpClientError('update_invoice', error.message);
           if (String(data?.status || '').toLowerCase() === 'paid') {
@@ -5132,22 +5277,9 @@ class AlphaCloneMCPServer {
             );
           }
 
-          const apiKey = process.env.ANTHROPIC_API_KEY;
-          if (!apiKey) throw new Error(MCP_GENERIC_OPERATION_ERROR);
-
-          const anthropic = new Anthropic({ apiKey });
-          const aiResponse = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 2048,
-            messages: [{
-              role: 'user',
-              content: `Draft a professional ${contract_type} for a client named "${client_name}". Key terms and scope: ${key_terms || 'Standard professional terms'}. Write a complete, legally-structured contract with all standard sections (parties, recitals, terms, obligations, payment, termination, governing law). Use plain, professional language.`,
-            }],
-          });
-
-          let contractContent = aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '';
+          const contractContent = await generateContractDraftText(contract_type, client_name, key_terms);
           const draftAttribution = 'Claude (via AlphaClone MCP generate_contract_draft)';
-          contractContent = appendContractDisclaimer(contractContent, draftAttribution);
+          const draftedContract = appendContractDisclaimer(contractContent, draftAttribution);
 
           // Attempt to save to contracts table
           const { data, error } = await supabase
@@ -5155,7 +5287,7 @@ class AlphaCloneMCPServer {
             .insert({
               tenant_id,
               title: `${contract_type}: ${client_name}`,
-              content: contractContent,
+              content: draftedContract,
               status: 'draft',
               type: contract_type.toLowerCase().replace(/\s+/g, '_'),
             })
@@ -5167,14 +5299,14 @@ class AlphaCloneMCPServer {
             result = {
               content: [{
                 type: 'text',
-                text: `Contract draft generated for ${client_name} (could not be saved automatically â€” open Contracts in the app to save):\n\n${contractContent}`,
+                text: `Contract draft generated for ${client_name} (could not be saved automatically â€” open Contracts in the app to save):\n\n${draftedContract}`,
               }],
             };
           } else {
             result = {
               content: [{
                 type: 'text',
-                text: `Contract draft saved!\nID: ${data.id}\nTitle: ${data.title}\nStatus: draft â€” ready for your review in the Contracts section.\n\nPreview:\n${contractContent.substring(0, 400)}...`,
+                text: `Contract draft saved!\nID: ${data.id}\nTitle: ${data.title}\nStatus: draft â€” ready for your review in the Contracts section.\n\nPreview:\n${draftedContract.substring(0, 400)}...`,
               }],
             };
           }
@@ -5637,17 +5769,21 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const project_id = String(a.project_id || '').trim();
           if (!isUuidString(project_id)) throw new Error('project_id must be a valid UUID');
-          const { data, error } = await supabaseAdmin.from('project_milestones').select('*').eq('tenant_id', tenant_id).eq('project_id', project_id).order('due_date', { ascending: true });
-          if (error) throw supabaseErrorToMcpClientError('get_project_milestones', error.message);
+          const { milestones, fallback, error } = await loadProjectMilestonesOrFallback(supabaseAdmin, tenant_id, project_id);
           result = {
             content: [
               {
                 type: 'text',
-                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
+                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', fallback ? 'Data retrieved from task fallback' : 'Data retrieved', milestones),
               },
               {
                 type: 'text',
-                text: JSON.stringify(data || [], null, 2),
+                text: JSON.stringify({
+                  project_id,
+                  fallback_used: fallback,
+                  warning: fallback ? error : null,
+                  milestones,
+                }, null, 2),
               },
             ],
           };
@@ -5697,11 +5833,9 @@ class AlphaCloneMCPServer {
             const from_date = a.from_date ? String(a.from_date) : null;
             const to_date = a.to_date ? String(a.to_date) : null;
 
-            // Fix: Join expense_categories to get the category name. 
-            // Also select 'category' in case it was added to the schema.
             let query = supabaseAdmin
               .from('expenses')
-              .select('id, category, status, amount, date, created_at, expense_categories(name)')
+              .select('*')
               .eq('tenant_id', tenant_id)
               .order('date', { ascending: false })
               .limit(5000);
@@ -5726,13 +5860,30 @@ class AlphaCloneMCPServer {
               };
             }
 
-            const rows = (data || []) as Array<any>;
+            const rows = (data || []) as Array<Record<string, any>>;
+            const categoryIds = [...new Set(
+              rows
+                .map((row) => row.category_id)
+                .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+            )];
+            let categoryNameMap = new Map<string, string>();
+            if (categoryIds.length > 0) {
+              const { data: categories } = await supabaseAdmin
+                .from('expense_categories')
+                .select('id, name')
+                .eq('tenant_id', tenant_id)
+                .in('id', categoryIds);
+              if (Array.isArray(categories)) {
+                categoryNameMap = new Map(categories.map((row: any) => [row.id, row.name]));
+              }
+            }
+
             const reportRowsMap = new Map<string, any>();
             let grandTotal = 0;
 
             rows.forEach((r) => {
-              // Priority: explicitly set 'category' field > joined category name > 'Uncategorized'
-              const catName = String(r.category || r.expense_categories?.name || 'Uncategorized');
+              // Priority: explicitly set 'category' field > lookup by category_id > 'Uncategorized'
+              const catName = String(r.category || categoryNameMap.get(String(r.category_id || '')) || 'Uncategorized');
               const status = String(r.status || 'pending');
               const amount = Number(r.amount || 0);
               const key = `${catName}|${status}`;
@@ -7439,34 +7590,23 @@ Return ONLY a JSON array of 60 objects:
             if (!quota.ok) {
               throw new Error('Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.');
             }
-            const apiKey = process.env.ANTHROPIC_API_KEY;
-            if (!apiKey) throw new Error(MCP_GENERIC_OPERATION_ERROR);
-            const anthropic = new Anthropic({ apiKey });
-            const aiResponse = await anthropic.messages.create({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 2048,
-              messages: [{
-                role: 'user',
-                content: `Draft a professional ${contract_type} for a client named "${client_name}". Key terms and scope: ${a.key_terms || 'Standard professional terms'}. Write a complete, legally-structured contract with all standard sections (parties, recitals, terms, obligations, payment, termination, governing law). Use plain, professional language.`,
-              }],
-            });
-            let contractContent = aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '';
-            contractContent = appendContractDisclaimer(contractContent, 'Claude (via AlphaClone MCP nexus_contract_drafter)');
+            const contractContent = await generateContractDraftText(contract_type, client_name, a.key_terms);
+            const draftedContract = appendContractDisclaimer(contractContent, 'Claude (via AlphaClone MCP nexus_contract_drafter)');
             const { data: savedContract, error: saveErr } = await supabaseAdmin
               .from('contracts')
               .insert({
                 tenant_id,
                 title: `${contract_type}: ${client_name}`,
-                content: contractContent,
+                content: draftedContract,
                 status: 'draft',
                 type: contract_type.toLowerCase().replace(/\s+/g, '_'),
               })
               .select('id, title, status')
               .single();
             if (saveErr) {
-              result = { content: [{ type: 'text', text: `Contract draft generated (could not save automatically):\n\n${contractContent}` }] };
+              result = { content: [{ type: 'text', text: `Contract draft generated (could not save automatically):\n\n${draftedContract}` }] };
             } else {
-              result = { content: [{ type: 'text', text: `Contract draft saved!\nID: ${savedContract.id}\nTitle: ${savedContract.title}\nStatus: draft — ready in the Contracts section.\n\nPreview:\n${contractContent.substring(0, 400)}...` }] };
+              result = { content: [{ type: 'text', text: `Contract draft saved!\nID: ${savedContract.id}\nTitle: ${savedContract.title}\nStatus: draft — ready in the Contracts section.\n\nPreview:\n${draftedContract.substring(0, 400)}...` }] };
             }
           } else {
             // No contract_type / client_name — return portfolio overview with a clear action hint.
@@ -7651,10 +7791,10 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
           const { project_id: pdId } = a;
           if (!pdId) throw new Error('project_id is required');
-          const [pdProjRes, pdTasksRes, pdMilesRes] = await Promise.all([
+          const milestonesLoad = await loadProjectMilestonesOrFallback(supabaseAdmin, tenant_id, pdId);
+          const [pdProjRes, pdTasksRes] = await Promise.all([
             supabaseAdmin.from('projects').select('id, name, description, status, current_stage, progress, due_date, owner_id, owner_name, team, created_at, updated_at').eq('id', pdId).eq('tenant_id', tenant_id).single(),
             supabaseAdmin.from('tasks').select('id, title, status, priority, assigned_to, due_date, completed_at').eq('related_to_project', pdId).eq('tenant_id', tenant_id).order('due_date', { ascending: true }),
-            supabaseAdmin.from('project_milestones').select('id, title, due_date, status, description').eq('project_id', pdId).order('due_date', { ascending: true }),
           ]);
           if (pdProjRes.error) throw supabaseErrorToMcpClientError('get_project_details', pdProjRes.error.message);
           const pdTasks = pdTasksRes.data || [];
@@ -7665,7 +7805,8 @@ Return ONLY a JSON array of 60 objects:
                 project: pdProjRes.data,
                 task_summary: { total: pdTasks.length, completed: pdTasks.filter((t: any) => t.status === 'completed').length, in_progress: pdTasks.filter((t: any) => t.status === 'in_progress').length, overdue: pdTasks.filter((t: any) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length },
                 tasks: pdTasks,
-                milestones: pdMilesRes.data || [],
+                milestones: milestonesLoad.milestones,
+                milestones_fallback_used: milestonesLoad.fallback,
               }, null, 2),
             }],
           };
@@ -7677,16 +7818,18 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
           const { project_id: ptId } = a;
           if (!ptId) throw new Error('project_id is required');
+          const milestonesLoad = await loadProjectMilestonesOrFallback(supabaseAdmin, tenant_id, ptId);
           const [ptTasksRes, ptMilesRes] = await Promise.all([
             supabaseAdmin.from('tasks').select('id, title, status, priority, due_date, created_at').eq('related_to_project', ptId).eq('tenant_id', tenant_id),
-            supabaseAdmin.from('project_milestones').select('id, title, due_date, status').eq('project_id', ptId),
+            supabaseAdmin.from('project_comments').select('id, author_name, content, created_at').eq('project_id', ptId).eq('tenant_id', tenant_id).order('created_at', { ascending: true }),
           ]);
           const ptEvents: any[] = [
             ...(ptTasksRes.data || []).map((t: any) => ({ type: 'task', date: t.due_date || t.created_at, title: t.title, status: t.status, priority: t.priority, id: t.id })),
-            ...(ptMilesRes.data || []).map((m: any) => ({ type: 'milestone', date: m.due_date, title: m.title, status: m.status, id: m.id })),
+            ...(milestonesLoad.milestones || []).map((m: any) => ({ type: 'milestone', date: m.due_date || m.created_at, title: m.title || m.name, status: m.status, id: m.id, source: m.source })),
+            ...(ptMilesRes.data || []).map((c: any) => ({ type: 'comment', date: c.created_at, title: c.content, author_name: c.author_name, id: c.id })),
           ];
           ptEvents.sort((x, y) => new Date(x.date || 0).getTime() - new Date(y.date || 0).getTime());
-          result = { content: [{ type: 'text', text: JSON.stringify({ project_id: ptId, total_events: ptEvents.length, timeline: ptEvents }, null, 2) }] };
+          result = { content: [{ type: 'text', text: JSON.stringify({ project_id: ptId, total_events: ptEvents.length, fallback_used: milestonesLoad.fallback, timeline: ptEvents }, null, 2) }] };
           break;
         }
 

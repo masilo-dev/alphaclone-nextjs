@@ -198,8 +198,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 total: invoiceTotal,
                 lineItems: formattedLineItems,
                 paymentMethod: paymentMethod,
-                bankDetails: paymentMethod === 'bank' ? bankDetails : undefined,
-                mobilePaymentDetails: paymentMethod === 'mobile_money' ? mobileDetails : undefined,
+                bankDetails: bankDetails.trim() || undefined,
+                mobilePaymentDetails: mobileDetails.trim() || undefined,
                 signature: signatureType === 'draw' && signatureData ? { type: 'draw' as const, data: signatureData }
                     : signatureType === 'type' && typedSignature ? { type: 'type' as const, data: typedSignature }
                         : undefined,
@@ -334,8 +334,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 tax: getTaxAmount(),
                 total: getTotal(),
                 lineItems: formattedLineItems,
-                bankDetails: bankDetails,
-                mobilePaymentDetails: mobileDetails
+                bankDetails: bankDetails.trim() || undefined,
+                mobilePaymentDetails: mobileDetails.trim() || undefined
             };
 
             const client = clients.find(c => c.id === selectedClientId);
@@ -648,4 +648,3 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 };
 
 export default CreateInvoiceModal;
-

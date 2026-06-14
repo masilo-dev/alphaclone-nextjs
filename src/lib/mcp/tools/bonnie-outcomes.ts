@@ -58,6 +58,8 @@ registerTool('bonnie-outcomes', {
       tool_name: 'define_outcome',
       success: args.status === 'success',
       duration_ms: 0,
+      tool_success: args.status === 'success',
+      tool_latency_ms: 0,
       expires_at: new Date(Date.now() + 60000).toISOString(),
       error_message: args.status === 'failure' ? `Outcome: ${args.status}. Notes: ${args.notes || 'none'}` : null,
     });

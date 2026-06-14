@@ -12,6 +12,7 @@ import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/sup
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 const FREE_IMAGES_PER_DAY = 3;
+const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
 
 type ImageProvider = 'xai' | 'openai';
 
@@ -50,7 +51,7 @@ async function generateWithProvider(params: {
     const apiKey = provider === 'xai' ? xaiApiKey : openaiApiKey;
     const model = provider === 'xai'
         ? (process.env.XAI_IMAGE_MODEL || process.env.GROK_IMAGE_MODEL || 'grok-2-image')
-        : 'dall-e-3';
+        : OPENAI_IMAGE_MODEL;
 
     if (!apiKey) {
         return { ok: false as const, status: 500, error: 'Provider API key missing', provider };
@@ -97,7 +98,7 @@ async function generateWithProvider(params: {
 
 /**
  * POST /api/ai/image
- * Generate an image via DALL-E 3.
+ * Generate an image via OpenAI GPT Image.
  * Returns a *temporary* OpenAI URL (expires ~1 hour).
  * Images are NOT saved to Supabase — caller must explicitly upload if needed.
  */

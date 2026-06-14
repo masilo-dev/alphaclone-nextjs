@@ -6,9 +6,8 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess } from '@/lib/apiAuth';
-import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
-import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
 import { randomBytes } from 'crypto';
 import { AppUrls } from '@/lib/urls';
 import {
@@ -329,26 +328,14 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       return { success: false, error: 'Failed to generate contract document' };
     }
 
-    const resolvedProvider = await resolveEmailProviderConfig({
-      tenantId,
-      preferredUserId: actorUserId,
-      fallbackToEnv: true,
-    });
-    if (!resolvedProvider?.apiKey) {
-      return { success: false, error: 'Email service not configured for this account' };
-    }
-
     const { data: tenantData } = await supabase
       .from('tenants')
       .select('name')
       .eq('id', tenantId)
       .single();
-    const tenantName = tenantData?.name || resolvedProvider.fromName || 'AlphaClone Systems';
 
-    const emailResult = await sendWithProviderSdk(resolvedProvider.provider as EmailProvider, {
-      apiKey: resolvedProvider.apiKey,
-      fromEmail: resolvedProvider.fromEmail || process.env.SENDGRID_FROM_EMAIL || process.env.BREVO_FROM_EMAIL || 'onboarding@alphacone.io',
-      fromName: resolvedProvider.fromName || tenantName,
+    const tenantName = tenantData?.name || 'AlphaClone Systems';
+    const emailResult = await sendEmailServer({
       to: recipients,
       subject: subject || `Contract: ${contract.title}`,
       text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
@@ -360,6 +347,9 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
         workspaceName: tenantName,
         customMessage: message || undefined,
       }),
+      tenantId,
+      userId: actorUserId || undefined,
+      fromName: tenantName,
       attachments: [{
         filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
         content: generated.data.bufferBase64,
@@ -367,9 +357,9 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
           ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
           : 'application/pdf'),
       }],
-    });
+    } as any);
 
-    if (!emailResult.ok) {
+    if (!emailResult.success) {
       return { success: false, error: emailResult.error || 'Failed to send contract email' };
     }
 

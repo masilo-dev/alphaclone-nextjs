@@ -7,7 +7,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesyste
 
 export const AppUrls = {
   // Public Signing
-  signContract: (token: string) => `${BASE_URL}/contract/${token}`,
+  signContract: (token: string) => `${BASE_URL}/sign/${token}`,
   
   // Public Payment
   payInvoice: (invoiceId: string) => `${BASE_URL}/invoice/${invoiceId}`,

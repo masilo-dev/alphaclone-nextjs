@@ -1,5 +1,3 @@
-
-import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export type PnLStatement = {
@@ -22,6 +20,33 @@ export type PnLStatement = {
   generated_at: string;
   tenant_id: string;
 };
+
+function normalizeMoney(value: unknown): number {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function normalizeDate(value: unknown): string | null {
+  if (!value) return null;
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+async function loadExpenseCategoryNames(supabase: ReturnType<typeof createSupabaseAdminClient>, tenantId: string, categoryIds: string[]) {
+  if (!categoryIds.length) return new Map<string, string>();
+
+  const { data, error } = await supabase
+    .from('expense_categories')
+    .select('id, name')
+    .eq('tenant_id', tenantId)
+    .in('id', categoryIds);
+
+  if (error || !data) {
+    return new Map<string, string>();
+  }
+
+  return new Map<string, string>((data as Array<{ id: string; name: string }>).map((row) => [row.id, row.name]));
+}
 
 export async function generatePnLStatement(
   tenantId: string,
@@ -50,27 +75,35 @@ export async function generatePnLStatement(
     }
   }
 
+  const fromIso = from as string;
+  const toIso = to as string;
+
   // 1. Fetch Revenue (Paid Invoices)
   const { data: invoices, error: invError } = await supabase
     .from('business_invoices')
-    .select('total, status, created_at')
+    .select('*')
     .eq('tenant_id', tenantId)
-    .gte('created_at', from)
-    .lte('created_at', to) as { data: any[] | null, error: any };
+    .gte('created_at', fromIso)
+    .lte('created_at', toIso) as { data: any[] | null, error: any };
 
   if (invError) throw new Error(`Revenue query failed: ${invError.message}`);
 
-  const paidInvoices = (invoices || []).filter((i: any) => i.status === 'paid');
-  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + (Number(i.total) || 0), 0);
-  
-  const outstandingInvoices = (invoices || []).filter((i: any) => ['sent', 'overdue'].includes(i.status || ''));
-  const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + (Number(i.total) || 0), 0);
+  const invoiceRows = (invoices || []) as Array<Record<string, any>>;
+  const paidInvoices = invoiceRows.filter((i) => String(i.status || i.payment_status || '').toLowerCase() === 'paid');
+  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + normalizeMoney(i.total ?? i.total_amount ?? i.amount), 0);
+
+  const outstandingInvoices = invoiceRows.filter((i) => {
+    const status = String(i.status || i.payment_status || '').toLowerCase();
+    return ['sent', 'overdue', 'open', 'unpaid', 'pending'].includes(status);
+  });
+  const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + normalizeMoney(i.total ?? i.total_amount ?? i.amount), 0);
 
   // Group revenue by month
   const revenueByMonthMap = new Map<string, number>();
   paidInvoices.forEach((i: any) => {
-    const month = i.created_at.substring(0, 7); // YYYY-MM
-    revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + (Number(i.total) || 0));
+    const invoiceDate = normalizeDate(i.created_at || i.issue_date || i.invoice_date || i.date);
+    const month = invoiceDate ? invoiceDate.substring(0, 7) : 'unknown';
+    revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + normalizeMoney(i.total ?? i.total_amount ?? i.amount));
   });
   const revenueByMonth = Array.from(revenueByMonthMap.entries())
     .map(([month, amount]) => ({ month, amount: Number(amount.toFixed(2)) }))
@@ -79,22 +112,30 @@ export async function generatePnLStatement(
   // 2. Fetch Expenses (Approved)
   const { data: expenses, error: expError } = await supabase
     .from('expenses')
-    .select('amount, status, category, categories:category_id(name)')
+    .select('*')
     .eq('tenant_id', tenantId)
-    .gte('date', (from as string).split('T')[0])
-    .lte('date', (to as string).split('T')[0]) as { data: any[] | null, error: any };
+    .gte('date', fromIso.split('T')[0])
+    .lte('date', toIso.split('T')[0]) as { data: any[] | null, error: any };
 
   if (expError) throw new Error(`Expenses query failed: ${expError.message}`);
 
+  const expenseRows = (expenses || []) as Array<Record<string, any>>;
+  const categoryIdList = [...new Set(
+    expenseRows
+      .map((row) => row.category_id)
+      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+  )];
+  const categoryNames = await loadExpenseCategoryNames(supabase, tenantId, categoryIdList);
+
   // Include approved or all if no status exists (though our schema has status)
-  const approvedExpenses = (expenses || []).filter((e: any) => e.status === 'approved' || !e.status);
-  const totalExpenses = approvedExpenses.reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+  const approvedExpenses = expenseRows.filter((e: any) => String(e.status || 'approved').toLowerCase() === 'approved');
+  const totalExpenses = approvedExpenses.reduce((sum: number, e: any) => sum + normalizeMoney(e.amount), 0);
 
   // Group expenses by category
   const expenseByCatMap = new Map<string, number>();
   approvedExpenses.forEach((e: any) => {
-    const cat = e.category || (e.categories as any)?.name || 'Uncategorized';
-    expenseByCatMap.set(cat, (expenseByCatMap.get(cat) || 0) + (Number(e.amount) || 0));
+    const cat = e.category || categoryNames.get(String(e.category_id || '')) || 'Uncategorized';
+    expenseByCatMap.set(cat, (expenseByCatMap.get(cat) || 0) + normalizeMoney(e.amount));
   });
   
   const expenseByCat = Array.from(expenseByCatMap.entries())
