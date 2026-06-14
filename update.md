@@ -1,5 +1,26 @@
 # Update Log
 
+## Date: 2026-06-14 (MICROSOFT GRAPH TEAMS & CHAT MCP TOOLS REGISTERED, OUTLOOK FOLDER NAVIGATION & GEMINI ROUTER STABILIZATION)
+
+### Added
+- **Microsoft Teams MCP Tools Registered** (`src/lib/mcp/tools/microsoft.ts`):
+  - Registered new tools: `microsoft_get_joined_teams`, `microsoft_get_team_channels`, `microsoft_send_channel_message`, `microsoft_get_chats`, `microsoft_create_chat`, and `microsoft_send_chat_message` to expose Teams channel messaging and chat capabilities to AI agents.
+- **Gemini Fallback Support** (`src/services/aiRouter.ts`):
+  - Integrated Google Gemini API integration as a fallback option when Anthropic or OpenAI configurations are missing, ensuring uninterrupted AI capabilities using the Gemini free version.
+
+### Modified
+- **Outlook Folder Navigation UI & State** (`src/hooks/useMicrosoftEmails.ts`, `src/components/dashboard/business/MicrosoftInboxView.tsx`):
+  - Extended Outlook inbox view with interactive tabbed navigation support for Inbox, Sent, Drafts, and Trash folders.
+  - Updated hooks to handle dynamic folder fetching and state management via the Microsoft Graph API.
+- **Facebook Identity Resolution Helper** (`src/services/mcp/MCPServer.ts`):
+  - Refactored Facebook MCP tool handlers to query integrations through a unified helper `getFacebookIntegrations` with robust multi-factor scoping fallback strategies.
+  - Fixed database client reference by instantiating `supabaseAdmin` properly within the helper.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. Next.js type-safety checks (`tsc --noEmit`) pass with zero errors. Verified that new Teams routes and schema definitions are Edge and Serverless compatible.
+
+---
+
 ## Date: 2026-06-13 (SOCIAL AUTOMATION PIPELINE RESTORED — SCHEDULED POSTS PUBLISHER)
 
 ### Fixed

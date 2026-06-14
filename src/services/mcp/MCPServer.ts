@@ -669,7 +669,6 @@ class AlphaCloneMCPServer {
     return tid;
   }
 
-  /** Profile / gamification scope (same user as the connection by default). */
   private requireProfileUser(args: Record<string, any>): string {
     if (this.ctx?.userId) {
       const r = args.user_id;
@@ -685,6 +684,76 @@ class AlphaCloneMCPServer {
       throw new Error('user_id must be a valid UUID from your MCP connection URL.');
     }
     return uid;
+  }
+
+  private async getFacebookIntegrations(
+    tenantId: string,
+    userId: string,
+    pageId?: string,
+    activeOnly = true
+  ): Promise<FacebookIntegrationIdentity[]> {
+    const supabaseAdmin = createSupabaseAdminClient();
+    // 1. Try to query with tenant_id + user_id
+    let query = supabaseAdmin
+      .from('facebook_integrations')
+      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    
+    if (activeOnly) {
+      query = query.eq('is_active', true);
+    }
+    if (pageId) {
+      query = query.eq('page_id', pageId);
+    }
+    
+    const { data: tenantRows, error: tenantError } = await query
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId);
+
+    if (!tenantError && tenantRows && tenantRows.length > 0) {
+      return tenantRows as FacebookIntegrationIdentity[];
+    }
+
+    // 2. Fallback: Query with user_id only (in case tenant_id mismatch/missing in connection flow)
+    let fallbackQuery = supabaseAdmin
+      .from('facebook_integrations')
+      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    
+    if (activeOnly) {
+      fallbackQuery = fallbackQuery.eq('is_active', true);
+    }
+    if (pageId) {
+      fallbackQuery = fallbackQuery.eq('page_id', pageId);
+    }
+
+    const { data: userRows, error: userError } = await fallbackQuery
+      .eq('user_id', userId);
+
+    if (!userError && userRows && userRows.length > 0) {
+      console.log(`[Facebook Fallback] Found ${userRows.length} integrations by user_id ${userId} (tenant_id mismatch)`);
+      return userRows as FacebookIntegrationIdentity[];
+    }
+
+    // 3. Last fallback: Query by tenant_id only (no user_id filter)
+    let tenantOnlyQuery = supabaseAdmin
+      .from('facebook_integrations')
+      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+
+    if (activeOnly) {
+      tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
+    }
+    if (pageId) {
+      tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
+    }
+
+    const { data: tenantOnlyRows, error: tenantOnlyError } = await tenantOnlyQuery
+      .eq('tenant_id', tenantId);
+
+    if (!tenantOnlyError && tenantOnlyRows && tenantOnlyRows.length > 0) {
+      console.log(`[Facebook Fallback] Found ${tenantOnlyRows.length} integrations by tenant_id ${tenantId} (user_id mismatch)`);
+      return tenantOnlyRows as FacebookIntegrationIdentity[];
+    }
+
+    return [];
   }
 
   private setupToolHandlers() {
@@ -3262,18 +3331,12 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { data: pages, error } = await supabaseAdmin
-            .from('facebook_integrations')
-            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .order('updated_at', { ascending: false });
-          if (error) throw supabaseErrorToMcpClientError('get_facebook_identities', error.message);
+          const pages = await this.getFacebookIntegrations(tenant_id, user_id, undefined, false);
 
           const identities = (pages || []).map((page: any) => {
             const tasks = Array.isArray((page as any)?.metadata?.page_tasks)
-              ? ((page as any).metadata.page_tasks as string[])
-              : [];
+               ? ((page as any).metadata.page_tasks as string[])
+               : [];
             const hasTaskPermission = tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
             const canPost = !!page.page_access_token && page.is_active && !(page as any)?.metadata?.no_pages && hasTaskPermission;
             return {
@@ -3294,15 +3357,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
-          let query = supabaseAdmin
-            .from('facebook_integrations')
-            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true);
-          if (pageId) query = query.eq('page_id', pageId);
-          const { data: rows, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_facebook_page_capabilities', error.message);
+          const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration) throw new Error('No active Facebook Page integration found.');
           pageId = integration.page_id;
@@ -3339,14 +3394,9 @@ class AlphaCloneMCPServer {
           if (!postId) throw new Error('post_id is required');
           let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
-          let query = supabaseAdmin
-            .from('facebook_integrations')
-            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-            .eq('tenant_id', tenant_id)
-            .eq('is_active', true);
-          if (pageId) query = query.eq('page_id', pageId);
-          const { data: rows, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_facebook_post_insights', error.message);
+          let user_id = '';
+          try { user_id = this.requireProfileUser(a); } catch {}
+          const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration?.page_access_token) throw new Error('No Facebook Page token found for insights.');
           const metrics = ['post_impressions', 'post_impressions_unique', 'post_engaged_users', 'post_clicks'].join(',');
@@ -3364,14 +3414,9 @@ class AlphaCloneMCPServer {
           if (!postId) throw new Error('post_id is required');
           let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
-          let query = supabaseAdmin
-            .from('facebook_integrations')
-            .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-            .eq('tenant_id', tenant_id)
-            .eq('is_active', true);
-          if (pageId) query = query.eq('page_id', pageId);
-          const { data: rows, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('delete_facebook_post', error.message);
+          let user_id = '';
+          try { user_id = this.requireProfileUser(a); } catch {}
+          const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration?.page_access_token) throw new Error('No Facebook Page token found for delete.');
           pageId = integration.page_id;
@@ -3501,23 +3546,11 @@ class AlphaCloneMCPServer {
           let integration: FacebookIntegrationIdentity | null = null;
 
           if (hasFacebook && resolvedPageId) {
-            const { data: specificIntegration, error: integrationError } = await supabaseAdmin
-              .from('facebook_integrations')
-              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-              .eq('tenant_id', tenant_id)
-              .eq('page_id', resolvedPageId)
-              .eq('is_active', true)
-              .maybeSingle();
-            if (integrationError) throw supabaseErrorToMcpClientError('create_social_post', integrationError.message);
-            integration = (specificIntegration as FacebookIntegrationIdentity | null) || null;
+            const rows = await this.getFacebookIntegrations(tenant_id, user_id, resolvedPageId, true);
+            integration = (rows && rows[0]) || null;
           } else if (hasFacebook) {
-            const { data: identities, error: identitiesError } = await supabaseAdmin
-              .from('facebook_integrations')
-              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-              .eq('tenant_id', tenant_id)
-              .eq('is_active', true);
-            if (identitiesError) throw supabaseErrorToMcpClientError('create_social_post', identitiesError.message);
-            integration = pickPreferredFacebookIdentity(identities as FacebookIntegrationIdentity[]);
+            const identities = await this.getFacebookIntegrations(tenant_id, user_id, undefined, true);
+            integration = pickPreferredFacebookIdentity(identities);
             if (integration?.page_id) resolvedPageId = integration.page_id;
           }
 
@@ -3694,23 +3727,11 @@ class AlphaCloneMCPServer {
           let integration: FacebookIntegrationIdentity | null = null;
 
           if (resolvedPageId) {
-            const { data: specificIntegration, error: integrationError } = await supabaseAdmin
-              .from('facebook_integrations')
-              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-              .eq('tenant_id', tenant_id)
-              .eq('page_id', resolvedPageId)
-              .eq('is_active', true)
-              .maybeSingle();
-            if (integrationError) throw supabaseErrorToMcpClientError('create_facebook_comment', integrationError.message);
-            integration = (specificIntegration as FacebookIntegrationIdentity | null) || null;
+            const rows = await this.getFacebookIntegrations(tenant_id, user_id, resolvedPageId, true);
+            integration = (rows && rows[0]) || null;
           } else {
-            const { data: identities, error: identitiesError } = await supabaseAdmin
-              .from('facebook_integrations')
-              .select('page_id, page_name, is_active, page_access_token, metadata, updated_at')
-              .eq('tenant_id', tenant_id)
-              .eq('is_active', true);
-            if (identitiesError) throw supabaseErrorToMcpClientError('create_facebook_comment', identitiesError.message);
-            integration = pickPreferredFacebookIdentity((identities || []) as FacebookIntegrationIdentity[]);
+            const identities = await this.getFacebookIntegrations(tenant_id, user_id, undefined, true);
+            integration = pickPreferredFacebookIdentity(identities);
             if (integration?.page_id) resolvedPageId = integration.page_id;
           }
 

@@ -11,6 +11,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '@/config/env';
 import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL } from '@/config/aiModels';
 
@@ -100,6 +101,10 @@ const openRouterClient = ENV.OPENROUTER_API_KEY
     })
   : null;
 
+const geminiAI = ENV.VITE_GEMINI_API_KEY
+  ? new GoogleGenerativeAI(ENV.VITE_GEMINI_API_KEY)
+  : null;
+
 // Model pricing (per 1M tokens)
 export const MODEL_PRICING = {
   // OpenAI (per 1M tokens)
@@ -147,7 +152,7 @@ export interface AIResponse {
 
 export interface AIStreamResponse {
   stream: ReadableStream;
-  provider: 'anthropic' | 'xai' | 'openai' | 'openrouter';
+  provider: 'anthropic' | 'xai' | 'openai' | 'openrouter' | 'gemini';
   model: string;
 }
 
@@ -226,6 +231,9 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     if (requestedModel.startsWith('grok') && xai) {
       return await completeWithXAI(options);
     }
+    if ((requestedModel.startsWith('gemini') || requestedModel.includes('gemini')) && geminiAI) {
+      return await completeWithGemini(options);
+    }
     if (requestedModel.startsWith('openrouter/') && openRouterClient) {
       return await completeWithOpenRouter(options);
     }
@@ -273,10 +281,24 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
+  // Priority 4: Try Gemini
+  if (geminiAI) {
+    try {
+      console.log('[AI Router] Attempting Google Gemini...');
+      const response = await completeWithGemini(options);
+      console.log('[AI Router] ✓ Gemini succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `Gemini failed: ${error.message}`;
+      console.error(`[AI Router] ✗ Gemini Error:`, error);
+      errors.push(errorMsg);
+    }
+  }
+
   // All providers failed
   const finalError = errors.length > 0
     ? `All AI providers failed:\n${errors.join('\n')}`
-    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, or OPENAI_API_KEY.";
+    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -348,6 +370,13 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'grok-4.3'
       };
     }
+    if ((requestedModel.startsWith('gemini') || requestedModel.includes('gemini')) && geminiAI) {
+      return {
+        stream: await streamWithGemini(options),
+        provider: 'gemini',
+        model: options.model || 'gemini-1.5-flash'
+      };
+    }
   }
 
   // Fallback Chain (Priority 1: Anthropic)
@@ -380,11 +409,30 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
 
   // Priority 3: Try OpenAI
   if (openai) {
-    return {
-      stream: await streamWithOpenAI(options),
-      provider: 'openai',
-      model: options.model || 'gpt-4-turbo'
-    };
+    try {
+      console.log('[AI Router] Attempting OpenAI stream...');
+      return {
+        stream: await streamWithOpenAI(options),
+        provider: 'openai',
+        model: options.model || 'gpt-4-turbo'
+      };
+    } catch (error) {
+      console.warn('[AI Router] OpenAI stream failed, falling back...');
+    }
+  }
+
+  // Priority 4: Try Gemini
+  if (geminiAI) {
+    try {
+      console.log('[AI Router] Attempting Gemini stream...');
+      return {
+        stream: await streamWithGemini(options),
+        provider: 'gemini',
+        model: options.model || 'gemini-1.5-flash'
+      };
+    } catch (error) {
+      console.warn('[AI Router] Gemini stream failed, falling back...');
+    }
   }
 
   throw new Error('No AI providers available for streaming');
@@ -579,9 +627,8 @@ export async function routeAIChat(
     if (requestedModel.startsWith('grok') && xai) {
       return await chatWithXAI(history, message, systemPrompt, model, image);
     }
-    if (requestedModel.startsWith('gemini') && ENV.VITE_GEMINI_API_KEY) {
-      // Gemini chat is fallback-only in this simplified router, but we can call it directly
-      // Note: chatWithGemini handles its own model logic usually, but we should pass it if possible
+    if (requestedModel.startsWith('gemini') && geminiAI) {
+      return await chatWithGemini(history, message, systemPrompt, model);
     }
     if (requestedModel.startsWith('openrouter/') && openRouterClient) {
       return await chatWithOpenRouter(history, message, systemPrompt, model);
@@ -630,9 +677,23 @@ export async function routeAIChat(
     }
   }
 
+  // Priority 4: Try Gemini
+  if (geminiAI) {
+    try {
+      console.log('[AI Router] Attempting Gemini chat...');
+      const response = await chatWithGemini(history, message, systemPrompt, model);
+      console.log('[AI Router] ✓ Gemini chat succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `Gemini chat failed: ${error.message}`;
+      console.error(`[AI Router] ✗ ${errorMsg}`);
+      errors.push(errorMsg);
+    }
+  }
+
   const finalError = errors.length > 0
     ? `All AI chat providers failed:\n${errors.join('\n')}`
-    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, or OPENAI_API_KEY.";
+    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -1076,6 +1137,112 @@ async function streamWithOpenAI(options: AIRequestOptions): Promise<ReadableStre
         }
       }
       controller.close();
+    },
+  });
+}
+
+/**
+ * Complete with Google Gemini
+ */
+async function completeWithGemini(options: AIRequestOptions): Promise<AIResponse> {
+  if (!geminiAI) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  const modelName = options.model || 'gemini-1.5-flash';
+  const model = geminiAI.getGenerativeModel({
+    model: modelName,
+    ...(options.systemPrompt ? { systemInstruction: options.systemPrompt } : {}),
+  });
+
+  const result = await model.generateContent(options.prompt);
+  const content = result.response.text() || '';
+
+  return {
+    content,
+    provider: 'gemini',
+    model: modelName,
+    success: true,
+  };
+}
+
+/**
+ * Chat with Google Gemini
+ */
+async function chatWithGemini(
+  history: Array<{ role: string; content: string }>,
+  message: string,
+  systemPrompt?: string,
+  model?: string
+): Promise<AIResponse> {
+  if (!geminiAI) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  const modelName = model || 'gemini-1.5-flash';
+  const geminiModel = geminiAI.getGenerativeModel({
+    model: modelName,
+    ...(systemPrompt ? { systemInstruction: systemPrompt } : {}),
+  });
+
+  const validHistory = history.filter((msg, idx) => {
+    if (idx === 0 && msg.role !== 'user') return false;
+    return true;
+  });
+
+  const contents: any[] = [];
+  for (const msg of validHistory) {
+    contents.push({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }],
+    });
+  }
+
+  const chat = geminiModel.startChat({
+    history: contents,
+  });
+
+  const result = await chat.sendMessage(message);
+  const content = result.response.text() || '';
+
+  return {
+    content,
+    provider: 'gemini',
+    model: modelName,
+    success: true,
+  };
+}
+
+/**
+ * Stream with Google Gemini
+ */
+async function streamWithGemini(options: AIRequestOptions): Promise<ReadableStream> {
+  if (!geminiAI) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  const modelName = options.model || 'gemini-1.5-flash';
+  const geminiModel = geminiAI.getGenerativeModel({
+    model: modelName,
+    ...(options.systemPrompt ? { systemInstruction: options.systemPrompt } : {}),
+  });
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        const result = await geminiModel.generateContentStream(options.prompt);
+        for await (const chunk of result.stream) {
+          const text = chunk.text();
+          if (text) {
+            controller.enqueue(encoder.encode(text));
+          }
+        }
+      } catch (err: any) {
+        controller.enqueue(encoder.encode(`[Gemini stream error: ${err.message}]`));
+      } finally {
+        controller.close();
+      }
     },
   });
 }

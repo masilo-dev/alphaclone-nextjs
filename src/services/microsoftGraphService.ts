@@ -278,6 +278,65 @@ export const microsoftGraphService = {
     return data.value;
   },
 
+  async getTeamChannels(teamId: string) {
+    const data = await graphRequest<{ value: any[] }>(`/teams/${teamId}/channels`);
+    return data.value;
+  },
+
+  async sendChannelMessage(teamId: string, channelId: string, message: string) {
+    return graphRequest(`/teams/${teamId}/channels/${channelId}/messages`, {
+      method: 'POST',
+      body: {
+        body: {
+          content: message,
+          contentType: 'text',
+        },
+      },
+    });
+  },
+
+  async getChats() {
+    const data = await graphRequest<{ value: any[] }>('/me/chats');
+    return data.value;
+  },
+
+  async createChat(input: { userIds: string[]; chatType?: 'oneOnOne' | 'group'; topic?: string }) {
+    const me = await this.getCurrentUser();
+    const myId = me.id;
+    const members = [
+      {
+        '@odata.type': '#microsoft.graph.aadUserConversationMember',
+        roles: ['owner'],
+        'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${myId}')`,
+      },
+      ...input.userIds.map((userId) => ({
+        '@odata.type': '#microsoft.graph.aadUserConversationMember',
+        roles: ['owner'],
+        'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${userId}')`,
+      })),
+    ];
+    return graphRequest('/chats', {
+      method: 'POST',
+      body: {
+        chatType: input.chatType || (input.userIds.length > 1 ? 'group' : 'oneOnOne'),
+        topic: input.topic,
+        members,
+      },
+    });
+  },
+
+  async sendChatMessage(chatId: string, message: string) {
+    return graphRequest(`/chats/${chatId}/messages`, {
+      method: 'POST',
+      body: {
+        body: {
+          content: message,
+          contentType: 'text',
+        },
+      },
+    });
+  },
+
   async getCurrentUser() {
     return graphRequest('/me');
   },

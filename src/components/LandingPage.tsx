@@ -493,11 +493,6 @@ const LandingPage = () => {
 
                   {/* Mobile Menu Trigger */}
                   <div className="lg:hidden flex items-center gap-2">
-                    <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
-                       <Button className="h-9 px-3 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/20">
-                          Start Free
-                       </Button>
-                    </Link>
                      <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
@@ -681,16 +676,7 @@ const LandingPage = () => {
                         </nav>
                      </div>
 
-                     {/* Mobile Menu Footer CTA */}
-                     <div className="border-t border-slate-800 p-4">
-                        <button
-                           onClick={() => { router.push(BUSINESS_SIGNUP_HREF); }}
-                           className="w-full py-4 px-4 bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-black text-lg rounded-2xl transition-all shadow-xl shadow-teal-500/30"
-                        >
-                           Start Free Trial
-                        </button>
-                        <p className="text-center text-xs text-slate-500 mt-2">14-day free trial - No card required</p>
-                     </div>
+                     {/* Mobile Menu Footer CTA hidden to keep clean */}
                   </div>
                </motion.div>
             )}
@@ -724,33 +710,16 @@ const LandingPage = () => {
                      <h1 className="font-marketing-heading font-black text-white mb-6 tracking-tight">
                         Run your business from{' '}
                         <span className="text-cyan-400">one AI workspace.</span>
-                     </h1>
-
-                     {/* Solution subheadline */}
+                     </h1>                     {/* Solution subheadline */}
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
                         AlphaClone replaces scattered CRM, billing, contracts, and project tools with one system that helps founders move faster and keep every client workflow connected.
                      </p>
-                     <p className="text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
+                     <p className="hidden sm:block text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
                         Built for service businesses. Social automation supports LinkedIn pages and Facebook business pages, without needing a personal account.
                      </p>
 
-                     {/* Outcome bullets */}
-                     <div className="grid gap-3 sm:grid-cols-3 mb-10 sm:mb-12 max-w-4xl mx-auto text-left">
-                        {heroOutcomePoints.map((point) => (
-                           <div
-                              key={point}
-                              className="flex items-start gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/40 px-4 py-3 shadow-[0_0_30px_-18px_rgba(34,211,238,0.25)]"
-                           >
-                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-400">
-                                 <Check className="h-3.5 w-3.5" />
-                              </div>
-                              <span className="text-sm leading-relaxed text-slate-200">{point}</span>
-                           </div>
-                        ))}
-                     </div>
-
                      {/* CTAs */}
-                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6 mt-6">
                         <Button
                            onClick={() => router.push(BUSINESS_SIGNUP_HREF)}
                            className="h-14 px-8 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xl shadow-cyan-500/20"
@@ -766,6 +735,21 @@ const LandingPage = () => {
                         </button>
                      </div>
 
+                     {/* Outcome bullets */}
+                     <div className="hidden sm:grid gap-3 sm:grid-cols-3 mb-10 sm:mb-12 max-w-4xl mx-auto text-left">
+                        {heroOutcomePoints.map((point) => (
+                           <div
+                              key={point}
+                              className="flex items-start gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/40 px-4 py-3 shadow-[0_0_30px_-18px_rgba(34,211,238,0.25)]"
+                           >
+                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-400">
+                                 <Check className="h-3.5 w-3.5" />
+                              </div>
+                              <span className="text-sm leading-relaxed text-slate-200">{point}</span>
+                           </div>
+                        ))}
+                     </div>
+
                      <div className="flex flex-wrap justify-center gap-2 mb-10">
                         {heroTrustPoints.map((point) => (
                            <div key={point} className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-950/40 px-3.5 py-1.5 text-xs font-medium text-slate-300">
@@ -776,7 +760,7 @@ const LandingPage = () => {
                      </div>
 
                      {/* Offer block */}
-                     <div className="mb-10 rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 via-slate-950/60 to-blue-500/10 px-5 py-5 sm:px-6 sm:py-6 text-left max-w-4xl mx-auto">
+                     <div className="hidden sm:block mb-10 rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 via-slate-950/60 to-blue-500/10 px-5 py-5 sm:px-6 sm:py-6 text-left max-w-4xl mx-auto">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                            <div>
                               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300 mb-3">
@@ -1021,7 +1005,7 @@ const LandingPage = () => {
 
 
             {/* Privacy and Compliance */}
-            <section className="py-14 border-y border-slate-800 bg-slate-950/70">
+            <section className="hidden sm:block py-14 border-y border-slate-800 bg-slate-950/70">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                      <div className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-6">
@@ -1065,7 +1049,7 @@ const LandingPage = () => {
             </section>
 
             {/* Stats / Proof Section */}
-            <section className="py-12 border-y border-slate-800 bg-slate-950/50">
+            <section className="hidden sm:block py-12 border-y border-slate-800 bg-slate-950/50">
                <motion.div 
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
