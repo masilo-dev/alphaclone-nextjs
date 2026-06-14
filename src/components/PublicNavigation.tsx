@@ -319,10 +319,15 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-slate-800/80">
+                                    <div className="pt-4 border-t border-slate-800/80 space-y-2.5">
                                         <Link href={LOGIN_HREF} onClick={() => setMobileMenuOpen(false)}>
                                             <Button variant="outline" className="w-full py-3.5 text-center font-bold text-slate-300 border border-slate-700/50 rounded-xl hover:bg-slate-900 transition-colors text-base h-auto">
                                                 Login
+                                            </Button>
+                                        </Link>
+                                        <Link href={BUSINESS_SIGNUP_HREF} onClick={() => setMobileMenuOpen(false)}>
+                                            <Button className="w-full py-3.5 text-center font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 rounded-xl transition-colors text-base h-auto shadow-lg shadow-teal-500/20">
+                                                Start Free Trial
                                             </Button>
                                         </Link>
                                     </div>
