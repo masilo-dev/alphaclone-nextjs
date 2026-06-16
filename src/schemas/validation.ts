@@ -158,6 +158,8 @@ export const integrationEmailProviderSchema = z.object({
     apiKey: z.string().optional(),
     fromEmail: emailSchema,
     fromName: z.string().min(1).max(200).optional(),
+    deepseekApiKey: z.string().optional(),
+    deepseekModel: z.enum(['deepseek-chat', 'deepseek-reasoner']).optional().default('deepseek-chat'),
 }).passthrough();
 
 export const integrationEmailProviderDeleteSchema = z.object({
