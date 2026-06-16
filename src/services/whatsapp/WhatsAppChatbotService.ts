@@ -76,10 +76,9 @@ export class WhatsAppChatbotService {
     try {
       const res = await aiService.complete({
         prompt: `Client says: "${messageText}"\n\nPlease provide the exact reply to send back via WhatsApp. Do not include quotes or surrounding text.`,
-        systemPrompt,
-        provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20240620'
+        systemPrompt
       });
+
 
       return res.content?.trim();
     } catch (e) {

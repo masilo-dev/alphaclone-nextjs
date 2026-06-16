@@ -38,8 +38,10 @@ class AIService {
             prompt: request.prompt,
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens,
-            temperature: request.temperature
+            temperature: request.temperature,
+            model: request.model || (request.provider === 'anthropic' ? 'claude-sonnet-4-20250514' : undefined)
         });
+
 
         return {
             content: response.content,

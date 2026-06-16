@@ -36,10 +36,9 @@ export class ChatbotTrainingService {
     try {
       const res = await aiService.complete({
         prompt: contentToAnalyze,
-        systemPrompt,
-        provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20240620'
+        systemPrompt
       });
+
 
       const persona = res.content?.trim() || '';
 

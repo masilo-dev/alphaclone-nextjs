@@ -85,10 +85,9 @@ export class WhatsAppOutreachService {
     try {
       const res = await aiService.complete({
         prompt: `Lead Details: ${JSON.stringify(lead)}`,
-        systemPrompt,
-        provider: 'anthropic',
-        model: 'claude-3-5-sonnet-20240620'
+        systemPrompt
       });
+
       return res.content?.trim();
     } catch {
       return null;
