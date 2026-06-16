@@ -49,6 +49,10 @@ export function PlaywrightIntegration() {
   const checkPlaywrightStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=playwright&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('Playwright status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.playwright) {

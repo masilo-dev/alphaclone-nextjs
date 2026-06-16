@@ -547,6 +547,71 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         );
     }
 
+    // For solo business owners, show a simplified view
+    const isSoloOwner = true; // This would be determined by user role/plan
+    if (isSoloOwner) {
+        return (
+            <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+                <CRMNav pathname={pathname} />
+                <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+                {/* Simplified Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">My Clients</h2>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <Badge variant="blue">{totalCount || clients.length} total</Badge>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">CRM</p>
+                        </div>
+                    </div>
+                    <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
+                        <Button
+                            onClick={() => setShowAddModal(true)}
+                            icon={<Plus className="w-4 h-4" />}
+                        >
+                            Add Client
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Quick Stats for Solo Owner */}
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Clients</span>
+                        <span className="text-base font-black text-white block">{totalCount || clients.length}</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Revenue</span>
+                        <span className="text-base font-black text-teal-400 block">${totalClientValue.toLocaleString()}</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active</span>
+                        <span className="text-base font-black text-white block">{activeClientsCount}</span>
+                    </div>
+                </div>
+
+                {/* Simple Client List */}
+                <div className="space-y-2">
+                    {filteredClients.map(client => (
+                        <div key={client.id} className="p-3 bg-slate-900/60 border border-white/5 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-xs">
+                                    {(client.name || '?').charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-sm">{client.name}</h3>
+                                    <p className="text-xs text-slate-400">{client.email || client.phone || 'No contact'}</p>
+                                </div>
+                            </div>
+                            <Badge variant={client.salesStage === 'customer' ? 'success' : 'blue'}>
+                                {client.salesStage}
+                            </Badge>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     if (loading) {
         return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading clients...</div></div>;
     }

@@ -53,6 +53,10 @@ export function SendGridIntegration() {
   const checkSendGridStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=sendgrid&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('SendGrid status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.sendgrid) {

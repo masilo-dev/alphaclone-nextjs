@@ -90,6 +90,18 @@ const CalendlySettings: React.FC = () => {
         window.location.href = `/api/auth/calendly/connect?tenantId=${currentTenant.id}`;
     };
 
+    // Fallback: if the API route doesn't exist, show a manual link option
+    useEffect(() => {
+        if (connecting) {
+            const timeout = setTimeout(() => {
+                setConnecting(false);
+                setShowManual(true);
+                toast.error('Calendly connection timed out. Please use the manual link option below.');
+            }, 10000);
+            return () => clearTimeout(timeout);
+        }
+    }, [connecting]);
+
     const handleDisconnect = async () => {
         if (!currentTenant || !window.confirm('Are you sure you want to disconnect Calendly? This will disable the booking page.')) return;
 

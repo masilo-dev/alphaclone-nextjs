@@ -38,6 +38,26 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, subtitle, videoUrl, icon
         setParticles(newParticles);
     }, []);
 
+    // Fallback if no particles (SSR safety)
+    if (particles.length === 0) {
+        return (
+            <div className="relative w-full h-[calc(100vh-100px)] overflow-hidden rounded-[2.5rem] bg-slate-950 border border-white/5 flex items-center justify-center">
+                <div className="relative z-10 text-center max-w-2xl px-6">
+                    <div className="relative w-24 h-24 mx-auto mb-8">
+                        <div className="relative bg-slate-900 border border-white/10 rounded-3xl h-full w-full flex items-center justify-center shadow-2xl">
+                            <Icon className="w-10 h-10 text-teal-400" />
+                        </div>
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-4">{title}</h1>
+                    <p className="text-lg md:text-xl text-slate-400 mb-12 leading-relaxed">{subtitle}</p>
+                    <button onClick={() => router.back()} className="flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl border border-white/10 transition-all">
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="relative w-full h-[calc(100vh-100px)] overflow-hidden rounded-[2.5rem] bg-slate-950 border border-white/5 flex items-center justify-center">
             {/* Immersive Neural Background */}

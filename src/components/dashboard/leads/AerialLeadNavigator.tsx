@@ -51,7 +51,11 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
     const apiKey = getPublicGoogleMapsApiKey();
 
     useEffect(() => {
-        if (!apiKey) return;
+        if (!apiKey) {
+            console.warn('Google Maps API key not configured, showing fallback UI');
+            setIsLoaded(true);
+            return;
+        }
 
         setOptions({
             key: apiKey,
@@ -77,6 +81,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                 }
             } catch (error) {
                 console.error('Error loading Google Maps:', error);
+                setIsLoaded(true); // Still mark as loaded to show fallback
             }
         };
 

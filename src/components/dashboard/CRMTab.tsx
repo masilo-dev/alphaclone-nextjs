@@ -904,8 +904,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   useEffect(() => {
     const checkTeamsConnection = async () => {
       if (currentTenant?.id) {
-        const { config } = await microsoft365Service.getMicrosoft365Config(currentTenant.id);
-        setIsTeamsConnected(!!config?.services?.teams);
+        try {
+          const { config } = await microsoft365Service.getMicrosoft365Config(currentTenant.id);
+          setIsTeamsConnected(!!config?.services?.teams);
+        } catch (err) {
+          console.warn('Failed to check Teams connection:', err);
+          setIsTeamsConnected(false);
+        }
       }
     };
     checkTeamsConnection();

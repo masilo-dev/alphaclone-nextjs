@@ -26,6 +26,13 @@ const XP_HISTORY = [
   { action: 'Added 10 new leads', xp: 40, time: '2 days ago' },
 ];
 
+// Fallback Clock icon component
+const Clock: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
 const GLOBAL_LB: LeaderboardEntry[] = [
   { rank: 1, name: 'Jordan Kim', xp: 12400 },
   { rank: 2, name: 'Alex Rivera', xp: 11200 },

@@ -27,6 +27,11 @@ export default function WhatsAppIntegration() {
     if (!currentTenant?.id) return;
     try {
       const res = await fetch(`/api/integrations/whatsapp?tenantId=${currentTenant.id}`);
+      if (!res.ok) {
+        console.warn('WhatsApp API not available, showing idle state');
+        setActiveIntegration(null);
+        return;
+      }
       const data = await res.json();
       if (data?.success && data?.integrations?.length > 0) {
         setActiveIntegration(data.integrations[0]);
@@ -35,6 +40,7 @@ export default function WhatsAppIntegration() {
       }
     } catch (err) {
       console.error('Failed to load integration:', err);
+      setActiveIntegration(null);
     } finally {
       setLoading(false);
     }

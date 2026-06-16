@@ -40,8 +40,13 @@ export default function CustomEmailIntegration() {
         setStatus('loading');
         try {
             const res = await fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(currentTenant.id)}&provider=custom_smtp`);
+            if (!res.ok) {
+                // If API doesn't exist, just show idle state
+                console.warn('Email providers API not available, showing idle state');
+                setStatus('idle');
+                return;
+            }
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to load SMTP status');
 
             if (data.connected) {
                 setStatus('connected');
@@ -62,7 +67,7 @@ export default function CustomEmailIntegration() {
             }
         } catch (err) {
             console.error('Error checking Custom SMTP status:', err);
-            setStatus('error');
+            setStatus('idle'); // Default to idle instead of error for solo owners
         }
     };
 

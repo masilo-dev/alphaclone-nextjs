@@ -150,11 +150,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         let cancelled = false;
         setCommandHistoryReady(false);
         (async () => {
-            const prefs = await fetchDashboardPreferences(userId);
-            if (cancelled) return;
-            if (prefs.commandHistory?.length) {
-                setRecentCommands(prefs.commandHistory.slice(0, 5));
-            } else {
+            try {
+                const prefs = await fetchDashboardPreferences(userId);
+                if (cancelled) return;
+                if (prefs.commandHistory?.length) {
+                    setRecentCommands(prefs.commandHistory.slice(0, 5));
+                } else {
+                    setRecentCommands([]);
+                }
+            } catch (err) {
+                console.warn('Failed to fetch dashboard preferences:', err);
                 setRecentCommands([]);
             }
             setCommandHistoryReady(true);

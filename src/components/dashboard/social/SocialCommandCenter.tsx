@@ -197,7 +197,7 @@ export default function SocialCommandCenter() {
 
         } catch (error) {
             console.error('Failed to load social metrics:', error);
-            toast.error('Failed to load data');
+            // Don't show error toast for solo owners, just show empty state
         } finally {
             setLoading(false);
         }

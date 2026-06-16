@@ -29,7 +29,7 @@ export default function Microsoft365Integration() {
             }
         } catch (error) {
             console.error('Error loading Microsoft connection:', error);
-            setStatus('error');
+            setStatus('idle'); // Default to idle instead of error for solo owners
         }
     };
 

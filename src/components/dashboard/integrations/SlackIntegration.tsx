@@ -40,6 +40,10 @@ export function SlackIntegration() {
   const checkSlackStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=slack&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('Slack status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.slack) {
