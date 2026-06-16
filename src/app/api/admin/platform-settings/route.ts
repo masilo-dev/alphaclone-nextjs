@@ -19,6 +19,14 @@ function buildEnvStatus(): PlatformEnvStatus {
     anthropic: !!ENV.ANTHROPIC_API_KEY,
     openai: !!ENV.OPENAI_API_KEY,
     gemini: !!ENV.VITE_GEMINI_API_KEY,
+    whatsapp: !!(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
+    linkedin: !!(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET),
+    instagram: !!(process.env.INSTAGRAM_ACCESS_TOKEN),
+    twitter: !!(process.env.TWITTER_API_KEY && process.env.TWITTER_API_SECRET),
+    zoho: !!(process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET),
+    outlook: !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET),
+    gmail: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    deepseek: !!process.env.DEEPSEEK_API_KEY,
   };
 }
 
