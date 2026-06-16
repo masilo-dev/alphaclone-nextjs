@@ -53,5 +53,3 @@ const ComingSoonOverlay: React.FC<ComingSoonOverlayProps> = ({
 };
 
 export default ComingSoonOverlay;
-
-export default ComingSoonOverlay;
