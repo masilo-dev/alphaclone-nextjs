@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DailyCall, DailyParticipant } from '@daily-co/daily-js';
-import { Maximize2, Minimize2, Move } from 'lucide-react';
+import { Maximize2, Minimize2, Move, Bell } from 'lucide-react';
+import { setDailyCallObject } from '../../services/notificationService';
+import { setDailyCallObject as setWorkflowCallObject } from '../../services/engine/WorkflowExecutor';
 
 interface VideoLayoutProps {
     callObject: DailyCall | null;
@@ -12,6 +14,40 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ callObject, participan
     const participantIds = Object.keys(participants);
     const [pipMinimized, setPipMinimized] = useState(false);
     const [pipPosition, setPipPosition] = useState({ x: 16, y: 16 }); // top-right offset
+    const [auditNotifications, setAuditNotifications] = useState<Array<{ id: string; message: string }>>([]);
+
+    // Set global Daily call object for audit services
+    useEffect(() => {
+        setDailyCallObject(callObject);
+        setWorkflowCallObject(callObject);
+    }, [callObject]);
+
+    // Listen for audit events from the meeting
+    useEffect(() => {
+        if (!callObject) return;
+
+        const handleAppMessage = (event: any) => {
+            const msg = event?.data;
+            if (msg?.type === 'audit-event') {
+                const payload = msg.payload;
+                const notification = {
+                    id: `${Date.now()}-${Math.random()}`,
+                    message: `Audit: ${payload.source} - ${payload.type}`,
+                };
+                setAuditNotifications(prev => [...prev, notification]);
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    setAuditNotifications(prev => prev.filter(n => n.id !== notification.id));
+                }, 5000);
+            }
+        };
+
+        callObject.on('app-message', handleAppMessage);
+
+        return () => {
+            callObject.off('app-message', handleAppMessage);
+        };
+    }, [callObject]);
 
     // Filter for screen shares
     const screenShares = participantIds.filter(id => {
@@ -54,6 +90,21 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ callObject, participan
                     {participantIds.map(id => (
                         <div key={id} className={`${screenShares.length > 0 ? 'h-32 md:h-auto' : ''}`}>
                             <ParticipantTile participant={participants[id]} />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Audit Notifications Overlay */}
+            {auditNotifications.length > 0 && (
+                <div className="absolute top-4 left-4 z-50 space-y-2">
+                    {auditNotifications.map(notif => (
+                        <div
+                            key={notif.id}
+                            className="flex items-center gap-2 px-3 py-2 bg-teal-600/90 backdrop-blur-md rounded-lg text-white text-xs font-medium shadow-lg animate-in slide-in-from-left"
+                        >
+                            <Bell className="w-3 h-3" />
+                            {notif.message}
                         </div>
                     ))}
                 </div>

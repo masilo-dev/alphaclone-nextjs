@@ -4,6 +4,16 @@
  * Replaces n8n/Zapier as the internal orchestration layer.
  */
 
+import { DailyCall } from '@daily-co/daily-js';
+import { sendAuditToMeeting } from '../../lib/meetingAudit';
+
+// Global reference to the Daily call object (set by the meeting component)
+let _dailyCallObject: DailyCall | null = null;
+
+export function setDailyCallObject(callObject: DailyCall | null) {
+    _dailyCallObject = callObject;
+}
+
 const getBaseUrl = () => {
     if (process.env.NEXT_PUBLIC_APP_URL) {
         return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
@@ -275,6 +285,23 @@ export async function runWorkflow(
 
     const allSuccess = actionsTaken.every(a => a.status === 'success');
     const anySuccess = actionsTaken.some(a => a.status === 'success');
+
+    // Send audit to meeting
+    if (_dailyCallObject) {
+        sendAuditToMeeting(_dailyCallObject, {
+            source: 'workflow',
+            type: 'workflow_executed',
+            details: {
+                workflowId: workflow.id,
+                workflowName: workflow.name,
+                conditionsMet,
+                actionsCount: workflow.actions.length,
+                status: allSuccess ? 'success' : anySuccess ? 'partial' : 'failed',
+                durationMs: Date.now() - start,
+            },
+            timestamp: new Date().toISOString(),
+        });
+    }
 
     return {
         workflowId: workflow.id,
