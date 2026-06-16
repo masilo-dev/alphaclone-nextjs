@@ -100,3 +100,4 @@ Thumbs.db
 
 # Scratch and temporary files
 /scratch/
+.aider*

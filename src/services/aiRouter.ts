@@ -105,8 +105,19 @@ const geminiAI = ENV.VITE_GEMINI_API_KEY
   ? new GoogleGenerativeAI(ENV.VITE_GEMINI_API_KEY)
   : null;
 
+const deepseek = ENV.DEEPSEEK_API_KEY
+  ? new OpenAI({
+      apiKey: ENV.DEEPSEEK_API_KEY,
+      baseURL: 'https://api.deepseek.com/v1',
+    })
+  : null;
+
+
 // Model pricing (per 1M tokens)
 export const MODEL_PRICING = {
+  // DeepSeek
+  'deepseek-chat': { input: 0.14, output: 0.28 },
+  'deepseek-reasoner': { input: 0.55, output: 2.19 },
   // OpenAI (per 1M tokens)
   'gpt-4o': { input: 5, output: 15 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
@@ -140,7 +151,7 @@ export interface AIRequestOptions {
 
 export interface AIResponse {
   content: string;
-  provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter';
+  provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter' | 'deepseek';
   model: string;
   success: boolean;
   error?: string;
@@ -152,7 +163,7 @@ export interface AIResponse {
 
 export interface AIStreamResponse {
   stream: ReadableStream;
-  provider: 'anthropic' | 'xai' | 'openai' | 'openrouter' | 'gemini';
+  provider: 'anthropic' | 'xai' | 'openai' | 'openrouter' | 'gemini' | 'deepseek';
   model: string;
 }
 
@@ -222,6 +233,9 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
 
   // Specific Provider Routing
   if (requestedModel) {
+    if ((requestedModel.startsWith('deepseek') || requestedModel.includes('deepseek')) && deepseek) {
+      return await completeWithDeepSeek(options);
+    }
     if (requestedModel.startsWith('claude') && anthropic) {
       return await completeWithAnthropic(options);
     }
@@ -239,7 +253,21 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
-  // Fallback Chain (Priority 1: Anthropic)
+  // Fallback Chain (Priority 1: DeepSeek)
+  if (deepseek) {
+    try {
+      console.log('[AI Router] Attempting DeepSeek...');
+      const response = await completeWithDeepSeek(options);
+      console.log('[AI Router] ✓ DeepSeek succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `DeepSeek failed: ${error.message}`;
+      console.error(`[AI Router] ✗ DeepSeek Error:`, error);
+      errors.push(errorMsg);
+    }
+  }
+
+  // Priority 2: Try Anthropic
   if (anthropic) {
     try {
       console.log('[AI Router] Attempting Anthropic (Claude)...');
@@ -308,6 +336,17 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
  * Uses the best model for the task type and cleans output of emojis.
  */
 export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, systemPrompt?: string): Promise<AIResponse> {
+  if (deepseek) {
+    try {
+      const model = task === 'legal' || task === 'strategy' ? 'deepseek-reasoner' : 'deepseek-chat';
+      const res = await completeWithDeepSeek({ prompt, systemPrompt, model });
+      res.content = cleanProfessionalContent(res.content);
+      return res;
+    } catch (error) {
+      console.warn('[AI Router] DeepSeek failed for autonomous task, falling back:', error);
+    }
+  }
+
   const strength = TASK_STRENGTH_MAP[task] || TASK_STRENGTH_MAP['strategy'];
   
   const options = {
@@ -349,6 +388,13 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
 
   // Specific Provider Routing
   if (requestedModel) {
+    if ((requestedModel.startsWith('deepseek') || requestedModel.includes('deepseek')) && deepseek) {
+      return {
+        stream: await streamWithDeepSeek(options),
+        provider: 'deepseek',
+        model: options.model || 'deepseek-chat'
+      };
+    }
     if (requestedModel.startsWith('claude') && anthropic) {
       return {
         stream: await streamWithAnthropic(options),
@@ -379,7 +425,21 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
     }
   }
 
-  // Fallback Chain (Priority 1: Anthropic)
+  // Fallback Chain (Priority 1: DeepSeek)
+  if (deepseek) {
+    try {
+      console.log('[AI Router] Attempting DeepSeek stream...');
+      return {
+        stream: await streamWithDeepSeek(options),
+        provider: 'deepseek',
+        model: options.model || 'deepseek-chat'
+      };
+    } catch (error) {
+      console.warn('[AI Router] DeepSeek stream failed, falling back...');
+    }
+  }
+
+  // Priority 2: Try Anthropic
   if (anthropic) {
     try {
       console.log('[AI Router] Attempting Anthropic stream...');
@@ -618,6 +678,9 @@ export async function routeAIChat(
   // Specific Provider Routing
   if (model) {
     const requestedModel = model.toLowerCase();
+    if ((requestedModel.startsWith('deepseek') || requestedModel.includes('deepseek')) && deepseek) {
+      return await chatWithDeepSeek(history, message, systemPrompt, model);
+    }
     if (requestedModel.startsWith('claude') && anthropic) {
       return await chatWithAnthropic(history, message, systemPrompt, model);
     }
@@ -635,7 +698,21 @@ export async function routeAIChat(
     }
   }
 
-  // Priority 1: Try Anthropic
+  // Priority 1: Try DeepSeek
+  if (deepseek) {
+    try {
+      console.log('[AI Router] Attempting DeepSeek chat...');
+      const response = await chatWithDeepSeek(history, message, systemPrompt, model);
+      console.log('[AI Router] ✓ DeepSeek chat succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `DeepSeek chat failed: ${error.message}`;
+      console.error(`[AI Router] ✗ ${errorMsg}`);
+      errors.push(errorMsg);
+    }
+  }
+
+  // Priority 2: Try Anthropic
   if (anthropic) {
     try {
       console.log('[AI Router] Attempting Anthropic chat...');
@@ -1011,6 +1088,7 @@ export function getAvailableProviders() {
     openai: !!openai,
     openrouter: !!openRouterClient,
     gemini: !!ENV.VITE_GEMINI_API_KEY,
+    deepseek: !!deepseek,
   };
 }
 
@@ -1018,6 +1096,7 @@ export function getAvailableProviders() {
  * Get the primary provider name for display
  */
 export function getPrimaryProvider(): string {
+  if (deepseek) return 'DeepSeek';
   if (anthropic) return 'Claude (Anthropic)';
   if (xai) return 'Grok (xAI)';
   if (openRouterClient) return 'OpenRouter';
@@ -1289,3 +1368,118 @@ async function streamWithXAI(options: AIRequestOptions): Promise<ReadableStream>
     },
   });
 }
+
+/**
+ * Complete with DeepSeek
+ */
+async function completeWithDeepSeek(options: AIRequestOptions): Promise<AIResponse> {
+  if (!deepseek) {
+    throw new Error('DeepSeek API key not configured');
+  }
+  const model = options.model || 'deepseek-chat';
+
+  const messages: any[] = [];
+  if (options.systemPrompt) {
+    messages.push({ role: 'system', content: options.systemPrompt });
+  }
+  messages.push({ role: 'user', content: options.prompt });
+
+  const completion = await deepseek.chat.completions.create({
+    model: model,
+    messages,
+    max_tokens: options.maxTokens || 4096,
+    temperature: options.temperature || 0.7,
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || '',
+    provider: 'deepseek',
+    model: model,
+    success: true,
+  };
+}
+
+/**
+ * Stream with DeepSeek
+ */
+async function streamWithDeepSeek(options: AIRequestOptions): Promise<ReadableStream> {
+  if (!deepseek) throw new Error('DeepSeek not configured');
+
+  const model = options.model || 'deepseek-chat';
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const stream = await deepseek.chat.completions.create({
+        model: model,
+        messages: [
+          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+          { role: 'user' as const, content: options.prompt },
+        ],
+        max_tokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          controller.enqueue(encoder.encode(content));
+        }
+      }
+      controller.close();
+    },
+  });
+}
+
+/**
+ * Chat with DeepSeek
+ */
+async function chatWithDeepSeek(
+  history: Array<{ role: string; content: string }>,
+  message: string,
+  systemPrompt?: string,
+  model?: string
+): Promise<AIResponse> {
+  if (!deepseek) {
+    throw new Error('DeepSeek API key not configured');
+  }
+
+  const selectedModel = model || 'deepseek-chat';
+
+  // Ensure history alternates and starts with 'user'
+  const validHistory = history.filter((msg, idx) => {
+    if (idx === 0 && msg.role !== 'user') return false;
+    return true;
+  });
+
+  const chatMessages: any[] = [];
+  for (const msg of validHistory) {
+    const role = msg.role === 'user' ? 'user' : 'assistant';
+    if (chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === role) {
+      continue;
+    }
+    chatMessages.push({
+      role,
+      content: msg.content || (msg as any).text || '',
+    });
+  }
+
+  const completion = await deepseek.chat.completions.create({
+    model: selectedModel,
+    messages: [
+      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+      ...chatMessages,
+      { role: 'user', content: message }
+    ],
+    max_tokens: 4096,
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || '',
+    provider: 'deepseek',
+    model: selectedModel,
+    success: true,
+  };
+}
+

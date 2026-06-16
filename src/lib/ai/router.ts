@@ -1,4 +1,4 @@
-import { callDeepSeek } from './deepseek';
+import { callDeepSeek, DeepSeekModel } from './deepseek';
 import { routeAIRequest } from '@/services/aiRouter';
 
 export type AITask = 'summarize' | 'draft' | 'reason' | 'enrich' | 'generate';
@@ -23,6 +23,15 @@ export async function callClaude(prompt: string, model: string, systemPrompt?: s
  * Uses DeepSeek for cost-sensitive tasks and Claude for complex/creative tasks.
  */
 export async function callAI(task: AITask, prompt: string, systemPrompt?: string): Promise<string> {
+    if (process.env.DEEPSEEK_API_KEY) {
+        try {
+            const model: DeepSeekModel = task === 'reason' || task === 'generate' ? 'deepseek-reasoner' : 'deepseek-chat';
+            return await callDeepSeek(prompt, { model, systemPrompt });
+        } catch (err) {
+            console.warn('[AI Router] DeepSeek call failed, falling back to Claude:', err);
+        }
+    }
+
     switch (task) {
         case 'summarize':
         case 'enrich':
@@ -42,3 +51,4 @@ export async function callAI(task: AITask, prompt: string, systemPrompt?: string
             return callClaude(prompt, 'claude-sonnet-4-20250514', systemPrompt);
     }
 }
+
