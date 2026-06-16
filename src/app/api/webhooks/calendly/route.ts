@@ -68,6 +68,12 @@ export async function POST(req: Request) {
             await handleInviteeCanceled({ ...payload.payload, status: 'missed' }, supabaseAdmin);
         } else if (payload.event === 'meeting_recap.created') {
             await handleMeetingRecap(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'routing_form_submission.created') {
+            await handleRoutingFormSubmission(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'contact.created' || payload.event === 'contact.updated') {
+            await handleContactUpsert(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'contact.deleted') {
+            await handleContactDeleted(payload.payload, supabaseAdmin);
         }
 
         return NextResponse.json({ success: true });
@@ -164,4 +170,91 @@ async function handleMeetingRecap(payload: Record<string, unknown>, supabase: Re
             },
         })
         .eq('id', booking.id);
+}
+
+// ── Calendly Contacts API (May 2026) ─────────────────────────────────────────
+
+async function handleContactUpsert(
+    payload: Record<string, unknown>,
+    supabase: ReturnType<typeof createSupabaseAdminClient>
+) {
+    const userUri = typeof payload.owner_uri === 'string' ? payload.owner_uri : null;
+    if (!userUri) return;
+
+    const match = await findTenantByCalendlyUserUri(userUri);
+    if (!match) return;
+
+    const contactUri = String(payload.uri || '');
+    const name = String(payload.name || 'Unknown');
+    const email = String(payload.email || '');
+    if (!email) return;
+
+    // Upsert into business_clients so Calendly contacts flow into the CRM
+    await supabase.from('business_clients').upsert(
+        {
+            tenant_id: match.tenantId,
+            name,
+            email,
+            sales_stage: 'lead',
+            is_active: true,
+            custom_fields: { calendly_contact_uri: contactUri },
+        },
+        { onConflict: 'tenant_id,email', ignoreDuplicates: false }
+    );
+}
+
+async function handleContactDeleted(
+    payload: Record<string, unknown>,
+    supabase: ReturnType<typeof createSupabaseAdminClient>
+) {
+    const email = String(payload.email || '');
+    if (!email) return;
+
+    // Don't delete—just mark inactive to preserve data integrity
+    await supabase
+        .from('business_clients')
+        .update({ is_active: false })
+        .filter('email', 'eq', email)
+        .filter('custom_fields->>calendly_contact_uri', 'not.is', null);
+}
+
+async function handleRoutingFormSubmission(
+    payload: Record<string, unknown>,
+    supabase: ReturnType<typeof createSupabaseAdminClient>
+) {
+    const userUri = typeof payload.event_type_owner_uri === 'string'
+        ? payload.event_type_owner_uri
+        : typeof payload.owner_uri === 'string' ? payload.owner_uri : null;
+    if (!userUri) return;
+
+    const match = await findTenantByCalendlyUserUri(userUri);
+    if (!match) return;
+
+    const invitee = payload.invitee as Record<string, unknown> | undefined;
+    const name = String(invitee?.name || payload.name || 'Calendly Lead');
+    const email = String(invitee?.email || payload.email || '');
+    const qna = payload.questions_and_answers as unknown[];
+    const notes = qna ? JSON.stringify(qna, null, 2) : null;
+
+    if (!email) return;
+
+    // Push routing form submissions into leads table
+    const { data: existing } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('tenant_id', match.tenantId)
+        .eq('email', email)
+        .maybeSingle();
+
+    if (!existing) {
+        await supabase.from('leads').insert({
+            tenant_id: match.tenantId,
+            name,
+            email,
+            source: 'calendly_routing_form',
+            status: 'new',
+            notes,
+            metadata: { calendly_routing_payload: payload },
+        });
+    }
 }

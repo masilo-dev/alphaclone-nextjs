@@ -34,14 +34,18 @@ export async function refreshCalendlyToken(
   if (!config.refreshToken || !config.expiresAt) return config;
   if (new Date(config.expiresAt).getTime() >= Date.now() + 5 * 60_000) return config;
 
+  const clientId = ENV.VITE_CALENDLY_CLIENT_ID || '';
+  const clientSecret = ENV.CALENDLY_CLIENT_SECRET || '';
   const tokenRes = await fetch('https://auth.calendly.com/oauth/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      // OAuth 2.1 / Calendly refresh token rotation requires Basic Auth header
+      'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+    },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: config.refreshToken,
-      client_id: ENV.VITE_CALENDLY_CLIENT_ID || '',
-      client_secret: ENV.CALENDLY_CLIENT_SECRET || '',
     }),
   });
 
@@ -238,7 +242,17 @@ export async function registerCalendlyWebhook(
     },
     body: JSON.stringify({
       url: callbackUrl,
-      events: ['invitee.created', 'invitee.canceled', 'invitee.no_show.created'],
+      events: [
+        'invitee.created',
+        'invitee.canceled',
+        'invitee.no_show.created',
+        // New events: meeting recap (Oct 2025), contacts (May 2026), routing forms
+        'meeting_recap.created',
+        'routing_form_submission.created',
+        'contact.created',
+        'contact.updated',
+        'contact.deleted',
+      ],
       user: calendlyUserUri,
       scope: 'user',
     }),
@@ -322,4 +336,130 @@ export async function pullAndSyncCalendlyEvents(
   }
 
   return { syncedCount, totalActive: allEvents.length };
+}
+
+// ── Calendly Contacts API (May 2026) ──────────────────────────────────────────
+
+export interface CalendlyContact {
+  uri: string;
+  name: string;
+  email: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Fetch all Calendly contacts for the authenticated user
+ */
+export async function getCalendlyContacts(
+  tenantId: string,
+  config: CalendlyTenantConfig
+): Promise<CalendlyContact[]> {
+  const refreshed = await refreshCalendlyToken(tenantId, config);
+  const contacts: CalendlyContact[] = [];
+  let nextPage: string | null =
+    `https://api.calendly.com/contacts?user=${encodeURIComponent(refreshed.calendlyUserUri)}&count=100`;
+  let pages = 0;
+
+  while (nextPage && pages < 20) {
+    const res: Response = await fetch(nextPage, {
+      headers: { Authorization: `Bearer ${refreshed.accessToken}` },
+    });
+    if (!res.ok) break;
+    const data: { collection?: CalendlyContact[]; pagination?: { next_page?: string } } = await res.json();
+    contacts.push(...(data.collection || []));
+    nextPage = data.pagination?.next_page || null;
+    pages++;
+  }
+
+  return contacts;
+}
+
+/**
+ * Create or update a Calendly contact
+ */
+export async function upsertCalendlyContact(
+  tenantId: string,
+  config: CalendlyTenantConfig,
+  contact: { name: string; email: string }
+): Promise<CalendlyContact | null> {
+  const refreshed = await refreshCalendlyToken(tenantId, config);
+  const res = await fetch('https://api.calendly.com/contacts', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${refreshed.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user: refreshed.calendlyUserUri,
+      name: contact.name,
+      email: contact.email,
+    }),
+  });
+
+  if (!res.ok) {
+    console.warn('[Calendly Contacts] upsert failed:', res.status, await res.text());
+    return null;
+  }
+
+  const data = await res.json();
+  return data.resource || null;
+}
+
+/**
+ * Delete a Calendly contact by its URI
+ */
+export async function deleteCalendlyContact(
+  tenantId: string,
+  config: CalendlyTenantConfig,
+  contactUri: string
+): Promise<boolean> {
+  const refreshed = await refreshCalendlyToken(tenantId, config);
+  const uuid = contactUri.split('/').pop();
+  const res = await fetch(`https://api.calendly.com/contacts/${uuid}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${refreshed.accessToken}` },
+  });
+  return res.ok || res.status === 404;
+}
+
+/**
+ * Sync CRM clients into Calendly Contacts — bidirectional bridge.
+ * Reads all business_clients for the tenant and pushes them to Calendly.
+ */
+export async function syncCRMClientsToCalendlyContacts(
+  tenantId: string,
+  config: CalendlyTenantConfig
+): Promise<{ synced: number; failed: number }> {
+  const supabase = createSupabaseAdminClient();
+  const { data: clients } = await supabase
+    .from('business_clients')
+    .select('id, name, email')
+    .eq('tenant_id', tenantId)
+    .not('email', 'is', null);
+
+  if (!clients || clients.length === 0) return { synced: 0, failed: 0 };
+
+  let synced = 0;
+  let failed = 0;
+
+  for (const client of clients) {
+    if (!client.email) continue;
+    const result = await upsertCalendlyContact(tenantId, config, {
+      name: client.name,
+      email: client.email,
+    });
+    if (result) {
+      // Store the Calendly contact URI back on the client record
+      await supabase
+        .from('business_clients')
+        .update({ custom_fields: { calendly_contact_uri: result.uri } })
+        .eq('id', client.id);
+      synced++;
+    } else {
+      failed++;
+    }
+  }
+
+  return { synced, failed };
 }
