@@ -99,9 +99,13 @@ export const campaignService = {
      */
     async createCampaign(campaign: {
         name: string;
-        subject: string;
-        from_name: string;
-        from_email: string;
+        subject?: string;
+        body?: string;
+        type?: string;
+        status?: string;
+        from_name?: string;
+        from_email?: string;
+        tenantId?: string;
         template_id?: string;
         scheduled_at?: string;
         segment_filter?: Record<string, any>;
@@ -346,12 +350,12 @@ export const campaignService = {
             if (error) throw error;
 
             const total = recipients?.length || 0;
-            const sent = recipients?.filter(r => r.status !== 'pending').length || 0;
-            const delivered = recipients?.filter(r => r.status === 'delivered' || r.status === 'opened' || r.status === 'clicked').length || 0;
-            const opened = recipients?.filter(r => r.status === 'opened' || r.status === 'clicked').length || 0;
-            const clicked = recipients?.filter(r => r.status === 'clicked').length || 0;
-            const bounced = recipients?.filter(r => r.status === 'bounced').length || 0;
-            const unsubscribed = recipients?.filter(r => r.status === 'unsubscribed').length || 0;
+            const sent = recipients?.filter((r: { status: string }) => r.status !== 'pending').length || 0;
+            const delivered = recipients?.filter((r: { status: string }) => r.status === 'delivered' || r.status === 'opened' || r.status === 'clicked').length || 0;
+            const opened = recipients?.filter((r: { status: string }) => r.status === 'opened' || r.status === 'clicked').length || 0;
+            const clicked = recipients?.filter((r: { status: string }) => r.status === 'clicked').length || 0;
+            const bounced = recipients?.filter((r: { status: string }) => r.status === 'bounced').length || 0;
+            const unsubscribed = recipients?.filter((r: { status: string }) => r.status === 'unsubscribed').length || 0;
 
             return {
                 analytics: {

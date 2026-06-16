@@ -375,4 +375,33 @@ export const microsoftGraphService = {
     });
     return { success: true };
   },
+
+  async createOnlineMeeting(input: {
+    subject: string;
+    participants?: { email: string }[];
+    startDateTime?: string;
+    endDateTime?: string;
+  }) {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour default
+    const meeting = await graphRequest<any>('/me/onlineMeetings', {
+      method: 'POST',
+      body: {
+        subject: input.subject,
+        startDateTime: input.startDateTime || now.toISOString(),
+        endDateTime: input.endDateTime || end.toISOString(),
+        participants: {
+          attendees: (input.participants || []).map((p) => ({
+            upn: p.email,
+          })),
+        },
+      },
+    });
+    return {
+      id: meeting.id,
+      subject: meeting.subject,
+      joinUrl: meeting.joinWebUrl || meeting.joinUrl || '',
+      chatInfo: meeting.chatInfo,
+    };
+  },
 };
