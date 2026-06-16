@@ -67,10 +67,13 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ token:
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     const filename = sanitizeFilename(`Quote_${quote.quote_number || token}.pdf`);
 
+    const isDownload = _req.nextUrl.searchParams.get('download') === 'true';
+    const disposition = isDownload ? 'attachment' : 'inline';
+
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${filename}"`,
+        'Content-Disposition': `${disposition}; filename="${filename}"`,
       },
     });
   } catch (error) {

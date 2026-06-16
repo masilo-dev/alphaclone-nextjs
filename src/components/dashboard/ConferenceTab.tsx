@@ -159,29 +159,48 @@ const ConferenceTab: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto pb-20 bg-slate-950 divide-y divide-white/5">
-        {filtered.map(room => (
-          <button key={room.id} onClick={() => setPreJoinRoom(room)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left">
-            <div className="relative flex-shrink-0">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${room.status === 'live' ? 'bg-red-500/20' : 'bg-slate-800'}`}>
-                <Video className={`w-5 h-5 ${room.status === 'live' ? 'text-red-400' : 'text-slate-400'}`} />
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
+              <Video className="w-8 h-8 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">No Meetings Found</h3>
+            <p className="text-slate-400 text-sm max-w-xs">
+              {filter === 'all' 
+                ? 'You haven\'t joined any meetings yet. Create or join a meeting to get started.'
+                : `No ${filter} meetings available. Try a different filter or create a new meeting.`
+              }
+            </p>
+            <button className="mt-6 px-6 py-3 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-xl transition-all">
+              <Plus className="w-4 h-4 inline mr-2" />
+              Create Meeting
+            </button>
+          </div>
+        ) : (
+          filtered.map(room => (
+            <button key={room.id} onClick={() => setPreJoinRoom(room)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left">
+              <div className="relative flex-shrink-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${room.status === 'live' ? 'bg-red-500/20' : 'bg-slate-800'}`}>
+                  <Video className={`w-5 h-5 ${room.status === 'live' ? 'text-red-400' : 'text-slate-400'}`} />
+                </div>
+                {room.status === 'live' && (
+                  <span className="absolute -top-1 -right-1 flex items-center gap-0.5 bg-red-500 rounded-full px-1.5 py-0.5">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                    <span className="text-[8px] font-black text-white">LIVE</span>
+                  </span>
+                )}
               </div>
-              {room.status === 'live' && (
-                <span className="absolute -top-1 -right-1 flex items-center gap-0.5 bg-red-500 rounded-full px-1.5 py-0.5">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                  <span className="text-[8px] font-black text-white">LIVE</span>
-                </span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[15px] font-bold text-white truncate">{room.name}</div>
-              {room.scheduledAt && <div className="text-[13px] text-slate-500 opacity-55">{new Date(room.scheduledAt).toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</div>}
-              {room.status === 'ended' && <div className="text-[13px] text-slate-500 opacity-55">Ended</div>}
-            </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full flex-shrink-0">
-              {room.participants} <Users className="w-3 h-3 inline" />
-            </span>
-          </button>
-        ))}
+              <div className="flex-1 min-w-0">
+                <div className="text-[15px] font-bold text-white truncate">{room.name}</div>
+                {room.scheduledAt && <div className="text-[13px] text-slate-500 opacity-55">{new Date(room.scheduledAt).toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</div>}
+                {room.status === 'ended' && <div className="text-[13px] text-slate-500 opacity-55">Ended</div>}
+              </div>
+              <span className="text-[11px] font-bold px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full flex-shrink-0">
+                {room.participants} <Users className="w-3 h-3 inline" />
+              </span>
+            </button>
+          ))
+        )}
       </div>
 
       <button className="fixed bottom-20 right-4 w-14 h-14 bg-red-500 rounded-full flex items-center justify-center shadow-lg shadow-red-500/30 z-30">

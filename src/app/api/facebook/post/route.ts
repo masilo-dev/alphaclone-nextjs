@@ -72,6 +72,55 @@ export async function POST(req: NextRequest) {
 
     if (imageUrl) body.url = imageUrl;
 
+    // Also post to Instagram if connected
+    const { data: instagramAccount } = await supabase
+        .from('facebook_integrations')
+        .select('instagram_account_id, instagram_access_token')
+        .eq('user_id', user.id)
+        .eq('page_id', pageId)
+        .eq('is_active', true)
+        .single();
+
+    if (instagramAccount?.instagram_account_id && instagramAccount?.instagram_access_token) {
+        try {
+            const igBody: Record<string, string> = {
+                caption: message,
+                access_token: instagramAccount.instagram_access_token,
+            };
+            if (imageUrl) {
+                igBody.image_url = imageUrl;
+                const igRes = await fetch(
+                    `https://graph.facebook.com/v19.0/${instagramAccount.instagram_account_id}/media`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(igBody),
+                    }
+                );
+                const igData = await igRes.json();
+                if (igData.id) {
+                    // Publish the media
+                    await fetch(
+                        `https://graph.facebook.com/v19.0/${instagramAccount.instagram_account_id}/media_publish`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                creation_id: igData.id,
+                                access_token: instagramAccount.instagram_access_token,
+                            }),
+                        }
+                    );
+                }
+            } else {
+                // Carousel or simple post not supported for Instagram without media
+                console.log('Instagram post requires media (image/video)');
+            }
+        } catch (igErr) {
+            console.error('Instagram posting failed:', igErr);
+        }
+    }
+
     let res: Response;
     try {
         res = await fetchWithRetry(endpoint, {
@@ -118,6 +167,82 @@ export async function POST(req: NextRequest) {
             { error: 'Failed to post to Facebook', code: 'FACEBOOK_GRAPH_ERROR' },
             { status: 400 }
         );
+    }
+
+    // Also post to LinkedIn if connected
+    const { data: linkedinIntegration } = await supabase
+        .from('linkedin_integrations')
+        .select('access_token, organization_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    if (linkedinIntegration?.access_token) {
+        try {
+            const liBody: Record<string, any> = {
+                author: `urn:li:organization:${linkedinIntegration.organization_id}`,
+                lifecycleState: 'PUBLISHED',
+                specificContent: {
+                    'com.linkedin.ugc.ShareContent': {
+                        shareCommentary: {
+                            text: message,
+                        },
+                        shareMediaCategory: imageUrl ? 'IMAGE' : 'NONE',
+                    },
+                },
+                visibility: {
+                    'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+                },
+            };
+
+            if (imageUrl) {
+                // Register image upload first
+                const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${linkedinIntegration.access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        registerUploadRequest: {
+                            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                            owner: `urn:li:organization:${linkedinIntegration.organization_id}`,
+                            serviceRelationships: [{
+                                relationshipType: 'OWNER',
+                                identifier: 'urn:li:userGeneratedContent',
+                            }],
+                        },
+                    }),
+                });
+                const registerData = await registerRes.json();
+                const uploadUrl = registerData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+                if (uploadUrl) {
+                    // Upload image
+                    const imageRes = await fetch(imageUrl);
+                    const imageBlob = await imageRes.blob();
+                    await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'image/jpeg' },
+                        body: imageBlob,
+                    });
+                    liBody.specificContent['com.linkedin.ugc.ShareContent'].media = [{
+                        status: 'READY',
+                        media: registerData.value.asset,
+                    }];
+                }
+            }
+
+            await fetch('https://api.linkedin.com/v2/ugcPosts', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${linkedinIntegration.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(liBody),
+            });
+        } catch (liErr) {
+            console.error('LinkedIn posting failed:', liErr);
+        }
     }
 
     return NextResponse.json({ success: true, post_id: data.id || data.post_id });

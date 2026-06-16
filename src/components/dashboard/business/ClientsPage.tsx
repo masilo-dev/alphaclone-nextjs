@@ -1085,16 +1085,28 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                     )}
                                                                 </div>
                                                                 {inv.metadata?.invoice_id && (
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className="text-teal-400 hover:text-teal-300"
-                                                                        onClick={() => {
-                                                                            window.open(`/api/billing/invoices/${inv.metadata.invoice_id}/download`, '_blank');
-                                                                        }}
-                                                                    >
-                                                                        Download
-                                                                    </Button>
+                                                                    <div className="flex gap-2">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="text-teal-400 hover:text-teal-300"
+                                                                            onClick={() => {
+                                                                                window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf`, '_blank');
+                                                                            }}
+                                                                        >
+                                                                            View PDF
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="text-blue-400 hover:text-blue-300"
+                                                                            onClick={() => {
+                                                                                window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf?download=true`, '_blank');
+                                                                            }}
+                                                                        >
+                                                                            Download
+                                                                        </Button>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         );

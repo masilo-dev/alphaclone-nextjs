@@ -26,4 +26,8 @@ export type PlatformEnvStatus = {
   anthropic: boolean;
   openai: boolean;
   gemini: boolean;
+  whatsapp: boolean;
+  linkedin: boolean;
+  instagram: boolean;
+  twitter: boolean;
 };
