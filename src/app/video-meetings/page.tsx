@@ -7,7 +7,7 @@ import { absoluteUrl } from '@/lib/siteUrl';
 export const metadata: Metadata = {
   title: 'AlphaClone Video Meetings | Built-In Business Meetings',
   description:
-    'AlphaClone video meetings provide integrated business conferencing connected to CRM records, projects, and follow-up workflows.',
+    'AlphaClone video meetings provide integrated business conferencing connected to CRM records, projects, and follow-up workflows. No video demo required.',
   keywords: [
     'AlphaClone video meetings',
     'business video meetings',

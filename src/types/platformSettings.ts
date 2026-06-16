@@ -12,6 +12,23 @@ export type PlatformGlobalSettings = {
   support?: {
     docsUrl?: string;
   };
+  compliance?: {
+    gdprEnabled?: boolean;
+    ccpaEnabled?: boolean;
+    cookieConsentEnabled?: boolean;
+    dataProcessingAgreementUrl?: string;
+    privacyPolicyUrl?: string;
+    termsOfServiceUrl?: string;
+  };
+  emailProviders?: {
+    zohoEnabled?: boolean;
+    outlookEnabled?: boolean;
+    gmailEnabled?: boolean;
+    sendgridEnabled?: boolean;
+    resendEnabled?: boolean;
+    brevoEnabled?: boolean;
+    customSmtpEnabled?: boolean;
+  };
 };
 
 export type PlatformEnvStatus = {
@@ -30,4 +47,8 @@ export type PlatformEnvStatus = {
   linkedin: boolean;
   instagram: boolean;
   twitter: boolean;
+  zoho: boolean;
+  outlook: boolean;
+  gmail: boolean;
+  deepseek: boolean;
 };

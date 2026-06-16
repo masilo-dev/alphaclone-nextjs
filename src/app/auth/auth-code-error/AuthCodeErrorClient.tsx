@@ -18,6 +18,12 @@ export default function AuthCodeErrorClient() {
         <p className="text-sm text-slate-400">
           {error === 'linkedin_sync_failed'
             ? 'Your account signed in, but LinkedIn could not be connected. You can retry from Settings → Integrations.'
+            : error === 'zoho_auth_failed'
+            ? 'Zoho Mail authentication failed. Please try connecting your Zoho account again from Settings → Integrations.'
+            : error === 'outlook_auth_failed'
+            ? 'Microsoft Outlook authentication failed. Please try connecting your Microsoft account again from Settings → Integrations.'
+            : error === 'gmail_auth_failed'
+            ? 'Gmail authentication failed. Please try connecting your Google account again from Settings → Integrations.'
             : 'The authorization code was invalid or expired. Please try signing in again.'}
         </p>
         <div className="flex flex-col gap-2 pt-2">

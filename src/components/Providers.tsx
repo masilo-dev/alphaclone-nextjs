@@ -11,6 +11,7 @@ import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
+import CookieConsent from '@/components/legal/CookieConsent';
 
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -44,6 +45,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                                 <TenantProvider>
                                     <BackgroundTaskProvider>
                                         {children}
+                                        <CookieConsent />
                                     </BackgroundTaskProvider>
                                 </TenantProvider>
                             </AuthProvider>
