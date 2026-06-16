@@ -7,18 +7,19 @@ import { absoluteUrl } from '@/lib/siteUrl';
 export const metadata: Metadata = {
   title: 'AlphaClone Claude and Manus Integrations',
   description:
-    'Use Claude and Manus integrations with AlphaClone to support AI-assisted CRM, lead research, project execution, and business workflow automation.',
+    'Use Claude and Manus integrations with AlphaClone to support AI-assisted CRM, lead research, project execution, and business workflow automation. Also supports DeepSeek V3/R1.',
   keywords: [
     'AlphaClone Claude integration',
     'AlphaClone Manus integration',
     'Claude MCP integration',
     'Manus MCP integration',
     'AI integrations for CRM',
+    'DeepSeek',
   ],
   alternates: { canonical: absoluteUrl('/claude-manus-integrations') },
   openGraph: {
     title: 'AlphaClone Claude and Manus Integrations',
-    description: 'Connect Claude and Manus workflows to AlphaClone business operations.',
+    description: 'Connect Claude, Manus, and DeepSeek workflows to AlphaClone business operations.',
     url: absoluteUrl('/claude-manus-integrations'),
     type: 'website',
   },
@@ -42,7 +43,7 @@ export default function ClaudeManusIntegrationsPage() {
           <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <h1 className="text-4xl font-black text-white mb-4">Claude and Manus Integrations</h1>
             <p className="text-slate-300 mb-6">
-              AlphaClone supports AI integration patterns that help businesses execute CRM, lead, and project workflows with assisted intelligence.
+              AlphaClone supports AI integration patterns that help businesses execute CRM, lead, and project workflows with assisted intelligence. Also supports DeepSeek V3/R1.
             </p>
             <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 text-sm text-slate-300">
               <ul className="space-y-2">
@@ -50,6 +51,7 @@ export default function ClaudeManusIntegrationsPage() {
                 <li>Lead research and qualification support workflows</li>
                 <li>Drafting and automation support across revenue operations</li>
                 <li>Business-controlled execution with platform policies</li>
+                <li>DeepSeek V3/R1 support for intelligent reasoning</li>
               </ul>
             </div>
             <MarketingRelatedLinks

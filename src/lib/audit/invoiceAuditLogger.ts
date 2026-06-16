@@ -27,6 +27,7 @@ interface LogEventParams {
  * Logs an event to the immutable invoice_audit_log table.
  * This table is INSERT-only at the RLS policy level — no updates or deletes.
  * Safe to call in a fire-and-forget pattern (swallows errors to avoid breaking callers).
+ * Compliant with GDPR Article 30 (records of processing activities).
  */
 export async function logInvoiceEvent({
   invoiceId,

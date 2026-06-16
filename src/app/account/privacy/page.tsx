@@ -11,6 +11,8 @@ type Prefs = {
   product_updates: boolean;
   marketing: boolean;
   sms: boolean;
+  gdpr_consent: boolean;
+  cookie_consent: boolean;
 };
 
 const DEFAULT_PREFS: Prefs = {
@@ -18,6 +20,8 @@ const DEFAULT_PREFS: Prefs = {
   product_updates: true,
   marketing: false,
   sms: false,
+  gdpr_consent: false,
+  cookie_consent: false,
 };
 
 export default function PrivacyCenterPage() {
@@ -31,6 +35,7 @@ export default function PrivacyCenterPage() {
     { label: 'Microsoft', connected: false },
     { label: 'Meta', connected: false },
     { label: 'LinkedIn', connected: false },
+    { label: 'Zoho', connected: false },
   ]);
 
   useEffect(() => {
@@ -43,6 +48,8 @@ export default function PrivacyCenterPage() {
           product_updates: data.communication_prefs.product_updates !== false,
           marketing: Boolean(data.communication_prefs.marketing),
           sms: Boolean(data.communication_prefs.sms),
+          gdpr_consent: Boolean(data.communication_prefs.gdpr_consent),
+          cookie_consent: Boolean(data.communication_prefs.cookie_consent),
         });
       }
     };
@@ -121,7 +128,7 @@ export default function PrivacyCenterPage() {
           <p className="text-xs uppercase tracking-[0.25em] text-teal-400">Account Privacy</p>
           <h1 className="mt-2 text-4xl font-semibold text-white">Privacy & Consent Center</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">
-            Review what AlphaClone stores, manage your communication preferences, and trigger export or deletion flows
+            Review what AlphaClone stores, manage your communication preferences, GDPR consent, and trigger export or deletion flows
             from one place.
           </p>
         </div>
@@ -132,6 +139,7 @@ export default function PrivacyCenterPage() {
             <div className="mt-4 space-y-2 text-sm text-slate-300">
               <p>Account created: {user ? 'Available in profile data' : 'Sign in required'}</p>
               <p>Stored data: profile, CRM data, emails sent, invoices, and contracts.</p>
+              <p>Email providers: Zoho, Outlook, Gmail, SendGrid, Resend, Brevo</p>
             </div>
             <div className="mt-5">
               <button
@@ -152,6 +160,8 @@ export default function PrivacyCenterPage() {
               <ToggleRow label="Product updates / changelog" checked={prefs.product_updates} onToggle={() => setPrefs((prev) => ({ ...prev, product_updates: !prev.product_updates }))} description="Optional product updates and release notes." />
               <ToggleRow label="Marketing emails" checked={prefs.marketing} onToggle={() => setPrefs((prev) => ({ ...prev, marketing: !prev.marketing }))} description="Promotional emails and announcements." />
               <ToggleRow label="SMS notifications" checked={prefs.sms} onToggle={() => setPrefs((prev) => ({ ...prev, sms: !prev.sms }))} description="Text message alerts and reminders." />
+              <ToggleRow label="GDPR Consent" checked={prefs.gdpr_consent} onToggle={() => setPrefs((prev) => ({ ...prev, gdpr_consent: !prev.gdpr_consent }))} description="Consent to data processing under GDPR Article 6." />
+              <ToggleRow label="Cookie Consent" checked={prefs.cookie_consent} onToggle={() => setPrefs((prev) => ({ ...prev, cookie_consent: !prev.cookie_consent }))} description="Consent to non-essential cookies." />
             </div>
             <div className="mt-5 flex items-center gap-3">
               <button

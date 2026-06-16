@@ -247,6 +247,33 @@ export function ResendIntegration() {
       };
     }
     
+    if (errorMessage.includes('zoho') || errorMessage.includes('Zoho')) {
+      return {
+        title: 'Zoho Mail Error',
+        message: 'There was an issue with the Zoho Mail integration.',
+        suggestion: 'Please check your Zoho Mail connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('outlook') || errorMessage.includes('Outlook') || errorMessage.includes('microsoft')) {
+      return {
+        title: 'Microsoft Outlook Error',
+        message: 'There was an issue with the Microsoft Outlook integration.',
+        suggestion: 'Please check your Outlook connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('gmail') || errorMessage.includes('Gmail') || errorMessage.includes('google')) {
+      return {
+        title: 'Gmail Error',
+        message: 'There was an issue with the Gmail integration.',
+        suggestion: 'Please check your Gmail connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
     // Default friendly error
     return {
       title: 'Email Sending Failed',

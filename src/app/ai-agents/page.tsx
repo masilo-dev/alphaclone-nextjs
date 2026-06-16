@@ -7,18 +7,19 @@ import { absoluteUrl } from '@/lib/siteUrl';
 export const metadata: Metadata = {
   title: 'AlphaClone AI Agents | Business Automation Agents',
   description:
-    'AlphaClone AI agents execute business workflows across CRM, lead operations, project delivery, and communication tasks with policy controls.',
+    'AlphaClone AI agents execute business workflows across CRM, lead operations, project delivery, and communication tasks with policy controls. Integrated with DeepSeek V3/R1 for intelligent automation.',
   keywords: [
     'AlphaClone AI agents',
     'business AI agents',
     'AI workflow automation',
     'autonomous business agents',
     'AlphaClone AI automation',
+    'DeepSeek',
   ],
   alternates: { canonical: absoluteUrl('/ai-agents') },
   openGraph: {
     title: 'AlphaClone AI Agents',
-    description: 'Automate business workflows with AlphaClone AI agents.',
+    description: 'Automate business workflows with AlphaClone AI agents powered by DeepSeek V3/R1.',
     url: absoluteUrl('/ai-agents'),
     type: 'website',
   },
@@ -42,7 +43,7 @@ export default function AiAgentsPage() {
           <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <h1 className="text-4xl font-black text-white mb-4">AlphaClone AI Agents</h1>
             <p className="text-slate-300 mb-6">
-              Run automation agents for lead qualification, follow-up preparation, and operational execution inside one platform.
+              Run automation agents for lead qualification, follow-up preparation, and operational execution inside one platform. Powered by DeepSeek V3/R1 for intelligent reasoning.
             </p>
             <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 text-sm text-slate-300">
               <ul className="space-y-2">
@@ -50,6 +51,7 @@ export default function AiAgentsPage() {
                 <li>Task generation with due-date awareness</li>
                 <li>Workflow execution from conversational commands</li>
                 <li>Controlled automation with approval and policy gating</li>
+                <li>Powered by DeepSeek V3/R1 for intelligent reasoning</li>
               </ul>
             </div>
             <MarketingRelatedLinks

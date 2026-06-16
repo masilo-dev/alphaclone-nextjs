@@ -142,6 +142,11 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                                             <Mail size={12} className="text-teal-400/50" />
                                             {lead.email}
                                         </div>
+                                        {lead.email && (
+                                          <div className="flex items-center gap-1 font-medium text-[10px] text-gray-600">
+                                            <span>Send via: Zoho / Outlook / Gmail</span>
+                                          </div>
+                                        )}
                                         {lead.industry && (
                                             <div className="flex items-center gap-1 font-medium">
                                                 <Briefcase size={12} className="text-gray-600" />
