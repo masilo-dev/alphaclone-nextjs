@@ -412,13 +412,25 @@ export const workflowService = {
 
             case 'ai_draft_email': {
                 try {
-                    const { generateText } = await import('./unifiedAIService');
-                    const result = await generateText(
-                        `You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise.`,
-                        2048
-                    );
-                    context.emailDraft = result.text || '';
-                    context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
+                    const deepSeekKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
+                    
+                    if (deepSeekKey) {
+                        const { callDeepSeek } = await import('@/lib/ai/deepseek');
+                        const result = await callDeepSeek(
+                            `You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise. Write in plain text only — no markdown.`,
+                            { model: 'deepseek-chat', maxTokens: 2048, temperature: 0.7 }
+                        );
+                        context.emailDraft = result || '';
+                        context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
+                    } else {
+                        const { generateText } = await import('./unifiedAIService');
+                        const result = await generateText(
+                            `You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise.`,
+                            2048
+                        );
+                        context.emailDraft = result.text || '';
+                        context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
+                    }
                     return { success: true, error: null };
                 } catch {
                     return { success: true, error: null };
@@ -427,12 +439,23 @@ export const workflowService = {
 
             case 'ai_generate_contract': {
                 try {
-                    const { generateText } = await import('./unifiedAIService');
-                    const result = await generateText(
-                        `You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses.`,
-                        4096
-                    );
-                    context.contractContent = result.text || '';
+                    const deepSeekKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
+                    
+                    if (deepSeekKey) {
+                        const { callDeepSeek } = await import('@/lib/ai/deepseek');
+                        const result = await callDeepSeek(
+                            `You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses. Write in plain professional text only — no markdown.`,
+                            { model: 'deepseek-chat', maxTokens: 4096, temperature: 0.3 }
+                        );
+                        context.contractContent = result || '';
+                    } else {
+                        const { generateText } = await import('./unifiedAIService');
+                        const result = await generateText(
+                            `You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses.`,
+                            4096
+                        );
+                        context.contractContent = result.text || '';
+                    }
                     return { success: true, error: null };
                 } catch {
                     return { success: true, error: null };

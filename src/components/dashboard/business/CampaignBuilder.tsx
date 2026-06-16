@@ -410,6 +410,36 @@ Request: ${userMsg}`,
         if (!form.subject) { toast.error('Enter a subject line first'); return; }
         setAiGenerating(true);
         try {
+            // Try DeepSeek first if API key is configured
+            const deepSeekKey = typeof process !== 'undefined' && 
+                (process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY);
+
+            if (deepSeekKey) {
+                try {
+                    const { callDeepSeek } = await import('@/lib/ai/deepseek');
+                    const prompt = `Write a plain-language, high-converting HTML campaign email body.
+Campaign goal: ${campaignGoal || 'Keep it simple and useful.'}
+Subject: "${form.subject}"
+${getCampaignLanguageInstruction({ languageMode: form.languageMode })}
+
+Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`;
+
+                    const text = await callDeepSeek(prompt, {
+                        model: 'deepseek-chat',
+                        maxTokens: 2048,
+                        temperature: 0.7,
+                    });
+
+                    if (text) {
+                        setForm(f => ({ ...f, bodyHtml: text }));
+                        setAiGenerating(false);
+                        return;
+                    }
+                } catch (deepSeekError) {
+                    console.warn('DeepSeek generation failed, falling back:', deepSeekError);
+                }
+            }
+
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
