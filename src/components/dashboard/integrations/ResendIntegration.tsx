@@ -51,6 +51,10 @@ export function ResendIntegration() {
   const checkResendStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=resend&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('Resend status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.resend) {

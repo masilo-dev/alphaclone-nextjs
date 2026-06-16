@@ -40,8 +40,12 @@ export function ModuleIntelligenceCard({
           `/api/intelligence/system?tenantId=${encodeURIComponent(tenantId)}&module=${encodeURIComponent(moduleKey)}`,
           { credentials: 'include' }
         );
+        if (!response.ok) {
+          console.warn('Intelligence API not available');
+          if (active) setData(null);
+          return;
+        }
         const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Failed');
         if (active) setData(payload.data as ModulePayload);
       } catch {
         if (active) setData(null);

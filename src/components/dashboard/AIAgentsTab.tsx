@@ -121,6 +121,8 @@ const AIAgentsTab: React.FC = () => {
         const trigData = await trigRes.json();
         setRuns(trigData.runs || []);
         setApprovals(trigData.approvals || []);
+      } else {
+        console.warn('Autonomous trigger API not available');
       }
       if (rulesRes.ok) {
         const rulesData = await rulesRes.json();
@@ -136,6 +138,8 @@ const AIAgentsTab: React.FC = () => {
             email_provider: rulesData.rules.email_provider || 'system_default',
           });
         }
+      } else {
+        console.warn('Autonomous rules API not available');
       }
     } catch (error) {
       console.error('Failed to load autonomous analytics:', error);

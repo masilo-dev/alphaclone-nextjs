@@ -101,16 +101,17 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
         setIsLoadingContacts(true);
         try {
             const response = await fetch(`/api/hubspot/sync?userId=${user.id}`);
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch contacts');
+                console.warn('HubSpot API not available, showing empty state');
+                setContacts([]);
+                return;
             }
+            const data = await response.json();
 
             setContacts(data.contacts || []);
         } catch (err: any) {
             console.error('Error fetching HubSpot contacts:', err);
-            toast.error(err.message || 'Failed to load HubSpot contacts');
+            setContacts([]);
         } finally {
             setIsLoadingContacts(false);
         }

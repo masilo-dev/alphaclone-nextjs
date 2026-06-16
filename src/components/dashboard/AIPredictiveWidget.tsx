@@ -39,6 +39,7 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
             }
         } catch (error) {
             console.error('Failed to load insights:', error);
+            setInsights([]);
         } finally {
             setLoading(false);
         }

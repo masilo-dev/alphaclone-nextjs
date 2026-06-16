@@ -141,29 +141,31 @@ const BusinessPerformanceDashboard: React.FC = () => {
         animate="show"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
-        {/* Pipeline Health */}
+        {/* Revenue Today */}
         <motion.div variants={item}>
           <Card className="p-6 relative overflow-hidden group border-slate-800 bg-slate-900/40 backdrop-blur-md">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Users className="w-12 h-12 text-blue-400" />
+              <DollarSign className="w-12 h-12 text-emerald-400" />
             </div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                <Activity className="w-5 h-5" />
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                <DollarSign className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-medium text-slate-300">Pipeline Health</h3>
+              <h3 className="text-sm font-medium text-slate-300">Revenue Today</h3>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{(data?.businessOS?.pipeline?.stats || []).reduce((s: any, c: any) => s + (c?.dealCount || 0), 0)}</span>
-                <span className="text-xs text-slate-400 mb-1">Active Deals</span>
+                <span className="text-2xl font-bold text-white">{formatCurrency(data?.revenue?.thisMonth ?? 0)}</span>
+                <span className="text-xs text-slate-400 mb-1">This Month</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Weighted Value</span>
-                <span className="text-blue-400 font-mono font-bold">{formatCurrency(data?.businessOS?.pipeline?.weightedValue ?? 0)}</span>
+                <span className="text-slate-500">Trend</span>
+                <span className={`font-mono font-bold ${(data?.revenue?.trend ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {(data?.revenue?.trend ?? 0) >= 0 ? '+' : ''}{(data?.revenue?.trend ?? 0).toFixed(1)}%
+                </span>
               </div>
               <div className="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
-                <div className="bg-blue-500 h-full rounded-full" style={{ width: '65%' }} />
+                <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.min(Math.abs(data?.revenue?.trend ?? 0) * 10, 100)}%` }} />
               </div>
             </div>
           </Card>

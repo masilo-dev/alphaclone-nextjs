@@ -33,8 +33,18 @@ const CampaignList: React.FC = () => {
     const loadCampaigns = useCallback(async () => {
         if (!currentTenant?.id) return;
         setLoading(true);
-        const { campaigns: data, error } = await campaignService.getCampaigns();
-        if (!error) setCampaigns(data);
+        try {
+            const { campaigns: data, error } = await campaignService.getCampaigns();
+            if (!error) {
+                setCampaigns(data);
+            } else {
+                console.warn('Failed to load campaigns:', error);
+                setCampaigns([]);
+            }
+        } catch (err) {
+            console.warn('Campaign service not available:', err);
+            setCampaigns([]);
+        }
         setLoading(false);
     }, [currentTenant?.id]);
 
