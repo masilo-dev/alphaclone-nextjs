@@ -360,3 +360,139 @@ const addFooter = (doc: jsPDF, pageWidth: number, pageHeight: number) => {
         doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
     }
 };
+
+/**
+ * Invoice PDF generator
+ */
+export interface InvoiceItem {
+    id: string;
+    invoiceId: string;
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+}
+
+export interface InvoiceData {
+    id: string;
+    invoiceNumber: string;
+    status: string;
+    subtotal: number;
+    taxRate: number;
+    tax: number;
+    discountAmount: number;
+    total: number;
+    currency: string;
+    dueDate?: string;
+    issueDate?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export const generateInvoicePDF = (
+    invoice: InvoiceData,
+    items: InvoiceItem[],
+    tenant: Tenant
+) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const brandColor = tenant?.brand_color_primary || '#0f172a';
+    const accentColor = tenant?.brand_color_secondary || '#14b8a6';
+    const currency = invoice.currency || 'USD';
+    const fmt = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val);
+
+    // Header bar
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageWidth, 34, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', pageWidth - 20, 16, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`#${invoice.invoiceNumber}`, pageWidth - 20, 24, { align: 'right' });
+
+    // Company name
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 22);
+
+    // Meta chips
+    const chipY = 44;
+    const chip = (label: string, value: string, x: number, width: number) => {
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(x, chipY, width, 16, 3, 3);
+        doc.setFontSize(7);
+        doc.setTextColor(100, 116, 139);
+        doc.text(label.toUpperCase(), x + 3, chipY + 5);
+        doc.setFontSize(9);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.text(value, x + 3, chipY + 11.5);
+        doc.setFont('helvetica', 'normal');
+    };
+
+    chip('Status', invoice.status || 'draft', 20, 35);
+    chip('Issue Date', invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : new Date(invoice.createdAt).toLocaleDateString(), 58, 44);
+    chip('Due Date', invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'On receipt', 105, 44);
+    chip('Currency', currency, 152, 30);
+
+    // Line items table
+    const tableColumn = ['Description', 'Qty', 'Rate', 'Amount'];
+    const tableRows = items.map(item => [
+        item.description || '',
+        item.quantity,
+        fmt(item.rate),
+        fmt(item.amount),
+    ]);
+
+    autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: chipY + 22,
+        theme: 'grid',
+        headStyles: { fillColor: brandColor, textColor: '#ffffff' },
+        alternateRowStyles: { fillColor: '#f8fafc' },
+        styles: { fontSize: 9 },
+    });
+
+    // Totals
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text('Subtotal:', pageWidth - 60, finalY);
+    doc.text(fmt(invoice.subtotal), pageWidth - 20, finalY, { align: 'right' });
+
+    if (invoice.discountAmount > 0) {
+        doc.text('Discount:', pageWidth - 60, finalY + 6);
+        doc.text(`-${fmt(invoice.discountAmount)}`, pageWidth - 20, finalY + 6, { align: 'right' });
+    }
+
+    if (invoice.tax > 0) {
+        doc.text(`Tax (${invoice.taxRate}%):`, pageWidth - 60, finalY + 12);
+        doc.text(fmt(invoice.tax), pageWidth - 20, finalY + 12, { align: 'right' });
+    }
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(accentColor);
+    doc.text('Total:', pageWidth - 60, finalY + 22);
+    doc.text(fmt(invoice.total), pageWidth - 20, finalY + 22, { align: 'right' });
+
+    // Notes
+    if (invoice.notes) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(15, 23, 42);
+        doc.text('Notes:', 20, finalY + 36);
+        doc.setTextColor(60, 60, 60);
+        const splitNotes = doc.splitTextToSize(invoice.notes, pageWidth - 40);
+        doc.text(splitNotes, 20, finalY + 42);
+    }
+
+    addFooter(doc, pageWidth, pageHeight);
+    return doc;
+};
