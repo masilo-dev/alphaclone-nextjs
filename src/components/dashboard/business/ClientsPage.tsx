@@ -549,6 +549,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     // For solo business owners, show a simplified view
     const isSoloOwner = true; // This would be determined by user role/plan
+    const totalClientValue = clients.reduce((sum, c) => sum + (c.value || 0), 0);
+    const activeClientsCount = clients.filter(c => c.salesStage !== 'lost').length;
     if (isSoloOwner) {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0">
