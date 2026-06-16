@@ -29,33 +29,6 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
         })));
     }, []);
 
-    // Fallback if Google Maps is not available
-    if (!apiKey) {
-        return (
-            <div className="relative w-full h-full bg-slate-950 overflow-hidden font-sans">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-slate-900/90 backdrop-blur-2xl p-6 rounded-2xl border border-teal-500/30 text-center max-w-sm">
-                        <div className="w-12 h-12 mx-auto mb-4">
-                            <div className="absolute inset-0 border-2 border-teal-500/20 rounded-full" />
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                className="absolute inset-0 border-2 border-transparent border-t-teal-500 rounded-full"
-                            />
-                        </div>
-                        <h2 className="text-sm font-bold text-white mb-1 uppercase tracking-tighter">
-                            Lead Discovery
-                        </h2>
-                        <p className="text-teal-400 font-mono text-xs uppercase tracking-widest">
-                            {isSearching ? `Searching ${searchTopic || 'Leads'}...` : 'Ready to explore'}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     // Simulate progress and phase changes
     useEffect(() => {
         const interval = setInterval(() => {
