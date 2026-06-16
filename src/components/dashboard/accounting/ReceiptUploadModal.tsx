@@ -7,15 +7,18 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import { receiptService } from '../../../services/accounting/receiptService';
 import toast from 'react-hot-toast';
+import { DailyCall } from '@daily-co/daily-js';
+import { sendAuditToMeeting } from '../../../lib/meetingAudit';
 
 interface ReceiptUploadModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     accounts: ChartOfAccount[];
+    callObject?: DailyCall | null;
 }
 
-export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, accounts }: ReceiptUploadModalProps) {
+export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, accounts, callObject }: ReceiptUploadModalProps) {
     const { currentTenant } = useTenant();
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -107,6 +110,21 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                 else toast.success('Expense recorded and paid!');
             } else {
                 toast.success('Receipt saved as pending expense');
+            }
+
+            // Send audit to meeting
+            if (callObject) {
+                sendAuditToMeeting(callObject, {
+                    source: 'accounting',
+                    type: 'receipt_saved',
+                    details: {
+                        receiptId: receipt?.id,
+                        description: extractedData.description,
+                        amount: extractedData.amount,
+                        category: extractedData.category,
+                    },
+                    timestamp: new Date().toISOString(),
+                });
             }
 
             onSuccess();

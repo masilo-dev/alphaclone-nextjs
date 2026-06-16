@@ -1,4 +1,13 @@
 import { supabase } from '../lib/supabase';
+import { DailyCall } from '@daily-co/daily-js';
+import { sendAuditToMeeting } from '../lib/meetingAudit';
+
+// Global reference to the Daily call object (set by the meeting component)
+let _dailyCallObject: DailyCall | null = null;
+
+export function setDailyCallObject(callObject: DailyCall | null) {
+    _dailyCallObject = callObject;
+}
 
 export interface Notification {
     id: string;
@@ -35,6 +44,20 @@ export const notificationService = {
                 metadata: params.metadata || {},
                 read: false
             });
+
+        // Send audit to meeting
+        if (_dailyCallObject) {
+            sendAuditToMeeting(_dailyCallObject, {
+                source: 'notification',
+                type: 'notification_sent',
+                details: {
+                    userId: params.userId,
+                    type: params.type,
+                    title: params.title,
+                },
+                timestamp: new Date().toISOString(),
+            });
+        }
 
         return { success: !error, error: error?.message };
     },
