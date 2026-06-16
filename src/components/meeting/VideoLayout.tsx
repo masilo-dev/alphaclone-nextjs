@@ -1,8 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DailyCall, DailyParticipant } from '@daily-co/daily-js';
-import { Maximize2, Minimize2, Move, Bell } from 'lucide-react';
+import { Maximize2, Minimize2, Move, Bell, Phone, PhoneOff, MessageSquare, Users, Share2, Mic, MicOff, Camera, CameraOff } from 'lucide-react';
 import { setDailyCallObject } from '../../services/notificationService';
 import { setDailyCallObject as setWorkflowCallObject } from '../../services/engine/WorkflowExecutor';
+import { microsoftGraphService } from '../../services/microsoftGraphService';
+import { microsoft365Service } from '../../services/microsoft365Service';
+import { useTenant } from '../../contexts/TenantContext';
+import toast from 'react-hot-toast';
 
 interface VideoLayoutProps {
     callObject: DailyCall | null;
@@ -11,16 +15,50 @@ interface VideoLayoutProps {
 }
 
 export const VideoLayout: React.FC<VideoLayoutProps> = ({ callObject, participants, localParticipant }) => {
+    const { currentTenant } = useTenant();
     const participantIds = Object.keys(participants);
     const [pipMinimized, setPipMinimized] = useState(false);
     const [pipPosition, setPipPosition] = useState({ x: 16, y: 16 }); // top-right offset
     const [auditNotifications, setAuditNotifications] = useState<Array<{ id: string; message: string }>>([]);
+    const [isTeamsConnected, setIsTeamsConnected] = useState(false);
+    const [teamsMeetingUrl, setTeamsMeetingUrl] = useState<string | null>(null);
+    const [isCreatingTeamsMeeting, setIsCreatingTeamsMeeting] = useState(false);
 
     // Set global Daily call object for audit services
     useEffect(() => {
         setDailyCallObject(callObject);
         setWorkflowCallObject(callObject);
     }, [callObject]);
+
+    // Check Teams connection
+    useEffect(() => {
+        if (currentTenant?.id) {
+            microsoft365Service.getMicrosoft365Config(currentTenant.id).then(({ config }) => {
+                setIsTeamsConnected(!!config?.services?.teams);
+            }).catch(() => {});
+        }
+    }, [currentTenant?.id]);
+
+    const createTeamsMeeting = async () => {
+        if (!currentTenant?.id || isCreatingTeamsMeeting) return;
+        setIsCreatingTeamsMeeting(true);
+        try {
+            const meeting = await microsoftGraphService.createOnlineMeeting({
+                subject: 'AlphaClone Business Meeting',
+                participants: participantIds.map(id => ({
+                    email: participants[id]?.user_name || '',
+                })),
+            });
+            if (meeting?.joinUrl) {
+                setTeamsMeetingUrl(meeting.joinUrl);
+                toast.success('Teams meeting created! Click to join.');
+            }
+        } catch (err) {
+            toast.error('Failed to create Teams meeting');
+        } finally {
+            setIsCreatingTeamsMeeting(false);
+        }
+    };
 
     // Listen for audit events from the meeting
     useEffect(() => {
@@ -108,6 +146,29 @@ export const VideoLayout: React.FC<VideoLayoutProps> = ({ callObject, participan
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Teams Meeting Button */}
+            {isTeamsConnected && !teamsMeetingUrl && (
+                <button
+                    onClick={createTeamsMeeting}
+                    disabled={isCreatingTeamsMeeting}
+                    className="absolute bottom-24 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold shadow-lg transition-all disabled:opacity-50"
+                >
+                    <MessageSquare className="w-4 h-4" />
+                    {isCreatingTeamsMeeting ? 'Creating...' : 'Create Teams Meeting'}
+                </button>
+            )}
+            {teamsMeetingUrl && (
+                <a
+                    href={teamsMeetingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-24 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold shadow-lg transition-all animate-pulse"
+                >
+                    <MessageSquare className="w-4 h-4" />
+                    Join Teams Meeting
+                </a>
             )}
 
             {/* Local User (Self View PiP) - Draggable/Minimizable on Mobile */}

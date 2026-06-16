@@ -119,15 +119,24 @@ const GamificationTab: React.FC = () => {
       <div>
         <span className="text-[13px] font-black uppercase tracking-wider text-slate-400 block mb-3">XP History</span>
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
-          {XP_HISTORY.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <span className="flex-1 text-[15px] text-slate-300">{item.action}</span>
-              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                <span className="text-[13px] font-bold text-emerald-400">+{item.xp} XP</span>
-                <span className="text-[11px] text-slate-500 opacity-55">{item.time}</span>
+          {XP_HISTORY.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center mb-3">
+                <Clock className="w-6 h-6 text-slate-500" />
               </div>
+              <p className="text-slate-400 text-sm">No XP history yet. Complete tasks to earn XP!</p>
             </div>
-          ))}
+          ) : (
+            XP_HISTORY.map((item, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <span className="flex-1 text-[15px] text-slate-300">{item.action}</span>
+                <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                  <span className="text-[13px] font-bold text-emerald-400">+{item.xp} XP</span>
+                  <span className="text-[11px] text-slate-500 opacity-55">{item.time}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -142,16 +151,25 @@ const GamificationTab: React.FC = () => {
           </div>
         </div>
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
-          {GLOBAL_LB.map(entry => (
-            <div key={entry.rank} className={`flex items-center gap-3 px-4 py-3 ${entry.isMe ? 'bg-purple-500/10' : ''}`}>
-              <span className={`text-[20px] font-black w-8 flex-shrink-0 ${rankStyle(entry.rank)}`}>{entry.rank}</span>
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0">
-                {entry.name[0]}
+          {GLOBAL_LB.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center mb-3">
+                <Trophy className="w-6 h-6 text-slate-500" />
               </div>
-              <span className={`flex-1 text-[15px] font-bold ${entry.isMe ? 'text-purple-300' : 'text-white'}`}>{entry.name}</span>
-              <span className="text-[13px] text-slate-400 font-mono">{entry.xp.toLocaleString()} XP</span>
+              <p className="text-slate-400 text-sm">No leaderboard data yet. Start earning XP to appear here!</p>
             </div>
-          ))}
+          ) : (
+            GLOBAL_LB.map(entry => (
+              <div key={entry.rank} className={`flex items-center gap-3 px-4 py-3 ${entry.isMe ? 'bg-purple-500/10' : ''}`}>
+                <span className={`text-[20px] font-black w-8 flex-shrink-0 ${rankStyle(entry.rank)}`}>{entry.rank}</span>
+                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0">
+                  {entry.name[0]}
+                </div>
+                <span className={`flex-1 text-[15px] font-bold ${entry.isMe ? 'text-purple-300' : 'text-white'}`}>{entry.name}</span>
+                <span className="text-[13px] text-slate-400 font-mono">{entry.xp.toLocaleString()} XP</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

@@ -266,6 +266,30 @@ const GlobalSettingsTab: React.FC = () => {
                                         description="Sign-in and calendar integrations."
                                         details="GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET"
                                     />
+                                    <IntegrationItem
+                                        name="WhatsApp"
+                                        configured={envStatus.whatsapp}
+                                        description="WhatsApp Business API for messaging."
+                                        details="TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN"
+                                    />
+                                    <IntegrationItem
+                                        name="LinkedIn"
+                                        configured={envStatus.linkedin}
+                                        description="LinkedIn API for social posting."
+                                        details="LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET"
+                                    />
+                                    <IntegrationItem
+                                        name="Instagram"
+                                        configured={envStatus.instagram}
+                                        description="Instagram Graph API for posting."
+                                        details="INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET"
+                                    />
+                                    <IntegrationItem
+                                        name="Twitter/X"
+                                        configured={envStatus.twitter}
+                                        description="Twitter/X API for social posting."
+                                        details="TWITTER_API_KEY and TWITTER_API_SECRET"
+                                    />
                                 </div>
                             </div>
                         )}

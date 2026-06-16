@@ -390,7 +390,27 @@ const Client360Detail: React.FC<{
       toast.error('No phone number available for outreach');
       return;
     }
-    window.open(`https://wa.me/${phoneClean}?text=Hello%20${encodeURIComponent(client.name)},`, '_blank');
+    // Try to send via platform API first, fallback to opening WhatsApp
+    const sendViaPlatform = async () => {
+      try {
+        const res = await fetch('/api/whatsapp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantId: currentTenant?.id,
+            to: phoneClean,
+            message: `Hello ${client.name}, this is a message from AlphaClone.`,
+          }),
+        });
+        if (res.ok) {
+          toast.success('WhatsApp message sent via platform!');
+          return;
+        }
+      } catch {}
+      // Fallback: open WhatsApp Web/app
+      window.open(`https://wa.me/${phoneClean}?text=Hello%20${encodeURIComponent(client.name)},`, '_blank');
+    };
+    sendViaPlatform();
   };
 
   return (
