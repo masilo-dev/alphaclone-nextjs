@@ -772,16 +772,60 @@ export const leadService = {
                 }
             };
 
-            const { enrichLeadData } = await import('./unifiedAIService');
-            const intelligence = await enrichLeadData({
-                businessName: lead.business_name || lead.name,
-                industry: lead.industry,
-                location: lead.location || lead.city,
-                website: lead.website,
-                knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
-                socialLinks,
-                techStack: uniqueStrings(techStack).slice(0, 20)
-            });
+            // Use DeepSeek for AI enrichment if available
+            let intelligence: string;
+            try {
+                const deepSeekKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
+                
+                if (deepSeekKey) {
+                    const { callDeepSeek } = await import('@/lib/ai/deepseek');
+                    const prompt = `Analyze this business lead and provide strategic insights:
+Business Name: ${lead.business_name || lead.name}
+Industry: ${lead.industry || 'Unknown'}
+Location: ${lead.location || lead.city || 'Unknown'}
+Website: ${lead.website || 'N/A'}
+Known Emails: ${uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5).join(', ') || 'None'}
+Social Links: ${Object.keys(socialLinks).join(', ') || 'None'}
+Tech Stack: ${uniqueStrings(techStack).slice(0, 20).join(', ') || 'Unknown'}
+
+Provide:
+1. Business overview and likely size
+2. Key pain points they might face
+3. Recommended outreach angle
+4. Technology opportunities
+5. Risk factors to consider
+
+Write in plain professional text. No markdown.`;
+
+                    intelligence = await callDeepSeek(prompt, {
+                        model: 'deepseek-chat',
+                        temperature: 0.5,
+                        maxTokens: 1024,
+                    });
+                } else {
+                    const { enrichLeadData } = await import('./unifiedAIService');
+                    intelligence = await enrichLeadData({
+                        businessName: lead.business_name || lead.name,
+                        industry: lead.industry,
+                        location: lead.location || lead.city,
+                        website: lead.website,
+                        knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
+                        socialLinks,
+                        techStack: uniqueStrings(techStack).slice(0, 20)
+                    });
+                }
+            } catch {
+                const { enrichLeadData } = await import('./unifiedAIService');
+                intelligence = await enrichLeadData({
+                    businessName: lead.business_name || lead.name,
+                    industry: lead.industry,
+                    location: lead.location || lead.city,
+                    website: lead.website,
+                    knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
+                    socialLinks,
+                    techStack: uniqueStrings(techStack).slice(0, 20)
+                });
+            }
 
             const updatePayload: Record<string, unknown> = {
                 notes: intelligence,
