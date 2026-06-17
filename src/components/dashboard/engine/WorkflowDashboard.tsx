@@ -86,6 +86,117 @@ const DEFAULT_WORKFLOWS = [
             config: { to: '{{phone}}', message: 'Hi {{first_name}}, thanks for your interest! We\'ll be in touch shortly.' }
         }],
     },
+    // ── VERTICAL MODULE DEFAULT WORKFLOWS ──
+    {
+        name: 'Low Stock → Purchase Order',
+        description: 'Auto-create purchase order when inventory drops below threshold',
+        trigger_type: 'inventory_low_stock' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'create_purchase_order' as ActionType,
+            config: { supplierName: 'Auto-Reorder', items: '{{low_stock_items}}', notes: 'Auto-generated low stock reorder' }
+        }],
+    },
+    {
+        name: 'Ticket Created → Assign & Notify',
+        description: 'Auto-assign new support tickets and notify the team',
+        trigger_type: 'ticket_created' as TriggerType,
+        conditions: [],
+        actions: [
+            { type: 'assign_ticket' as ActionType, config: { assigneeId: '{{default_assignee}}' } },
+            { type: 'notify_user' as ActionType, config: { title: 'New Ticket', message: 'Ticket {{ticket_id}}: {{ticket_title}}' } },
+        ],
+    },
+    {
+        name: 'Order Placed → Fulfillment & Inventory',
+        description: 'Create fulfillment record and decrement inventory when order is placed',
+        trigger_type: 'order_created' as TriggerType,
+        conditions: [],
+        actions: [
+            { type: 'fulfill_order' as ActionType, config: { carrier: '{{default_carrier}}' } },
+            { type: 'update_inventory' as ActionType, config: { quantityChange: '-{{order_quantity}}', referenceType: 'sale' } },
+        ],
+    },
+    {
+        name: 'Shipment Delivered → Invoice',
+        description: 'Auto-generate invoice when shipment is marked as delivered',
+        trigger_type: 'shipment_delivered' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'send_email' as ActionType,
+            config: { to: '{{client_email}}', subject: 'Invoice for Shipment {{shipment_id}}', body: 'Your shipment has been delivered. Please find the invoice attached.' }
+        }],
+    },
+    {
+        name: 'Signature Completed → Contract Status',
+        description: 'Update contract status to executed when all signatures are collected',
+        trigger_type: 'signature_completed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/contracts/{{contract_id}}/status', method: 'PATCH', body: JSON.stringify({ status: 'executed' }) }
+        }],
+    },
+    {
+        name: 'Sprint Completed → Retrospective',
+        description: 'Generate sprint retrospective report when sprint ends',
+        trigger_type: 'sprint_completed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'notify_user' as ActionType,
+            config: { title: 'Sprint Retrospective', message: 'Sprint {{sprint_name}} has completed. Generate retrospective report.' }
+        }],
+    },
+    {
+        name: 'Daily Log → Project Progress Update',
+        description: 'Update project progress based on daily log submissions',
+        trigger_type: 'daily_log_submitted' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/projects/{{project_id}}/progress', method: 'PATCH', body: JSON.stringify({ source: 'daily_log' }) }
+        }],
+    },
+    {
+        name: 'Change Order Approved → Budget Update',
+        description: 'Update project budget when change order is approved',
+        trigger_type: 'change_order_approved' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/projects/{{project_id}}/budget', method: 'PATCH', body: JSON.stringify({ changeOrderId: '{{change_order_id}}' }) }
+        }],
+    },
+    {
+        name: 'Client Approval → Project Stage',
+        description: 'Move project to next stage when client approves',
+        trigger_type: 'client_approval_completed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/projects/{{project_id}}/stage', method: 'PATCH', body: JSON.stringify({ stage: 'next' }) }
+        }],
+    },
+    {
+        name: 'Retainer Due → Auto Invoice',
+        description: 'Generate invoice for active retainer agreements on billing day',
+        trigger_type: 'retainer_invoice_generated' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'send_email' as ActionType,
+            config: { to: '{{client_email}}', subject: 'Monthly Retainer Invoice', body: 'Your retainer invoice for {{period}} is ready.' }
+        }],
+    },
+    {
+        name: 'Tax Return Deadline → Reminder',
+        description: 'Send reminder when tax return deadline is approaching',
+        trigger_type: 'tax_return_filed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'notify_user' as ActionType,
+            config: { title: 'Tax Return Due', message: 'Tax return for {{client_name}} is due soon.' }
+        }],
+    },
 ];
 
 const EMPTY_FORM = {
