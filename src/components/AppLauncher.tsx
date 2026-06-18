@@ -63,18 +63,12 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
 
   return (
     <div className="fixed inset-0 bg-[#000814] text-white px-4 py-8 flex flex-col supports-[height:100dvh]:h-[100dvh] overflow-hidden select-none">
-      {/* Background Video - System Aesthetic */}
+      {/* Background - System Aesthetic */}
       <div className="absolute inset-0 z-0">
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline
-          className="w-full h-full object-cover opacity-70"
-          src="https://cdn.pixabay.com/video/2021/09/01/87134-596489437_large.mp4" // Sleek abstract network particles
-        />
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#000814] via-transparent to-[#000814]/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#000814] via-[#0a1628] to-[#000814]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-500/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
       </div>
 
       <LoginModal
