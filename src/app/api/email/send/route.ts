@@ -1,75 +1,137 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
-import { resolveEmailAttachmentsFromFileIds } from '@/lib/files/resolveEmailAttachments';
 import { z } from 'zod';
+import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
-const SendEmailSchema = z.object({
-    to: z.union([z.string().email(), z.array(z.string().email())]),
-    subject: z.string().min(1).max(250),
-    html: z.string().max(100000).optional(),
-    text: z.string().max(50000).optional(),
-    message: z.string().max(50000).optional(),
-    fromName: z.string().max(100).optional(),
-    tenantId: z.string().uuid(),
-    userId: z.string().uuid().optional(),
-    replyTo: z.string().email().optional(),
-    attachments: z.array(z.any()).optional(),
-    isPlatformNotification: z.boolean().optional(),
-    templateName: z.string().optional(),
-    listUnsubscribeUrl: z.string().optional(),
-    preferredProvider: z.enum(['zoho', 'brevo', 'resend', 'sendgrid']).optional(),
-    document_file_ids: z.array(z.string().uuid()).optional(),
+const sendEmailSchema = z.object({
+  to: z.string().email(),
+  subject: z.string().min(1),
+  body_html: z.string().min(1),
+  threadId: z.string().optional(),
+  contactId: z.string().uuid().optional(),
+  clientId: z.string().uuid().optional(),
 });
 
 export async function POST(req: NextRequest) {
-    try {
-        const body = await req.json();
-        const parsed = SendEmailSchema.safeParse(body);
-        if (!parsed.success) {
-            return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
-        }
-
-        const internalKey = req.headers.get('x-internal-api-key');
-        const internalOk =
-            Boolean(internalKey) &&
-            internalKey === process.env.INTERNAL_API_KEY;
-
-        let authUserId: string | null = null;
-        if (!internalOk) {
-            const authClient = await createSupabaseServerClient();
-            const {
-                data: { user },
-            } = await authClient.auth.getUser();
-            if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-            authUserId = user.id;
-        }
-
-        const resolvedAttachments = parsed.data.document_file_ids?.length
-            ? await resolveEmailAttachmentsFromFileIds(parsed.data.tenantId, parsed.data.document_file_ids)
-            : [];
-        const sendResult = await sendEmailServer({
-            ...parsed.data,
-            userId: parsed.data.userId || authUserId || undefined,
-            attachments: [
-                ...(parsed.data.attachments || []),
-                ...resolvedAttachments,
-            ],
-        });
-
-        if (!sendResult.success) {
-            return NextResponse.json(sendResult, { status: 502 });
-        }
-
-        return NextResponse.json({
-            success: true,
-            id: sendResult.emailId,
-            provider: sendResult.provider,
-            status: 'sent',
-        });
-
-    } catch (error) {
-        console.error('Error in /api/email/send:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  try {
+    const body = await req.json();
+    const parsed = sendEmailSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 422 });
     }
+
+    const { to, subject, body_html, threadId, contactId, clientId } = parsed.data;
+    const { user } = await requireTenantAccess('51772ee6-dee8-4c42-81f7-0fee297e5b27');
+    const admin = createAdminSupabaseClientOrThrow();
+
+    // Fix 2E: Replace {{{unsubscribe_url}}} template variable
+    let processedBody = body_html.replace(
+      '{{{unsubscribe_url}}}',
+      `https://alphaclonesystems.com/unsubscribe?email=${encodeURIComponent(to)}`
+    );
+
+    // Remove double footer - ensure footer is only added once
+    processedBody += `
+      <br><br>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+      <p style="font-size: 11px; color: #9ca3af;">
+        AlphaClone Systems LLC<br>
+        <a href="https://alphaclonesystems.com" style="color: #6366f1;">alphaclonesystems.com</a><br>
+        <a href="https://alphaclonesystems.com/unsubscribe?email=${encodeURIComponent(to)}" style="color: #6366f1;">Unsubscribe</a>
+      </p>
+    `;
+
+    let result;
+
+    if (threadId) {
+      // Reply to existing thread via Zoho API
+      const zohoRes = await fetch(
+        `https://mail.zoho.eu/api/accounts/8586098000000002002/messages/${threadId}/reply`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Zoho-oauthtoken ${process.env.ZOHO_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fromAddress: 'sales@alphaclonesystems.com',
+            toAddress: to,
+            subject: subject.startsWith('Re:') ? subject : `Re: ${subject}`,
+            content: processedBody,
+            mailFormat: 'html',
+            askReceipt: 'no',
+          }),
+        }
+      );
+
+      if (!zohoRes.ok) {
+        const zohoError = await zohoRes.text();
+        throw new Error(`Zoho reply failed: ${zohoError}`);
+      }
+
+      result = await zohoRes.json();
+    } else {
+      // Send new email via Zoho transactional API
+      const zohoRes = await fetch(
+        'https://mail.zoho.eu/api/accounts/8586098000000002002/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Zoho-oauthtoken ${process.env.ZOHO_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fromAddress: 'sales@alphaclonesystems.com',
+            toAddress: to,
+            subject,
+            content: processedBody,
+            mailFormat: 'html',
+            askReceipt: 'no',
+          }),
+        }
+      );
+
+      if (!zohoRes.ok) {
+        const zohoError = await zohoRes.text();
+        throw new Error(`Zoho send failed: ${zohoError}`);
+      }
+
+      result = await zohoRes.json();
+    }
+
+    // Log to outreach_logs
+    await admin.from('lead_outreach_log').insert({
+      tenant_id: '51772ee6-dee8-4c42-81f7-0fee297e5b27',
+      contact_id: contactId || null,
+      client_id: clientId || null,
+      type: 'email',
+      direction: 'outbound',
+      subject,
+      body: processedBody,
+      sent_at: new Date().toISOString(),
+      provider: 'zoho',
+      status: 'sent',
+      metadata: {
+        zoho_message_id: result?.data?.messageId || null,
+        thread_id: threadId || null,
+      },
+    });
+
+    // Log to client_email_history if contactId provided
+    if (contactId) {
+      await admin.from('client_email_history').insert({
+        tenant_id: '51772ee6-dee8-4c42-81f7-0fee297e5b27',
+        contact_id: contactId,
+        direction: 'outbound',
+        subject,
+        body_html: processedBody,
+        sent_at: new Date().toISOString(),
+        zoho_message_id: result?.data?.messageId || null,
+        thread_id: threadId || null,
+      });
+    }
+
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    return routeErrorResponse(error, 'Failed to send email', req);
+  }
 }
