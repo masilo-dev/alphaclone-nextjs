@@ -154,18 +154,15 @@ export default function RootLayout({
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
         <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
-        {/* PWA Meta Tags */}
+        {/* PWA Meta Tags - already defined in metadata/viewport exports */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="AlphaClone" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#020617" />
-        <meta name="application-name" content="AlphaClone" />
         <meta name="msapplication-TileColor" content="#020617" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="handheldFriendly" content="true" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
         <link rel="apple-touch-startup-image" href="/logo.png" />
@@ -205,21 +202,6 @@ export default function RootLayout({
           <CookieBanner />
         </Providers>
         <ConsentAwareAnalytics />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                    console.log('ServiceWorker registered with scope:', registration.scope);
-                  }, function(err) {
-                    console.log('ServiceWorker registration failed:', err);
-                  });
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   );
