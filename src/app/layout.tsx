@@ -163,13 +163,21 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="handheldFriendly" content="true" />
+        <meta name="theme-color" content="#020617" />
+        <meta name="application-name" content="AlphaClone" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
         <link rel="apple-touch-startup-image" href="/logo.png" />
         <link rel="mask-icon" href="/favicon-192x192.png" color="#020617" />
       </head>
       <body
-        className="antialiased text-base subpixel-antialiased font-sans"
+        className="antialiased text-base subpixel-antialiased font-sans touch-action-manipulation overscroll-behavior-none"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'none',
+          touchAction: 'manipulation',
+        }}
       >
         <script
           type="application/ld+json"
