@@ -90,17 +90,37 @@ export default function PublicSignPage() {
     // Get signature image data
     const signatureData = canvasRef.current?.toDataURL() || 'typed-signature';
 
+    // Detect IP via a simple fetch (optional, falls back to 'unknown')
+    let ipAddress = 'unknown';
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipRes.json();
+      ipAddress = ipData.ip || 'unknown';
+    } catch {
+      // ignore
+    }
+
     const result = await contractSigningService.signContract(
       contract.id,
       token as string,
       signatureData,
       signerName,
       signerEmail,
-      'unknown', // IP would be detected on server-side usually, but we'll use 'unknown' for now or fetch it
+      ipAddress,
       navigator.userAgent
     );
 
     if (result.success) {
+      // Trigger PDF generation after successful signing
+      try {
+        await fetch(`/api/contracts/${contract.id}/generate-pdf`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tenantId: contract.tenant_id }),
+        });
+      } catch {
+        // PDF generation is non-blocking; don't block the success flow
+      }
       setSigned(true);
     } else {
       setError(result.error);
