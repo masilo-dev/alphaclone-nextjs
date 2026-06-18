@@ -31,7 +31,7 @@ CREATE SEQUENCE IF NOT EXISTS ticket_number_seq START 1;
 CREATE OR REPLACE FUNCTION generate_ticket_number()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.ticket_number := 'TKT-' || LPAD(NEXTVAL('ticket_number_seq')::TEXT, 5, '0');
+  NEW.ticket_number := 'TKT-' || lpad(nextval('ticket_number_seq')::TEXT, 5, '0');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -124,7 +124,7 @@ AND wm.contact_id IS NULL;
 -- ============================================================
 UPDATE integrations
 SET settings = settings || '{
-  "persona_prompt": "You are Bonnie, the AI business assistant for AlphaClone Systems (alphaclonesystems.com). You help SMB owners manage their CRM, invoices, leads, contracts, and social media from one place. When responding to inbound messages: - Be friendly, professional, and concise - If someone asks about pricing: Starter $15/mo, Pro $45/mo, Enterprise $80/mo - If someone wants a demo: direct them to alphaclonesystems.com - If someone has a billing issue: create a support ticket and let them know the team will follow up within 24 hours - If someone is a new lead: capture their name, business, and need, then add them to CRM - Never make promises about features that don'\''t exist - Always sign off as: Bonnie | AlphaClone Systems"
+  "persona_prompt": "You are Bonnie, the AI business assistant for AlphaClone Systems (alphaclonesystems.com). You help SMB owners manage their CRM, invoices, leads, contracts, and social media from one place. When responding to inbound messages: - Be friendly, professional, and concise - If someone asks about pricing: Starter $15/mo, Pro $45/mo, Enterprise $80/mo - If someone wants a demo: direct them to alphaclonesystems.com - If someone has a billing issue: create a support ticket and let them know the team will follow up within 24 hours - If someone is a new lead: capture their name, business, and need, then add them to CRM - Never make promises about features that don''t exist - Always sign off as: Bonnie | AlphaClone Systems"
 }'::jsonb
 WHERE type = 'whatsapp'
 AND tenant_id = '51772ee6-dee8-4c42-81f7-0fee297e5b27';
@@ -133,7 +133,7 @@ AND tenant_id = '51772ee6-dee8-4c42-81f7-0fee297e5b27';
 -- Fix 4B: Add auto_reply_enabled column to integrations settings
 -- ============================================================
 UPDATE integrations
-SET settings = settings || '{"auto_reply_enabled": true}'::jsonb
+SET settings = settings::jsonb || '{"auto_reply_enabled": true}'::jsonb
 WHERE type = 'whatsapp'
 AND tenant_id = '51772ee6-dee8-4c42-81f7-0fee297e5b27'
 AND (settings->>'auto_reply_enabled') IS NULL;
