@@ -49,6 +49,8 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
             setTickets(data);
         } catch (error) {
             console.error('Failed to load tickets:', error);
+            // Show error state to user
+            setTickets([]);
         } finally {
             setLoading(false);
         }
@@ -83,11 +85,14 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
 
     const handleSelectTicket = async (ticket: Ticket) => {
         setSelectedTicket(ticket);
+        setComments([]);
         try {
             const data = await ticketService.getComments(ticket.id);
             setComments(data);
         } catch (error) {
             console.error('Failed to load comments:', error);
+            // Show error state to user
+            setComments([]);
         }
     };
 

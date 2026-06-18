@@ -25,14 +25,35 @@ export default function MicrosoftMeetingEmbed({
   useEffect(() => {
     const loadToken = async () => {
       try {
-        const response = await fetch(`${ENV.VITE_SUPABASE_URL}/functions/v1/get-teams-token`, {
+        const supabaseUrl = ENV?.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const anonKey = ENV?.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl || !anonKey) {
+          setTeamsToken({
+            available: false,
+            error: 'Supabase URL or anon key not configured',
+          });
+          return;
+        }
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/get-teams-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            apikey: ENV.VITE_SUPABASE_ANON_KEY,
+            apikey: anonKey,
           },
           body: JSON.stringify({ displayName }),
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          setTeamsToken({
+            available: false,
+            error: `Failed to get Teams token: ${response.status} ${errorText}`,
+          });
+          return;
+        }
+
         const payload = await response.json();
         setTeamsToken(payload);
       } catch (error) {

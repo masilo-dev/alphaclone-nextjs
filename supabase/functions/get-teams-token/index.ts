@@ -1,9 +1,33 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 serve(async (req) => {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders });
+    }
+
     try {
         const { displayName } = await req.json();
+
+        if (!displayName || typeof displayName !== 'string') {
+            return new Response(
+                JSON.stringify({
+                    available: false,
+                    error: 'displayName is required and must be a string',
+                }),
+                { 
+                    status: 400,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                }
+            );
+        }
 
         // Get Microsoft Graph token using client credentials flow
         const tenantId = Deno.env.get('AZURE_TENANT_ID');
@@ -16,7 +40,10 @@ serve(async (req) => {
                     available: false,
                     error: 'Azure credentials not configured',
                 }),
-                { headers: { 'Content-Type': 'application/json' } }
+                { 
+                    status: 500,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                }
             );
         }
 
@@ -35,15 +62,32 @@ serve(async (req) => {
             }
         );
 
+        if (!tokenResponse.ok) {
+            const errorText = await tokenResponse.text();
+            return new Response(
+                JSON.stringify({
+                    available: false,
+                    error: `Microsoft Graph token request failed: ${tokenResponse.status} ${errorText}`,
+                }),
+                { 
+                    status: 502,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                }
+            );
+        }
+
         const tokenData = await tokenResponse.json();
 
         if (!tokenData.access_token) {
             return new Response(
                 JSON.stringify({
                     available: false,
-                    error: 'Failed to obtain Microsoft Graph token',
+                    error: 'Failed to obtain Microsoft Graph token - no access_token in response',
                 }),
-                { headers: { 'Content-Type': 'application/json' } }
+                { 
+                    status: 502,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                }
             );
         }
 
@@ -52,7 +96,10 @@ serve(async (req) => {
                 available: true,
                 token: tokenData.access_token,
             }),
-            { headers: { 'Content-Type': 'application/json' } }
+            { 
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
         );
     } catch (error) {
         return new Response(
@@ -60,7 +107,10 @@ serve(async (req) => {
                 available: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             }),
-            { headers: { 'Content-Type': 'application/json' } }
+            { 
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
         );
     }
 });

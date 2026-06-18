@@ -300,8 +300,9 @@ class EmailService {
             throw new Error('SMTP_HOST and SMTP_PORT not configured');
         }
 
+        // Use the provider SDK with SMTP parameters
         const result = await sendWithProviderSdk('smtp', {
-            host, port, user, pass,
+            apiKey: pass || '', // SMTP uses password as apiKey in some SDKs
             fromEmail: options.from || this.defaultFrom,
             fromName: 'AlphaClone Systems',
             to: options.to,
@@ -315,7 +316,12 @@ class EmailService {
                 filename: a.filename,
                 content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
                 contentType: a.contentType
-            }))
+            })),
+            // Additional SMTP-specific parameters
+            smtpHost: host,
+            smtpPort: port,
+            smtpUser: user,
+            smtpPass: pass,
         });
 
         if (!result.ok) {
