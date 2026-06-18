@@ -128,22 +128,45 @@ Return ONLY valid JSON with:
                 continue;
             }
 
-            // 4. Create tasks
+            // 4. Create tasks (with deduplication)
             if (memoryUpdates && memoryUpdates.length > 0) {
                 try {
                     for (const update of memoryUpdates) {
-                        await supabase
+                        const title = `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`;
+                        
+                        // Check for existing similar task
+                        const { data: existingTask } = await supabase
                             .from('tasks')
-                            .insert({
-                                tenant_id: tenantId,
-                                title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
-                                description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
-                                priority: 'medium',
-                                status: 'todo',
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString(),
-                                metadata: { source: 'bonnie_dream', update_category: update.category }
-                            });
+                            .select('id, description')
+                            .eq('tenant_id', tenantId)
+                            .ilike('title', '%' + (update.insight?.substring(0, 50) || '') + '%')
+                            .eq('status', 'todo')
+                            .maybeSingle();
+
+                        if (existingTask) {
+                            // Update existing task with new note instead of creating duplicate
+                            await supabase
+                                .from('tasks')
+                                .update({
+                                    description: existingTask.description + '\n[Re-flagged: ' + new Date().toISOString() + ']',
+                                    updated_at: new Date().toISOString(),
+                                })
+                                .eq('id', existingTask.id);
+                        } else {
+                            // Create new task
+                            await supabase
+                                .from('tasks')
+                                .insert({
+                                    tenant_id: tenantId,
+                                    title,
+                                    description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
+                                    priority: 'medium',
+                                    status: 'todo',
+                                    created_at: new Date().toISOString(),
+                                    updated_at: new Date().toISOString(),
+                                    metadata: { source: 'bonnie_dream', update_category: update.category }
+                                });
+                        }
                     }
                 } catch (taskErr) {
                     console.warn(`[bonnie-dream-cron] Failed to create tasks for tenant ${tenantId}:`, taskErr);
