@@ -203,7 +203,7 @@ class CampaignService {
 
         if (contactsError) throw contactsError;
 
-        const recipients = contacts.map(contact => ({
+        const recipients = (contacts as Array<{ id: string; email: string | null; phone: string | null }>).map(contact => ({
             campaign_id: campaignId,
             contact_id: contact.id,
             email: contact.email,
