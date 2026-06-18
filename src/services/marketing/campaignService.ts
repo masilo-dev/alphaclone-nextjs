@@ -340,7 +340,7 @@ class CampaignService {
             failed: 0,
         };
 
-        (data || []).forEach(r => {
+        (data as Array<{ status: string }> || []).forEach(r => {
             switch (r.status) {
                 case 'sent': stats.sent++; break;
                 case 'delivered': stats.delivered++; break;
