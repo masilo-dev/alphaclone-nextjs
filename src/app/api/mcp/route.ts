@@ -141,10 +141,80 @@ export async function POST(req: NextRequest) {
   if (requestBody.method === 'tools/list') {
     const { listAllMcpTools } = await import('@/lib/mcp/listAllTools');
     const tools = await listAllMcpTools();
+    
+    // Add ticketing tools
+    const ticketingTools = [
+      {
+        name: 'create_ticket',
+        description: 'Create a new support ticket',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', description: 'Ticket title' },
+            description: { type: 'string', description: 'Ticket description' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Priority level' },
+            category: { type: 'string', enum: ['billing', 'technical', 'general', 'feature_request', 'bug', 'onboarding'], description: 'Category' },
+            source: { type: 'string', enum: ['whatsapp', 'email', 'chat', 'manual', 'bonnie_agent', 'api'], description: 'Source' },
+            contact_id: { type: 'string', description: 'Contact UUID (optional)' },
+            client_id: { type: 'string', description: 'Client UUID (optional)' },
+          },
+          required: ['title'],
+        },
+      },
+      {
+        name: 'get_tickets',
+        description: 'Get support tickets with optional filters',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], description: 'Filter by status' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Filter by priority' },
+            category: { type: 'string', enum: ['billing', 'technical', 'general', 'feature_request', 'bug', 'onboarding'], description: 'Filter by category' },
+            limit: { type: 'number', description: 'Max results (default 20)' },
+          },
+        },
+      },
+      {
+        name: 'update_ticket',
+        description: 'Update a support ticket status, priority, or resolution',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            ticket_id: { type: 'string', description: 'Ticket UUID' },
+            status: { type: 'string', enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], description: 'New status' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'New priority' },
+            resolution_note: { type: 'string', description: 'Resolution note' },
+            assigned_to: { type: 'string', description: 'User UUID to assign' },
+          },
+          required: ['ticket_id'],
+        },
+      },
+      {
+        name: 'get_ticket_stats',
+        description: 'Get ticket statistics including counts by status, avg resolution time, SLA breaches',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
+      {
+        name: 'escalate_ticket',
+        description: 'Escalate a ticket to urgent priority and notify Alpha',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            ticket_id: { type: 'string', description: 'Ticket UUID' },
+            reason: { type: 'string', description: 'Reason for escalation' },
+          },
+          required: ['ticket_id', 'reason'],
+        },
+      },
+    ];
+    
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: { tools }
+      result: { tools: [...tools, ...ticketingTools] }
     }, { headers: getMcpCorsHeaders(req) });
   }
 
@@ -189,7 +259,200 @@ export async function POST(req: NextRequest) {
     return new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
   }
 
-  // 3. Execute via SDK
+  // 3. Handle ticketing tools directly (bypass SDK for reliability)
+  if (requestBody.method === 'tools/call') {
+    const toolName = requestBody.params?.name;
+    const toolArgs = requestBody.params?.arguments || {};
+
+    if (toolName === 'create_ticket') {
+      const admin = createAdminSupabaseClientOrThrow();
+      const { data: ticket, error } = await admin
+        .from('support_tickets')
+        .insert({
+          tenant_id: tenantId,
+          title: toolArgs.title,
+          description: toolArgs.description || '',
+          priority: toolArgs.priority || 'medium',
+          category: toolArgs.category || 'general',
+          source: toolArgs.source || 'bonnie_agent',
+          contact_id: toolArgs.contact_id || null,
+          client_id: toolArgs.client_id || null,
+          status: 'open',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          error: { code: -32603, message: `Failed to create ticket: ${error.message}` },
+        }, { status: 500, headers: getMcpCorsHeaders(req) });
+      }
+
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
+      }, { headers: getMcpCorsHeaders(req) });
+    }
+
+    if (toolName === 'get_tickets') {
+      const admin = createAdminSupabaseClientOrThrow();
+      let query = admin
+        .from('support_tickets')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(toolArgs.limit || 20);
+
+      if (toolArgs.status) query = query.eq('status', toolArgs.status);
+      if (toolArgs.priority) query = query.eq('priority', toolArgs.priority);
+      if (toolArgs.category) query = query.eq('category', toolArgs.category);
+
+      const { data: tickets, error } = await query;
+
+      if (error) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          error: { code: -32603, message: `Failed to fetch tickets: ${error.message}` },
+        }, { status: 500, headers: getMcpCorsHeaders(req) });
+      }
+
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(tickets || []) }] },
+      }, { headers: getMcpCorsHeaders(req) });
+    }
+
+    if (toolName === 'update_ticket') {
+      const admin = createAdminSupabaseClientOrThrow();
+      const updateData: any = {};
+      if (toolArgs.status) updateData.status = toolArgs.status;
+      if (toolArgs.priority) updateData.priority = toolArgs.priority;
+      if (toolArgs.resolution_note) updateData.resolution_note = toolArgs.resolution_note;
+      if (toolArgs.assigned_to) updateData.assigned_to = toolArgs.assigned_to;
+      
+      // Auto-set resolved_at if status changes to resolved
+      if (toolArgs.status === 'resolved') {
+        updateData.resolved_at = new Date().toISOString();
+      }
+      // Auto-set closed_at if status changes to closed
+      if (toolArgs.status === 'closed') {
+        updateData.closed_at = new Date().toISOString();
+      }
+
+      updateData.updated_at = new Date().toISOString();
+
+      const { data: ticket, error } = await admin
+        .from('support_tickets')
+        .update(updateData)
+        .eq('id', toolArgs.ticket_id)
+        .eq('tenant_id', tenantId)
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          error: { code: -32603, message: `Failed to update ticket: ${error.message}` },
+        }, { status: 500, headers: getMcpCorsHeaders(req) });
+      }
+
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
+      }, { headers: getMcpCorsHeaders(req) });
+    }
+
+    if (toolName === 'get_ticket_stats') {
+      const admin = createAdminSupabaseClientOrThrow();
+      
+      // Get counts by status
+      const { data: statusCounts } = await admin
+        .from('support_tickets')
+        .select('status, count')
+        .eq('tenant_id', tenantId)
+        .then(r => r.data);
+
+      // Get average resolution time
+      const { data: avgResolution } = await admin
+        .rpc('get_avg_ticket_resolution_time', { p_tenant_id: tenantId })
+        .maybeSingle();
+
+      // Get SLA breaches
+      const { data: slaBreaches } = await admin
+        .from('support_tickets')
+        .select('id, title, sla_due_at, created_at')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'open')
+        .lt('sla_due_at', new Date().toISOString())
+        .limit(10);
+
+      const stats = {
+        status_counts: statusCounts || [],
+        avg_resolution_hours: avgResolution?.avg_hours || null,
+        sla_breaches: slaBreaches || [],
+        total_open: (statusCounts || []).filter((s: any) => s.status === 'open').reduce((sum: number, s: any) => sum + (s.count || 0), 0),
+      };
+
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(stats) }] },
+      }, { headers: getMcpCorsHeaders(req) });
+    }
+
+    if (toolName === 'escalate_ticket') {
+      const admin = createAdminSupabaseClientOrThrow();
+      
+      const { data: ticket, error } = await admin
+        .from('support_tickets')
+        .update({
+          priority: 'urgent',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', toolArgs.ticket_id)
+        .eq('tenant_id', tenantId)
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          error: { code: -32603, message: `Failed to escalate ticket: ${error.message}` },
+        }, { status: 500, headers: getMcpCorsHeaders(req) });
+      }
+
+      // Send notification to Alpha
+      await admin
+        .from('notifications')
+        .insert({
+          tenant_id: tenantId,
+          title: `🚨 Ticket Escalated: ${ticket.title}`,
+          body: `Reason: ${toolArgs.reason}\n\nTicket #${ticket.ticket_number || ticket.id}`,
+          type: 'ticket_escalation',
+          metadata: {
+            ticket_id: toolArgs.ticket_id,
+            reason: toolArgs.reason,
+          },
+          created_at: new Date().toISOString(),
+        });
+
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
+      }, { headers: getMcpCorsHeaders(req) });
+    }
+  }
+
+  // 4. Execute via SDK
   try {
     const mcpServer = createMCPServer({
       tenantId,
