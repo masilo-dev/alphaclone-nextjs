@@ -5,7 +5,7 @@ import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 
-export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow';
+export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow' | 'outlook' | 'smtp';
 
 export type EmailSendInput = {
     apiKey: string;          // For Gmail: App Password (stored in Supabase per-tenant, never global env)
@@ -25,6 +25,11 @@ export type EmailSendInput = {
         contentType?: string;
     }>;
     userId?: string;
+    // SMTP-specific
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUser?: string;
+    smtpPass?: string;
 };
 
 export type EmailSendResult = {
@@ -304,6 +309,112 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
     }
 }
 
+async function sendViaOutlook(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
+        if (!input.userId) {
+            return { ok: false, provider: 'outlook', error: 'Outlook send requires userId (OAuth context)' };
+        }
+        // Use Microsoft Graph API via nodemailer-like approach or direct fetch
+        // Credentials resolved from Supabase tenant integrations at runtime
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration } = await supabaseAdmin
+            .from('integrations')
+            .select('config')
+            .eq('user_id', input.userId)
+            .eq('type', 'outlook')
+            .maybeSingle();
+
+        const accessToken = integration?.config?.access_token;
+        if (!accessToken) {
+            return { ok: false, provider: 'outlook', error: 'No Outlook OAuth token found for user' };
+        }
+
+        const recipients = normalizeRecipients(input.to);
+        const graphPayload = {
+            message: {
+                subject: input.subject,
+                body: { contentType: input.html ? 'HTML' : 'Text', content: input.html || input.text || '' },
+                toRecipients: recipients.map(addr => ({ emailAddress: { address: addr } })),
+                ...(input.cc?.length ? { ccRecipients: input.cc.map(addr => ({ emailAddress: { address: addr } })) } : {}),
+                ...(input.bcc?.length ? { bccRecipients: input.bcc.map(addr => ({ emailAddress: { address: addr } })) } : {}),
+                ...(input.replyTo ? { replyTo: [{ emailAddress: { address: input.replyTo } }] } : {}),
+            },
+            saveToSentItems: true,
+        };
+
+        const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(graphPayload),
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            return { ok: false, provider: 'outlook', error: errText };
+        }
+
+        return { ok: true, provider: 'outlook' };
+    } catch (error) {
+        return {
+            ok: false,
+            provider: 'outlook',
+            error: error instanceof Error ? error.message : 'Outlook send failed',
+        };
+    }
+}
+
+async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
+        const host = input.smtpHost;
+        const port = input.smtpPort || 587;
+        const user = input.smtpUser;
+        const pass = input.smtpPass || input.apiKey;
+
+        if (!host) {
+            return { ok: false, provider: 'smtp', error: 'SMTP host not configured' };
+        }
+
+        const transporter = nodemailer.createTransport({
+            host,
+            port,
+            secure: port === 465,
+            auth: user ? { user, pass } : undefined,
+        });
+
+        const recipients = normalizeRecipients(input.to);
+        const mailOptions: nodemailer.SendMailOptions = {
+            from: input.fromName ? `"${input.fromName}" <${input.fromEmail}>` : input.fromEmail,
+            to: recipients.join(', '),
+            subject: input.subject,
+            html: input.html,
+            text: input.text,
+        };
+
+        if (input.replyTo) mailOptions.replyTo = input.replyTo;
+        if (input.cc?.length) mailOptions.cc = input.cc.join(', ');
+        if (input.bcc?.length) mailOptions.bcc = input.bcc.join(', ');
+        if (input.attachments?.length) {
+            mailOptions.attachments = input.attachments.map(att => ({
+                filename: att.filename,
+                content: att.content instanceof Buffer ? att.content : Buffer.from(String(att.content), 'base64'),
+                contentType: att.contentType || 'application/octet-stream',
+            }));
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        return { ok: true, provider: 'smtp', emailId: info.messageId };
+    } catch (error) {
+        return {
+            ok: false,
+            provider: 'smtp',
+            error: error instanceof Error ? error.message : 'SMTP send failed',
+        };
+    }
+}
+
 async function sendViaMailflow(input: EmailSendInput): Promise<EmailSendResult> {
     try {
         const recipients = normalizeRecipients(input.to);
@@ -349,6 +460,8 @@ export async function sendWithProviderSdk(
     else if (provider === 'zoho') result = await sendViaZoho(input);
     else if (provider === 'gmail') result = await sendViaGmail(input);
     else if (provider === 'mailflow') result = await sendViaMailflow(input);
+    else if (provider === 'outlook') result = await sendViaOutlook(input);
+    else if (provider === 'smtp') result = await sendViaSmtp(input);
     else result = await sendViaBrevo(input);
 
     // Sync successfully sent external emails to unified_messages
