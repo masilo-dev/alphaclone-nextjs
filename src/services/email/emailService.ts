@@ -6,6 +6,9 @@
  * - Brevo
  * - SendGrid
  * - Resend
+ * - Zoho
+ * - Outlook (Microsoft Graph)
+ * - SMTP (generic)
  */
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
@@ -20,6 +23,8 @@ export interface EmailOptions {
     cc?: string[];
     bcc?: string[];
     attachments?: EmailAttachment[];
+    provider?: EmailProvider; // optional override for specific send
+    userId?: string; // for Zoho/Outlook OAuth
 }
 
 export interface EmailAttachment {
@@ -85,6 +90,10 @@ class EmailService {
             this.provider = 'resend';
         } else if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET) {
             this.provider = 'zoho';
+        } else if (process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET) {
+            this.provider = 'outlook';
+        } else if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
+            this.provider = 'smtp';
         } else {
             this.provider = 'resend';
         }
@@ -96,8 +105,11 @@ class EmailService {
      * Send email
      */
     async send(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
+        // Allow per-call provider override
+        const provider = options.provider || this.provider;
+
         try {
-            switch (this.provider) {
+            switch (provider) {
                 case 'brevo':
                     return await this.sendWithBrevo(options);
                 case 'resend':
@@ -106,8 +118,12 @@ class EmailService {
                     return await this.sendWithSendGrid(options);
                 case 'zoho':
                     return await this.sendWithZoho(options);
+                case 'outlook':
+                    return await this.sendWithOutlook(options);
+                case 'smtp':
+                    return await this.sendWithSmtp(options);
                 default:
-                    throw new Error('No email provider configured');
+                    throw new Error(`No email provider configured for ${provider}`);
             }
         } catch (error) {
             console.error('Error sending email:', error);
@@ -220,7 +236,7 @@ class EmailService {
     /**
      * Send email using Zoho Mail
      */
-    private async sendWithZoho(options: EmailOptions & { userId?: string }) {
+    private async sendWithZoho(options: EmailOptions) {
         if (!options.userId) {
             throw new Error('Zoho send requires a userId');
         }
@@ -245,12 +261,78 @@ class EmailService {
     }
 
     /**
+     * Send email using Outlook (Microsoft Graph API)
+     */
+    private async sendWithOutlook(options: EmailOptions) {
+        if (!options.userId) {
+            throw new Error('Outlook send requires a userId');
+        }
+
+        const result = await sendWithProviderSdk('outlook', {
+            apiKey: 'oauth', // Outlook uses OAuth
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            userId: options.userId,
+        });
+
+        if (!result.ok) {
+            throw new Error(`Outlook error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
+    /**
+     * Send email using generic SMTP
+     */
+    private async sendWithSmtp(options: EmailOptions) {
+        const host = process.env.SMTP_HOST;
+        const port = parseInt(process.env.SMTP_PORT || '587', 10);
+        const user = process.env.SMTP_USER;
+        const pass = process.env.SMTP_PASS;
+
+        if (!host || !port) {
+            throw new Error('SMTP_HOST and SMTP_PORT not configured');
+        }
+
+        const result = await sendWithProviderSdk('smtp', {
+            host, port, user, pass,
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
+        });
+
+        if (!result.ok) {
+            throw new Error(`SMTP error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
+    /**
      * Send email from template
      */
     async sendTemplate(
         template: string,
         to: string | string[],
-        variables: Record<string, any>
+        variables: Record<string, any>,
+        options?: Partial<EmailOptions>
     ): Promise<{ success: boolean; error?: string }> {
         const emailTemplate = this.getTemplate(template);
 
@@ -275,13 +357,14 @@ class EmailService {
             to,
             subject,
             html,
+            ...options,
         });
     }
 
     /**
      * Get email template
      */
-    private getTemplate(name: string): EmailTemplate | null {
+    getTemplate(name: string): EmailTemplate | null {
         // In production, load from database or file system
         // For now, return inline templates
         const templates: Record<string, EmailTemplate> = {
@@ -498,7 +581,7 @@ export const emailHelpers = {
             receipt_url: receiptUrl,
         };
 
-        const emailTemplate = (emailService as any).getTemplate(template);
+        const emailTemplate = emailService.getTemplate(template);
         if (!emailTemplate) throw new Error('Receipt template not found');
 
         let html = emailTemplate.html;
@@ -509,7 +592,7 @@ export const emailHelpers = {
             subject = subject.replace(placeholder, String(value));
         });
 
-        const options: EmailOptions & { userId?: string } = {
+        const options: EmailOptions = {
             to: email,
             subject,
             html,
@@ -519,9 +602,8 @@ export const emailHelpers = {
             options.attachments = [attachment];
         }
 
-        // If a specific provider is requested, temporarily override the singleton's provider
         if (provider) {
-            (options as any).provider = provider;
+            options.provider = provider;
         }
         if (userId) {
             options.userId = userId;
