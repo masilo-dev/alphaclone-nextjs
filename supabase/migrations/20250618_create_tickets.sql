@@ -43,15 +43,15 @@ ALTER TABLE ticket_comments ENABLE ROW LEVEL SECURITY;
 -- Create RLS policies for tickets
 CREATE POLICY "Users can view tickets in their tenant"
     ON tickets FOR SELECT
-    USING (tenant_id = auth.jwt() ->> 'tenant_id'::text);
+    USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Users can create tickets in their tenant"
     ON tickets FOR INSERT
-    WITH CHECK (tenant_id = auth.jwt() ->> 'tenant_id'::text);
+    WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 CREATE POLICY "Users can update tickets in their tenant"
     ON tickets FOR UPDATE
-    USING (tenant_id = auth.jwt() ->> 'tenant_id'::text);
+    USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 -- Create RLS policies for ticket comments
 CREATE POLICY "Users can view comments on tickets in their tenant"
@@ -60,7 +60,7 @@ CREATE POLICY "Users can view comments on tickets in their tenant"
         EXISTS (
             SELECT 1 FROM tickets
             WHERE tickets.id = ticket_comments.ticket_id
-            AND tickets.tenant_id = auth.jwt() ->> 'tenant_id'::text
+            AND tickets.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
 
@@ -69,8 +69,8 @@ CREATE POLICY "Users can create comments on tickets in their tenant"
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM tickets
-            WHERE tickets.id = ticket_comments.ticket_id
-            AND tickets.tenant_id = auth.jwt() ->> 'tenant_id'::text
+            WHERE tickets.id = NEW.ticket_id
+            AND tickets.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
 
@@ -81,7 +81,7 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create trigger for updated_at
 CREATE TRIGGER update_tickets_updated_at
