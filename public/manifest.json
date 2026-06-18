@@ -18,10 +18,6 @@
   "prefer_related_applications": false,
   "lang": "en-US",
   "dir": "ltr",
-  "handle_links": "preferred",
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
   "icons": [
     {
       "src": "/favicon-48x48.png",
@@ -111,20 +107,6 @@
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
-  "protocol_handlers": [
-    {
-      "protocol": "web+alphaclone",
-      "url": "/?url=%s"
-    }
-  ],
-  "url_handlers": [
-    {
-      "origin": "https://alphaclonesystems.com"
-    }
-  ],
   "related_applications": [],
-  "iarc_rating_id": "",
-  "note_taking": {
-    "new_note_url": "/dashboard/notes/new"
-  }
+  "iarc_rating_id": ""
 }
