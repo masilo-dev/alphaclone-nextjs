@@ -49,13 +49,6 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         }
 
         // 2. Security Guards
-        if ((body as any).status === 'paid') {
-            return NextResponse.json(
-                { error: 'Invoice cannot be marked paid via direct update. Use the reconcile_payment endpoint with a valid payment_ref.' },
-                { status: 403 }
-            );
-        }
-
         const lockedStatuses = ['sent', 'paid', 'overdue'];
         const isModifyingTotals = updatePayload.total !== undefined || updatePayload.subtotal !== undefined || updatePayload.tax !== undefined;
 
@@ -66,10 +59,19 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
             );
         }
 
-        // 3. Clear paid_at if status is being changed away from paid
+        // 3. Handle paid_at and delivery_status when status changes to 'paid'
         const finalPayload: any = { ...updatePayload };
         if (updatePayload.status) {
-            finalPayload.paid_at = null;
+            if (updatePayload.status === 'paid') {
+                // Set paid_at if not already set
+                if (!existing.paid_at) {
+                    finalPayload.paid_at = new Date().toISOString();
+                    finalPayload.delivery_status = 'DELIVERED';
+                }
+                // Clear any previous paid_at if status is being changed away from paid
+            } else {
+                finalPayload.paid_at = null;
+            }
         }
 
         // 4. Update Database
