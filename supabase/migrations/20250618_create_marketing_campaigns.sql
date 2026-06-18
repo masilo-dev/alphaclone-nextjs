@@ -89,7 +89,7 @@ CREATE POLICY "Users can create campaign messages in their tenant"
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM marketing_campaigns
-            WHERE marketing_campaigns.id = campaign_messages.campaign_id
+            WHERE marketing_campaigns.id = NEW.campaign_id
             AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
@@ -110,7 +110,7 @@ CREATE POLICY "Users can create campaign recipients in their tenant"
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM marketing_campaigns
-            WHERE marketing_campaigns.id = campaign_recipients.campaign_id
+            WHERE marketing_campaigns.id = NEW.campaign_id
             AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
