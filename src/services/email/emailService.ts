@@ -647,4 +647,56 @@ export const emailHelpers = {
 
         return emailService.send(options);
     },
+
+    /**
+     * Send ticket notification
+     */
+    async sendTicketNotification(
+        email: string,
+        ticketTitle: string,
+        ticketDescription: string,
+        ticketUrl: string,
+        priority?: string
+    ) {
+        const priorityLabel = priority || 'medium';
+        const priorityColor = priorityLabel === 'urgent' ? '#EF4444' : 
+                              priorityLabel === 'high' ? '#F97316' : 
+                              priorityLabel === 'medium' ? '#EAB308' : '#6B7280';
+
+        const html = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #3B82F6;">New Ticket Created</h2>
+                <p>A new support ticket has been created:</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Title:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${ticketTitle}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Priority:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${priorityColor}; margin-right: 5px;"></span>
+                            ${priorityLabel.toUpperCase()}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Description:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${ticketDescription}</td>
+                    </tr>
+                </table>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${ticketUrl}" style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                        View Ticket
+                    </a>
+                </div>
+                <p style="color: #666; font-size: 12px;">This is an automated notification from AlphaClone Systems.</p>
+            </div>
+        `;
+
+        return emailService.send({
+            to: email,
+            subject: `New Ticket: ${ticketTitle}`,
+            html,
+        });
+    },
 };
