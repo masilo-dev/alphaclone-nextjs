@@ -3931,7 +3931,43 @@ class AlphaCloneMCPServer {
             .limit(1)
             .maybeSingle();
           if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_identities', liErr.message);
-          if (!li) {
+
+          // Also fetch organization identities from linkedin_identities table
+          const { data: orgIdentities, error: orgError } = await supabaseAdmin
+            .from('linkedin_identities')
+            .select('*')
+            .eq('tenant_id', tenant_id)
+            .eq('type', 'organization');
+
+          if (orgError) throw supabaseErrorToMcpClientError('get_linkedin_identities', orgError.message);
+
+          const identities: any[] = [];
+
+          if (li) {
+            const scopes = Array.isArray(li.scopes)
+              ? li.scopes.map((scope: any) => String(scope).toLowerCase())
+              : [];
+            identities.push({
+              type: 'person',
+              linkedin_member_id: li.linkedin_member_id || null,
+              author_urn: li.linkedin_person_urn,
+              can_post: scopes.includes('w_member_social'),
+            });
+          }
+
+          if (orgIdentities && orgIdentities.length > 0) {
+            for (const org of orgIdentities) {
+              identities.push({
+                type: 'organization',
+                linkedin_organization_id: org.linkedin_organization_id,
+                author_urn: org.author_urn,
+                can_post: org.can_post !== false,
+                name: org.name || null,
+              });
+            }
+          }
+
+          if (identities.length === 0) {
             result = {
               content: [
                 {
@@ -3952,43 +3988,6 @@ class AlphaCloneMCPServer {
             break;
           }
 
-          const scopes = Array.isArray(li.scopes)
-            ? li.scopes.map((scope: any) => String(scope).toLowerCase())
-            : [];
-          const companyPagesRaw = Array.isArray((li as any)?.metadata?.company_pages)
-            ? ((li as any).metadata.company_pages as Array<Record<string, unknown>>)
-            : [];
-          const companyIdentities = companyPagesRaw
-            .map((company) => {
-              const id = String(company?.id || '').trim();
-              if (!id) return null;
-              return {
-                type: 'company',
-                organization_id: id,
-                author_urn: `urn:li:organization:${id}`,
-                name: typeof company?.name === 'string' ? company.name : null,
-                vanity_name: typeof company?.vanityName === 'string' ? company.vanityName : null,
-                can_post: scopes.includes('w_organization_social'),
-              };
-            })
-            .filter((identity): identity is {
-              type: 'company';
-              organization_id: string;
-              author_urn: string;
-              name: string | null;
-              vanity_name: string | null;
-              can_post: boolean;
-            } => !!identity);
-
-          const identities = [
-            {
-              type: 'person',
-              linkedin_member_id: li.linkedin_member_id || null,
-              author_urn: li.linkedin_person_urn,
-              can_post: scopes.includes('w_member_social'),
-            },
-            ...companyIdentities,
-          ];
           result = { content: [{ type: 'text', text: JSON.stringify({ connected: true, identities }, null, 2) }] };
           break;
         }
@@ -4996,7 +4995,7 @@ class AlphaCloneMCPServer {
 
           const { data: li, error: liErr } = await supabaseAdmin
             .from('linkedin_integrations')
-            .select('access_token')
+            .select('access_token, scopes')
             .eq('tenant_id', tenant_id)
             .eq('user_id', user_id)
             .eq('is_active', true)
@@ -5004,16 +5003,69 @@ class AlphaCloneMCPServer {
           if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_accounts', liErr.message);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
-          const resp = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search&search=(status:(values:LIST(ACTIVE,PAUSED)))', {
+          // Check for r_ads scope
+          const scopes = Array.isArray(li.scopes) ? li.scopes.map((s: any) => String(s).toLowerCase()) : [];
+          if (!scopes.includes('r_ads')) {
+            result = {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  adsConnected: false,
+                  message: 'Ads not connected. Please re-authorize with r_ads scope.',
+                  accounts: [],
+                }, null, 2),
+              }],
+            };
+            break;
+          }
+
+          // Correct API query format for LinkedIn Ads API
+          const resp = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search&search.type.values[0]=BUSINESS', {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${li.access_token}`,
               'X-Restli-Protocol-Version': '2.0.0',
+              'LinkedIn-Version': '202401',
             },
           });
+
+          if (!resp.ok) {
+            const errorData = await resp.json();
+            // Graceful handling for no ad accounts
+            if (resp.status === 400 || resp.status === 404) {
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    adsConnected: true,
+                    message: 'No ad accounts found for this LinkedIn identity.',
+                    accounts: [],
+                  }, null, 2),
+                }],
+              };
+              break;
+            }
+            throw new Error(`Failed to fetch LinkedIn ad accounts: ${JSON.stringify(errorData)}`);
+          }
+
           const data = await resp.json();
-          if (!resp.ok) throw new Error(`Failed to fetch LinkedIn ad accounts: ${JSON.stringify(data)}`);
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          const accounts = (data.elements || []).map((elem: any) => ({
+            id: elem.id,
+            name: elem.name || elem.accountName,
+            status: elem.status,
+            currency: elem.currency,
+            servedEntity: elem.servedEntity,
+          }));
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                adsConnected: true,
+                accounts,
+              }, null, 2),
+            }],
+          };
           break;
         }
 

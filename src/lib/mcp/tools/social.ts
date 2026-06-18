@@ -29,6 +29,77 @@ registerTool('social', {
   },
 });
 
+// 1b. get_linkedin_identities (updated to return both person and org identities)
+registerTool('social', {
+  name: 'get_linkedin_identities',
+  description: 'List posting identities for LinkedIn: personal profile and any connected company pages.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    
+    // Get person identity from linkedin_integrations
+    const { data: personIdentity, error: personError } = await supabase
+      .from('linkedin_integrations')
+      .select('linkedin_member_id, linkedin_person_urn, scopes, metadata, is_active, updated_at')
+      .eq('tenant_id', args.tenant_id)
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (personError) throw personError;
+
+    // Get organization identities from linkedin_identities table
+    const { data: orgIdentities, error: orgError } = await supabase
+      .from('linkedin_identities')
+      .select('*')
+      .eq('tenant_id', args.tenant_id)
+      .eq('type', 'organization');
+
+    if (orgError) throw orgError;
+
+    const identities: any[] = [];
+
+    if (personIdentity) {
+      const scopes = Array.isArray(personIdentity.scopes)
+        ? personIdentity.scopes.map((s: any) => String(s).toLowerCase())
+        : [];
+      identities.push({
+        type: 'person',
+        linkedin_member_id: personIdentity.linkedin_member_id || null,
+        author_urn: personIdentity.linkedin_person_urn,
+        can_post: scopes.includes('w_member_social'),
+      });
+    }
+
+    if (orgIdentities && orgIdentities.length > 0) {
+      for (const org of orgIdentities) {
+        identities.push({
+          type: 'organization',
+          linkedin_organization_id: org.linkedin_organization_id,
+          author_urn: org.author_urn,
+          can_post: org.can_post !== false,
+          name: org.name || null,
+        });
+      }
+    }
+
+    return {
+      connected: identities.length > 0,
+      identities,
+    };
+  },
+});
+
 // 2. schedule_social_post
 registerTool('social', {
   name: 'schedule_social_post',

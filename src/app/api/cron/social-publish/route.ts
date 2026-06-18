@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { publishDueSocialPosts, publishScheduledPosts } from '@/lib/social/cronPublish';
+import { publishDueSocialPosts, publishScheduledPosts, publishDueLinkedInPosts } from '@/lib/social/cronPublish';
 
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
@@ -9,12 +9,14 @@ export async function GET(req: NextRequest) {
   try {
     const publishedCount = await publishDueSocialPosts();
     const scheduledPublishedCount = await publishScheduledPosts();
+    const linkedinPublishedCount = await publishDueLinkedInPosts();
 
     return NextResponse.json({
       success: true,
       publishedCount,
       scheduledPublishedCount,
-      totalCount: publishedCount + scheduledPublishedCount,
+      linkedinPublishedCount,
+      totalCount: publishedCount + scheduledPublishedCount + linkedinPublishedCount,
       timestamp: new Date().toISOString()
     });
   } catch (err: unknown) {
