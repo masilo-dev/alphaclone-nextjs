@@ -4,7 +4,7 @@
  * Supports email campaigns, SMS campaigns, and multi-channel campaigns
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { emailService } from '../email/emailService';
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
