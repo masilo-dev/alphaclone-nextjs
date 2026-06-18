@@ -4,7 +4,7 @@
  * Supports creating, updating, and managing tickets linked to any entity
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { emailService } from './email/emailService';
 
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
