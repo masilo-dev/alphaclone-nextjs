@@ -59,19 +59,19 @@ ALTER TABLE campaign_recipients ENABLE ROW LEVEL SECURITY;
 -- Create RLS policies for marketing_campaigns
 CREATE POLICY "Users can view campaigns in their tenant"
     ON marketing_campaigns FOR SELECT
-    USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+    USING (tenant_id = auth.jwt() ->> 'tenant_id');
 
 CREATE POLICY "Users can create campaigns in their tenant"
     ON marketing_campaigns FOR INSERT
-    WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+    WITH CHECK (tenant_id = auth.jwt() ->> 'tenant_id');
 
 CREATE POLICY "Users can update campaigns in their tenant"
     ON marketing_campaigns FOR UPDATE
-    USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+    USING (tenant_id = auth.jwt() ->> 'tenant_id');
 
 CREATE POLICY "Users can delete campaigns in their tenant"
     ON marketing_campaigns FOR DELETE
-    USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
+    USING (tenant_id = auth.jwt() ->> 'tenant_id');
 
 -- Create RLS policies for campaign_messages
 CREATE POLICY "Users can view campaign messages in their tenant"
@@ -80,7 +80,7 @@ CREATE POLICY "Users can view campaign messages in their tenant"
         EXISTS (
             SELECT 1 FROM marketing_campaigns
             WHERE marketing_campaigns.id = campaign_messages.campaign_id
-            AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
+            AND marketing_campaigns.tenant_id = auth.jwt() ->> 'tenant_id'
         )
     );
 
@@ -90,7 +90,7 @@ CREATE POLICY "Users can create campaign messages in their tenant"
         EXISTS (
             SELECT 1 FROM marketing_campaigns
             WHERE marketing_campaigns.id = NEW.campaign_id
-            AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
+            AND marketing_campaigns.tenant_id = auth.jwt() ->> 'tenant_id'
         )
     );
 
@@ -101,7 +101,7 @@ CREATE POLICY "Users can view campaign recipients in their tenant"
         EXISTS (
             SELECT 1 FROM marketing_campaigns
             WHERE marketing_campaigns.id = campaign_recipients.campaign_id
-            AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
+            AND marketing_campaigns.tenant_id = auth.jwt() ->> 'tenant_id'
         )
     );
 
@@ -111,7 +111,7 @@ CREATE POLICY "Users can create campaign recipients in their tenant"
         EXISTS (
             SELECT 1 FROM marketing_campaigns
             WHERE marketing_campaigns.id = NEW.campaign_id
-            AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
+            AND marketing_campaigns.tenant_id = auth.jwt() ->> 'tenant_id'
         )
     );
 
