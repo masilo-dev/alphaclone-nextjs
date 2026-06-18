@@ -62,7 +62,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
   const formattedDate = currentTime?.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) || '';
 
   return (
-    <div className="fixed inset-0 bg-[#000814] text-white px-4 py-8 flex flex-col supports-[height:100dvh]:h-[100dvh] overflow-hidden select-none">
+    <div className="fixed inset-0 bg-[#000814] text-white px-4 py-8 flex flex-col supports-[height:100dvh]:h-[100dvh] overflow-hidden select-none overscroll-behavior-none touch-action-manipulation">
       {/* Background - System Aesthetic */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#000814] via-[#0a1628] to-[#000814]" />
@@ -93,13 +93,14 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
       </div>
 
       {/* Main OS Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center pt-10 sm:pt-16 will-change-transform">
+      <div className="relative z-10 flex-1 flex flex-col items-center pt-10 sm:pt-16 will-change-transform overscroll-behavior-none touch-action-manipulation">
         {/* Time & Date Display */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="flex flex-col items-center mb-12 will-change-transform"
+          style={{ WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}
         >
           <h1 className="text-7xl sm:text-8xl font-thin tracking-tighter drop-shadow-2xl">
             {formattedTime}
@@ -139,9 +140,11 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
               transition={{ delay: index * 0.04 + 0.6 }}
               className="flex flex-col items-center gap-1.5 cursor-pointer group touch-action-manipulation will-change-transform"
               onClick={handleAppClick}
+              style={{ WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}
             >
               <div 
                 className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 ${app.color} rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center shadow-xl transition-all active:scale-90 group-hover:scale-105 group-hover:shadow-2xl relative overflow-hidden will-change-transform`}
+                style={{ WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}
               >
                 {/* Glass Reflection Fade */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
@@ -163,6 +166,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
             whileHover={{ y: -10, scale: 1.1 }}
             className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 ${app.color} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg cursor-pointer ring-1 ring-white/20 will-change-transform`}
             onClick={handleAppClick}
+            style={{ WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}
           >
              <app.icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
           </motion.div>
