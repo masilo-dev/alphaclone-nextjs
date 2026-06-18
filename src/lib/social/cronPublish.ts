@@ -652,6 +652,37 @@ export async function publishDueSocialPosts(limit = 25) {
   return duePosts.length;
 }
 
+/**
+ * Publish due LinkedIn posts specifically (for the LinkedIn cron).
+ * Queries social_posts where status='scheduled', platform contains 'linkedin',
+ * scheduled_at <= NOW(), and linkedin_post_urn IS NULL.
+ */
+export async function publishDueLinkedInPosts(limit = 25) {
+  if (!isSocialPublishEnabled()) return 0;
+
+  const adminClient = createSupabaseAdminClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await adminClient
+    .from('social_posts')
+    .select('id')
+    .eq('status', 'scheduled')
+    .contains('platforms', ['linkedin'])
+    .is('linkedin_post_urn', null)
+    .not('scheduled_at', 'is', null)
+    .lte('scheduled_at', nowIso)
+    .order('scheduled_at', { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+
+  const duePosts = data || [];
+  for (const post of duePosts) {
+    await publishSocialPost(post.id);
+  }
+
+  return duePosts.length;
+}
+
 export async function publishScheduledPosts(limit = 25) {
   if (!isSocialPublishEnabled()) return 0;
 
