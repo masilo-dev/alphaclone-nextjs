@@ -234,14 +234,17 @@ class TicketService {
      * Get tenant ID from the authenticated user's JWT
      */
     private getTenantId(): string {
-        // Try to get tenant_id from the session
-        const session = supabase.auth.getSession();
-        // The tenant_id should be in the user's app_metadata or user_metadata
+        // Try to get tenant_id from the session's user metadata
         // This is a simplified version - in production you'd decode the JWT
-        const user = supabase.auth.getUser();
-        // For now, we'll use a fallback that will be overridden by RLS
-        // In production, the tenant_id should be set in the JWT claims
-        return 'default';
+        // The tenant_id should be set in the user's app_metadata during signup
+        try {
+            const session = supabase.auth.getSession();
+            // We'll use a fallback that will be overridden by RLS
+            // In production, the tenant_id should be set in the JWT claims
+            return 'default';
+        } catch {
+            return 'default';
+        }
     }
 }
 
