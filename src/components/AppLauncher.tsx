@@ -93,13 +93,13 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
       </div>
 
       {/* Main OS Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center pt-10 sm:pt-16">
+      <div className="relative z-10 flex-1 flex flex-col items-center pt-10 sm:pt-16 will-change-transform">
         {/* Time & Date Display */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="flex flex-col items-center mb-12"
+          className="flex flex-col items-center mb-12 will-change-transform"
         >
           <h1 className="text-7xl sm:text-8xl font-thin tracking-tighter drop-shadow-2xl">
             {formattedTime}
@@ -130,18 +130,18 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
         </motion.div>
 
         {/* App Grid */}
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md px-4 sm:px-6 grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-8 sm:gap-y-10">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md px-4 sm:px-6 grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-8 sm:gap-y-10 content-visibility-auto">
           {APPS.map((app, index) => (
             <motion.div
               key={app.name}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.04 + 0.6 }}
-              className="flex flex-col items-center gap-1.5 cursor-pointer group touch-action-manipulation"
+              className="flex flex-col items-center gap-1.5 cursor-pointer group touch-action-manipulation will-change-transform"
               onClick={handleAppClick}
             >
               <div 
-                className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 ${app.color} rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center shadow-xl transition-all active:scale-90 group-hover:scale-105 group-hover:shadow-2xl relative overflow-hidden`}
+                className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 ${app.color} rounded-[1rem] sm:rounded-[1.2rem] flex items-center justify-center shadow-xl transition-all active:scale-90 group-hover:scale-105 group-hover:shadow-2xl relative overflow-hidden will-change-transform`}
               >
                 {/* Glass Reflection Fade */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
@@ -156,12 +156,12 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
       </div>
 
       {/* Dock Area */}
-      <div className="relative z-10 w-fit mx-auto mb-6 px-3 sm:px-4 py-2 sm:py-3 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl flex items-center gap-3 sm:gap-4 md:gap-6 animate-in slide-in-from-bottom-10 fade-in duration-1000">
+      <div className="relative z-10 w-fit mx-auto mb-6 px-3 sm:px-4 py-2 sm:py-3 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl flex items-center gap-3 sm:gap-4 md:gap-6 animate-in slide-in-from-bottom-10 fade-in duration-1000 will-change-transform">
         {DOCK_APPS.map((app, index) => (
           <motion.div
             key={`dock-${app.name}`}
             whileHover={{ y: -10, scale: 1.1 }}
-            className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 ${app.color} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg cursor-pointer ring-1 ring-white/20`}
+            className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 ${app.color} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg cursor-pointer ring-1 ring-white/20 will-change-transform`}
             onClick={handleAppClick}
           >
              <app.icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
