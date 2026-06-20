@@ -40,8 +40,8 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { Search, Download } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useTenant } from '@/hooks/useTenant';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface Deal {
   id: string;
@@ -57,7 +57,8 @@ interface Deal {
  * Uses TanStack Table v8 for table logic and Chakra UI for rendering.
  */
 export function DataTable() {
-  const { tenantId, isLoading: tenantLoading } = useTenant();
+  const { currentTenant, isLoading: tenantLoading } = useTenant();
+  const tenantId = currentTenant?.id;
   const [data, setData] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -76,7 +77,7 @@ export function DataTable() {
 
     async function fetchDeals() {
       try {
-        const supabase = createClientComponentClient();
+        const supabase = createSupabaseBrowserClient();
         const { data: deals } = await supabase
           .from('business_deals')
           .select('id, name, stage, value, client_name, created_at')

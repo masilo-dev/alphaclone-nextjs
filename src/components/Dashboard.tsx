@@ -44,6 +44,7 @@ import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
 import { generateText } from '../services/unifiedAIService';
 import BonnieWidget from './dashboard/bonnie/BonnieWidget';
+import BonnieFullView from './dashboard/bonnie/BonnieFullView';
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
@@ -105,6 +106,7 @@ const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/busine
 const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
 const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
 const ContractsTab = React.lazy(() => import('./dashboard/ContractsTab'));
+const DeepDeskView = React.lazy(() => import('./dashboard/tickets/DeepDeskView'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
@@ -181,7 +183,33 @@ const Dashboard: React.FC<DashboardProps> = ({
       setSidebarOpen(window.innerWidth >= 768);
     }
   }, []);
-  const [activeTab, setActiveTab] = useState(location || '/dashboard');
+  const normalizeTabForRole = (tab: string) => {
+    if (!tab) return '/dashboard';
+    if (user.role === 'tenant_admin') {
+      if (tab === '/dashboard/messages') return '/dashboard/business/messages';
+      if (tab === '/dashboard/settings') return '/dashboard/business/settings';
+      if (tab === '/dashboard/contracts') return '/dashboard/business/contracts';
+      if (tab === '/dashboard/deals') return '/dashboard/deals';
+      if (tab === '/dashboard/finance') return '/dashboard/business/billing';
+      if (tab === '/dashboard/projects') return '/dashboard/business/projects';
+      if (tab === '/dashboard/tasks') return '/dashboard/business/tasks';
+      if (tab === '/dashboard/quotes') return '/dashboard/business/quotes';
+      if (tab === '/dashboard/tickets') return '/dashboard/business/tickets';
+      return tab;
+    } else {
+      if (tab === '/dashboard/business/messages') return '/dashboard/messages';
+      if (tab === '/dashboard/business/settings') return '/dashboard/settings';
+      if (tab === '/dashboard/business/contracts') return '/dashboard/contracts';
+      if (tab === '/dashboard/business/billing') return '/dashboard/finance';
+      if (tab === '/dashboard/business/projects') return '/dashboard/projects';
+      if (tab === '/dashboard/business/tasks') return '/dashboard/tasks';
+      if (tab === '/dashboard/business/quotes') return '/dashboard/quotes';
+      if (tab === '/dashboard/business/tickets') return '/dashboard/tickets';
+      return tab;
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState(normalizeTabForRole(location || '/dashboard'));
   const {
     activeMeetingCallId,
     isMeetingMinimized,
@@ -212,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   useEffect(() => {
     // location is a string in Next.js usePathname
     if (location?.startsWith('/dashboard')) {
-      setActiveTab(location);
+      setActiveTab(normalizeTabForRole(location));
     }
   }, [location]);
   const [invoices, setInvoices] = useState<Invoice[]>([]); // Initialize empty
@@ -273,7 +301,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [selectedProjectForMilestones, setSelectedProjectForMilestones] = useState<Project | null>(null);
 
   const { tasks: bgTasks } = useBackgroundTasks();
-  const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
+  const activeBgTasksCount = (bgTasks || []).filter(t => t.status === 'running').length;
 
   const [isVoiceActive, setIsVoiceActive] = useState(false);
 
@@ -282,21 +310,21 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Tenant Admin: sees all data within their tenant
   // Client: sees only their own data
   const filteredProjects = useMemo(() => user.role === 'admin'
-    ? projects // Super Admin sees everything
-    : projects.filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
+    ? (projects || []) // Super Admin sees everything
+    : (projects || []).filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
 
   const filteredMessages = useMemo(() => user.role === 'admin'
-    ? messages // Super Admin sees everything
-    : messages.filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
+    ? (messages || []) // Super Admin sees everything
+    : (messages || []).filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
 
   const filteredInvoices = useMemo(() => (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'
-    ? invoices // Admin sees all (cross-tenant), tenant_admin sees tenant-scoped (from service)
-    : invoices.filter(i => i.clientId === user.id), [user.id, user.role, invoices]);
+    ? (invoices || []) // Admin sees all (cross-tenant), tenant_admin sees tenant-scoped (from service)
+    : (invoices || []).filter(i => i.clientId === user.id), [user.id, user.role, invoices]);
 
   // Stats Logic
   const projectDays = useMemo(() => {
-    if (filteredProjects.length === 0) return 0;
-    const oldest = Math.min(...filteredProjects.map(p => new Date(p.createdAt || Date.now()).getTime()));
+    if ((filteredProjects || []).length === 0) return 0;
+    const oldest = Math.min(...(filteredProjects || []).map(p => new Date(p.createdAt || Date.now()).getTime()));
     return Math.floor((Date.now() - oldest) / (1000 * 60 * 60 * 24));
   }, [filteredProjects]);
 
@@ -382,7 +410,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [user.role]);
 
   // Calculate unread message count
-  const unreadMessageCount = filteredMessages.filter(m =>
+  const unreadMessageCount = (filteredMessages || []).filter(m =>
     m.senderId !== user.id && !m.readAt
   ).length;
 
@@ -479,7 +507,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (user.role === 'admin') {
         promises.push(userService.getUsers().then(({ users, error }) => {
           if (!error && users) {
-            const count = users.filter(u => u.role === 'client').length;
+            const count = (users || []).filter(u => u.role === 'client').length;
             setTotalClientCount(count);
           }
         }));
@@ -1199,6 +1227,20 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/bonnie':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <BonnieFullView />
+          </React.Suspense>
+        );
+
+      case '/dashboard/tickets':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <DeepDeskView />
+          </React.Suspense>
+        );
+
       case '/dashboard/gamification':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -1816,7 +1858,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         title="Mission Accomplished" 
         message="Achievement unlocked." 
       />
-      <BonnieWidget />
+      {activeTab !== '/dashboard/bonnie' && <BonnieWidget />}
     </div>
   );
 };

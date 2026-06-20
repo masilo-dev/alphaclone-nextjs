@@ -482,7 +482,7 @@ const Client360Detail: React.FC<{
             <span className="text-[10px] text-slate-400 font-bold">SMTP Mail</span>
           </button>
           <button
-            onClick={() => router.push(`/dashboard/messages?selectedClientId=${client.id}`)}
+            onClick={() => router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages'}?selectedClientId=${client.id}`)}
             className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900 hover:bg-slate-800 transition-all active:scale-95 group"
           >
             <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
@@ -622,7 +622,7 @@ const Client360Detail: React.FC<{
           <span className="text-[10px] text-teal-300 font-bold">Draft Contract</span>
         </button>
         <button
-          onClick={() => router.push('/dashboard/business/billing')}
+          onClick={() => router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance')}
           className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors"
         >
           <DollarSign className="w-5 h-5 text-blue-400" />
@@ -1225,7 +1225,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     const list: CRMEntity[] = [];
 
     // Leads
-    leads.forEach(l => {
+    (leads || []).forEach(l => {
       list.push({
         type: 'lead',
         id: l.id,
@@ -1241,7 +1241,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     });
 
     // Clients
-    clients.forEach(c => {
+    (clients || []).forEach(c => {
       const isClient = c.sales_stage === 'customer';
       list.push({
         type: isClient ? 'client' : 'contact',
@@ -1307,7 +1307,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           }}
           onDraftContract={() => {
             setSelectedEntity(null);
-            router.push('/dashboard/business/contracts');
+            router.push(user.role === 'tenant_admin' ? '/dashboard/business/contracts' : '/dashboard/contracts');
           }}
           status={isTeamsConnected ? (teamsPresenceMap[selectedEntity.id] || 'offline') : (presenceMap[selectedEntity.id] || 'offline')}
           isTeamsConnected={isTeamsConnected}
@@ -1317,9 +1317,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   }
 
   // Calculate summaries for stats indicators
-  const totalLeadsCount = leads.length;
-  const activeClientsCount = clients.filter(c => c.sales_stage === 'customer').length;
-  const totalClientValue = clients.filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
+  const totalLeadsCount = (leads || []).length;
+  const activeClientsCount = (clients || []).filter(c => c.sales_stage === 'customer').length;
+  const totalClientValue = (clients || []).filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-slate-950 select-none relative">

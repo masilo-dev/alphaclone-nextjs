@@ -11,7 +11,7 @@ import {
   Text,
   useColorModeValue,
 } from '@chakra-ui/react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { useEffect, useState } from 'react';
 
 interface UserProfile {
@@ -30,7 +30,7 @@ export function Header() {
 
   useEffect(() => {
     async function fetchUser() {
-      const supabase = createClientComponentClient();
+      const supabase = createSupabaseBrowserClient();
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
@@ -48,7 +48,7 @@ export function Header() {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = createClientComponentClient();
+    const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
     window.location.href = '/login';
   };

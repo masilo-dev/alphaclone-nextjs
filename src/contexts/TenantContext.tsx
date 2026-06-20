@@ -121,10 +121,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           tenantService.setCurrentTenant(firstTenant);
           setIsLoading(false);
         }
-      } else if (user.role !== 'client') {
-        // Any non-client user with no tenants gets a default org auto-created
+      } else {
+        // Any user with no tenants gets a default org auto-created
         console.log(`[TenantContext] No tenants found for user with role ${user.role}, auto-creating...`);
-        // ... (rest of creation logic)
 
         try {
           // Generate tenant name based on role
@@ -179,11 +178,6 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           // Early return to prevent further execution
           return;
         }
-      } else {
-        // No tenants and not an admin/creator
-        console.warn(`[TenantContext] No tenants found for user: ${user.id} (Role: ${user.role}) after retry.`);
-        setCurrentTenant(null);
-        setIsLoading(false);
       }
     } catch (error: any) {
       console.error('Failed to load user tenants:', error);

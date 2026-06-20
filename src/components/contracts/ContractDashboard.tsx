@@ -1163,9 +1163,54 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         }`}
                                     >
                                         {msg.content ? (
-                                            <div className="prose prose-invert prose-xs max-w-none space-y-1.5 break-words whitespace-pre-wrap">
-                                                {msg.content}
-                                            </div>
+                                            <>
+                                                <div className="prose prose-invert prose-xs max-w-none space-y-1.5 break-words whitespace-pre-wrap">
+                                                    {msg.content}
+                                                </div>
+                                                {msg.role === 'assistant' && i > 0 && (
+                                                    <div className="mt-3 pt-3 border-t border-slate-850 flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const html = msg.content.startsWith('<') ? msg.content : contractToHTML(msg.content);
+                                                                setGeneratedContract(msg.content);
+                                                                setEditedHtml(html);
+                                                                setStep('preview');
+                                                                setIsEditing(true);
+                                                                setContractId('');
+                                                                setIsSigned(false);
+                                                                setSignatureName('');
+                                                                setSignatureData('');
+                                                                setActiveView('new');
+                                                                toast.success("AI draft loaded into the editor! You can now review, edit, sign, and download/send as PDF.");
+                                                            }}
+                                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600 border border-teal-500/30 hover:border-teal-400 text-[10px] font-bold text-teal-400 hover:text-white uppercase transition-all duration-150"
+                                                        >
+                                                            <FileText className="w-3.5 h-3.5" /> Convert to PDF Contract
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const mockContract: Partial<Contract> = {
+                                                                    id: 'AI_DRAFT',
+                                                                    title: `AI Lawyer Drafted Agreement`,
+                                                                    content: msg.content,
+                                                                    status: 'draft'
+                                                                };
+                                                                try {
+                                                                    toast.success("Generating PDF...");
+                                                                    contractService.downloadPDF(mockContract, currentTenant || undefined);
+                                                                } catch (e) {
+                                                                    toast.error("Failed to generate PDF");
+                                                                }
+                                                            }}
+                                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/50 text-[10px] font-bold text-slate-300 hover:text-white uppercase transition-all duration-150"
+                                                        >
+                                                            <Printer className="w-3.5 h-3.5" /> Download PDF
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <div className="flex items-center gap-1.5 py-1">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '0ms' }} />

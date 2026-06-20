@@ -15,9 +15,8 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useTenant } from '@/hooks/useTenant';
-import { RealtimeService } from '@/lib/realtime-service';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { useTenant } from '@/contexts/TenantContext';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Activity,
@@ -60,7 +59,8 @@ const ENTITY_COLORS: Record<string, string> = {
  * Uses Chakra UI for styling and Framer Motion for animations.
  */
 export function ActivityFeed({ userId, limit = 20 }: ActivityFeedProps) {
-  const { tenantId, isLoading: tenantLoading } = useTenant();
+  const { currentTenant, isLoading: tenantLoading } = useTenant();
+  const tenantId = currentTenant?.id;
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(true);
@@ -72,9 +72,10 @@ export function ActivityFeed({ userId, limit = 20 }: ActivityFeedProps) {
   useEffect(() => {
     if (!tenantId) return;
 
+    const supabase = createSupabaseBrowserClient();
+
     async function fetchActivities() {
       try {
-        const supabase = createClientComponentClient();
         const { data } = await supabase
           .from('audit_logs')
           .select('*')
@@ -93,25 +94,20 @@ export function ActivityFeed({ userId, limit = 20 }: ActivityFeedProps) {
     fetchActivities();
 
     // Realtime subscription
-    const realtime = RealtimeService.getInstance();
-    realtime.init();
-
-    const channel = realtime.subscribe(
-      'activity-feed',
-      { table: 'audit_logs', filter: `tenant_id=eq.${tenantId}` },
-      (payload) => {
-        if (payload.eventType === 'INSERT') {
+    const channel = supabase.channel(`activity-feed-${tenantId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'audit_logs', filter: `tenant_id=eq.${tenantId}` },
+        (payload: any) => {
           setActivities((prev) => [payload.new as ActivityLog, ...prev.slice(0, limit - 1)]);
         }
-      }
-    );
-
-    channel.on('system', { event: 'error' }, () => {
-      setIsConnected(false);
-    });
+      )
+      .subscribe((status: any) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
 
     return () => {
-      realtime.unsubscribe('activity-feed');
+      supabase.removeChannel(channel);
     };
   }, [tenantId, limit]);
 

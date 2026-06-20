@@ -36,6 +36,7 @@ import {
   MessageCircle,
   Database,
   Target,
+  Brain,
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -88,6 +89,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Bonnie AI Console', href: '/dashboard/bonnie', icon: Brain },
   { label: 'Business OS', href: '/dashboard/performance', icon: Zap },
   { label: 'Live Stats', href: '/dashboard/analytics', icon: Activity },
   {
@@ -98,6 +100,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Calendar', href: '/dashboard/calendar' },
       { label: 'Mail', href: '/dashboard/mail', comingSoon: true },
       { label: 'Messages', href: '/dashboard/messages' },
+      { label: 'Deep-Desk Tickets', href: '/dashboard/tickets' },
     ]
   },
   {
@@ -139,6 +142,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Deals Pipeline', href: '/dashboard/deals', icon: Target },
       { label: 'Branded Forms', href: '/dashboard/business/forms', icon: FileText },
       { label: 'AI Growth Agent', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
+      { label: 'Bonnie AI Console', href: '/dashboard/business/bonnie', icon: Brain },
     ]
   },
 
@@ -156,6 +160,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'X (Twitter) Manager', href: '/dashboard/business/x', icon: Twitter },
       { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
       { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
+      { label: 'Deep-Desk Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
     ]
   },
 
