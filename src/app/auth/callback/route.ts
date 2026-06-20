@@ -25,6 +25,19 @@ export async function GET(request: Request) {
                         },
                         setAll(cookiesToSet) {
                             try {
+                                const allCookies = cookieStore.getAll();
+                                const sbCookieNames = allCookies
+                                    .map(c => c.name)
+                                    .filter(name => name.startsWith('sb-') && name.includes('-auth-token'));
+                                
+                                const newCookieNames = new Set(cookiesToSet.map(c => c.name));
+                                
+                                sbCookieNames.forEach(oldName => {
+                                    if (!newCookieNames.has(oldName)) {
+                                        cookieStore.set(oldName, '', { expires: new Date(0), path: '/' });
+                                    }
+                                });
+
                                 cookiesToSet.forEach(({ name, value, options }) =>
                                     cookieStore.set(name, value, options)
                                 )
