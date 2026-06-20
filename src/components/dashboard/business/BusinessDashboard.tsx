@@ -100,8 +100,11 @@ const CashFlowForecastTab = React.lazy(() => import('./CashFlowForecastTab'));
 const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
 const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
+const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
 
 import { TrialBanner } from '../TrialBanner';
+import BonnieWidget from '../bonnie/BonnieWidget';
+import BonnieFullView from '../bonnie/BonnieFullView';
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import BottomNav from '../BottomNav';
@@ -188,7 +191,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     // -- PERSISTENT VIDEO CALL STATE --
     const { tasks: bgTasks } = useBackgroundTasks();
-    const activeBgTasksCount = bgTasks.filter(t => t.status === 'running').length;
+    const activeBgTasksCount = (bgTasks || []).filter(t => t.status === 'running').length;
 
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
@@ -298,7 +301,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 const { tasks } = await taskService.getUpcomingTasks(user.id);
 
                 const today = new Date();
-                const dueTasks = tasks.filter(t => {
+                const dueTasks = (tasks || []).filter(t => {
                     if (!t.dueDate) return false;
                     const due = new Date(t.dueDate);
                     return due.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0) && t.status !== 'completed';
@@ -351,16 +354,19 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         switch (activeTab) {
             case '/dashboard':
                 return <BusinessHome user={user} stats={dashboardStats} />;
+            case '/dashboard/projects':
             case '/dashboard/business/projects':
                 return <ProjectsPage user={user} />;
             case '/dashboard/business/team':
                 return <TeamPage user={user} />;
+            case '/dashboard/messages':
             case '/dashboard/business/messages':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
                         <MessagesPage user={user} />
                     </React.Suspense>
                 );
+            case '/dashboard/calendar':
             case '/dashboard/business/calendar':
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={10} columns={7} /></div>}>
@@ -379,6 +385,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <TeamsPage user={user} setActiveTab={setActiveTab} />
                     </React.Suspense>
                 );
+            case '/dashboard/billing':
             case '/dashboard/business/billing':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -397,6 +404,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <BusinessPerformanceDashboard />
                     </React.Suspense>
                 );
+            case '/dashboard/settings':
             case '/dashboard/business/settings':
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
@@ -443,6 +451,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
+            case '/dashboard/contracts':
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} initialTab="details" />;
             // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
@@ -635,6 +644,20 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
+            case '/dashboard/business/bonnie':
+                return (
+                    <React.Suspense fallback={<TableSkeleton />}>
+                        <BonnieFullView />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/tickets':
+                return (
+                    <React.Suspense fallback={<TableSkeleton />}>
+                        <DeepDeskView />
+                    </React.Suspense>
+                );
+
             // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
             case '/dashboard/finance': {
                 const FinanceTab = React.lazy(() => import('../FinanceTab'));
@@ -659,14 +682,20 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/deals': return t('Deals');
             case '/dashboard/contacts':
             case '/dashboard/business/clients': return t('Contacts');
+            case '/dashboard/projects':
             case '/dashboard/business/projects': return t('Projects');
             case '/dashboard/business/team': return t('Team Management');
+            case '/dashboard/messages':
             case '/dashboard/business/messages': return t('Messages');
+            case '/dashboard/calendar':
             case '/dashboard/business/calendar': return t('Calendar');
+            case '/dashboard/billing':
             case '/dashboard/business/billing': return t('Billing');
             case '/dashboard/business/reports': return t('Analytics & Reports');
             case '/dashboard/performance': return t('Business OS Performance');
+            case '/dashboard/settings':
             case '/dashboard/business/settings': return t('Settings');
+            case '/dashboard/contracts':
             case '/dashboard/business/contracts': return t('Contracts');
             case '/dashboard/business/documents': return t('Document Hub');
             case '/dashboard/business/pages': return t('Pages');
@@ -697,6 +726,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
+            case '/dashboard/business/bonnie': return t('Bonnie AI Console');
+            case '/dashboard/business/tickets': return t('Deep-Desk Support');
             case '/dashboard/accounting': return t('Accounting Dashboard');
             case '/dashboard/mail': return t('Mail');
             case '/dashboard/zoho/mail': return t('Zoho Mail');
@@ -957,6 +988,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 unreadCount={unreadMessageCount}
                 userRole="tenant_admin"
             />
+
+            {activeTab !== '/dashboard/business/bonnie' && <BonnieWidget />}
 
         </div>
     );

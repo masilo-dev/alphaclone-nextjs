@@ -14,8 +14,8 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { Bell } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useTenant } from '@/hooks/useTenant';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { useTenant } from '@/contexts/TenantContext';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Notification {
@@ -30,7 +30,8 @@ interface Notification {
  * Notification bell component with realtime updates.
  */
 export function NotificationBell() {
-  const { tenantId } = useTenant();
+  const { currentTenant } = useTenant();
+  const tenantId = currentTenant?.id;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -42,7 +43,7 @@ export function NotificationBell() {
     if (!tenantId) return;
 
     async function fetchNotifications() {
-      const supabase = createClientComponentClient();
+      const supabase = createSupabaseBrowserClient();
       const { data } = await supabase
         .from('notifications')
         .select('*')
@@ -52,7 +53,7 @@ export function NotificationBell() {
 
       if (data) {
         setNotifications(data);
-        setUnreadCount(data.filter((n) => !n.read).length);
+        setUnreadCount(data.filter((n: Notification) => !n.read).length);
       }
     }
 

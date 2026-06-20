@@ -75,6 +75,77 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     const [isSummarizing, setIsSummarizing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Compose states
+    const [composing, setComposing] = useState(false);
+    const [composeTo, setComposeTo] = useState('');
+    const [composeSubject, setComposeSubject] = useState('');
+    const [composeBody, setComposeBody] = useState('');
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [isAiDrafting, setIsAiDrafting] = useState(false);
+
+    const handleGenerateComposeDraft = async () => {
+        if (!aiPrompt.trim()) {
+            toast.error('Please enter an AI prompt instruction');
+            return;
+        }
+        setIsAiDrafting(true);
+        const toastId = toast.loading('Bonnie is drafting your email...');
+        try {
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Draft a professional email with subject "${composeSubject || 'No Subject'}" based on the following instruction: "${aiPrompt}"`
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.result) {
+                setComposeBody(data.result);
+                toast.success('AI draft generated successfully!', { id: toastId });
+            } else {
+                toast.error(data.error || 'Failed to generate AI draft', { id: toastId });
+            }
+        } catch (err: any) {
+            console.error('Failed to generate draft:', err);
+            toast.error('Failed to generate draft', { id: toastId });
+        } finally {
+            setIsAiDrafting(false);
+        }
+    };
+
+    const handleSendCompose = async () => {
+        if (!composeTo.trim()) {
+            toast.error('Recipient email (To) is required');
+            return;
+        }
+        if (!composeSubject.trim()) {
+            toast.error('Subject is required');
+            return;
+        }
+        setIsSending(true);
+        try {
+            const recipients = composeTo.split(',').map(email => email.trim()).filter(Boolean);
+            await microsoftGraphService.sendEmail({
+                to: recipients,
+                subject: composeSubject,
+                body: composeBody
+            });
+            toast.success('Email sent successfully via Outlook!');
+            setComposing(false);
+            setComposeTo('');
+            setComposeSubject('');
+            setComposeBody('');
+            setAiPrompt('');
+            // Reload folder
+            fetchMessages(activeLabel);
+        } catch (err: any) {
+            console.error('Failed to send Outlook email:', err);
+            toast.error(err.message || 'Failed to send email via Outlook');
+        } finally {
+            setIsSending(false);
+        }
+    };
+
     const fetchMessages = async (folder: string = activeLabel) => {
         setIsLoading(true);
         try {
@@ -248,7 +319,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
             </div>
 
             {/* Sidebar: Message List */}
-            <div className={`w-full md:w-80 lg:w-96 border-r border-slate-800 flex flex-col ${selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-80 lg:w-96 border-r border-slate-800 flex flex-col ${selectedThreadId || composing ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-2">
                     <h3 className="text-white font-bold flex items-center gap-2">
                         {(() => {
@@ -258,9 +329,20 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         })()}
                         {LABELS.find(l => l.id === activeLabel)?.label || 'Inbox'}
                     </h3>
-                    <Button variant="outline" size="sm" onClick={() => fetchMessages(activeLabel)} isLoading={isLoading} className="h-8 w-8 p-0">
-                        <RefreshCw className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setComposing(true);
+                                setSelectedThreadId(null);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center px-3 py-1.5 rounded-lg h-8 font-bold uppercase text-[10px] tracking-wider transition-all"
+                        >
+                            Compose
+                        </button>
+                        <Button variant="outline" size="sm" onClick={() => fetchMessages(activeLabel)} isLoading={isLoading} className="h-8 w-8 p-0 border-slate-800">
+                            <RefreshCw className="w-3.5 h-3.5" />
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Search Bar */}
@@ -349,8 +431,103 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
             </div>
 
             {/* Main Content: Conversation View */}
-            <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId ? 'hidden md:flex' : 'flex'}`}>
-                {selectedThreadId ? (
+            <div className={`flex-1 flex flex-col bg-slate-950 ${!selectedThreadId && !composing ? 'hidden md:flex' : 'flex'}`}>
+                {composing ? (
+                    <div className="flex-1 flex flex-col bg-slate-950">
+                        {/* Compose Header */}
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 backdrop-blur-sm">
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={() => setComposing(false)} 
+                                    className="p-2 border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-all"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                </button>
+                                <h3 className="text-white font-bold">New Message</h3>
+                            </div>
+                            <Badge variant="blue" className="text-xs px-1.5 py-0 uppercase">Outlook Compose</Badge>
+                        </div>
+                        
+                        {/* Compose Form */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/10">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">To</label>
+                                <input
+                                    type="text"
+                                    placeholder="recipient@domain.com (comma separated for multiple)"
+                                    value={composeTo}
+                                    onChange={(e) => setComposeTo(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                />
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Subject</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter subject line..."
+                                    value={composeSubject}
+                                    onChange={(e) => setComposeSubject(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                />
+                            </div>
+                            
+                            {/* AI Copilot Section */}
+                            <div className="bg-gradient-to-r from-violet-900/20 to-indigo-900/10 border border-violet-800/30 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center gap-2 text-violet-400">
+                                    <Sparkles className="w-4 h-4" />
+                                    <span className="text-xs font-black uppercase tracking-wider">Bonnie AI Assistant</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Ask AI to write: e.g. Write a professional contract proposal..."
+                                        value={aiPrompt}
+                                        onChange={(e) => setAiPrompt(e.target.value)}
+                                        className="flex-1 bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500 transition-all"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleGenerateComposeDraft();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        onClick={handleGenerateComposeDraft}
+                                        isLoading={isAiDrafting}
+                                        className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs uppercase tracking-wider px-3 h-[34px]"
+                                    >
+                                        Draft
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5 flex-1 min-h-[300px]">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Message</label>
+                                <textarea
+                                    placeholder="Write your email content here (HTML is supported)..."
+                                    value={composeBody}
+                                    onChange={(e) => setComposeBody(e.target.value)}
+                                    className="w-full flex-1 bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 min-h-[250px] resize-y custom-scrollbar"
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* Compose Actions */}
+                        <div className="p-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-950/50">
+                            <Button variant="outline" onClick={() => setComposing(false)} className="border-slate-800 text-slate-400 hover:text-white">
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleSendCompose}
+                                isLoading={isSending}
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-5 font-bold uppercase tracking-wider text-xs"
+                            >
+                                <Send className="w-3.5 h-3.5 mr-2" /> Send Email
+                            </Button>
+                        </div>
+                    </div>
+                ) : selectedThreadId ? (
                     <>
                         {/* Thread Header */}
                         <div className="p-4 border-b border-slate-800 flex items-center gap-4 bg-slate-950/50 backdrop-blur-sm">

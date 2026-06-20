@@ -17,9 +17,8 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useTenant } from '@/hooks/useTenant';
-import { RealtimeService } from '@/lib/realtime-service';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { useTenant } from '@/contexts/TenantContext';
 import {
   Facebook,
   Twitter,
@@ -68,7 +67,8 @@ const STATUS_COLORS: Record<string, string> = {
  * Displays posts in a calendar-like grid with platform icons.
  */
 export function SocialPanel() {
-  const { tenantId, isLoading: tenantLoading } = useTenant();
+  const { currentTenant, isLoading: tenantLoading } = useTenant();
+  const tenantId = currentTenant?.id;
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,9 +79,10 @@ export function SocialPanel() {
   useEffect(() => {
     if (!tenantId) return;
 
+    const supabase = createSupabaseBrowserClient();
+
     async function fetchPosts() {
       try {
-        const supabase = createClientComponentClient();
         const { data } = await supabase
           .from('social_posts')
           .select('*')
@@ -99,33 +100,32 @@ export function SocialPanel() {
 
     fetchPosts();
 
-    const realtime = RealtimeService.getInstance();
-    realtime.init();
-
-    const channel = realtime.subscribe(
-      'social-posts',
-      { table: 'social_posts', filter: `tenant_id=eq.${tenantId}` },
-      (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setPosts((prev) => [payload.new as SocialPost, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
-          setPosts((prev) =>
-            prev.map((p) =>
-              p.id === (payload.new as SocialPost).id
-                ? (payload.new as SocialPost)
-                : p
-            )
-          );
-        } else if (payload.eventType === 'DELETE') {
-          setPosts((prev) =>
-            prev.filter((p) => p.id !== (payload.old as SocialPost).id)
-          );
+    const channel = supabase.channel(`social-posts-${tenantId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'social_posts', filter: `tenant_id=eq.${tenantId}` },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            setPosts((prev) => [payload.new as SocialPost, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setPosts((prev) =>
+              prev.map((p) =>
+                p.id === (payload.new as SocialPost).id
+                  ? (payload.new as SocialPost)
+                  : p
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setPosts((prev) =>
+              prev.filter((p) => p.id !== (payload.old as SocialPost).id)
+            );
+          }
         }
-      }
-    );
+      )
+      .subscribe();
 
     return () => {
-      realtime.unsubscribe('social-posts');
+      supabase.removeChannel(channel);
     };
   }, [tenantId]);
 

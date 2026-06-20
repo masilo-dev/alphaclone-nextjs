@@ -255,9 +255,13 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         if (toInput.trim().includes('@')) {
             finalTo.push(toInput.trim());
         }
-        
         if (finalTo.length === 0) {
-            toast.error('Recipient email required');
+            toast.error('Recipient email is required');
+            return;
+        }
+        
+        if (!emailData.subject?.trim()) {
+            toast.error('Subject is required');
             return;
         }
 
@@ -673,8 +677,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     <button 
                                         type="button"
                                         onClick={() => handleSend()}
-                                        disabled={sending || (toEmails.length === 0 && !toInput.includes('@')) || !emailData.subject}
-                                        className="text-[15px] font-semibold text-teal-400 disabled:opacity-40 disabled:pointer-events-none"
+                                        disabled={sending}
+                                        className="text-[15px] font-semibold text-teal-400 disabled:opacity-45"
                                     >
                                         {sending ? 'Sending...' : 'Send'}
                                     </button>
