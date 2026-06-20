@@ -39,6 +39,9 @@ export const rateLimitConfigs: {
         contact: { limit: number; window: Duration };
         general: { limit: number; window: Duration };
     };
+    supabase: {
+        standard: { limit: number; window: Duration };
+    };
 } = {
     // Authentication endpoints - tightened for Phase 1 hardening
     auth: {
@@ -59,6 +62,11 @@ export const rateLimitConfigs: {
     public: {
         contact: { limit: 5, window: '1h' }, // 5 contact form submissions per hour
         general: { limit: 300, window: '1m' }, // 300 requests per minute
+    },
+
+    // Supabase endpoint rate limits
+    supabase: {
+        standard: { limit: 120, window: '1m' },
     },
 };
 
@@ -140,7 +148,7 @@ function parseWindow(window: string): number {
  * Apply rate limiting to a request
  */
 export async function rateLimit(
-    request: NextRequest,
+    request: NextRequest | null,
     config: { limit: number; window: Duration },
     identifier?: string
 ): Promise<{
@@ -150,7 +158,7 @@ export async function rateLimit(
     limit: number;
 }> {
     // 1. Determine identifier (IP address or provided custom identifier)
-    const id = identifier || (request as any).ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const id = identifier || (request as any)?.ip || request?.headers.get('x-forwarded-for') || '127.0.0.1';
 
     // 2. Try Redis rate limiter if configured
     if (redis) {
@@ -168,7 +176,7 @@ export async function rateLimit(
                 new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Rate limit timeout')), 1000))
             ]);
 
-            if (!result.success) {
+            if (!result.success && request) {
                 await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
             }
 
@@ -188,7 +196,7 @@ export async function rateLimit(
     const windowMs = parseWindow(config.window);
     const result = checkInMemoryRateLimit(id, config.limit, windowMs);
 
-    if (!result.success) {
+    if (!result.success && request) {
         // Log violation for in-memory as well (non-blocking)
         logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname).catch(console.error);
     }
@@ -258,7 +266,7 @@ async function logRateLimitViolation(identifier: string, ipAddress: string, path
  * Middleware helper to apply rate limiting and return response
  */
 export async function rateLimitMiddleware(
-    request: NextRequest,
+    request: NextRequest | null,
     config: { limit: number; window: Duration },
     identifier?: string
 ): Promise<NextResponse | null> {
@@ -266,8 +274,8 @@ export async function rateLimitMiddleware(
 
     if (!result.success) {
         // SECURITY SHIELD: Log the rate limit violation as a security event
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
-        const pathname = request.nextUrl.pathname;
+        const ip = request ? (request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1') : '127.0.0.1';
+        const pathname = request ? request.nextUrl.pathname : '/unknown';
         
         // Fire and forget (don't block the 429 response)
         securityLogService.logEvent({

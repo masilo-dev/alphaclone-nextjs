@@ -13,6 +13,12 @@ export async function updateSession(request: NextRequest) {
         return res;
     };
 
+    // Rate limit direct Supabase endpoints (/auth/v1/, /storage/v1/, /rest/v1/) to prevent resource exhaustion
+    if (pathname.includes('/auth/v1/') || pathname.includes('/storage/v1/') || pathname.includes('/rest/v1/')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.supabase.standard);
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
+    }
+
     // DIRECT BYPASS: Ensure direct Supabase Auth and Storage calls are never intercepted by application middleware logic
     // This is a safety layer for the "Unexpected end of JSON input" error and prevents binary corruption
     if (pathname.includes('/auth/v1/') || pathname.includes('/storage/v1/')) {
@@ -93,13 +99,28 @@ export async function updateSession(request: NextRequest) {
                         return request.cookies.getAll()
                     },
                     setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                        const allCookies = request.cookies.getAll();
+                        const sbCookieNames = allCookies
+                            .map(c => c.name)
+                            .filter(name => name.startsWith('sb-') && name.includes('-auth-token'));
+                        
+                        const newCookieNames = new Set(cookiesToSet.map(c => c.name));
+                        
+                        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+                        
                         response = NextResponse.next({
                             request: {
                                 headers: forwardHeaders,
                             },
                         })
                         response.headers.set('x-request-id', requestId);
+
+                        sbCookieNames.forEach(oldName => {
+                            if (!newCookieNames.has(oldName)) {
+                                response.cookies.set(oldName, '', { expires: new Date(0), path: '/' });
+                            }
+                        });
+
                         cookiesToSet.forEach(({ name, value, options }) =>
                             response.cookies.set(name, value, options)
                         )

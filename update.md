@@ -1,5 +1,30 @@
 # Update Log
 
+## Date: 2026-06-20 (SESSION COOKIE CLEANUP, SUPABASE RATE LIMITING & GIT SYNC)
+
+### Added
+- **Supabase Rate Limiting Configuration** (`src/lib/rateLimit.ts`):
+  - Declared `supabase.standard` rate limit configuration (120 requests/minute) to protect direct `/auth/v1/`, `/storage/v1/`, and `/rest/v1/` routes.
+  - Made the `request` parameter in the core `rateLimit` and `rateLimitMiddleware` utilities nullable and optional, allowing safe invocations from any server-side context where a request object is absent.
+
+### Modified
+- **Middleware Rate-Limiting & Cookie Sanitization** (`src/lib/middleware.ts`):
+  - Applied the new `supabase` rate limit rules to direct `/auth/v1/`, `/storage/v1/`, and `/rest/v1/` endpoints.
+  - Enhanced the `setAll` cookie synchronization routine to dynamically scan incoming cookies for stale `sb-` auth session cookies or obsolete token chunks (those not present in the current active session) and expire them immediately in the client response to prevent session corruption.
+- **Server-Side Supabase Client & OAuth Callback** (`src/lib/supabase-server.ts`, `src/app/auth/callback/route.ts`):
+  - Standardized the same stale cookie chunk cleanup logic in the respective `setAll` handlers to ensure consistent session sanitization across all SSR contexts and authentication flow callbacks.
+- **Redundant Cookie Banners Pruned** (`src/components/Providers.tsx`):
+  - Removed deprecated `<CookieConsent />` import and rendering to prevent overlapping banners, relying solely on the canonical, modern `<CookieBanner />` component.
+  - Surgically deleted all deprecated and duplicate `CookieConsent.tsx` files (`src/components/CookieConsent.tsx`, `src/components/legal/CookieConsent.tsx`, `src/components/common/CookieConsent.tsx`, `src/components/gdpr/CookieConsent.tsx`).
+- **Database Quota Enforcement Integration** (`src/app/api/finance/expenses/route.ts`):
+  - Integrated the database-level `enforceQuota` middleware wrapper across GET, POST, PATCH, and DELETE endpoints of the expenses API route.
+  - Wired successful actions to track and log API calls using `quotaEnforcementService.trackAPICall`.
+
+### Production Readiness
+- **Vercel Safe**: Clean production compilation verified. Next.js type-safety checks (`npm run build`) pass with zero errors. All changes are Edge and Serverless compatible with no new external dependencies.
+
+---
+
 ## Date: 2026-06-14 (MICROSOFT GRAPH TEAMS & CHAT MCP TOOLS REGISTERED, OUTLOOK FOLDER NAVIGATION & GEMINI ROUTER STABILIZATION)
 
 ### Added
