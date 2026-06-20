@@ -14,7 +14,7 @@ const UpdateInvoiceSchema = z.object({
     tax: z.number().min(0).optional(),
     due_date: z.string().datetime().optional(),
     notes: z.string().optional(),
-    status: z.enum(['draft', 'sent', 'overdue', 'cancelled', 'void']).optional(),
+    status: z.enum(['draft', 'sent', 'overdue', 'cancelled', 'void', 'paid']).optional(),
     line_items: z.array(z.object({
         description: z.string(),
         quantity: z.number().min(0),
