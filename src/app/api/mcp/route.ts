@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
+import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
@@ -373,11 +374,16 @@ export async function POST(req: NextRequest) {
       const admin = createAdminSupabaseClientOrThrow();
       
       // Get counts by status
-      const { data: statusCounts } = await admin
+      const { data: allTickets } = await admin
         .from('support_tickets')
-        .select('status, count')
-        .eq('tenant_id', tenantId)
-        .then(r => r.data);
+        .select('status')
+        .eq('tenant_id', tenantId);
+
+      const statusCountsMap: Record<string, number> = {};
+      (allTickets || []).forEach((t: any) => {
+        statusCountsMap[t.status] = (statusCountsMap[t.status] || 0) + 1;
+      });
+      const statusCounts = Object.entries(statusCountsMap).map(([status, count]) => ({ status, count }));
 
       // Get average resolution time
       const { data: avgResolution } = await admin
