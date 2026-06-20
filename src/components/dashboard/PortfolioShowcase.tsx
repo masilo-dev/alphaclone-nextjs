@@ -40,7 +40,8 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     // Filter projects
-    const portfolioProjects = isAdmin ? projects : projects.filter(
+    const safeProjects = projects || [];
+    const portfolioProjects = isAdmin ? safeProjects : safeProjects.filter(
         (p) => p.status === 'Completed' || p.status === 'Active'
     );
 
