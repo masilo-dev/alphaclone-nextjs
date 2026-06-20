@@ -1,11 +1,17 @@
 # Update Log
 
-## Date: 2026-06-20 (SESSION COOKIE CLEANUP, SUPABASE RATE LIMITING & GIT SYNC)
+## Date: 2026-06-20 (SESSION COOKIE CLEANUP, SUPABASE RATE LIMITING & PRODUCTION BUILD STABILIZATION)
 
 ### Added
 - **Supabase Rate Limiting Configuration** (`src/lib/rateLimit.ts`):
   - Declared `supabase.standard` rate limit configuration (120 requests/minute) to protect direct `/auth/v1/`, `/storage/v1/`, and `/rest/v1/` routes.
   - Made the `request` parameter in the core `rateLimit` and `rateLimitMiddleware` utilities nullable and optional, allowing safe invocations from any server-side context where a request object is absent.
+
+### Fixed
+- **Next.js Production Build Stabilization**:
+  - Reverted the experimental, unused Chakra UI dashboard overhaul commit `41166c05` (`app/dashboard/*` and `src/components/dashboard/Layout/*` / other duplicate components) to eliminate over 94 build-blocking type-safety compilation errors under Chakra UI v3.
+  - Corrected the invoice update API schema (`src/app/api/invoices/[id]/route.ts`) by adding `'paid'` to the `status` Zod enum definition, resolving a compile-time type-safety warning for status comparisons.
+  - Resolved missing imports in the MCP server route (`src/app/api/mcp/route.ts`) by importing `createAdminSupabaseClientOrThrow` from `@/lib/apiAuth` and refactoring `get_ticket_stats` to compute status counts via a type-safe database-query fallback rather than invalid `select('status, count')` notation.
 
 ### Modified
 - **Middleware Rate-Limiting & Cookie Sanitization** (`src/lib/middleware.ts`):
@@ -21,7 +27,7 @@
   - Wired successful actions to track and log API calls using `quotaEnforcementService.trackAPICall`.
 
 ### Production Readiness
-- **Vercel Safe**: Clean production compilation verified. Next.js type-safety checks (`npm run build`) pass with zero errors. All changes are Edge and Serverless compatible with no new external dependencies.
+- **Vercel Safe**: Clean production compilation verified. Next.js type-safety checks (`npm run build`) pass with zero errors. All changes are Edge and Serverless compatible with no new external dependencies. Pushed to remote master branch to trigger active Vercel deployment.
 
 ---
 
