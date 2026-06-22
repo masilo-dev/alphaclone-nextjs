@@ -13,5 +13,24 @@
  * strictly to client-side useEffect or a browser devtools snippet.
  */
 export function initPatch() {
-  // Intentionally disabled — was causing SSR prerender crash on /dashboard.
+  if (typeof Array.prototype.filter !== 'function') return;
+
+  // Prevent duplicate patching
+  if ((Array.prototype.filter as any).__patched) return;
+
+  const origFilter = Array.prototype.filter;
+
+  const patchedFilter = function (this: any[], callback: any, thisArg?: any) {
+    if (typeof callback !== 'function') {
+      console.error('--- DETECTED BAD FILTER CALL ---');
+      console.error('Callback value:', callback);
+      console.error('This array:', this);
+      console.error('Stack trace:', new Error().stack);
+      console.error('---------------------------------');
+    }
+    return origFilter.call(this, callback, thisArg);
+  };
+
+  (patchedFilter as any).__patched = true;
+  Array.prototype.filter = patchedFilter as any;
 }

@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase';
-import Daily, { DailyCall } from '@daily-co/daily-js';
+import type { DailyCall } from '@daily-co/daily-js';
 import { tenantService } from './tenancy/TenantService';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
 
 /**
  * Daily.co Video Service
@@ -455,9 +456,11 @@ class DailyService {
     }
 
     /**
-     * Create a Daily call instance for embedding
+     * Create a Daily call instance for embedding.
+     * Uses dynamic import so @daily-co/daily-js never runs during SSR/prerender.
      */
-    createCallObject(containerElement?: HTMLElement): DailyCall {
+    async createCallObject(containerElement?: HTMLElement): Promise<DailyCall> {
+        const { default: Daily } = await import('@daily-co/daily-js');
         if (containerElement) {
             return Daily.createFrame(containerElement, {
                 showLeaveButton: true,
