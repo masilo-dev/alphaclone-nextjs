@@ -1,6 +1,6 @@
-import nodemailer from 'nodemailer';
-import { Resend } from 'resend';
-import sgMail from '@sendgrid/mail';
+const nodemailer: any = typeof window === 'undefined' ? eval('require')('nodemailer') : null;
+const Resend: any = typeof window === 'undefined' ? eval('require')('resend').Resend : null;
+const sgMail: any = typeof window === 'undefined' ? eval('require')('@sendgrid/mail') : null;
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
@@ -44,7 +44,9 @@ function normalizeRecipients(to: string | string[]): string[] {
 }
 
 async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
-    try {
+        if (!Resend) {
+            return { ok: false, provider: 'resend', error: 'Resend is not available in browser environment' };
+        }
         const resend = new Resend(input.apiKey);
         const resendPayload: Record<string, unknown> = {
             from: input.fromName ? `${input.fromName} <${input.fromEmail}>` : input.fromEmail,
@@ -89,7 +91,9 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
 }
 
 async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> {
-    try {
+        if (!sgMail) {
+            return { ok: false, provider: 'sendgrid', error: 'SendGrid is not available in browser environment' };
+        }
         sgMail.setApiKey(input.apiKey);
 
         const [response] = await sgMail.send({
@@ -249,6 +253,10 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
             return { ok: false, provider: 'gmail', error: 'Gmail requires an App Password. Generate one at myaccount.google.com/apppasswords' };
         }
 
+        if (!nodemailer) {
+            return { ok: false, provider: 'gmail', error: 'Nodemailer is not available in browser environment' };
+        }
+
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             port: 587,
@@ -259,7 +267,7 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
             },
         });
 
-        const mailOptions: nodemailer.SendMailOptions = {
+        const mailOptions: any = {
             from: input.fromName
                 ? `"${input.fromName}" <${input.fromEmail}>`
                 : input.fromEmail,
@@ -377,6 +385,10 @@ async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
             return { ok: false, provider: 'smtp', error: 'SMTP host not configured' };
         }
 
+        if (!nodemailer) {
+            return { ok: false, provider: 'smtp', error: 'Nodemailer is not available in browser environment' };
+        }
+
         const transporter = nodemailer.createTransport({
             host,
             port,
@@ -385,7 +397,7 @@ async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
         });
 
         const recipients = normalizeRecipients(input.to);
-        const mailOptions: nodemailer.SendMailOptions = {
+        const mailOptions: any = {
             from: input.fromName ? `"${input.fromName}" <${input.fromEmail}>` : input.fromEmail,
             to: recipients.join(', '),
             subject: input.subject,
