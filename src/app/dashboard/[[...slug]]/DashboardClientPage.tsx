@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Dashboard from '@/components/Dashboard';
 import { Project, ChatMessage, GalleryItem } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,12 @@ import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/Se
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import AppLegalFooter from '@/components/legal/AppLegalFooter';
+import dynamic from 'next/dynamic';
+
+const Dashboard = dynamic(() => import('@/components/Dashboard'), {
+    ssr: false,
+    loading: () => <DashboardShellSkeleton />,
+});
 
 class BuildErrorLogger extends React.Component<{ children: React.ReactNode }> {
     state = { hasError: false };
