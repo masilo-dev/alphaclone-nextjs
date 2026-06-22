@@ -44,6 +44,7 @@ function normalizeRecipients(to: string | string[]): string[] {
 }
 
 async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
         if (!Resend) {
             return { ok: false, provider: 'resend', error: 'Resend is not available in browser environment' };
         }
@@ -68,7 +69,7 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
 
         const { data, error } = await resend.emails.send(
             {
-                ...(resendPayload as unknown as Parameters<typeof resend.emails.send>[0]),
+                ...(resendPayload as any),
                 attachments: input.attachments?.map((attachment) => ({
                     filename: attachment.filename,
                     content: attachment.content,
@@ -91,6 +92,7 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
 }
 
 async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> {
+    try {
         if (!sgMail) {
             return { ok: false, provider: 'sendgrid', error: 'SendGrid is not available in browser environment' };
         }
