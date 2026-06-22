@@ -11,9 +11,6 @@
  * during static page generation on /dashboard.
  */
 
-import { initPatch } from '@/utils/patch-filter';
-initPatch();
-
 import dynamic from 'next/dynamic';
 
 const DashboardClientPage = dynamic(
