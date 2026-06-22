@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+
 import "@fontsource-variable/inter";
 import "@fontsource/space-grotesk";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+
 import { PWAProvider } from "@/contexts/PWAContext";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import CookieBanner from "@/components/legal/CookieBanner";
@@ -98,7 +101,6 @@ export const viewport: Viewport = {
   ],
 };
 
-
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -139,8 +141,6 @@ const websiteSchema = {
 
 const navigationSchema = buildSiteNavigationSchema();
 const organizationEntitySchema = buildOrganizationEntitySchema();
-
-import Script from "next/script";
 
 export default function RootLayout({
   children,

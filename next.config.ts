@@ -10,15 +10,12 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV !== "production",
   register: false,
-  // Inject our push + notificationclick handlers into the generated service
-  // worker so push notifications display even when the app is closed.
-  importScripts: ["/push-handler.js"],
 } as Parameters<typeof withSerwistInit>[0]);
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', 'nodemailer'],
+  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', 'nodemailer', '@upstash/qstash', '@upstash/ratelimit', '@upstash/redis'],
   typescript: {
     ignoreBuildErrors: false,
   },

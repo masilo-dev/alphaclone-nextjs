@@ -12,45 +12,45 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
-
 export function Providers({ children }: { children: React.ReactNode }) {
-    // Create QueryClient inside component to avoid server/client hydration mismatch
-    const [queryClient] = useState(() => new QueryClient({
+  // Create QueryClient inside component to avoid server/client hydration mismatch
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
         defaultOptions: {
-            queries: {
-                staleTime: 60 * 1000,
-                refetchOnWindowFocus: false,
-            },
+          queries: {
+            staleTime: 60 * 1000,
+            refetchOnWindowFocus: false,
+          },
         },
-    }));
+      }),
+  );
 
-    // Setup global error handlers
-    useEffect(() => {
-        const cleanup = setupGlobalErrorHandlers();
-        return cleanup;
-    }, []);
+  // Setup global error handlers
+  useEffect(() => {
+    const cleanup = setupGlobalErrorHandlers();
+    return cleanup;
+  }, []);
 
-    useLayoutEffect(() => {
-        applyAcThemeClass(readStoredAcTheme());
-    }, []);
+  useLayoutEffect(() => {
+    applyAcThemeClass(readStoredAcTheme());
+  }, []);
 
-    return (
-        <GlobalErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-                <ToastProvider>
-                    <ThemeProvider>
-                        <LanguageProvider>
-                            <AuthProvider>
-                                <TenantProvider>
-                                    <BackgroundTaskProvider>
-                                        {children}
-                                    </BackgroundTaskProvider>
-                                </TenantProvider>
-                            </AuthProvider>
-                        </LanguageProvider>
-                    </ThemeProvider>
-                </ToastProvider>
-            </QueryClientProvider>
-        </GlobalErrorBoundary>
-    );
+  return (
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <TenantProvider>
+                  <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
+                </TenantProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
+  );
 }
