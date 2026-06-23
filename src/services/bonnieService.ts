@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import { generateText } from './unifiedAIService';
 
 export interface BonnieRule {
   tenant_id: string;
@@ -242,123 +241,46 @@ export const bonnieService = {
   },
 
   /**
-   * Direct instructions to Bonnie.
-   * Leverages unifiedAIService to parse instructions, determine tool execution,
-   * simulates the outcome, inserts log entries, and returns a natural language response.
+   * Direct instructions to Bonnie — full agentic loop via DeepSeek + real tool execution.
    */
-  async sendInstruction(tenantId: string, instruction: string): Promise<{ response: string; success: boolean }> {
+  async sendInstruction(
+    tenantId: string,
+    instruction: string,
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    options?: { pathname?: string; moduleContext?: string }
+  ): Promise<{ response: string; success: boolean; toolsExecuted?: Array<{ tool: string; success: boolean; summary: string }> }> {
     try {
-      const prompt = `You are Bonnie, the internal, always-on AI execution assistant for AlphaClone.
-The user has given you a direct instruction: "${instruction}"
+      const response = await fetch('/api/bonnie/instruct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
+          instruction,
+          history,
+          pathname: options?.pathname,
+          moduleContext: options?.moduleContext,
+        }),
+      });
 
-Determine the appropriate actions/tools to execute based on this instruction. You have access to these simulated tool modules:
-1. "outreach_scan" - Scans for new leads, drafts outreach messages, and triggers campaigns.
-2. "invoice_audit" - Scans for overdue or stale invoices, drafts payment reminders.
-3. "deal_optimizer" - Audits sales deals, checks for stale conversations, suggests conversion strategies.
-4. "calendar_sync" - Analyzes calendar events, schedules prep tasks or follow-ups.
-5. "social_poster" - Generates and schedules social media content.
-
-You can choose to execute one or more tools, or none if the input is a general conversation.
-
-Return a JSON object with:
-- "response": A friendly, professional, high-competence natural language response telling the user what you've done or are doing in response to their instruction.
-- "actions": Array of tool executions. Each execution has:
-  - "tool": one of the five keys above (e.g., "invoice_audit")
-  - "status": "success" or "failed"
-  - "details": human-friendly details of what was done (e.g. "Found 2 overdue invoices, queued reminders").
-- "logs": Array of sequential log steps to write to the activity feed (e.g. ["Initiating invoice audit...", "Found invoice INV-003 overdue by 12 days.", "Drafted reminder email to client."]). Give 2-4 detailed logs per executed tool to make the feed look rich and alive.
-
-Strictly return ONLY valid JSON. No markdown, no extra explanation outside the JSON.
-Example output format:
-{
-  "response": "I've scanned all deals and identified 3 that were stale. I updated their follow-up tasks.",
-  "actions": [
-    { "tool": "deal_optimizer", "status": "success", "details": "Analyzed and scored 12 deals, updated 3 stale deals." }
-  ],
-  "logs": [
-    "Starting deal optimization scan...",
-    "Found 3 deals with no activity for 7+ days: TechCorp, PeakDev, ApexLtd.",
-    "Updating next-action suggestions and generating draft follow-up emails.",
-    "Deal scan completed successfully."
-  ]
-}`;
-
-      const { text, error } = await generateText(prompt, 1000);
-      if (error || !text) {
-        throw new Error(error || 'Empty response from AI engine');
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          response: data.error || 'Bonnie could not process that instruction.',
+          success: false,
+        };
       }
 
-      // Parse JSON from response. Sometimes the model might wrap in ```json ... ```
-      let jsonText = text.trim();
-      if (jsonText.startsWith('```')) {
-        jsonText = jsonText.replace(/^```json/, '').replace(/```$/, '').trim();
-      }
-
-      const result = JSON.parse(jsonText);
-      const responseMessage = result.response || "Instruction processed.";
-
-      // 1. Insert logs to public.bonnie_logs
-      const logEntries = (result.logs || []).map((message: string) => ({
-        tenant_id: tenantId,
-        level: 'info',
-        message,
-      }));
-
-      // Append a final log acknowledging completion
-      if (logEntries.length === 0) {
-        logEntries.push({
-          tenant_id: tenantId,
-          level: 'info',
-          message: `Processed command: "${instruction}"`,
-        });
-      }
-
-      const { error: insertError } = await supabase
-        .from('bonnie_logs')
-        .insert(logEntries);
-
-      if (insertError) {
-        if (isMissingBonnieLogsTable(insertError)) {
-          bonnieLogsTableAvailable = false;
-        }
-      } else {
-        bonnieLogsTableAvailable = true;
-      }
-
-      // 2. Insert mock runs/actions if any actions were decided
-      if (result.actions && result.actions.length > 0) {
-        const { data: runData, error: runError } = await supabase
-          .from('autonomous_runner_runs')
-          .insert({
-            tenant_id: tenantId,
-            status: 'completed',
-            trigger_snapshot: { source: 'manual_chat', instruction },
-            summary: { actions_run: result.actions.length }
-          })
-          .select('id')
-          .single();
-
-        if (!runError && runData) {
-          const actionEntries = result.actions.map((act: any) => ({
-            run_id: runData.id,
-            tenant_id: tenantId,
-            action_key: act.tool,
-            status: act.status,
-            details: act.details,
-            payload: { instruction }
-          }));
-
-          await supabase.from('autonomous_runner_actions').insert(actionEntries);
-        }
-      }
-
-      return { response: responseMessage, success: true };
+      return {
+        response: data.response || 'Instruction processed.',
+        success: Boolean(data.success),
+        toolsExecuted: data.toolsExecuted,
+      };
     } catch (e: any) {
       console.error('Error sending instruction to Bonnie:', e);
       return {
-        response: `I received your request, but I encountered a parsing error: ${e.message}. Let me know if I should try again!`,
+        response: `Bonnie hit a connection error: ${e.message}. Check your network and try again.`,
         success: false,
       };
     }
-  }
+  },
 };

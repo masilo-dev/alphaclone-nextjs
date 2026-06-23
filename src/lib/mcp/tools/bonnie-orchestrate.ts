@@ -13,7 +13,7 @@ const SubagentSchema = z.object({
 registerTool('bonnie-orchestrate', {
   name: 'orchestrate_task',
   description:
-    'Orchestrates a complex task by delegating sub-tasks to specialized Bonnie subagents. Uses the Claude Managed Agents multiagent session type to coordinate execution.',
+    'Orchestrates a complex task by delegating sub-tasks to specialized Bonnie AI sub-agents (DeepSeek-powered).',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     task: z.string().min(1),
@@ -42,50 +42,28 @@ registerTool('bonnie-orchestrate', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
     const subagentResults: Array<{ name: string; role: string; result: string; success: boolean }> = [];
 
-    // Execute each subagent task via Anthropic
+    // Execute each subagent task via DeepSeek (Bonnie sub-agents)
     for (const subagent of args.subagents) {
       let result = '';
       let success = false;
 
-      if (ANTHROPIC_API_KEY) {
-        try {
-          const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': ANTHROPIC_API_KEY,
-              'anthropic-version': '2023-06-01',
-              'anthropic-beta': 'managed-agents-2026-04-01',
-            },
-            body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 1024,
-              system: `You are ${subagent.name}, a specialized subagent with the role: ${subagent.role}. You are part of a multiagent orchestration system for AlphaClone business platform. Be concise and return structured results.`,
-              messages: [
-                { role: 'user', content: `Main task: ${args.task}\n\nYour specific instructions: ${subagent.instructions}\n\nReturn a brief JSON summary of your results with keys: "outcome", "details", "next_steps".` },
-              ],
-              metadata: { session_type: 'multiagent', parent_task: args.task },
-            }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            result = data.content?.[0]?.text || 'No output';
-            success = true;
-          } else {
-            result = `API error: ${res.status}`;
+      try {
+        const { callDeepSeek } = await import('@/lib/ai/deepseek');
+        result = await callDeepSeek(
+          `Main task: ${args.task}\n\nYour specific instructions: ${subagent.instructions}\n\nReturn a brief JSON summary with keys: "outcome", "details", "next_steps".`,
+          {
+            model: 'deepseek-reasoner',
+            maxTokens: 1024,
+            temperature: 0.4,
+            systemPrompt: `You are ${subagent.name}, a Bonnie AI sub-agent with role: ${subagent.role}. You operate inside AlphaClone business platform. Be concise and return structured JSON only. Never mention external AI vendors.`,
           }
-        } catch (e: any) {
-          result = `Subagent execution error: ${e.message}`;
-        }
-      } else {
-        // Mock when no API key
-        result = JSON.stringify({ outcome: 'simulated', details: `${subagent.name} processed task segment`, next_steps: [] });
+        );
         success = true;
+      } catch (e: any) {
+        result = `Subagent execution error: ${e.message}`;
       }
 
       subagentResults.push({ name: subagent.name, role: subagent.role, result, success });

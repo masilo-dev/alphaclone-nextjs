@@ -131,6 +131,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 // --- TENANT_ADMIN NAVIGATION (workspace: fewer top-level groups, same destinations) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Workspace home', href: '/dashboard', icon: Zap },
+  { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
 
   {
     label: 'CRM & Growth', href: '#', icon: Users,
@@ -142,7 +143,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Deals Pipeline', href: '/dashboard/deals', icon: Target },
       { label: 'Branded Forms', href: '/dashboard/business/forms', icon: FileText },
       { label: 'AI Growth Agent', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
-      { label: 'Bonnie AI Console', href: '/dashboard/business/bonnie', icon: Brain },
     ]
   },
 

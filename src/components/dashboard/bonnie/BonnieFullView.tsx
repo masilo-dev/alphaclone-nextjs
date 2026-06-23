@@ -6,23 +6,21 @@ import {
   Brain, Play, Pause, RefreshCw,
   CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
+import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-
-// Dynamically import DeepChat to prevent SSR compilation errors in Next.js
-const DeepChat = dynamic(
-  () => import('deep-chat-react').then((mod) => mod.DeepChat),
-  { ssr: false }
-);
+import BonnieChatPanel from './BonnieChatPanel';
 
 export default function BonnieFullView() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const activeModule = resolveBonnieModuleFromPath(pathname || '');
+  const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const [rules, setRules] = useState<BonnieRule | null>(null);
   const [logs, setLogs] = useState<BonnieLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -137,130 +135,49 @@ export default function BonnieFullView() {
 
   const isRunning = rules?.enabled ?? true;
 
-  // Custom chat request handler integration with bonnieService
-  const chatConnect = {
-    handler: async (body: any, signals: any) => {
-      try {
-        const text = body.messages[body.messages.length - 1].text;
-        
-        // Add immediate log indicating instruction received
-        setLogs(prev => [
-          {
-            id: String(Date.now()),
-            created_at: new Date().toISOString(),
-            type: 'log',
-            level: 'info',
-            message: `Command received: "${text}"`
-          },
-          ...prev
-        ]);
-
-        // Cross-dashboard action: if the user asked to go somewhere, navigate first.
-        const nav = resolveBonnieNavIntent(text, user?.role);
-        if (nav) {
-          router.push(nav.route);
-          setLogs(prev => [
-            {
-              id: String(Date.now() + 1),
-              created_at: new Date().toISOString(),
-              type: 'action',
-              level: 'success',
-              message: `Navigated to ${nav.label}`,
-              details: nav.route,
-            },
-            ...prev
-          ]);
-          await signals.onResponse({ text: `Opening ${nav.label} for you now.` });
-          return;
-        }
-
-        const res = await bonnieService.sendInstruction(tenantId, text);
-        if (res.success) {
-          await signals.onResponse({ text: res.response });
-          // Refresh logs to load simulated tool execution runs
-          const logsData = await bonnieService.getCombinedLogs(tenantId);
-          setLogs(logsData);
-        } else {
-          await signals.onResponse({ error: res.response || 'Failed to process command' });
-        }
-      } catch (err) {
-        await signals.onResponse({ error: 'Command processing error' });
-      }
-    }
-  };
-
-  // Enterprise Dark styling for DeepChat (Full View version)
-  const chatStyle = {
-    backgroundColor: '#090d16',
-    border: '1px solid #1e293b',
-    borderRadius: '16px',
-    width: '100%',
-    height: '100%',
-    minHeight: '420px',
-    boxShadow: 'none',
-  };
-
-  const messageStyles = {
-    default: {
-      ai: {
-        bubble: {
-          backgroundColor: '#1e293b',
-          color: '#f8fafc',
-          fontSize: '13.5px',
-          fontFamily: 'Inter, sans-serif',
-          borderRadius: '14px',
-          padding: '12px 16px',
-          maxWidth: '85%',
-        }
+  const handleBonnieMessage = async (
+    text: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  ): Promise<{ text: string; error?: boolean }> => {
+    setLogs(prev => [
+      {
+        id: String(Date.now()),
+        created_at: new Date().toISOString(),
+        type: 'log',
+        level: 'info',
+        message: `Command received: "${text}"`,
       },
-      user: {
-        bubble: {
-          backgroundColor: '#0d9488',
-          color: '#ffffff',
-          fontSize: '13.5px',
-          fontFamily: 'Inter, sans-serif',
-          borderRadius: '14px',
-          padding: '12px 16px',
-          maxWidth: '85%',
-        }
-      }
-    }
-  };
+      ...prev,
+    ]);
 
-  const textInputConfig = {
-    styles: {
-      container: {
-        backgroundColor: '#020617',
-        color: '#ffffff',
-        border: '1px solid #1e293b',
-        borderRadius: '12px',
-        padding: '6px',
-      },
-      text: {
-        fontSize: '13px',
-        color: '#ffffff',
-      }
-    },
-    placeholder: {
-      text: "Instruct Bonnie (e.g. Audit payroll invoices, summarize recent client activity)...",
-      style: {
-        color: '#64748b',
-      }
-    }
-  };
-
-  const submitButtonStyle = {
-    submit: {
-      container: {
-        default: {
-          backgroundColor: '#0d9488',
-          borderRadius: '8px',
+    const nav = resolveBonnieNavIntent(text, user?.role);
+    if (nav) {
+      router.push(nav.route);
+      setLogs(prev => [
+        {
+          id: String(Date.now() + 1),
+          created_at: new Date().toISOString(),
+          type: 'action',
+          level: 'success',
+          message: `Navigated to ${nav.label}`,
+          details: nav.route,
         },
-        hover: {
-          backgroundColor: '#0f766e',
-        }
-      }
+        ...prev,
+      ]);
+      return { text: `Opening ${nav.label} for you now.` };
     }
+
+    const res = await bonnieService.sendInstruction(tenantId, text, history, {
+      pathname: pathname || undefined,
+      moduleContext: activeModule,
+    });
+    if (res.success) {
+      const logsData = await bonnieService.getCombinedLogs(tenantId);
+      setLogs(logsData);
+      return { text: res.response };
+    }
+
+    return { text: res.response || 'Failed to process command.', error: true };
   };
 
   return (
@@ -277,7 +194,7 @@ export default function BonnieFullView() {
               Bonnie AI System Console
             </h1>
             <p className="text-sm text-slate-400">
-              Enterprise-wide automated agent continuously executing audits, checks, and workflow triggers.
+              Bonnie AI executes real actions across CRM, finance, outreach, social, and automation — not just chat.
             </p>
           </div>
         </div>
@@ -333,12 +250,18 @@ export default function BonnieFullView() {
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
-                <span className="text-slate-400">Audit Scope</span>
-                <span className="font-bold text-slate-300">Financials, Workflows & CRM</span>
+                <span className="text-slate-400">Chat commands</span>
+                <span className="font-bold text-teal-400">Always available</span>
               </div>
               <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
-                <span className="text-slate-400">Execution Mode</span>
-                <span className="font-bold text-slate-300">Agnostic Hybrid Tooling</span>
+                <span className="text-slate-400">Background scans</span>
+                <span className={`font-bold ${isRunning ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {isRunning ? 'Scheduled + manual' : 'Paused'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
+                <span className="text-slate-400">High-risk sends</span>
+                <span className="font-bold text-slate-300">Approval required</span>
               </div>
             </div>
 
@@ -423,27 +346,25 @@ export default function BonnieFullView() {
           </div>
         </div>
 
-        {/* Right Side: DeepChat Interface */}
-        <div className="flex-1 flex flex-col bg-[#090d16] border border-slate-800 rounded-3xl p-6 relative overflow-hidden">
+        {/* Right Side: Chat Interface */}
+        <div className="flex-1 flex flex-col bg-[#090d16] border border-slate-800 rounded-3xl p-6 relative overflow-hidden min-h-0">
           <div className="flex items-center justify-between pb-4 border-b border-slate-800/50 mb-4 shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-teal-400" />
-              <span className="text-sm font-black uppercase tracking-wider text-slate-200">Interactive DeepChat Shell</span>
+              <span className="text-sm font-black uppercase tracking-wider text-slate-200">Talk to Bonnie</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                Full Context Aware
+              <span className="text-[10px] font-black text-teal-400/80 uppercase tracking-wider">
+                Bonnie AI · Agentic
               </span>
             </div>
           </div>
 
-          <div className="flex-1 min-h-[420px] relative">
-            <DeepChat
-              connect={chatConnect}
-              chatStyle={chatStyle}
-              messageStyles={messageStyles}
-              textInput={textInputConfig}
-              submitButtonStyles={submitButtonStyle}
+          <div className="flex-1 min-h-[420px]">
+            <BonnieChatPanel
+              placeholder="Instruct Bonnie (e.g. audit overdue invoices, open WhatsApp, summarize stale deals)…"
+              introMessage="I'm Bonnie AI — your full-stack workspace agent. I execute real tools: CRM queries, invoice audits, task creation, social posts, email campaigns, playbooks, and autonomous background scans. Tell me what to run."
+              onSend={handleBonnieMessage}
             />
           </div>
         </div>

@@ -46,6 +46,7 @@ const MODULES: Module[] = [
   { label: 'Campaigns',      icon: Mail,          href: '/dashboard/business/campaigns', accent: 'text-amber-400',  bg: 'bg-amber-500/15' },
   { label: 'Gamification',   icon: Trophy,        href: '/dashboard/gamification',     accent: 'text-yellow-400', bg: 'bg-yellow-500/15' },
   { label: 'AI Agents',      icon: Cpu,           href: '/dashboard/sales-agent',      accent: 'text-purple-400', bg: 'bg-purple-500/15' },
+  { label: 'Bonnie AI',      icon: Brain,         href: '/dashboard/bonnie',           accent: 'text-teal-400',   bg: 'bg-teal-500/15' },
   { label: 'Analytics',      icon: Activity,      href: '/dashboard/analytics',        accent: 'text-blue-400',   bg: 'bg-blue-500/15' },
   { label: 'Settings',       icon: Settings,      href: '/dashboard/settings',         accent: 'text-slate-400',  bg: 'bg-slate-500/15' },
 ];

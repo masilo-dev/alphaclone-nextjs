@@ -38,6 +38,28 @@ export function resolveMeetingJoinUrl(call: VideoCall | Record<string, unknown>)
   );
 }
 
+export function getMeetingProviderDisplay(provider: PlatformMeetingProvider): {
+  label: string;
+  className: string;
+} {
+  if (provider === 'teams') {
+    return {
+      label: 'Using Teams',
+      className: 'bg-blue-500/10 text-blue-300 border-blue-500/25',
+    };
+  }
+  if (provider === 'jitsi') {
+    return {
+      label: 'Using Jitsi',
+      className: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
+    };
+  }
+  return {
+    label: 'Using AlphaClone video',
+    className: 'bg-teal-500/10 text-teal-300 border-teal-500/25',
+  };
+}
+
 export async function createInstantMeeting(input: {
   hostId: string;
   title: string;

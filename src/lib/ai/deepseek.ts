@@ -12,8 +12,13 @@ export interface DeepSeekOptions {
     systemPrompt?: string;
 }
 
-export async function callDeepSeek(
-    prompt: string,
+export type DeepSeekMessage = {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+};
+
+async function deepSeekCompletion(
+    messages: DeepSeekMessage[],
     options: DeepSeekOptions = {}
 ): Promise<string> {
     const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -25,14 +30,7 @@ export async function callDeepSeek(
         model = 'deepseek-chat',
         maxTokens = 2000,
         temperature = 0.7,
-        systemPrompt,
     } = options;
-
-    const messages: Array<{ role: string; content: string }> = [];
-    if (systemPrompt) {
-        messages.push({ role: 'system', content: systemPrompt });
-    }
-    messages.push({ role: 'user', content: prompt });
 
     const res = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
@@ -59,4 +57,32 @@ export async function callDeepSeek(
         throw new Error('DeepSeek returned empty response');
     }
     return content as string;
+}
+
+export async function callDeepSeek(
+    prompt: string,
+    options: DeepSeekOptions = {}
+): Promise<string> {
+    const messages: DeepSeekMessage[] = [];
+    if (options.systemPrompt) {
+        messages.push({ role: 'system', content: options.systemPrompt });
+    }
+    messages.push({ role: 'user', content: prompt });
+    return deepSeekCompletion(messages, options);
+}
+
+export async function chatDeepSeek(
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    message: string,
+    options: DeepSeekOptions = {}
+): Promise<string> {
+    const messages: DeepSeekMessage[] = [];
+    if (options.systemPrompt) {
+        messages.push({ role: 'system', content: options.systemPrompt });
+    }
+    for (const turn of history) {
+        messages.push({ role: turn.role, content: turn.content });
+    }
+    messages.push({ role: 'user', content: message });
+    return deepSeekCompletion(messages, options);
 }
