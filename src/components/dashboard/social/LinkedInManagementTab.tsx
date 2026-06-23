@@ -902,7 +902,7 @@ ${parentContext}Return only the comment text.`;
           <Send className="w-4 h-4" /> Post Now
         </button>
         <button
-          onClick={() => router.push('/dashboard/campaigns')}
+          onClick={() => router.push('/dashboard/business/campaigns')}
           className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
         >
           <MessageCircle className="w-4 h-4" /> Outreach

@@ -67,21 +67,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const commands: Command[] = useMemo(() => [
         // --- NAVIGATION ---
         { id: 'nav-home', title: 'Home Dashboard', description: 'Back to overview', icon: Layout, category: 'Navigate', action: () => router.push('/dashboard') },
-        { id: 'nav-analytics', title: 'Analytics Hub', description: 'Performance & metrics', icon: BarChart3, category: 'Navigate', action: () => router.push('/dashboard?tab=analytics') },
-        { id: 'nav-projects', title: 'Project Management', description: 'Active & pending projects', icon: Briefcase, category: 'Navigate', action: () => router.push('/dashboard?tab=projects') },
-        { id: 'nav-crm', title: 'CRM & Pipeline', description: 'Manage leads & clients', icon: Users, category: 'Navigate', action: () => router.push('/dashboard?tab=crm') },
-        { id: 'nav-messages', title: 'Messenger', description: 'Internal communication', icon: MessageSquare, category: 'Navigate', action: () => router.push('/dashboard?tab=messages') },
-        { id: 'nav-mail', title: 'Mail Inbox', description: 'Connect & management', icon: Mail, category: 'Navigate', action: () => router.push('/dashboard?tab=mail') },
-        { id: 'nav-calendar', title: 'Schedule & Booking', description: 'Manage your time', icon: Calendar, category: 'Navigate', action: () => router.push('/dashboard?tab=calendar') },
+        { id: 'nav-analytics', title: 'Analytics Hub', description: 'Performance & metrics', icon: BarChart3, category: 'Navigate', action: () => router.push('/dashboard/analytics') },
+        { id: 'nav-projects', title: 'Project Management', description: 'Active & pending projects', icon: Briefcase, category: 'Navigate', action: () => router.push('/dashboard/projects') },
+        { id: 'nav-crm', title: 'CRM & Pipeline', description: 'Manage leads & clients', icon: Users, category: 'Navigate', action: () => router.push('/dashboard/crm') },
+        { id: 'nav-messages', title: 'Messenger', description: 'Internal communication', icon: MessageSquare, category: 'Navigate', action: () => router.push('/dashboard/messages') },
+        { id: 'nav-mail', title: 'Mail Inbox', description: 'Connect & management', icon: Mail, category: 'Navigate', action: () => router.push('/dashboard/mail') },
+        { id: 'nav-calendar', title: 'Schedule & Booking', description: 'Manage your time', icon: Calendar, category: 'Navigate', action: () => router.push('/dashboard/calendar') },
 
         // --- FINANCE ---
-        { id: 'fin-overview', title: 'Financial Overview', description: 'P&L, billing, and health', icon: CreditCard, category: 'Finance', action: () => router.push('/dashboard?tab=finance') },
-        { id: 'fin-forecast', title: 'Sales Forecast', description: 'Projected revenue models', icon: TrendingUp, category: 'Finance', action: () => router.push('/dashboard?tab=sales-forecast') },
-        { id: 'fin-quotes', title: 'Quotes & Proposals', description: 'Draft new deals', icon: FileText, category: 'Finance', action: () => router.push('/dashboard?tab=finance&subtab=quotes') },
+        { id: 'fin-overview', title: 'Financial Overview', description: 'P&L, billing, and health', icon: CreditCard, category: 'Finance', action: () => router.push('/dashboard/finance') },
+        { id: 'fin-forecast', title: 'Sales Forecast', description: 'Projected revenue models', icon: TrendingUp, category: 'Finance', action: () => router.push('/dashboard/forecast') },
+        { id: 'fin-quotes', title: 'Quotes & Proposals', description: 'Draft new deals', icon: FileText, category: 'Finance', action: () => router.push('/dashboard/quotes') },
 
         // --- CRM & OPS ---
-        { id: 'ops-tasks', title: 'Task Matrix', description: 'Global task management', icon: PieChart, category: 'CRM', action: () => router.push('/dashboard?tab=tasks') },
-        { id: 'ops-deals', title: 'Deals & Opportunities', description: 'High-value pipelines', icon: DollarSign, category: 'CRM', action: () => router.push('/dashboard?tab=deals') },
+        { id: 'ops-tasks', title: 'Task Matrix', description: 'Global task management', icon: PieChart, category: 'CRM', action: () => router.push('/dashboard/tasks') },
+        { id: 'ops-deals', title: 'Deals & Opportunities', description: 'High-value pipelines', icon: DollarSign, category: 'CRM', action: () => router.push('/dashboard/deals') },
 
         // --- ACTIONS ---
         {
@@ -91,7 +91,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             icon: Plus,
             category: 'Actions',
             shortcut: 'I',
-            action: () => onCreateInvoice ? onCreateInvoice() : router.push('/dashboard?tab=finance&action=new-invoice')
+            action: () => onCreateInvoice ? onCreateInvoice() : router.push('/dashboard/finance')
         },
         {
             id: 'act-task',
@@ -100,7 +100,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             icon: Plus,
             category: 'Actions',
             shortcut: 'T',
-            action: () => onCreateTask ? onCreateTask() : router.push('/dashboard?tab=tasks&action=new-task')
+            action: () => onCreateTask ? onCreateTask() : router.push('/dashboard/tasks')
         },
         {
             id: 'act-project',
@@ -109,19 +109,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             icon: Plus,
             category: 'Actions',
             shortcut: 'P',
-            action: () => onCreateProject ? onCreateProject() : router.push('/dashboard?tab=projects&action=new-project')
+            action: () => onCreateProject ? onCreateProject() : router.push('/dashboard/projects')
         },
-        { id: 'act-lead', title: 'Manual Lead Entry', description: 'Add a new prospect', icon: Plus, category: 'Actions', shortcut: 'L', action: () => router.push('/dashboard?tab=crm&action=new-lead') },
+        { id: 'act-lead', title: 'Manual Lead Entry', description: 'Add a new prospect', icon: Plus, category: 'Actions', shortcut: 'L', action: () => router.push('/dashboard/crm') },
 
         // --- TASK SPECIFIC ACTIONS ---
-        { id: 'task-pri-urgent', title: 'Task: Set Priority to Urgent', description: 'Immediate operational attention', icon: AlertCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setPriority=urgent') },
-        { id: 'task-pri-high', title: 'Task: Set Priority to High', description: 'Strategic priority', icon: ArrowUpCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setPriority=high') },
-        { id: 'task-status-review', title: 'Task: Move to Review', description: 'Pending quality assurance', icon: Eye, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setStatus=review') },
-        { id: 'task-status-done', title: 'Task: Mark as Completed', description: 'Mission success', icon: CheckCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setStatus=completed') },
+        { id: 'task-pri-urgent', title: 'Task: Set Priority to Urgent', description: 'Immediate operational attention', icon: AlertCircle, category: 'Actions', action: () => router.push('/dashboard/tasks') },
+        { id: 'task-pri-high', title: 'Task: Set Priority to High', description: 'Strategic priority', icon: ArrowUpCircle, category: 'Actions', action: () => router.push('/dashboard/tasks') },
+        { id: 'task-status-review', title: 'Task: Move to Review', description: 'Pending quality assurance', icon: Eye, category: 'Actions', action: () => router.push('/dashboard/tasks') },
+        { id: 'task-status-done', title: 'Task: Mark as Completed', description: 'Mission success', icon: CheckCircle, category: 'Actions', action: () => router.push('/dashboard/tasks') },
 
         // --- INTERNAL ---
-        { id: 'int-settings', title: 'Platform Settings', description: 'Identity & profile', icon: Settings, category: 'Internal', action: () => router.push('/dashboard?tab=settings') },
-        { id: 'int-security', title: 'Security Dashboard', description: 'Access & logs', icon: Shield, category: 'Internal', action: () => router.push('/dashboard?tab=settings&section=security') },
+        { id: 'int-settings', title: 'Platform Settings', description: 'Identity & profile', icon: Settings, category: 'Internal', action: () => router.push('/dashboard/settings') },
+        { id: 'int-security', title: 'Security Dashboard', description: 'Access & logs', icon: Shield, category: 'Internal', action: () => router.push('/dashboard/security') },
     ], [router, onCreateInvoice, onCreateTask, onCreateProject]);
 
     const filteredCommands = commands.filter(cmd =>

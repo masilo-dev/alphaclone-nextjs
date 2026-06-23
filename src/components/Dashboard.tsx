@@ -107,6 +107,9 @@ const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
 const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
 const ContractsTab = React.lazy(() => import('./dashboard/ContractsTab'));
 const DeepDeskView = React.lazy(() => import('./dashboard/tickets/DeepDeskView'));
+const CampaignBuilder = React.lazy(() => import('./dashboard/business/CampaignBuilder'));
+const SocialMediaComposer = React.lazy(() => import('./dashboard/engine/SocialMediaComposer'));
+const WhatsAppManagementPage = React.lazy(() => import('./dashboard/WhatsAppManagementPage'));
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
@@ -1278,6 +1281,37 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
             <DealsTab user={user} />
+          </React.Suspense>
+        );
+
+      case '/dashboard/crm':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <CRMTab user={user} />
+          </React.Suspense>
+        );
+
+      case '/dashboard/email-campaigns':
+      case '/dashboard/business/campaigns':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <CampaignBuilder userId={user.id} />
+          </React.Suspense>
+        );
+
+      case '/dashboard/whatsapp':
+      case '/dashboard/business/whatsapp':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <WhatsAppManagementPage />
+          </React.Suspense>
+        );
+
+      case '/dashboard/social':
+      case '/dashboard/business/social':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <SocialMediaComposer />
           </React.Suspense>
         );
 

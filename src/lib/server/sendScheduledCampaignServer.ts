@@ -149,7 +149,10 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         }
 
         if (!recipients?.length) {
-            return { success: true, error: 'No pending recipients' };
+            return {
+                success: false,
+                error: 'No pending recipients on this campaign. Add contacts in the campaign builder, or turn off “Skip previously contacted” if everyone was filtered out.',
+            };
         }
 
         const c = campaign as Record<string, unknown>;
