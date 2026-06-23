@@ -25,6 +25,34 @@ const statusColors: Record<string, string> = {
     cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
+// Plain-language <-> HTML helpers so non-technical users never see markup in simple mode.
+const plainFromHtml = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+        .replace(/<\/\s*(p|div|h[1-6]|li)\s*>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+};
+
+const htmlFromPlain = (text: string): string => {
+    if (!text || !text.trim()) return '';
+    const escape = (s: string) => s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    return text
+        .trim()
+        .split(/\n{2,}/)
+        .map(block => `<p style="margin:0 0 16px;line-height:1.6;">${escape(block).replace(/\n/g, '<br />')}</p>`)
+        .join('\n');
+};
+
 const PERSONALIZATION_BUTTONS = [
     { label: 'First name', tag: '{{firstName}}' },
     { label: 'Last name', tag: '{{lastName}}' },
@@ -417,12 +445,17 @@ Request: ${userMsg}`,
             if (deepSeekKey) {
                 try {
                     const { callDeepSeek } = await import('@/lib/ai/deepseek');
-                    const prompt = `Write a plain-language, high-converting HTML campaign email body.
+                    const prompt = `You are the best email copywriter alive — warm, human, and impossible to ignore. Write a high-converting marketing email body.
 Campaign goal: ${campaignGoal || 'Keep it simple and useful.'}
 Subject: "${form.subject}"
 ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}
 
-Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`;
+Voice & rules:
+- Open with a first line that hooks instantly — a bold statement, a relatable pain, or a curiosity gap. NEVER "I hope this email finds you well" or generic corporate intros.
+- Sound like a real person talking to a friend, not a press release. No stiff jargon, no buzzword soup.
+- Keep paragraphs short and skimmable. Build one clear idea, then a single confident call to action.
+- Be specific and benefit-driven; make the reader feel something.
+- Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`;
 
                     const text = await callDeepSeek(prompt, {
                         model: 'deepseek-chat',
@@ -444,10 +477,15 @@ Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a plain-language, high-converting HTML campaign email body.
+                    prompt: `You are the best email copywriter alive — warm, human, and impossible to ignore. Write a high-converting marketing email body.
 Campaign goal: ${campaignGoal || 'Keep it simple and useful.'}
 Subject: "${form.subject}"
-${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
+${getCampaignLanguageInstruction({ languageMode: form.languageMode })}
+
+Voice & rules:
+- Open with a first line that hooks instantly — a bold statement, a relatable pain, or a curiosity gap. NEVER "I hope this email finds you well" or generic corporate intros.
+- Sound like a real person, not a press release. No stiff jargon. Short, skimmable paragraphs. One clear call to action.
+- Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`,
                 })
             });
             const data = await response.json();
@@ -835,10 +873,17 @@ ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
                                 <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
                                     <span>Step {activeStep} of 4</span>
                                     <span>
-                                        {activeStep === 1 ? 'Message & Provider' :
-                                         activeStep === 2 ? 'Segment' :
-                                         activeStep === 3 ? 'Templates & Preview' :
-                                         'Review Summary'}
+                                        {campaignMode === 'simple' ? (
+                                            activeStep === 1 ? 'Basics' :
+                                            activeStep === 2 ? 'Who gets it' :
+                                            activeStep === 3 ? 'Write your message' :
+                                            'Review & send'
+                                        ) : (
+                                            activeStep === 1 ? 'Message & Provider' :
+                                            activeStep === 2 ? 'Segment' :
+                                            activeStep === 3 ? 'Templates & Preview' :
+                                            'Review Summary'
+                                        )}
                                     </span>
                                 </div>
 
@@ -1091,6 +1136,35 @@ ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
                                             ))}
                                         </div>
 
+                                        {campaignMode === 'simple' ? (
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center px-1">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Your message</label>
+                                                    <button
+                                                        onClick={generateWithAI}
+                                                        disabled={aiGenerating}
+                                                        className="text-xs text-teal-400 flex items-center gap-1 bg-teal-500/10 px-2.5 py-1 rounded-lg border border-teal-500/20 disabled:opacity-50"
+                                                    >
+                                                        {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Write it for me
+                                                    </button>
+                                                </div>
+                                                <textarea
+                                                    value={plainFromHtml(form.bodyHtml)}
+                                                    onChange={e => setForm(f => ({ ...f, bodyHtml: htmlFromPlain(e.target.value) }))}
+                                                    placeholder={"Type your email the way you'd write it to a customer.\n\nLeave a blank line between paragraphs. No code needed — we handle the formatting."}
+                                                    className="w-full h-48 bg-slate-900 border border-white/5 rounded-2xl p-4 text-sm text-white outline-none resize-none leading-relaxed focus:border-teal-500/40"
+                                                />
+                                                <p className="text-[11px] text-slate-500 px-1">Tip: pick a template above to start, or let AI write a first draft — then tweak the words.</p>
+                                                <div className="space-y-2">
+                                                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">How it will look</label>
+                                                    <div
+                                                        className="p-5 bg-white text-slate-800 rounded-2xl min-h-[160px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
+                                                        dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic text-center py-8">Start typing your message above.</p>' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                        <>
                                         <div className="flex gap-2 border-b border-slate-800 pb-2">
                                             <button
                                                 onClick={() => setEditorTab('preview')}
@@ -1143,6 +1217,8 @@ ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
                                                     />
                                                 </div>
                                             </div>
+                                        )}
+                                        </>
                                         )}
                                     </div>
                                 )}
@@ -1252,8 +1328,19 @@ ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
                                                 if (activeStep === 1 && (!form.name || !form.subject)) {
                                                     return toast.error('Name and subject are required');
                                                 }
-                                                if (activeStep === 2 && (!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0))) {
-                                                    return toast.error('Choose a recipient segment');
+                                                if (activeStep === 2) {
+                                                    if (!recipientType) {
+                                                        return toast.error('Choose who should receive this');
+                                                    }
+                                                    if (recipientType === 'all' && contacts.length === 0) {
+                                                        return toast.error('You have no contacts yet. Add contacts or paste recipients first.');
+                                                    }
+                                                    if (recipientType !== 'all' && selectedContactIds.length === 0) {
+                                                        return toast.error('Select at least one recipient');
+                                                    }
+                                                }
+                                                if (activeStep === 3 && !form.bodyHtml?.trim()) {
+                                                    return toast.error('Write your message before continuing');
                                                 }
                                                 setActiveStep(prev => prev + 1);
                                             }}
@@ -1360,8 +1447,19 @@ ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}`,
                                 if (activeStep === 1 && (!form.name || !form.subject)) {
                                     return toast.error('Name and subject are required');
                                 }
-                                if (activeStep === 2 && (!recipientType || (recipientType !== 'all' && selectedContactIds.length === 0))) {
-                                    return toast.error('Choose a recipient segment');
+                                if (activeStep === 2) {
+                                    if (!recipientType) {
+                                        return toast.error('Choose who should receive this');
+                                    }
+                                    if (recipientType === 'all' && contacts.length === 0) {
+                                        return toast.error('You have no contacts yet. Add contacts or paste recipients first.');
+                                    }
+                                    if (recipientType !== 'all' && selectedContactIds.length === 0) {
+                                        return toast.error('Select at least one recipient');
+                                    }
+                                }
+                                if (activeStep === 3 && !form.bodyHtml?.trim()) {
+                                    return toast.error('Write your message before continuing');
                                 }
                                 setActiveStep(prev => prev + 1);
                             }}

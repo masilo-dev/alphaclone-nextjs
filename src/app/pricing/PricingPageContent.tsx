@@ -5,45 +5,21 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CheckCircle2, Shield, Zap, Globe, MessageSquare, Star,
-    ChevronDown, Users, Brain, FileText, DollarSign,
-    Video, Calendar, Mail, BarChart3, Lock, X
+    ChevronDown, Brain, FileText, DollarSign,
+    Video, Calendar, Mail, BarChart3, Lock
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
 import MarketingFooter from '@/components/landing/MarketingFooter';
+import { PUBLIC_PRICING_PLANS, PRICING_FROM } from '@/config/pricingPlans';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
     loading: () => <div className="absolute inset-0 bg-slate-950" />,
 });
 
-const plans = [
-    {
-        name: 'AlphaClone Platform',
-        price: '15',
-        users: 'Unlimited',
-        desc: 'One complete platform plan for CRM, projects, social, finance, and operations.',
-        highlight: true,
-        color: 'teal',
-        features: [
-            'Unlimited team members',
-            'Unified CRM Pipeline',
-            'Automated Invoicing & P&L',
-            'Contract Engine',
-            'Unlimited Task & Project Boards',
-            'Secure document storage',
-            'Unified Gmail Integration',
-            'Lead finder and outreach workspace',
-            'Social publishing and scheduling',
-            'Native 1-hour video meetings built into AlphaClone',
-            'Email support',
-        ],
-        notIncluded: [],
-        cta: 'Start 14-Day Free Trial',
-        ctaLink: '/auth/login?register=true&type=freelancer&plan=starter',
-    },
-];
+const plans = PUBLIC_PRICING_PLANS;
 
 const replacedTools = [
     { icon: Brain, name: 'CRM software', replaced: 'CRM & Deals module' },
@@ -67,8 +43,8 @@ const faqs = [
         a: 'Costs vary by stack. AlphaClone is priced to consolidate common workflows like CRM, finance, contracts, meetings, projects, and outreach into one $15/month starter workspace.',
     },
     {
-        q: 'What is included in the $15 plan?',
-        a: 'The plan includes your full operating stack: CRM pipeline, outreach workflows, contracts, invoicing and finance views, native 1-hour video meetings, projects, documents, and core automations. You do not need separate plans to activate these core workflows.',
+        q: 'What is included, and how do the plans differ?',
+        a: 'Every plan includes the full operating stack: CRM pipeline, outreach, contracts, invoicing and finance, native 1-hour video meetings, projects, documents, and core automations. Starter ($15/mo) covers up to 25 team members and 25GB storage. Pro ($45/mo) unlocks unlimited members, the Bonnie AI sales assistant, API access, and a custom domain. Enterprise ($80/mo) adds 500GB storage, advanced AI limits, and priority infrastructure.',
     },
     {
         q: 'Do I need a credit card to start?',
@@ -108,7 +84,7 @@ export default function PricingPageContent() {
                     '@context': 'https://schema.org',
                     '@type': 'FAQPage',
                     mainEntity: [
-                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone has one public price of $15 per month and includes a 14-day free trial without a credit card.' } },
+                        { '@type': 'Question', name: 'How much does AlphaClone cost?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone starts at $15/month (Starter), with Pro at $45/month and Enterprise at $80/month. Every plan includes a 14-day free trial without a credit card.' } },
                         { '@type': 'Question', name: 'How much can software sprawl cost per year?', acceptedAnswer: { '@type': 'Answer', text: 'Costs vary by stack. AlphaClone consolidates common workflows like CRM, finance, contracts, meetings, projects, and outreach into one $15/month starter workspace.' } },
                         { '@type': 'Question', name: 'Does AlphaClone include built-in video meetings?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. AlphaClone includes native built-in 1-hour video meetings as part of the platform.' } },
                         { '@type': 'Question', name: 'Why was AlphaClone built?', acceptedAnswer: { '@type': 'Answer', text: 'AlphaClone was built to reduce fragmented business software by connecting CRM, communication, finance, contracts, and operations in one workspace.' } },
@@ -137,9 +113,11 @@ export default function PricingPageContent() {
                         'name': 'AlphaClone'
                     },
                     'offers': {
-                        '@type': 'Offer',
-                        'price': '15.00',
+                        '@type': 'AggregateOffer',
                         'priceCurrency': 'USD',
+                        'lowPrice': '15.00',
+                        'highPrice': '80.00',
+                        'offerCount': 3,
                         'url': 'https://alphaclonesystems.com/pricing',
                         'priceValidUntil': '2027-12-31',
                         'availability': 'https://schema.org/InStock'
@@ -167,12 +145,12 @@ export default function PricingPageContent() {
                             <span className="hero-metallic-text">Authority.</span>
                         </h1>
                         <p className="text-slate-400 text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight">
-                            One clear plan. One clear price. <br className="hidden md:block" />
-                            Use the full AlphaClone platform for $15/month.
+                            Simple, transparent plans. <br className="hidden md:block" />
+                            The full AlphaClone platform, starting at ${PRICING_FROM}/month.
                         </p>
                         <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">
                             <span>• Zero Setup Fees</span>
-                            <span>• Single Pricing</span>
+                            <span>• 14-Day Free Trial</span>
                             <span>• Cancel Anytime</span>
                         </div>
                     </div>
@@ -181,7 +159,7 @@ export default function PricingPageContent() {
                 <div className="max-w-7xl mx-auto px-4 pb-24 relative z-20">
 
                 {/* Plan Cards */}
-                <div className="grid grid-cols-1 gap-6 mb-16 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-6xl mx-auto items-stretch">
                     {plans.map((plan, i) => (
                         <motion.div
                             key={plan.name}
@@ -190,43 +168,40 @@ export default function PricingPageContent() {
                             transition={{ delay: i * 0.1 }}
                             whileHover={{ y: -6 }}
                             className={`p-px rounded-3xl ${plan.highlight
-                                ? 'bg-gradient-to-b from-teal-500/60 via-teal-500/10 to-transparent shadow-2xl shadow-teal-500/15'
+                                ? 'bg-gradient-to-b from-teal-500/60 via-teal-500/10 to-transparent shadow-2xl shadow-teal-500/15 md:-mt-4'
                                 : 'bg-gradient-to-b from-white/8 to-transparent'
                                 }`}
                         >
                             <div className="bg-slate-950 rounded-[calc(1.5rem-1px)] p-8 h-full flex flex-col relative overflow-hidden">
-                                {plan.highlight && (
+                                {plan.badge && (
                                     <div className="absolute top-0 right-0 bg-teal-500 text-slate-950 text-xs font-black px-4 py-1.5 rounded-bl-2xl uppercase tracking-widest">
-                                        Single Plan
+                                        {plan.badge}
                                     </div>
                                 )}
 
                                 <div className="mb-6">
                                     <h2 className={`text-xl font-bold mb-1 ${plan.highlight ? 'text-teal-400' : 'text-white'}`}>{plan.name}</h2>
-                                    <p className="text-slate-500 text-xs leading-relaxed">{plan.desc}</p>
+                                    <p className="text-slate-500 text-xs leading-relaxed">{plan.tagline}</p>
                                 </div>
 
-                                <div className="flex items-baseline gap-2 mb-2">
+                                <div className="flex items-baseline gap-2 mb-1">
                                     <span className="text-5xl font-black text-white">${plan.price}</span>
                                     <span className="text-slate-600 font-bold text-xs uppercase tracking-wider">/ month</span>
                                 </div>
                                 <p className="text-xs text-slate-600 mb-8">
-                                    <Users className="inline w-3 h-3 mr-1" /> Up to {plan.users} team members
+                                    or ${plan.yearly}/year — save {Math.round((1 - plan.yearly / (plan.price * 12)) * 100)}%
                                 </p>
 
                                 <ul className="space-y-3 mb-8 flex-grow">
-                                    {plan.features.map(feat => (
-                                        <li key={feat} className="flex items-start gap-2.5 text-sm text-slate-300">
-                                            <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? 'text-teal-400' : 'text-slate-500'}`} />
-                                            {feat}
-                                        </li>
-                                    ))}
-                                    {plan.notIncluded.map(feat => (
-                                        <li key={feat} className="flex items-start gap-2.5 text-sm text-slate-600">
-                                            <X className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-800" />
-                                            {feat}
-                                        </li>
-                                    ))}
+                                    {plan.features.map(feat => {
+                                        const isHeader = feat.endsWith('plus:');
+                                        return (
+                                            <li key={feat} className={`flex items-start gap-2.5 text-sm ${isHeader ? 'text-slate-400 font-semibold' : 'text-slate-300'}`}>
+                                                {!isHeader && <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? 'text-teal-400' : 'text-slate-500'}`} />}
+                                                {feat}
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
 
                                 <Link
@@ -289,7 +264,7 @@ export default function PricingPageContent() {
                         <div className="text-slate-600 text-2xl font-bold">vs</div>
                         <div>
                             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">AlphaClone Platform</p>
-                            <p className="text-3xl font-black text-teal-400">$15<span className="text-lg text-slate-500">/mo</span></p>
+                            <p className="text-3xl font-black text-teal-400">from $15<span className="text-lg text-slate-500">/mo</span></p>
                         </div>
                         <div className="px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-xl">
                             <p className="text-xs text-teal-300 font-bold">Consolidate common workflows</p>
@@ -342,7 +317,7 @@ export default function PricingPageContent() {
                             href="/auth/login?register=true&type=business&plan=starter"
                             className="cta-primary px-12 py-5 rounded-2xl text-lg w-full sm:w-auto text-center"
                         >
-                            Start for $15/month
+                            Start from $15/month
                         </Link>
                         <Link
                             href="/contact"

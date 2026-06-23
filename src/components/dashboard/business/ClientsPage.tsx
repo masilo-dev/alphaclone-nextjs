@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -30,7 +30,10 @@ import {
     CheckCircle2,
     Sparkles,
     Clock,
-    Send
+    Send,
+    DollarSign,
+    UserCheck,
+    Target
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
@@ -46,6 +49,7 @@ import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
@@ -547,10 +551,47 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         );
     }
 
-    // For solo business owners, show a simplified view
-    const isSoloOwner = true; // This would be determined by user role/plan
+    // Show the simplified solo view on the free plan; paid plans (starter/pro/
+    // enterprise) unlock the full CRM contacts workspace (import/export, board
+    // view, batch outreach). Mirrors the `fullCRM` feature flag in PLAN_PRICING.
+    const tenantPlan = currentTenant?.subscription_plan || 'free';
+    const isSoloOwner = tenantPlan === 'free';
     const totalClientValue = clients.reduce((sum, c) => sum + (c.value || 0), 0);
     const activeClientsCount = clients.filter(c => c.salesStage !== 'lost').length;
+    const customerCount = clients.filter(c => c.salesStage === 'customer').length;
+    const prospectCount = clients.filter(c => c.salesStage === 'prospect').length;
+
+    const contactStats = useMemo<ModuleStat[]>(() => [
+        {
+            label: 'Total Contacts',
+            value: totalCount || clients.length,
+            sub: `${customerCount} customers`,
+            Icon: Users,
+            accent: 'teal',
+        },
+        {
+            label: 'Pipeline Value',
+            value: `$${totalClientValue.toLocaleString()}`,
+            sub: 'Combined contact value',
+            Icon: DollarSign,
+            accent: 'emerald',
+        },
+        {
+            label: 'Active',
+            value: activeClientsCount,
+            sub: 'Excluding lost',
+            Icon: UserCheck,
+            accent: 'blue',
+        },
+        {
+            label: 'Prospects',
+            value: prospectCount,
+            sub: `${clients.filter(c => c.salesStage === 'lead').length} leads`,
+            Icon: Target,
+            accent: 'purple',
+        },
+    ], [clients, totalCount, totalClientValue, activeClientsCount, customerCount, prospectCount]);
+
     if (isSoloOwner) {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0">
@@ -576,20 +617,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Quick Stats for Solo Owner */}
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Clients</span>
-                        <span className="text-base font-black text-white block">{totalCount || clients.length}</span>
-                    </div>
-                    <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Revenue</span>
-                        <span className="text-base font-black text-teal-400 block">${totalClientValue.toLocaleString()}</span>
-                    </div>
-                    <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active</span>
-                        <span className="text-base font-black text-white block">{activeClientsCount}</span>
-                    </div>
-                </div>
+                <ModuleStatCards stats={contactStats} />
 
                 {/* Simple Client List */}
                 <div className="space-y-2">
@@ -622,6 +650,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         <div className="space-y-4 sm:space-y-6 w-full min-w-0">
             <CRMNav pathname={pathname} />
             <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+            <ModuleStatCards stats={contactStats} />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">

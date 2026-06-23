@@ -3,7 +3,7 @@ import { LegalPageShell } from '@/components/legal/LegalPageShell';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | AlphaClone Systems',
-  description: 'Terms of service for AlphaClone Systems LLC.',
+  description: 'Terms of service for Alphaclone Systems, LLC.',
   alternates: { canonical: 'https://alphaclonesystems.com/legal/terms' },
   robots: { index: true, follow: true },
 };
@@ -31,7 +31,7 @@ export default function Page() {
     >
       <section id="acceptance" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Acceptance</h2>
-        <p className="text-sm leading-7 text-slate-300">By using AlphaClone Systems LLC services, you agree to these terms and any linked policies.</p>
+        <p className="text-sm leading-7 text-slate-300">By using Alphaclone Systems, LLC services, you agree to these terms and any linked policies.</p>
       </section>
       <section id="service" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Service description</h2>

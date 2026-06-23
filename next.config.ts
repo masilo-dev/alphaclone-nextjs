@@ -67,6 +67,18 @@ const nextConfig: NextConfig = {
 
   },
   turbopack: {},
+  async redirects() {
+    // Consolidate the older /legal/* summaries onto the canonical, full-length
+    // legal documents. Sources are exact paths, so sub-routes such as
+    // /legal/dpa/download and /legal/data-request keep working.
+    return [
+      { source: '/legal/privacy', destination: '/privacy-policy', permanent: true },
+      { source: '/legal/terms', destination: '/terms-of-service', permanent: true },
+      { source: '/legal/cookies', destination: '/cookie-policy', permanent: true },
+      { source: '/legal/dpa', destination: '/dpa', permanent: true },
+      { source: '/legal/sla', destination: '/sla', permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {

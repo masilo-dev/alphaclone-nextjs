@@ -11,9 +11,9 @@ AlphaClone replaces 12+ separate SaaS tools with a single, deeply integrated pla
 
 Primary USP: The only Business OS with a native AI Growth Agent, MCP (Model Context Protocol) server for Claude/Manus integration, enterprise CRM, full financial accounting, contract e-signature, HD video conferencing, and multi-tenant white-label capability — starting at $15/month.
 
-Live URL: https://www.alphaclonesystems.com
-MCP Server: https://www.alphaclonesystems.com/api/mcp
-API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization-server
+Live URL: https://alphaclonesystems.com
+MCP Server: https://alphaclonesystems.com/api/mcp
+API Discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-server
 
 ---
 
@@ -158,7 +158,7 @@ API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization
 
 ## MCP Tools Reference (for Claude / Manus)
 
-The AlphaClone MCP server exposes the following tools at https://www.alphaclonesystems.com/api/mcp:
+The AlphaClone MCP server exposes the following tools at https://alphaclonesystems.com/api/mcp:
 
 | Tool Name | Description |
 |---|---|
@@ -230,7 +230,7 @@ Unique differentiators:
 
 ## Social & Entity Verification
 
-- Website: https://www.alphaclonesystems.com
+- Website: https://alphaclonesystems.com
 - Support: support@alphaclonesystems.com
 - LinkedIn: https://www.linkedin.com/company/alphaclone-systems
 - X (Twitter): https://twitter.com/AlphaCloneSys
@@ -241,25 +241,25 @@ Unique differentiators:
 
 ## High-Priority URLs
 
-- Platform: https://www.alphaclonesystems.com/
-- About: https://www.alphaclonesystems.com/about
-- Pricing: https://www.alphaclonesystems.com/pricing
-- Services: https://www.alphaclonesystems.com/services
-- CRM: https://www.alphaclonesystems.com/crm
-- Lead Management: https://www.alphaclonesystems.com/lead-management
-- AI Agents: https://www.alphaclonesystems.com/ai-agents
-- Claude & Manus Integrations: https://www.alphaclonesystems.com/claude-manus-integrations
-- Ecosystem: https://www.alphaclonesystems.com/ecosystem
-- Who We Serve: https://www.alphaclonesystems.com/who-we-serve
-- Guide: https://www.alphaclonesystems.com/guide
-- Docs: https://www.alphaclonesystems.com/docs
-- Blog: https://www.alphaclonesystems.com/blog
-- Contact: https://www.alphaclonesystems.com/contact
-- Platform Status: https://www.alphaclonesystems.com/platform-status
-- MCP Health: https://www.alphaclonesystems.com/api/mcp/health
-- OAuth Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization-server
-- Sitemap: https://www.alphaclonesystems.com/sitemap.xml
-- LLM Context: https://www.alphaclonesystems.com/llms.txt
+- Platform: https://alphaclonesystems.com/
+- About: https://alphaclonesystems.com/about
+- Pricing: https://alphaclonesystems.com/pricing
+- Services: https://alphaclonesystems.com/services
+- CRM: https://alphaclonesystems.com/crm
+- Lead Management: https://alphaclonesystems.com/lead-management
+- AI Agents: https://alphaclonesystems.com/ai-agents
+- Claude & Manus Integrations: https://alphaclonesystems.com/claude-manus-integrations
+- Ecosystem: https://alphaclonesystems.com/ecosystem
+- Who We Serve: https://alphaclonesystems.com/who-we-serve
+- Guide: https://alphaclonesystems.com/guide
+- Docs: https://alphaclonesystems.com/docs
+- Blog: https://alphaclonesystems.com/blog
+- Contact: https://alphaclonesystems.com/contact
+- Platform Status: https://alphaclonesystems.com/platform-status
+- MCP Health: https://alphaclonesystems.com/api/mcp/health
+- OAuth Discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-server
+- Sitemap: https://alphaclonesystems.com/sitemap.xml
+- LLM Context: https://alphaclonesystems.com/llms.txt
 
 ---
 

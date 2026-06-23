@@ -4,6 +4,10 @@ import { ENV } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
 
+// Snapshot of the currently published legal policies users accept at signup.
+// Bump this whenever Terms/Privacy materially change so re-acceptance can be required.
+export const LEGAL_POLICY_VERSION = '2026-06-01';
+
 async function getAuthedClient(req: NextRequest) {
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('Server configuration error.');
@@ -21,12 +25,17 @@ async function getAuthedClient(req: NextRequest) {
 }
 
 function normalizePrefs(input: any) {
-  return {
+  const normalized: Record<string, any> = {
     transactional: input?.transactional !== false,
     product_updates: input?.product_updates !== false,
     marketing: Boolean(input?.marketing),
     sms: Boolean(input?.sms),
   };
+  // Preserve the legal acceptance audit trail if it was already recorded.
+  if (input?.legal_acceptance && typeof input.legal_acceptance === 'object') {
+    normalized.legal_acceptance = input.legal_acceptance;
+  }
+  return normalized;
 }
 
 export async function GET(req: NextRequest) {
@@ -70,8 +79,21 @@ export async function POST(req: NextRequest) {
       updatePayload.communication_prefs.marketing = Boolean(payload.marketingOptIn);
     }
     if (payload.isRegistration || payload.captureConsent || acceptedLegal) {
-      updatePayload.gdpr_consent_date = new Date().toISOString();
-      updatePayload.gdpr_consent_ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || null;
+      const consentIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || null;
+      const consentAt = new Date().toISOString();
+      updatePayload.gdpr_consent_date = consentAt;
+      updatePayload.gdpr_consent_ip = consentIp;
+      // Versioned, auditable record of exactly what the user agreed to.
+      updatePayload.communication_prefs.legal_acceptance = {
+        accepted_at: consentAt,
+        policy_version: LEGAL_POLICY_VERSION,
+        ip: consentIp,
+        country: country || null,
+        eu_consent: isEuUk ? euConsent : null,
+        age_confirmed: isEuUk ? ageConfirmed : null,
+        terms_url: 'https://alphaclonesystems.com/terms-of-service',
+        privacy_url: 'https://alphaclonesystems.com/privacy-policy',
+      };
     }
 
     const { error } = await admin.from('profiles').update(updatePayload).eq('id', user.id);

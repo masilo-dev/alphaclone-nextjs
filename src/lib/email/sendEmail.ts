@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { buildEmailUnsubscribeUrl } from '@/lib/email/unsubscribe';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
@@ -233,14 +234,20 @@ export async function sendEmail(
       }
     }
 
+    // Build a per-recipient signed unsubscribe link (single-recipient sends, e.g. campaigns/outreach).
+    // Falls back gracefully inside ensureFooter when unavailable.
+    const singleRecipient = recipients.length === 1 ? String(recipients[0] || '').trim() : '';
+    const unsubscribeUrl = payload.listUnsubscribeUrl
+      || (singleRecipient ? buildEmailUnsubscribeUrl({ tenantId, email: singleRecipient }) : '');
+
     const normalizedSubject = normalizeEmailSubject(payload.subject);
     const normalizedHtml = payload.html
       ? ensureFooter(sanitizeHtml(String(payload.html), {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
         allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
-      }))
+      }), { unsubscribeUrl })
       : undefined;
-    const normalizedText = payload.text ? ensureFooter(payload.text) : undefined;
+    const normalizedText = payload.text ? ensureFooter(payload.text, { unsubscribeUrl }) : undefined;
 
     const configs = await resolveProviderConfigs({
       tenantId,
@@ -265,7 +272,7 @@ export async function sendEmail(
         html: normalizedHtml,
         text: normalizedText,
         replyTo: payload.reply_to || payload.replyTo,
-        listUnsubscribeUrl: payload.listUnsubscribeUrl,
+        listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
         attachments: payload.attachments?.map((attachment) => ({
           filename: attachment.filename,
           content: attachment.content,

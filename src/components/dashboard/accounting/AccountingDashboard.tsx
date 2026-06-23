@@ -19,15 +19,28 @@ import ReceiptGeneratorModal from './ReceiptGeneratorModal';
 import { generalLedgerService } from '../../../services/accounting/generalLedgerService';
 import { advancedAccountingService } from '../../../services/accounting/advancedAccountingService';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { ChartOfAccountsPage } from './ChartOfAccountsPage';
+import { JournalEntriesPage } from './JournalEntriesPage';
+import { FinancialReportsPage } from './FinancialReportsPage';
 
 type Period = 'week' | 'month' | 'quarter' | 'year';
+type AccountingTab = 'overview' | 'income' | 'reports' | 'chart' | 'journal' | 'receipts';
+
+const ACCOUNTING_TABS: { key: AccountingTab; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'income', label: 'Income' },
+    { key: 'reports', label: 'Financial Reports' },
+    { key: 'chart', label: 'Chart of Accounts' },
+    { key: 'journal', label: 'Journal Entries' },
+    { key: 'receipts', label: 'Receipts' },
+];
 
 export default function AccountingDashboard() {
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
     
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'income' | 'balance' | 'receipts'>('overview');
+    const [activeTab, setActiveTab] = useState<AccountingTab>('overview');
     const [period, setPeriod] = useState<Period>('month');
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
@@ -239,13 +252,13 @@ export default function AccountingDashboard() {
 
             {/* Mobile-Friendly Tab Switcher */}
             <div className="flex border-b border-white/5 overflow-x-auto no-scrollbar">
-                {(['overview', 'income', 'balance', 'receipts'] as const).map(tab => (
+                {ACCOUNTING_TABS.map(tab => (
                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-6 py-4 text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border-b-2 ${activeTab === tab ? 'border-teal-500 text-white bg-teal-500/5' : 'border-transparent text-gray-500'}`}
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`px-6 py-4 text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-teal-500 text-white bg-teal-500/5' : 'border-transparent text-gray-500'}`}
                     >
-                        {tab === 'overview' ? 'Overview' : tab === 'income' ? 'Income' : tab === 'balance' ? 'Balance' : 'Receipts'}
+                        {tab.label}
                     </button>
                 ))}
             </div>
@@ -310,6 +323,24 @@ export default function AccountingDashboard() {
                         </div>
                     </div>
                 </Card>
+            )}
+
+            {activeTab === 'reports' && (
+                <div className="animate-in fade-in duration-300">
+                    <FinancialReportsPage />
+                </div>
+            )}
+
+            {activeTab === 'chart' && (
+                <div className="animate-in fade-in duration-300">
+                    <ChartOfAccountsPage />
+                </div>
+            )}
+
+            {activeTab === 'journal' && (
+                <div className="animate-in fade-in duration-300">
+                    <JournalEntriesPage />
+                </div>
             )}
 
             {activeTab === 'receipts' && (

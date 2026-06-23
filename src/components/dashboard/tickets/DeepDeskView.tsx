@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { 
     Loader2, 
     Plus, 
@@ -282,6 +283,21 @@ export default function DeepDeskView() {
         return matchesSearch && matchesStatus && matchesPriority;
     });
 
+    const ticketStats = useMemo<ModuleStat[]>(() => {
+        const open = tickets.filter(t => t.status === 'open').length;
+        const inProgress = tickets.filter(t => t.status === 'in_progress').length;
+        const unresolved = tickets.filter(t => t.status !== 'resolved' && t.status !== 'closed');
+        const needsAttention = unresolved.filter(t => t.priority === 'high' || t.priority === 'urgent').length;
+        const resolved = tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
+        const resolutionRate = tickets.length > 0 ? Math.round((resolved / tickets.length) * 100) : 0;
+        return [
+            { label: 'Open', value: open, sub: 'Awaiting first action', Icon: MessageSquare, accent: 'blue' },
+            { label: 'In Progress', value: inProgress, sub: 'Being worked', Icon: Clock, accent: 'amber' },
+            { label: 'Needs Attention', value: needsAttention, sub: 'High / urgent open', Icon: AlertCircle, accent: needsAttention > 0 ? 'rose' : 'emerald' },
+            { label: 'Resolution Rate', value: `${resolutionRate}%`, sub: `${resolved} resolved`, Icon: CheckCircle, accent: 'teal' },
+        ];
+    }, [tickets]);
+
     return (
         <div className="flex flex-col h-[calc(100vh-6rem)] bg-slate-950 text-slate-100 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
             
@@ -314,6 +330,13 @@ export default function DeepDeskView() {
                     </button>
                 </div>
             </div>
+
+            {/* KPI Overview */}
+            {!loading && tickets.length > 0 && (
+                <div className="p-4 border-b border-slate-800 bg-slate-900/20 shrink-0">
+                    <ModuleStatCards stats={ticketStats} />
+                </div>
+            )}
 
             {/* Main Area */}
             <div className="flex flex-1 overflow-hidden relative">

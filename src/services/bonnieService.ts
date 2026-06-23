@@ -21,6 +21,63 @@ export interface BonnieLog {
   tool?: string;
 }
 
+export interface BonnieNavIntent {
+  route: string;
+  label: string;
+}
+
+/**
+ * Deterministic, role-aware navigation intent resolver so Bonnie can actually
+ * move the user around the dashboard (not just chat). Matches plain-language
+ * phrases like "open tickets", "take me to the CRM", "show campaigns".
+ * Returns null when no navigation intent is detected.
+ */
+export function resolveBonnieNavIntent(
+  rawText: string,
+  role?: string | null
+): BonnieNavIntent | null {
+  const text = (rawText || '').toLowerCase().trim();
+  if (!text) return null;
+
+  // Only treat as navigation when the user expresses a "go/open/show" intent
+  // or simply names a destination. Avoid hijacking analytical instructions.
+  const navVerb = /(open|go to|goto|take me|navigate|show|bring up|switch to|jump to|launch|view)\b/.test(text);
+
+  const isTenant = role === 'tenant_admin';
+
+  // [keywords, businessRoute, adminRoute, label]
+  const map: Array<[RegExp, string, string, string]> = [
+    [/\b(crm|customers?|contacts?|client list)\b/, '/dashboard/crm', '/dashboard/crm', 'CRM'],
+    [/\b(leads?|lead board|pipeline of leads)\b/, '/dashboard/leads', '/dashboard/leads', 'Leads'],
+    [/\b(deals?|sales pipeline|opportunit)/, '/dashboard/deals', '/dashboard/deals', 'Deals'],
+    [/\b(ticket|support|help ?desk|deep ?desk)/, '/dashboard/business/tickets', '/dashboard/tickets', 'Tickets'],
+    [/\b(campaign|marketing|email blast|newsletter)/, '/dashboard/business/campaigns', '/dashboard/campaigns', 'Marketing Campaigns'],
+    [/\b(account(ing)?|book ?keep|quickbooks|ledger|journal|chart of accounts)/, '/dashboard/accounting', '/dashboard/finance', 'Accounting'],
+    [/\b(invoice|billing|payment)/, '/dashboard/business/billing', '/dashboard/finance', 'Billing'],
+    [/\b(quote|proposal)/, '/dashboard/business/quotes', '/dashboard/contracts', 'Quotes & Proposals'],
+    [/\b(contract|agreement)/, '/dashboard/business/contracts', '/dashboard/contracts', 'Contracts'],
+    [/\b(calendar|schedule|meeting|booking)/, '/dashboard/business/calendar', '/dashboard/calendar', 'Calendar'],
+    [/\b(mail|inbox|outlook|email)/, '/dashboard/mail', '/dashboard/mail', 'Mail'],
+    [/\b(whatsapp)/, '/dashboard/business/whatsapp', '/dashboard/messages', 'WhatsApp'],
+    [/\b(social|facebook|instagram|linkedin|twitter|post)/, '/dashboard/business/social', '/dashboard/messages', 'Social Media'],
+    [/\b(task|to-?do)/, '/dashboard/tasks', '/dashboard/tasks', 'Tasks'],
+    [/\b(report|analytic|forecast|revenue|stat)/, '/dashboard/business/reports', '/dashboard/analytics', 'Reports & Analytics'],
+    [/\b(setting|preference|config)/, '/dashboard/settings', '/dashboard/settings', 'Settings'],
+    [/\b(bonnie console|automation console|ai console)/, '/dashboard/business/bonnie', '/dashboard/bonnie', 'Bonnie Console'],
+    [/\b(home|dashboard|workspace|overview)\b/, '/dashboard', '/dashboard', 'Workspace Home'],
+  ];
+
+  for (const [re, businessRoute, adminRoute, label] of map) {
+    if (re.test(text)) {
+      // Require a nav verb for the very generic "home/dashboard" match to avoid false positives
+      if (label === 'Workspace Home' && !navVerb) continue;
+      return { route: isTenant ? businessRoute : adminRoute, label };
+    }
+  }
+
+  return null;
+}
+
 export const bonnieService = {
   /**
    * Fetch autonomous runner rules for a tenant

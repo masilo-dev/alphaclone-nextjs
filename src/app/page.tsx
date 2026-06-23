@@ -1,7 +1,5 @@
 import React, { Suspense } from 'react';
 import HomeClient from '@/components/home/HomeClient';
-import { SITE_URL } from '@/lib/siteUrl';
-import { SAME_AS_URLS } from '@/lib/seo/siteEntity';
 
 /**
  * AlphaClone Home Page (Server Component)
@@ -10,46 +8,9 @@ import { SAME_AS_URLS } from '@/lib/seo/siteEntity';
  * and delegates client-side logic (auth, search params) to HomeClient.
  */
 export default async function Home() {
-  const siteUrl = SITE_URL;
-  const organizationJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'AlphaClone Systems',
-    alternateName: ['Alphaclone', 'AlphaClone'],
-    url: siteUrl,
-    logo: `${siteUrl}/logo.png`,
-    sameAs: [...SAME_AS_URLS],
-    contactPoint: [
-      {
-        '@type': 'ContactPoint',
-        contactType: 'sales',
-        email: 'sales@alphaclonesystems.com',
-      },
-      {
-        '@type': 'ContactPoint',
-        contactType: 'customer support',
-        email: 'support@alphaclonesystems.com',
-      },
-      {
-        '@type': 'ContactPoint',
-        contactType: 'security',
-        email: 'security@alphaclonesystems.com',
-      },
-    ],
-  };
-
-  const websiteJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'AlphaClone Systems',
-    url: siteUrl,
-    inLanguage: 'en',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${siteUrl}/search?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-  };
+  // Organization + WebSite JSON-LD are injected site-wide from the root layout
+  // (see src/app/layout.tsx) to avoid duplicate/conflicting entities. The home
+  // page only adds the page-specific FAQ block below.
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -99,14 +60,6 @@ export default async function Home() {
 
   return (
     <main>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}

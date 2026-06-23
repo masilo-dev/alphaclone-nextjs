@@ -328,8 +328,10 @@ export const generateEmailDraft = async (instructions: string, recipientInfo?: s
     - Subject Line: ${subject || 'N/A'}
     
     GOAL:
-    Draft a complete, professionally worded email body that follows the instructions precisely. 
-    The tone should be professional yet human and engaging.
+    Draft a complete email body that follows the instructions precisely.
+    Write like a sharp, likeable human — confident and warm, never stiff or corporate.
+    Open with a first line that earns attention immediately (a specific hook, not "I hope this email finds you well").
+    Keep it clear, concise and skimmable, and end with one natural call to action.
     
     STRICT FORMATTING RULES:
     - Write in plain text only. No markdown.

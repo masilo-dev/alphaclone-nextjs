@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Project } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessEventService, BusinessEvent } from '../../../services/businessEventService';
@@ -21,6 +21,7 @@ import {
     Mail,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 
 interface CalendarPageProps {
     user: User;
@@ -326,6 +327,29 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     const filteredEvents = allEvents.filter(e => activeFilters.has(e.source));
 
+    const calendarStats = useMemo<ModuleStat[]>(() => {
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        const thisMonth = filteredEvents.filter(e => {
+            const d = new Date(e.date);
+            return d >= monthStart && d <= monthEnd;
+        });
+        const bookings = thisMonth.filter(e => e.source === 'booking').length;
+        const tasks = thisMonth.filter(e => e.source === 'task').length;
+        const deals = thisMonth.filter(e => e.source === 'deal').length;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const todayCount = filteredEvents.filter(e => {
+            const d = new Date(e.date); d.setHours(0, 0, 0, 0);
+            return d.getTime() === today.getTime();
+        }).length;
+        return [
+            { label: 'This Month', value: thisMonth.length, sub: currentDate.toLocaleDateString('en-US', { month: 'long' }), Icon: CalendarIcon, accent: 'teal' },
+            { label: 'Today', value: todayCount, sub: 'Scheduled items', Icon: Clock, accent: 'amber' },
+            { label: 'Bookings', value: bookings, sub: `${tasks} tasks · ${deals} deals`, Icon: Briefcase, accent: 'purple' },
+            { label: 'Sources', value: activeFilters.size, sub: 'Active filters', Icon: TrendingUp, accent: 'blue' },
+        ];
+    }, [filteredEvents, currentDate, activeFilters.size]);
+
     const getDaysInMonth = (date: Date) => {
         const year = date.getFullYear();
         const month = date.getMonth();
@@ -361,6 +385,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     return (
         <div className="space-y-4">
+            <ModuleStatCards stats={calendarStats} />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">

@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       <br><br>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
       <p style="font-size: 11px; color: #9ca3af;">
-        AlphaClone Systems LLC<br>
+        Alphaclone Systems, LLC<br>
         <a href="https://alphaclonesystems.com" style="color: #6366f1;">alphaclonesystems.com</a><br>
         <a href="https://alphaclonesystems.com/unsubscribe?email=${encodeURIComponent(to)}" style="color: #6366f1;">Unsubscribe</a>
       </p>

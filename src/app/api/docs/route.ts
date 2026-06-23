@@ -13,7 +13,7 @@ const openApiSpec = {
         description: 'Complete Business Operating System API',
         contact: {
             name: 'API Support',
-            email: 'api@alphaclone.com',
+            email: 'api@alphaclonesystems.com',
             url: 'https://alphaclone.com/support',
         },
         license: {

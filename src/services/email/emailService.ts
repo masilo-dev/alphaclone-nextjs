@@ -98,7 +98,7 @@ class EmailService {
             this.provider = 'resend';
         }
 
-        this.defaultFrom = process.env.EMAIL_FROM || 'noreply@alphaclone.com';
+        this.defaultFrom = process.env.EMAIL_FROM || 'notifications@alphaclonesystems.com';
     }
 
     /**

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '@/services/authService';
+import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
 export default function ResetPasswordPage() {
@@ -18,6 +19,43 @@ export default function ResetPasswordPage() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    // null = verifying the recovery link, true = valid session, false = invalid/expired
+    const [linkValid, setLinkValid] = useState<boolean | null>(null);
+
+    // Establish the recovery session from the email link before allowing a password change.
+    useEffect(() => {
+        let settled = false;
+
+        const markValid = () => {
+            if (!settled) {
+                settled = true;
+                setLinkValid(true);
+            }
+        };
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || session) {
+                markValid();
+            }
+        });
+
+        supabase.auth.getSession().then(({ data }) => {
+            if (data.session) markValid();
+        });
+
+        // If no recovery session is established shortly after load, the link is invalid/expired.
+        const timeout = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                setLinkValid(false);
+            }
+        }, 4000);
+
+        return () => {
+            subscription.unsubscribe();
+            clearTimeout(timeout);
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,6 +98,37 @@ export default function ResetPasswordPage() {
                     </p>
                     <Button onClick={() => router.push('/auth/login')} className="w-full">
                         Return to Login
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (linkValid === null) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
+                    <Loader2 className="w-10 h-10 text-teal-400 animate-spin mx-auto mb-6" />
+                    <h2 className="text-xl font-bold text-white mb-2">Verifying your reset link…</h2>
+                    <p className="text-slate-400 text-sm">Just a moment while we securely open your password reset session.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (linkValid === false) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
+                    <div className="w-20 h-20 bg-amber-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-10 h-10 text-amber-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Reset link expired</h2>
+                    <p className="text-slate-400 mb-8">
+                        This password reset link is invalid or has expired. Reset links are single-use and time-limited — please request a new one.
+                    </p>
+                    <Button onClick={() => router.push('/auth/login')} className="w-full">
+                        Request a new link
                     </Button>
                 </div>
             </div>

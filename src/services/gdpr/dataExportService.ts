@@ -268,7 +268,7 @@ export const dataExportService = {
     <hr style="margin: 40px 0;">
     <p class="meta">
         This export contains all personal data AlphaClone has stored about you.
-        For questions, contact privacy@alphaclone.com
+        For questions, contact privacy@alphaclonesystems.com
     </p>
 </body>
 </html>

@@ -2,8 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText, CheckSquare
+  Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText, CheckSquare,
+  ClipboardList, TrendingUp, ToggleRight, BarChart3
 } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import type { FormField, FormFieldType, TenantForm } from '@/types/tenantForms';
@@ -158,6 +160,19 @@ export default function FormsHub() {
     toast.success('Submit endpoint copied');
   };
 
+  const formStats = useMemo<ModuleStat[]>(() => {
+    const totalSubmissions = forms.reduce((s, f) => s + (f.submission_count || 0), 0);
+    const activeForms = forms.filter(f => f.is_active !== false).length;
+    const avgPerForm = forms.length > 0 ? Math.round(totalSubmissions / forms.length) : 0;
+    const defaultForm = forms.find(f => f.is_default);
+    return [
+      { label: 'Total Forms', value: forms.length, sub: `${activeForms} active`, Icon: ClipboardList, accent: 'teal' },
+      { label: 'Submissions', value: totalSubmissions.toLocaleString(), sub: 'All-time captured', Icon: BarChart3, accent: 'blue' },
+      { label: 'Avg / Form', value: avgPerForm, sub: 'Conversion volume', Icon: TrendingUp, accent: 'purple' },
+      { label: 'Default Form', value: defaultForm ? 'Live' : 'None', sub: defaultForm?.slug || 'Set a default', Icon: ToggleRight, accent: defaultForm ? 'emerald' : 'amber' },
+    ];
+  }, [forms]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -180,6 +195,8 @@ export default function FormsHub() {
           <Plus className="w-4 h-4" /> New form
         </button>
       </div>
+
+      {forms.length > 0 && <ModuleStatCards stats={formStats} />}
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-6">
         <div className="space-y-2">

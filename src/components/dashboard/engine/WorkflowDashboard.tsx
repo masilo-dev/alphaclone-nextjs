@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Zap, Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Play, ChevronDown,
     ChevronUp, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2,
@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import type { WorkflowCondition, WorkflowAction, TriggerType, ActionType } from '@/services/engine/WorkflowExecutor';
 
 interface WorkflowDef {
@@ -319,13 +320,29 @@ export default function WorkflowDashboard() {
 
     const activeCount = workflows.filter(w => w.is_active).length;
 
+    const workflowStats = useMemo<ModuleStat[]>(() => {
+        const succeeded = executions.filter(e => e.status === 'success').length;
+        const failed = executions.filter(e => e.status === 'failed').length;
+        const decided = succeeded + failed;
+        const successRate = decided > 0 ? Math.round((succeeded / decided) * 100) : 0;
+        const avgMs = executions.length > 0
+            ? Math.round(executions.reduce((s, e) => s + (e.duration_ms || 0), 0) / executions.length)
+            : 0;
+        return [
+            { label: 'Active Flows', value: activeCount, sub: `${workflows.length} total workflows`, Icon: Zap, accent: 'teal' },
+            { label: 'Recent Runs', value: executions.length, sub: 'Last execution batch', Icon: Activity, accent: 'blue' },
+            { label: 'Success Rate', value: `${successRate}%`, sub: `${succeeded} succeeded`, Icon: CheckCircle2, accent: successRate >= 80 ? 'emerald' : 'amber' },
+            { label: 'Avg Duration', value: avgMs > 1000 ? `${(avgMs / 1000).toFixed(1)}s` : `${avgMs}ms`, sub: failed > 0 ? `${failed} failed` : 'All healthy', Icon: Clock, accent: failed > 0 ? 'rose' : 'purple' },
+        ];
+    }, [workflows.length, activeCount, executions]);
+
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">AlphaClone Flow Engine</h2>
-                    <p className="text-sm text-slate-400">{activeCount} active · {workflows.length} total · {executions.length} recent executions</p>
+                    <p className="text-sm text-slate-400">Automated orchestration for leads, forms, SMS, and ingestion events</p>
                 </div>
                 <div className="flex gap-2">
                     {workflows.length === 0 && (
@@ -341,6 +358,10 @@ export default function WorkflowDashboard() {
                     </button>
                 </div>
             </div>
+
+            {(workflows.length > 0 || executions.length > 0) && (
+                <ModuleStatCards stats={workflowStats} />
+            )}
 
             {/* Architecture info banner */}
             <div className="flex gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">

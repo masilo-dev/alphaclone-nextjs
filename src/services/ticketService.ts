@@ -206,7 +206,7 @@ class TicketService {
         try {
             const notificationEmail = typeof process !== 'undefined' && process.env?.NOTIFICATION_EMAIL 
                 ? process.env.NOTIFICATION_EMAIL 
-                : 'support@alphaclone.com';
+                : 'support@alphaclonesystems.com';
             
             const appUrl = typeof process !== 'undefined' && process.env?.APP_URL 
                 ? process.env.APP_URL 

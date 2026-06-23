@@ -36,16 +36,47 @@ export function buildSiteNavigationSchema() {
   };
 }
 
+/** Registered legal entity details (Wyoming, USA). */
+export const COMPANY_LEGAL = {
+  legalName: 'Alphaclone Systems, LLC',
+  entityType: 'Limited Liability Company - Domestic',
+  filingId: '2026-002002581',
+  jurisdiction: 'Wyoming, USA',
+  street: '30 N Gould St',
+  city: 'Sheridan',
+  region: 'WY',
+  postalCode: '82801',
+  country: 'US',
+} as const;
+
 export function buildOrganizationEntitySchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'AlphaClone Systems',
-    alternateName: ['Alphaclone', 'AlphaClone'],
+    legalName: COMPANY_LEGAL.legalName,
+    alternateName: ['Alphaclone', 'AlphaClone', 'Alphaclone Systems, LLC'],
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     description:
-      'Unified AI business operating system with CRM, lead management, invoicing, contracts, meetings, and automation.',
+      'Unified AI business operating system with CRM, lead management, invoicing, contracts, meetings, and automation. Alphaclone Systems, LLC is a Wyoming (USA) registered company.',
+    identifier: {
+      '@type': 'PropertyValue',
+      name: 'Wyoming Filing ID',
+      value: COMPANY_LEGAL.filingId,
+    },
+    foundingLocation: {
+      '@type': 'Place',
+      name: COMPANY_LEGAL.jurisdiction,
+    },
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: COMPANY_LEGAL.street,
+      addressLocality: COMPANY_LEGAL.city,
+      addressRegion: COMPANY_LEGAL.region,
+      postalCode: COMPANY_LEGAL.postalCode,
+      addressCountry: COMPANY_LEGAL.country,
+    },
     sameAs: [...SAME_AS_URLS],
     contactPoint: [
       {

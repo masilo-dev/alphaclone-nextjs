@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { quoteService } from '../../services/quoteService';
@@ -645,8 +646,29 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
 
   const filtered = quotes.filter(q => filter === 'all' || q.status === filter);
 
+  const quoteStats = useMemo<ModuleStat[]>(() => {
+    const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
+    const pipeline = quotes.reduce((s, q) => s + (q.amount || 0), 0);
+    const wonQuotes = quotes.filter(q => q.status === 'accepted' || q.status === 'converted');
+    const wonValue = wonQuotes.reduce((s, q) => s + (q.amount || 0), 0);
+    const outstanding = quotes.filter(q => q.status === 'sent').reduce((s, q) => s + (q.amount || 0), 0);
+    const decided = quotes.filter(q => ['accepted', 'converted', 'rejected'].includes(q.status)).length;
+    const winRate = decided > 0 ? Math.round((wonQuotes.length / decided) * 100) : 0;
+    return [
+      { label: 'Pipeline Value', value: fmt(pipeline), sub: `${quotes.length} quotes`, Icon: DollarSign, accent: 'teal' },
+      { label: 'Won', value: fmt(wonValue), sub: `${wonQuotes.length} accepted`, Icon: Trophy, accent: 'emerald' },
+      { label: 'Outstanding', value: fmt(outstanding), sub: 'Sent, awaiting reply', Icon: Clock, accent: 'amber' },
+      { label: 'Win Rate', value: `${winRate}%`, sub: `${decided} decided`, Icon: FileText, accent: 'purple' },
+    ];
+  }, [quotes]);
+
   return (
     <div className="relative flex flex-col h-full">
+      {!loading && quotes.length > 0 && (
+        <div className="p-4 border-b border-white/5 bg-slate-900/20">
+          <ModuleStatCards stats={quoteStats} />
+        </div>
+      )}
       <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5">
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>

@@ -95,6 +95,7 @@ const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
 );
 
 import { PLATFORM_CALENDLY_URL } from '@/constants';
+import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
 
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
 const LOGIN_HREF = '/auth/login';
@@ -980,44 +981,22 @@ const LandingPage = () => {
                      className="text-center mb-16"
                   >
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        One price. Every feature. No games.
+                        Simple plans. Every feature. No games.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
                         No hidden fees. No surprise charges. One operating system for the work you run every day.
                      </p>
                   </motion.div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                     {[
-                        {
-                           name: 'Starter',
-                           price: '$15',
-                           desc: 'Full access to all platform modules',
-                           features: [
-                              'CRM, projects, contracts, invoices, tasks',
-                              'LinkedIn and Facebook workflow support',
-                              'AI workflows and automation tools',
-                              'Team collaboration and analytics',
-                              'Full system access',
-                           ],
-                           note: 'All features included',
-                           popular: false
-                        },
-                        {
-                           name: 'Pro Video',
-                           price: '$35',
-                           desc: 'Full access plus integrated video meetings',
-                           features: [
-                              'Everything in Starter',
-                              'Daily and LiveKit video meeting support',
-                              'Hosted client calls and team meetings',
-                              'Meeting operations and controls',
-                              'Full system access',
-                           ],
-                           note: 'All features included',
-                           popular: true
-                        }
-                     ].map((plan, i) => (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+                     {PUBLIC_PRICING_PLANS.map((p) => ({
+                        name: p.name,
+                        price: `$${p.price}`,
+                        desc: p.tagline,
+                        features: p.features,
+                        note: p.badge || 'All features included',
+                        popular: !!p.highlight,
+                     })).map((plan, i) => (
                         <motion.div
                            key={i}
                            initial={{ opacity: 0, y: 30 }}

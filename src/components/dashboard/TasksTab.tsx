@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, Calendar, Briefcase,
-  Trash2, RefreshCw, LayoutGrid, List
+  Trash2, RefreshCw, LayoutGrid, List,
+  ListChecks, CalendarClock, AlertTriangle, CheckCircle2
 } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
@@ -359,6 +361,26 @@ const TasksTab: React.FC<TasksTabProps> = () => {
   const ORDER = ['Today', 'This Week', 'Later', 'No Due Date', 'Completed'];
   const isTruncated = totalCount !== null && tasks.length < totalCount;
 
+  const taskStats = useMemo<ModuleStat[]>(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const active = tasks.filter(t => t.status !== 'completed');
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    const overdue = active.filter(t => t.due_date && new Date(t.due_date) < today).length;
+    const dueToday = active.filter(t => {
+      if (!t.due_date) return false;
+      const d = new Date(t.due_date); d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    }).length;
+    const totalSeen = tasks.length;
+    const completionRate = totalSeen > 0 ? Math.round((completed / totalSeen) * 100) : 0;
+    return [
+      { label: 'Open Tasks', value: (totalCount ?? active.length).toLocaleString(), sub: 'Not yet completed', Icon: ListChecks, accent: 'blue' },
+      { label: 'Due Today', value: dueToday, sub: 'Needs attention', Icon: CalendarClock, accent: 'amber' },
+      { label: 'Overdue', value: overdue, sub: overdue > 0 ? 'Past due date' : 'All on track', Icon: AlertTriangle, accent: overdue > 0 ? 'rose' : 'emerald' },
+      { label: 'Completion', value: `${completionRate}%`, sub: `${completed} done`, Icon: CheckCircle2, accent: 'teal' },
+    ];
+  }, [tasks, totalCount]);
+
   return (
     <div className="relative flex flex-col h-full">
       <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
@@ -378,6 +400,11 @@ const TasksTab: React.FC<TasksTabProps> = () => {
         </button>
       </div>
       <div className="flex-1 overflow-y-auto pb-20 bg-slate-950">
+        {!loading && (
+          <div className="p-4 border-b border-white/5 bg-slate-900/20">
+            <ModuleStatCards stats={taskStats} />
+          </div>
+        )}
         {microsoftConnected && (
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">

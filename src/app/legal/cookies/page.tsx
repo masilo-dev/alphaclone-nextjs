@@ -4,7 +4,7 @@ import { CookiePolicyContent } from './shared';
 
 export const metadata: Metadata = {
   title: 'Cookie Policy | AlphaClone Systems',
-  description: 'Cookie policy for AlphaClone Systems LLC.',
+  description: 'Cookie policy for Alphaclone Systems, LLC.',
   alternates: { canonical: 'https://alphaclonesystems.com/legal/cookies' },
   robots: { index: true, follow: true },
 };

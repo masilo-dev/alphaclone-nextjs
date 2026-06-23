@@ -40,7 +40,7 @@ function LegalLayout({
             <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-slate-800">
                <span className="text-xs text-slate-500">Last updated: {lastUpdated}</span>
                <span className="text-xs text-slate-500">•</span>
-               <span className="text-xs text-slate-500">AlphaClone Systems LLC</span>
+               <span className="text-xs text-slate-500">Alphaclone Systems, LLC</span>
                <span className="text-xs text-slate-500">•</span>
                <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
                   <Mail className="w-3 h-3" /> legal@alphaclonesystems.com
@@ -130,7 +130,7 @@ export function PrivacyPolicy() {
                The data controller responsible for your personal information is:
             </p>
             <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
-               <p><strong className="text-white">AlphaClone Systems LLC</strong></p>
+               <p><strong className="text-white">Alphaclone Systems, LLC</strong></p>
                <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
                <p>Data Protection Officer (DPO): <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                <p>Website: <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">https://alphaclonesystems.com</a></p>
@@ -373,7 +373,7 @@ export function TermsOfService() {
 
          <Section id="subscription" title="4. Subscription Plans & Billing">
             <Sub title="4.1 Plans">
-               <p>AlphaClone offers the following subscription tiers, all of which include every platform feature. Differences between tiers are usage quotas only: Starter ($15/month — 5 users, 5GB storage, 50 AI queries/month, 10 AI Agent runs/month, standard 48h support); Pro ($45/month — 25 users, 25GB storage, 500 AI queries/month, 200 AI Agent runs/month, priority 12h support); Enterprise ($80/month — unlimited users, 100GB storage, unlimited AI queries, unlimited AI Agent runs, dedicated 4h support). All plans include a 14-day free trial; no credit card required to begin.</p>
+               <p>AlphaClone offers the following subscription tiers, all of which include every platform module. Differences between tiers are usage quotas and support levels only: Starter ($15/month — up to 25 users, 50 active projects, 25GB storage, 25 video meetings/month, approximately 2,500 daily AI usage units, standard email support); Pro ($45/month — unlimited users and projects, 100GB storage, unlimited video meetings, the Bonnie AI sales assistant, API access, custom domain, approximately 100,000 daily AI usage units, priority support); Enterprise ($80/month — unlimited users and projects, 500GB storage, advanced AI features, approximately 500,000 daily AI usage units, priority infrastructure and SLA support). Annual billing is available at a discount (Starter $144/yr, Pro $432/yr, Enterprise $768/yr). All plans include a 14-day free trial; no credit card required to begin.</p>
             </Sub>
             <Sub title="4.2 Billing Cycle">
                <p>Subscriptions are billed monthly in advance. Your billing date is set on the day you first provide payment details. Invoices are issued automatically and sent to your registered email address. You authorize AlphaClone to charge your payment method on each monthly billing date.</p>
@@ -414,7 +414,7 @@ export function TermsOfService() {
                <p>You retain full ownership of all data, content, and intellectual property you upload, create, or store within the Platform ("Your Data"). AlphaClone claims no ownership of Your Data. By using the Platform, you grant AlphaClone a limited, non-exclusive, royalty-free license to store, process, and display Your Data solely for the purpose of providing the service to you.</p>
             </Sub>
             <Sub title="6.2 Platform IP">
-               <p>The AlphaClone Platform, including its software, design, trademarks, logos, documentation, and all associated intellectual property, is owned by AlphaClone Systems LLC and is protected by copyright, trademark, and other applicable laws. You may not use our trademarks or branding without prior written consent.</p>
+               <p>The AlphaClone Platform, including its software, design, trademarks, logos, documentation, and all associated intellectual property, is owned by Alphaclone Systems, LLC and is protected by copyright, trademark, and other applicable laws. You may not use our trademarks or branding without prior written consent.</p>
             </Sub>
          </Section>
 
@@ -862,7 +862,7 @@ export function DPA() {
                 <div className="space-y-3">
                     {[
                         { role: 'Customer (Data Controller)', def: 'The business or individual subscribing to AlphaClone. The Controller determines the purposes and means of processing personal data of their clients, contacts, and team members. The Controller is responsible for ensuring their instructions to AlphaClone are lawful.' },
-                        { role: 'AlphaClone Systems LLC (Data Processor)', def: 'AlphaClone processes personal data only on behalf of and according to the documented instructions of the Controller. AlphaClone acts as a Controller only for its own account administration data (billing, authentication).' },
+                        { role: 'Alphaclone Systems, LLC (Data Processor)', def: 'AlphaClone processes personal data only on behalf of and according to the documented instructions of the Controller. AlphaClone acts as a Controller only for its own account administration data (billing, authentication).' },
                     ].map((item, i) => (
                         <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
                             <p className="text-white font-semibold text-xs mb-1">{item.role}</p>

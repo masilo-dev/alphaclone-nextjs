@@ -4,12 +4,12 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 export const dynamic = 'force-dynamic';
 
 const lines = [
-  'AlphaClone Systems LLC',
+  'Alphaclone Systems, LLC',
   'Data Processing Agreement (DPA)',
   'Effective date: June 9, 2025',
   '',
   '1. Parties',
-  'AlphaClone Systems LLC acts as Processor. The customer acts as Controller.',
+  'Alphaclone Systems, LLC acts as Processor. The customer acts as Controller.',
   '',
   '2. Subject matter',
   'Processing of personal data through the AlphaClone SaaS platform.',
@@ -36,7 +36,7 @@ const lines = [
   'Wyoming, USA.',
   '',
   '10. Signatures',
-  'Processor: AlphaClone Systems LLC, signed by Bornface Masilo.',
+  'Processor: Alphaclone Systems, LLC, signed by Bornface Masilo.',
 ];
 
 function wrapText(text: string, maxChars: number) {
@@ -84,7 +84,7 @@ export async function GET() {
     }
   };
 
-  drawLine('AlphaClone Systems LLC', true, 18);
+  drawLine('Alphaclone Systems, LLC', true, 18);
   y -= 10;
   drawLine('Data Processing Agreement (DPA)', true, 14);
   drawLine('Effective date: June 9, 2025');
