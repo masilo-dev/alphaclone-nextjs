@@ -198,7 +198,9 @@ export async function POST(request: Request) {
         '*': ['style', 'class'],
       }
     });
-    const bodyWithFooter = ensureFooter(sanitizedBody);
+    const unsubscribeUrl = buildEmailUnsubscribeUrl({ tenantId, email: leadEmail });
+    // Single shared footer (company legal name, Wyoming address, unsubscribe) — no duplicate block.
+    const bodyWithFooter = ensureFooter(sanitizedBody, { unsubscribeUrl });
     if (await isEmailSuppressed(tenantId, leadEmail)) {
       return NextResponse.json({ success: false, status: 'suppressed', error: 'Recipient is suppressed' }, { status: 409 });
     }
@@ -217,12 +219,9 @@ export async function POST(request: Request) {
     // 1. Generate tracking ID
     const trackingId = crypto.randomUUID();
 
-    // 2. Inject tracking pixel
+    // 2. Inject tracking pixel (footer already applied above via ensureFooter)
     const htmlBody = injectTrackingPixel(bodyWithFooter, trackingId);
-    const unsubscribeUrl = buildEmailUnsubscribeUrl({ tenantId, email: leadEmail });
-    const htmlWithComplianceFooter = unsubscribeUrl
-      ? `${htmlBody}\n\n<div style="margin-top:16px;border-top:1px solid #334155;padding-top:12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;text-align:center;">\n<div>AlphaClone Systems LLC</div>\n<div>1621 Central Ave, Cheyenne, WY 82001, USA</div>\n<div><a href="https://alphaclonesystems.com" style="color:#94a3b8;text-decoration:none;">alphaclonesystems.com</a></div>\n<div><a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:none;">Unsubscribe</a> | <a href="https://alphaclonesystems.com/legal/privacy" style="color:#94a3b8;text-decoration:none;">Privacy</a> | <a href="https://alphaclonesystems.com/legal/terms" style="color:#94a3b8;text-decoration:none;">Terms</a></div>\n</div>`
-      : htmlBody;
+    const htmlWithComplianceFooter = htmlBody;
 
     // 3. Pre-insert log row as 'queued'
     const { data: logRow, error: logErr } = await admin

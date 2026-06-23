@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import CalendlyEmbed from '../../booking/CalendlyEmbed';
 import { Card } from '@/components/ui/UIComponents';
-import { Calendar, Settings, AlertCircle, Clock, ExternalLink, RefreshCw, User } from 'lucide-react';
+import { Calendar, Settings, AlertCircle, Clock, ExternalLink, RefreshCw, User, CalendarCheck, CalendarDays } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { toast } from 'react-hot-toast';
 
 const BookingTab: React.FC = () => {
@@ -66,6 +67,23 @@ const BookingTab: React.FC = () => {
         }
     };
 
+    const bookingStats = useMemo<ModuleStat[]>(() => {
+        const now = new Date();
+        const upcoming = scheduledEvents.filter((e: { start_time?: string }) => e.start_time && new Date(e.start_time) >= now);
+        const thisWeekEnd = new Date(now); thisWeekEnd.setDate(thisWeekEnd.getDate() + 7);
+        const thisWeek = scheduledEvents.filter((e: { start_time?: string }) => {
+            if (!e.start_time) return false;
+            const d = new Date(e.start_time);
+            return d >= now && d <= thisWeekEnd;
+        });
+        return [
+            { label: 'Upcoming', value: upcoming.length, sub: 'Future appointments', Icon: CalendarCheck, accent: 'teal' },
+            { label: 'This Week', value: thisWeek.length, sub: 'Next 7 days', Icon: CalendarDays, accent: 'blue' },
+            { label: 'Synced Total', value: scheduledEvents.length, sub: 'From Calendly', Icon: Clock, accent: 'purple' },
+            { label: 'Status', value: isEnabled ? 'Live' : 'Off', sub: 'Calendly connection', Icon: Calendar, accent: isEnabled ? 'emerald' : 'amber' },
+        ];
+    }, [scheduledEvents, isEnabled]);
+
     if (!isEnabled || !calendlyUrl) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
@@ -113,6 +131,8 @@ const BookingTab: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <ModuleStatCards stats={bookingStats} />
 
             {activeView === 'schedule' ? (
                 <div className="space-y-4">

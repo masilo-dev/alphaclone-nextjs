@@ -52,8 +52,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/sla',
         '/dpa',
         '/privacy-choices',
-        '/compliance',
-        '/security-policy',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
@@ -61,16 +59,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
     }));
 
+    // Note: /legal/privacy, /legal/terms, /legal/cookies, /legal/sla and
+    // /legal/dpa now permanently redirect to the canonical docs above, so they
+    // are intentionally excluded here to avoid indexing redirecting URLs.
     const newLegalRoutes = [
-        '/legal/privacy',
-        '/legal/terms',
-        '/legal/cookies',
         '/legal/acceptable-use',
         '/legal/data-request',
         '/legal/refund',
-        '/legal/sla',
         '/legal/ai-disclaimer',
-        '/legal/dpa',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),

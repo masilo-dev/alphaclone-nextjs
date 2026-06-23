@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Send, MessageSquare, Search, Smile, User as UserIcon, Menu, X, Paperclip, Loader2, Flag, Bot, ArrowLeft, Mail, Users, UserPlus, Wand2 } from 'lucide-react';
+import { Send, MessageSquare, Search, Smile, User as UserIcon, Menu, X, Paperclip, Loader2, Flag, Bot, ArrowLeft, Mail, Users, UserPlus, Wand2, Inbox, AlertTriangle } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { User, ChatMessage } from '../../types';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { userService } from '../../services/userService';
@@ -633,6 +634,45 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         ? (selectedClient ? typingUsers.has(selectedClient.id) : false)
         : (adminUser ? typingUsers.has(adminUser.id) : false);
 
+    const messageStats = useMemo<ModuleStat[]>(() => {
+        const unread = filteredMessages.filter(m => !m.readAt && m.senderId !== user.id).length;
+        const priority = filteredMessages.filter(m => m.priority === 'high' || m.priority === 'urgent').length;
+        const threadCount = isAdmin ? clients.length : 1;
+        const channels = new Set(
+            filteredMessages.map(m => m.source).filter((s): s is string => !!s && s !== 'internal')
+        );
+        return [
+            {
+                label: isAdmin ? 'Conversations' : 'Thread',
+                value: threadCount,
+                sub: isAdmin ? 'Active chat clients' : 'With your team',
+                Icon: MessageSquare,
+                accent: 'teal',
+            },
+            {
+                label: 'Unread',
+                value: unread,
+                sub: unread > 0 ? 'Needs attention' : 'All caught up',
+                Icon: Inbox,
+                accent: unread > 0 ? 'amber' : 'emerald',
+            },
+            {
+                label: 'CRM Contacts',
+                value: crmClients.length,
+                sub: 'Linked in sidebar',
+                Icon: Users,
+                accent: 'blue',
+            },
+            {
+                label: 'Priority / Channels',
+                value: priority,
+                sub: `${channels.size} external channel${channels.size === 1 ? '' : 's'}`,
+                Icon: AlertTriangle,
+                accent: priority > 0 ? 'rose' : 'purple',
+            },
+        ];
+    }, [filteredMessages, user.id, clients.length, crmClients.length, isAdmin]);
+
     return (
         <div
             className="h-[100dvh] md:h-[calc(100dvh-140px)] flex flex-col glass-panel rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl animate-fade-in relative backdrop-blur-xl border-0 md:border border-white/5"
@@ -669,7 +709,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
             {/* Messages View */}
             {(!isAdmin || adminView === 'messages') && (
-                <div className="flex-1 flex overflow-hidden relative">
+                <>
+                <div className="flex-shrink-0 px-3 sm:px-4 pt-3 pb-1 border-b border-white/5">
+                    <ModuleStatCards stats={messageStats} className="grid-cols-2 lg:grid-cols-4" />
+                </div>
+                <div className="flex-1 flex overflow-hidden relative min-h-0">
                     {/* Ambient Background Glow */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -mt-20 -mr-20"></div>
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none -mb-20 -ml-20"></div>
@@ -1164,6 +1208,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         </div>
                     )}
                 </div>
+                </>
             )
             }
         </div >

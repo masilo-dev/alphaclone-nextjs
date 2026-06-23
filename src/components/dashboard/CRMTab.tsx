@@ -6,9 +6,10 @@ import {
   MessageCircle, Clock,
   UserCheck, Users, ArrowLeft, Star, AlertCircle,
   ShieldCheck, DollarSign, Activity, Loader2, Smartphone, Video,
-  ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw
+  ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw, Target
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
@@ -126,8 +127,9 @@ const SwipeableRow: React.FC<{
   isTeamsConnected: boolean;
   onMarkContacted: (id: string) => void;
   onDisqualify: (id: string) => void;
+  onQualify: (entity: CRMEntity) => void;
   onTap: (entity: CRMEntity) => void;
-}> = ({ entity, status, isTeamsConnected, onMarkContacted, onDisqualify, onTap }) => {
+}> = ({ entity, status, isTeamsConnected, onMarkContacted, onDisqualify, onQualify, onTap }) => {
   const x = useMotionValue(0);
   const leftOpacity  = useTransform(x, [0, 80],  [0, 1]);
   const rightOpacity = useTransform(x, [-80, 0], [1, 0]);
@@ -198,6 +200,45 @@ const SwipeableRow: React.FC<{
           </span>
         </div>
 
+        {/* Quick actions for leads (desktop / tablet) — visible on hover so users can move a lead without swiping */}
+        {entity.type === 'lead' && (
+          <div
+            className="hidden sm:flex items-center gap-1 flex-shrink-0 mr-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {entity.status !== 'contacted' && entity.status !== 'qualified' && (
+              <button
+                type="button"
+                title="Mark as contacted"
+                onClick={() => onMarkContacted(entity.id)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 active:scale-95 transition-all"
+              >
+                <Phone className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {entity.status !== 'qualified' && (
+              <button
+                type="button"
+                title="Qualify & convert to client"
+                onClick={() => onQualify(entity)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 hover:bg-teal-500/20 active:scale-95 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {entity.status !== 'disqualified' && (
+              <button
+                type="button"
+                title="Disqualify lead"
+                onClick={() => onDisqualify(entity.id)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 active:scale-95 transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Right */}
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
           <span className="text-xs font-bold text-teal-400">
@@ -222,6 +263,31 @@ const LeadDetail: React.FC<{
   onUpdate: (id: string, status: LeadStatus) => void;
   onQualify: (lead: Lead) => void;
 }> = ({ lead, onBack, onUpdate, onQualify }) => {
+  const [activities, setActivities] = useState<Array<{ id: string; type: string; description: string; created_at: string }>>([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadActivities = async () => {
+      setLoadingActivities(true);
+      try {
+        const { data } = await supabase
+          .from('lead_activities')
+          .select('id, type, description, created_at')
+          .eq('lead_id', lead.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (!cancelled) setActivities(data || []);
+      } catch {
+        if (!cancelled) setActivities([]);
+      } finally {
+        if (!cancelled) setLoadingActivities(false);
+      }
+    };
+    loadActivities();
+    return () => { cancelled = true; };
+  }, [lead.id]);
+
   return (
     <div className="flex flex-col h-full bg-slate-950 text-slate-100">
       <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
@@ -281,6 +347,42 @@ const LeadDetail: React.FC<{
                 {new Date(lead.created_at).toLocaleString()}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Activity / Email History */}
+        <div>
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <Activity className="w-4 h-4 text-teal-400" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity History</span>
+          </div>
+          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4">
+            {loadingActivities ? (
+              <div className="flex items-center gap-2 text-slate-500 text-xs py-4 justify-center">
+                <Loader2 className="w-4 h-4 animate-spin" /> Loading history…
+              </div>
+            ) : activities.length === 0 ? (
+              <div className="text-center py-6">
+                <Clock className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+                <p className="text-xs text-slate-500">No activity logged yet.</p>
+                <p className="text-[10px] text-slate-600 mt-1">Status changes and outreach will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-0">
+                {activities.map((act, i) => (
+                  <div key={act.id} className="flex gap-3 relative pb-4 last:pb-0">
+                    {i !== activities.length - 1 && (
+                      <span className="absolute left-[7px] top-4 bottom-0 w-px bg-slate-800" />
+                    )}
+                    <span className="mt-1 w-3.5 h-3.5 rounded-full bg-teal-500/20 border border-teal-500/40 flex-shrink-0 z-10" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-slate-300 leading-relaxed">{act.description || act.type}</p>
+                      <p className="text-[10px] text-slate-600 mt-0.5">{new Date(act.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -877,6 +979,101 @@ const STATUS_FILTERS: { label: string; value: LeadStatus | 'all' }[] = [
   { label: 'Disqualified', value: 'disqualified' },
 ];
 
+// ── Pipeline Kanban ──────────────────────────────────────────────────────────
+const KANBAN_COLUMNS: { status: LeadStatus; label: string; accent: string; dot: string }[] = [
+  { status: 'new', label: 'New', accent: 'border-sky-500/30', dot: 'bg-sky-400' },
+  { status: 'contacted', label: 'Contacted', accent: 'border-amber-500/30', dot: 'bg-amber-400' },
+  { status: 'qualified', label: 'Qualified', accent: 'border-teal-500/30', dot: 'bg-teal-400' },
+  { status: 'disqualified', label: 'Disqualified', accent: 'border-rose-500/30', dot: 'bg-rose-400' },
+];
+
+const KanbanCard: React.FC<{ lead: Lead; onClick: () => void; overlay?: boolean }> = ({ lead, onClick, overlay }) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id, data: { status: lead.status } });
+  return (
+    <div
+      ref={overlay ? undefined : setNodeRef}
+      {...(overlay ? {} : attributes)}
+      {...(overlay ? {} : listeners)}
+      onClick={onClick}
+      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-white/5 bg-slate-900 p-3 shadow-sm hover:border-teal-500/30 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-teal-500/40' : ''}`}
+    >
+      <div className="flex items-center gap-2.5">
+        <div className={`w-8 h-8 rounded-lg ${hashColor(lead.name)} flex items-center justify-center flex-shrink-0`}>
+          <span className="text-[11px] font-black text-white">{getInitials(lead.name)}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-white truncate">{lead.name}</p>
+          <p className="text-[10px] text-slate-500 truncate">{lead.company || lead.business_name || lead.email || '—'}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const KanbanColumn: React.FC<{ col: typeof KANBAN_COLUMNS[number]; leads: Lead[]; onSelect: (l: Lead) => void }> = ({ col, leads, onSelect }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: col.status });
+  return (
+    <div className="flex w-[78%] sm:w-72 flex-shrink-0 flex-col">
+      <div className="flex items-center justify-between px-2 pb-2">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${col.dot}`} />
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">{col.label}</span>
+        </div>
+        <span className="text-[10px] font-bold text-slate-500 bg-slate-800/60 rounded-full px-2 py-0.5">{leads.length}</span>
+      </div>
+      <div
+        ref={setNodeRef}
+        className={`flex-1 min-h-[120px] rounded-2xl border ${col.accent} ${isOver ? 'bg-teal-500/10 border-teal-500/40' : 'bg-slate-950/40'} p-2 space-y-2 transition-colors`}
+      >
+        {leads.map(l => (
+          <KanbanCard key={l.id} lead={l} onClick={() => onSelect(l)} />
+        ))}
+        {leads.length === 0 && (
+          <p className="text-center text-[10px] text-slate-600 py-6">Drop leads here</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const LeadKanban: React.FC<{ leads: Lead[]; onUpdate: (id: string, status: LeadStatus) => void; onSelect: (l: Lead) => void }> = ({ leads, onUpdate, onSelect }) => {
+  const [activeLead, setActiveLead] = useState<Lead | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handleDragStart = (e: DragStartEvent) => {
+    setActiveLead(leads.find(l => l.id === e.active.id) || null);
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    setActiveLead(null);
+    const { active, over } = e;
+    if (!over) return;
+    const newStatus = over.id as LeadStatus;
+    const lead = leads.find(l => l.id === active.id);
+    if (lead && lead.status !== newStatus && KANBAN_COLUMNS.some(c => c.status === newStatus)) {
+      onUpdate(lead.id, newStatus);
+    }
+  };
+
+  return (
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex gap-3 overflow-x-auto p-4 h-full items-start scrollbar-hide">
+        {KANBAN_COLUMNS.map(col => (
+          <KanbanColumn
+            key={col.status}
+            col={col}
+            leads={leads.filter(l => l.status === col.status)}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeLead ? <KanbanCard lead={activeLead} onClick={() => {}} overlay /> : null}
+      </DragOverlay>
+    </DndContext>
+  );
+};
+
 const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
@@ -888,6 +1085,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [clients, setClients] = useState<BusinessClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<LeadStatus | 'all'>('all');
+  const [accountFilter, setAccountFilter] = useState<'all' | 'customer' | 'prospect' | 'lead' | 'lost'>('all');
+  const [leadsView, setLeadsView] = useState<'list' | 'board'>('list');
   const [search, setSearch] = useState('');
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
 
@@ -1272,6 +1471,12 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     // 2. Status pill filter (leads only)
     if (subView === 'leads' && filter !== 'all' && ent.status !== filter) return false;
 
+    // 2b. Account stage filter (clients/contacts views) — lets you isolate customers, prospects or lost accounts
+    if ((subView === 'clients' || subView === 'contacts') && accountFilter !== 'all') {
+      const stage = ent.rawClient?.sales_stage;
+      if (stage !== accountFilter) return false;
+    }
+
     // 3. Search text matching
     if (search) {
       const query = search.toLowerCase();
@@ -1325,18 +1530,64 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     <div className="flex flex-col h-full min-h-0 bg-slate-950 select-none relative">
       {/* Metric Cards Banner */}
       <div className="grid grid-cols-3 gap-3 p-4 bg-slate-900/20 border-b border-white/5">
-        <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 flex flex-col gap-0.5">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Leads Pool</span>
-          <span className="text-base font-black text-white">{totalLeadsCount}</span>
-        </div>
-        <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 flex flex-col gap-0.5">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Customers</span>
-          <span className="text-base font-black text-teal-400">{activeClientsCount}</span>
-        </div>
-        <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 flex flex-col gap-0.5">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Book</span>
-          <span className="text-base font-black text-white">${totalClientValue.toLocaleString()}</span>
-        </div>
+        {([
+          {
+            label: 'Leads Pool',
+            value: totalLeadsCount.toLocaleString(),
+            sub: 'In the funnel',
+            Icon: Target,
+            card: 'from-purple-500/12 via-slate-900/70 to-slate-900/50 hover:border-purple-500/40',
+            glow: 'bg-purple-500/10 group-hover:bg-purple-500/20',
+            tile: 'from-purple-500/25 to-purple-500/5 border-purple-500/30',
+            iconColor: 'text-purple-300',
+            valueColor: 'text-white',
+          },
+          {
+            label: 'Customers',
+            value: activeClientsCount.toLocaleString(),
+            sub: 'Won accounts',
+            Icon: UserCheck,
+            card: 'from-teal-500/12 via-slate-900/70 to-slate-900/50 hover:border-teal-500/40',
+            glow: 'bg-teal-500/10 group-hover:bg-teal-500/20',
+            tile: 'from-teal-500/25 to-teal-500/5 border-teal-500/30',
+            iconColor: 'text-teal-300',
+            valueColor: 'text-teal-300',
+          },
+          {
+            label: 'Active Book',
+            value: `$${totalClientValue.toLocaleString()}`,
+            sub: 'Customer value',
+            Icon: DollarSign,
+            card: 'from-emerald-500/12 via-slate-900/70 to-slate-900/50 hover:border-emerald-500/40',
+            glow: 'bg-emerald-500/10 group-hover:bg-emerald-500/20',
+            tile: 'from-emerald-500/25 to-emerald-500/5 border-emerald-500/30',
+            iconColor: 'text-emerald-300',
+            valueColor: 'text-white',
+          },
+        ]).map((m, i) => {
+          const MetricIcon = m.Icon;
+          return (
+            <motion.div
+              key={m.label}
+              initial={{ opacity: 0, y: 12, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.05 + i * 0.06, type: 'spring', stiffness: 240, damping: 22 }}
+              className={`group relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br ${m.card} p-3 shadow-lg shadow-black/20 transition-all duration-300`}
+            >
+              <div className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full blur-2xl transition-colors ${m.glow}`} />
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-gradient-to-br ${m.tile}`}>
+                  <MetricIcon className={`h-4 w-4 ${m.iconColor}`} />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">{m.label}</span>
+                  <span className={`block text-base sm:text-lg font-black tabular-nums leading-tight truncate ${m.valueColor}`}>{m.value}</span>
+                </div>
+              </div>
+              <span className="relative z-10 mt-1.5 hidden sm:block text-[10px] text-slate-500 truncate">{m.sub}</span>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Segment Tabs */}
@@ -1347,6 +1598,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             onClick={() => {
               setSubView(v);
               setSelectedEntity(null);
+              setAccountFilter('all');
             }}
             className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === v ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}
           >
@@ -1395,13 +1647,57 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
         {/* Lead filters */}
         {subView === 'leads' && (
+          <>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-0.5 flex-1">
+              {STATUS_FILTERS.map(f => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className={`flex-shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
+                    filter === f.value
+                      ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/10'
+                      : 'bg-slate-900 text-slate-400 border-white/5 hover:border-slate-800'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center rounded-lg border border-white/5 bg-slate-900 p-0.5 flex-shrink-0">
+              {(['list', 'board'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => setLeadsView(v)}
+                  className={`px-2.5 h-7 rounded-md text-[10px] font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="hidden sm:block text-[10px] text-slate-500 pt-0.5">
+            {leadsView === 'board'
+              ? <>Tip: <span className="text-teal-300 font-semibold">drag a card</span> between columns to move a lead across the pipeline.</>
+              : <>Tip: hover a lead to <span className="text-amber-400 font-semibold">contact</span>, <span className="text-teal-300 font-semibold">qualify</span> or <span className="text-rose-400 font-semibold">disqualify</span> it — or swipe on mobile.</>}
+          </p>
+          </>
+        )}
+
+        {/* Account stage filters (clients & contacts) */}
+        {(subView === 'clients' || subView === 'contacts') && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide py-0.5">
-            {STATUS_FILTERS.map(f => (
+            {([
+              { label: 'All', value: 'all' as const },
+              { label: 'Customers', value: 'customer' as const },
+              { label: 'Prospects', value: 'prospect' as const },
+              { label: 'Lost', value: 'lost' as const },
+            ]).map(f => (
               <button
                 key={f.value}
-                onClick={() => setFilter(f.value)}
+                onClick={() => setAccountFilter(f.value)}
                 className={`flex-shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
-                  filter === f.value
+                  accountFilter === f.value
                     ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/10'
                     : 'bg-slate-900 text-slate-400 border-white/5 hover:border-slate-800'
                 }`}
@@ -1414,8 +1710,21 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       </div>
 
       {/* List content */}
-      <div className="flex-1 overflow-y-auto bg-slate-950">
-        {loading ? (
+      <div className={`flex-1 ${subView === 'leads' && leadsView === 'board' ? 'overflow-hidden' : 'overflow-y-auto'} bg-slate-950`}>
+        {!loading && subView === 'leads' && leadsView === 'board' ? (
+          <LeadKanban
+            leads={leads.filter(l => {
+              if (filter !== 'all' && l.status !== filter) return false;
+              if (search) {
+                const q = search.toLowerCase();
+                return l.name.toLowerCase().includes(q) || (l.email?.toLowerCase().includes(q) || false) || (l.company?.toLowerCase().includes(q) || false);
+              }
+              return true;
+            })}
+            onUpdate={handleStatusUpdate}
+            onSelect={(l) => setSelectedEntity(entities.find(e => e.id === l.id) || null)}
+          />
+        ) : loading ? (
           <div className="space-y-px">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="h-16 bg-slate-900/30 animate-pulse" />
@@ -1439,6 +1748,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 isTeamsConnected={isTeamsConnected}
                 onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
                 onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
+                onQualify={(ent) => ent.rawLead && handleQualifyLead(ent.rawLead)}
                 onTap={setSelectedEntity}
               />
             ))}

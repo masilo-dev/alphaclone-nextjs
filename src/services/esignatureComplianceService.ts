@@ -85,7 +85,7 @@ export const esignatureComplianceService = {
 
             <h4>9. Contact Information</h4>
             <p>If you have questions about this disclosure or electronic signatures, please contact
-            us at support@alphaclone.com or through your dashboard.</p>
+            us at support@alphaclonesystems.com or through your dashboard.</p>
 
             <div class="consent-checkbox">
                 <label>

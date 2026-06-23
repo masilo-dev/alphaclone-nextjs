@@ -12,7 +12,7 @@ const isPlaceholder = (key?: string) => !key || key.includes('your_') || key.len
 if (vapidPublicKey && vapidPrivateKey && !isPlaceholder(vapidPublicKey) && !isPlaceholder(vapidPrivateKey)) {
     try {
         webPush.setVapidDetails(
-            'mailto:support@alphaclone.io',
+            'mailto:support@alphaclonesystems.com',
             vapidPublicKey,
             vapidPrivateKey
         );

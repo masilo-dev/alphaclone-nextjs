@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Mail,
@@ -293,8 +294,27 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
         setThreadMessages([]);
     };
 
+    const mailStats = useMemo<ModuleStat[]>(() => {
+        const unread = messages.filter(m => !m.isRead).length;
+        const threads = new Set(messages.map(m => m.threadId)).size;
+        const withAttachments = messages.filter(m => m.hasAttachments).length;
+        const urgent = messages.filter(m => m.category === 'urgent').length;
+        return [
+            { label: 'In Folder', value: messages.length, sub: LABELS.find(l => l.id === activeLabel)?.label || 'Inbox', Icon: Mail, accent: 'blue' },
+            { label: 'Unread', value: unread, sub: 'Need attention', Icon: Clock, accent: unread > 0 ? 'amber' : 'emerald' },
+            { label: 'Threads', value: threads, sub: 'Conversations', Icon: UserIcon, accent: 'purple' },
+            { label: 'Attachments', value: withAttachments, sub: urgent > 0 ? `${urgent} urgent flagged` : 'Files included', Icon: FileText, accent: urgent > 0 ? 'rose' : 'teal' },
+        ];
+    }, [messages, activeLabel]);
+
     return (
-        <div className="flex h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="flex flex-col h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            {!isLoading && messages.length > 0 && (
+                <div className="p-3 border-b border-slate-800 bg-slate-900/20 shrink-0">
+                    <ModuleStatCards stats={mailStats} />
+                </div>
+            )}
+            <div className="flex flex-1 overflow-hidden min-h-0">
             {/* Folder Sidebar */}
             <div className="w-16 sm:w-20 md:w-24 border-r border-slate-800 flex flex-col items-center py-6 gap-6 bg-slate-950/50">
                 {LABELS.map(({ id, Icon, label }) => (
@@ -688,6 +708,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         </motion.div>
                     </div>
                 )}
+            </div>
             </div>
         </div>
     );

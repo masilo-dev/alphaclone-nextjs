@@ -544,7 +544,7 @@ export const workflowService = {
                     subject: config.subject || context.emailSubject || 'Important Update',
                     template_id: config.templateId || context.templateId,
                     from_name: config.fromName || 'AlphaClone',
-                    from_email: config.fromEmail || context.fromEmail || 'noreply@alphaclone.com',
+                    from_email: config.fromEmail || context.fromEmail || 'notifications@alphaclonesystems.com',
                     status: config.scheduleAt ? 'scheduled' : 'draft',
                     scheduled_at: config.scheduleAt,
                     segment_filter: config.segmentFilter || context.segmentFilter || {},

@@ -3,7 +3,7 @@ import { LegalPageShell } from '@/components/legal/LegalPageShell';
 
 export const metadata: Metadata = {
   title: 'Refund Policy | AlphaClone Systems',
-  description: 'Refund and cancellation policy for AlphaClone Systems LLC.',
+  description: 'Refund and cancellation policy for Alphaclone Systems, LLC.',
   alternates: { canonical: 'https://alphaclonesystems.com/legal/refund' },
   robots: { index: true, follow: true },
 };

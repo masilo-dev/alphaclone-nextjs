@@ -159,7 +159,7 @@ const JoinMeeting: React.FC = () => {
 
                     <p className="text-center text-xs text-slate-500 leading-relaxed">
                         By joining, you agree to the AlphaClone ecosystem{' '}
-                        <a href="/legal/terms" className="text-blue-400 hover:underline">
+                        <a href="/terms-of-service" className="text-blue-400 hover:underline">
                             Security Protocols
                         </a>
                     </p>

@@ -26,17 +26,17 @@ export const metadata: Metadata = {
 const legalPages = [
   {
     title: 'Privacy Policy',
-    href: '/legal/privacy',
+    href: '/privacy-policy',
     description: 'Data collection, processing, retention, and user rights.',
   },
   {
     title: 'Terms of Service',
-    href: '/legal/terms',
+    href: '/terms-of-service',
     description: 'Commercial terms, usage boundaries, and platform responsibilities.',
   },
   {
     title: 'Cookie Policy',
-    href: '/legal/cookies',
+    href: '/cookie-policy',
     description: 'Cookie categories, usage purpose, and preference controls.',
   },
   {
@@ -55,19 +55,9 @@ const legalPages = [
     description: 'Monthly and annual plan refund rules and exceptions.',
   },
   {
-    title: 'Service Level Agreement',
-    href: '/legal/sla',
-    description: 'Uptime commitment, exclusions, and service credit process.',
-  },
-  {
     title: 'AI Disclaimer',
     href: '/legal/ai-disclaimer',
     description: 'How to use Bonnie AI safely and responsibly.',
-  },
-  {
-    title: 'Data Processing Agreement',
-    href: '/legal/dpa',
-    description: 'GDPR and UK GDPR DPA with sub-processor list and transfer safeguards.',
   },
   {
     title: 'Platform Status',

@@ -3,7 +3,7 @@ import { LegalPageShell } from '@/components/legal/LegalPageShell';
 
 export const metadata: Metadata = {
   title: 'Acceptable Use Policy | AlphaClone Systems',
-  description: 'Acceptable use policy for AlphaClone Systems LLC.',
+  description: 'Acceptable use policy for Alphaclone Systems, LLC.',
   alternates: { canonical: 'https://alphaclonesystems.com/legal/acceptable-use' },
   robots: { index: true, follow: true },
 };
@@ -13,7 +13,7 @@ export default function Page() {
     <LegalPageShell
       title="Acceptable Use Policy"
       lastUpdated="June 9, 2025"
-      intro="This policy sets out the acceptable and prohibited uses of AlphaClone Systems LLC services."
+      intro="This policy sets out the acceptable and prohibited uses of Alphaclone Systems, LLC services."
       sections={[
         { id: 'purpose', title: 'Purpose' },
         { id: 'permitted', title: 'Permitted uses' },

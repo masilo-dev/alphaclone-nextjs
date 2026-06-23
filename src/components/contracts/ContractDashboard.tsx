@@ -185,10 +185,29 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     prompt,
                     maxTokens: 1500,
                     stream: true,
+                    ...(currentTenant?.id ? { tenantId: currentTenant.id } : {}),
                 }),
             });
 
-            if (!res.ok) throw new Error('Failed to get lawyer response');
+            if (!res.ok) {
+                // Surface the actual reason (quota, workspace, provider) instead of a silent failure.
+                let serverMsg = '';
+                try {
+                    const errJson = await res.json();
+                    if (errJson?.code === 'TENANT_REQUIRED') {
+                        serverMsg = 'Please select your workspace/organization first, then ask again.';
+                    } else if (res.status === 429 || /quota/i.test(errJson?.error || '')) {
+                        serverMsg = "You've reached today's AI usage limit. Please try again later or upgrade your plan.";
+                    } else if (res.status === 503) {
+                        serverMsg = 'The AI service is not configured yet (no provider key). Please add an AI provider key in settings.';
+                    } else {
+                        serverMsg = errJson?.error || '';
+                    }
+                } catch {
+                    /* response wasn't JSON */
+                }
+                throw new Error(serverMsg || 'Failed to get lawyer response');
+            }
 
             const reader = res.body?.getReader();
             if (!reader) throw new Error('No reader available');
@@ -213,12 +232,26 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
                 if (doneReading) break;
             }
+
+            // Guard against a completed-but-empty stream so users never see endless loading dots.
+            if (!accumulated.trim()) {
+                setChatMessages(prev => {
+                    const next = [...prev];
+                    if (next.length > 0) {
+                        next[next.length - 1] = { role: 'assistant', content: "I couldn't generate a response just now. Please rephrase your question or try again in a moment." };
+                    }
+                    return next;
+                });
+            }
         } catch (err: any) {
             console.error(err);
+            const friendly = err?.message && err.message !== 'Failed to get lawyer response'
+                ? err.message
+                : 'Sorry, I encountered an error while processing your request. Please try again.';
             setChatMessages(prev => {
                 const next = [...prev];
                 if (next.length > 0) {
-                    next[next.length - 1] = { role: 'assistant', content: 'Sorry, I encountered an error while processing your request. Please try again.' };
+                    next[next.length - 1] = { role: 'assistant', content: friendly };
                 }
                 return next;
             });
@@ -362,6 +395,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     prompt,
                     maxTokens: maxTokensForLength(form.contractLength),
                     stream: true,
+                    ...(currentTenant?.id ? { tenantId: currentTenant.id } : {}),
                 }),
             });
 

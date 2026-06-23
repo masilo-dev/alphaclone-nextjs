@@ -7,8 +7,10 @@ import {
   CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { bonnieService, BonnieLog, BonnieRule } from '../../../services/bonnieService';
+import { useRouter } from 'next/navigation';
+import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
 import { useTenant } from '../../../contexts/TenantContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 // Dynamically import DeepChat to prevent SSR compilation errors in Next.js
@@ -19,6 +21,8 @@ const DeepChat = dynamic(
 
 export default function BonnieFullView() {
   const { currentTenant } = useTenant();
+  const { user } = useAuth();
+  const router = useRouter();
   const [rules, setRules] = useState<BonnieRule | null>(null);
   const [logs, setLogs] = useState<BonnieLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -150,6 +154,25 @@ export default function BonnieFullView() {
           },
           ...prev
         ]);
+
+        // Cross-dashboard action: if the user asked to go somewhere, navigate first.
+        const nav = resolveBonnieNavIntent(text, user?.role);
+        if (nav) {
+          router.push(nav.route);
+          setLogs(prev => [
+            {
+              id: String(Date.now() + 1),
+              created_at: new Date().toISOString(),
+              type: 'action',
+              level: 'success',
+              message: `Navigated to ${nav.label}`,
+              details: nav.route,
+            },
+            ...prev
+          ]);
+          await signals.onResponse({ text: `Opening ${nav.label} for you now.` });
+          return;
+        }
 
         const res = await bonnieService.sendInstruction(tenantId, text);
         if (res.success) {

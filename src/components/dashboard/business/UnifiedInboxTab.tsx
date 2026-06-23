@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   MessageSquare, Mail, MessageCircle, Phone, 
   Sparkles, Send, Trash2, CheckCircle2, AlertCircle, 
   Archive, Loader2, ArrowRight, CornerUpLeft, ShieldAlert,
   Inbox, Brain, RefreshCw, Check, Star, CheckSquare
 } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -240,6 +241,19 @@ export default function UnifiedInboxTab() {
     return true;
   });
 
+  const inboxStats = useMemo<ModuleStat[]>(() => {
+    const pending = messages.filter(m => m.needs_response).length;
+    const unread = messages.filter(m => !m.read).length;
+    const urgent = messages.filter(m => m.priority === 'urgent' || m.priority === 'high').length;
+    const channels = new Set(messages.map(m => m.source)).size;
+    return [
+      { label: 'Total Messages', value: messages.length, sub: 'Across all channels', Icon: Inbox, accent: 'teal' },
+      { label: 'Needs Reply', value: pending, sub: 'Awaiting response', Icon: CornerUpLeft, accent: pending > 0 ? 'amber' : 'emerald' },
+      { label: 'Unread', value: unread, sub: 'Not yet opened', Icon: Mail, accent: 'blue' },
+      { label: 'High Priority', value: urgent, sub: `${channels} channel${channels !== 1 ? 's' : ''} active`, Icon: AlertCircle, accent: urgent > 0 ? 'rose' : 'purple' },
+    ];
+  }, [messages]);
+
   if (loading && messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
@@ -250,6 +264,10 @@ export default function UnifiedInboxTab() {
   }
 
   return (
+    <div className="space-y-4">
+      {messages.length > 0 && (
+        <ModuleStatCards stats={inboxStats} />
+      )}
     <div className="flex h-[calc(100vh-140px)] border border-slate-800 rounded-3xl overflow-hidden bg-slate-950/60 backdrop-blur-md">
       {/* 1. Left Message List Section */}
       <div className="w-1/3 border-r border-slate-800 flex flex-col bg-slate-900/20">
@@ -559,6 +577,7 @@ export default function UnifiedInboxTab() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

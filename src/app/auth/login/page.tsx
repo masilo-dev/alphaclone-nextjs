@@ -57,7 +57,11 @@ function LoginContent() {
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState(businessNameParam || '');
     const [isBusiness] = useState(true);
-    const [selectedPlan] = useState<SubscriptionPlan>('starter');
+    const [selectedPlan] = useState<SubscriptionPlan>(
+        (['free', 'starter', 'pro', 'enterprise'] as const).includes(planParam as never)
+            ? (planParam as SubscriptionPlan)
+            : 'starter'
+    );
     const [legalAccepted, setLegalAccepted] = useState(false);
     const [marketingOptIn, setMarketingOptIn] = useState(false);
     const [euConsent, setEuConsent] = useState(false);

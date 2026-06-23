@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
-import { Settings, Video, Link, Plus, Clock, Calendar } from 'lucide-react';
+import { Settings, Video, Link, Plus, Clock, Calendar, Users } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { CalendlySettingsModal } from './CalendlySettingsModal';
 import { BookingSettings } from './BookingSettings';
 import { PLATFORM_CALENDLY_URL } from '@/constants';
@@ -86,6 +87,18 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
     const hasBooking = true;
 
+    const meetingStats = useMemo<ModuleStat[]>(() => {
+        const active = meetings.filter(m => m.status === 'active').length;
+        const scheduled = meetings.filter(m => m.status === 'scheduled').length;
+        const hostedByYou = meetings.filter(m => m.host_id === user.id).length;
+        return [
+            { label: 'Active Rooms', value: active, sub: 'Live now', Icon: Video, accent: active > 0 ? 'emerald' : 'teal' },
+            { label: 'Scheduled', value: scheduled, sub: 'Upcoming sessions', Icon: Calendar, accent: 'blue' },
+            { label: 'Your Rooms', value: hostedByYou, sub: 'You are host', Icon: Users, accent: 'purple' },
+            { label: 'Total', value: meetings.length, sub: 'Active + scheduled', Icon: Clock, accent: 'amber' },
+        ];
+    }, [meetings, user.id]);
+
     return (
         <div className="space-y-8 max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -114,6 +127,8 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     </Button>
                 </div>
             </div>
+
+            {!loading && <ModuleStatCards stats={meetingStats} />}
 
             {/* Active / upcoming meetings */}
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">

@@ -63,7 +63,7 @@ export default function Page() {
       <section id="liability" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">No liability</h2>
         <p className="text-sm leading-7 text-slate-300">
-          AlphaClone Systems LLC is not liable for decisions made based on Bonnie AI output or for losses caused by
+          Alphaclone Systems, LLC is not liable for decisions made based on Bonnie AI output or for losses caused by
           reliance on unverified AI content.
         </p>
       </section>

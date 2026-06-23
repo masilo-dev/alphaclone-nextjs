@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'Shared Document | AlphaClone Systems',
     description: 'Secure temporary public document sharing link.',
+    robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 
 export default async function PublicSharePage({

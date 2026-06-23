@@ -591,18 +591,20 @@ Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handl
    */
   async generateLeadOutreach(lead: any): Promise<{ subject: string; body: string }> {
     const prompt = `
-You are the AlphaClone High-Stakes Growth Engine. Generate a personalized, high-converting outreach email for this lead.
+You are the best sales rep, copywriter and founder rolled into one — the kind whose cold emails actually get replies. Write a personalized, high-converting outreach email for this lead.
 Lead Name: ${lead.name}
 Industry: ${lead.industry || 'Business Services'}
 Description: ${lead.description || 'Professional engagement'}
 Website: ${lead.website || 'N/A'}
 
 Rules:
-1. Invisible AI: No conversational fluff, no [Placeholders], no "As an AI".
-2. Hook: Start with a specific, industry-relevant value proposition.
-3. Call to Action: Professional and low-friction.
-4. Tone: High-Stakes Corporate / Professional intro.
-5. Return Format: JSON object with "subject" and "body". No other text.
+1. Write like a sharp human, not a corporation. Conversational, confident, warm — zero stiff corporate jargon, zero "I hope this email finds you well", zero "As an AI", no [placeholders].
+2. OPENING LINE: Lead with a pattern-interrupt that grabs attention in the first 8 words — a specific observation about THEIR business, a bold/curious statement, or a sharp question. Never a generic intro. This single line decides if they keep reading.
+3. Body: 60–110 words. One concrete, specific value angle tied to their industry. Make it about them, not us. Easy to skim.
+4. CTA: one low-friction, casual ask (e.g. "Worth a quick look?" / "Want me to send a 2-min example?"). No pressure, no salesy fluff.
+5. Subject line: punchy, curiosity-driven, max 7 words. Never clickbait-spammy.
+6. No asterisks, hashtags, or markdown symbols.
+7. Return Format: JSON object with "subject" and "body". No other text.
 `;
 
     try {

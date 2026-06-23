@@ -483,85 +483,98 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
 
             {/* KPI Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-teal-500/30 transition-colors group relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-teal-500/10 transition-colors" />
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
-                            <DollarSign className="w-6 h-6 text-teal-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-400">Total Revenue</p>
-                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                                {currencyFormatter.format(stats?.totalRevenue || 0)}
-                            </h3>
-                        </div>
-                    </div>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.15 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-blue-500/30 transition-colors group relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                            <UsersIcon className="w-6 h-6 text-blue-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-400">Total Clients</p>
-                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                                {stats?.clientCount || 0}
-                            </h3>
-                        </div>
-                    </div>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-purple-500/30 transition-colors group relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-purple-500/10 transition-colors" />
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                            <Target className="w-6 h-6 text-purple-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-400">Total Leads</p>
-                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                                {stats?.totalLeads || 0}
-                            </h3>
-                        </div>
-                    </div>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.25 }}
-                    className="bg-slate-900/50 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:border-orange-500/30 transition-colors group relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-orange-500/10 transition-colors" />
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                            <TrendingUp className="w-6 h-6 text-orange-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-400">Forecast</p>
-                            <h3 className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                                {currencyFormatter.format(stats?.salesForecast || 0)}
-                            </h3>
-                        </div>
-                    </div>
-                </motion.div>
+                {([
+                    {
+                        label: 'Total Revenue',
+                        value: currencyFormatter.format(stats?.totalRevenue || 0),
+                        sub: 'Collected this period',
+                        Icon: DollarSign,
+                        trend: Number(stats?.revenueChange),
+                        card: 'from-teal-500/10 via-slate-900/60 to-slate-900/40 hover:border-teal-500/40 hover:shadow-teal-500/10',
+                        glow: 'bg-teal-500/10 group-hover:bg-teal-500/20',
+                        tile: 'from-teal-500/25 to-teal-500/5 border-teal-500/30',
+                        iconColor: 'text-teal-300',
+                        bar: 'from-teal-400 to-emerald-400',
+                    },
+                    {
+                        label: 'Total Clients',
+                        value: (stats?.clientCount || 0).toLocaleString(),
+                        sub: 'Active customer accounts',
+                        Icon: UsersIcon,
+                        trend: Number(stats?.clientChange),
+                        card: 'from-blue-500/10 via-slate-900/60 to-slate-900/40 hover:border-blue-500/40 hover:shadow-blue-500/10',
+                        glow: 'bg-blue-500/10 group-hover:bg-blue-500/20',
+                        tile: 'from-blue-500/25 to-blue-500/5 border-blue-500/30',
+                        iconColor: 'text-blue-300',
+                        bar: 'from-blue-400 to-sky-400',
+                    },
+                    {
+                        label: 'Total Leads',
+                        value: (stats?.totalLeads || 0).toLocaleString(),
+                        sub: 'In your pipeline',
+                        Icon: Target,
+                        trend: Number(stats?.leadChange),
+                        card: 'from-purple-500/10 via-slate-900/60 to-slate-900/40 hover:border-purple-500/40 hover:shadow-purple-500/10',
+                        glow: 'bg-purple-500/10 group-hover:bg-purple-500/20',
+                        tile: 'from-purple-500/25 to-purple-500/5 border-purple-500/30',
+                        iconColor: 'text-purple-300',
+                        bar: 'from-purple-400 to-fuchsia-400',
+                    },
+                    {
+                        label: 'Forecast',
+                        value: currencyFormatter.format(stats?.salesForecast || 0),
+                        sub: 'Projected revenue',
+                        Icon: TrendingUp,
+                        trend: Number(stats?.forecastChange),
+                        card: 'from-orange-500/10 via-slate-900/60 to-slate-900/40 hover:border-orange-500/40 hover:shadow-orange-500/10',
+                        glow: 'bg-orange-500/10 group-hover:bg-orange-500/20',
+                        tile: 'from-orange-500/25 to-orange-500/5 border-orange-500/30',
+                        iconColor: 'text-orange-300',
+                        bar: 'from-orange-400 to-amber-400',
+                    },
+                ]).map((kpi, i) => {
+                    const KpiIcon = kpi.Icon;
+                    const hasTrend = Number.isFinite(kpi.trend) && kpi.trend !== 0;
+                    const trendUp = (kpi.trend || 0) > 0;
+                    return (
+                        <motion.div
+                            key={kpi.label}
+                            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ delay: 0.1 + i * 0.06, type: 'spring', stiffness: 220, damping: 22 }}
+                            whileHover={{ y: -4 }}
+                            className={`group relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br ${kpi.card} p-4 sm:p-5 shadow-lg shadow-black/20 transition-all duration-300`}
+                        >
+                            <div className={`pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full blur-2xl transition-colors ${kpi.glow}`} />
+                            <div className="relative z-10 flex items-start justify-between gap-3">
+                                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border bg-gradient-to-br ${kpi.tile} shadow-inner`}>
+                                    <KpiIcon className={`h-6 w-6 ${kpi.iconColor}`} />
+                                </div>
+                                {hasTrend && (
+                                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums ${trendUp ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
+                                        {trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingUp className="h-3 w-3 rotate-180" />}
+                                        {Math.abs(kpi.trend).toFixed(1)}%
+                                    </span>
+                                )}
+                            </div>
+                            <div className="relative z-10 mt-4">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{kpi.label}</p>
+                                <h3 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight text-white tabular-nums">
+                                    {kpi.value}
+                                </h3>
+                                <p className="mt-1 text-xs text-slate-500">{kpi.sub}</p>
+                            </div>
+                            <div className="relative z-10 mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-800/80">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${[78, 64, 52, 70][i]}%` }}
+                                    transition={{ delay: 0.3 + i * 0.06, duration: 0.8, ease: 'easeOut' }}
+                                    className={`h-full rounded-full bg-gradient-to-r ${kpi.bar}`}
+                                />
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
             
             {/* Database Engine Summary — desktop only (mobile uses KPI row above) */}

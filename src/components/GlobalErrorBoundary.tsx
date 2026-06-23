@@ -128,8 +128,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                         <div className="mt-6 text-center">
                             <p className="text-sm text-slate-500">
                                 If this problem persists, please contact{' '}
-                                <a href="mailto:support@alphaclone.systems" className="text-teal-400 hover:underline">
-                                    support@alphaclone.systems
+                                <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">
+                                    support@alphaclonesystems.com
                                 </a>
                             </p>
                         </div>

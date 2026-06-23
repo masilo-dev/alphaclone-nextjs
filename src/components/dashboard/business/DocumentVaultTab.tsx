@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   FolderOpen, ShieldCheck, FileText, Upload, Plus, Trash2,
   Sparkles, Loader2, RefreshCw, Key, ShieldAlert, Check,
-  Download, Eye, Lock, Unlock, AlertCircle
+  Download, Eye, Lock, Unlock, AlertCircle, HardDrive
 } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
@@ -173,6 +174,24 @@ export default function DocumentVaultTab() {
     }
   };
 
+  const vaultStats = useMemo<ModuleStat[]>(() => {
+    const totalBytes = documents.reduce((s, d) => s + (d.file_size || 0), 0);
+    const fmtSize = totalBytes >= 1_000_000
+      ? `${(totalBytes / 1_000_000).toFixed(1)} MB`
+      : totalBytes >= 1000
+        ? `${Math.round(totalBytes / 1000)} KB`
+        : `${totalBytes} B`;
+    const encrypted = documents.filter(d => d.is_encrypted).length;
+    const sensitive = documents.filter(d => d.security_level === 'confidential' || d.security_level === 'restricted').length;
+    const categories = new Set(documents.map(d => d.category).filter(Boolean)).size;
+    return [
+      { label: 'Documents', value: documents.length, sub: `${categories} categories`, Icon: FolderOpen, accent: 'teal' },
+      { label: 'Storage Used', value: fmtSize, sub: 'Vault footprint', Icon: HardDrive, accent: 'blue' },
+      { label: 'Encrypted', value: encrypted, sub: 'AES-256 protected', Icon: Lock, accent: 'emerald' },
+      { label: 'Sensitive', value: sensitive, sub: 'Confidential + restricted', Icon: ShieldAlert, accent: sensitive > 0 ? 'amber' : 'purple' },
+    ];
+  }, [documents]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -204,6 +223,10 @@ export default function DocumentVaultTab() {
           </button>
         </div>
       </div>
+
+      {!loading && documents.length > 0 && (
+        <ModuleStatCards stats={vaultStats} />
+      )}
 
       {/* Security Banner */}
       <div className="bg-teal-500/5 border border-teal-500/10 rounded-3xl p-4 flex gap-3 items-center">

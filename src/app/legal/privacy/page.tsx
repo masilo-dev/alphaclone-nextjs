@@ -3,7 +3,7 @@ import { LegalPageShell } from '@/components/legal/LegalPageShell';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | AlphaClone Systems',
-  description: 'Privacy policy for AlphaClone Systems LLC.',
+  description: 'Privacy policy for Alphaclone Systems, LLC.',
   alternates: { canonical: 'https://alphaclonesystems.com/legal/privacy' },
   robots: { index: true, follow: true },
 };
@@ -24,14 +24,14 @@ export default function Page() {
     <LegalPageShell
       title="Privacy Policy"
       lastUpdated="June 9, 2025"
-      intro="This policy explains what AlphaClone Systems LLC collects, how we use it, and the choices available to you."
+      intro="This policy explains what Alphaclone Systems, LLC collects, how we use it, and the choices available to you."
       sections={sections}
       badge="Privacy"
     >
       <section id="who-we-are" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Who we are</h2>
         <p className="text-sm leading-7 text-slate-300">
-          AlphaClone Systems LLC operates the AlphaClone platform at alphaclonesystems.com. This policy covers the data
+          Alphaclone Systems, LLC operates the AlphaClone platform at alphaclonesystems.com. This policy covers the data
           we handle when you use the service, contact us, or connect third-party integrations.
         </p>
       </section>

@@ -63,7 +63,7 @@ export function LegalPageShell({
                 Last updated {lastUpdated}
               </span>
               <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1">
-                AlphaClone Systems LLC
+                Alphaclone Systems, LLC
               </span>
               <Link href="/legal/data-request" className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-slate-300 hover:text-teal-300">
                 Data rights

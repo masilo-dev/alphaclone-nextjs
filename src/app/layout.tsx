@@ -59,6 +59,12 @@ export const metadata: Metadata = {
   publisher: "AlphaClone Systems",
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   alternates: { canonical: SITE_URL },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : {},
+  },
   openGraph: {
     title: "Alphaclone — AI Business OS for Founders",
     description:
@@ -92,8 +98,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
@@ -134,7 +140,7 @@ const websiteSchema = {
   description: "Unified business operating platform for service businesses.",
   potentialAction: {
     "@type": "SearchAction",
-    target: `${SITE_URL}/docs?query={search_term_string}`,
+    target: `${SITE_URL}/search?q={search_term_string}`,
     "query-input": "required name=search_term_string",
   },
 };

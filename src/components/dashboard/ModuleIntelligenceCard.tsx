@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Play, RefreshCw, Zap } from 'lucide-react';
 import { tenantService } from '@/services/tenancy/TenantService';
+import { toast } from 'react-hot-toast';
 
 interface ModulePayload {
   module: {
@@ -16,6 +17,22 @@ interface ModulePayload {
   systemicRisks: string[];
 }
 
+// Map a free-text recommendation to a concrete Nexus system action.
+function resolveSystemKey(actionText: string): string {
+  const t = actionText.toLowerCase();
+  if (t.includes('enrich')) return 'lead_enrichment';
+  if (t.includes('campaign')) return 'sales_campaign';
+  if (t.includes('triage')) return 'email_triage';
+  if (t.includes('reminder') || t.includes('recovery') || t.includes('invoice') || t.includes('chas')) return 'invoice_chasing';
+  if (t.includes('backlog') || t.includes('task') || t.includes('project')) return 'project_architect';
+  if (t.includes('onboard')) return 'onboarding_flow';
+  if (t.includes('proposal') || t.includes('contract')) return 'contract_drafter';
+  if (t.includes('meeting') || t.includes('calendar')) return 'calendar_nexus';
+  if (t.includes('support')) return 'support_triage';
+  if (t.includes('content') || t.includes('post')) return 'content_synthesis';
+  return 'market_pulse';
+}
+
 export function ModuleIntelligenceCard({
   moduleKey,
   title
@@ -25,39 +42,71 @@ export function ModuleIntelligenceCard({
 }) {
   const [data, setData] = useState<ModulePayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [executing, setExecuting] = useState<string | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const tenantId = tenantService.getCurrentTenantId();
+      if (!tenantId) {
+        setData(null);
+        setUnavailable(true);
+        return;
+      }
+      const response = await fetch(
+        `/api/intelligence/system?tenantId=${encodeURIComponent(tenantId)}&module=${encodeURIComponent(moduleKey)}`,
+        { credentials: 'include' }
+      );
+      if (!response.ok) {
+        setData(null);
+        setUnavailable(true);
+        return;
+      }
+      const payload = await response.json().catch(() => ({}));
+      setData(payload.data as ModulePayload);
+      setUnavailable(false);
+    } catch {
+      setData(null);
+      setUnavailable(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [moduleKey]);
 
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) {
-          if (active) setData(null);
-          return;
-        }
-        const response = await fetch(
-          `/api/intelligence/system?tenantId=${encodeURIComponent(tenantId)}&module=${encodeURIComponent(moduleKey)}`,
-          { credentials: 'include' }
-        );
-        if (!response.ok) {
-          console.warn('Intelligence API not available');
-          if (active) setData(null);
-          return;
-        }
-        const payload = await response.json().catch(() => ({}));
-        if (active) setData(payload.data as ModulePayload);
-      } catch {
-        if (active) setData(null);
-      } finally {
-        if (active) setLoading(false);
+    void (async () => { if (active) await load(); })();
+    return () => { active = false; };
+  }, [load]);
+
+  const handleExecute = async (actionText: string) => {
+    const tenantId = tenantService.getCurrentTenantId();
+    if (!tenantId) {
+      toast.error('Select a workspace first.');
+      return;
+    }
+    setExecuting(actionText);
+    try {
+      const res = await fetch('/api/social/command-center', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ tenantId, mode: 'nexus_system_action', systemKey: resolveSystemKey(actionText) }),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(result?.result?.message || result?.result?.strategic_summary || 'Action executed.');
+        await load();
+      } else {
+        toast.error(result?.error || 'Failed to execute action.');
       }
-    };
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [moduleKey]);
+    } catch {
+      toast.error('Execution failed.');
+    } finally {
+      setExecuting(null);
+    }
+  };
 
   const scoreTone = useMemo(() => {
     const score = data?.module?.score || 0;
@@ -66,7 +115,7 @@ export function ModuleIntelligenceCard({
     return 'text-red-400';
   }, [data?.module?.score]);
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-xs text-slate-400 flex items-center gap-2">
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -75,15 +124,64 @@ export function ModuleIntelligenceCard({
     );
   }
 
-  if (!data?.module) return null;
+  // Explicit state instead of vanishing silently when intelligence isn't ready.
+  if (!data?.module) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs uppercase tracking-wider text-slate-400">{title}</h4>
+          <button
+            onClick={() => load()}
+            className="text-[10px] text-teal-400 hover:text-teal-300 font-bold uppercase tracking-wider flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" /> Scan
+          </button>
+        </div>
+        <p className="text-[11px] text-slate-500">
+          {unavailable
+            ? 'Intelligence is still warming up for this workspace — add a few records, then run a scan.'
+            : 'No insights yet.'}
+        </p>
+      </div>
+    );
+  }
+
+  const topAction = data.topActions?.[0];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
+    <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2.5">
       <div className="flex items-center justify-between">
         <h4 className="text-xs uppercase tracking-wider text-slate-400">{title}</h4>
-        <div className={`text-sm font-bold ${scoreTone}`}>{Math.round(data.module.score)}</div>
+        <div className="flex items-center gap-2">
+          <div className={`text-sm font-bold ${scoreTone}`}>{Math.round(data.module.score)}</div>
+          <button
+            onClick={() => load()}
+            title="Recalibrate scan"
+            className="text-slate-500 hover:text-teal-400 transition-colors"
+          >
+            <RefreshCw className="w-3 h-3" />
+          </button>
+        </div>
       </div>
-      {data.topActions?.[0] && <p className="text-xs text-slate-200 line-clamp-2">{data.topActions[0]}</p>}
+
+      {topAction ? (
+        <button
+          onClick={() => handleExecute(topAction)}
+          disabled={!!executing}
+          className="w-full group flex items-center justify-between gap-2 p-2.5 rounded-lg bg-teal-500/10 border border-teal-500/20 hover:bg-teal-500/20 transition-all text-left disabled:opacity-60"
+        >
+          <span className="flex items-start gap-2 min-w-0">
+            {executing === topAction
+              ? <Loader2 className="w-3.5 h-3.5 text-teal-400 animate-spin mt-0.5 shrink-0" />
+              : <Zap className="w-3.5 h-3.5 text-teal-400 mt-0.5 shrink-0" />}
+            <span className="text-xs text-teal-100 font-medium line-clamp-2">{topAction}</span>
+          </span>
+          <Play className="w-3 h-3 text-teal-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+      ) : (
+        <p className="text-[11px] text-slate-500">System optimized — no immediate action needed.</p>
+      )}
+
       {data.systemicRisks?.[0] && (
         <p className="text-[11px] text-amber-300 flex items-start gap-1.5 line-clamp-2">
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />

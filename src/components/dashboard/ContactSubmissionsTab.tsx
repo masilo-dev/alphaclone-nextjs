@@ -1,8 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Mail, Clock, CheckCircle, MessageSquare } from 'lucide-react';
+'use client';
+
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { Mail, Clock, CheckCircle, MessageSquare, Inbox, Reply } from 'lucide-react';
 import { inboxService, type InboxSubmission, type InboxStatus } from '../../services/inboxService';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 
 const ContactSubmissionsTab: React.FC = () => {
     const [submissions, setSubmissions] = useState<InboxSubmission[]>([]);
@@ -28,6 +31,21 @@ const ContactSubmissionsTab: React.FC = () => {
     const filteredSubmissions = filter === 'all'
         ? submissions
         : submissions.filter(s => s.status === filter);
+
+    const submissionStats = useMemo<ModuleStat[]>(() => {
+        const newCount = submissions.filter(s => s.status === 'new').length;
+        const readCount = submissions.filter(s => s.status === 'read').length;
+        const repliedCount = submissions.filter(s => s.status === 'replied').length;
+        const responseRate = submissions.length > 0
+            ? Math.round((repliedCount / submissions.length) * 100)
+            : 0;
+        return [
+            { label: 'Total', value: submissions.length, sub: 'All submissions', Icon: Inbox, accent: 'teal' },
+            { label: 'New', value: newCount, sub: 'Unread inquiries', Icon: Mail, accent: newCount > 0 ? 'amber' : 'emerald' },
+            { label: 'Awaiting Reply', value: readCount, sub: 'Read but open', Icon: Clock, accent: 'blue' },
+            { label: 'Response Rate', value: `${responseRate}%`, sub: `${repliedCount} replied`, Icon: Reply, accent: 'purple' },
+        ];
+    }, [submissions]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -59,7 +77,7 @@ const ContactSubmissionsTab: React.FC = () => {
                     {['all', 'new', 'read', 'replied'].map((status) => (
                         <button
                             key={status}
-                            onClick={() => setFilter(status as any)}
+                            onClick={() => setFilter(status as 'all' | InboxStatus)}
                             className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all h-10 ${filter === status
                                     ? 'bg-teal-500 text-white'
                                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
@@ -75,6 +93,8 @@ const ContactSubmissionsTab: React.FC = () => {
                     ))}
                 </div>
             </div>
+
+            {submissions.length > 0 && <ModuleStatCards stats={submissionStats} />}
 
             {filteredSubmissions.length === 0 ? (
                 <EmptyState

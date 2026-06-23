@@ -41,9 +41,9 @@ const MarketingFooter: React.FC = () => {
             title: 'Legal',
             links: [
                 { label: 'Legal Hub', href: '/legal' },
-                { label: 'Privacy Policy', href: '/legal/privacy' },
-                { label: 'Terms of Service', href: '/legal/terms' },
-                { label: 'Cookie Policy', href: '/legal/cookies' },
+                { label: 'Privacy Policy', href: '/privacy-policy' },
+                { label: 'Terms of Service', href: '/terms-of-service' },
+                { label: 'Cookie Policy', href: '/cookie-policy' },
                 { label: 'Refund Policy', href: '/legal/refund' },
                 { label: 'Acceptable Use', href: '/legal/acceptable-use' },
                 { label: 'Data Requests', href: '/legal/data-request' },

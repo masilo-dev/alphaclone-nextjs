@@ -140,7 +140,7 @@ const DEFAULT_SLIDES: SlideContent[] = [
         title: 'Thank You',
         subtitle: 'Questions & Discussion',
         content: [
-            'Contact us: hello@alphaclone.com',
+            'Contact us: hello@alphaclonesystems.com',
             'Website: www.alphaclone.com',
             'Follow us: @AlphaCloneSystems'
         ],

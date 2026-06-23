@@ -412,7 +412,7 @@ const ServicesPage: React.FC = () => {
                                 </Button>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-widest">
-                                Starter from $15/mo · Pro Video from $35/mo · 14-day trial · No card required
+                                Starter $15/mo · Pro $45/mo · Enterprise $80/mo · 14-day trial · No card required
                             </p>
                         </AnimateIn>
                     </div>

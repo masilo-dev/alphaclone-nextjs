@@ -12,6 +12,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import { dealService, DealProduct } from '../../services/dealService';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import toast from 'react-hot-toast';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
@@ -469,6 +470,33 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     return deals.reduce((sum, d) => sum + (d.value || 0), 0);
   }, [deals]);
 
+  const dealStats = useMemo<ModuleStat[]>(() => {
+    const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
+    const open = deals.filter(d => d.stage !== 'closed_won' && d.stage !== 'closed_lost');
+    const openValue = open.reduce((s, d) => s + (d.value || 0), 0);
+    const won = deals.filter(d => d.stage === 'closed_won');
+    const wonValue = won.reduce((s, d) => s + (d.value || 0), 0);
+    const closed = deals.filter(d => d.stage === 'closed_won' || d.stage === 'closed_lost').length;
+    const winRate = closed > 0 ? Math.round((won.length / closed) * 100) : 0;
+    const avgDeal = deals.length > 0 ? totalPipelineValue / deals.length : 0;
+    return [
+      { label: 'Open Pipeline', value: fmt(openValue), sub: `${open.length} active deals`, Icon: TrendingUp, accent: 'teal' },
+      { label: 'Won', value: fmt(wonValue), sub: `${won.length} closed won`, Icon: CheckSquare, accent: 'emerald' },
+      { label: 'Win Rate', value: `${winRate}%`, sub: `${closed} closed`, Icon: ArrowUpDown, accent: 'purple' },
+      { label: 'Avg Deal', value: fmt(avgDeal), sub: `${deals.length} total`, Icon: FileText, accent: 'blue' },
+    ];
+  }, [deals, totalPipelineValue]);
+
+  // Stage funnel breakdown for the mini visualization
+  const stageBreakdown = useMemo(() => {
+    const max = Math.max(1, ...STAGES.map(st => deals.filter(d => d.stage === st).reduce((s, d) => s + (d.value || 0), 0)));
+    return STAGES.map(st => {
+      const inStage = deals.filter(d => d.stage === st);
+      const value = inStage.reduce((s, d) => s + (d.value || 0), 0);
+      return { stage: st, count: inStage.length, value, pct: Math.round((value / max) * 100) };
+    });
+  }, [deals]);
+
   // Filtered and sorted deals for Table view
   const filteredDeals = useMemo(() => {
     return deals
@@ -809,6 +837,39 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           </button>
         </div>
       </div>
+
+      {/* KPI Overview + Stage Funnel */}
+      {!loading && deals.length > 0 && (
+        <div className="p-4 border-b border-white/5 bg-slate-900/20 space-y-4 shrink-0">
+          <ModuleStatCards stats={dealStats} />
+          <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline by Stage</h3>
+              <span className="text-[11px] text-slate-500">Value distribution</span>
+            </div>
+            <div className="space-y-2">
+              {stageBreakdown.map(({ stage, count, value, pct }) => (
+                <div key={stage} className="flex items-center gap-3">
+                  <span className={`w-24 shrink-0 text-[11px] font-bold capitalize ${STAGE_COLORS[stage].text}`}>
+                    {stage.replace('_', ' ')}
+                  </span>
+                  <div className="flex-1 h-2.5 rounded-full bg-slate-800/80 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.7, ease: 'easeOut' }}
+                      className={`h-full rounded-full ${STAGE_COLORS[stage].bg.replace('/15', '/60')}`}
+                    />
+                  </div>
+                  <span className="w-28 shrink-0 text-right text-[11px] tabular-nums text-slate-300">
+                    ${value.toLocaleString()} <span className="text-slate-600">({count})</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main View Area */}
       <div className="flex-1 overflow-auto">

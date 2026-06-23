@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
         externalId: body.externalId || `zoho-test-${Date.now()}`,
         threadId: body.threadId || `zoho-thread-${Date.now()}`,
         from,
-        to: to || 'support@alphaclone.com',
+        to: to || 'support@alphaclonesystems.com',
         subject: subject || 'New Zoho Conversation',
         text,
         receivedAt: new Date().toISOString()

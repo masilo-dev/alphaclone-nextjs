@@ -4,7 +4,7 @@ import DpaActions from './DpaActions';
 
 export const metadata: Metadata = {
   title: 'Data Processing Agreement (DPA) | AlphaClone Systems',
-  description: 'Data processing agreement for AlphaClone Systems LLC, including Art. 28 language and subprocessors.',
+  description: 'Data processing agreement for Alphaclone Systems, LLC, including Art. 28 language and subprocessors.',
   alternates: { canonical: 'https://alphaclonesystems.com/legal/dpa' },
   robots: { index: true, follow: true },
 };
@@ -50,7 +50,7 @@ export default function Page() {
       <section id="parties" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Parties</h2>
         <p className="text-sm leading-7 text-slate-300">
-          AlphaClone Systems LLC acts as the Processor. The customer acts as the Controller.
+          Alphaclone Systems, LLC acts as the Processor. The customer acts as the Controller.
         </p>
       </section>
 
@@ -139,7 +139,7 @@ export default function Page() {
           Controller: customer authorized signatory.
         </p>
         <p className="text-sm leading-7 text-slate-300">
-          Processor: AlphaClone Systems LLC, signed by Bornface Masilo.
+          Processor: Alphaclone Systems, LLC, signed by Bornface Masilo.
         </p>
       </section>
     </LegalPageShell>

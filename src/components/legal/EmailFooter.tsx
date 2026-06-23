@@ -9,11 +9,11 @@ const wrapperStyle: CSSProperties = {
 };
 
 export const emailFooterText = [
-  'AlphaClone Systems LLC',
+  'Alphaclone Systems, LLC',
   'alphaclonesystems.com',
   'Unsubscribe: {{{unsubscribe_url}}}',
-  'Privacy Policy: https://alphaclonesystems.com/legal/privacy',
-  'Terms: https://alphaclonesystems.com/legal/terms',
+  'Privacy Policy: https://alphaclonesystems.com/privacy-policy',
+  'Terms: https://alphaclonesystems.com/terms-of-service',
   'If you received this email in error, please disregard and delete it.',
 ].join('\n');
 
@@ -21,7 +21,7 @@ export default function EmailFooter({ marketing = false }: { marketing?: boolean
   return (
     <div style={wrapperStyle}>
       <div style={{ borderTop: '1px solid #334155', margin: '16px 0', width: '100%' }} />
-      <div>AlphaClone Systems LLC</div>
+      <div>Alphaclone Systems, LLC</div>
       <div>
         <a href="https://alphaclonesystems.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>
           alphaclonesystems.com
@@ -32,11 +32,11 @@ export default function EmailFooter({ marketing = false }: { marketing?: boolean
           Unsubscribe
         </a>
         {' | '}
-        <a href="https://alphaclonesystems.com/legal/privacy" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+        <a href="https://alphaclonesystems.com/privacy-policy" style={{ color: '#94a3b8', textDecoration: 'none' }}>
           Privacy Policy
         </a>
         {' | '}
-        <a href="https://alphaclonesystems.com/legal/terms" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+        <a href="https://alphaclonesystems.com/terms-of-service" style={{ color: '#94a3b8', textDecoration: 'none' }}>
           Terms
         </a>
       </div>

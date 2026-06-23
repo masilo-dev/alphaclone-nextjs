@@ -175,6 +175,7 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
   const [notes, setNotes] = useState(lead.notes || '');
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
   const [showEmailComposer, setShowEmailComposer] = useState(false);
   const [emailDraft, setEmailDraft] = useState<{ to: string; subject: string; body: string } | null>(null);
   
@@ -271,6 +272,24 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
     }
   };
   
+  const handleEnrich = async () => {
+    if (enriching) return;
+    setEnriching(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be signed in to enrich a lead');
+      const { error } = await leadService.enrichLead(lead.id, user.id);
+      if (error) throw new Error(error);
+      toast.success('Lead enriched — refreshed details and activity.');
+      loadRelatedData();
+      onUpdate?.(lead);
+    } catch (err: any) {
+      toast.error(err.message || 'Enrichment failed');
+    } finally {
+      setEnriching(false);
+    }
+  };
+
   const handleSendEmail = async () => {
     if (!lead.email) {
       toast.error('No email address available');
@@ -466,11 +485,11 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
                   />
                   <QuickActionButton
                     icon={<Zap className="w-4 h-4" />}
-                    label="Enrich Data"
-                    onClick={() => {}}
+                    label={enriching ? 'Enriching…' : 'Enrich Data'}
+                    onClick={handleEnrich}
                     color="orange"
-                    disabled
-                    title="Coming soon"
+                    disabled={enriching}
+                    title="Use AI to research and fill in missing lead details"
                   />
                 </div>
               </div>

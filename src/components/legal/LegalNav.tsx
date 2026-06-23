@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 const LINKS = [
-  { href: '/legal/privacy', label: 'Privacy Policy' },
-  { href: '/legal/terms', label: 'Terms of Service' },
-  { href: '/legal/cookies', label: 'Cookie Policy' },
+  { href: '/privacy-policy', label: 'Privacy Policy' },
+  { href: '/terms-of-service', label: 'Terms of Service' },
+  { href: '/cookie-policy', label: 'Cookie Policy' },
   { href: '/legal/acceptable-use', label: 'Acceptable Use' },
   { href: '/legal/data-request', label: 'Data Requests' },
   { href: '/legal/refund', label: 'Refund Policy' },
-  { href: '/legal/sla', label: 'SLA' },
-  { href: '/legal/dpa', label: 'DPA' },
+  { href: '/sla', label: 'SLA' },
+  { href: '/dpa', label: 'DPA' },
   { href: '/legal/ai-disclaimer', label: 'AI Disclaimer' },
 ];
 

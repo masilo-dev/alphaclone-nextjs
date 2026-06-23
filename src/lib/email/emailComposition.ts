@@ -1,11 +1,15 @@
 const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [
-  'AlphaClone Systems LLC',
+  'Alphaclone Systems, LLC — a Wyoming registered company',
+  '30 N Gould St, Sheridan, WY 82801, USA',
   'alphaclonesystems.com',
   'Unsubscribe: {{{unsubscribe_url}}}',
-  'Privacy: https://alphaclonesystems.com/legal/privacy',
-  'Terms: https://alphaclonesystems.com/legal/terms',
+  'Privacy: https://alphaclonesystems.com/privacy-policy',
+  'Terms: https://alphaclonesystems.com/terms-of-service',
   'If you received this email in error, please disregard and delete it.',
 ];
+
+// Fallback unsubscribe page (used when no signed per-recipient link is available).
+const FALLBACK_UNSUBSCRIBE_URL = 'https://alphaclonesystems.com/unsubscribe';
 
 const HTML_FOOTER_STYLE = [
   'margin-top:24px',
@@ -57,10 +61,29 @@ function buildHtmlFooter(lines: string[]): string {
   return `<div style="${HTML_FOOTER_STYLE}">${escapedLines}</div>`;
 }
 
-export function ensureFooter(content: string): string {
+export interface FooterContext {
+  /** A fully-built, signed unsubscribe URL (preferred). */
+  unsubscribeUrl?: string;
+}
+
+/**
+ * Replace the {{{unsubscribe_url}}} placeholder with a real link.
+ * Falls back to a generic unsubscribe page (with the recipient email when known)
+ * so the footer never ships a broken placeholder to a real inbox.
+ */
+function resolveUnsubscribePlaceholder(footer: string, ctx?: FooterContext): string {
+  if (!footer.includes('{{{unsubscribe_url}}}')) return footer;
+  const url = ctx?.unsubscribeUrl && ctx.unsubscribeUrl.trim().length > 0
+    ? ctx.unsubscribeUrl.trim()
+    : FALLBACK_UNSUBSCRIBE_URL;
+  return footer.split('{{{unsubscribe_url}}}').join(url);
+}
+
+export function ensureFooter(content: string, ctx?: FooterContext): string {
   const body = String(content || '').trim();
-  const footer = getSystemFooter().trim();
+  let footer = getSystemFooter().trim();
   if (!footer) return body;
+  footer = resolveUnsubscribePlaceholder(footer, ctx);
   if (!body) return footer;
   if (body.includes(footer)) return body;
 
