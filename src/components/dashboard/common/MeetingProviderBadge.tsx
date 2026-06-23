@@ -1,8 +1,11 @@
-import { getMeetingProviderDisplay, resolveMeetingProvider } from '@/services/instantMeetingService';
-import type { VideoCall } from '@/services/dailyService';
+import {
+  getMeetingProviderDisplay,
+  resolveMeetingProvider,
+  type MeetingProviderInput,
+} from '@/services/instantMeetingService';
 
 type MeetingProviderBadgeProps = {
-  meeting: VideoCall | Record<string, unknown>;
+  meeting: MeetingProviderInput;
 };
 
 export default function MeetingProviderBadge({ meeting }: MeetingProviderBadgeProps) {
