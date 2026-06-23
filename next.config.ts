@@ -64,7 +64,17 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
-
+    webpackMemoryOptimizations: true,
+    webpackBuildWorker: true,
+    optimizePackageImports: [
+      '@heroicons/react',
+      '@tremor/react',
+      'date-fns',
+      'framer-motion',
+      'lucide-react',
+      'react-icons',
+      'recharts',
+    ],
   },
   turbopack: {},
   async redirects() {
@@ -208,7 +218,8 @@ export default withSentryConfig(botIdConfig as any, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,
-  widenClientFileUpload: true,
+  // Full client upload balloons webpack memory during CI builds.
+  widenClientFileUpload: false,
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
