@@ -8,6 +8,7 @@ import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabase';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import Image from 'next/image';
 
 export default function ResetPasswordPage() {
@@ -33,13 +34,13 @@ export default function ResetPasswordPage() {
             }
         };
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
             if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || session) {
                 markValid();
             }
         });
 
-        supabase.auth.getSession().then(({ data }) => {
+        supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
             if (data.session) markValid();
         });
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 const SITE_PAGES = [
   { href: '/services', title: 'Services', description: 'AI growth agent, CRM, invoicing, contracts, meetings, and more.' },
@@ -20,6 +21,7 @@ const SITE_PAGES = [
   { href: '/pricing', title: 'Pricing', description: 'Plans and subscription details.' },
   { href: '/about', title: 'About', description: 'Mission, values, and company background.' },
   { href: '/contact', title: 'Contact', description: 'Reach the AlphaClone team.' },
+  { href: '/faq', title: 'FAQ', description: 'Common questions about plans, CRM, and workflows.' },
 ];
 
 export const metadata: Metadata = {
@@ -43,39 +45,41 @@ export default function Page({
     : SITE_PAGES.slice(0, 8);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200">
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-semibold text-white">Search AlphaClone</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
-          Find product pages, onboarding help, and legal notices from one place.
-        </p>
+    <MarketingLandingShell>
+      <main className="min-h-screen bg-slate-950 text-slate-200 pt-20">
+        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+          <h1 className="text-4xl font-semibold text-white">Search AlphaClone</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
+            Find product pages, onboarding help, and legal notices from one place.
+          </p>
 
-        <form action="/search" method="get" className="mt-8 flex gap-3">
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Search pages..."
-            className="min-w-0 flex-1 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-teal-500"
-          />
-          <button type="submit" className="rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-400">
-            Search
-          </button>
-        </form>
+          <form action="/search" method="get" className="mt-8 flex gap-3">
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Search pages..."
+              className="min-w-0 flex-1 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-teal-500"
+            />
+            <button type="submit" className="rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-400">
+              Search
+            </button>
+          </form>
 
-        <div className="mt-10 grid gap-4">
-          {results.map((page) => (
-            <Link
-              key={page.href}
-              href={page.href}
-              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-colors hover:border-teal-500/30"
-            >
-              <p className="text-xs uppercase tracking-[0.2em] text-teal-400">{page.href}</p>
-              <h2 className="mt-2 text-xl font-semibold text-white">{page.title}</h2>
-              <p className="mt-2 text-sm leading-7 text-slate-400">{page.description}</p>
-            </Link>
-          ))}
+          <div className="mt-10 grid gap-4">
+            {results.map((page) => (
+              <Link
+                key={page.href}
+                href={page.href}
+                className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-colors hover:border-teal-500/30"
+              >
+                <p className="text-xs uppercase tracking-[0.2em] text-teal-400">{page.href}</p>
+                <h2 className="mt-2 text-xl font-semibold text-white">{page.title}</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-400">{page.description}</p>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </MarketingLandingShell>
   );
 }

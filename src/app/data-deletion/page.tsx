@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import DataDeletionPage from '@/components/pages/DataDeletionPage';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
     title: 'Data Deletion Request | AlphaClone Systems',
@@ -9,5 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <DataDeletionPage />;
+    return (
+        <MarketingLandingShell>
+            <div className="pt-20">
+                <DataDeletionPage />
+            </div>
+        </MarketingLandingShell>
+    );
 }

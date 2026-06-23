@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
   title: 'Security Policy | AlphaClone Systems',
@@ -23,8 +24,9 @@ export const metadata: Metadata = {
 
 export default function SecurityPolicyPage() {
   return (
-    <main className="min-h-screen bg-[#040A12] text-slate-200">
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <MarketingLandingShell>
+      <main className="min-h-screen bg-[#040A12] text-slate-200 pt-20">
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl font-black text-white mb-4">Security Policy</h1>
         <p className="text-slate-300 mb-8">
           AlphaClone applies a security-first engineering model for platform services, customer data, and production operations.
@@ -64,7 +66,8 @@ export default function SecurityPolicyPage() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+    </MarketingLandingShell>
   );
 }
 

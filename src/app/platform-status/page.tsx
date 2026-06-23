@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
   title: 'Platform Status | AlphaClone Systems',
@@ -25,8 +26,9 @@ export const metadata: Metadata = {
 
 export default function PlatformStatusPage() {
   return (
-    <main className="min-h-screen bg-[#040A12] text-slate-200">
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <MarketingLandingShell>
+      <main className="min-h-screen bg-[#040A12] text-slate-200 pt-20">
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl font-black text-white mb-4">Platform Status</h1>
         <p className="text-slate-300 mb-8">
           This page describes current service posture and the way AlphaClone communicates reliability events.
@@ -64,7 +66,8 @@ export default function PlatformStatusPage() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+    </MarketingLandingShell>
   );
 }
 
