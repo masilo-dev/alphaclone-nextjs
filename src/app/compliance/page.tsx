@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
   title: 'Compliance Overview | AlphaClone Systems',
@@ -23,8 +24,9 @@ export const metadata: Metadata = {
 
 export default function CompliancePage() {
   return (
-    <main className="min-h-screen bg-[#040A12] text-slate-200">
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <MarketingLandingShell>
+      <main className="min-h-screen bg-[#040A12] text-slate-200 pt-20">
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl font-black text-white mb-4">Compliance Overview</h1>
         <p className="text-slate-300 mb-8">
           AlphaClone maintains a transparent trust posture through published legal documentation and policy-based operational controls.
@@ -55,7 +57,8 @@ export default function CompliancePage() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+    </MarketingLandingShell>
   );
 }
 

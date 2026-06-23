@@ -90,6 +90,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
         { label: 'User Guide', path: '/guide' },
         { label: 'Search', path: '/search' },
         { label: 'Docs', path: '/docs' },
+        { label: 'FAQ', path: '/faq' },
         { label: 'Pricing', path: '/pricing' },
         { label: 'Contact', path: '/contact' },
     ];
@@ -143,10 +144,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
     };
 
     return (
-        <nav className={`fixed w-full z-[120] pt-safe transition-all duration-300 ${isScrolled && !mobileMenuOpen
-                ? 'max-lg:bg-transparent max-lg:border-transparent max-lg:backdrop-blur-none lg:bg-slate-950/95 lg:backdrop-blur-md lg:border-b lg:border-slate-800/50'
-                : 'bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50'
-            }`}>
+        <nav className={`fixed w-full z-[120] pt-safe transition-all duration-300 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className={`flex items-center justify-between transition-all duration-300 ${isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'}`}>
                     {/* Logo */}

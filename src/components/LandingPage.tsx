@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -15,11 +15,9 @@ import {
    Briefcase, 
    User as UserIcon, 
    ShieldCheck, 
-   X, 
    Mail, 
    ArrowRight,
    Video,
-   ChevronDown,
 } from 'lucide-react';
 
 /* ─────────────────────────── Integrations Marquee ─────────────────────────── */
@@ -74,6 +72,7 @@ const InfiniteMarquee = () => {
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/UIComponents';
+import PublicNavigation from './PublicNavigation';
 import MarketingFooter from './landing/MarketingFooter';
 import { ServiceCard } from './landing/ServiceCard';
 import { AIWorkerGraphic } from './ui/AIWorkerGraphic';
@@ -86,14 +85,6 @@ const VideoExplainer = dynamic(() => import('./dashboard/VideoExplainer'), {
    ssr: false,
 });
 
-const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
-   <div className="relative w-6 h-6 flex flex-col justify-center items-center">
-      <span className={`block w-5 h-0.5 bg-current rounded-full transition-all duration-300 ease-out ${isOpen ? 'rotate-45 translate-y-0.5' : '-translate-y-1'}`} />
-      <span className={`block w-5 h-0.5 bg-current rounded-full transition-all duration-300 ease-out my-0.5 ${isOpen ? 'opacity-0' : 'opacity-100'}`} />
-      <span className={`block w-5 h-0.5 bg-current rounded-full transition-all duration-300 ease-out ${isOpen ? '-rotate-45 -translate-y-0.5' : 'translate-y-1'}`} />
-   </div>
-);
-
 import { PLATFORM_CALENDLY_URL } from '@/constants';
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
 
@@ -104,12 +95,6 @@ const LOGIN_HREF = '/auth/login';
 
 const LandingPage = () => {
    const router = useRouter();
-   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-   const [mobilePlatformOpen, setMobilePlatformOpen] = useState(false);
-   const [mobileResourcesOpen, setMobileResourcesOpen] = useState(false);
-   const [mobileCompanyOpen, setMobileCompanyOpen] = useState(false);
-   const [scrolled, setScrolled] = useState(false);
-   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
    const [contactForm, setContactForm] = useState({
       name: '',
@@ -117,25 +102,6 @@ const LandingPage = () => {
       subject: '',
       message: ''
    });
-
-   // Smooth scroll function
-   const scrollToSection = useCallback((sectionId: string) => {
-      setMobileMenuOpen(false);
-      setServicesDropdownOpen(false);
-      const element = document.getElementById(sectionId);
-      if (element) {
-         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-         return;
-      }
-      router.push(`/#${sectionId}`);
-   }, [router]);
-
-   const platformMenuItems = useMemo(() => ([
-      { label: 'CRM and Pipeline', action: () => scrollToSection('services') },
-      { label: 'Messaging and Meetings', action: () => scrollToSection('video') },
-      { label: 'Finance and Billing', action: () => scrollToSection('pricing') },
-      { label: 'Lead Operations', action: () => scrollToSection('services') },
-   ]), [scrollToSection]);
 
    const heroOutcomePoints = [
       'Replace CRM, invoicing, contracts, and project tools',
@@ -148,26 +114,6 @@ const LandingPage = () => {
       'GDPR-friendly controls',
       'Live demo available anytime',
    ];
-
-   // Scroll handling for navbar styling only.
-   useEffect(() => {
-      const handleScroll = () => {
-         const currentScrollY = window.scrollY;
-         setScrolled(currentScrollY > 20);
-      };
-
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      return () => window.removeEventListener('scroll', handleScroll);
-   }, []);
-
-   useEffect(() => {
-      if (mobileMenuOpen) {
-         document.body.classList.add('menu-open');
-      } else {
-         document.body.classList.remove('menu-open');
-      }
-      return () => document.body.classList.remove('menu-open');
-   }, [mobileMenuOpen]);
 
    // Handle contact form submission
    const handleContactSubmit = async (e: React.FormEvent) => {
@@ -219,283 +165,7 @@ const LandingPage = () => {
          </div>
          <div className="fixed inset-0 z-[1] pointer-events-none bg-slate-950/25" />
 
-         {/* Enhanced Navigation with better transitions */}
-         <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-            scrolled ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-lg' : 'bg-slate-950/80 backdrop-blur-lg'
-         } translate-y-0`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-               <div className="flex items-center justify-between gap-4 h-16 sm:h-[4.5rem]">
-                  {/* Logo */}
-                  <Link href="/" className="flex items-center gap-3 cursor-pointer group shrink-0">
-                     <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                        <Image
-                           src="/logo.png"
-                           alt="AlphaClone"
-                           width={36}
-                           height={36}
-                           className="object-contain"
-                        />
-                     </div>
-                     <span className="text-xl font-bold tracking-tight text-white font-marketing-heading">AlphaClone</span>
-                  </Link>
-
-                  {/* Desktop Nav */}
-                  <div className="hidden lg:flex flex-1 items-center justify-center gap-7 px-4">
-                     <Link href="/" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Home</Link>
-                     <Link href="/guide" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Guide</Link>
-                     <div
-                        className="relative"
-                        onMouseEnter={() => setServicesDropdownOpen(true)}
-                        onMouseLeave={() => setServicesDropdownOpen(false)}
-                     >
-                        <button
-                           onClick={() => setServicesDropdownOpen((open) => !open)}
-                           className="inline-flex items-center gap-1 h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                           aria-expanded={servicesDropdownOpen}
-                           aria-label="Toggle platform menu"
-                        >
-                           Platform
-                           <ChevronDown className={`w-4 h-4 transition-transform ${servicesDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {servicesDropdownOpen && (
-                           <div className="absolute left-1/2 top-full mt-3 w-64 -translate-x-1/2 rounded-2xl border border-slate-800 bg-slate-950/95 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl">
-                              {platformMenuItems.map((item) => (
-                                 <button
-                                    key={item.label}
-                                    onClick={item.action}
-                                    className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-300 transition-colors hover:bg-slate-900 hover:text-white"
-                                 >
-                                    <span>{item.label}</span>
-                                    <ArrowRight className="w-4 h-4 text-teal-400" />
-                                 </button>
-                              ))}
-                           </div>
-                        )}
-                     </div>
-                     <button onClick={() => scrollToSection('pricing')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Pricing</button>
-                     <Link href="/docs" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Docs</Link>
-                     <Link href="/faq" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">FAQ</Link>
-                     <Link href="/ecosystem" className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Ecosystem</Link>
-                     <button onClick={() => scrollToSection('contact')} className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Contact</button>
-                  </div>
-
-                  <div className="hidden lg:flex items-center gap-3 shrink-0">
-                     <Link
-                        href={LOGIN_HREF}
-                        className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-                     >
-                        Login
-                     </Link>
-                     <Link href="/book-demo" className="inline-flex items-center">
-                        <Button variant="outline" className="border-slate-600 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 px-4 h-10 text-sm font-semibold transition-all">
-                           Book Demo
-                        </Button>
-                     </Link>
-                     <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
-                        <Button className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 h-10">
-                           Start Free
-                        </Button>
-                     </Link>
-                  </div>
-
-                  {/* Mobile Menu Trigger */}
-                  <div className="lg:hidden flex items-center gap-2">
-                     <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-                        aria-expanded={mobileMenuOpen}
-                        className={`w-11 h-11 flex items-center justify-center rounded-xl border transition-all duration-300 ${mobileMenuOpen
-                           ? 'text-teal-400 bg-slate-900 border-teal-500/50 shadow-lg shadow-teal-500/10'
-                           : 'text-white bg-white/5 border-white/10 hover:border-teal-500/30'
-                           }`}
-                     >
-                        <HamburgerIcon isOpen={mobileMenuOpen} />
-                     </button>
-                  </div>
-               </div>
-            </div>
-         </nav>
-
-         {/* Mobile Menu - Full Screen Overlay */}
-         <AnimatePresence>
-            {mobileMenuOpen && (
-               <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="fixed inset-0 bg-slate-950 z-[200] lg:hidden overflow-y-auto"
-               >
-                  <div className="min-h-screen flex flex-col">
-                     {/* Mobile Menu Header */}
-                     <div className="flex items-center justify-between px-4 py-5 border-b border-slate-800">
-                        <Link href="/" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
-                           <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                              <Image
-                                 src="/logo.png"
-                                 alt="AlphaClone"
-                                 width={32}
-                                 height={32}
-                                 className="object-contain"
-                              />
-                           </div>
-                           <span className="text-lg font-bold text-white">AlphaClone</span>
-                        </Link>
-                        <button
-                           onClick={() => setMobileMenuOpen(false)}
-                           className="p-2 text-slate-400 hover:text-white transition-colors"
-                           aria-label="Close menu"
-                        >
-                           <X className="w-6 h-6" />
-                        </button>
-                     </div>
-
-                     {/* Mobile Menu Content */}
-                     <div className="flex-1 px-4 py-6">
-                        <nav className="space-y-2">
-                           <Link
-                              href="/"
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="block w-full text-left px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                           >
-                              Home
-                           </Link>
-
-                           {/* Platform Dropdown */}
-                           <div className="space-y-1">
-                              <button
-                                 onClick={() => setMobilePlatformOpen(!mobilePlatformOpen)}
-                                 className="flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                              >
-                                 Platform
-                                 <ChevronDown className={`w-5 h-5 transition-transform ${mobilePlatformOpen ? 'rotate-180' : ''}`} />
-                              </button>
-                              <AnimatePresence>
-                                 {mobilePlatformOpen && (
-                                    <motion.div
-                                       initial={{ height: 0, opacity: 0 }}
-                                       animate={{ height: 'auto', opacity: 1 }}
-                                       exit={{ height: 0, opacity: 0 }}
-                                       className="overflow-hidden pl-4 space-y-1"
-                                    >
-                                       {platformMenuItems.map((item) => (
-                                          <button
-                                             key={item.label}
-                                             onClick={() => { item.action(); setMobileMenuOpen(false); }}
-                                             className="w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
-                                          >
-                                             {item.label}
-                                          </button>
-                                       ))}
-                                       <button
-                                          onClick={() => { scrollToSection('services'); setMobileMenuOpen(false); }}
-                                          className="w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
-                                       >
-                                          Capabilities
-                                       </button>
-                                    </motion.div>
-                                 )}
-                              </AnimatePresence>
-                           </div>
-
-                           {/* Resources Dropdown */}
-                           <div className="space-y-1">
-                              <button
-                                 onClick={() => setMobileResourcesOpen(!mobileResourcesOpen)}
-                                 className="flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                              >
-                                 Resources
-                                 <ChevronDown className={`w-5 h-5 transition-transform ${mobileResourcesOpen ? 'rotate-180' : ''}`} />
-                              </button>
-                              <AnimatePresence>
-                                 {mobileResourcesOpen && (
-                                    <motion.div
-                                       initial={{ height: 0, opacity: 0 }}
-                                       animate={{ height: 'auto', opacity: 1 }}
-                                       exit={{ height: 0, opacity: 0 }}
-                                       className="overflow-hidden pl-4 space-y-1"
-                                    >
-                                       {[
-                                          { label: 'Guide', href: '/guide' },
-                                          { label: 'Docs', href: '/docs' },
-                                          { label: 'FAQ', href: '/faq' },
-                                          { label: 'Ecosystem', href: '/ecosystem' }
-                                       ].map((item) => (
-                                          <Link
-                                             key={item.label}
-                                             href={item.href}
-                                             onClick={() => setMobileMenuOpen(false)}
-                                             className="block w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
-                                          >
-                                             {item.label}
-                                          </Link>
-                                       ))}
-                                    </motion.div>
-                                 )}
-                              </AnimatePresence>
-                           </div>
-
-                           {/* Company Dropdown */}
-                           <div className="space-y-1">
-                              <button
-                                 onClick={() => setMobileCompanyOpen(!mobileCompanyOpen)}
-                                 className="flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
-                              >
-                                 Company
-                                 <ChevronDown className={`w-5 h-5 transition-transform ${mobileCompanyOpen ? 'rotate-180' : ''}`} />
-                              </button>
-                              <AnimatePresence>
-                                 {mobileCompanyOpen && (
-                                    <motion.div
-                                       initial={{ height: 0, opacity: 0 }}
-                                       animate={{ height: 'auto', opacity: 1 }}
-                                       exit={{ height: 0, opacity: 0 }}
-                                       className="overflow-hidden pl-4 space-y-1"
-                                    >
-                                       {[
-                                          { label: 'Pricing', section: 'pricing' },
-                                          { label: 'Contact', section: 'contact' }
-                                       ].map((item) => (
-                                          <button
-                                             key={item.label}
-                                             onClick={() => { scrollToSection(item.section); setMobileMenuOpen(false); }}
-                                             className="w-full text-left px-4 py-2 text-base font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
-                                          >
-                                             {item.label}
-                                          </button>
-                                       ))}
-                                    </motion.div>
-                                 )}
-                              </AnimatePresence>
-                           </div>
-
-                           {/* Login + Start Free Trial - prominent in nav */}
-                           <div className="pt-4 mt-4 border-t border-slate-800 space-y-3">
-                              <Link
-                                 href={LOGIN_HREF}
-                                 onClick={() => setMobileMenuOpen(false)}
-                                 className="flex items-center justify-between w-full px-4 py-4 text-lg font-bold text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-xl transition-colors border border-teal-500/20"
-                              >
-                                 Log In
-                                 <ArrowRight className="w-5 h-5" />
-                              </Link>
-                              <Link
-                                 href={BUSINESS_SIGNUP_HREF}
-                                 onClick={() => setMobileMenuOpen(false)}
-                                 className="flex items-center justify-center gap-2 w-full px-4 py-4 text-lg font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 rounded-xl transition-colors shadow-lg shadow-teal-500/20"
-                              >
-                                 Start Free Trial
-                                 <Zap className="w-5 h-5" />
-                              </Link>
-                           </div>
-                        </nav>
-                     </div>
-
-                     {/* Mobile Menu Footer CTA hidden to keep clean */}
-                  </div>
-               </motion.div>
-            )}
-         </AnimatePresence>
+         <PublicNavigation onLoginClick={() => router.push(LOGIN_HREF)} />
 
          <main className="relative z-10">
             {/* Hero Section */}

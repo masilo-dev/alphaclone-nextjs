@@ -265,10 +265,18 @@ export default function MessengerInbox() {
 
     return (
         <div className="flex flex-col bg-gray-950 text-gray-100 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden shadow-2xl h-[calc(100dvh-160px)] min-h-[520px] relative">
+            {isMobileMenuOpen && (
+                <button
+                    type="button"
+                    className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+                    aria-label="Close conversations menu"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
             <div className="flex flex-1 overflow-hidden">
                 {/* Conversation Sidebar */}
                 <div className={`
-                    ${isMobileMenuOpen ? 'fixed inset-0 z-50 bg-gray-950 w-72 border-r border-white/10 shadow-2xl shadow-blue-500/10' : 'hidden lg:flex'} 
+                    ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 bg-gray-950 w-72 border-r border-white/10 shadow-2xl shadow-blue-500/10' : 'hidden lg:flex'} 
                     w-80 flex-col bg-gray-900/20 backdrop-blur-3xl shrink-0 transition-all duration-300 border-r border-white/5
                 `}>
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
@@ -356,7 +364,15 @@ export default function MessengerInbox() {
                     {selectedConversation ? (
                         <>
                             <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-gray-950/60 backdrop-blur-3xl z-20">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsMobileMenuOpen(true)}
+                                        className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
+                                        aria-label="Open conversations"
+                                    >
+                                        <Menu size={20} />
+                                    </button>
                                     <button onClick={() => setSelectedConversation(null)} className="lg:hidden p-2 text-gray-400 hover:text-white rounded-xl">
                                         <ArrowLeft size={20} />
                                     </button>
@@ -458,6 +474,15 @@ export default function MessengerInbox() {
                         </>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-600 p-12 text-center">
+                            <button
+                                type="button"
+                                onClick={() => setIsMobileMenuOpen(true)}
+                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                                aria-label="Open conversations"
+                            >
+                                <Menu size={18} />
+                                Browse conversations
+                            </button>
                             <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-2xl">
                                 <MessageSquare size={40} className="text-gray-700" />
                             </div>

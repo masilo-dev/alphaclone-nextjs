@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/siteUrl';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 const faqItems = [
   {
@@ -57,22 +58,24 @@ export default function FaqPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <h1 className="text-3xl md:text-5xl font-black text-white mb-6">Frequently Asked Questions</h1>
-        <p className="text-slate-300 mb-10 text-base md:text-lg">
-          Everything you need to know about Alphaclone as an AI business operating system.
-        </p>
-        <div className="space-y-6">
-          {faqItems.map((item) => (
-            <article key={item.question} className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
-              <h2 className="text-xl font-bold text-white mb-2">{item.question}</h2>
-              <p className="text-slate-300 leading-relaxed">{item.answer}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+    <MarketingLandingShell>
+      <main className="min-h-screen bg-slate-950 text-slate-200 pt-20">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-6">Frequently Asked Questions</h1>
+          <p className="text-slate-300 mb-10 text-base md:text-lg">
+            Everything you need to know about Alphaclone as an AI business operating system.
+          </p>
+          <div className="space-y-6">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+                <h2 className="text-xl font-bold text-white mb-2">{item.question}</h2>
+                <p className="text-slate-300 leading-relaxed">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      </main>
+    </MarketingLandingShell>
   );
 }
