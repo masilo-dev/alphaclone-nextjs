@@ -51,7 +51,7 @@ export default function BonnieWidget() {
 
     loadData();
 
-    // Set up polling for logs every 10 seconds to keep feed live-updating
+    // Poll less aggressively to avoid noisy console when optional tables are missing
     const interval = setInterval(async () => {
       try {
         const logsData = await bonnieService.getCombinedLogs(tenantId);
@@ -59,7 +59,7 @@ export default function BonnieWidget() {
       } catch (e) {
         // ignore polling errors
       }
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [tenantId]);
