@@ -6,9 +6,15 @@ import { tenantService } from '@/services/tenancy/TenantService';
 
 export type PlatformMeetingProvider = 'teams' | 'livekit' | 'daily' | 'jitsi';
 
+/** Minimal fields needed to resolve Teams vs AlphaClone video badge */
+export type MeetingProviderInput = {
+  metadata?: Record<string, unknown> | null;
+  daily_room_url?: string | null;
+};
+
 function mapVideoCall(row: Record<string, unknown>): VideoCall {
   return {
-    ...(row as VideoCall),
+    ...(row as unknown as VideoCall),
     created_at: new Date(String(row.created_at)),
     updated_at: new Date(String(row.updated_at)),
     scheduled_at: new Date(String(row.scheduled_at)),
@@ -19,7 +25,7 @@ function mapVideoCall(row: Record<string, unknown>): VideoCall {
   };
 }
 
-export function resolveMeetingProvider(call: VideoCall | Record<string, unknown>): PlatformMeetingProvider {
+export function resolveMeetingProvider(call: MeetingProviderInput): PlatformMeetingProvider {
   const metadata = (call.metadata || {}) as Record<string, unknown>;
   const fromMeta = String(metadata.video_provider || '').trim();
   if (fromMeta === 'teams') return 'teams';
@@ -29,10 +35,10 @@ export function resolveMeetingProvider(call: VideoCall | Record<string, unknown>
   return 'livekit';
 }
 
-export function resolveMeetingJoinUrl(call: VideoCall | Record<string, unknown>): string | null {
+export function resolveMeetingJoinUrl(call: MeetingProviderInput): string | null {
   const metadata = (call.metadata || {}) as Record<string, unknown>;
   return (
-    (call as VideoCall).daily_room_url ||
+    call.daily_room_url ||
     (typeof metadata.teams_join_url === 'string' ? metadata.teams_join_url : null) ||
     null
   );
