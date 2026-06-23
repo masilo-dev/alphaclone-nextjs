@@ -8387,6 +8387,24 @@ Return ONLY a JSON array of 60 objects:
         throw new Error(payload);
       }
   }
+
+  /** Bonnie agent + internal automations — execute any MCP tool server-side */
+  async runTool(
+    name: string,
+    args: Record<string, unknown>
+  ): Promise<{ content?: Array<{ type?: string; text?: string }>; isError?: boolean }> {
+    const traceId = crypto.randomUUID();
+    const supabaseAdmin = createSupabaseAdminClient();
+    try {
+      return await this.executeToolInternal(name, args, traceId, supabaseAdmin);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      return {
+        content: [{ type: 'text', text: message }],
+        isError: true,
+      };
+    }
+  }
 }
 
 export const mcpServerInstance = new AlphaCloneMCPServer();

@@ -9,6 +9,7 @@ import { PLATFORM_CALENDLY_URL } from '@/constants';
 import { Button, Badge } from '@/components/ui/UIComponents';
 import { supabase } from '../../../lib/supabase';
 import { createInstantMeeting } from '../../../services/instantMeetingService';
+import MeetingProviderBadge from '../common/MeetingProviderBadge';
 import toast from 'react-hot-toast';
 
 interface MeetingsPageProps {
@@ -22,6 +23,7 @@ interface MeetingRow {
     status: string;
     created_at: string;
     host_id: string;
+    metadata?: Record<string, unknown> | null;
 }
 
 const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
@@ -37,7 +39,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
         setLoading(true);
         const { data } = await supabase
             .from('video_calls')
-            .select('id, title, status, created_at, host_id')
+            .select('id, title, status, created_at, host_id, metadata')
             .eq('tenant_id', currentTenant.id)
             .in('status', ['scheduled', 'active'])
             .order('created_at', { ascending: false })
@@ -154,8 +156,11 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                         <Video className="w-5 h-5 text-teal-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
-                                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-sm font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
+                                            <MeetingProviderBadge meeting={m} />
+                                        </div>
+                                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                                             <Clock className="w-3 h-3" />
                                             {new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                         </p>

@@ -4,23 +4,21 @@ import {
   Brain, Play, Pause, RefreshCw, X,
   CheckCircle2, AlertCircle, Clock
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
+import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-
-// Dynamically import DeepChat to prevent SSR compilation errors in Next.js
-const DeepChat = dynamic(
-  () => import('deep-chat-react').then((mod) => mod.DeepChat),
-  { ssr: false }
-);
+import BonnieChatPanel from './BonnieChatPanel';
 
 export default function BonnieWidget() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const activeModule = resolveBonnieModuleFromPath(pathname || '');
+  const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const [isOpen, setIsOpen] = useState(false);
   const [rules, setRules] = useState<BonnieRule | null>(null);
   const [logs, setLogs] = useState<BonnieLog[]>([]);
@@ -124,130 +122,53 @@ export default function BonnieWidget() {
 
   const isRunning = rules?.enabled ?? true;
 
-  // Custom chat request handler integration with bonnieService
-  const chatConnect = {
-    handler: async (body: any, signals: any) => {
-      try {
-        const text = body.messages[body.messages.length - 1].text;
-        
-        // Add immediate log indicating instruction received
-        setLogs(prev => [
-          {
-            id: String(Date.now()),
-            created_at: new Date().toISOString(),
-            type: 'log',
-            level: 'info',
-            message: `Command received: "${text}"`
-          },
-          ...prev
-        ]);
-
-        // Cross-dashboard action: if the user asked to go somewhere, navigate first.
-        const nav = resolveBonnieNavIntent(text, user?.role);
-        if (nav) {
-          router.push(nav.route);
-          setLogs(prev => [
-            {
-              id: String(Date.now() + 1),
-              created_at: new Date().toISOString(),
-              type: 'action',
-              level: 'success',
-              message: `Navigated to ${nav.label}`,
-              details: nav.route,
-            },
-            ...prev
-          ]);
-          await signals.onResponse({ text: `Opening ${nav.label} for you now.` });
-          return;
-        }
-
-        const res = await bonnieService.sendInstruction(tenantId, text);
-        if (res.success) {
-          await signals.onResponse({ text: res.response });
-          // Refresh logs to load simulated tool execution runs
-          const logsData = await bonnieService.getCombinedLogs(tenantId);
-          setLogs(logsData);
-        } else {
-          await signals.onResponse({ error: res.response || 'Failed to process command' });
-        }
-      } catch (err) {
-        await signals.onResponse({ error: 'Command processing error' });
-      }
-    }
-  };
-
-  // Enterprise Dark styling for DeepChat
-  const chatStyle = {
-    backgroundColor: '#090d16',
-    border: '1px solid #1e293b',
-    borderRadius: '12px',
-    width: '100%',
-    height: '320px',
-    boxShadow: 'none',
-  };
-
-  const messageStyles = {
-    default: {
-      ai: {
-        bubble: {
-          backgroundColor: '#1e293b',
-          color: '#f8fafc',
-          fontSize: '12.5px',
-          fontFamily: 'Inter, sans-serif',
-          borderRadius: '12px',
-          padding: '10px',
-        }
+  const handleBonnieMessage = async (
+    text: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  ): Promise<{ text: string; error?: boolean }> => {
+    setLogs(prev => [
+      {
+        id: String(Date.now()),
+        created_at: new Date().toISOString(),
+        type: 'log',
+        level: 'info',
+        message: `Command received: "${text}"`,
       },
-      user: {
-        bubble: {
-          backgroundColor: '#0d9488',
-          color: '#ffffff',
-          fontSize: '12.5px',
-          fontFamily: 'Inter, sans-serif',
-          borderRadius: '12px',
-          padding: '10px',
-        }
-      }
-    }
-  };
+      ...prev,
+    ]);
 
-  const textInputConfig = {
-    styles: {
-      container: {
-        backgroundColor: '#020617',
-        color: '#ffffff',
-        border: '1px solid #1e293b',
-        borderRadius: '10px',
-      },
-      text: {
-        fontSize: '12px',
-        color: '#ffffff',
-      }
-    },
-    placeholder: {
-      text: "Instruct Bonnie (e.g. Audit invoices)...",
-      style: {
-        color: '#64748b',
-      }
-    }
-  };
-
-  const submitButtonStyle = {
-    submit: {
-      container: {
-        default: {
-          backgroundColor: '#0d9488',
-          borderRadius: '8px',
+    const nav = resolveBonnieNavIntent(text, user?.role);
+    if (nav) {
+      router.push(nav.route);
+      setLogs(prev => [
+        {
+          id: String(Date.now() + 1),
+          created_at: new Date().toISOString(),
+          type: 'action',
+          level: 'success',
+          message: `Navigated to ${nav.label}`,
+          details: nav.route,
         },
-        hover: {
-          backgroundColor: '#0f766e',
-        }
-      }
+        ...prev,
+      ]);
+      return { text: `Opening ${nav.label} for you now.` };
     }
+
+    const res = await bonnieService.sendInstruction(tenantId, text, history, {
+      pathname: pathname || undefined,
+      moduleContext: activeModule,
+    });
+    if (res.success) {
+      const logsData = await bonnieService.getCombinedLogs(tenantId);
+      setLogs(logsData);
+      return { text: res.response };
+    }
+
+    return { text: res.response || 'Failed to process command.', error: true };
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+72px)] right-4 z-[70] flex flex-col items-end md:bottom-6 md:right-6">
       {/* Drawer / Popup Window */}
       <AnimatePresence>
         {isOpen && (
@@ -269,7 +190,9 @@ export default function BonnieWidget() {
                   <h3 className="font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-400">
                     Bonnie
                   </h3>
-                  <p className="text-xs text-slate-400">Always-On execution agent</p>
+                  <p className="text-xs text-slate-400">
+                    {moduleHint.label} · WhatsApp, campaigns, CRM & more
+                  </p>
                 </div>
               </div>
               <button
@@ -330,15 +253,12 @@ export default function BonnieWidget() {
               </div>
             </div>
 
-            {/* Deep Chat Interface */}
-            <div className="p-4 border-b border-slate-800 bg-slate-950/20 pointer-events-auto">
-              <DeepChat
-                connect={chatConnect}
-                chatStyle={chatStyle}
-                messageStyles={messageStyles}
-                textInput={textInputConfig}
-                submitButtonStyles={submitButtonStyle}
-                introMessage={{ text: "Hi! I am Bonnie, your AI automation agent. Tell me what tasks or pipelines to audit." }}
+            <div className="border-b border-slate-800 bg-slate-950/20 p-4">
+              <BonnieChatPanel
+                compact
+                placeholder={`Ask Bonnie about ${moduleHint.label.toLowerCase()}…`}
+                introMessage={`I'm Bonnie AI — focused on ${moduleHint.label} right now. I can run real actions: ${moduleHint.examples[0]}. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
+                onSend={handleBonnieMessage}
               />
             </div>
 
@@ -407,9 +327,12 @@ export default function BonnieWidget() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 via-cyan-500 to-indigo-600 text-white shadow-xl shadow-teal-500/20 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 border border-teal-400/20"
+        title="Open Bonnie AI"
+        aria-label="Open Bonnie AI assistant"
+        className="relative flex h-14 min-w-[3.5rem] items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-teal-500 via-cyan-500 to-indigo-600 px-4 text-white shadow-xl shadow-teal-500/20 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 border border-teal-400/20"
       >
-        <Brain className="h-6 w-6" />
+        <Brain className="h-6 w-6 shrink-0" />
+        <span className="hidden sm:inline text-xs font-black uppercase tracking-wide">Bonnie</span>
         {/* Glow pulsing ring around the button */}
         <span className="absolute inset-0 rounded-full bg-teal-500 animate-ping opacity-20 pointer-events-none" />
 
