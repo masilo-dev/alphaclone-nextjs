@@ -18,6 +18,7 @@ import { JournalEntryModal } from './JournalEntryModal';
 import ReceiptGeneratorModal from './ReceiptGeneratorModal';
 import { generalLedgerService } from '../../../services/accounting/generalLedgerService';
 import { advancedAccountingService } from '../../../services/accounting/advancedAccountingService';
+import { getOperationalFinancials } from '../../../services/accounting/operationalAccountingService';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { ChartOfAccountsPage } from './ChartOfAccountsPage';
 import { JournalEntriesPage } from './JournalEntriesPage';
@@ -85,21 +86,25 @@ export default function AccountingDashboard() {
                 const { statement } = await generalLedgerService.getProfitLossData(startDateStr, endOfToday);
                 const { trialBalance } = await generalLedgerService.getTrialBalance(endOfToday);
                 const { snapshot } = await advancedAccountingService.getOperatingSnapshot();
+                const operational = await getOperationalFinancials(currentTenant.id, startDateStr, endOfToday);
 
-                const { data: pendingInvoices } = await supabase
-                    .from('business_invoices')
-                    .select('total')
-                    .eq('tenant_id', currentTenant.id)
-                    .in('status', ['draft', 'sent', 'overdue']);
+                const pending = operational.pendingInvoices;
+                const glRevenue = statement?.totalRevenue || 0;
+                const glExpenses = statement?.totalExpenses || 0;
 
-                const pending = (pendingInvoices || []).reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-                // User wants to see ALL revenue including pending
-                const revenue = (statement?.totalRevenue || 0) + pending;
-                const totalExp = statement?.totalExpenses || 0;
+                // Fall back to invoices/receipts when the ledger has no posted journal entries yet.
+                const revenue = glRevenue > 0
+                    ? glRevenue + pending
+                    : operational.invoiceRevenue + pending;
+                const totalExp = glExpenses > 0 ? glExpenses : operational.receiptExpenses;
 
-                const cashBalance = (trialBalance?.accounts || [])
+                let cashBalance = (trialBalance?.accounts || [])
                     .filter(a => a.accountType === 'asset' && (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash')))
                     .reduce((sum, a) => sum + (a.debitBalance - a.creditBalance), 0);
+
+                if (cashBalance === 0 && operational.paidRevenue > 0) {
+                    cashBalance = operational.paidRevenue - operational.receiptExpenses;
+                }
 
                 const { data: entries } = await supabase
                     .from('journal_entries')
@@ -108,7 +113,7 @@ export default function AccountingDashboard() {
                     .order('entry_date', { ascending: false })
                     .limit(10);
 
-                const simpleTransactions = (entries || []).map((entry: any) => {
+                let simpleTransactions = (entries || []).map((entry: any) => {
                     const line = entry.journal_entry_lines?.[0];
                     const amount = line?.amount || (line?.debit_amount || line?.credit_amount || 0);
                     return {
@@ -119,6 +124,10 @@ export default function AccountingDashboard() {
                         type: entry.journal_entry_lines?.some((l: any) => l.account_type === 'revenue') ? 'income' : 'expense'
                     };
                 });
+
+                if (simpleTransactions.length === 0 && operational.recentInvoiceActivity.length > 0) {
+                    simpleTransactions = operational.recentInvoiceActivity;
+                }
 
                 if (mounted) {
                     setStats({

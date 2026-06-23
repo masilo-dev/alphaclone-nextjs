@@ -440,6 +440,15 @@ Request: ${userMsg}`,
             }
 
             if (!form.scheduleEnabled || !form.scheduledAt) {
+                toast.loading('Running pre-flight checks...', { id: toastId });
+                const diag = await emailCampaignService.diagnoseCampaign(campaign.id);
+                if (diag.issues.length > 0) {
+                    toast.error(`Campaign saved but blocked: ${diag.issues.join(' ')}`, { id: toastId, duration: 8000 });
+                    setViewMode('list');
+                    loadData();
+                    return;
+                }
+
                 toast.loading('Dispatching campaign emails...', { id: toastId });
                 const sendResult = await emailCampaignService.sendCampaign(campaign.id);
                 if (!sendResult.success) {
@@ -807,7 +816,13 @@ Voice & rules:
                                         {(selectedCampaign.status === 'draft' || selectedCampaign.status === 'scheduled') && (
                                             <button 
                                                 onClick={async () => {
-                                                    const toastId = toast.loading('Sending campaign...');
+                                                    const toastId = toast.loading('Running pre-flight checks...');
+                                                    const diag = await emailCampaignService.diagnoseCampaign(selectedCampaign.id);
+                                                    if (diag.issues.length > 0) {
+                                                        toast.error(diag.issues.join(' '), { id: toastId, duration: 8000 });
+                                                        return;
+                                                    }
+                                                    toast.loading('Sending campaign...', { id: toastId });
                                                     const res = await emailCampaignService.sendCampaign(selectedCampaign.id);
                                                     if (res.success) {
                                                         toast.success('Campaign sent!', { id: toastId });

@@ -23,6 +23,7 @@ import {
 } from '../../services/universalServiceCatalog';
 import { generateEmailDraft } from '../../services/unifiedAIService';
 import { contractLifecycleService } from '../../services/contractLifecycleService';
+import { EU_JURISDICTIONS } from '../../config/euJurisdictions';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -141,6 +142,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         { role: 'assistant', content: 'Hello! I am your AI Legal Assistant. You can ask me to review clauses, draft custom sections, explain legal terms, or evaluate potential risks. Select a contract below to analyze it specifically, or just start typing.' }
     ]);
     const [selectedContractIdForChat, setSelectedContractIdForChat] = useState<string>('');
+    const [selectedClientIdForLawyer, setSelectedClientIdForLawyer] = useState<string>('');
     const [chatInput, setChatInput] = useState('');
     const [isLawyerResponding, setIsLawyerResponding] = useState(false);
     const [isSavingLawyerPdf, setIsSavingLawyerPdf] = useState(false);
@@ -177,7 +179,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 }
             }
 
-            const prompt = `You are an expert professional contract lawyer. Provide clean, professional, legally sound analysis and explanations. Format your responses beautifully in markdown.\n\n${contractContext}User Question: ${textToSend}`;
+            let clientContext = '';
+            if (selectedClientIdForLawyer && clients.length > 0) {
+                const client = clients.find((c) => c.id === selectedClientIdForLawyer);
+                if (client) {
+                    clientContext = `Client context from CRM:\nName: ${client.name}\nEmail: ${client.email || 'N/A'}\nPhone: ${client.phone || 'N/A'}\nLocation: ${client.location || 'N/A'}\n\n`;
+                }
+            }
+
+            const jurisdictionHint = form.jurisdiction
+                ? `Preferred governing jurisdiction: ${form.jurisdiction}${form.governingLaw ? ` (${form.governingLaw})` : ''}.\n\n`
+                : '';
+
+            const prompt = `You are an expert professional contract lawyer specializing in EU/EEA and international commercial agreements. Provide clean, professional, legally sound analysis and explanations. When drafting clauses, use the client's name and jurisdiction when known. Format responses in markdown suitable for a professional PDF export.\n\n${jurisdictionHint}${clientContext}${contractContext}User Question: ${textToSend}`;
 
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
@@ -275,11 +289,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             const cleaned = stripMarkdownFence(content);
             if (!cleaned.trim()) throw new Error('Nothing to save yet');
 
-            const title = `AI Lawyer Agreement — ${format(new Date(), 'MMM d, yyyy')}`;
+            const title = `AI Lawyer Agreement — ${form.clientName || 'Client'} — ${format(new Date(), 'MMM d, yyyy')}`;
             const { contract, error } = await contractService.createContract({
                 title,
                 content: cleaned,
                 status: 'draft',
+                client_id: selectedClientIdForLawyer || form.clientId || undefined,
             });
             if (error || !contract) throw new Error(error || 'Failed to save contract');
 
@@ -936,7 +951,29 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     </div>
                                     <div>
                                         <label className={labelCls}>Governing Jurisdiction</label>
-                                        <input className={inputCls} value={form.jurisdiction} onChange={e => set('jurisdiction', e.target.value)} placeholder="e.g. State of California, USA" />
+                                        <select
+                                            className={inputCls}
+                                            value={form.jurisdiction}
+                                            onChange={(e) => {
+                                                const picked = EU_JURISDICTIONS.find((j) => j.label === e.target.value);
+                                                set('jurisdiction', e.target.value);
+                                                if (picked) set('governingLaw', picked.governingLaw);
+                                            }}
+                                        >
+                                            <option value="">— Select EU / EEA jurisdiction —</option>
+                                            {EU_JURISDICTIONS.map((j) => (
+                                                <option key={j.code} value={j.label}>{j.label}</option>
+                                            ))}
+                                            <option value="custom">Other (type below)</option>
+                                        </select>
+                                        {(form.jurisdiction === 'custom' || (form.jurisdiction && !EU_JURISDICTIONS.some((j) => j.label === form.jurisdiction))) && (
+                                            <input
+                                                className={`${inputCls} mt-2`}
+                                                value={form.jurisdiction === 'custom' ? '' : form.jurisdiction}
+                                                onChange={(e) => set('jurisdiction', e.target.value)}
+                                                placeholder="e.g. State of California, USA"
+                                            />
+                                        )}
                                     </div>
                                     <div>
                                         <label className={labelCls}>Governing Law</label>
@@ -1159,6 +1196,35 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     <span>AI will reference selected contract content</span>
                                 </div>
                             )}
+
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">Client from CRM</label>
+                            <select
+                                value={selectedClientIdForLawyer}
+                                onChange={(e) => {
+                                    const id = e.target.value;
+                                    setSelectedClientIdForLawyer(id);
+                                    const picked = clients.find((c) => c.id === id);
+                                    if (picked) {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            clientId: id,
+                                            clientName: picked.name || prev.clientName,
+                                            clientCompany: String(picked.customFields?.company || picked.metadata?.company || ''),
+                                            clientEmail: picked.email || prev.clientEmail,
+                                            clientPhone: picked.phone || prev.clientPhone,
+                                            clientAddress: picked.location || prev.clientAddress,
+                                        }));
+                                    }
+                                }}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500 transition-colors"
+                            >
+                                <option value="">Who is the client? (select from CRM)</option>
+                                {clients.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}{c.customFields?.company ? ` — ${c.customFields.company}` : ''}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2.5">

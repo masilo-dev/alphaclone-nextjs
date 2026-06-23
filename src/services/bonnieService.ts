@@ -262,18 +262,32 @@ export const bonnieService = {
         }),
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data: Record<string, unknown> = {};
+      if (raw.trim()) {
+        try {
+          data = JSON.parse(raw) as Record<string, unknown>;
+        } catch {
+          return {
+            response: response.ok
+              ? 'Bonnie returned an invalid response. Please try again.'
+              : `Bonnie error (${response.status}). The server may be busy — try a shorter message.`,
+            success: false,
+          };
+        }
+      }
+
       if (!response.ok) {
         return {
-          response: data.error || 'Bonnie could not process that instruction.',
+          response: String(data.error || `Bonnie could not process that instruction (${response.status}).`),
           success: false,
         };
       }
 
       return {
-        response: data.response || 'Instruction processed.',
+        response: String(data.response || 'Instruction processed.'),
         success: Boolean(data.success),
-        toolsExecuted: data.toolsExecuted,
+        toolsExecuted: data.toolsExecuted as Array<{ tool: string; success: boolean; summary: string }> | undefined,
       };
     } catch (e: any) {
       console.error('Error sending instruction to Bonnie:', e);
@@ -282,5 +296,90 @@ export const bonnieService = {
         success: false,
       };
     }
+  },
+
+  async streamInstruction(
+    tenantId: string,
+    instruction: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> | undefined,
+    options: { pathname?: string; moduleContext?: string; onToken?: (token: string) => void; onPhase?: (phase: string) => void }
+  ): Promise<{ response: string; success: boolean; toolsExecuted?: Array<{ tool: string; success: boolean; summary: string }> }> {
+    const response = await fetch('/api/bonnie/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenantId,
+        instruction,
+        history,
+        pathname: options.pathname,
+        moduleContext: options.moduleContext,
+      }),
+    });
+
+    if (!response.ok || !response.body) {
+      const raw = await response.text().catch(() => '');
+      let message = `Bonnie stream failed (${response.status}).`;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.error) message = String(parsed.error);
+      } catch {
+        // ignore
+      }
+      return { response: message, success: false };
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let streamedText = '';
+    let finalResponse = '';
+    let success = false;
+    let toolsExecuted: Array<{ tool: string; success: boolean; summary: string }> | undefined;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const chunks = buffer.split('\n\n');
+      buffer = chunks.pop() || '';
+
+      for (const chunk of chunks) {
+        const lines = chunk.split('\n');
+        const eventLine = lines.find((line) => line.startsWith('event:'));
+        const dataLine = lines.find((line) => line.startsWith('data:'));
+        if (!eventLine || !dataLine) continue;
+
+        const event = eventLine.replace('event:', '').trim();
+        let data: any = {};
+        try {
+          data = JSON.parse(dataLine.replace('data:', '').trim());
+        } catch {
+          continue;
+        }
+
+        if (event === 'phase' && data.phase) {
+          options.onPhase?.(String(data.phase));
+        }
+        if (event === 'token' && data.text) {
+          streamedText += String(data.text);
+          options.onToken?.(String(data.text));
+        }
+        if (event === 'done') {
+          finalResponse = String(data.response || streamedText || '');
+          success = Boolean(data.success);
+          toolsExecuted = data.toolsExecuted as typeof toolsExecuted;
+        }
+        if (event === 'error') {
+          return { response: String(data.message || 'Bonnie stream failed.'), success: false };
+        }
+      }
+    }
+
+    return {
+      response: finalResponse || streamedText || 'Bonnie finished without a response.',
+      success,
+      toolsExecuted,
+    };
   },
 };

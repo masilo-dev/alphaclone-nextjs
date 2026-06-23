@@ -87,7 +87,10 @@ const SwipeableTaskRow: React.FC<{
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onTap: (task: Task) => void;
-}> = ({ task, onComplete, onDelete, onTap }) => {
+  bulkMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
+}> = ({ task, onComplete, onDelete, onTap, bulkMode, selected, onToggleSelect }) => {
   const x = useMotionValue(0);
   const leftOp  = useTransform(x, [0, 70],   [0, 1]);
   const rightOp = useTransform(x, [-70, 0], [1, 0]);
@@ -118,7 +121,17 @@ const SwipeableTaskRow: React.FC<{
         style={{ x }}
         className="relative z-10 bg-slate-950 flex items-center gap-0 min-h-[44px]"
       >
-        {/* Custom checkbox — 44x44 tap area */}
+        {bulkMode ? (
+          <button
+            type="button"
+            onClick={() => onToggleSelect?.(task.id)}
+            className="w-11 h-11 flex items-center justify-center flex-shrink-0"
+          >
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selected ? 'border-teal-500 bg-teal-500/20' : 'border-slate-600'}`}>
+              {selected && <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />}
+            </div>
+          </button>
+        ) : (
         <button
           onClick={() => !done && onComplete(task.id)}
           className="w-11 h-11 flex items-center justify-center flex-shrink-0"
@@ -127,6 +140,7 @@ const SwipeableTaskRow: React.FC<{
             {done && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
           </div>
         </button>
+        )}
 
         <div className="flex-1 min-w-0 py-2 cursor-pointer" onClick={() => onTap(task)}>
           <div className="flex items-center gap-2 pr-4">
@@ -244,7 +258,10 @@ const TaskSection: React.FC<{
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onTap: (task: Task) => void;
-}> = ({ label, tasks, defaultCollapsed = false, onComplete, onDelete, onTap }) => {
+  bulkMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+}> = ({ label, tasks, defaultCollapsed = false, onComplete, onDelete, onTap, bulkMode, selectedIds, onToggleSelect }) => {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   if (tasks.length === 0) return null;
   return (
@@ -260,7 +277,18 @@ const TaskSection: React.FC<{
         {!collapsed && (
           <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
             <div className="divide-y divide-white/5">
-              {tasks.map(t => <SwipeableTaskRow key={t.id} task={t} onComplete={onComplete} onDelete={onDelete} onTap={onTap} />)}
+              {tasks.map(t => (
+                <SwipeableTaskRow
+                  key={t.id}
+                  task={t}
+                  onComplete={onComplete}
+                  onDelete={onDelete}
+                  onTap={onTap}
+                  bulkMode={bulkMode}
+                  selected={selectedIds?.has(t.id)}
+                  onToggleSelect={onToggleSelect}
+                />
+              ))}
             </div>
           </motion.div>
         )}
@@ -286,6 +314,8 @@ const TasksTab: React.FC<TasksTabProps> = () => {
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const PAGE_SIZE = 200;
 
@@ -357,6 +387,34 @@ const TasksTab: React.FC<TasksTabProps> = () => {
     await handleUpdate(taskId, { status: fromKanbanStatus(newStatus) });
   };
 
+  const toggleTaskSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!currentTenant?.id || selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected task(s)?`)) return;
+    const ids = Array.from(selectedIds);
+    await supabase.from('tasks').delete().eq('tenant_id', currentTenant.id).in('id', ids);
+    setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+    setSelectedIds(new Set());
+    toast.success(`${ids.length} task(s) deleted`);
+  };
+
+  const handleBulkComplete = async () => {
+    if (!currentTenant?.id || selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    await supabase.from('tasks').update({ status: 'completed' }).eq('tenant_id', currentTenant.id).in('id', ids);
+    setTasks((prev) => prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: 'completed' as TaskStatus } : t)));
+    setSelectedIds(new Set());
+    toast.success(`${ids.length} task(s) completed`);
+  };
+
   const groups = groupTasks(tasks);
   const ORDER = ['Today', 'This Week', 'Later', 'No Due Date', 'Completed'];
   const isTruncated = totalCount !== null && tasks.length < totalCount;
@@ -383,7 +441,33 @@ const TasksTab: React.FC<TasksTabProps> = () => {
 
   return (
     <div className="relative flex flex-col h-full">
-      <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setBulkMode((v) => !v);
+              setSelectedIds(new Set());
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${bulkMode ? 'bg-teal-600 text-white' : 'text-slate-400 border border-white/10'}`}
+          >
+            {bulkMode ? 'Cancel' : 'Select'}
+          </button>
+          {bulkMode && (
+            <>
+              <button type="button" onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))} className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 border border-white/10">
+                All
+              </button>
+              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkComplete} className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30 disabled:opacity-40">
+                Complete ({selectedIds.size})
+              </button>
+              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkDelete} className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-300 border border-rose-500/30 disabled:opacity-40">
+                Delete ({selectedIds.size})
+              </button>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setViewMode('list')}
@@ -398,6 +482,7 @@ const TasksTab: React.FC<TasksTabProps> = () => {
         >
           <LayoutGrid className="w-3.5 h-3.5" /> Board
         </button>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto pb-20 bg-slate-950">
         {!loading && (
@@ -477,6 +562,9 @@ const TasksTab: React.FC<TasksTabProps> = () => {
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onTap={setDetailTask}
+                bulkMode={bulkMode}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleTaskSelected}
               />
             ))}
             {hasMore && (

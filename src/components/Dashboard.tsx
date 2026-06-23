@@ -212,7 +212,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const [activeTab, setActiveTab] = useState(normalizeTabForRole(location || '/dashboard'));
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabStorageKey = `dashboard_active_tab_${user.id}`;
+    const fromUrl = location || '/dashboard';
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(tabStorageKey);
+      if (saved?.startsWith('/dashboard') && (fromUrl === '/dashboard' || fromUrl === saved)) {
+        return normalizeTabForRole(saved);
+      }
+    }
+    return normalizeTabForRole(fromUrl);
+  });
   const {
     activeMeetingCallId,
     isMeetingMinimized,
@@ -246,6 +256,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       setActiveTab(normalizeTabForRole(location));
     }
   }, [location]);
+
+  // Persist last dashboard route so switching browser tabs does not reset navigation
+  useEffect(() => {
+    if (typeof window === 'undefined' || !activeTab?.startsWith('/dashboard')) return;
+    sessionStorage.setItem(`dashboard_active_tab_${user.id}`, activeTab);
+  }, [activeTab, user.id]);
   const [invoices, setInvoices] = useState<Invoice[]>([]); // Initialize empty
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 

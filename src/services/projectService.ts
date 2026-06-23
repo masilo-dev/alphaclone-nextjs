@@ -139,25 +139,74 @@ export const projectService = {
     },
 
     /**
-     * Get a specific public project's status by ID (no auth required)
-     * Used for the shared external link
+     * Resolve a public project by opaque portal token (preferred) or legacy UUID.
      */
-    async getPublicProjectStatus(projectId: string): Promise<{ project: Partial<Project> | null; error: string | null }> {
+    async resolvePublicProjectRef(tokenOrId: string): Promise<{ projectId: string | null; portalToken: string | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select('id, portal_token')
+                .eq('is_public', true)
+                .or(`portal_token.eq.${tokenOrId},id.eq.${tokenOrId}`)
+                .maybeSingle();
+
+            if (error || !data) {
+                return { projectId: null, portalToken: null, error: error?.message || 'Project not found' };
+            }
+
+            return { projectId: data.id, portalToken: data.portal_token || null, error: null };
+        } catch (err) {
+            return { projectId: null, portalToken: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Ensure every public project has an opaque portal token (never expose raw UUIDs in client links).
+     */
+    async ensurePortalToken(projectId: string): Promise<{ token: string | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            let query = supabase.from('projects').select('portal_token').eq('id', projectId);
+            if (tenantId) query = query.eq('tenant_id', tenantId);
+
+            const { data: existing, error: readErr } = await query.single();
+            if (readErr) return { token: null, error: readErr.message };
+
+            if (existing?.portal_token) {
+                return { token: existing.portal_token, error: null };
+            }
+
+            const token = crypto.randomUUID().replace(/-/g, '');
+            const { error: updateErr } = await supabase
+                .from('projects')
+                .update({ portal_token: token, portal_enabled: true })
+                .eq('id', projectId);
+
+            if (updateErr) return { token: null, error: updateErr.message };
+            return { token, error: null };
+        } catch (err) {
+            return { token: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Get a specific public project's status by portal token or legacy ID (no auth required).
+     * External views intentionally omit internal database IDs.
+     */
+    async getPublicProjectStatus(tokenOrId: string): Promise<{ project: Partial<Project> | null; error: string | null }> {
         try {
             const { data, error } = await supabase
                 .from('projects')
                 .select('*')
-                .eq('id', projectId)
-                .eq('is_public', true) // CRITICAL: Only allow if explicitly public
-                .single();
+                .eq('is_public', true)
+                .or(`portal_token.eq.${tokenOrId},id.eq.${tokenOrId}`)
+                .maybeSingle();
 
-            if (error) {
-                return { project: null, error: error.message };
+            if (error || !data) {
+                return { project: null, error: error?.message || 'Project not found' };
             }
 
-            // Return limited fields/readonly view
             const project: Partial<Project> = {
-                id: data.id,
                 name: data.name,
                 category: data.category,
                 status: data.status,
@@ -167,6 +216,7 @@ export const projectService = {
                 ownerName: data.owner_name,
                 image: data.image,
                 description: data.description,
+                portalToken: data.portal_token,
             };
 
             return { project, error: null };

@@ -125,7 +125,7 @@ export default function BonnieWidget() {
   const handleBonnieMessage = async (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = []
-  ): Promise<{ text: string; error?: boolean }> => {
+  ): Promise<{ text: string; error?: boolean; tools?: Array<{ tool: string; success: boolean; summary: string }> }> => {
     setLogs(prev => [
       {
         id: String(Date.now()),
@@ -161,9 +161,32 @@ export default function BonnieWidget() {
     if (res.success) {
       const logsData = await bonnieService.getCombinedLogs(tenantId);
       setLogs(logsData);
-      return { text: res.response };
+      return {
+        text: res.response,
+        tools: res.toolsExecuted,
+      };
     }
 
+    return { text: res.response || 'Failed to process command.', error: true };
+  };
+
+  const handleBonnieStream = async (
+    text: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    onToken: (token: string) => void,
+    onPhase?: (phase: string) => void
+  ) => {
+    const res = await bonnieService.streamInstruction(tenantId, text, history, {
+      pathname: pathname || undefined,
+      moduleContext: activeModule,
+      onToken,
+      onPhase,
+    });
+    if (res.success) {
+      const logsData = await bonnieService.getCombinedLogs(tenantId);
+      setLogs(logsData);
+      return { text: res.response, tools: res.toolsExecuted };
+    }
     return { text: res.response || 'Failed to process command.', error: true };
   };
 
@@ -256,9 +279,12 @@ export default function BonnieWidget() {
             <div className="border-b border-slate-800 bg-slate-950/20 p-4">
               <BonnieChatPanel
                 compact
+                streaming
+                storageKey={tenantId ? `bonnie_chat_${tenantId}` : undefined}
                 placeholder={`Ask Bonnie about ${moduleHint.label.toLowerCase()}…`}
-                introMessage={`I'm Bonnie AI — focused on ${moduleHint.label} right now. I can run real actions: ${moduleHint.examples[0]}. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
+                introMessage={`I'm Bonnie AI — your in-platform agent for ${moduleHint.label}. Tell me what to do and I'll execute it. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
                 onSend={handleBonnieMessage}
+                onStreamSend={handleBonnieStream}
               />
             </div>
 

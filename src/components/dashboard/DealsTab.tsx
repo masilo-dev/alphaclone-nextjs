@@ -14,6 +14,8 @@ import { dealService, DealProduct } from '../../services/dealService';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import toast from 'react-hot-toast';
+import { CommunicationModal } from './crm/CommunicationModal';
+import type { EmailRecipient } from './crm/emailRecipient';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -121,7 +123,8 @@ const DealDetail: React.FC<{
   user: UserType;
   onBack: () => void;
   onStageChange: (id: string, stage: DealStage) => void;
-}> = ({ deal, user, onBack, onStageChange }) => {
+  onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
+}> = ({ deal, user, onBack, onStageChange, onComposeEmail }) => {
   const col = STAGE_COLORS[deal.stage];
   const stageIdx = STAGES.indexOf(deal.stage);
 
@@ -228,7 +231,26 @@ const DealDetail: React.FC<{
         {/* Contact */}
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
           {deal.contact_name && <div className="flex items-center gap-3 p-4"><User className="w-5 h-5 text-slate-500" /><span className="text-[15px] text-slate-300">{deal.contact_name}</span></div>}
-          {deal.contact_email && <div className="flex items-center gap-3 p-4"><Mail className="w-5 h-5 text-slate-500" /><span className="text-[15px] text-slate-300">{deal.contact_email}</span></div>}
+          {deal.contact_email && (
+            <div className="flex items-center justify-between gap-3 p-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <Mail className="w-5 h-5 text-slate-500 shrink-0" />
+                <span className="text-[15px] text-slate-300 truncate">{deal.contact_email}</span>
+              </div>
+              {onComposeEmail && (
+                <button
+                  type="button"
+                  onClick={() => onComposeEmail(
+                    { name: deal.contact_name || deal.name, email: deal.contact_email! },
+                    `Re: ${deal.name}`
+                  )}
+                  className="shrink-0 text-xs font-bold text-teal-400 hover:text-teal-300"
+                >
+                  Compose
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {deal.description && (
@@ -353,6 +375,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [newDealContactEmail, setNewDealContactEmail] = useState('');
   const [newDealDescription, setNewDealDescription] = useState('');
   const [savingNewDeal, setSavingNewDeal] = useState(false);
+  const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
 
   // Detect responsive view mode on load
   useEffect(() => {
@@ -526,7 +549,26 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }, [deals, searchTerm, filterStage, sortBy, sortOrder]);
 
   if (selectedDeal) {
-    return <DealDetail deal={selectedDeal} user={user} onBack={() => setSelectedDeal(null)} onStageChange={handleStageChange} />;
+    return (
+      <>
+        <DealDetail
+          deal={selectedDeal}
+          user={user}
+          onBack={() => setSelectedDeal(null)}
+          onStageChange={handleStageChange}
+          onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
+        />
+        {emailCompose && (
+          <CommunicationModal
+            user={user}
+            recipient={emailCompose.recipient}
+            prefilledSubject={emailCompose.subject}
+            onClose={() => setEmailCompose(null)}
+            onSent={() => setEmailCompose(null)}
+          />
+        )}
+      </>
+    );
   }
 
   // ── RENDER BOARD VIEW ──────────────────────────────────────────────────────────

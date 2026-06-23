@@ -99,6 +99,27 @@ export const notificationService = {
         return { error: error?.message };
     },
 
+    /** Workspace-wide in-app + email announcement (owner/admin only). */
+    async broadcastToTenant(params: {
+        tenantId: string;
+        title: string;
+        message?: string;
+        link?: string;
+        email?: boolean;
+        userIds?: string[];
+    }) {
+        const res = await fetch('/api/notifications/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params),
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return { success: false, error: payload.error || 'Broadcast failed' };
+        }
+        return { success: true, ...payload };
+    },
+
     // Subscribe to realtime notifications
     subscribe(userId: string, callback: (notification: Notification) => void) {
         const channel = supabase

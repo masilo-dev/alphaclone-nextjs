@@ -792,7 +792,6 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
         setSharing(true);
         try {
             const { toast } = await import('react-hot-toast');
-            // Make the project publicly viewable (idempotent) so the client link works without login.
             if (!project.isPublic) {
                 const { error } = await projectService.updateProject(project.id, { isPublic: true });
                 if (error) {
@@ -801,7 +800,12 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 }
                 project.isPublic = true;
             }
-            const url = `${window.location.origin}/p/${project.id}`;
+            const { token, error: tokenErr } = await projectService.ensurePortalToken(project.id);
+            if (tokenErr || !token) {
+                toast.error('Could not create a secure client link. Please try again.');
+                return;
+            }
+            const url = `${window.location.origin}/p/${token}`;
             try {
                 await navigator.clipboard.writeText(url);
                 toast.success('Client link copied to clipboard');
@@ -946,9 +950,10 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 setCommentDraft('');
 
                 if (clientEmail) {
-                    const threadTag = `AC-PROJ:${project.id}`;
+                    const threadTag = project.portalToken ? `AC-PROJ:${project.portalToken.slice(0, 8)}` : `AC-PROJ:${project.name?.slice(0, 12) || 'project'}`;
                     const subject = `Project update: ${project.name} [${threadTag}]`;
-                    const publicUrl = project.isPublic ? `${window.location.origin}/p/${project.id}` : '';
+                    const portalRef = project.portalToken || '';
+                    const publicUrl = project.isPublic && portalRef ? `${window.location.origin}/p/${portalRef}` : '';
                     const updateLines = [
                         `Hi ${clientName || 'there'},`,
                         '',

@@ -138,7 +138,7 @@ export default function BonnieFullView() {
   const handleBonnieMessage = async (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = []
-  ): Promise<{ text: string; error?: boolean }> => {
+  ): Promise<{ text: string; error?: boolean; tools?: Array<{ tool: string; success: boolean; summary: string }> }> => {
     setLogs(prev => [
       {
         id: String(Date.now()),
@@ -174,9 +174,32 @@ export default function BonnieFullView() {
     if (res.success) {
       const logsData = await bonnieService.getCombinedLogs(tenantId);
       setLogs(logsData);
-      return { text: res.response };
+      return {
+        text: res.response,
+        tools: res.toolsExecuted,
+      };
     }
 
+    return { text: res.response || 'Failed to process command.', error: true };
+  };
+
+  const handleBonnieStream = async (
+    text: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    onToken: (token: string) => void,
+    onPhase?: (phase: string) => void
+  ) => {
+    const res = await bonnieService.streamInstruction(tenantId, text, history, {
+      pathname: pathname || undefined,
+      moduleContext: activeModule,
+      onToken,
+      onPhase,
+    });
+    if (res.success) {
+      const logsData = await bonnieService.getCombinedLogs(tenantId);
+      setLogs(logsData);
+      return { text: res.response, tools: res.toolsExecuted };
+    }
     return { text: res.response || 'Failed to process command.', error: true };
   };
 
@@ -362,9 +385,12 @@ export default function BonnieFullView() {
 
           <div className="flex-1 min-h-[420px]">
             <BonnieChatPanel
-              placeholder="Instruct Bonnie (e.g. audit overdue invoices, open WhatsApp, summarize stale deals)…"
-              introMessage="I'm Bonnie AI — your full-stack workspace agent. I execute real tools: CRM queries, invoice audits, task creation, social posts, email campaigns, playbooks, and autonomous background scans. Tell me what to run."
+              streaming
+              storageKey={tenantId ? `bonnie_chat_full_${tenantId}` : undefined}
+              placeholder="Tell Bonnie what to run (e.g. audit overdue invoices, send WhatsApp, publish campaign, find Facebook leads)…"
+              introMessage="I'm Bonnie AI — your full-stack workspace agent. Chat naturally; I execute real tools across CRM, finance, outreach, social, WhatsApp, and automation."
               onSend={handleBonnieMessage}
+              onStreamSend={handleBonnieStream}
             />
           </div>
         </div>

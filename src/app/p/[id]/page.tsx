@@ -21,8 +21,9 @@ interface ProjectComment {
 
 export default function PublicProjectPage() {
   const params = useParams();
-  const projectId = params?.id as string;
+  const portalRef = params?.id as string;
   const [project, setProject] = useState<Partial<Project> | null>(null);
+  const [internalProjectId, setInternalProjectId] = useState<string | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [comments, setComments] = useState<ProjectComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,41 +34,46 @@ export default function PublicProjectPage() {
   const [posting, setPosting] = useState(false);
 
   const loadComments = useCallback(async () => {
-    if (!projectId) return;
-    const res = await fetch(`/api/projects/public/${projectId}/comments`);
+    if (!portalRef) return;
+    const res = await fetch(`/api/projects/public/${portalRef}/comments`);
     const data = await res.json().catch(() => ({}));
     if (data.success) setComments(data.comments || []);
-  }, [projectId]);
+  }, [portalRef]);
 
   useEffect(() => {
-    if (projectId) loadData();
-  }, [projectId]);
+    if (portalRef) loadData();
+  }, [portalRef]);
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!internalProjectId) return;
     loadComments();
     const channel = supabase
-      .channel(`project_comments_${projectId}`)
+      .channel(`project_comments_${internalProjectId}`)
       .on('postgres_changes' as any, {
         event: 'INSERT',
         schema: 'public',
         table: 'project_comments',
-        filter: `project_id=eq.${projectId}`,
+        filter: `project_id=eq.${internalProjectId}`,
       }, (payload: any) => {
         const row = payload.new as ProjectComment;
         setComments((prev) => (prev.some((c) => c.id === row.id) ? prev : [...prev, row]));
       })
       .subscribe();
     return () => { channel.unsubscribe(); };
-  }, [projectId, loadComments]);
+  }, [internalProjectId, loadComments]);
 
   const loadData = async () => {
     try {
-      const { project, error: projectError } = await projectService.getPublicProjectStatus(projectId);
-      if (projectError) throw new Error(projectError);
-      setProject(project);
-      const { milestones, error: milestonesError } = await milestoneService.getMilestones(projectId);
-      if (!milestonesError) setMilestones(milestones);
+      const { project: publicProject, error: projectError } = await projectService.getPublicProjectStatus(portalRef);
+      if (projectError || !publicProject) throw new Error(projectError || 'Not found');
+      setProject(publicProject);
+
+      const { projectId } = await projectService.resolvePublicProjectRef(portalRef);
+      if (!projectId) throw new Error('Project reference invalid');
+      setInternalProjectId(projectId);
+
+      const { milestones: rows, error: milestonesError } = await milestoneService.getMilestones(projectId);
+      if (!milestonesError) setMilestones(rows);
     } catch {
       setError('Failed to load project details');
     } finally {
@@ -83,7 +89,7 @@ export default function PublicProjectPage() {
     }
     setPosting(true);
     try {
-      const res = await fetch(`/api/projects/public/${projectId}/comments`, {
+      const res = await fetch(`/api/projects/public/${portalRef}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ authorName, authorEmail, content: newComment, isClient: true }),
@@ -127,7 +133,7 @@ export default function PublicProjectPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <div className="inline-block px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 text-sm font-medium border border-teal-500/20">
-            Project Portal
+            AlphaClone Systems — Project Portal
           </div>
           <h1 className="text-4xl md:text-5xl font-bold">{project.name}</h1>
           {project.ownerName && <p className="text-slate-400">Client: {project.ownerName}</p>}

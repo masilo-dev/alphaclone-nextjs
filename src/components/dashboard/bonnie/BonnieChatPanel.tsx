@@ -1,13 +1,20 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, Send } from 'lucide-react';
+import { CheckCircle2, Loader2, Send, Wrench, XCircle } from 'lucide-react';
+
+export type BonnieToolStep = {
+  tool: string;
+  success: boolean;
+  summary: string;
+};
 
 export type BonnieChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   error?: boolean;
+  tools?: BonnieToolStep[];
 };
 
 type BonnieChatPanelProps = {
@@ -15,32 +22,63 @@ type BonnieChatPanelProps = {
   placeholder?: string;
   compact?: boolean;
   disabled?: boolean;
+  storageKey?: string;
+  streaming?: boolean;
   onSend: (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>
-  ) => Promise<{ text: string; error?: boolean }>;
+  ) => Promise<{ text: string; error?: boolean; tools?: BonnieToolStep[] }>;
+  onStreamSend?: (
+    text: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    onToken: (token: string) => void,
+    onPhase?: (phase: string) => void
+  ) => Promise<{ text: string; error?: boolean; tools?: BonnieToolStep[] }>;
 };
 
+function loadStoredMessages(key: string, intro: string): BonnieChatMessage[] {
+  if (typeof window === 'undefined') {
+    return intro ? [{ id: 'intro', role: 'assistant', text: intro }] : [];
+  }
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw) as BonnieChatMessage[];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // ignore corrupt storage
+  }
+  return intro ? [{ id: 'intro', role: 'assistant', text: intro }] : [];
+}
+
 export default function BonnieChatPanel({
-  introMessage = "Hi — I'm Bonnie. Type a command (e.g. audit overdue invoices, open CRM, summarize stale deals).",
-  placeholder = 'Instruct Bonnie…',
+  introMessage = "Hi — I'm Bonnie AI. Tell me what to do (audit invoices, send WhatsApp, publish a campaign, find leads) and I'll execute it across your workspace.",
+  placeholder = 'Ask Bonnie to do something…',
   compact = false,
   disabled = false,
+  storageKey,
+  streaming = false,
   onSend,
+  onStreamSend,
 }: BonnieChatPanelProps) {
   const [messages, setMessages] = useState<BonnieChatMessage[]>(() =>
-    introMessage
-      ? [{ id: 'intro', role: 'assistant', text: introMessage }]
-      : []
+    storageKey ? loadStoredMessages(storageKey, introMessage) : introMessage ? [{ id: 'intro', role: 'assistant', text: introMessage }] : []
   );
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [agentPhase, setAgentPhase] = useState<'idle' | 'thinking' | 'executing' | 'responding'>('idle');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, sending]);
+  }, [messages, sending, agentPhase]);
+
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') return;
+    sessionStorage.setItem(storageKey, JSON.stringify(messages.slice(-40)));
+  }, [messages, storageKey]);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -54,37 +92,97 @@ export default function BonnieChatPanel({
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setSending(true);
+    setAgentPhase('thinking');
 
     const history = messages
       .filter((m) => m.id !== 'intro')
       .map((m) => ({ role: m.role, content: m.text }));
 
+    const phaseTimer = window.setTimeout(() => setAgentPhase('executing'), 1200);
+
     try {
-      const result = await onSend(text, history);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          text: result.text,
-          error: result.error,
-        },
-      ]);
+      if (streaming && onStreamSend) {
+        const streamMsgId = `assistant-${Date.now()}`;
+        setMessages((prev) => [...prev, { id: streamMsgId, role: 'assistant', text: '' }]);
+        setAgentPhase('responding');
+
+        const result = await onStreamSend(
+          text,
+          history,
+          (token) => {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === streamMsgId ? { ...m, text: m.text + token } : m))
+            );
+          },
+          (phase) => {
+            if (phase === 'executing') setAgentPhase('executing');
+            if (phase === 'thinking') setAgentPhase('thinking');
+          }
+        );
+
+        window.clearTimeout(phaseTimer);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamMsgId
+              ? {
+                  ...m,
+                  text: result.text || m.text,
+                  error: result.error,
+                  tools: result.tools,
+                }
+              : m
+          )
+        );
+      } else {
+        const result = await onSend(text, history);
+        window.clearTimeout(phaseTimer);
+        setAgentPhase('responding');
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: 'assistant',
+            text: result.text,
+            error: result.error,
+            tools: result.tools,
+          },
+        ]);
+      }
     } catch {
+      window.clearTimeout(phaseTimer);
       setMessages((prev) => [
         ...prev,
         {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          text: 'Something went wrong processing that command. Please try again.',
+          text: 'Something went wrong. Check that DEEPSEEK_API_KEY is set and try again.',
           error: true,
         },
       ]);
     } finally {
       setSending(false);
+      setAgentPhase('idle');
       inputRef.current?.focus();
     }
   };
+
+  const clearChat = () => {
+    const fresh = introMessage ? [{ id: 'intro', role: 'assistant' as const, text: introMessage }] : [];
+    setMessages(fresh);
+    if (storageKey && typeof window !== 'undefined') {
+      sessionStorage.removeItem(storageKey);
+    }
+  };
+
+  const phaseLabel =
+    agentPhase === 'thinking'
+      ? 'Bonnie is thinking…'
+      : agentPhase === 'executing'
+        ? 'Bonnie is running tools…'
+        : agentPhase === 'responding'
+          ? 'Bonnie is responding…'
+          : null;
 
   return (
     <div
@@ -92,6 +190,18 @@ export default function BonnieChatPanel({
         compact ? 'h-[280px]' : 'h-full min-h-[360px]'
       }`}
     >
+      {!compact && messages.length > 1 && (
+        <div className="flex justify-end border-b border-slate-800/60 px-3 py-1.5">
+          <button
+            type="button"
+            onClick={clearChat}
+            className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300"
+          >
+            Clear chat
+          </button>
+        </div>
+      )}
+
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-3 custom-scrollbar">
         {messages.map((msg) => (
           <div
@@ -107,14 +217,40 @@ export default function BonnieChatPanel({
                     : 'border border-slate-700/60 bg-slate-800/80 text-slate-100'
               }`}
             >
-              {msg.text}
+              {msg.role === 'assistant' && msg.id !== 'intro' && (
+                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-400/80">
+                  Bonnie AI
+                </p>
+              )}
+              <p className="whitespace-pre-wrap">{msg.text}</p>
+              {msg.tools && msg.tools.length > 0 && (
+                <div className="mt-2 space-y-1 border-t border-slate-700/50 pt-2">
+                  <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <Wrench className="h-3 w-3" /> Actions run
+                  </p>
+                  {msg.tools.map((t, i) => (
+                    <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 text-[11px] text-slate-400">
+                      {t.success ? (
+                        <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-400" />
+                      ) : (
+                        <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" />
+                      )}
+                      <span>
+                        <span className="font-mono text-slate-300">{t.tool}</span>
+                        {' — '}
+                        {t.summary}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
-        {sending && (
+        {sending && phaseLabel && (
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />
-            Bonnie is working…
+            {phaseLabel}
           </div>
         )}
       </div>
@@ -148,7 +284,7 @@ export default function BonnieChatPanel({
           </button>
         </div>
         <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
-          Enter to send · Bonnie AI runs real tools across your workspace
+          Enter to send · Bonnie AI runs real tools across your workspace — chat persists in this session
         </p>
       </div>
     </div>

@@ -7,7 +7,7 @@ import {
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
     TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown, Sparkles,
     Activity, HelpCircle, Code2, Globe, Shield, Zap, AlertCircle, AlertTriangle, MessageCircle,
-    ThumbsUp, Repeat2, BarChart3, ChevronRight, X, Calendar
+    ThumbsUp, Repeat2, BarChart3, ChevronRight, X, Calendar, Search
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -174,6 +174,9 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [activityLoading, setActivityLoading] = useState(false);
     const [postsLoading, setPostsLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [leadSearchQuery, setLeadSearchQuery] = useState('');
+    const [graphLeadResults, setGraphLeadResults] = useState<Array<Record<string, unknown>>>([]);
+    const [searchingLeads, setSearchingLeads] = useState(false);
     const [reconnectRequired, setReconnectRequired] = useState(false);
     const [integrationLoadError, setIntegrationLoadError] = useState<string | null>(null);
 
@@ -752,6 +755,25 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     const filteredLeads = statusFilter === 'all' ? leads : leads.filter(l => l.status === statusFilter);
 
+    const handleLeadSearch = async () => {
+        if (!tenant?.id) return;
+        setSearchingLeads(true);
+        try {
+            const res = await fetch(
+                `/api/facebook/leads/search?tenantId=${encodeURIComponent(tenant.id)}&q=${encodeURIComponent(leadSearchQuery.trim())}`
+            );
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Search failed');
+            setLeads(data.local || []);
+            setGraphLeadResults(data.graph || []);
+            toast.success(`Found ${data.total || 0} Facebook lead(s)`);
+        } catch (err: any) {
+            toast.error(err.message || 'Facebook lead search failed');
+        } finally {
+            setSearchingLeads(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -864,6 +886,27 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         {/* Leads View */}
                         {activeTab === 'leads' && (
                             <div className="space-y-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                        <input
+                                            value={leadSearchQuery}
+                                            onChange={(e) => setLeadSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && void handleLeadSearch()}
+                                            placeholder="Search Facebook leads by name, email, phone, company…"
+                                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white text-sm placeholder:text-slate-500 focus:border-teal-500/50 outline-none"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleLeadSearch()}
+                                        disabled={searchingLeads}
+                                        className="px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {searchingLeads ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                        Search
+                                    </button>
+                                </div>
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                                         <Users className="text-blue-500" />
@@ -915,7 +958,24 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             </div>
                                         </div>
                                     ))}
+                                    {filteredLeads.length === 0 && graphLeadResults.length === 0 && (
+                                        <p className="text-sm text-slate-500 text-center py-8">No leads yet. Connect Facebook and run a search above.</p>
+                                    )}
                                 </div>
+                                {graphLeadResults.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Live from Facebook Graph</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {graphLeadResults.map((g, idx) => (
+                                                <div key={String(g.lead_id || idx)} className="bg-[#141414] border border-blue-500/20 rounded-2xl p-4">
+                                                    <p className="font-bold text-white">{String(g.name || 'Lead')}</p>
+                                                    <p className="text-xs text-slate-400 mt-1">{String(g.email || 'No email')} · {String(g.phone || 'No phone')}</p>
+                                                    <p className="text-[10px] text-slate-500 mt-2">{String(g.form_name || 'Lead form')} · {String(g.page_name || 'Facebook')}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

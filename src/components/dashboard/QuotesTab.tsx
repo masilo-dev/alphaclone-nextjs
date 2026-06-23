@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText } from 'lucide-react';
+import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText, Mail } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +9,8 @@ import { useTenant } from '../../contexts/TenantContext';
 import { quoteService } from '../../services/quoteService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { CommunicationModal } from './crm/CommunicationModal';
+import type { EmailRecipient } from './crm/emailRecipient';
 
 type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
@@ -97,7 +99,8 @@ const QuoteDetail: React.FC<{
   onConvert: (quote: QuoteRow) => void;
   onEdit: (quote: QuoteRow) => void;
   onDelete: (id: string) => void;
-}> = ({ quote, onBack, onSend, onConvert, onEdit, onDelete }) => {
+  onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
+}> = ({ quote, onBack, onSend, onConvert, onEdit, onDelete, onComposeEmail }) => {
   const clientName = quote.client_name?.trim() || 'Unnamed Client';
   const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
 
@@ -115,7 +118,23 @@ const QuoteDetail: React.FC<{
         </div>
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
           <div className="text-[15px] font-bold text-white">{clientName}</div>
-          {quote.client_email && <div className="text-[13px] text-slate-400 mt-0.5">{quote.client_email}</div>}
+          {quote.client_email && (
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <div className="text-[13px] text-slate-400">{quote.client_email}</div>
+              {onComposeEmail && (
+                <button
+                  type="button"
+                  onClick={() => onComposeEmail(
+                    { name: clientName, email: quote.client_email! },
+                    `Quote ${quote.number || quote.id.slice(0, 8)} — ${clientName}`
+                  )}
+                  className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                >
+                  <Mail className="w-3.5 h-3.5" /> Compose
+                </button>
+              )}
+            </div>
+          )}
           {quote.valid_until && <div className="text-[13px] text-slate-400 opacity-55 mt-0.5">Valid until {new Date(quote.valid_until).toLocaleDateString()}</div>}
         </div>
         {quote.status === 'accepted' && (
@@ -539,6 +558,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   const [selected, setSelected] = useState<QuoteRow | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<QuoteRow | null>(null);
+  const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -637,7 +657,24 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   if (selected) {
     return (
       <>
-        <QuoteDetail quote={selected} onBack={() => setSelected(null)} onSend={sendQuote} onConvert={convertToInvoice} onEdit={(q) => setEditing(q)} onDelete={deleteQuote} />
+        <QuoteDetail
+          quote={selected}
+          onBack={() => setSelected(null)}
+          onSend={sendQuote}
+          onConvert={convertToInvoice}
+          onEdit={(q) => setEditing(q)}
+          onDelete={deleteQuote}
+          onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
+        />
+        {emailCompose && (
+          <CommunicationModal
+            user={user}
+            recipient={emailCompose.recipient}
+            prefilledSubject={emailCompose.subject}
+            onClose={() => setEmailCompose(null)}
+            onSent={() => setEmailCompose(null)}
+          />
+        )}
         <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
         <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
       </>

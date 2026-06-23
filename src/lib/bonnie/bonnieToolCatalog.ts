@@ -64,6 +64,7 @@ export const BONNIE_MCP_SERVER_TOOLS = [
 export const BONNIE_CUSTOM_TOOLS = [
   'run_autonomous_scan',
   'summarize_workspace',
+  'search_facebook_leads',
 ] as const;
 
 export type BonnieModuleId =
@@ -107,13 +108,13 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   whatsapp: {
     label: 'WhatsApp',
-    tools: ['send_whatsapp_message', 'get_whatsapp_status', 'enable_whatsapp_chatbot'],
-    examples: ['Check WhatsApp connection', 'Send WhatsApp to +1234567890 saying hello'],
+    tools: ['send_whatsapp_message', 'get_whatsapp_status', 'enable_whatsapp_chatbot', 'search_facebook_leads'],
+    examples: ['Check WhatsApp connection', 'Search Facebook leads for John'],
   },
   social: {
     label: 'Social media',
-    tools: ['create_social_post', 'create_linkedin_post', 'schedule_social_post', 'publish_facebook_reel'],
-    examples: ['Post to LinkedIn about our new service', 'Schedule a Facebook post for tomorrow'],
+    tools: ['create_social_post', 'create_linkedin_post', 'schedule_social_post', 'publish_facebook_reel', 'search_facebook_leads'],
+    examples: ['Post to LinkedIn about our new service', 'Search Facebook leads inside the platform'],
   },
   mail: {
     label: 'Mail',
