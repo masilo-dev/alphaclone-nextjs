@@ -77,6 +77,8 @@ export const meetingService = {
                 .insert({
                     host_id: data.hostId,
                     daily_room_url: data.dailyRoomUrl,
+                    video_provider: data.meetingProvider === 'teams' ? 'external' : 'daily',
+                    provider_metadata: data.providerMetadata || {},
                     scheduled_at: data.startTime,
                     duration_minutes: data.duration,
                     title: data.title,

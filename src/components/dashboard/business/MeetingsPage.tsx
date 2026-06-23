@@ -8,7 +8,7 @@ import { BookingSettings } from './BookingSettings';
 import { PLATFORM_CALENDLY_URL } from '@/constants';
 import { Button, Badge } from '@/components/ui/UIComponents';
 import { supabase } from '../../../lib/supabase';
-import { dailyService } from '../../../services/dailyService';
+import { createInstantMeeting } from '../../../services/instantMeetingService';
 import toast from 'react-hot-toast';
 
 interface MeetingsPageProps {
@@ -50,12 +50,12 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
     const startInstantMeeting = async () => {
         setStarting(true);
-        const toastId = toast.loading('Creating meeting room…');
+        const toastId = toast.loading('Creating meeting…');
         try {
-            const { call, error } = await dailyService.createVideoCall({
+            const { call, provider, error } = await createInstantMeeting({
                 hostId: user.id,
+                tenantId: currentTenant?.id,
                 title: `Meeting · ${new Date().toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
-                isPublic: false,
             });
             if (error || !call) {
                 if (error === 'LIMIT_EXCEEDED_TEASER') {
@@ -65,7 +65,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                 }
                 return;
             }
-            toast.success('Joining meeting…', { id: toastId });
+            toast.success(provider === 'teams' ? 'Teams meeting ready — joining…' : 'Joining meeting…', { id: toastId });
             await loadMeetings();
             onJoinRoom?.(call.id);
         } finally {

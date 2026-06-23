@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import CustomVideoRoom from '@/components/dashboard/video/CustomVideoRoom';
 import MicrosoftMeetingEmbed from '@/components/dashboard/video/MicrosoftMeetingEmbed';
 import { dailyService } from '@/services/dailyService';
+import { resolveMeetingJoinUrl, resolveMeetingProvider } from '@/services/instantMeetingService';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -160,15 +161,22 @@ export default function MeetPage() {
                 // For now, we will use the roomUrl.
                 // TODO: Enhance with token generation for stricter access control if needed.
 
-                if (!call.daily_room_url) {
+                const joinUrl = resolveMeetingJoinUrl(call);
+                if (!joinUrl) {
                     setError('Meeting room configuration error.');
                     setLoading(false);
                     return;
                 }
 
-                const provider = (call.metadata?.video_provider as 'daily' | 'teams' | 'jitsi' | undefined) || 'daily';
+                const resolvedProvider = resolveMeetingProvider(call);
+                const provider =
+                    resolvedProvider === 'teams'
+                        ? 'teams'
+                        : resolvedProvider === 'jitsi'
+                            ? 'jitsi'
+                            : 'daily';
                 setMeetingProvider(provider);
-                setRoomUrl(call.daily_room_url);
+                setRoomUrl(joinUrl);
                 setLoading(false);
 
                 // For permanent public rooms with no PIN, we can potentially auto-join if name is already known
