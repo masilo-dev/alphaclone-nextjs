@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 // Snapshot of the currently published legal policies users accept at signup.
 // Bump this whenever Terms/Privacy materially change so re-acceptance can be required.
-export const LEGAL_POLICY_VERSION = '2026-06-01';
+const LEGAL_POLICY_VERSION = '2026-06-01';
 
 async function getAuthedClient(req: NextRequest) {
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
