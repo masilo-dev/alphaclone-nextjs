@@ -25,6 +25,12 @@ const statusColors: Record<string, string> = {
     cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
+async function describeCampaignFailure(campaignId: string, fallback: string | null | undefined) {
+    const diag = await emailCampaignService.diagnoseCampaign(campaignId);
+    const message = [...diag.issues, ...diag.warnings, fallback].filter(Boolean).join(' ');
+    return message || fallback || 'Failed to send campaign';
+}
+
 // Plain-language <-> HTML helpers so non-technical users never see markup in simple mode.
 const plainFromHtml = (html: string): string => {
     if (!html) return '';
@@ -406,15 +412,39 @@ Request: ${userMsg}`,
             let finalIds = recipientType === 'all'
                 ? contacts.map(c => c.id)
                 : selectedContactIds;
-            await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds, {
+            const recipientResult = await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds, {
                 skipPreviouslyContacted: form.skipPreviouslyContacted,
             });
+
+            if (recipientResult.error) {
+                toast.error(`Campaign saved as draft. Recipients failed: ${recipientResult.error}`, { id: toastId });
+                setViewMode('list');
+                setActiveStep(1);
+                setRecipientType(null);
+                setSelectedContactIds([]);
+                loadData();
+                return;
+            }
+
+            if (recipientResult.added === 0) {
+                toast.error(
+                    `Campaign saved as draft. No recipients were added${recipientResult.skipped ? ` (${recipientResult.skipped} skipped as already contacted)` : ''}. Turn off "Skip previously contacted" or pick different contacts.`,
+                    { id: toastId, duration: 7000 },
+                );
+                setViewMode('list');
+                setActiveStep(1);
+                setRecipientType(null);
+                setSelectedContactIds([]);
+                loadData();
+                return;
+            }
 
             if (!form.scheduleEnabled || !form.scheduledAt) {
                 toast.loading('Dispatching campaign emails...', { id: toastId });
                 const sendResult = await emailCampaignService.sendCampaign(campaign.id);
                 if (!sendResult.success) {
-                    toast.error(`Campaign created but sending failed: ${sendResult.error}`, { id: toastId });
+                    const detail = await describeCampaignFailure(campaign.id, sendResult.error);
+                    toast.error(`Campaign created but sending failed: ${detail}`, { id: toastId, duration: 8000 });
                 } else {
                     toast.success('Campaign launched and sent!', { id: toastId });
                 }
@@ -668,6 +698,25 @@ Voice & rules:
                     {/* 1. LIST VIEW */}
                     {viewMode === 'list' && (
                         <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                            {campaigns.some((camp) => camp.status === 'draft') && (
+                                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3">
+                                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                                    <div className="text-sm">
+                                        <p className="font-semibold text-amber-200">Draft campaigns stay draft until you launch them</p>
+                                        <p className="mt-1 text-slate-400 leading-relaxed">
+                                            Open a draft and tap <span className="text-white font-semibold">Run Now</span>, or connect an email provider in{' '}
+                                            <button
+                                                type="button"
+                                                onClick={() => router.push('/dashboard/business/settings')}
+                                                className="text-teal-400 hover:text-teal-300 underline underline-offset-2"
+                                            >
+                                                Settings → Integrations
+                                            </button>{' '}
+                                            (SendGrid, Resend, Brevo, Zoho Mail, or Gmail).
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                             {campaigns.length === 0 ? (
                                 <div className="py-16 text-center border border-dashed border-white/5 rounded-2xl">
                                     <Inbox className="w-10 h-10 text-slate-700 mx-auto mb-3" />
@@ -765,7 +814,8 @@ Voice & rules:
                                                         loadData();
                                                         setViewMode('list');
                                                     } else {
-                                                        toast.error(res.error || 'Failed to send campaign', { id: toastId });
+                                                        const detail = await describeCampaignFailure(selectedCampaign.id, res.error);
+                                                        toast.error(detail, { id: toastId, duration: 8000 });
                                                     }
                                                 }}
                                                 className="px-3 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"

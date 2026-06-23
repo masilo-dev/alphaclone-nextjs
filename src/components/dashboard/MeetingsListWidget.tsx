@@ -78,9 +78,13 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
             return { hours: 999, canCancel: true, message: 'Can cancel anytime' };
         }
 
-        // This is a simplified calculation. In production, you'd fetch the calendar event's start_time
-        // For now, we'll use created_at as a proxy
-        const hoursUntil = 999; // Placeholder
+        // Use scheduled_at when available; otherwise allow cancellation by policy default.
+        const startMs = call.scheduled_at
+            ? new Date(call.scheduled_at).getTime()
+            : call.created_at
+                ? new Date(call.created_at).getTime()
+                : Date.now();
+        const hoursUntil = (startMs - Date.now()) / (1000 * 60 * 60);
         const canCancel = hoursUntil >= call.cancellation_policy_hours || user.role === 'admin';
         const message = user.role === 'admin'
             ? 'Admin can cancel anytime'

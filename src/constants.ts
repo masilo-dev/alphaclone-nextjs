@@ -68,7 +68,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     subItems: [
       { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-      { label: 'Mail', href: '/dashboard/mail', icon: Mail, comingSoon: true },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
     ]
   },
   {
@@ -98,7 +98,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     subItems: [
       { label: 'Calendar', href: '/dashboard/calendar' },
-      { label: 'Mail', href: '/dashboard/mail', comingSoon: true },
+      { label: 'Mail', href: '/dashboard/mail' },
       { label: 'Messages', href: '/dashboard/messages' },
       { label: 'Deep-Desk Tickets', href: '/dashboard/tickets' },
     ]

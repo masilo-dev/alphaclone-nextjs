@@ -670,6 +670,35 @@ export const emailCampaignService = {
         }
     },
 
+    async diagnoseCampaign(campaignId: string): Promise<{
+        issues: string[];
+        warnings: string[];
+        info: string[];
+        error: string | null;
+    }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const params = new URLSearchParams({ tenantId, campaignId });
+            const res = await fetch(`/api/email/campaigns/diagnose?${params.toString()}`);
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to diagnose campaign');
+            return {
+                issues: Array.isArray(payload.issues) ? payload.issues : [],
+                warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+                info: Array.isArray(payload.info) ? payload.info : [],
+                error: null,
+            };
+        } catch (err) {
+            return {
+                issues: [],
+                warnings: [],
+                info: [],
+                error: err instanceof Error ? err.message : 'Unknown error',
+            };
+        }
+    },
+
     /**
      * Send a single transactional email using a template
      */
