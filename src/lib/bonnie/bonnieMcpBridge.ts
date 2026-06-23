@@ -1,4 +1,3 @@
-import { createMCPServer } from '@/services/mcp/MCPServer';
 import { BONNIE_MCP_SERVER_TOOLS } from './bonnieToolCatalog';
 
 const MCP_TOOL_SET = new Set<string>(BONNIE_MCP_SERVER_TOOLS);
@@ -13,6 +12,7 @@ export async function executeBonnieMcpTool(
   tenantId: string,
   userId: string
 ): Promise<{ content?: Array<{ text?: string }>; isError?: boolean }> {
+  const { createMCPServer } = await import('@/services/mcp/MCPServer');
   const server = createMCPServer({ tenantId, userId });
   const merged = {
     ...args,

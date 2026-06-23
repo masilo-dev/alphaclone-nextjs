@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     MessageCircle, Send, Search, Loader2, User, Sparkles, 
     Check, CheckCheck, ShieldCheck, Phone, Globe, Bot, Settings,
-    Smartphone, MessageSquare
+    Smartphone, MessageSquare, Facebook
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -49,6 +49,11 @@ export default function WhatsAppChatHub() {
     // Chatbot settings toggle
     const [chatbotEnabled, setChatbotEnabled] = useState(false);
     const [savingSettings, setSavingSettings] = useState(false);
+
+    const [fbLeadQuery, setFbLeadQuery] = useState('');
+    const [fbLeadResults, setFbLeadResults] = useState<any[]>([]);
+    const [searchingFbLeads, setSearchingFbLeads] = useState(false);
+    const [showFbSearch, setShowFbSearch] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const threadsRef = useRef<ChatThread[]>([]);
@@ -118,6 +123,36 @@ export default function WhatsAppChatHub() {
         } finally {
             setSavingSettings(false);
         }
+    };
+
+    const handleFacebookLeadSearch = async () => {
+        if (!currentTenant?.id) return;
+        setSearchingFbLeads(true);
+        try {
+            const res = await fetch(
+                `/api/facebook/leads/search?tenantId=${encodeURIComponent(currentTenant.id)}&q=${encodeURIComponent(fbLeadQuery.trim())}`
+            );
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Search failed');
+            setFbLeadResults([...(data.local || []), ...(data.graph || [])]);
+            toast.success(`Found ${data.total || 0} Facebook lead(s)`);
+        } catch (err: any) {
+            toast.error(err.message || 'Facebook lead search failed');
+        } finally {
+            setSearchingFbLeads(false);
+        }
+    };
+
+    const startWhatsAppFromLead = (lead: any) => {
+        const phone = String(lead.phone || '').replace(/[^0-9]/g, '');
+        if (!phone) {
+            toast.error('This Facebook lead has no phone number for WhatsApp.');
+            return;
+        }
+        setSelectedPhone(phone);
+        const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.company || 'there';
+        setReplyText(`Hi ${name}, thanks for connecting via Facebook. How can I help you today?`);
+        setShowFbSearch(false);
     };
 
     // Load messages and group into threads
@@ -365,6 +400,53 @@ export default function WhatsAppChatHub() {
                             className="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white outline-none focus:border-teal-500/40 transition-all placeholder:text-slate-600"
                         />
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowFbSearch((prev) => !prev)}
+                        className="w-full text-left text-[10px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 flex items-center gap-1.5"
+                    >
+                        <Facebook className="w-3.5 h-3.5" />
+                        {showFbSearch ? 'Hide Facebook lead search' : 'Search Facebook leads'}
+                    </button>
+
+                    {showFbSearch && (
+                        <div className="space-y-2 p-2.5 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={fbLeadQuery}
+                                    onChange={(e) => setFbLeadQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleFacebookLeadSearch()}
+                                    placeholder="Name, email, campaign..."
+                                    className="flex-1 px-3 py-1.5 text-xs bg-slate-900 border border-slate-800 rounded-lg text-white"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleFacebookLeadSearch}
+                                    disabled={searchingFbLeads}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white disabled:opacity-50"
+                                >
+                                    {searchingFbLeads ? '…' : 'Find'}
+                                </button>
+                            </div>
+                            {fbLeadResults.slice(0, 5).map((lead, idx) => (
+                                <button
+                                    key={lead.id || lead.lead_id || idx}
+                                    type="button"
+                                    onClick={() => startWhatsAppFromLead(lead)}
+                                    className="w-full text-left p-2 rounded-lg bg-slate-900/80 border border-slate-800 hover:border-emerald-500/30"
+                                >
+                                    <p className="text-xs font-semibold text-white truncate">
+                                        {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.full_name || lead.company || 'Lead'}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 truncate">
+                                        {lead.phone || lead.email || lead.campaign_name || 'Tap to start WhatsApp'}
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Thread list */}

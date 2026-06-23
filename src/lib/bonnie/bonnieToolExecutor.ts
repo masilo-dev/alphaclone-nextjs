@@ -1,8 +1,6 @@
-import { autonomousRunnerService } from '@/services/autonomousRunnerService';
 import { initializeRegistry, executeTool, hasTool } from '@/lib/mcp/tool-registry';
-import { BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieSystemPrompt';
+import { BONNIE_CUSTOM_TOOLS, BONNIE_MCP_SERVER_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
 import { getBonnieWorkspaceSnapshot } from '@/lib/bonnie/bonnieWorkspaceSnapshot';
-import { executeBonnieMcpTool, isBonnieMcpServerTool } from '@/lib/bonnie/bonnieMcpBridge';
 
 export type BonnieToolCall = {
   tool: string;
@@ -17,6 +15,7 @@ export type BonnieToolResult = {
 };
 
 const CUSTOM_SET = new Set<string>(BONNIE_CUSTOM_TOOLS);
+const MCP_TOOL_SET = new Set<string>(BONNIE_MCP_SERVER_TOOLS);
 
 function extractToolText(result: { content?: Array<{ text?: string }> }): string {
   const chunk = result.content?.[0]?.text;
@@ -43,7 +42,7 @@ export async function executeBonnieToolCalls(
 
     try {
       if (CUSTOM_SET.has(tool)) {
-        results.push(await executeCustomTool(tool, tenantId, userId));
+        results.push(await executeCustomTool(tool, tenantId, userId, args));
         continue;
       }
 
@@ -65,7 +64,8 @@ export async function executeBonnieToolCalls(
         continue;
       }
 
-      if (isBonnieMcpServerTool(tool)) {
+      if (MCP_TOOL_SET.has(tool)) {
+        const { executeBonnieMcpTool } = await import('@/lib/bonnie/bonnieMcpBridge');
         const result = await executeBonnieMcpTool(tool, mergedArgs, tenantId, userId);
         const text = extractToolText(result);
         results.push({
@@ -97,9 +97,11 @@ export async function executeBonnieToolCalls(
 async function executeCustomTool(
   tool: string,
   tenantId: string,
-  _userId: string
+  _userId: string,
+  args: Record<string, unknown> = {}
 ): Promise<BonnieToolResult> {
   if (tool === 'run_autonomous_scan') {
+    const { autonomousRunnerService } = await import('@/services/autonomousRunnerService');
     const result = await autonomousRunnerService.runForTenant(tenantId);
     const actionCount = result.run?.actions?.length ?? 0;
     return {
@@ -119,6 +121,21 @@ async function executeCustomTool(
       success: true,
       summary: 'Workspace snapshot loaded.',
       details: JSON.stringify(snapshot, null, 2),
+    };
+  }
+
+  if (tool === 'search_facebook_leads') {
+    const query = String(args.query || args.q || args.name || '').trim();
+    if (!query) {
+      return { tool, success: false, summary: 'Provide a search query (name, email, company, or phone).' };
+    }
+    const { searchFacebookLeads } = await import('@/services/facebookLeadSearchService');
+    const data = await searchFacebookLeads(tenantId, query);
+    return {
+      tool,
+      success: true,
+      summary: `Found ${data.total} Facebook lead match(es) for "${query}".`,
+      details: JSON.stringify(data, null, 2).slice(0, 2000),
     };
   }
 

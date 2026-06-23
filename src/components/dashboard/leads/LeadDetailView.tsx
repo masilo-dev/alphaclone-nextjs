@@ -23,6 +23,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import GhostIntelligence from '@/components/leads/GhostIntelligence';
+import { useTenant } from '@/contexts/TenantContext';
 
 const ComposeEmailModal = dynamic(
   () => import('@/components/dashboard/business/ComposeEmailModal'),
@@ -165,8 +166,26 @@ function QuickActionButton({
   );
 }
 
+function getVerificationStatus(lead: Lead): { label: string; className: string } | null {
+  const quality = lead.metadata?.verification?.data_quality as string | undefined;
+  if (quality === 'verified') {
+    return { label: 'Verified', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
+  }
+  if (quality === 'partial') {
+    return { label: 'Partial', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' };
+  }
+  if (quality === 'unverified') {
+    return { label: 'Unverified', className: 'bg-rose-500/15 text-rose-400 border-rose-500/30' };
+  }
+  if (lead.isVerified) {
+    return { label: 'Verified', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
+  }
+  return null;
+}
+
 export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDelete }: LeadDetailViewProps) {
   const toast = useToast();
+  const { currentTenant } = useTenant();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'deals' | 'tasks'>('overview');
   const [isLoading, setIsLoading] = useState(false);
   const [activities, setActivities] = useState<any[]>([]);
@@ -280,7 +299,16 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
       if (!user) throw new Error('You must be signed in to enrich a lead');
       const { error } = await leadService.enrichLead(lead.id, user.id);
       if (error) throw new Error(error);
-      toast.success('Lead enriched — refreshed details and activity.');
+
+      if (currentTenant?.id) {
+        await fetch('/api/leads/enrich', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tenantId: currentTenant.id, leadId: lead.id }),
+        }).catch(() => null);
+      }
+
+      toast.success('Lead enriched — refreshed details and verification score.');
       loadRelatedData();
       onUpdate?.(lead);
     } catch (err: any) {
@@ -289,6 +317,8 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
       setEnriching(false);
     }
   };
+
+  const verificationBadge = getVerificationStatus(lead);
 
   const handleSendEmail = async () => {
     if (!lead.email) {
@@ -382,8 +412,17 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">{lead.businessName}</h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {getStageBadge(lead.stage)}
+                    {verificationBadge && (
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${verificationBadge.className}`}>
+                        <CheckCircle2 className="w-3 h-3" />
+                        {verificationBadge.label}
+                        {lead.metadata?.verification?.score != null && (
+                          <span className="opacity-80">· {lead.metadata.verification.score}</span>
+                        )}
+                      </span>
+                    )}
                     {lead.industry && (
                       <span className="text-xs text-slate-400">{lead.industry}</span>
                     )}

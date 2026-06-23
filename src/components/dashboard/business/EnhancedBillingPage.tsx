@@ -16,6 +16,8 @@ import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
 import { Button, Card } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { CommunicationModal } from '../crm/CommunicationModal';
+import type { EmailRecipient } from '../crm/emailRecipient';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -43,7 +45,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         sentCount: 0,
         paidCount: 0
     });
-    const [clientMap, setClientMap] = useState<Record<string, string>>({});
+    const [clientMap, setClientMap] = useState<Record<string, { name: string; email?: string }>>({});
+    const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -56,10 +59,39 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         if (!currentTenant?.id) return;
         const { clients } = await businessClientService.getClients(currentTenant.id);
         if (clients) {
-            const map: Record<string, string> = {};
-            clients.forEach(c => { map[c.id] = c.name; });
+            const map: Record<string, { name: string; email?: string }> = {};
+            clients.forEach((c) => {
+                map[c.id] = { name: c.name, email: c.email || undefined };
+            });
             setClientMap(map);
         }
+    };
+
+    const resolveInvoiceRecipient = (inv: BusinessInvoice): EmailRecipient | null => {
+        const metadata = businessInvoiceService.parseMetadata(inv.notes);
+        const clientInfo = inv.clientId ? clientMap[inv.clientId] : null;
+        const email = clientInfo?.email || metadata?.clientEmail || metadata?.email;
+        if (!email) return null;
+        return {
+            id: inv.clientId,
+            name: clientInfo?.name || metadata?.clientName || 'Client',
+            email,
+            description: `Invoice ${inv.invoiceNumber} — ${inv.total.toFixed(2)} due ${inv.dueDate}`,
+        };
+    };
+
+    const openInvoiceCompose = (inv: BusinessInvoice) => {
+        const recipient = resolveInvoiceRecipient(inv);
+        if (!recipient) {
+            toast.error('No client email on file for this invoice.');
+            return;
+        }
+        setIsOptionsOpen(false);
+        setEmailCompose({
+            recipient,
+            subject: `Invoice ${inv.invoiceNumber} from ${currentTenant?.name || 'AlphaClone'}`,
+            body: `Hello ${recipient.name.split(' ')[0]},\n\nPlease find details for invoice ${inv.invoiceNumber} (total ${inv.total.toFixed(2)}, due ${inv.dueDate}).\n\nThank you for your business.`,
+        });
     };
 
     const loadInvoices = async () => {
@@ -116,7 +148,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     const handleViewPDF = (inv: BusinessInvoice) => {
         const metadata = businessInvoiceService.parseMetadata(inv.notes);
-        const client = inv.clientId ? { name: clientMap[inv.clientId] || inv.clientId, email: '' } : { name: metadata?.clientName || 'Walk-in', email: '' };
+        const client = inv.clientId
+            ? { name: clientMap[inv.clientId]?.name || inv.clientId, email: clientMap[inv.clientId]?.email || '' }
+            : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
         const doc = businessInvoiceService.generatePDF(inv, currentTenant!, client);
         const pdfUrl = URL.createObjectURL(doc.output('blob'));
         setShowPDFPreview(pdfUrl);
@@ -235,7 +269,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <div className={`p-2 rounded-lg bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={18} /></div>
                                     <div>
                                         <p className="text-sm font-black text-white">{inv.invoiceNumber}</p>
-                                        <p className="text-xs text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId] ? clientMap[inv.clientId] : 'Walk-in Client'}</p>
+                                        <p className="text-xs text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
                                     </div>
                                 </div>
                                 <span className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
@@ -284,7 +318,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             {selectedInvoiceForOptions.invoiceNumber}
                                         </h3>
                                         <p className="text-xs text-slate-400 mt-1">
-                                            Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId] ? clientMap[selectedInvoiceForOptions.clientId] : 'Walk-in Client'}
+                                            Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId]?.name ? clientMap[selectedInvoiceForOptions.clientId].name : 'Walk-in Client'}
                                         </p>
                                     </div>
                                     <button onClick={() => setIsOptionsOpen(false)} className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
@@ -323,7 +357,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <button
                                         onClick={() => {
                                             const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
-                                            const client = selectedInvoiceForOptions.clientId ? { name: clientMap[selectedInvoiceForOptions.clientId] || selectedInvoiceForOptions.clientId, email: '' } : { name: metadata?.clientName || 'Walk-in', email: '' };
+                                            const client = selectedInvoiceForOptions.clientId
+                                                ? { name: clientMap[selectedInvoiceForOptions.clientId]?.name || selectedInvoiceForOptions.clientId, email: clientMap[selectedInvoiceForOptions.clientId]?.email || '' }
+                                                : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
                                             const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
                                             doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
                                             setIsOptionsOpen(false);
@@ -335,6 +371,17 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             <span>Download PDF File</span>
                                         </span>
                                         <span className="text-xs text-slate-500 font-mono">PDF DOWNLOAD</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => openInvoiceCompose(selectedInvoiceForOptions)}
+                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                    >
+                                        <span className="flex items-center gap-3">
+                                            <Mail className="w-5 h-5 text-teal-400" />
+                                            <span>Compose Email to Client</span>
+                                        </span>
+                                        <span className="text-xs text-slate-500 font-mono">ZOHO / OUTLOOK</span>
                                     </button>
 
                                     <button
@@ -396,8 +443,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     if (!selectedInvoiceForOptions) return;
                                     const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
                                     const client = selectedInvoiceForOptions.clientId
-                                        ? { name: clientMap[selectedInvoiceForOptions.clientId] || selectedInvoiceForOptions.clientId, email: '' }
-                                        : { name: metadata?.clientName || 'Walk-in', email: '' };
+                                        ? { name: clientMap[selectedInvoiceForOptions.clientId]?.name || selectedInvoiceForOptions.clientId, email: clientMap[selectedInvoiceForOptions.clientId]?.email || '' }
+                                        : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
                                     const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
                                     doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
                                 }}
@@ -411,6 +458,17 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </AnimatePresence>
 
             <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
+
+            {emailCompose && user && (
+                <CommunicationModal
+                    user={user}
+                    recipient={emailCompose.recipient}
+                    prefilledSubject={emailCompose.subject}
+                    prefilledBody={emailCompose.body}
+                    onClose={() => setEmailCompose(null)}
+                    onSent={() => setEmailCompose(null)}
+                />
+            )}
                 </>
             )}
         </div>

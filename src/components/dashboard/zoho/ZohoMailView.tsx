@@ -16,6 +16,14 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import LeadOutreachModal from './LeadOutreachModal';
 import CRMContactPickerModal from './CRMContactPickerModal';
+import { CommunicationModal } from '../crm/CommunicationModal';
+import { parseEmailFromHeader, type EmailRecipient } from '../crm/emailRecipient';
+
+type ComposeDraft = {
+    recipient?: EmailRecipient;
+    subject?: string;
+    body?: string;
+};
 
 interface Message {
     messageId: string;
@@ -68,7 +76,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const [messageContent, setMessageContent] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
-    const [composing, setComposing] = useState(false);
+    const [composeModal, setComposeModal] = useState<ComposeDraft | null>(null);
     
     // Compose form state
     const [toInput, setToInput] = useState('');
@@ -115,6 +123,25 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         () => messages.find((m) => m.messageId === selectedMessage) || null,
         [messages, selectedMessage]
     );
+
+    const openCompose = (draft?: ComposeDraft) => {
+        setComposeModal(draft || {});
+        setIsMobileMenuOpen(false);
+    };
+
+    const openReplyCompose = (bodyText?: string, subject?: string) => {
+        const senderRaw = selectedMessageMeta?.sender || messageContent?.sender || '';
+        const parsed = parseEmailFromHeader(senderRaw);
+        if (!parsed.email) {
+            toast.error('Could not parse recipient email.');
+            return;
+        }
+        openCompose({
+            recipient: parsed,
+            subject: subject || `Re: ${messageContent?.subject || selectedMessageMeta?.subject || ''}`,
+            body: bodyText || '',
+        });
+    };
 
     const reconnectUrl = (() => {
         const params = new URLSearchParams();
@@ -283,7 +310,6 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             });
             if (res.ok) {
                 toast.success('Sent!');
-                setComposing(false);
                 setReplyBody('');
                 setToEmails([]);
                 setCcEmails([]);
@@ -330,29 +356,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
 
     const handleQuickReply = async () => {
         if (!replyBody.trim()) return;
-        setSending(true);
-        try {
-            const res = await fetch('/api/email/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: selectedMessageMeta?.sender || messageContent?.sender || '',
-                    subject: `Re: ${messageContent?.subject || ''}`,
-                    text: replyBody,
-                    tenantId: currentTenant?.id,
-                    userId: user?.id,
-                    provider: selectedProvider?.type || 'zoho'
-                })
-            });
-            if (res.ok) {
-                toast.success('Sent!');
-                setReplyBody('');
-            }
-        } catch {
-            toast.error('Failed to send');
-        } finally {
-            setSending(false);
-        }
+        openReplyCompose(replyBody);
+        setReplyBody('');
     };
 
     const handleAiReply = async (customPrompt?: string) => {
@@ -361,26 +366,14 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         try {
             const reply = await generateEmailReply(messageContent.content || messageContent.snippet || '', customPrompt || 'Professional');
             if (reply) {
-                setEmailData({
-                    to: selectedMessageMeta?.sender || messageContent.sender || '',
-                    subject: `Re: ${messageContent.subject || ''}`,
-                    body: reply,
-                    provider: 'zoho'
-                });
-                setComposing(true);
+                openReplyCompose(reply);
             }
         } finally { setAiGenerating(false); }
     };
 
     const handleSmartReply = async (text: string) => {
         setReplyBody(text);
-        setEmailData({
-            to: selectedMessageMeta?.sender || messageContent?.sender || '',
-            subject: `Re: ${messageContent?.subject || ''}`,
-            body: text,
-            provider: 'zoho'
-        });
-        setComposing(true);
+        openReplyCompose(text);
     };
 
     const formatDate = (dateStr: any) => {
@@ -442,7 +435,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             
             <div className="p-6">
                 <button 
-                    onClick={() => { setComposing(true); setSelectedMessage(null); setIsMobileMenuOpen(false); }}
+                    onClick={() => { openCompose(); setSelectedMessage(null); }}
                     className="w-full flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 text-white py-4 px-4 rounded-2xl transition-all shadow-xl active:scale-95 group font-black uppercase text-xs"
                 >
                     <Plus size={20} /> 
@@ -455,7 +448,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 {displayFolders.map(folder => (
                     <button
                         key={folder.folderId}
-                        onClick={() => { setSelectedFolder(folder.folderId); setSelectedMessage(null); setComposing(false); setIsMobileMenuOpen(false); }}
+                        onClick={() => { setSelectedFolder(folder.folderId); setSelectedMessage(null); setComposeModal(null); setIsMobileMenuOpen(false); }}
                         className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all group ${selectedFolder === folder.folderId ? 'bg-teal-500/10 text-white border border-teal-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                     >
                         <div className="flex items-center gap-3">
@@ -524,7 +517,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </AnimatePresence>
 
                 {/* Message List Panel */}
-                <div className={`flex flex-col bg-[#0f0f0f] border-r border-white/5 shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage || composing ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`flex flex-col bg-[#0f0f0f] border-r border-white/5 shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
                     
                     {/* Header Bar */}
                     <div className="h-20 border-b border-white/5 px-6 flex items-center gap-4 sticky top-0 z-10 bg-[#0f0f0f]/80 backdrop-blur-md shrink-0">
@@ -543,7 +536,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                         {displayFolders.map(folder => (
                             <button
                                 key={folder.folderId}
-                                onClick={() => { setSelectedFolder(folder.folderId); setSelectedMessage(null); setComposing(false); }}
+                                onClick={() => { setSelectedFolder(folder.folderId); setSelectedMessage(null); setComposeModal(null); }}
                                 className={`h-[34px] px-4 rounded-full text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all flex items-center justify-center shrink-0 ${selectedFolder === folder.folderId ? 'bg-teal-500 text-white font-black' : 'bg-transparent text-white opacity-55'}`}
                             >
                                 {folder.folderName}
@@ -645,7 +638,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
 
                     {/* Mobile Compose FAB */}
                     <button 
-                        onClick={() => { setComposing(true); setSelectedMessage(null); }}
+                        onClick={() => { openCompose(); setSelectedMessage(null); }}
                         className="fixed bottom-[calc(49px+env(safe-area-inset-bottom)+16px)] right-4 w-[52px] h-[52px] rounded-full bg-teal-500 hover:bg-teal-400 text-white flex items-center justify-center shadow-2xl active:scale-95 transition-all z-30 md:hidden"
                         title="Compose email"
                     >
@@ -654,165 +647,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </div>
 
                 {/* Message Content Area */}
-                <div className={`flex-1 flex flex-col bg-[#141414] relative ${!selectedMessage && !composing ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`flex-1 flex flex-col bg-[#141414] relative ${!selectedMessage ? 'hidden md:flex' : 'flex'}`}>
                     <AnimatePresence mode="wait">
-                        {composing ? (
-                            <motion.div 
-                                key="compose" 
-                                initial={{ opacity: 0, y: 20 }} 
-                                animate={{ opacity: 1, y: 0 }} 
-                                exit={{ opacity: 0, y: -20 }} 
-                                className="fixed inset-0 z-[110] bg-[#0f0f0f] flex flex-col md:relative md:inset-auto md:z-auto md:bg-transparent md:flex-1"
-                            >
-                                {/* Custom Mobile-Aware Header */}
-                                <div className="h-14 px-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-[#0f0f0f] md:bg-transparent md:h-20 md:px-8">
-                                    <button 
-                                        type="button"
-                                        onClick={() => setComposing(false)} 
-                                        className="text-[15px] font-medium text-gray-400 hover:text-white"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <h2 className="text-[17px] font-semibold text-white">New Message</h2>
-                                    <button 
-                                        type="button"
-                                        onClick={() => handleSend()}
-                                        disabled={sending}
-                                        className="text-[15px] font-semibold text-teal-400 disabled:opacity-45"
-                                    >
-                                        {sending ? 'Sending...' : 'Send'}
-                                    </button>
-                                </div>
-
-                                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4">
-                                    {/* Tag input style for To Recipient */}
-                                    <div className="flex flex-wrap gap-1.5 p-2 bg-black/20 border-b border-white/5 items-center">
-                                        <div className="flex justify-between items-center w-full mb-1">
-                                            <span className="text-[13px] text-gray-500 font-semibold">To:</span>
-                                            <button type="button" onClick={() => setIsContactPickerOpen(true)} className="text-xs font-black text-teal-400 uppercase tracking-widest hover:text-teal-300">
-                                                + Add from CRM
-                                            </button>
-                                        </div>
-                                        {toEmails.map((email, idx) => (
-                                            <span key={idx} className="flex items-center gap-1 bg-teal-500/10 border border-teal-500/20 text-teal-400 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                                                {email}
-                                                <button type="button" onClick={() => setToEmails(prev => prev.filter((_, i) => i !== idx))} className="text-teal-400 hover:text-white">
-                                                    <X size={12} />
-                                                </button>
-                                            </span>
-                                        ))}
-                                        <input
-                                            type="text"
-                                            value={toInput}
-                                            onChange={e => setToInput(e.target.value)}
-                                            onKeyDown={e => handleEmailInputKeyDown('to', e)}
-                                            onBlur={() => handleAddEmail('to', toInput)}
-                                            placeholder={toEmails.length === 0 ? "recipient@domain.com" : ""}
-                                            className="flex-1 bg-transparent border-none outline-none text-[15px] text-white min-w-[120px] py-1"
-                                        />
-                                        <button type="button" onClick={() => setShowCcBcc(!showCcBcc)} className="text-xs text-teal-500 font-semibold px-2">
-                                            CC/BCC
-                                        </button>
-                                    </div>
-
-                                    {/* CC/BCC inputs */}
-                                    {showCcBcc && (
-                                        <div className="space-y-2 border-b border-white/5 pb-2">
-                                            <div className="flex flex-wrap gap-1.5 p-2 bg-black/20 items-center">
-                                                <span className="text-[13px] text-gray-500 font-semibold w-8">CC:</span>
-                                                {ccEmails.map((email, idx) => (
-                                                    <span key={idx} className="flex items-center gap-1 bg-white/5 border border-white/10 text-white px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                                                        {email}
-                                                        <button type="button" onClick={() => setCcEmails(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-white">
-                                                            <X size={12} />
-                                                        </button>
-                                                    </span>
-                                                ))}
-                                                <input
-                                                    type="text"
-                                                    value={ccInput}
-                                                    onChange={e => setCcInput(e.target.value)}
-                                                    onKeyDown={e => handleEmailInputKeyDown('cc', e)}
-                                                    onBlur={() => handleAddEmail('cc', ccInput)}
-                                                    className="flex-1 bg-transparent border-none outline-none text-[15px] text-white min-w-[120px] py-1"
-                                                />
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5 p-2 bg-black/20 items-center">
-                                                <span className="text-[13px] text-gray-500 font-semibold w-8">BCC:</span>
-                                                {bccEmails.map((email, idx) => (
-                                                    <span key={idx} className="flex items-center gap-1 bg-white/5 border border-white/10 text-white px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                                                        {email}
-                                                        <button type="button" onClick={() => setBccEmails(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-white">
-                                                            <X size={12} />
-                                                        </button>
-                                                    </span>
-                                                ))}
-                                                <input
-                                                    type="text"
-                                                    value={bccInput}
-                                                    onChange={e => setBccInput(e.target.value)}
-                                                    onKeyDown={e => handleEmailInputKeyDown('bcc', e)}
-                                                    onBlur={() => handleAddEmail('bcc', bccInput)}
-                                                    className="flex-1 bg-transparent border-none outline-none text-[15px] text-white min-w-[120px] py-1"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Subject */}
-                                    <div className="flex items-center gap-1.5 p-2 bg-black/20 border-b border-white/5">
-                                        <span className="text-[13px] text-gray-500 font-semibold w-8">Sub:</span>
-                                        <input 
-                                            type="text" 
-                                            value={emailData.subject} 
-                                            onChange={e => setEmailData({...emailData, subject: e.target.value})} 
-                                            placeholder="Subject"
-                                            className="flex-1 bg-transparent border-none outline-none text-[15px] text-white py-1"
-                                        />
-                                    </div>
-
-                                    {/* Auto-growing Textarea Body */}
-                                    <div className="flex-1 flex flex-col min-h-[250px]">
-                                        <div className="flex justify-between items-center py-2 px-1">
-                                            <span className="text-xs font-black text-gray-600 uppercase tracking-widest">Body</span>
-                                            <button type="button" onClick={() => handleAiReply()} className="flex items-center gap-2 text-xs font-black text-teal-500 uppercase tracking-widest bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20">
-                                                <Sparkles size={12} /> AI Assist
-                                            </button>
-                                        </div>
-                                        <textarea 
-                                            value={emailData.body} 
-                                            onChange={e => setEmailData({...emailData, body: e.target.value})} 
-                                            placeholder="Type your message..."
-                                            className="w-full flex-1 bg-transparent border-none outline-none text-[15px] text-white py-2 resize-none leading-relaxed min-h-[250px]"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Custom toolbar above keyboard & provider badge */}
-                                <div className="border-t border-white/5 bg-[#0a0a0a] px-4 py-2 flex items-center justify-between shrink-0 h-[60px] pb-[calc(env(safe-area-inset-bottom)+8px)]">
-                                    <div className="flex items-center gap-1">
-                                        <button type="button" className="w-[44px] h-[44px] flex items-center justify-center text-gray-400 hover:text-white rounded-lg transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                                        </button>
-                                        <button type="button" className="w-[44px] h-[44px] flex items-center justify-center text-gray-400 hover:text-white rounded-lg transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
-                                        </button>
-                                        <button type="button" className="w-[44px] h-[44px] flex items-center justify-center text-gray-400 hover:text-white rounded-lg transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg>
-                                        </button>
-                                        <button type="button" className="w-[44px] h-[44px] flex items-center justify-center text-gray-400 hover:text-white rounded-lg transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-                                        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
-                                            Via {selectedProvider?.type || 'zoho'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ) : selectedMessage && messageContent ? (
+                        {selectedMessage && messageContent ? (
                             <motion.div 
                                 key="content" 
                                 initial={{ opacity: 0 }} 
@@ -942,16 +779,26 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 isOpen={isLeadModalOpen}
                 onClose={() => setIsLeadModalOpen(false)}
                 onEmailDrafted={(data) => {
-                    setComposing(true);
-                    setToEmails([data.to]);
-                    setEmailData({
-                        to: data.to,
+                    openCompose({
+                        recipient: { name: data.to.split('@')[0], email: data.to },
                         subject: data.subject,
                         body: data.body,
-                        provider: data.provider || null
                     });
                 }}
             />
+
+            {composeModal && user && (
+                <CommunicationModal
+                    user={user}
+                    recipient={composeModal.recipient}
+                    prefilledSubject={composeModal.subject}
+                    prefilledBody={composeModal.body}
+                    preferredProvider="zoho"
+                    lockRecipient={Boolean(composeModal.recipient?.email)}
+                    onClose={() => setComposeModal(null)}
+                    onSent={() => setComposeModal(null)}
+                />
+            )}
 
             <style dangerouslySetInnerHTML={{ __html: `
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }

@@ -8,22 +8,38 @@ import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
+import { EmailRecipient, toBusinessClientFromRecipient } from './emailRecipient';
+
+type EmailProvider = 'microsoft' | 'zoho' | 'sendgrid' | 'resend' | 'brevo' | null;
+type ProviderStatusMap = Record<Exclude<EmailProvider, null>, boolean>;
 
 interface CommunicationModalProps {
-    client?: BusinessClient;       // Optional – pre-selected client
+    client?: BusinessClient;
+    recipient?: EmailRecipient;
+    prefilledSubject?: string;
+    prefilledBody?: string;
+    preferredProvider?: EmailProvider;
+    lockRecipient?: boolean;
     user: any;
     onClose: () => void;
     onSent: () => void;
 }
 
-type EmailProvider = 'microsoft' | 'zoho' | 'sendgrid' | 'resend' | 'brevo' | null;
-type ProviderStatusMap = Record<Exclude<EmailProvider, null>, boolean>;
- 
-export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, user, onClose, onSent }) => {
+export const CommunicationModal: React.FC<CommunicationModalProps> = ({
+    client,
+    recipient,
+    prefilledSubject,
+    prefilledBody,
+    preferredProvider,
+    lockRecipient = false,
+    user,
+    onClose,
+    onSent,
+}) => {
     const { currentTenant } = useTenant();
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(client || null);
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
+    const [subject, setSubject] = useState(prefilledSubject || '');
+    const [body, setBody] = useState(prefilledBody || '');
     const [isSending, setIsSending] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<EmailProvider>(null);
     const [loadingProvider, setLoadingProvider] = useState(false);
@@ -54,6 +70,24 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
         microsoft: 'Microsoft 365',
         zoho: 'Zoho Mail',
     };
+
+    useEffect(() => {
+        if (client) {
+            setSelectedClient(client);
+            return;
+        }
+        if (recipient?.email && currentTenant?.id) {
+            setSelectedClient(toBusinessClientFromRecipient(recipient, currentTenant.id));
+        }
+    }, [client, recipient, currentTenant?.id]);
+
+    useEffect(() => {
+        if (prefilledSubject) setSubject(prefilledSubject);
+    }, [prefilledSubject]);
+
+    useEffect(() => {
+        if (prefilledBody) setBody(prefilledBody);
+    }, [prefilledBody]);
 
     // Load signature
     useEffect(() => {
@@ -104,6 +138,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                 });
                 setProviderStatus(next);
                 setSelectedProvider((prev) => {
+                    if (preferredProvider && next[preferredProvider]) return preferredProvider;
                     if (prev && next[prev as keyof ProviderStatusMap]) return prev;
                     const firstConnected = (availableProviders.find((provider) => provider && next[provider as keyof ProviderStatusMap]) || null) as EmailProvider;
                     return firstConnected;
@@ -123,7 +158,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
         };
 
         loadProviderStatus();
-    }, [currentTenant?.id]);
+    }, [currentTenant?.id, preferredProvider]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -281,35 +316,50 @@ Return valid JSON with keys "subject" and "body".`;
     return (
         <Modal isOpen={true} onClose={onClose} title="Send Email" maxWidth="max-w-2xl">
             <div className="space-y-6">
-                {/* Provider Selector if multiple exist */}
-                {availableProviders.length > 1 && (
-                    <div className="flex gap-2 p-1 bg-slate-900/50 rounded-xl border border-slate-800">
-                        {availableProviders.map(p => (
+                {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Send via</label>
+                    <div className="flex flex-wrap gap-2 p-1 bg-slate-900/50 rounded-xl border border-slate-800">
+                        {availableProviders.map((p) => {
+                            if (!p) return null;
+                            const connected = providerStatus[p];
+                            return (
                             <button
                                 key={p}
+                                type="button"
                                 onClick={() => {
-                                    if (!p || !providerStatus[p]) return;
+                                    if (!connected) {
+                                        toast.error(`Connect ${providerLabels[p]} in Settings → Integrations first.`);
+                                        return;
+                                    }
                                     setSelectedProvider(p);
                                 }}
-                                disabled={!p || !providerStatus[p]}
-                                title={!p || !providerStatus[p] ? 'Connect this provider in Settings' : `Send with ${providerLabels[p]}`}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
-                                    selectedProvider === p 
+                                disabled={loadingProvider}
+                                title={connected ? `Send with ${providerLabels[p]}` : `Connect ${providerLabels[p]} in Settings`}
+                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                                    selectedProvider === p && connected
                                     ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20' 
-                                    : !p || !providerStatus[p]
-                                        ? 'text-slate-600 bg-slate-900/30 cursor-not-allowed'
-                                        : 'text-slate-500 hover:text-slate-300'
+                                    : connected
+                                        ? 'text-slate-300 hover:text-white border border-slate-700 hover:border-teal-500/40'
+                                        : 'text-slate-600 bg-slate-900/30 cursor-not-allowed border border-slate-800'
                                 }`}
                             >
                                 <MailCheck className="w-3.5 h-3.5" />
-                                {p ? providerLabels[p] : ''}
-                                {!p || !providerStatus[p] ? ' (Connect)' : ''}
+                                {providerLabels[p]}
+                                {!connected ? ' · Connect' : selectedProvider === p ? ' · Active' : ''}
                             </button>
-                        ))}
+                            );
+                        })}
                     </div>
-                )}
+                    {!loadingProvider && !availableProviders.some((p) => p && providerStatus[p]) && (
+                        <p className="text-xs text-amber-400">
+                            No email provider connected. Go to Settings → Integrations and connect Microsoft 365 or Zoho Mail.
+                        </p>
+                    )}
+                </div>
 
-                {/* Recipient selector */}
+                {/* Recipient selector — hidden when locked to a deal/quote recipient */}
+                {!recipient && (
                 <div ref={pickerRef}>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Recipient</label>
                     <div className="relative">
@@ -387,6 +437,17 @@ Return valid JSON with keys "subject" and "body".`;
                         </div>
                     )}
                 </div>
+                )}
+
+                {recipient?.email && (
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 flex items-center gap-3">
+                        <Mail className="w-4 h-4 text-teal-400 shrink-0" />
+                        <div>
+                            <p className="text-sm font-semibold text-white">{recipient.name}</p>
+                            <p className="text-xs text-slate-400">{recipient.email}</p>
+                        </div>
+                    </div>
+                )}
 
                 {selectedClient && (
                     <ClientEmailContextPicker

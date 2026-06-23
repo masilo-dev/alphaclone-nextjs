@@ -183,12 +183,12 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         const sendWhatsappChannel = deliveryChannel === 'whatsapp' || deliveryChannel === 'both';
 
         const filters = [];
-        if (campaignCreatorId) filters.push(`user_id.eq.${campaignCreatorId}`);
         if (c.tenant_id) filters.push(`tenant_id.eq.${c.tenant_id}`);
+        else if (campaignCreatorId) filters.push(`user_id.eq.${campaignCreatorId}`);
 
         let query = admin
             .from('integrations')
-            .select('type, enabled, config')
+            .select('type, enabled, config, user_id, tenant_id')
             .eq('enabled', true)
             .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
 
@@ -324,6 +324,8 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                 .eq('status', 'pending'))?.data || []
             : recipients;
 
+        let failedCount = 0;
+
         for (const recipient of emailRecipients) {
             if (await isEmailSuppressed(String(c.tenant_id || ''), recipient.email)) {
                 await admin
@@ -333,19 +335,40 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                         error_message: 'Recipient is suppressed',
                     })
                     .eq('id', recipient.id);
+                failedCount += 1;
                 continue;
             }
 
-            const { data: contact } = await admin
-                .from('contacts')
-                .select('id, full_name, email, custom_fields, company:companies(name, website)')
-                .eq('id', recipient.contact_id)
-                .single();
+            let contactName = '';
+            let companyName = '';
+            let customFields: Record<string, unknown> = {};
 
-            const contactName = String(contact?.full_name || '').trim();
+            if (recipient.contact_id) {
+                const { data: contact } = await admin
+                    .from('contacts')
+                    .select('id, full_name, email, custom_fields, company:companies(name, website)')
+                    .eq('id', recipient.contact_id)
+                    .single();
+
+                contactName = String(contact?.full_name || '').trim();
+                const companyRecord = Array.isArray(contact?.company) ? contact.company[0] : contact?.company;
+                companyName = String(companyRecord?.name || companyRecord?.website || '').trim();
+                customFields = (contact?.custom_fields as Record<string, unknown>) || {};
+            } else {
+                const meta = parseJsonObject(recipient.metadata);
+                const clientId = toNonEmptyString(meta.client_id);
+                if (clientId) {
+                    const { data: client } = await admin
+                        .from('business_clients')
+                        .select('name, email, industry, website')
+                        .eq('id', clientId)
+                        .maybeSingle();
+                    contactName = String(client?.name || '').trim();
+                    companyName = String(client?.website || client?.industry || '').trim();
+                }
+            }
+
             const parts = contactName.split(/\s+/).filter(Boolean);
-            const companyRecord = Array.isArray(contact?.company) ? contact.company[0] : contact?.company;
-            const companyName = String(companyRecord?.name || companyRecord?.website || '').trim();
 
             const recipientData = {
                 id: recipient.contact_id,
@@ -353,7 +376,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                 firstName: parts[0] || undefined,
                 lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
                 company: companyName || undefined,
-                ...(contact?.custom_fields || {}),
+                ...(customFields || {}),
             };
 
             const provider = selectProviderForRecipient(activeProviders, providerCountsToday, balanceByDailyLimit);
@@ -365,6 +388,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                         error_message: 'Daily sending limits reached for all selected providers',
                     })
                     .eq('id', recipient.id);
+                failedCount += 1;
                 continue;
             }
 
@@ -434,6 +458,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     // Non-blocking: campaign delivery should not fail due to analytics capture issues.
                 }
             } else {
+                failedCount += 1;
                 await admin
                     .from('campaign_recipients')
                     .update({
@@ -445,10 +470,24 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             }
         }
 
+        if (sentCount === 0 && emailRecipients.length > 0) {
+            await admin
+                .from('email_campaigns')
+                .update({
+                    status: 'draft',
+                    total_sent: 0,
+                })
+                .eq('id', campaignId);
+            return {
+                success: false,
+                error: `No emails were delivered (${failedCount} failed). Check connected providers under Settings → Integrations and verify recipient emails.`,
+            };
+        }
+
         await admin
             .from('email_campaigns')
             .update({
-                status: 'sent',
+                status: sentCount > 0 ? 'sent' : 'draft',
                 total_sent: sentCount,
                 completed_at: new Date().toISOString(),
             })

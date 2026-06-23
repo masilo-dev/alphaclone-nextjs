@@ -28,6 +28,7 @@ import {
 import { ticketService, type Ticket, type TicketComment, type TicketPriority, type TicketStatus, type TicketSource } from '@/services/ticketService';
 import { generateText } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
+import { useTenant } from '@/contexts/TenantContext';
 
 const PRIORITY_COLORS: Record<TicketPriority, string> = {
     low: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
@@ -45,6 +46,7 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
 };
 
 export default function DeepDeskView() {
+    const { currentTenant } = useTenant();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -68,6 +70,12 @@ export default function DeepDeskView() {
     // AI states
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiResult, setAiResult] = useState('');
+
+    const [fbLeadQuery, setFbLeadQuery] = useState('');
+    const [fbLeadResults, setFbLeadResults] = useState<any[]>([]);
+    const [fbGraphResults, setFbGraphResults] = useState<any[]>([]);
+    const [searchingFbLeads, setSearchingFbLeads] = useState(false);
+    const [showFbSearch, setShowFbSearch] = useState(false);
 
     const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -270,6 +278,44 @@ export default function DeepDeskView() {
         }
     };
 
+    const handleFacebookLeadSearch = async () => {
+        if (!currentTenant?.id) {
+            toast.error('No active workspace');
+            return;
+        }
+        setSearchingFbLeads(true);
+        try {
+            const res = await fetch(
+                `/api/facebook/leads/search?tenantId=${encodeURIComponent(currentTenant.id)}&q=${encodeURIComponent(fbLeadQuery.trim())}`
+            );
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Search failed');
+            setFbLeadResults(data.local || []);
+            setFbGraphResults(data.graph || []);
+            toast.success(`Found ${data.total || 0} Facebook lead(s)`);
+        } catch (err: any) {
+            toast.error(err.message || 'Facebook lead search failed');
+        } finally {
+            setSearchingFbLeads(false);
+        }
+    };
+
+    const createTicketFromFbLead = (lead: any) => {
+        const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.company || 'Facebook Lead';
+        setNewTitle(`Facebook lead: ${name}`);
+        setNewDescription(
+            [
+                lead.email ? `Email: ${lead.email}` : null,
+                lead.phone ? `Phone: ${lead.phone}` : null,
+                lead.company ? `Company: ${lead.company}` : null,
+                lead.campaign_name ? `Campaign: ${lead.campaign_name}` : null,
+            ].filter(Boolean).join('\n')
+        );
+        setNewSource('lead');
+        setNewSourceName(`Facebook: ${name}`);
+        setShowCreateModal(true);
+    };
+
     // Filter tickets
     const filteredTickets = tickets.filter(ticket => {
         const matchesSearch = 
@@ -355,6 +401,50 @@ export default function DeepDeskView() {
                                 className="w-full pl-9 pr-4 py-2 text-xs bg-slate-900 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
                             />
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowFbSearch((prev) => !prev)}
+                            className="w-full text-left text-[10px] font-bold uppercase tracking-wider text-teal-400 hover:text-teal-300"
+                        >
+                            {showFbSearch ? '− Hide Facebook lead search' : '+ Search Facebook leads'}
+                        </button>
+
+                        {showFbSearch && (
+                            <div className="space-y-2 p-2 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Name, email, campaign..."
+                                        value={fbLeadQuery}
+                                        onChange={(e) => setFbLeadQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleFacebookLeadSearch()}
+                                        className="flex-1 px-3 py-1.5 text-xs bg-slate-900 border border-slate-800 rounded-lg text-slate-100"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleFacebookLeadSearch}
+                                        disabled={searchingFbLeads}
+                                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white disabled:opacity-50"
+                                    >
+                                        {searchingFbLeads ? '…' : 'Find'}
+                                    </button>
+                                </div>
+                                {[...fbLeadResults, ...fbGraphResults].slice(0, 5).map((lead, idx) => (
+                                    <button
+                                        key={lead.id || lead.lead_id || idx}
+                                        type="button"
+                                        onClick={() => createTicketFromFbLead(lead)}
+                                        className="w-full text-left p-2 rounded-lg bg-slate-900/80 border border-slate-800 hover:border-teal-500/30"
+                                    >
+                                        <p className="text-xs font-semibold text-white truncate">
+                                            {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.full_name || lead.company || 'Lead'}
+                                        </p>
+                                        <p className="text-[10px] text-slate-500 truncate">{lead.email || lead.phone || lead.campaign_name || 'Facebook'}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2">
                             <div>

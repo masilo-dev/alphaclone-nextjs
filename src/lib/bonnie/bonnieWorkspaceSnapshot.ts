@@ -25,7 +25,8 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
     build: (q: ReturnType<typeof admin.from>) => ReturnType<ReturnType<typeof admin.from>['select']>
   ): Promise<number> {
     try {
-      const { count } = await build(admin.from(table));
+      const { count, error } = await build(admin.from(table));
+      if (error) return 0;
       return count ?? 0;
     } catch {
       return 0;
@@ -58,7 +59,7 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
         .limit(5),
     ]);
 
-  const rules = rulesRes.data;
+  const rules = rulesRes.error ? null : rulesRes.data;
 
   return {
     tenant_id: tenantId,
@@ -74,10 +75,12 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
       auto_send_enabled: rules?.auto_send_enabled ?? false,
       high_risk_approval_required: rules?.high_risk_approval_required ?? true,
     },
-    recent_runner_actions: (actionsRes.data || []).map((a: { action_key: string; status: string; created_at: string }) => ({
-      action_key: a.action_key,
-      status: a.status,
-      created_at: a.created_at,
-    })),
+    recent_runner_actions: (actionsRes.error ? [] : actionsRes.data || []).map(
+      (a: { action_key: string; status: string; created_at: string }) => ({
+        action_key: a.action_key,
+        status: a.status,
+        created_at: a.created_at,
+      })
+    ),
   };
 }

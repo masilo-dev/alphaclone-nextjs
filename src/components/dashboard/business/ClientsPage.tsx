@@ -715,6 +715,38 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         </button>
                     </div>
                     {selectedClientIds.length > 0 && (
+                        <>
+                        <Button
+                            variant="outline"
+                            onClick={async () => {
+                                if (!confirm(`Archive ${selectedClientIds.length} contact(s)?`)) return;
+                                for (const id of selectedClientIds) {
+                                    await businessClientService.updateClient(id, { isActive: false });
+                                }
+                                setClients(clients.filter(c => !selectedClientIds.includes(c.id)));
+                                setSelectedClientIds([]);
+                                toast.success('Selected contacts archived');
+                            }}
+                            icon={<Trash2 className="w-4 h-4" />}
+                        >
+                            Archive ({selectedClientIds.length})
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const first = clients.find(c => selectedClientIds.includes(c.id) && c.email);
+                                if (!first?.email) {
+                                    toast.error('Selected contacts need email addresses');
+                                    return;
+                                }
+                                setSelectedClientForCommunication(first);
+                                setShowCommunicationModal(true);
+                                toast(`Composing for ${first.name}. Use Outreach for bulk sends.`, { icon: '✉️' });
+                            }}
+                            icon={<Mail className="w-4 h-4" />}
+                        >
+                            Email ({selectedClientIds.length})
+                        </Button>
                         <Button
                             variant="primary"
                             onClick={() => setShowOutreachModal(true)}
@@ -723,6 +755,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         >
                             Outreach ({selectedClientIds.length})
                         </Button>
+                        </>
                     )}
                 </div>
             </div>

@@ -53,8 +53,10 @@ export async function POST(request: NextRequest) {
         summary: t.summary,
       })),
       logs: result.logs,
+      rounds: result.rounds,
     });
   } catch (error) {
-    return routeErrorResponse(error, 'Bonnie agent failed');
+    console.error('[bonnie/instruct] failed:', error);
+    return routeErrorResponse(error, 'Bonnie could not process that instruction. Try again in a moment.', request);
   }
 }

@@ -86,3 +86,75 @@ export async function chatDeepSeek(
     messages.push({ role: 'user', content: message });
     return deepSeekCompletion(messages, options);
 }
+
+/** Stream tokens from DeepSeek — used by Bonnie for DeepChat-style responses. */
+export async function streamDeepSeek(
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    message: string,
+    options: DeepSeekOptions = {},
+    onToken: (chunk: string) => void
+): Promise<string> {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+        throw new Error('DEEPSEEK_API_KEY is not configured');
+    }
+
+    const messages: DeepSeekMessage[] = [];
+    if (options.systemPrompt) {
+        messages.push({ role: 'system', content: options.systemPrompt });
+    }
+    for (const turn of history) {
+        messages.push({ role: turn.role, content: turn.content });
+    }
+    messages.push({ role: 'user', content: message });
+
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: options.model || 'deepseek-chat',
+            messages,
+            max_tokens: options.maxTokens ?? 2000,
+            temperature: options.temperature ?? 0.5,
+            stream: true,
+        }),
+    });
+
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`DeepSeek stream error ${res.status}: ${err}`);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error('DeepSeek stream unavailable');
+
+    const decoder = new TextDecoder();
+    let full = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const block = decoder.decode(value, { stream: true });
+        for (const line of block.split('\n')) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            try {
+                const parsed = JSON.parse(payload);
+                const delta = parsed?.choices?.[0]?.delta?.content;
+                if (delta) {
+                    full += delta;
+                    onToken(delta);
+                }
+            } catch {
+                // ignore malformed SSE chunks
+            }
+        }
+    }
+
+    return full;
+}

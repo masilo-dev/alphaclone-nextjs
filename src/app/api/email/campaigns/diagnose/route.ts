@@ -59,29 +59,39 @@ export async function GET(req: NextRequest) {
             issues.push('CRITICAL: Campaign has no creator (created_by is null). Recreate the campaign while logged in.');
         }
 
-        // 3. Check email providers
-        if (creatorId) {
-            const { data: integrations } = await admin
+        // 3. Check email providers (tenant-wide first, then creator)
+        const integrationQuery = admin
+            .from('integrations')
+            .select('type, enabled, config, tenant_id, user_id')
+            .eq('enabled', true)
+            .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
+
+        const { data: tenantIntegrations } = await integrationQuery.eq('tenant_id', tenantId);
+        const { data: creatorIntegrations } = creatorId
+            ? await admin
                 .from('integrations')
-                .select('type, enabled, config')
-                .eq('user_id', creatorId)
+                .select('type, enabled, config, tenant_id, user_id')
                 .eq('enabled', true)
-                .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
+                .eq('user_id', creatorId)
+                .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'])
+            : { data: [] as any[] };
 
-            if (!integrations || integrations.length === 0) {
-                issues.push('No email provider connected. Go to Settings > Integrations and connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.');
-            } else {
-                const providerNames = integrations.map((i: any) => i.type).join(', ');
-                info.push(`Active email providers: ${providerNames}`);
+        const integrations = [...(tenantIntegrations || []), ...(creatorIntegrations || [])].filter(
+            (row, index, arr) => arr.findIndex((item) => item.type === row.type) === index
+        );
 
-                // Check if API keys are present
-                for (const integ of integrations) {
-                    const cfg = integ.config || {};
-                    if (integ.type !== 'zoho' && integ.type !== 'gmail') {
-                        const hasKey = !!(cfg.apiKey || cfg.api_key);
-                        if (!hasKey) {
-                            issues.push(`Provider "${integ.type}" is connected but missing an API key. Edit the integration and add a valid key.`);
-                        }
+        if (!integrations.length) {
+            issues.push('No email provider connected. Go to Settings > Integrations and connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.');
+        } else {
+            const providerNames = integrations.map((i: any) => i.type).join(', ');
+            info.push(`Active email providers: ${providerNames}`);
+
+            for (const integ of integrations) {
+                const cfg = integ.config || {};
+                if (integ.type !== 'zoho' && integ.type !== 'gmail') {
+                    const hasKey = !!(cfg.apiKey || cfg.api_key);
+                    if (!hasKey) {
+                        issues.push(`Provider "${integ.type}" is connected but missing an API key. Edit the integration and add a valid key.`);
                     }
                 }
             }
