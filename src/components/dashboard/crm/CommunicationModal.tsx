@@ -7,6 +7,7 @@ import { BusinessClient, businessClientService } from '../../../services/busines
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
 
 interface CommunicationModalProps {
     client?: BusinessClient;       // Optional – pre-selected client
@@ -386,6 +387,15 @@ Return valid JSON with keys "subject" and "body".`;
                         </div>
                     )}
                 </div>
+
+                {selectedClient && (
+                    <ClientEmailContextPicker
+                        tenantId={currentTenant?.id}
+                        clientId={selectedClient.id}
+                        email={selectedClient.email}
+                        onInsert={(text) => setBody((prev) => `${prev}${text}`)}
+                    />
+                )}
 
                 <div className="space-y-4">
                     <Input

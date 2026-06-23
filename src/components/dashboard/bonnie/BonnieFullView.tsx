@@ -196,6 +196,7 @@ export default function BonnieFullView() {
     borderRadius: '16px',
     width: '100%',
     height: '100%',
+    minHeight: '420px',
     boxShadow: 'none',
   };
 
@@ -436,10 +437,10 @@ export default function BonnieFullView() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-hidden relative">
+          <div className="flex-1 min-h-[420px] relative">
             <DeepChat
               connect={chatConnect}
-              style={chatStyle}
+              chatStyle={chatStyle}
               messageStyles={messageStyles}
               textInput={textInputConfig}
               submitButtonStyles={submitButtonStyle}

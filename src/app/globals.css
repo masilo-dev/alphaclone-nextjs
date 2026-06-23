@@ -562,13 +562,9 @@ body {
   line-height: 1.25rem !important;
 }
 
-/* Mobile Menu Lock */
+/* Mobile Menu Lock — avoid touch-action:none so inputs stay usable if menu state desyncs */
 .menu-open {
   overflow: hidden !important;
-  touch-action: none !important;
-  position: fixed !important;
-  width: 100% !important;
-  height: 100% !important;
   overscroll-behavior: none !important;
 }
 
@@ -927,6 +923,12 @@ body {
 button, a, select, input, textarea, [role="button"], tr, .clickable-row {
   -webkit-tap-highlight-color: transparent !important;
   touch-action: manipulation !important;
+}
+
+deep-chat {
+  display: block;
+  width: 100%;
+  pointer-events: auto;
 }
 
 /* iOS zoom prevention: Force input/textarea/select to minimum 16px font-size */
