@@ -10,7 +10,15 @@ import {
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { extractEmailAddress } from '@/lib/email/composeNavigation';
 import toast from 'react-hot-toast';
+
+function resolveOutreachProvider(source?: string | null): string | undefined {
+  const normalized = String(source || '').toLowerCase();
+  if (normalized === 'zoho') return 'zoho';
+  if (normalized === 'microsoft' || normalized === 'outlook') return 'microsoft';
+  return undefined;
+}
 
 interface UnifiedMessage {
   id: string;
@@ -48,6 +56,8 @@ export default function UnifiedInboxTab() {
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [draftingReply, setDraftingReply] = useState(false);
   const [draftReplyText, setDraftReplyText] = useState('');
+  const [replySubject, setReplySubject] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
   const [processingIntelligence, setProcessingIntelligence] = useState(false);
   const [customReplyPrompt, setCustomReplyPrompt] = useState('');
 
@@ -84,6 +94,7 @@ export default function UnifiedInboxTab() {
     setSelectedMessage(msg);
     setDraftReplyText('');
     setCustomReplyPrompt('');
+    setReplySubject(msg.subject ? `Re: ${msg.subject.replace(/^Re:\s*/i, '')}` : 'Re: Your message');
     
     if (!msg.read) {
       // Mark as read in local state first
@@ -181,31 +192,82 @@ export default function UnifiedInboxTab() {
   };
 
   const handleSendReply = async () => {
-    if (!selectedMessage || !draftReplyText.trim()) return;
-    const sendToast = toast.loading('Sending response...');
+    if (!selectedMessage || !draftReplyText.trim() || !tenant?.id) return;
+
+    if (selectedMessage.channel !== 'email') {
+      toast.error('Direct send is available for email messages. Chat and SMS channels need their native reply flow.');
+      return;
+    }
+
+    const recipient = extractEmailAddress(selectedMessage.from_address);
+    if (!recipient.includes('@')) {
+      toast.error('No valid recipient email on this message.');
+      return;
+    }
+
+    setSendingReply(true);
+    const sendToast = toast.loading('Sending email...');
     try {
-      // Simulate real delivery logic based on selected message source
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Update DB to mark as replied and resolve needs_response
+      const subject = replySubject.trim() || `Re: ${selectedMessage.subject || 'Your message'}`;
+      const provider = resolveOutreachProvider(selectedMessage.source);
+
+      const response = await fetch('/api/outreach/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          leadEmail: recipient,
+          leadName: selectedMessage.from_name || undefined,
+          subject,
+          body: draftReplyText,
+          pitchAngle: 'inbox_reply',
+          autoSend: true,
+          consentGranted: true,
+          confidenceScore: 100,
+          ...(provider
+            ? { preferredProvider: provider, deliveryProviders: [provider] }
+            : {}),
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
       const { error } = await supabase
         .from('unified_messages')
         .update({
           replied_at: new Date().toISOString(),
           needs_response: false,
-          read: true
+          read: true,
         })
         .eq('id', selectedMessage.id);
 
       if (error) throw error;
 
-      toast.success('Reply successfully dispatched!', { id: sendToast });
+      const sentVia = String(result.provider || provider || 'platform').toUpperCase();
+      toast.success(`Email sent via ${sentVia}`, { id: sendToast });
       setDraftReplyText('');
       setCustomReplyPrompt('');
       loadMessages();
     } catch (err: any) {
       toast.error('Failed to send reply: ' + err.message, { id: sendToast });
+    } finally {
+      setSendingReply(false);
     }
+  };
+
+  const handleQuickEmailAction = async () => {
+    if (!selectedMessage) return;
+    if (selectedMessage.channel !== 'email') {
+      toast.error('Quick send is available for email messages only.');
+      return;
+    }
+    if (!draftReplyText.trim()) {
+      await handleGenerateAIDraft();
+    }
+    document.getElementById('inbox-reply-compose')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const getSourceIcon = (source: string) => {
@@ -393,12 +455,35 @@ export default function UnifiedInboxTab() {
                 <h3 className="text-sm font-bold text-white">
                   {selectedMessage.subject || `Conversation with ${selectedMessage.from_name || 'Client'}`}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  From: <span className="font-mono text-slate-300">{selectedMessage.from_address}</span> | Channel: <span className="capitalize">{selectedMessage.source} ({selectedMessage.channel})</span>
+                <p className="text-xs text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
+                  From:{' '}
+                  {selectedMessage.from_address ? (
+                    <button
+                      type="button"
+                      onClick={handleQuickEmailAction}
+                      className="font-mono text-teal-400 hover:text-teal-300 underline-offset-2 hover:underline"
+                      title="Prepare reply and send in platform"
+                    >
+                      {selectedMessage.from_address}
+                    </button>
+                  ) : (
+                    <span className="font-mono text-slate-300">Unknown</span>
+                  )}
+                  <span>| Channel: <span className="capitalize">{selectedMessage.source} ({selectedMessage.channel})</span></span>
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
+                {selectedMessage.channel === 'email' && selectedMessage.from_address && (
+                  <button
+                    type="button"
+                    onClick={handleQuickEmailAction}
+                    className="px-3 py-2 rounded-xl border border-teal-500/20 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 text-xs font-bold flex items-center gap-1.5 transition-all"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Send email
+                  </button>
+                )}
                 <button
                   onClick={() => handleMarkNeedsResponse(selectedMessage.id, !selectedMessage.needs_response)}
                   className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
@@ -446,7 +531,7 @@ export default function UnifiedInboxTab() {
                 </div>
 
                 {/* Reply drafting interface */}
-                <div className="mt-8 pt-6 border-t border-slate-800 space-y-4">
+                <div id="inbox-reply-compose" className="mt-8 pt-6 border-t border-slate-800 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                       <CornerUpLeft className="w-3.5 h-3.5" />
@@ -461,6 +546,16 @@ export default function UnifiedInboxTab() {
                       Generate AI Draft
                     </button>
                   </div>
+
+                  {selectedMessage.channel === 'email' && (
+                    <input
+                      type="text"
+                      value={replySubject}
+                      onChange={(e) => setReplySubject(e.target.value)}
+                      placeholder="Email subject"
+                      className="w-full px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-teal-500"
+                    />
+                  )}
 
                   {/* Optional instruction input */}
                   <div className="flex gap-2">
@@ -492,11 +587,11 @@ export default function UnifiedInboxTab() {
                     )}
                     <button
                       onClick={handleSendReply}
-                      disabled={!draftReplyText.trim()}
+                      disabled={!draftReplyText.trim() || sendingReply}
                       className="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-teal-500/10"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      Send Response
+                      {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                      {sendingReply ? 'Sending...' : 'Send Response'}
                     </button>
                   </div>
                 </div>

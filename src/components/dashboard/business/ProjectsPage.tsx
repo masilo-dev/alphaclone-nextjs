@@ -10,6 +10,7 @@ import { supabase } from '../../../lib/supabase';
 import { businessClientService } from '../../../services/businessClientService';
 import { Project as BusinessProject } from '../../../types';
 import { contractService } from '../../../services/contractService';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { milestoneService } from '../../../services/milestoneService';
 import {
     Plus,
@@ -767,6 +768,7 @@ const DEFAULT_MILESTONE_LABELS = [
 ];
 
 const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, tenantId, currentUser, onClose, onEdit }) => {
+    const router = useRouter();
     const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
     const [milestonesLoading, setMilestonesLoading] = useState(true);
     const [sharing, setSharing] = useState(false);
@@ -1144,9 +1146,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Client Inbox</p>
                             <p className="text-sm text-white font-semibold truncate">{clientName || 'Linked client'}</p>
                             {clientEmail ? (
-                                <a href={`mailto:${clientEmail}`} className="text-xs text-teal-300 hover:text-teal-200 break-all">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName || 'project update'}`))}
+                                    className="text-xs text-teal-300 hover:text-teal-200 break-all text-left"
+                                >
                                     {clientEmail}
-                                </a>
+                                </button>
                             ) : (
                                 <p className="text-xs text-slate-500">No email address on file yet.</p>
                             )}
@@ -1176,9 +1182,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                                     {comment.is_client ? ' (Client)' : ' (Team)'}
                                                 </p>
                                                 {comment.author_email && (
-                                                    <a href={`mailto:${comment.author_email}`} className="text-[11px] text-slate-500 hover:text-teal-300 break-all">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => router.push(buildMailComposeUrl(comment.author_email || '', 'Re: project comment'))}
+                                                        className="text-[11px] text-slate-500 hover:text-teal-300 break-all text-left"
+                                                    >
                                                         {comment.author_email}
-                                                    </a>
+                                                    </button>
                                                 )}
                                             </div>
                                             <span className="text-[11px] text-slate-500 shrink-0">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -18,9 +19,18 @@ const BOOK_DEMO_HREF = '/book-demo';
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [pathname]);
 
     // Scroll lock and Escape key handler
     useEffect(() => {
@@ -111,23 +121,23 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
         router.push('/');
     };
 
-    // Staggered variants
+    // Staggered variants — keep container visible; only animate link rows.
     const containerVariants = {
-        hidden: { opacity: 0 },
+        hidden: { opacity: 1 },
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.08,
-                delayChildren: 0.2
-            }
+                staggerChildren: 0.06,
+                delayChildren: 0.05,
+            },
         },
         exit: {
-            opacity: 0,
+            opacity: 1,
             transition: {
-                staggerChildren: 0.05,
-                staggerDirection: -1
-            }
-        }
+                staggerChildren: 0.04,
+                staggerDirection: -1,
+            },
+        },
     };
 
     const itemVariants: any = {
@@ -236,7 +246,9 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                     </div>
                 </div>
 
-                {/* Mobile Nav Overlay */}
+            </div>
+
+            {isMounted && createPortal(
                 <AnimatePresence>
                     {mobileMenuOpen && (
                         <motion.div
@@ -244,16 +256,22 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             ref={menuRef}
                             role="dialog"
                             aria-modal="true"
+                            aria-label="Site navigation"
                             initial="hidden"
                             animate="visible"
                             exit="exit"
                             variants={containerVariants}
-                            className="lg:hidden fixed inset-0 z-[130] bg-slate-950/98 backdrop-blur-2xl p-6 pt-24 flex flex-col"
-                            onClick={() => setMobileMenuOpen(false)} // Outside click close
+                            className="lg:hidden fixed inset-0 z-[200] bg-slate-950/98 backdrop-blur-2xl p-6 pt-24 flex flex-col"
                         >
-                            <div 
-                                className="flex-1 overflow-y-auto"
-                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside list
+                            <button
+                                type="button"
+                                className="absolute inset-0 z-0"
+                                aria-label="Close menu"
+                                onClick={() => setMobileMenuOpen(false)}
+                            />
+                            <div
+                                className="relative z-10 flex-1 overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()}
                             >
                                 <div className="mb-5 rounded-2xl border border-teal-500/15 bg-teal-500/5 p-4">
                                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-300 mb-2">
@@ -333,8 +351,9 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick }) => 
                             </div>
                         </motion.div>
                     )}
-                </AnimatePresence>
-            </div>
+                </AnimatePresence>,
+                document.body
+            )}
         </nav>
     );
 };

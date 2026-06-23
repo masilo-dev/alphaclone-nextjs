@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Mail, Clock, CheckCircle, MessageSquare, Inbox, Reply } from 'lucide-react';
 import { inboxService, type InboxSubmission, type InboxStatus } from '../../services/inboxService';
 import { CardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 
 const ContactSubmissionsTab: React.FC = () => {
+    const router = useRouter();
     const [submissions, setSubmissions] = useState<InboxSubmission[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | InboxStatus>('all');
@@ -158,13 +161,14 @@ const ContactSubmissionsTab: React.FC = () => {
                                         Mark as Replied
                                     </button>
                                 )}
-                                <a
-                                    href={`mailto:${submission.email}`}
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(buildMailComposeUrl(submission.email, `Re: ${submission.formTitle || 'your message'}`))}
                                     className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
                                 >
                                     <Mail className="w-4 h-4" />
-                                    Reply via Email
-                                </a>
+                                    Reply in Mail
+                                </button>
                             </div>
                         </div>
                     ))}

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -27,6 +28,7 @@ import { UnifiedEmailService } from '@/services/email/UnifiedEmailService';
 import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { extractEmailAddress } from '@/lib/email/composeNavigation';
 
 const LABELS = [
     { id: 'inbox', label: 'Inbox', Icon: Mail },
@@ -63,6 +65,7 @@ interface OutlookMessage {
 }
 
 export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) => {
+    const searchParams = useSearchParams();
     const [messages, setMessages] = useState<OutlookMessage[]>([]);
     const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
     const [threadMessages, setThreadMessages] = useState<OutlookMessage[]>([]);
@@ -83,6 +86,25 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     const [composeBody, setComposeBody] = useState('');
     const [aiPrompt, setAiPrompt] = useState('');
     const [isAiDrafting, setIsAiDrafting] = useState(false);
+
+    const startComposeTo = useCallback((rawEmail: string, subjectPrefix = '') => {
+        const email = extractEmailAddress(rawEmail);
+        if (!email.includes('@')) {
+            toast.error('No valid email address found');
+            return;
+        }
+        setComposing(true);
+        setSelectedThreadId(null);
+        setThreadMessages([]);
+        setComposeTo(email);
+        setComposeSubject(
+            subjectPrefix
+                ? `Re: ${subjectPrefix.replace(/^Re:\s*/i, '')}`
+                : ''
+        );
+        setComposeBody('');
+        setAiPrompt('');
+    }, []);
 
     const handleGenerateComposeDraft = async () => {
         if (!aiPrompt.trim()) {
@@ -186,6 +208,15 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     useEffect(() => {
         fetchMessages(activeLabel);
     }, [userId, activeLabel]);
+
+    useEffect(() => {
+        if (!searchParams) return;
+        const to = searchParams.get('to');
+        const compose = searchParams.get('action') === 'compose' || searchParams.get('compose') === '1';
+        if (compose && to) {
+            startComposeTo(decodeURIComponent(to), searchParams.get('subject') || '');
+        }
+    }, [searchParams, startComposeTo]);
 
     const handleThreadSelect = async (message: OutlookMessage) => {
         setSelectedThreadId(message.threadId || message.id);
@@ -420,13 +451,26 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                             : 'border-transparent hover:bg-slate-900 hover:border-slate-800'
                                     }`}
                                 >
-                                    <div className="flex justify-between items-start mb-1">
+                                    <div className="flex justify-between items-start mb-1 gap-2">
                                         <span className="text-xs font-bold text-blue-400 truncate max-w-[140px] uppercase tracking-wider">
                                             {activeLabel === 'sent'
                                                 ? (msg.subject?.slice(0, 15) || 'Sent Message')
                                                 : (msg.from?.split('@')[0].split('<')[0].replace(/[".]/g, ' ').trim() || 'Unknown')}
                                         </span>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {activeLabel !== 'sent' && extractEmailAddress(msg.from).includes('@') && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        startComposeTo(msg.from, msg.subject);
+                                                    }}
+                                                    className="p-1 rounded-lg border border-teal-500/20 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20"
+                                                    title="Compose to this contact"
+                                                >
+                                                    <Send className="w-3 h-3" />
+                                                </button>
+                                            )}
                                             {category !== 'normal' && (
                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${categoryInfo.color} text-white`}>
                                                     {categoryInfo.label}
@@ -564,6 +608,17 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                {threadMessages[0]?.from && extractEmailAddress(threadMessages[0].from).includes('@') && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => startComposeTo(threadMessages[0].from, threadMessages[0].subject)}
+                                        className="border-teal-500/30 text-teal-300 hover:bg-teal-500/10 h-8"
+                                    >
+                                        <Send className="w-3.5 h-3.5 mr-1.5" />
+                                        Send email
+                                    </Button>
+                                )}
                                 <Button 
                                     variant="outline" 
                                     size="sm" 
@@ -636,7 +691,18 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                             <div className="flex-1 rounded-2xl p-0 transition-all">
                                                 <div className="flex justify-between items-center mb-3">
                                                     <div className="flex flex-col">
-                                                        <span className="text-base font-bold text-white tracking-wide">{msg.from}</span>
+                                                        {extractEmailAddress(msg.from).includes('@') ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => startComposeTo(msg.from, msg.subject)}
+                                                                className="text-base font-bold text-teal-300 hover:text-teal-200 tracking-wide text-left"
+                                                                title="Compose to this address in platform"
+                                                            >
+                                                                {msg.from}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-base font-bold text-white tracking-wide">{msg.from}</span>
+                                                        )}
                                                         <span className="text-xs text-slate-500 uppercase tracking-widest mt-0.5">
                                                             {msg.receivedAt ? new Date(msg.receivedAt).toLocaleString() : ''}
                                                         </span>

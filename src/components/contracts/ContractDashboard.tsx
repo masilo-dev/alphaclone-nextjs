@@ -143,6 +143,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [selectedContractIdForChat, setSelectedContractIdForChat] = useState<string>('');
     const [chatInput, setChatInput] = useState('');
     const [isLawyerResponding, setIsLawyerResponding] = useState(false);
+    const [isSavingLawyerPdf, setIsSavingLawyerPdf] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -257,6 +258,49 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             });
         } finally {
             setIsLawyerResponding(false);
+        }
+    };
+
+    const stripMarkdownFence = (content: string) =>
+        content.replace(/```(?:markdown|md)?\s*|```/g, '').trim();
+
+    const handleSaveLawyerDraftAsPdf = async (content: string) => {
+        if (!currentTenant?.id) {
+            toast.error('Select a workspace first');
+            return;
+        }
+        setIsSavingLawyerPdf(true);
+        const toastId = toast.loading('Saving contract and generating PDF...');
+        try {
+            const cleaned = stripMarkdownFence(content);
+            if (!cleaned.trim()) throw new Error('Nothing to save yet');
+
+            const title = `AI Lawyer Agreement — ${format(new Date(), 'MMM d, yyyy')}`;
+            const { contract, error } = await contractService.createContract({
+                title,
+                content: cleaned,
+                status: 'draft',
+            });
+            if (error || !contract) throw new Error(error || 'Failed to save contract');
+
+            const html = cleaned.startsWith('<') ? cleaned : contractToHTML(cleaned);
+            setGeneratedContract(cleaned);
+            setEditedHtml(html);
+            setContractId(contract.id);
+            setStep('preview');
+            setPreviewTab('document');
+            setIsEditing(false);
+            setIsSigned(false);
+            setSignatureName('');
+            setSignatureData('');
+            setActiveView('new');
+
+            await contractService.downloadPDF(contract, currentTenant);
+            toast.success('AI Lawyer contract saved and PDF generated', { id: toastId });
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to generate PDF', { id: toastId });
+        } finally {
+            setIsSavingLawyerPdf(false);
         }
     };
 
@@ -1216,31 +1260,20 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                                                 setSignatureName('');
                                                                 setSignatureData('');
                                                                 setActiveView('new');
-                                                                toast.success("AI draft loaded into the editor! You can now review, edit, sign, and download/send as PDF.");
-                                                            }}
-                                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600 border border-teal-500/30 hover:border-teal-400 text-[10px] font-bold text-teal-400 hover:text-white uppercase transition-all duration-150"
-                                                        >
-                                                            <FileText className="w-3.5 h-3.5" /> Convert to PDF Contract
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const mockContract: Partial<Contract> = {
-                                                                    id: 'AI_DRAFT',
-                                                                    title: `AI Lawyer Drafted Agreement`,
-                                                                    content: msg.content,
-                                                                    status: 'draft'
-                                                                };
-                                                                try {
-                                                                    toast.success("Generating PDF...");
-                                                                    contractService.downloadPDF(mockContract, currentTenant || undefined);
-                                                                } catch (e) {
-                                                                    toast.error("Failed to generate PDF");
-                                                                }
+                                                                toast.success('AI draft loaded into the editor. Review, edit, then save or send as PDF.');
                                                             }}
                                                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700/50 text-[10px] font-bold text-slate-300 hover:text-white uppercase transition-all duration-150"
                                                         >
-                                                            <Printer className="w-3.5 h-3.5" /> Download PDF
+                                                            <Edit3 className="w-3.5 h-3.5" /> Open in Editor
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={isSavingLawyerPdf}
+                                                            onClick={() => handleSaveLawyerDraftAsPdf(msg.content)}
+                                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600 border border-teal-500/30 hover:border-teal-400 text-[10px] font-bold text-teal-400 hover:text-white uppercase transition-all duration-150 disabled:opacity-50"
+                                                        >
+                                                            {isSavingLawyerPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                                                            Save & Generate PDF
                                                         </button>
                                                     </div>
                                                 )}

@@ -23,6 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Lead, leadService } from '@/services/leadService';
 import { CrmNextStepsPanel } from './CrmNextStepsPanel';
 import { buildLeadKanbanNextSteps } from '@/lib/crmNextSteps';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
 import { Mail, Phone, MapPin, Sparkles, AlertCircle, ShieldCheck, GripVertical, CheckCircle2, Plus, X } from 'lucide-react';
 import AIOutreachModal from '../business/AIOutreachModal';
@@ -262,6 +263,7 @@ function KanbanColumn({
 }
 
 const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenFullDetails }: any) => {
+  const router = useRouter();
   if (!lead) return null;
 
   return (
@@ -372,15 +374,16 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                 )}
 
                 {lead.email ? (
-                  <a
-                    href={`mailto:${lead.email}`}
+                  <button
+                    type="button"
+                    onClick={() => router.push(buildMailComposeUrl(lead.email, `Re: ${lead.businessName || 'your inquiry'}`))}
                     className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
                   >
                     <div className="p-2 bg-indigo-500/10 rounded-xl">
                       <Mail className="w-5 h-5 text-indigo-400" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono">Email</span>
-                  </a>
+                  </button>
                 ) : (
                   <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
                     <Mail className="w-5 h-5 text-slate-600" />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, ShieldCheck, Zap, Globe, Link2, Loader2 } from 'lucide-react';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
@@ -48,7 +48,16 @@ const MailTab: React.FC<MailTabProps> = ({ user }) => {
     }
 
     if (isConnected) {
-        return <MicrosoftMailView userId={user.id} />;
+        return (
+            <Suspense fallback={
+                <div className="flex flex-col items-center justify-center p-12 gap-4 h-[50vh]">
+                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                    <p className="text-slate-400 font-medium animate-pulse uppercase tracking-[0.2em] text-xs">Loading mail...</p>
+                </div>
+            }>
+                <MicrosoftMailView userId={user.id} />
+            </Suspense>
+        );
     }
 
     return (

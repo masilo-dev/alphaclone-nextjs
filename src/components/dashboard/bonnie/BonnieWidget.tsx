@@ -331,7 +331,7 @@ export default function BonnieWidget() {
             </div>
 
             {/* Deep Chat Interface */}
-            <div className="p-4 border-b border-slate-800 bg-slate-950/20">
+            <div className="p-4 border-b border-slate-800 bg-slate-950/20 pointer-events-auto">
               <DeepChat
                 connect={chatConnect}
                 chatStyle={chatStyle}

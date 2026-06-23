@@ -501,12 +501,26 @@ export default function LeadDetailView({ lead, isOpen, onClose, onUpdate, onDele
                   {lead.email && (
                     <div className="flex items-center gap-3 text-sm">
                       <Mail className="w-4 h-4 text-slate-500" />
-                      <span className="text-white">{lead.email}</span>
+                      <button
+                        type="button"
+                        onClick={handleSendEmail}
+                        className="text-teal-300 hover:text-teal-200 underline-offset-2 hover:underline"
+                      >
+                        {lead.email}
+                      </button>
                       <button 
                         onClick={() => navigator.clipboard.writeText(lead.email || '')}
                         className="p-1 text-slate-500 hover:text-white"
                       >
                         <Copy className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSendEmail}
+                        className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-semibold hover:bg-teal-500/20"
+                      >
+                        <MailPlus className="w-3 h-3" />
+                        Send
                       </button>
                     </div>
                   )}

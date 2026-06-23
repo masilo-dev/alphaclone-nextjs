@@ -11,6 +11,7 @@ import { businessClientService } from '../../../services/businessClientService';
 import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { getMimeType } from '../../../utils/mimeTypes';
+import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
 
 interface ComposeEmailModalProps {
     isOpen: boolean;
@@ -116,6 +117,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const matchedClient = React.useMemo(() => {
+        const normalized = to.trim().toLowerCase();
+        if (!normalized) return null;
+        return clients.find((client) => client.email?.toLowerCase() === normalized) || null;
+    }, [clients, to]);
 
     const TONES = [
         { id: 'professional', label: 'Professional' },
@@ -226,38 +233,38 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             return;
         }
 
+        if (!currentTenant?.id) {
+            toast.error('No active workspace selected.');
+            return;
+        }
+
         setSending(true);
         try {
-            // Use unified email sending API
-            const res = await fetch('/api/email/send', {
+            const res = await fetch('/api/outreach/send', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    to,
-                    cc: cc || undefined,
-                    bcc: bcc || undefined,
+                    tenantId: currentTenant.id,
+                    leadEmail: to.trim(),
+                    leadName: matchedClient?.name,
                     subject,
-                    text: body,
-                    tenantId: currentTenant?.id,
-                    userId: userId,
-                    from: from || undefined,
-                    provider: selectedProvider?.type || 'microsoft',
-                    attachments: attachments.length > 0 ? attachments.map(att => ({
-                        filename: att.name,
-                        data: att.data,
-                        mimeType: getMimeType(att.name),
-                    })) : undefined,
-                })
+                    body,
+                    pitchAngle: 'direct_message',
+                    autoSend: true,
+                    consentGranted: true,
+                    confidenceScore: 100,
+                    deliveryProviders: selectedProvider?.type ? [selectedProvider.type] : undefined,
+                    preferredProvider: selectedProvider?.type,
+                    balanceByDailyLimit: false,
+                }),
             });
 
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error || 'Failed to send message');
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok || !result.success) {
+                throw new Error(result.error || 'Failed to send message');
             }
 
-            toast.success(`Email sent via ${selectedProvider?.name || 'Provider'}`);
+            toast.success(`Email sent via ${String(result.provider || selectedProvider?.type || 'platform').toUpperCase()}`);
             onClose();
             setTo('');
             setCc('');
@@ -511,6 +518,15 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         )}
                                     </AnimatePresence>
                                 </div>
+
+                                {matchedClient && (
+                                    <ClientEmailContextPicker
+                                        tenantId={currentTenant?.id}
+                                        clientId={matchedClient.id}
+                                        email={matchedClient.email}
+                                        onInsert={(text) => setBody((prev) => `${prev}${text}`)}
+                                    />
+                                )}
 
                                 {/* SUBJECT */}
                                 <div>

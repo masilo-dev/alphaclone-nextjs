@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTenant } from '@/contexts/TenantContext';
+import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { motion } from 'framer-motion';
 import { User } from '../../../types';
 import {
@@ -59,6 +61,26 @@ interface QuickAction {
 }
 
 const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats }) => {
+    const { currentTenant } = useTenant();
+    const [onboardingComplete, setOnboardingComplete] = useState(true);
+
+    useEffect(() => {
+        const completed =
+            localStorage.getItem(`onboarding_completed_${user.id}`) === 'true' ||
+            localStorage.getItem(`onboarding_completed_${user.id}`) === 'skipped';
+        setOnboardingComplete(completed);
+    }, [user.id]);
+
+    const isOwner = useMemo(() => {
+        const role = String(user.role || '').toLowerCase();
+        return (
+            role === 'tenant_admin' ||
+            role === 'admin' ||
+            role === 'owner' ||
+            (!!currentTenant?.admin_user_id && currentTenant.admin_user_id === user.id)
+        );
+    }, [user.role, user.id, currentTenant?.admin_user_id]);
+
     const greeting = useMemo(() => getGreeting(), []);
     const firstName = useMemo(() => (user.name || user.email || 'there').split(' ')[0], [user.name, user.email]);
     const welcomeMessage = useMemo(() => {
@@ -248,6 +270,101 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         ].every((value) => Number(value || 0) === 0);
     }, [stats]);
 
+    const showSetupGuide = !isOwner && isNewWorkspace && !onboardingComplete;
+
+    const ownerPrioritySteps = useMemo(() => {
+        const items: Array<{ step: string; title: string; description: string; href: string; icon: React.FC<any> }> = [];
+
+        if (Number(stats?.unreadMessages || 0) > 0) {
+            items.push({
+                step: String(items.length + 1),
+                title: 'Reply to messages',
+                description: `${stats.unreadMessages} unread — respond while context is fresh.`,
+                href: '/dashboard/business/messages',
+                icon: MessagesSquare,
+            });
+        }
+        if (Number(stats?.totalTasks || 0) > Number(stats?.completedTasks || 0)) {
+            items.push({
+                step: String(items.length + 1),
+                title: 'Clear open tasks',
+                description: `${Number(stats?.totalTasks || 0) - Number(stats?.completedTasks || 0)} tasks still open on your board.`,
+                href: '/dashboard/tasks',
+                icon: CheckSquare,
+            });
+        }
+        if (Number(stats?.totalLeads || 0) > 0) {
+            items.push({
+                step: String(items.length + 1),
+                title: 'Follow up pipeline',
+                description: `${stats.totalLeads} leads in CRM — move the next deal forward.`,
+                href: '/dashboard/crm',
+                icon: Target,
+            });
+        }
+        if (Number(stats?.activeCampaigns || 0) > 0) {
+            items.push({
+                step: String(items.length + 1),
+                title: 'Review campaigns',
+                description: `${stats.activeCampaigns} active campaigns need a quick performance check.`,
+                href: '/dashboard/business/campaigns',
+                icon: Mail,
+            });
+        }
+
+        if (items.length === 0) {
+            items.push(
+                {
+                    step: '1',
+                    title: 'Review performance',
+                    description: 'Check reports and trends to spot what is working this week.',
+                    href: '/dashboard/business/reports',
+                    icon: BarChart2,
+                },
+                {
+                    step: '2',
+                    title: 'Plan outreach',
+                    description: 'Launch or refine an email campaign to stay in front of clients.',
+                    href: '/dashboard/business/campaigns',
+                    icon: Mail,
+                },
+                {
+                    step: '3',
+                    title: 'Check inbox',
+                    description: 'Scan unified inbox and mail for anything that needs a reply.',
+                    href: '/dashboard/business/messages',
+                    icon: Inbox,
+                }
+            );
+        }
+
+        return items.slice(0, 3);
+    }, [stats]);
+
+    const ownerTodayActions = useMemo(() => [
+        {
+            time: 'Now',
+            title: 'Unread messages',
+            detail: `${Number(stats?.unreadMessages || 0)} waiting for a reply in inbox.`,
+            href: '/dashboard/business/messages',
+            icon: MessagesSquare,
+        },
+        {
+            time: 'Next',
+            title: 'Pipeline follow-ups',
+            detail: `${Number(stats?.totalLeads || 0)} leads and ${Number(stats?.clientCount || 0)} clients in CRM.`,
+            href: '/dashboard/crm',
+            icon: Target,
+        },
+        {
+            time: 'Then',
+            title: 'Tasks and deadlines',
+            detail: `${Number(stats?.completedTasks || 0)} of ${Number(stats?.totalTasks || 0)} tasks complete.`,
+            href: '/dashboard/tasks',
+            icon: CalendarCheck2,
+        },
+    ], [stats]);
+
     const todayActions = useMemo(() => [
         {
             time: 'Now',
@@ -272,10 +389,13 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         },
     ], [stats]);
 
+    const activePrioritySteps = isOwner ? ownerPrioritySteps : starterSteps.slice(0, 3);
+    const activeTimelineActions = isOwner ? ownerTodayActions : todayActions;
+
     return (
         <div className="px-2 py-3 sm:p-6 max-w-7xl mx-auto space-y-3 sm:space-y-6">
 
-            {isNewWorkspace && (
+            {showSetupGuide && (
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -331,6 +451,17 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </div>
             </div>
 
+            {isOwner && (
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.06 }}
+                >
+                    <ModuleIntelligenceCard moduleKey="analyticsDashboard" title="What to improve" />
+                </motion.div>
+            )}
+
+            {showSetupGuide && (
             <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -371,6 +502,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     })}
                 </div>
             </motion.div>
+            )}
 
             <motion.div
                 initial={{ opacity: 0, y: 12 }}
@@ -380,14 +512,20 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             >
                 <div className="flex items-center justify-between gap-3 mb-4">
                     <div>
-                        <div className="text-[11px] font-black uppercase tracking-[0.28em] text-sky-400">Today&apos;s first 3 actions</div>
-                        <p className="text-sm text-slate-400 mt-1">A short list to get momentum without clutter.</p>
+                        <div className="text-[11px] font-black uppercase tracking-[0.28em] text-sky-400">
+                            {isOwner ? 'Your priorities today' : 'Today&apos;s first 3 actions'}
+                        </div>
+                        <p className="text-sm text-slate-400 mt-1">
+                            {isOwner
+                                ? 'Summaries and next steps based on your workspace — no setup walkthrough.'
+                                : 'A short list to get momentum without clutter.'}
+                        </p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
                     <div className="space-y-3">
-                        {starterSteps.slice(0, 3).map((step) => {
+                        {activePrioritySteps.map((step) => {
                             const StepIcon = step.icon;
                             return (
                                 <button
@@ -414,11 +552,13 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     <div className="w-full lg:w-[320px] rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
                         <div className="flex items-center gap-2 mb-4">
                             <Clock3 className="w-4 h-4 text-teal-400" />
-                            <h3 className="text-sm font-semibold text-white">Activity timeline</h3>
+                            <h3 className="text-sm font-semibold text-white">
+                                {isOwner ? 'Workspace snapshot' : 'Activity timeline'}
+                            </h3>
                         </div>
 
                         <div className="space-y-4">
-                            {todayActions.map((item, index) => {
+                            {activeTimelineActions.map((item, index) => {
                                 const ItemIcon = item.icon;
                                 return (
                                     <button
@@ -430,7 +570,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                                             <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
                                                 <ItemIcon className="w-4 h-4 text-sky-400" />
                                             </div>
-                                            {index < todayActions.length - 1 && <div className="w-px h-8 bg-slate-800 mt-2" />}
+                                            {index < activeTimelineActions.length - 1 && <div className="w-px h-8 bg-slate-800 mt-2" />}
                                         </div>
                                         <div className="min-w-0 flex-1 pb-2">
                                             <div className="flex items-center gap-2">
