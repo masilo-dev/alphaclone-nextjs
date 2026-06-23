@@ -20,60 +20,12 @@ import {
    Video,
 } from 'lucide-react';
 
-/* ─────────────────────────── Integrations Marquee ─────────────────────────── */
-const INTEGRATIONS = [
-  { name: 'Meta', color: '#0064E0', bg: '#0a1a2d', letter: 'M' },
-  { name: 'LinkedIn', color: '#0A66C2', bg: '#0a1a2d', letter: 'L' },
-  { name: 'WhatsApp', color: '#25D366', bg: '#0a2d1a', letter: 'W' },
-];
-
-const IntegrationChip = ({ item }: { item: typeof INTEGRATIONS[0] }) => (
-  <div
-    className="flex-shrink-0 flex items-center gap-3 px-5 py-3 rounded-2xl border mx-3"
-    style={{
-      background: item.bg,
-      borderColor: `${item.color}30`,
-      boxShadow: `0 0 20px ${item.color}12`,
-    }}
-  >
-    <span
-      className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black"
-      style={{ background: `${item.color}22`, color: item.color }}
-    >
-      {item.letter}
-    </span>
-    <span className="text-sm font-semibold text-slate-200 whitespace-nowrap">{item.name}</span>
-    <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: item.color }} />
-  </div>
-);
-
-const InfiniteMarquee = () => {
-  // Duplicate list for seamless loop
-  const items = [...INTEGRATIONS, ...INTEGRATIONS, ...INTEGRATIONS];
-  return (
-    <div className="relative overflow-hidden w-full" aria-hidden="true">
-      {/* Left/right fade masks */}
-      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 z-10" style={{ background: 'linear-gradient(to right, #020D1A, transparent)' }} />
-      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 z-10" style={{ background: 'linear-gradient(to left, #020D1A, transparent)' }} />
-      <div
-        className="flex w-max"
-        style={{
-          animation: 'marquee-scroll 38s linear infinite',
-        }}
-      >
-        {items.map((item, i) => (
-          <IntegrationChip key={`${item.name}-${i}`} item={item} />
-        ))}
-      </div>
-    </div>
-  );
-};
-
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/UIComponents';
 import PublicNavigation from './PublicNavigation';
 import MarketingFooter from './landing/MarketingFooter';
+import VerifiedPartnersMarquee from './landing/VerifiedPartnersMarquee';
 import { ServiceCard } from './landing/ServiceCard';
 import { AIWorkerGraphic } from './ui/AIWorkerGraphic';
 const HeroBackground = dynamic(() => import('./landing/HeroBackground'), {
@@ -293,14 +245,17 @@ const LandingPage = () => {
                </motion.div>
             </section>
 
-            {/* ─── Integrations Marquee Strip ─── */}
+            {/* ─── Verified partner integrations ─── */}
             <section className="py-10 border-y border-slate-800/60 bg-slate-950/60 overflow-hidden">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
                   <p className="text-[11px] uppercase tracking-[0.28em] font-bold text-slate-500">
-                     Connected to the tools your business already uses
+                     Verified apps you can connect inside AlphaClone
+                  </p>
+                  <p className="mt-2 text-sm text-slate-400">
+                     Facebook, WhatsApp, LinkedIn, Stripe, Google, Microsoft, and more — OAuth-ready in your workspace.
                   </p>
                </div>
-               <InfiniteMarquee />
+               <VerifiedPartnersMarquee />
             </section>
 
 
