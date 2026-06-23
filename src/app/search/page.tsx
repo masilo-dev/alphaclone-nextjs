@@ -31,13 +31,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function Page({
+export default async function Page({
   searchParams,
 }: {
-  searchParams?: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const query = searchParams?.q || '';
-  const q = String(query).trim().toLowerCase();
+  const { q: query } = await searchParams;
+  const q = String(query || '').trim().toLowerCase();
   const results = q
     ? SITE_PAGES.filter((page) =>
         [page.title, page.description, page.href].some((field) => field.toLowerCase().includes(q))
