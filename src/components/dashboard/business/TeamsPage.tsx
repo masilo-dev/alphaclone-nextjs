@@ -6,7 +6,11 @@ import { useTenant } from '@/contexts/TenantContext';
 import { microsoft365Service } from '@/services/microsoft365Service';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { tenantService } from '@/services/tenancy/TenantService';
-import { dailyService } from '@/services/dailyService';
+import {
+    createInstantMeeting,
+    loadMeetingForJoin,
+    type PlatformMeetingProvider,
+} from '@/services/instantMeetingService';
 import { supabase } from '@/lib/supabase';
 import {
     Video,
@@ -30,6 +34,11 @@ import toast from 'react-hot-toast';
 const CustomVideoRoom = dynamic(
     () => import('@/components/dashboard/video/CustomVideoRoom'),
     { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-400" /></div> }
+);
+
+const MicrosoftMeetingEmbed = dynamic(
+    () => import('@/components/dashboard/video/MicrosoftMeetingEmbed'),
+    { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-400" /></div> }
 );
 
 interface TeamsPageProps {
@@ -68,6 +77,8 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
 
     // Active call inside the page
     const [activeCallId, setActiveCallId] = useState<string | null>(null);
+    const [activeProvider, setActiveProvider] = useState<PlatformMeetingProvider | null>(null);
+    const [activeJoinUrl, setActiveJoinUrl] = useState<string | null>(null);
 
     // ── Load everything ──────────────────────────────────────────────────────
     useEffect(() => {
@@ -129,23 +140,49 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
     // ── Start an instant meeting ─────────────────────────────────────────────
     const startInstantMeeting = async () => {
         setStarting(true);
-        const toastId = toast.loading('Creating secure meeting room…');
+        const toastId = toast.loading(isConnected ? 'Creating Microsoft Teams meeting…' : 'Creating secure meeting room…');
         try {
-            const { call, error } = await dailyService.createVideoCall({
+            const { call, provider, error } = await createInstantMeeting({
                 hostId: user.id,
+                tenantId: currentTenant?.id,
                 title: `Teams Meeting · ${new Date().toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
-                isPublic: false,
             });
             if (error || !call) {
                 toast.error(error === 'LIMIT_EXCEEDED_TEASER' ? 'Meeting limit reached. Upgrade to host more.' : (error || 'Could not create meeting'), { id: toastId });
                 return;
             }
-            toast.success('Room ready — joining now…', { id: toastId });
+            toast.success(provider === 'teams' ? 'Teams meeting ready — joining now…' : 'Room ready — joining now…', { id: toastId });
             setActiveCallId(call.id);
+            setActiveProvider(provider);
+            setActiveJoinUrl(provider === 'teams' ? call.daily_room_url || null : null);
             await loadAll();
         } finally {
             setStarting(false);
         }
+    };
+
+    const joinMeeting = async (callId: string) => {
+        const toastId = toast.loading('Opening meeting…');
+        const { call, provider, joinUrl, error } = await loadMeetingForJoin(callId);
+        if (error || !call) {
+            toast.error(error || 'Could not open meeting', { id: toastId });
+            return;
+        }
+        if (provider === 'teams' && !joinUrl) {
+            toast.error('Teams join link missing. Start a new meeting or reconnect Microsoft 365.', { id: toastId });
+            return;
+        }
+        toast.dismiss(toastId);
+        setActiveCallId(call.id);
+        setActiveProvider(provider);
+        setActiveJoinUrl(joinUrl);
+    };
+
+    const leaveActiveMeeting = () => {
+        setActiveCallId(null);
+        setActiveProvider(null);
+        setActiveJoinUrl(null);
+        void loadAll();
     };
 
     // ── Copy invite link ─────────────────────────────────────────────────────
@@ -185,14 +222,13 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
     if (activeCallId) {
         return (
             <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col">
-                {/* Thin top bar so user can exit back to dashboard */}
                 <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-white/10 shrink-0">
                     <div className="flex items-center gap-2 text-sm font-semibold text-white">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        Meeting in progress
+                        {activeProvider === 'teams' ? 'Microsoft Teams meeting' : 'Meeting in progress'}
                     </div>
                     <button
-                        onClick={() => { setActiveCallId(null); void loadAll(); }}
+                        onClick={leaveActiveMeeting}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                         title="Leave meeting and return to dashboard"
                     >
@@ -200,11 +236,18 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                     </button>
                 </div>
                 <div className="flex-1 relative">
-                    <CustomVideoRoom
-                        user={user}
-                        callId={activeCallId}
-                        onLeave={() => { setActiveCallId(null); void loadAll(); }}
-                    />
+                    {activeProvider === 'teams' && activeJoinUrl ? (
+                        <MicrosoftMeetingEmbed
+                            meetingLink={activeJoinUrl}
+                            displayName={user?.name || user?.email || 'Host'}
+                        />
+                    ) : (
+                        <CustomVideoRoom
+                            user={user}
+                            callId={activeCallId}
+                            onLeave={leaveActiveMeeting}
+                        />
+                    )}
                 </div>
             </div>
         );
@@ -247,7 +290,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                         className="gap-2 bg-teal-600 hover:bg-teal-500 text-white font-bold shadow-lg shadow-teal-500/20"
                     >
                         {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                        {starting ? 'Starting…' : 'New Meeting'}
+                        {starting ? 'Starting…' : isConnected ? 'New Teams Meeting' : 'New Meeting'}
                     </Button>
                 </div>
             </div>
@@ -335,7 +378,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                             >
                                                 <Copy className="w-3.5 h-3.5" />
                                             </button>
-                                            <Button onClick={() => setActiveCallId(m.id)} className="gap-1.5 h-8 text-xs px-3">
+                                            <Button onClick={() => void joinMeeting(m.id)} className="gap-1.5 h-8 text-xs px-3">
                                                 <Video className="w-3.5 h-3.5" /> Join
                                             </Button>
                                         </div>

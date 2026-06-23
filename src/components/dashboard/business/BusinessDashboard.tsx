@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -38,6 +38,7 @@ import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
+import { loadMeetingForJoin, type PlatformMeetingProvider } from '@/services/instantMeetingService';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -67,6 +68,7 @@ import DocumentHub from '../../documents/DocumentHub';
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 const MailTab = React.lazy(() => import('../MailTab'));
 const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
+const MicrosoftMeetingEmbed = React.lazy(() => import('../video/MicrosoftMeetingEmbed'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const ZohoMailView = React.lazy(() => import('../zoho/ZohoMailView'));
@@ -152,8 +154,32 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         setIsMeetingMinimized,
         toggleMeetingMinimized,
     } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
+    const [activeMeetingProvider, setActiveMeetingProvider] = useState<PlatformMeetingProvider | null>(null);
+    const [activeMeetingJoinUrl, setActiveMeetingJoinUrl] = useState<string | null>(null);
 
-    // Sync sidebar on mount to avoid hydration mismatch
+    useEffect(() => {
+        if (!activeMeetingCallId) {
+            setActiveMeetingProvider(null);
+            setActiveMeetingJoinUrl(null);
+            return;
+        }
+
+        let cancelled = false;
+        void loadMeetingForJoin(activeMeetingCallId).then(({ provider, joinUrl, error }) => {
+            if (cancelled) return;
+            if (error) {
+                toast.error(error);
+                endMeeting();
+                return;
+            }
+            setActiveMeetingProvider(provider);
+            setActiveMeetingJoinUrl(joinUrl);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeMeetingCallId, endMeeting]);
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
             // Keep sidebar expanded by default on tablet and desktop so navigation labels stay visible.
@@ -970,13 +996,22 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             Background mode
                         </button>
                     )}
-                    <CustomVideoRoom
-                        user={user}
-                        callId={activeMeetingCallId}
-                        onLeave={endMeeting}
-                        isMinimized={isMeetingMinimized}
-                        onToggleMinimize={toggleMeetingMinimized}
-                    />
+                    {activeMeetingProvider === 'teams' && activeMeetingJoinUrl ? (
+                        <div className="fixed inset-0 z-[120] bg-slate-950">
+                            <MicrosoftMeetingEmbed
+                                meetingLink={activeMeetingJoinUrl}
+                                displayName={user.name || user.email || 'Host'}
+                            />
+                        </div>
+                    ) : (
+                        <CustomVideoRoom
+                            user={user}
+                            callId={activeMeetingCallId}
+                            onLeave={endMeeting}
+                            isMinimized={isMeetingMinimized}
+                            onToggleMinimize={toggleMeetingMinimized}
+                        />
+                    )}
                 </React.Suspense>
             )}
 
