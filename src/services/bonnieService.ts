@@ -26,6 +26,14 @@ export interface BonnieNavIntent {
   label: string;
 }
 
+let bonnieLogsTableAvailable: boolean | null = null;
+
+function isMissingBonnieLogsTable(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  const message = String(error.message || '').toLowerCase();
+  return error.code === 'PGRST205' || message.includes('bonnie_logs') || message.includes('schema cache');
+}
+
 /**
  * Deterministic, role-aware navigation intent resolver so Bonnie can actually
  * move the user around the dashboard (not just chat). Matches plain-language
@@ -171,20 +179,26 @@ export const bonnieService = {
    */
   async getCombinedLogs(tenantId: string, limit: number = 30): Promise<BonnieLog[]> {
     try {
-      // 1. Fetch bonnie_logs
-      const { data: bonnieLogs, error: logsError } = await supabase
-        .from('bonnie_logs')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+      let bonnieLogs: any[] = [];
 
-      if (logsError) {
-        // If table doesn't exist yet or config is missing, catch gracefully
-        console.warn('Could not load bonnie_logs directly (non-critical):', logsError.message);
+      if (bonnieLogsTableAvailable !== false) {
+        const { data, error: logsError } = await supabase
+          .from('bonnie_logs')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+
+        if (logsError) {
+          if (isMissingBonnieLogsTable(logsError)) {
+            bonnieLogsTableAvailable = false;
+          }
+        } else {
+          bonnieLogsTableAvailable = true;
+          bonnieLogs = data || [];
+        }
       }
 
-      // 2. Fetch autonomous_runner_actions
       const { data: runnerActions, error: actionsError } = await supabase
         .from('autonomous_runner_actions')
         .select('id, action_key, status, details, created_at')
@@ -304,7 +318,11 @@ Example output format:
         .insert(logEntries);
 
       if (insertError) {
-        console.error('Failed to save Bonnie logs:', insertError);
+        if (isMissingBonnieLogsTable(insertError)) {
+          bonnieLogsTableAvailable = false;
+        }
+      } else {
+        bonnieLogsTableAvailable = true;
       }
 
       // 2. Insert mock runs/actions if any actions were decided

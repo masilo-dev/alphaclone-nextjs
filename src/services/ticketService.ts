@@ -6,6 +6,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { emailService } from './email/emailService';
+import { tenantService } from './tenancy/TenantService';
 
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'reopened';
@@ -60,7 +61,7 @@ class TicketService {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Authentication required');
 
-        const tenantId = this.getTenantId();
+        const tenantId = await this.getTenantId();
 
         const { data, error } = await supabase
             .from('tickets')
@@ -93,7 +94,7 @@ class TicketService {
      * Get tickets for a specific entity
      */
     async getBySource(source: TicketSource, sourceId: string): Promise<Ticket[]> {
-        const tenantId = this.getTenantId();
+        const tenantId = await this.getTenantId();
 
         const { data, error } = await supabase
             .from('tickets')
@@ -116,7 +117,7 @@ class TicketService {
         source?: TicketSource;
         assignedTo?: string;
     }): Promise<Ticket[]> {
-        const tenantId = this.getTenantId();
+        const tenantId = await this.getTenantId();
 
         let query = supabase
             .from('tickets')
@@ -233,18 +234,25 @@ class TicketService {
     /**
      * Get tenant ID from the authenticated user's JWT
      */
-    private getTenantId(): string {
-        // Try to get tenant_id from the session's user metadata
-        // This is a simplified version - in production you'd decode the JWT
-        // The tenant_id should be set in the user's app_metadata during signup
-        try {
-            const session = supabase.auth.getSession();
-            // We'll use a fallback that will be overridden by RLS
-            // In production, the tenant_id should be set in the JWT claims
-            return 'default';
-        } catch {
-            return 'default';
+    private async getTenantId(): Promise<string> {
+        const cached = tenantService.getCurrentTenantId();
+        if (cached) return cached;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Authentication required');
+
+        const { data } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+
+        if (data?.tenant_id) {
+            return data.tenant_id;
         }
+
+        throw new Error('No active workspace selected');
     }
 }
 

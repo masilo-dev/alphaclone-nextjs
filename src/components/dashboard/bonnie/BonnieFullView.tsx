@@ -60,7 +60,7 @@ export default function BonnieFullView() {
       } catch (e) {
         // ignore polling errors
       }
-    }, 8000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [tenantId]);

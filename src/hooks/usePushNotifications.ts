@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { registerServiceWorkerSafely } from '@/lib/pwa/registerServiceWorker';
 
 // Helper to convert VAPID public key
 function urlBase64ToUint8Array(base64String: string) {
@@ -30,22 +31,19 @@ export function usePushNotifications() {
             'serviceWorker' in navigator &&
             'PushManager' in window
         ) {
-            navigator.serviceWorker
-                .register('/sw.js')
+            void registerServiceWorkerSafely()
                 .then((reg) => {
-                    if (process.env.NODE_ENV === 'development') {
-                        console.log('[PushNotifications] Service Worker registered:', reg);
-                    }
+                    if (!reg) return null;
                     setRegistration(reg);
-                    
-                    // Check if already subscribed
                     return reg.pushManager.getSubscription();
                 })
                 .then((sub) => {
-                    setIsSubscribed(!!sub);
+                    if (sub !== null && sub !== undefined) {
+                        setIsSubscribed(!!sub);
+                    }
                 })
-                .catch((err) => {
-                    console.error('[PushNotifications] SW registration/check failed:', err);
+                .catch(() => {
+                    // Missing /sw.js or blocked registration — non-critical
                 });
         }
     }, []);

@@ -66,9 +66,11 @@ export const pwaService = {
                 return { success: false, error: 'Service worker is only available in production builds' };
             }
 
-            const registration = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/',
-            });
+            const { registerServiceWorkerSafely } = await import('@/lib/pwa/registerServiceWorker');
+            const registration = await registerServiceWorkerSafely();
+            if (!registration) {
+                return { success: false, error: 'Service worker is not available yet' };
+            }
 
             // Check for updates
             registration.addEventListener('updatefound', () => {
