@@ -3,6 +3,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2, Send, Wrench, XCircle } from 'lucide-react';
 
+// Sanitize text to remove problematic characters
+function sanitizeDisplayText(text: string): string {
+  return text
+    .replace(/[\*]{2,}/g, '')
+    .replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '')
+    .replace(/[£]{2,}/g, '')
+    .replace(/[$]{2,}/g, '')
+    .replace(/[#]{2,}/g, '')
+    .replace(/\\/g, '')
+    .replace(/\{[^}]*\}/g, '')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 export type BonnieToolStep = {
   tool: string;
   success: boolean;
@@ -222,7 +235,7 @@ export default function BonnieChatPanel({
                   Bonnie AI
                 </p>
               )}
-              <p className="whitespace-pre-wrap">{msg.text}</p>
+              <p className="whitespace-pre-wrap">{sanitizeDisplayText(msg.text)}</p>
               {msg.tools && msg.tools.length > 0 && (
                 <div className="mt-2 space-y-1 border-t border-slate-700/50 pt-2">
                   <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -238,7 +251,7 @@ export default function BonnieChatPanel({
                       <span>
                         <span className="font-mono text-slate-300">{t.tool}</span>
                         {' — '}
-                        {t.summary}
+                        {sanitizeDisplayText(t.summary)}
                       </span>
                     </div>
                   ))}

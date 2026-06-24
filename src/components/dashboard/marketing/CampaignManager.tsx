@@ -1,42 +1,61 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Plus, Send, Pause, Play, Trash2, BarChart3, Mail, MessageSquare, Smartphone } from 'lucide-react';
-import { campaignService, type Campaign, type CampaignStatus, type CampaignType, type CampaignChannel } from '@/services/marketing/campaignService';
+import { Loader2, Plus, Send, Pause, Play, Trash2, BarChart3, Mail, Calendar, Users, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { emailCampaignService, type EmailCampaign } from '@/services/emailCampaignService';
+import { useAuth } from '@/contexts/AuthContext';
+
+type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
     draft: 'bg-gray-500',
     scheduled: 'bg-blue-500',
-    active: 'bg-green-500',
-    paused: 'bg-yellow-500',
-    completed: 'bg-purple-500',
+    sending: 'bg-yellow-500',
+    sent: 'bg-green-500',
+    paused: 'bg-orange-500',
     cancelled: 'bg-red-500',
 };
 
-const CHANNEL_ICONS: Record<CampaignChannel, React.ReactNode> = {
-    email: <Mail className="w-4 h-4" />,
-    sms: <MessageSquare className="w-4 h-4" />,
-    push: <Smartphone className="w-4 h-4" />,
-    in_app: <Smartphone className="w-4 h-4" />,
+const STATUS_LABELS: Record<CampaignStatus, string> = {
+    draft: 'Draft',
+    scheduled: 'Scheduled',
+    sending: 'Sending',
+    sent: 'Sent',
+    paused: 'Paused',
+    cancelled: 'Cancelled',
 };
 
+interface CampaignStats {
+    totalRecipients: number;
+    totalSent: number;
+    totalDelivered: number;
+    totalOpened: number;
+    totalClicked: number;
+    totalBounced: number;
+    totalUnsubscribed: number;
+    openRate: number;
+    clickRate: number;
+    bounceRate: number;
+}
+
 export default function CampaignManager() {
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const { user } = useAuth();
+    const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-    const [campaignStats, setCampaignStats] = useState<any>(null);
+    const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+    const [campaignStats, setCampaignStats] = useState<CampaignStats | null>(null);
     const [newCampaign, setNewCampaign] = useState({
         name: '',
-        description: '',
-        type: 'email' as CampaignType,
-        channels: ['email'] as CampaignChannel[],
-        target_audience: '',
-        scheduled_at: '',
-        messageContent: '',
-        messageSubject: '',
+        subject: '',
+        fromName: '',
+        fromEmail: '',
+        scheduledAt: '',
     });
     const [creating, setCreating] = useState(false);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null);
 
     useEffect(() => {
         loadCampaigns();
@@ -45,71 +64,142 @@ export default function CampaignManager() {
     const loadCampaigns = async () => {
         try {
             setLoading(true);
-            const data = await campaignService.getAll();
+            setError(null);
+            const { campaigns: data, error: err } = await emailCampaignService.getCampaigns();
+            if (err) throw new Error(err);
             setCampaigns(data);
-        } catch (error) {
-            console.error('Failed to load campaigns:', error);
+        } catch (err) {
+            console.error('Failed to load campaigns:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load campaigns');
         } finally {
             setLoading(false);
         }
     };
 
     const handleCreateCampaign = async () => {
-        if (!newCampaign.name.trim() || !newCampaign.messageContent.trim()) return;
+        if (!newCampaign.name.trim() || !newCampaign.subject.trim()) return;
+        if (!user?.id) {
+            setError('You must be logged in to create campaigns');
+            return;
+        }
 
         try {
             setCreating(true);
-            const campaign = await campaignService.create({
+            setError(null);
+            const { campaign, error: err } = await emailCampaignService.createCampaign(user.id, {
                 name: newCampaign.name,
-                description: newCampaign.description,
-                type: newCampaign.type,
-                channels: newCampaign.channels,
-                target_audience: newCampaign.target_audience,
-                scheduled_at: newCampaign.scheduled_at || undefined,
-                messages: [{
-                    channel: newCampaign.channels[0],
-                    subject: newCampaign.messageSubject,
-                    content: newCampaign.messageContent,
-                }],
+                subject: newCampaign.subject,
+                fromName: newCampaign.fromName || 'AlphaClone Systems',
+                fromEmail: newCampaign.fromEmail || 'noreply@alphaclonesystems.com',
+                scheduledAt: newCampaign.scheduledAt || undefined,
             });
+
+            if (err || !campaign) throw new Error(err || 'Failed to create campaign');
 
             setCampaigns(prev => [campaign, ...prev]);
             setShowCreateForm(false);
             setNewCampaign({
                 name: '',
-                description: '',
-                type: 'email',
-                channels: ['email'],
-                target_audience: '',
-                scheduled_at: '',
-                messageContent: '',
-                messageSubject: '',
+                subject: '',
+                fromName: '',
+                fromEmail: '',
+                scheduledAt: '',
             });
-        } catch (error) {
-            console.error('Failed to create campaign:', error);
+        } catch (err) {
+            console.error('Failed to create campaign:', err);
+            setError(err instanceof Error ? err.message : 'Failed to create campaign');
         } finally {
             setCreating(false);
         }
     };
 
-    const handleLaunchCampaign = async (campaignId: string) => {
+    const handleSendCampaign = async (campaignId: string) => {
         try {
-            await campaignService.launch(campaignId);
+            setActionLoading(campaignId);
+            setError(null);
+            const { success, error: err } = await emailCampaignService.sendCampaign(campaignId);
+            if (!success) throw new Error(err || 'Failed to send campaign');
             await loadCampaigns();
-        } catch (error) {
-            console.error('Failed to launch campaign:', error);
+        } catch (err) {
+            console.error('Failed to send campaign:', err);
+            setError(err instanceof Error ? err.message : 'Failed to send campaign');
+        } finally {
+            setActionLoading(null);
         }
     };
 
-    const handleViewStats = async (campaign: Campaign) => {
-        setSelectedCampaign(campaign);
+    const handleUpdateStatus = async (campaignId: string, status: CampaignStatus) => {
         try {
-            const stats = await campaignService.getStats(campaign.id);
-            setCampaignStats(stats);
-        } catch (error) {
-            console.error('Failed to load stats:', error);
+            setActionLoading(campaignId);
+            setError(null);
+            const { campaign, error: err } = await emailCampaignService.updateCampaign(campaignId, { status });
+            if (err || !campaign) throw new Error(err || 'Failed to update campaign');
+            setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, status } : c));
+        } catch (err) {
+            console.error('Failed to update campaign status:', err);
+            setError(err instanceof Error ? err.message : 'Failed to update status');
+        } finally {
+            setActionLoading(null);
         }
     };
+
+    const handleDeleteCampaign = async (campaignId: string) => {
+        if (!confirm('Are you sure you want to delete this campaign?')) return;
+        try {
+            setActionLoading(campaignId);
+            setError(null);
+            const { success, error: err } = await emailCampaignService.deleteCampaign(campaignId);
+            if (!success) throw new Error(err || 'Failed to delete campaign');
+            setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+        } catch (err) {
+            console.error('Failed to delete campaign:', err);
+            setError(err instanceof Error ? err.message : 'Failed to delete campaign');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleViewStats = async (campaign: EmailCampaign) => {
+        setSelectedCampaign(campaign);
+        try {
+            const { analytics, error: err } = await emailCampaignService.getCampaignAnalytics(campaign.id);
+            if (err) throw new Error(err);
+
+            setCampaignStats({
+                totalRecipients: campaign.totalRecipients || 0,
+                totalSent: campaign.totalSent || 0,
+                totalDelivered: campaign.totalDelivered || 0,
+                totalOpened: campaign.totalOpened || 0,
+                totalClicked: campaign.totalClicked || 0,
+                totalBounced: campaign.totalBounced || 0,
+                totalUnsubscribed: campaign.totalUnsubscribed || 0,
+                openRate: analytics?.openRate || 0,
+                clickRate: analytics?.clickRate || 0,
+                bounceRate: analytics?.bounceRate || 0,
+            });
+        } catch (err) {
+            console.error('Failed to load stats:', err);
+            setCampaignStats({
+                totalRecipients: campaign.totalRecipients || 0,
+                totalSent: campaign.totalSent || 0,
+                totalDelivered: campaign.totalDelivered || 0,
+                totalOpened: campaign.totalOpened || 0,
+                totalClicked: campaign.totalClicked || 0,
+                totalBounced: campaign.totalBounced || 0,
+                totalUnsubscribed: campaign.totalUnsubscribed || 0,
+                openRate: 0,
+                clickRate: 0,
+                bounceRate: 0,
+            });
+        }
+    };
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return 'Not scheduled';
+        return new Date(dateString).toLocaleString();
+    };
+
+    const formatRate = (rate: number) => `${rate.toFixed(1)}%`;
 
     if (loading) {
         return (
@@ -122,7 +212,10 @@ export default function CampaignManager() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">Marketing Campaigns</h2>
+                <div>
+                    <h2 className="text-lg font-bold text-white">Email Campaigns</h2>
+                    <p className="text-xs text-slate-400">Create and manage email marketing campaigns</p>
+                </div>
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
@@ -132,13 +225,19 @@ export default function CampaignManager() {
                 </button>
             </div>
 
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
+                    {error}
+                </div>
+            )}
+
             {showCreateForm && (
                 <div className="bg-slate-800 rounded-xl p-6 space-y-4 border border-slate-700">
-                    <h3 className="text-sm font-semibold text-white">Create Campaign</h3>
-                    
+                    <h3 className="text-sm font-semibold text-white">Create Email Campaign</h3>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs text-slate-400">Campaign Name</label>
+                            <label className="text-xs text-slate-400">Campaign Name *</label>
                             <input
                                 type="text"
                                 placeholder="Summer Sale 2024"
@@ -148,72 +247,49 @@ export default function CampaignManager() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs text-slate-400">Campaign Type</label>
-                            <select
-                                value={newCampaign.type}
-                                onChange={(e) => setNewCampaign(prev => ({ ...prev, type: e.target.value as CampaignType }))}
-                                className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                            >
-                                <option value="email">Email Campaign</option>
-                                <option value="sms">SMS Campaign</option>
-                                <option value="multi_channel">Multi-Channel</option>
-                            </select>
+                            <label className="text-xs text-slate-400">Email Subject *</label>
+                            <input
+                                type="text"
+                                placeholder="Don't miss our summer sale!"
+                                value={newCampaign.subject}
+                                onChange={(e) => setNewCampaign(prev => ({ ...prev, subject: e.target.value }))}
+                                className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                            />
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs text-slate-400">Description</label>
-                        <textarea
-                            placeholder="Campaign description..."
-                            value={newCampaign.description}
-                            onChange={(e) => setNewCampaign(prev => ({ ...prev, description: e.target.value }))}
-                            rows={2}
-                            className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
-                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs text-slate-400">Target Audience</label>
+                            <label className="text-xs text-slate-400">From Name</label>
                             <input
                                 type="text"
-                                placeholder="All active customers"
-                                value={newCampaign.target_audience}
-                                onChange={(e) => setNewCampaign(prev => ({ ...prev, target_audience: e.target.value }))}
+                                placeholder="AlphaClone Systems"
+                                value={newCampaign.fromName}
+                                onChange={(e) => setNewCampaign(prev => ({ ...prev, fromName: e.target.value }))}
                                 className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs text-slate-400">Schedule (optional)</label>
+                            <label className="text-xs text-slate-400">From Email</label>
                             <input
-                                type="datetime-local"
-                                value={newCampaign.scheduled_at}
-                                onChange={(e) => setNewCampaign(prev => ({ ...prev, scheduled_at: e.target.value }))}
-                                className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                                type="email"
+                                placeholder="noreply@alphaclonesystems.com"
+                                value={newCampaign.fromEmail}
+                                onChange={(e) => setNewCampaign(prev => ({ ...prev, fromEmail: e.target.value }))}
+                                className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs text-slate-400">Email Subject</label>
+                        <label className="text-xs text-slate-400">Schedule Send (optional)</label>
                         <input
-                            type="text"
-                            placeholder="Don't miss our summer sale!"
-                            value={newCampaign.messageSubject}
-                            onChange={(e) => setNewCampaign(prev => ({ ...prev, messageSubject: e.target.value }))}
-                            className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                            type="datetime-local"
+                            value={newCampaign.scheduledAt}
+                            onChange={(e) => setNewCampaign(prev => ({ ...prev, scheduledAt: e.target.value }))}
+                            className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs text-slate-400">Message Content (HTML supported)</label>
-                        <textarea
-                            placeholder="<h1>Summer Sale!</h1><p>Get 20% off...</p>"
-                            value={newCampaign.messageContent}
-                            onChange={(e) => setNewCampaign(prev => ({ ...prev, messageContent: e.target.value }))}
-                            rows={6}
-                            className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none font-mono"
-                        />
+                        <p className="text-[10px] text-slate-500">Leave empty to save as draft</p>
                     </div>
 
                     <div className="flex justify-end gap-3">
@@ -225,7 +301,7 @@ export default function CampaignManager() {
                         </button>
                         <button
                             onClick={handleCreateCampaign}
-                            disabled={creating || !newCampaign.name.trim() || !newCampaign.messageContent.trim()}
+                            disabled={creating || !newCampaign.name.trim() || !newCampaign.subject.trim()}
                             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
                         >
                             {creating ? 'Creating...' : 'Create Campaign'}
@@ -236,88 +312,173 @@ export default function CampaignManager() {
 
             {campaigns.length === 0 ? (
                 <div className="text-center py-12 text-slate-500">
-                    <Send className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <Mail className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">No campaigns yet</p>
-                    <p className="text-xs mt-1">Create your first marketing campaign</p>
+                    <p className="text-xs mt-1">Create your first email campaign</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
                     {campaigns.map(campaign => (
                         <div
                             key={campaign.id}
-                            className="bg-slate-800 rounded-xl border border-slate-700 p-5 hover:border-slate-600 transition-colors"
+                            className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden"
                         >
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-sm font-semibold text-white truncate">
-                                            {campaign.name}
-                                        </h3>
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full text-white ${STATUS_COLORS[campaign.status]}`}>
-                                            {campaign.status}
-                                        </span>
-                                    </div>
-                                    {campaign.description && (
-                                        <p className="text-xs text-slate-400 mb-2 line-clamp-2">
-                                            {campaign.description}
-                                        </p>
-                                    )}
-                                    <div className="flex items-center gap-4 text-[10px] text-slate-500">
-                                        <span className="flex items-center gap-1">
-                                            {campaign.channels.map(ch => (
-                                                <span key={ch} className="flex items-center gap-1">
-                                                    {CHANNEL_ICONS[ch]}
-                                                    {ch}
-                                                </span>
-                                            ))}
-                                        </span>
-                                        <span>
-                                            Created: {new Date(campaign.created_at).toLocaleDateString()}
-                                        </span>
-                                        {campaign.scheduled_at && (
-                                            <span>
-                                                Scheduled: {new Date(campaign.scheduled_at).toLocaleDateString()}
+                            <div className="p-5">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h3 className="text-sm font-semibold text-white truncate">
+                                                {campaign.name}
+                                            </h3>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full text-white ${STATUS_COLORS[campaign.status]}`}>
+                                                {STATUS_LABELS[campaign.status]}
                                             </span>
-                                        )}
+                                        </div>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            Subject: {campaign.subject}
+                                        </p>
+                                        <div className="flex items-center gap-4 text-[10px] text-slate-500">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                Created: {new Date(campaign.createdAt).toLocaleDateString()}
+                                            </span>
+                                            {campaign.scheduledAt && (
+                                                <span className="flex items-center gap-1 text-blue-400">
+                                                    <Calendar className="w-3 h-3" />
+                                                    Scheduled: {formatDate(campaign.scheduledAt)}
+                                                </span>
+                                            )}
+                                            {campaign.sentAt && (
+                                                <span className="flex items-center gap-1 text-green-400">
+                                                    <Send className="w-3 h-3" />
+                                                    Sent: {formatDate(campaign.sentAt)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-4 mt-2 text-[10px] text-slate-400">
+                                            <span className="flex items-center gap-1">
+                                                <Users className="w-3 h-3" />
+                                                {campaign.totalRecipients || 0} recipients
+                                            </span>
+                                            {campaign.totalSent > 0 && (
+                                                <>
+                                                    <span>{campaign.totalSent} sent</span>
+                                                    <span>{campaign.totalDelivered} delivered</span>
+                                                    {campaign.totalOpened > 0 && (
+                                                        <span className="text-blue-400">
+                                                            {campaign.totalOpened} opens ({formatRate((campaign.totalOpened / campaign.totalDelivered) * 100)})
+                                                        </span>
+                                                    )}
+                                                    {campaign.totalClicked > 0 && (
+                                                        <span className="text-purple-400">
+                                                            {campaign.totalClicked} clicks ({formatRate((campaign.totalClicked / campaign.totalDelivered) * 100)})
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-2 ml-4">
-                                    {campaign.status === 'draft' && (
+                                    <div className="flex items-center gap-2 ml-4">
+                                        {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+                                            <button
+                                                onClick={() => handleSendCampaign(campaign.id)}
+                                                disabled={actionLoading === campaign.id}
+                                                className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors"
+                                                title="Send Campaign Now"
+                                            >
+                                                {actionLoading === campaign.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Send className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        )}
+                                        {campaign.status === 'sending' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(campaign.id, 'paused')}
+                                                disabled={actionLoading === campaign.id}
+                                                className="p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-colors"
+                                                title="Pause Campaign"
+                                            >
+                                                {actionLoading === campaign.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Pause className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        )}
+                                        {campaign.status === 'paused' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(campaign.id, 'sending')}
+                                                disabled={actionLoading === campaign.id}
+                                                className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors"
+                                                title="Resume Campaign"
+                                            >
+                                                {actionLoading === campaign.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Play className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => handleLaunchCampaign(campaign.id)}
-                                            className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors"
-                                            title="Launch Campaign"
+                                            onClick={() => handleViewStats(campaign)}
+                                            className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                                            title="View Statistics"
                                         >
-                                            <Play className="w-4 h-4" />
+                                            <BarChart3 className="w-4 h-4" />
                                         </button>
-                                    )}
-                                    {campaign.status === 'active' && (
                                         <button
-                                            onClick={() => campaignService.updateStatus(campaign.id, 'paused')}
-                                            className="p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-colors"
-                                            title="Pause Campaign"
+                                            onClick={() => handleDeleteCampaign(campaign.id)}
+                                            disabled={actionLoading === campaign.id}
+                                            className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                            title="Delete Campaign"
                                         >
-                                            <Pause className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
-                                    )}
-                                    {campaign.status === 'paused' && (
                                         <button
-                                            onClick={() => campaignService.updateStatus(campaign.id, 'active')}
-                                            className="p-2 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors"
-                                            title="Resume Campaign"
+                                            onClick={() => setExpandedCampaign(expandedCampaign === campaign.id ? null : campaign.id)}
+                                            className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
+                                            title="Toggle Details"
                                         >
-                                            <Play className="w-4 h-4" />
+                                            {expandedCampaign === campaign.id ? (
+                                                <ChevronUp className="w-4 h-4" />
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4" />
+                                            )}
                                         </button>
-                                    )}
-                                    <button
-                                        onClick={() => handleViewStats(campaign)}
-                                        className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
-                                        title="View Statistics"
-                                    >
-                                        <BarChart3 className="w-4 h-4" />
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
+                            {expandedCampaign === campaign.id && (
+                                <div className="border-t border-slate-700 bg-slate-900/50 px-5 py-4">
+                                    <div className="grid grid-cols-3 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-slate-500 text-xs">From:</span>
+                                            <p className="text-slate-300">{campaign.fromName || 'Not set'}</p>
+                                            <p className="text-slate-400 text-xs">{campaign.fromEmail || 'Not set'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 text-xs">Reply-To:</span>
+                                            <p className="text-slate-300">{campaign.replyTo || campaign.fromEmail || 'Not set'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 text-xs">Status Details:</span>
+                                            <p className="text-slate-300">
+                                                {campaign.totalBounced > 0 && (
+                                                    <span className="text-red-400">{campaign.totalBounced} bounced</span>
+                                                )}
+                                                {campaign.totalUnsubscribed > 0 && (
+                                                    <span className="text-orange-400 ml-2">{campaign.totalUnsubscribed} unsubscribed</span>
+                                                )}
+                                                {!campaign.totalBounced && !campaign.totalUnsubscribed && (
+                                                    <span className="text-slate-500">No issues</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -325,43 +486,58 @@ export default function CampaignManager() {
 
             {selectedCampaign && campaignStats && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-lg w-full mx-4">
+                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-semibold text-white">
-                                Campaign Stats: {selectedCampaign.name}
+                                Campaign Analytics: {selectedCampaign.name}
                             </h3>
                             <button
                                 onClick={() => { setSelectedCampaign(null); setCampaignStats(null); }}
                                 className="text-slate-400 hover:text-white transition-colors"
                             >
-                                ✕
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-slate-900 rounded-lg p-3 text-center">
-                                <div className="text-2xl font-bold text-white">{campaignStats.total}</div>
-                                <div className="text-xs text-slate-400">Total</div>
+
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-white">{campaignStats.totalRecipients.toLocaleString()}</div>
+                                <div className="text-xs text-slate-400 mt-1">Total Recipients</div>
                             </div>
-                            <div className="bg-slate-900 rounded-lg p-3 text-center">
-                                <div className="text-2xl font-bold text-green-400">{campaignStats.sent}</div>
-                                <div className="text-xs text-slate-400">Sent</div>
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-green-400">{campaignStats.totalSent.toLocaleString()}</div>
+                                <div className="text-xs text-slate-400 mt-1">Sent</div>
                             </div>
-                            <div className="bg-slate-900 rounded-lg p-3 text-center">
-                                <div className="text-2xl font-bold text-blue-400">{campaignStats.delivered}</div>
-                                <div className="text-xs text-slate-400">Delivered</div>
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-blue-400">{campaignStats.totalDelivered.toLocaleString()}</div>
+                                <div className="text-xs text-slate-400 mt-1">Delivered</div>
                             </div>
-                            <div className="bg-slate-900 rounded-lg p-3 text-center">
-                                <div className="text-2xl font-bold text-yellow-400">{campaignStats.opened}</div>
-                                <div className="text-xs text-slate-400">Opened</div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-4 mb-6">
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-yellow-400">{formatRate(campaignStats.openRate)}</div>
+                                <div className="text-xs text-slate-400 mt-1">Open Rate</div>
+                                <div className="text-xs text-slate-500">{campaignStats.totalOpened.toLocaleString()} opens</div>
                             </div>
-                            <div className="bg-slate-900 rounded-lg p-3 text-center">
-                                <div className="text-2xl font-bold text-purple-400">{campaignStats.clicked}</div>
-                                <div className="text-xs text-slate-400">Clicked</div>
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-purple-400">{formatRate(campaignStats.clickRate)}</div>
+                                <div className="text-xs text-slate-400 mt-1">Click Rate</div>
+                                <div className="text-xs text-slate-500">{campaignStats.totalClicked.toLocaleString()} clicks</div>
                             </div>
-                            <div className="bg-slate-900 rounded-lg p-3 text-center">
-                                <div className="text-2xl font-bold text-red-400">{campaignStats.bounced}</div>
-                                <div className="text-xs text-slate-400">Bounced</div>
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-red-400">{formatRate(campaignStats.bounceRate)}</div>
+                                <div className="text-xs text-slate-400 mt-1">Bounce Rate</div>
+                                <div className="text-xs text-slate-500">{campaignStats.totalBounced.toLocaleString()} bounced</div>
                             </div>
+                            <div className="bg-slate-900 rounded-lg p-4 text-center">
+                                <div className="text-2xl font-bold text-orange-400">{campaignStats.totalUnsubscribed.toLocaleString()}</div>
+                                <div className="text-xs text-slate-400 mt-1">Unsubscribes</div>
+                            </div>
+                        </div>
+
+                        <div className="text-xs text-slate-500 text-center">
+                            Campaign sent on {selectedCampaign.sentAt ? formatDate(selectedCampaign.sentAt) : 'Not sent yet'}
                         </div>
                     </div>
                 </div>

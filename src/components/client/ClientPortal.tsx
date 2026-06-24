@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button } from '../ui/UIComponents';
-import { Calendar, Download, CheckCircle, Clock, FileText, Star } from 'lucide-react';
+import { Calendar, Download, CheckCircle, Clock, FileText, Star, AlertCircle } from 'lucide-react';
 import { Project, User } from '../../types';
 import { projectService } from '../../services/projectService';
 import { format } from 'date-fns';
+import { supabase } from '../../lib/supabase';
+import { tenantService } from '../../services/tenancy/TenantService';
 
 interface ClientPortalProps {
     user: User;
@@ -32,41 +34,67 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [feedback, setFeedback] = useState({ rating: 0, comment: '' });
     const [showSurvey, setShowSurvey] = useState(false);
+    const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
     const loadProjectDetails = useCallback(async () => {
-        // Load milestones and deliverables for the project
-        // This would come from a project details API
-        setMilestones([
-            {
-                id: '1',
-                name: 'Project Kickoff',
-                description: 'Initial meeting and requirements gathering',
-                dueDate: new Date().toISOString(),
-                completed: true,
-                completedAt: new Date().toISOString(),
-            },
-            {
-                id: '2',
-                name: 'Design Phase',
-                description: 'UI/UX design completion',
-                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                completed: false,
-            },
-        ]);
+        if (!selectedProject?.id) return;
+        
+        setLoading(true);
+        setError(null);
+        
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            
+            // Fetch real milestones from database
+            const { data: milestonesData, error: milestonesError } = await supabase
+                .from('project_milestones')
+                .select('*')
+                .eq('project_id', selectedProject.id)
+                .eq('tenant_id', tenantId)
+                .order('order_index', { ascending: true });
 
-        setDeliverables([
-            {
-                id: '1',
-                name: 'Project Proposal.pdf',
-                type: 'file',
-                url: '#',
-                uploadedAt: new Date().toISOString(),
-                size: 1024000,
-            },
-        ]);
-    }, []);
+            if (milestonesError) throw milestonesError;
+
+            const mappedMilestones: Milestone[] = (milestonesData || []).map((m: any) => ({
+                id: m.id,
+                name: m.name,
+                description: m.description,
+                dueDate: m.due_date,
+                completed: m.status === 'completed',
+                completedAt: m.completed_at,
+            }));
+
+            setMilestones(mappedMilestones);
+
+            // Fetch deliverables from project_files if available
+            const { data: filesData } = await supabase
+                .from('project_files')
+                .select('*')
+                .eq('project_id', selectedProject.id)
+                .eq('tenant_id', tenantId)
+                .eq('is_deliverable', true)
+                .order('created_at', { ascending: false });
+
+            const mappedDeliverables: Deliverable[] = (filesData || []).map((f: any) => ({
+                id: f.id,
+                name: f.file_name,
+                type: f.file_type || 'file',
+                url: f.file_url || f.storage_path || '#',
+                uploadedAt: f.created_at,
+                size: f.file_size,
+            }));
+
+            setDeliverables(mappedDeliverables);
+        } catch (err) {
+            console.error('Failed to load project details:', err);
+            setError('Failed to load project details. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedProject?.id]);
 
     const loadProjects = useCallback(async () => {
         setLoading(true);
@@ -86,9 +114,36 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
     };
 
     const handleFeedbackSubmit = async () => {
-        // Submit feedback
-        setShowSurvey(false);
-        setFeedback({ rating: 0, comment: '' });
+        if (!selectedProject || !user.id || feedback.rating === 0) return;
+        
+        setFeedbackSubmitting(true);
+        
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            
+            // Save feedback to client_feedback table
+            const { error: feedbackError } = await supabase
+                .from('client_feedback')
+                .insert({
+                    tenant_id: tenantId,
+                    project_id: selectedProject.id,
+                    user_id: user.id,
+                    rating: feedback.rating,
+                    comment: feedback.comment,
+                    created_at: new Date().toISOString(),
+                });
+            
+            if (feedbackError) throw feedbackError;
+            
+            setShowSurvey(false);
+            setFeedback({ rating: 0, comment: '' });
+            alert('Thank you for your feedback!');
+        } catch (err) {
+            console.error('Failed to submit feedback:', err);
+            alert('Failed to submit feedback. Please try again.');
+        } finally {
+            setFeedbackSubmitting(false);
+        }
     };
 
     useEffect(() => {
@@ -101,7 +156,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
         }
     }, [selectedProject, loadProjectDetails]);
 
-    if (loading) {
+    if (loading && !selectedProject) {
         return (
             <div className="p-10 text-center text-slate-500">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-400 mb-4"></div>
@@ -112,6 +167,15 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-sm text-red-400 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                    <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
+                        Dismiss
+                    </button>
+                </div>
+            )}
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-white">Client Portal</h2>
@@ -245,10 +309,19 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                                 />
                             </div>
                             <div className="flex gap-2">
-                                <Button onClick={handleFeedbackSubmit} className="flex-1 bg-teal-600 hover:bg-teal-500">
-                                    Submit
+                                <Button 
+                                    onClick={handleFeedbackSubmit} 
+                                    disabled={feedbackSubmitting || feedback.rating === 0}
+                                    className="flex-1 bg-teal-600 hover:bg-teal-500 disabled:opacity-50"
+                                >
+                                    {feedbackSubmitting ? 'Submitting...' : 'Submit'}
                                 </Button>
-                                <Button onClick={() => setShowSurvey(false)} variant="outline" className="flex-1">
+                                <Button 
+                                    onClick={() => setShowSurvey(false)} 
+                                    variant="outline" 
+                                    className="flex-1"
+                                    disabled={feedbackSubmitting}
+                                >
                                     Cancel
                                 </Button>
                             </div>

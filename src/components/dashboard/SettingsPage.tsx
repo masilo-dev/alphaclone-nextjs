@@ -45,7 +45,7 @@ const statusColors: Record<string, string> = {
 
 export default function SettingsPage({ user }: SettingsPageProps) {
     const { currentTenant } = useTenant();
-    const { backgroundColor, setBackgroundColor } = useTheme();
+    const { backgroundColor, setBackgroundColor, themeMode, setThemeMode } = useTheme();
     const { language, setLanguage, t: translate } = useLanguage();
 
     // Accordion visibility mapping
@@ -61,6 +61,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [showApiKey, setShowApiKey] = useState(false);
+    const [mcpApiKey, setMcpApiKey] = useState<string | null>(null);
+    const [isLoadingApiKey, setIsLoadingApiKey] = useState(true);
 
     // Profile & workspace details
     const [profileData, setProfileData] = useState({
@@ -135,6 +137,74 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         };
         loadInitialData();
     }, [currentTenant?.id]);
+
+    // Load MCP API key
+    useEffect(() => {
+        const loadMcpApiKey = async () => {
+            if (!user.id) return;
+            setIsLoadingApiKey(true);
+            try {
+                // Try to fetch existing API key
+                const { data, error } = await supabase
+                    .from('user_api_keys')
+                    .select('key')
+                    .eq('user_id', user.id)
+                    .eq('type', 'mcp')
+                    .eq('is_active', true)
+                    .single();
+                
+                if (data?.key) {
+                    setMcpApiKey(data.key);
+                } else {
+                    setMcpApiKey(null);
+                }
+            } catch (err) {
+                console.error('Failed to load MCP API key:', err);
+                setMcpApiKey(null);
+            } finally {
+                setIsLoadingApiKey(false);
+            }
+        };
+        loadMcpApiKey();
+    }, [user.id]);
+
+    const handleGenerateApiKey = async () => {
+        if (!user.id) return toast.error('You must be logged in');
+        
+        try {
+            setIsSaving(true);
+            
+            // Generate a new key
+            const newKey = `mcp_live_${crypto.randomUUID().replace(/-/g, '')}`;
+            
+            // Revoke any existing keys
+            await supabase
+                .from('user_api_keys')
+                .update({ is_active: false, revoked_at: new Date().toISOString() })
+                .eq('user_id', user.id)
+                .eq('type', 'mcp');
+            
+            // Insert new key
+            const { error } = await supabase
+                .from('user_api_keys')
+                .insert({
+                    user_id: user.id,
+                    type: 'mcp',
+                    key: newKey,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                });
+            
+            if (error) throw error;
+            
+            setMcpApiKey(newKey);
+            toast.success('New MCP API key generated!');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to generate API key');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleSaveProfile = async () => {
         if (!profileData.name.trim()) return toast.error('Name is required');
@@ -301,10 +371,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         } finally {
             setIsDeleting(false);
         }
-    };
-
-    const handleCopyApiKey = () => {
-        toast.error('API key is not configured yet');
     };
 
     return (
@@ -739,14 +805,15 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div className="space-y-1.5">
                         <label className="text-[10px] text-slate-500 uppercase font-black">Interface Theme</label>
                         <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                            {['dark', 'light', 'system'].map((theme) => (
+                            {(['dark', 'light', 'system'] as const).map((theme) => (
                                 <button
                                     key={theme}
                                     onClick={() => {
+                                        setThemeMode(theme);
                                         toast.success(`Theme mode updated to ${theme}`);
                                     }}
                                     className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg uppercase transition-all ${
-                                        theme === 'dark' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
+                                        themeMode === theme ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
                                     }`}
                                 >
                                     {theme}
@@ -856,26 +923,51 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             <div className="space-y-3">
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Developer MCP & API</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
-                    <span className="text-[10px] text-slate-500 uppercase font-black block">Publish credential keys</span>
-                    <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
-                        <span className="font-mono text-xs text-slate-400 select-all">
-                            {showApiKey ? 'mcp_live_generate_in_settings' : 'mcp_live_••••••••••••••••••••••••'}
-                        </span>
-                        <div className="flex items-center gap-1.5 ml-2">
-                            <button 
-                                onClick={() => setShowApiKey(!showApiKey)}
-                                className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-slate-500 uppercase font-black block">MCP API Key</span>
+                        {!mcpApiKey && !isLoadingApiKey && (
+                            <button
+                                onClick={handleGenerateApiKey}
+                                disabled={isSaving}
+                                className="text-[10px] px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors disabled:opacity-50"
                             >
-                                <Eye className="w-3.5 h-3.5" />
+                                {isSaving ? 'Generating...' : 'Generate Key'}
                             </button>
-                            <button 
-                                onClick={handleCopyApiKey}
-                                className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
-                            >
-                                <Copy className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
+                        )}
                     </div>
+                    {isLoadingApiKey ? (
+                        <div className="flex items-center justify-center p-3 bg-slate-950 rounded-xl border border-white/5">
+                            <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+                        </div>
+                    ) : mcpApiKey ? (
+                        <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
+                            <span className="font-mono text-xs text-slate-400 select-all">
+                                {showApiKey ? mcpApiKey : `${mcpApiKey.substring(0, 12)}••••••••••••••••••••••••`}
+                            </span>
+                            <div className="flex items-center gap-1.5 ml-2">
+                                <button
+                                    onClick={() => setShowApiKey(!showApiKey)}
+                                    className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(mcpApiKey);
+                                        toast.success('API key copied to clipboard');
+                                    }}
+                                    className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
+                                >
+                                    <Copy className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-3 bg-slate-950 rounded-xl border border-white/5 text-center">
+                            <p className="text-sm text-slate-400">No MCP API key generated yet</p>
+                            <p className="text-xs text-slate-500 mt-1">Click "Generate Key" to create one</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

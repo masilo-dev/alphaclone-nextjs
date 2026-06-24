@@ -3,6 +3,17 @@ import autoTable from 'jspdf-autotable';
 import { Quote, QuoteItem } from '../services/quoteService';
 import { Tenant } from '../services/tenancy/types';
 
+/**
+ * Convert hex color to RGB array
+ */
+function hexToRgb(hex: string): [number, number, number] {
+    const cleanHex = hex.replace('#', '');
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+    return [r || 0, g || 0, b || 0];
+}
+
 export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenant) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -196,7 +207,7 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
 };
 
 /**
- * Profit & Loss Statement PDF
+ * Profit & Loss Statement PDF - Enhanced Professional Styling
  */
 export const generatePnLPDF = (
     statement: any,
@@ -206,65 +217,175 @@ export const generatePnLPDF = (
 ) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
     const brandColor = tenant?.brand_color_primary || '#0f172a';
-
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor(brandColor);
-    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 25);
-
-    doc.setFontSize(16);
-    doc.setTextColor(33, 33, 33);
-    doc.text('Profit & Loss Statement', 20, 35);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Period: ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`, 20, 42);
+    const isDarkBrand = brandColor === '#0f172a' || brandColor.toLowerCase().includes('0f172a');
+    const headerTextColor = isDarkBrand ? [255, 255, 255] : [255, 255, 255];
 
     const currencyFormatter = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
-    // Revenue Section
-    const revenueRows = (statement.revenue || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    // === Professional Header Bar ===
+    const brandRgb = hexToRgb(brandColor);
+    doc.setFillColor(brandRgb[0], brandRgb[1], brandRgb[2]);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+
+    // Logo / Company Name
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(headerTextColor[0], headerTextColor[1], headerTextColor[2]);
+    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 20);
+
+    // Report Title
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Profit & Loss Statement', 20, 32);
+
+    // Period
+    doc.setFontSize(9);
+    doc.text(`Period: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`, 20, 40);
+
+    // Generated date on right
+    doc.setFontSize(8);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 20, 40, { align: 'right' });
+
+    let startY = 55;
+
+    // === Revenue Section ===
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(20, 184, 166); // Teal-500
+    doc.text('REVENUE', 20, startY);
+
+    const revenueRows = (statement.revenue || []).map((acc: any) => [
+        acc.accountName,
+        currencyFormatter(acc.balance)
+    ]);
+
     autoTable(doc, {
-        head: [['REVENUE ACCOUNT', 'BALANCE']],
+        head: [['Account', 'Amount']],
         body: revenueRows,
-        startY: 50,
-        theme: 'striped',
-        headStyles: { fillColor: brandColor },
+        startY: startY + 5,
+        theme: 'grid',
+        headStyles: {
+            fillColor: [20, 184, 166],
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold'
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'right' }
+        },
         foot: [['TOTAL REVENUE', currencyFormatter(statement.totalRevenue)]],
-        footStyles: { fillColor: [20, 184, 166], textColor: [255, 255, 255] } // Teal-500
+        footStyles: {
+            fillColor: [20, 184, 166],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
     });
 
-    let currentY = (doc as any).lastAutoTable.finalY + 10;
+    let currentY = (doc as any).lastAutoTable.finalY + 12;
 
-    // Expenses Section
-    const expenseRows = (statement.expenses || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    // === Expenses Section ===
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(239, 68, 68); // Red-500
+    doc.text('EXPENSES', 20, currentY);
+
+    const expenseRows = (statement.expenses || []).map((acc: any) => [
+        acc.accountName,
+        currencyFormatter(acc.balance)
+    ]);
+
     autoTable(doc, {
-        head: [['EXPENSE ACCOUNT', 'BALANCE']],
+        head: [['Account', 'Amount']],
         body: expenseRows,
-        startY: currentY,
-        theme: 'striped',
-        headStyles: { fillColor: '#ef4444' }, // Red-500
+        startY: currentY + 5,
+        theme: 'grid',
+        headStyles: {
+            fillColor: [239, 68, 68],
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold'
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'right' }
+        },
         foot: [['TOTAL EXPENSES', currencyFormatter(statement.totalExpenses)]],
-        footStyles: { fillColor: [244, 63, 94], textColor: [255, 255, 255] } // Rose-500
+        footStyles: {
+            fillColor: [239, 68, 68],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10
+        },
+        alternateRowStyles: { fillColor: [254, 242, 242] }
     });
 
     currentY = (doc as any).lastAutoTable.finalY + 15;
 
-    // Net Income
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(statement.netIncome >= 0 ? '#14b8a6' : '#ef4444');
-    doc.text('NET INCOME:', 20, currentY);
-    doc.text(currencyFormatter(statement.netIncome), pageWidth - 20, currentY, { align: 'right' });
+    // === Net Income Summary Box ===
+    const boxHeight = 25;
+    const boxColor = statement.netIncome >= 0 ? [20, 184, 166] : [239, 68, 68];
 
-    addFooter(doc, pageWidth, doc.internal.pageSize.height);
+    // Background box
+    doc.setFillColor(boxColor[0], boxColor[1], boxColor[2]);
+    doc.roundedRect(20, currentY, pageWidth - 40, boxHeight, 3, 3, 'F');
+
+    // Net Income text
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('NET INCOME', 30, currentY + 10);
+
+    doc.setFontSize(14);
+    doc.text(currencyFormatter(statement.netIncome), pageWidth - 30, currentY + 16, { align: 'right' });
+
+    // Margin indicator
+    const revenue = statement.totalRevenue || 0;
+    const margin = revenue > 0 ? ((statement.netIncome / revenue) * 100).toFixed(1) : '0.0';
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Profit Margin: ${margin}%`, 30, currentY + 20);
+
+    // === Key Metrics Summary (if space allows) ===
+    if (currentY + boxHeight + 40 < pageHeight - 30) {
+        const metricsY = currentY + boxHeight + 15;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text('KEY METRICS', 20, metricsY);
+
+        // Simple metrics line
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
+
+        const metrics = [
+            `Gross Revenue: ${currencyFormatter(revenue)}`,
+            `Total Expenses: ${currencyFormatter(statement.totalExpenses || 0)}`,
+            `Net Result: ${currencyFormatter(statement.netIncome || 0)}`
+        ];
+
+        let lineY = metricsY + 8;
+        metrics.forEach(metric => {
+            doc.text(metric, 20, lineY);
+            lineY += 6;
+        });
+    }
+
+    addFooter(doc, pageWidth, pageHeight);
 
     return doc;
 };
 
 /**
- * Balance Sheet PDF
+ * Balance Sheet PDF - Enhanced Professional Styling
  */
 export const generateBalanceSheetPDF = (
     statement: any,
@@ -273,74 +394,184 @@ export const generateBalanceSheetPDF = (
 ) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
     const brandColor = tenant?.brand_color_primary || '#0f172a';
-
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor(brandColor);
-    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 25);
-
-    doc.setFontSize(16);
-    doc.setTextColor(33, 33, 33);
-    doc.text('Balance Sheet', 20, 35);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`As of: ${new Date(asOfDate).toLocaleDateString()}`, 20, 42);
 
     const currencyFormatter = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
-    // Assets Table
-    const assetRows = (statement.assets || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    // === Professional Header Bar ===
+    const brandRgb = hexToRgb(brandColor);
+    doc.setFillColor(brandRgb[0], brandRgb[1], brandRgb[2]);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+
+    // Logo / Company Name
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 20);
+
+    // Report Title
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Balance Sheet', 20, 32);
+
+    // As Of Date
+    doc.setFontSize(9);
+    doc.text(`As of: ${new Date(asOfDate).toLocaleDateString()}`, 20, 40);
+
+    // Generated date on right
+    doc.setFontSize(8);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 20, 40, { align: 'right' });
+
+    let startY = 55;
+
+    // === Assets Section ===
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(34, 197, 94); // Green-500
+    doc.text('ASSETS', 20, startY);
+
+    const assetRows = (statement.assets || []).map((acc: any) => [
+        acc.accountName,
+        currencyFormatter(acc.balance)
+    ]);
+
     autoTable(doc, {
-        head: [['ASSETS', 'BALANCE']],
+        head: [['Account', 'Amount']],
         body: assetRows,
-        startY: 50,
+        startY: startY + 5,
         theme: 'grid',
-        headStyles: { fillColor: brandColor },
+        headStyles: {
+            fillColor: [34, 197, 94],
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold'
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'right' }
+        },
         foot: [['TOTAL ASSETS', currencyFormatter(statement.totalAssets)]],
-        footStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] }
+        footStyles: {
+            fillColor: [20, 83, 45],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10
+        },
+        alternateRowStyles: { fillColor: [240, 253, 244] }
     });
 
-    let currentY = (doc as any).lastAutoTable.finalY + 10;
+    let currentY = (doc as any).lastAutoTable.finalY + 12;
 
-    // Liabilities Table
-    const liabilityRows = (statement.liabilities || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    // === Liabilities Section ===
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(239, 68, 68); // Red-500
+    doc.text('LIABILITIES', 20, currentY);
+
+    const liabilityRows = (statement.liabilities || []).map((acc: any) => [
+        acc.accountName,
+        currencyFormatter(acc.balance)
+    ]);
+
     autoTable(doc, {
-        head: [['LIABILITIES', 'BALANCE']],
+        head: [['Account', 'Amount']],
         body: liabilityRows,
-        startY: currentY,
+        startY: currentY + 5,
         theme: 'grid',
-        headStyles: { fillColor: '#ef4444' },
+        headStyles: {
+            fillColor: [239, 68, 68],
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold'
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'right' }
+        },
         foot: [['TOTAL LIABILITIES', currencyFormatter(statement.totalLiabilities)]],
+        footStyles: {
+            fillColor: [153, 27, 27],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10
+        },
+        alternateRowStyles: { fillColor: [254, 242, 242] }
     });
 
-    currentY = (doc as any).lastAutoTable.finalY + 10;
+    currentY = (doc as any).lastAutoTable.finalY + 12;
 
-    // Equity Table
-    const equityRows = (statement.equity || []).map((acc: any) => [acc.accountName, currencyFormatter(acc.balance)]);
+    // === Equity Section ===
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(99, 102, 241); // Indigo-500
+    doc.text('EQUITY', 20, currentY);
+
+    const equityRows = (statement.equity || []).map((acc: any) => [
+        acc.accountName,
+        currencyFormatter(acc.balance)
+    ]);
     equityRows.push(['Net Income (Current Period)', currencyFormatter(statement.netIncome)]);
 
     autoTable(doc, {
-        head: [['EQUITY', 'BALANCE']],
+        head: [['Account', 'Amount']],
         body: equityRows,
-        startY: currentY,
+        startY: currentY + 5,
         theme: 'grid',
-        headStyles: { fillColor: '#6366f1' }, // Indigo-500
+        headStyles: {
+            fillColor: [99, 102, 241],
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold'
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'right' }
+        },
         foot: [['TOTAL EQUITY', currencyFormatter(statement.totalEquity)]],
+        footStyles: {
+            fillColor: [67, 56, 202],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10
+        },
+        alternateRowStyles: { fillColor: [238, 242, 255] }
     });
 
     currentY = (doc as any).lastAutoTable.finalY + 15;
 
-    // Summary
+    // === Balance Check Summary Box ===
     const totalLiabilitiesAndEquity = statement.totalLiabilities + statement.totalEquity;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('TOTAL LIABILITIES & EQUITY:', 20, currentY);
-    doc.text(currencyFormatter(totalLiabilitiesAndEquity), pageWidth - 20, currentY, { align: 'right' });
+    const isBalanced = Math.abs(statement.totalAssets - totalLiabilitiesAndEquity) < 0.01;
 
-    addFooter(doc, pageWidth, doc.internal.pageSize.height);
+    const boxHeight = 30;
+    const boxColor = isBalanced ? [34, 197, 94] : [239, 68, 68];
+
+    // Background box
+    doc.setFillColor(boxColor[0], boxColor[1], boxColor[2]);
+    doc.roundedRect(20, currentY, pageWidth - 40, boxHeight, 3, 3, 'F');
+
+    // Summary title
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(isBalanced ? 'BALANCE SHEET BALANCED' : 'BALANCE CHECK', 30, currentY + 10);
+
+    // Summary values
+    doc.setFontSize(10);
+    doc.text(`Total Assets: ${currencyFormatter(statement.totalAssets)}`, 30, currentY + 19);
+    doc.text(`Total Liabilities + Equity: ${currencyFormatter(totalLiabilitiesAndEquity)}`,
+             pageWidth - 30, currentY + 19, { align: 'right' });
+
+    // Verification indicator
+    doc.setFontSize(8);
+    doc.text(isBalanced ? '✓ Accounting equation satisfied' : '⚠ Check accounts for discrepancies',
+             30, currentY + 26);
+
+    addFooter(doc, pageWidth, pageHeight);
 
     return doc;
 };

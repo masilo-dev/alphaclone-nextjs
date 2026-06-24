@@ -2,10 +2,12 @@
  * Marketing Campaign Service
  * Full marketing campaign management system
  * Supports email campaigns, SMS campaigns, and multi-channel campaigns
+ * @deprecated Use emailCampaignService.ts instead for email campaigns
  */
 
 import { supabase } from '@/lib/supabase';
 import { emailService } from '../email/emailService';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
 export type CampaignType = 'email' | 'sms' | 'multi_channel';
@@ -358,12 +360,11 @@ class CampaignService {
      * Get tenant ID
      */
     private getTenantId(): string {
-        try {
-            const session = supabase.auth.getSession();
-            return 'default';
-        } catch {
-            return 'default';
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            throw new Error('No tenant selected. Please select a workspace first.');
         }
+        return tenantId;
     }
 }
 

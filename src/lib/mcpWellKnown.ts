@@ -24,15 +24,32 @@ function getDiscoveryHeaders() {
   };
 }
 
+/**
+ * OAuth 2.0 Protected Resource Metadata (RFC 9728)
+ * 
+ * This endpoint describes the MCP server as an OAuth 2.0 protected resource,
+ * indicating which authorization servers can issue tokens for it.
+ */
 export function createProtectedResourceResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
   const data = {
     resource: `${baseUrl}/api/mcp`,
     authorization_servers: [baseUrl],
-    bearer_methods_supported: ['header', 'query'],
+    // RFC 6750: Tokens MUST be sent in the Authorization header, NEVER in query strings
+    bearer_methods_supported: ['header'],
     resource_documentation: `${baseUrl}/api/mcp/health`,
     scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
     resource_indicators_supported: true,
+    // MCP 2025-11-25: Include authorization server metadata inline for convenience
+    authorization_server_metadata: {
+      issuer: baseUrl,
+      authorization_endpoint: `${baseUrl}/api/mcp/authorize`,
+      token_endpoint: `${baseUrl}/api/mcp/token`,
+      registration_endpoint: `${baseUrl}/api/mcp/register`,
+      introspection_endpoint: `${baseUrl}/api/mcp/token/introspect`,
+      revocation_endpoint: `${baseUrl}/api/mcp/token/revoke`,
+      code_challenge_methods_supported: ['S256'],
+    },
   };
 
   return new Response(JSON.stringify(data), {
@@ -41,22 +58,31 @@ export function createProtectedResourceResponse(req: NextRequest) {
   });
 }
 
+/**
+ * OAuth 2.0 Authorization Server Metadata (RFC 8414)
+ * 
+ * This endpoint describes the OAuth 2.0 authorization server capabilities,
+ * including endpoints, grant types, and PKCE methods supported.
+ */
 export function createAuthorizationServerResponse(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
   const data = {
     issuer: baseUrl,
-    // MCP clients (headless) use /api/mcp/authorize with Bearer API key.
-    // Human-facing login UI is at /authorize — kept as fallback_authorization_endpoint.
     authorization_endpoint: `${baseUrl}/api/mcp/authorize`,
-    fallback_authorization_endpoint: `${baseUrl}/authorize`,
     token_endpoint: `${baseUrl}/api/mcp/token`,
     registration_endpoint: `${baseUrl}/api/mcp/register`,
+    introspection_endpoint: `${baseUrl}/api/mcp/token/introspect`,
+    revocation_endpoint: `${baseUrl}/api/mcp/token/revoke`,
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code', 'refresh_token', 'client_credentials'],
-    code_challenge_methods_supported: ['S256', 'plain'],
+    // MCP 2025-11-25: PKCE S256 is REQUIRED, 'plain' is NOT permitted
+    code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none', 'client_secret_basic', 'client_secret_post'],
     scopes_supported: ['read', 'write', 'mcp:tools', 'mcp:resources'],
     service_documentation: `${baseUrl}/api/mcp/health`,
+    // Additional metadata for MCP compliance
+    require_pkce: true,
+    resource_indicators_supported: true,
   };
 
   return new Response(JSON.stringify(data), {

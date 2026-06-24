@@ -13,7 +13,7 @@ export interface BusinessInvoice {
     invoiceNumber: string;
     issueDate: string;
     dueDate: string;
-    status: 'draft' | 'sent' | 'paid' | 'overdue';
+    status: 'draft' | 'sent' | 'viewed' | 'partially_paid' | 'paid' | 'overdue' | 'disputed' | 'void' | 'cancelled';
     subtotal: number;
     taxRate: number;
     tax: number;
