@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
-import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -458,8 +455,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 4. Execute via SDK
+  // 4. Execute via SDK (lazy-load heavy MCPServer module for POST only)
   try {
+    const { createMCPServer } = await import('@/services/mcp/MCPServer');
+    const { DEFAULT_BUSINESS_AI_STATE } = await import('@/services/mcp/businessAIState');
+    const { StatelessTransport } = await import('@/services/mcp/StatelessTransport');
+
     const mcpServer = createMCPServer({
       tenantId,
       userId,
@@ -522,25 +523,33 @@ export async function GET(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
 
-  const auth = await resolveAuth(req);
-  if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+  try {
+    const auth = await resolveAuth(req);
+    if ('error' in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+    }
+
+    const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
+    const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
+    initializeRegistry();
+    const newTools = listTools();
+    const newToolNames = new Set(newTools.map(t => t.name));
+    const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
+
+    return NextResponse.json({ tools: [...newTools, ...legacyFiltered] }, {
+      headers: {
+        ...getMcpCorsHeaders(req),
+        'X-MCP-Version': '2.0.0',
+        'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+      },
+    });
+  } catch (err) {
+    console.error('[MCP GET] Failed:', err);
+    return NextResponse.json(
+      { error: 'MCP server failed to load tools' },
+      { status: 500, headers: getMcpCorsHeaders(req) }
+    );
   }
-
-  const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-  const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
-  initializeRegistry();
-  const newTools = listTools();
-  const newToolNames = new Set(newTools.map(t => t.name));
-  const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
-
-  return NextResponse.json({ tools: [...newTools, ...legacyFiltered] }, { 
-    headers: { 
-      ...getMcpCorsHeaders(req), 
-      'X-MCP-Version': '2.0.0',
-      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION
-    } 
-  });
 }
 
 /**
