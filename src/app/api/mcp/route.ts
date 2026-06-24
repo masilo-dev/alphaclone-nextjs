@@ -543,6 +543,43 @@ export async function GET(req: NextRequest) {
   });
 }
 
+/**
+ * DELETE handler for session termination (HTTP Transport)
+ * 
+ * Per MCP 2025-11-25 spec: DELETE should terminate the session and clean up resources.
+ * This provides parity with the SSE transport's DELETE endpoint.
+ */
+export async function DELETE(req: NextRequest) {
+  const cors = handleCorsApp(req);
+  if (cors) return cors;
+
+  const auth = await resolveAuth(req);
+  if ('error' in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+  }
+
+  const mcpSessionId = req.headers.get('mcp-session-id');
+  
+  if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+      await supabaseAdmin.from('mcp_sessions').delete().eq('id', mcpSessionId);
+      console.log('[MCP HTTP DELETE] Session terminated:', mcpSessionId);
+    } catch (err) {
+      console.warn('[MCP HTTP DELETE] Session cleanup failed:', err);
+      // Continue to return 204 even if cleanup fails - client should consider session closed
+    }
+  }
+
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      ...getMcpCorsHeaders(req),
+      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+    },
+  });
+}
+
 export async function OPTIONS(req: NextRequest) {
   return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
 }

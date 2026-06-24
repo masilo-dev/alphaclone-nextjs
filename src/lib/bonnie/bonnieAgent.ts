@@ -1,5 +1,5 @@
 import { callDeepSeek, chatDeepSeek, streamDeepSeek } from '@/lib/ai/deepseek';
-import { routeAIRequest } from '@/services/aiRouter';
+import { routeAIRequest, cleanProfessionalContent } from '@/services/aiRouter';
 import { buildBonnieSystemPrompt } from '@/lib/bonnie/bonnieSystemPrompt';
 import { buildBonnieConversationalPrompt } from '@/lib/bonnie/bonnieConversationalPrompt';
 import {
@@ -168,7 +168,15 @@ async function synthesizeWithDeepSeek(
   moduleId: BonnieModuleId,
   onStreamToken?: (token: string) => void
 ): Promise<string | null> {
-  if (!toolResults.length) return plan.response;
+  if (!toolResults.length) return cleanProfessionalContent(plan.response);
+
+  // Sanitize tool summaries before adding to prompt
+  const sanitizeSummary = (text: string) => text
+    .replace(/[*]{2,}/g, '')
+    .replace(/[£]{2,}/g, '')
+    .replace(/[$]{2,}/g, '')
+    .replace(/[#]{2,}/g, '')
+    .slice(0, 200);
 
   const synthesisPrompt = `You are Bonnie AI (in-platform agent — DeepChat/DeepCode style, Bonnie-branded).
 
@@ -177,25 +185,31 @@ The user asked: "${instruction}"
 Your draft: ${plan.response}
 
 Tools executed:
-${toolResults.map((r) => `- ${r.success ? '✓' : '✗'} ${r.tool}: ${r.summary}`).join('\n')}
+${toolResults.map((r) => `- ${r.success ? '✓' : '✗'} ${r.tool}: ${sanitizeSummary(r.summary)}`).join('\n')}
 
 Write the final reply: what you did, key results, and clear next step if any. Plain text, concise, professional. No vendor names.`;
 
   if (process.env.DEEPSEEK_API_KEY) {
     if (onStreamToken) {
-      return streamDeepSeek([], synthesisPrompt, {
+      // For streaming, we need to clean tokens as they come through
+      const wrappedOnStreamToken = (token: string) => {
+        onStreamToken(cleanProfessionalContent(token));
+      };
+      const result = await streamDeepSeek([], synthesisPrompt, {
         model: 'deepseek-chat',
         maxTokens: 1400,
         temperature: 0.45,
         systemPrompt: buildBonnieConversationalPrompt(moduleId),
-      }, onStreamToken);
+      }, wrappedOnStreamToken);
+      return result ? cleanProfessionalContent(result) : null;
     }
-    return callDeepSeek(synthesisPrompt, {
+    const result = await callDeepSeek(synthesisPrompt, {
       model: 'deepseek-chat',
       maxTokens: 1400,
       temperature: 0.45,
       systemPrompt: buildBonnieConversationalPrompt(moduleId),
     });
+    return cleanProfessionalContent(result);
   }
 
   const res = await routeAIRequest({
@@ -203,7 +217,7 @@ Write the final reply: what you did, key results, and clear next step if any. Pl
     systemPrompt: buildBonnieConversationalPrompt(moduleId),
     maxTokens: 1400,
   });
-  return res.content;
+  return cleanProfessionalContent(res.content);
 }
 
 async function persistBonnieLogs(tenantId: string, logs: string[]) {

@@ -5,6 +5,9 @@
     },
     "supabase": {
       "enabled": true
+    },
+    "cursor-team-kit": {
+      "enabled": true
     }
   },
   "css.lint.unknownAtRules": "ignore"

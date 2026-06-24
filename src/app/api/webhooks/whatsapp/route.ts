@@ -1,7 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 
-const TENANT_ID = '51772ee6-dee8-4c42-81f7-0fee297e5b27';
+/**
+ * Resolve tenant ID from WhatsApp webhook payload.
+ * Uses phone_number_id from the webhook to look up the correct tenant's integration.
+ */
+async function resolveTenantFromWebhook(admin: any, value: any): Promise<string | null> {
+  try {
+    // Get the phone number ID from the webhook payload
+    const phoneNumberId = value?.metadata?.phone_number_id;
+
+    if (phoneNumberId) {
+      // Look up integration by phone number ID in settings
+      const { data: integration } = await admin
+        .from('integrations')
+        .select('tenant_id')
+        .eq('type', 'whatsapp')
+        .contains('settings', { phone_number_id: phoneNumberId })
+        .maybeSingle();
+
+      if (integration?.tenant_id) {
+        return integration.tenant_id;
+      }
+    }
+
+    // Fallback: try to find any active WhatsApp integration
+    // This is a last resort and should be improved with proper phone number mapping
+    const { data: fallbackIntegration } = await admin
+      .from('integrations')
+      .select('tenant_id')
+      .eq('type', 'whatsapp')
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
+
+    if (fallbackIntegration?.tenant_id) {
+      console.warn('[WhatsApp Webhook] Using fallback tenant resolution - consider adding phone_number_id mapping');
+      return fallbackIntegration.tenant_id;
+    }
+
+    return null;
+  } catch (err) {
+    console.error('[WhatsApp Webhook] Error resolving tenant:', err);
+    return null;
+  }
+}
 
 /**
  * GET /api/webhooks/whatsapp
@@ -45,6 +88,15 @@ export async function POST(request: NextRequest) {
     const messages = value?.messages || [];
     const contacts = value?.contacts || [];
 
+    // Resolve tenant ID from webhook metadata
+    const tenantId = await resolveTenantFromWebhook(admin, value);
+    if (!tenantId) {
+      console.error('[WhatsApp Webhook] Could not resolve tenant ID from webhook payload');
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 400 });
+    }
+
+    console.log('[WhatsApp Webhook] Resolved tenant:', tenantId);
+
     for (const msg of messages) {
       if (msg.type === 'text' || msg.type === 'interactive') {
         const fromPhone = msg.from; // sender phone number
@@ -64,7 +116,7 @@ export async function POST(request: NextRequest) {
           .from('contacts')
           .select('id, name, client_id')
           .eq('phone', fromPhone)
-          .eq('tenant_id', TENANT_ID)
+          .eq('tenant_id', tenantId)
           .maybeSingle();
 
         if (contact) {
@@ -76,7 +128,7 @@ export async function POST(request: NextRequest) {
             .from('clients')
             .select('id, name')
             .eq('phone', fromPhone)
-            .eq('tenant_id', TENANT_ID)
+            .eq('tenant_id', tenantId)
             .maybeSingle();
 
           if (client) {
@@ -86,7 +138,7 @@ export async function POST(request: NextRequest) {
             const { data: newContact } = await admin
               .from('contacts')
               .insert({
-                tenant_id: TENANT_ID,
+                tenant_id: tenantId,
                 name: senderName,
                 phone: fromPhone,
                 status: 'lead',
@@ -105,7 +157,7 @@ export async function POST(request: NextRequest) {
         const { data: savedMessage } = await admin
           .from('whatsapp_messages')
           .insert({
-            tenant_id: TENANT_ID,
+            tenant_id: tenantId,
             phone_number: fromPhone,
             contact_id: contactId,
             client_id: clientId,
@@ -123,7 +175,7 @@ export async function POST(request: NextRequest) {
           await admin
             .from('support_tickets')
             .insert({
-              tenant_id: TENANT_ID,
+              tenant_id: tenantId,
               title: `WhatsApp message from ${senderName}`,
               description: messageBody,
               status: 'open',
@@ -140,7 +192,7 @@ export async function POST(request: NextRequest) {
         const { data: integration } = await admin
           .from('integrations')
           .select('settings')
-          .eq('tenant_id', TENANT_ID)
+          .eq('tenant_id', tenantId)
           .eq('type', 'whatsapp')
           .maybeSingle();
 
@@ -177,7 +229,7 @@ export async function POST(request: NextRequest) {
         await admin
           .from('notifications')
           .insert({
-            tenant_id: TENANT_ID,
+            tenant_id: tenantId,
             title: `New WhatsApp message from ${senderName}`,
             body: messageBody.substring(0, 200),
             type: 'whatsapp_inbound',
