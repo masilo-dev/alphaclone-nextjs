@@ -7,6 +7,14 @@ export function setupGlobalErrorHandlers() {
   // Handle unhandled chunk loading errors
   const handleChunkLoadError = (event: ErrorEvent) => {
     if (event.error?.name === 'ChunkLoadError' || event.message?.includes('Loading chunk')) {
+      const reloadKey = 'ac_chunk_reload_ts';
+      const lastReload = Number(sessionStorage.getItem(reloadKey) || '0');
+      const now = Date.now();
+      if (now - lastReload < 15000) {
+        console.warn('[GlobalErrorHandler] ChunkLoadError suppressed — reload already attempted recently');
+        return;
+      }
+      sessionStorage.setItem(reloadKey, String(now));
       console.log('[GlobalErrorHandler] ChunkLoadError detected, clearing cache and reloading...');
       
       // Clear service worker cache if available

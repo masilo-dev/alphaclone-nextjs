@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -239,6 +239,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     );
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const currentTenant = propTenant || contextTenant;
+    const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
+    if (currentTenant) {
+        hasBootstrappedRef.current = true;
+    }
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -984,8 +988,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         }
     };
 
-    // Show loading state while tenant context initializes (only if no cache found)
-    if (tenantLoading && !currentTenant) {
+    // Show loading state only on first workspace bootstrap (never flash back mid-session).
+    if (!hasBootstrappedRef.current && tenantLoading && !currentTenant) {
         return (
             <div className="flex items-center justify-center h-screen bg-slate-950">
                 <div id="main-content" className="text-center">

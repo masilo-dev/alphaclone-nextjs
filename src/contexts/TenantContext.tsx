@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback, useMemo } from 'react';
 import { tenantService } from '../services/tenancy/TenantService';
 import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
@@ -43,6 +43,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return true;
   });
   const [error, setError] = useState<string | null>(null);
+  const hasResolvedOnceRef = useRef(false);
 
   // Load user's tenants when user logs in
   useEffect(() => {
@@ -83,7 +84,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     try {
       setError(null); // Clear previous errors
       const hasCachedTenant = !!tenantService.getCachedCurrentTenant();
-      if (!hasCachedTenant) {
+      if (!hasCachedTenant && !hasResolvedOnceRef.current) {
         setIsLoading(true);
       }
 
@@ -115,6 +116,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           setCurrentTenant(savedTenant);
           // Refresh the full object cache
           tenantService.setCurrentTenant(savedTenant);
+          hasResolvedOnceRef.current = true;
           setIsLoading(false);
         } else {
           // Default to first tenant
@@ -122,6 +124,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           console.log('[TenantContext] No saved tenant valid, defaulting to:', firstTenant.id);
           setCurrentTenant(firstTenant);
           tenantService.setCurrentTenant(firstTenant);
+          hasResolvedOnceRef.current = true;
           setIsLoading(false);
         }
       } else {
@@ -152,6 +155,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           setUserTenants([{ ...newTenant, role: 'tenant_admin' }]);
           tenantService.setCurrentTenant(newTenant.id);
           if (timeoutId) clearTimeout(timeoutId);
+          hasResolvedOnceRef.current = true;
           setIsLoading(false);
         } catch (error: any) {
           console.error('Failed to auto-create default tenant:', error);
@@ -176,6 +180,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           tenantService.clearCurrentTenant();
           setError(errorMessage);
           if (timeoutId) clearTimeout(timeoutId);
+          hasResolvedOnceRef.current = true;
           setIsLoading(false);
 
           // Early return to prevent further execution
@@ -209,23 +214,27 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       }
 
       setError(errorMessage);
-      setCurrentTenant(null);
-      setUserTenants([]);
+      // Keep cached tenant visible during transient failures so the UI stays clickable.
+      if (!tenantService.getCachedCurrentTenant()) {
+        setCurrentTenant(null);
+        setUserTenants([]);
+      }
       if (timeoutId) clearTimeout(timeoutId);
+      hasResolvedOnceRef.current = true;
       setIsLoading(false);
 
       // For network errors, retry after a delay
       if (isNetworkError && !timeoutId) {
         console.log('[TenantContext] Network error detected, scheduling retry...');
         setTimeout(() => {
-          if (user?.id && !currentTenant) {
+          if (user?.id) {
             console.log('[TenantContext] Retrying tenant load after network error...');
             loadUserTenants();
           }
         }, 3000); // Retry after 3 seconds
       }
     }
-  }, [user]);
+  }, [user?.id]);
 
   const refreshTenants = useCallback(async () => {
     if (user?.id) {
@@ -293,6 +302,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
       return () => clearTimeout(timeoutId);
     } else {
+      hasResolvedOnceRef.current = false;
       setCurrentTenant(null);
       setUserTenants([]);
       setIsLoading(false);

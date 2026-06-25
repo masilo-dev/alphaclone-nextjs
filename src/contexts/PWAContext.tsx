@@ -55,6 +55,12 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        document.documentElement.classList.toggle('pwa-standalone', isPwaMode);
+        return () => document.documentElement.classList.remove('pwa-standalone');
+    }, [isPwaMode]);
+
     return (
         <PWAContext.Provider value={{ isPWA: isPwaMode, isLoading }}>
             {children}
