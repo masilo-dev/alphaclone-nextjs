@@ -1,0 +1,255 @@
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { emitBusinessEvent } from '@/lib/automation/emit-event';
+import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
+import { freePlacesService } from '@/services/freePlacesService';
+import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
+import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
+
+export async function fallbackLocalSearch(
+  tenantId: string,
+  campaignId: string,
+  intent: ParsedLeadIntent
+): Promise<number> {
+  const supabase = createSupabaseAdminClient();
+  const niche = intent.industry?.[0] || intent.search_query || 'business';
+  const location =
+    intent.location?.city ||
+    intent.location?.country ||
+    'United States';
+
+  const result = await freePlacesService.searchPlacesForLeads(niche, location, undefined, {
+    maxResults: 30,
+    radiusKm: intent.location?.radius_km || 25,
+  });
+  const places = result.places || [];
+  const smbPlaces = filterSmbLeads(
+    places.map((p) => ({
+      name: p.businessName,
+      company: p.businessName,
+      company_website: p.website,
+      email: undefined,
+      phone: p.phone,
+    }))
+  );
+
+  if (!smbPlaces.length) return 0;
+
+  const rows = smbPlaces.slice(0, intent.daily_limit).map((p) => {
+    const place = places.find((pl) => pl.businessName === p.company) || places[0];
+    return {
+      campaign_id: campaignId,
+      tenant_id: tenantId,
+      name: place?.businessName || p.company,
+      company: place?.businessName || p.company,
+      phone: place?.phone,
+      company_website: place?.website,
+      industry: niche,
+      source: 'directory',
+      score: place?.phone || place?.website ? 55 : 40,
+      grade: 'C',
+      status: 'new',
+      quality_reason: 'SMB local search (Vercel/Railway fallback)',
+    };
+  });
+
+  const { error } = await supabase.from('scraper_leads').insert(rows);
+  if (error) throw error;
+  return rows.length;
+}
+
+export async function saveLeadsToCrm(
+  tenantId: string,
+  userId: string,
+  leads: Array<Record<string, unknown>>
+) {
+  const created: Array<{ scraper_lead_id?: string; crm_lead_id?: string }> = [];
+
+  for (const lead of leads) {
+    const result = await executeSingleBonnieTool({
+      tenantId,
+      userId,
+      tool: 'create_lead',
+      args: {
+        contact_name: lead.name || lead.company,
+        email: lead.email,
+        phone: lead.phone,
+        business_name: lead.company,
+        industry: lead.industry,
+        source: lead.source || 'lead_finder_chat',
+        notes: `Score: ${lead.score ?? 'N/A'}, Grade: ${lead.grade ?? 'N/A'}`,
+      },
+      skipPolicy: true,
+      policySource: 'mcp',
+    });
+
+    let crmLeadId: string | undefined;
+    if (result.success && result.details) {
+      try {
+        const parsed = JSON.parse(result.details);
+        crmLeadId = parsed.id || parsed.lead_id;
+      } catch {
+        const m = result.details.match(/"id"\s*:\s*"([^"]+)"/);
+        crmLeadId = m?.[1];
+      }
+    }
+
+    if (lead.id && crmLeadId) {
+      const supabase = createSupabaseAdminClient();
+      await supabase
+        .from('scraper_leads')
+        .update({ crm_lead_id: crmLeadId, status: 'synced' })
+        .eq('id', lead.id)
+        .eq('tenant_id', tenantId);
+
+      await emitBusinessEvent(tenantId, 'lead_created', {
+        leadId: crmLeadId,
+        source: 'lead_finder_chat',
+      });
+    }
+
+    created.push({ scraper_lead_id: String(lead.id || ''), crm_lead_id: crmLeadId });
+  }
+
+  return created;
+}
+
+/** Save scraper leads to CRM if needed, then mark contacted after outreach. */
+export async function prepareLeadsForOutreach(
+  tenantId: string,
+  userId: string,
+  campaignId: string,
+  scraperLeadIds: string[]
+) {
+  const supabase = createSupabaseAdminClient();
+  const { data: rows } = await supabase
+    .from('scraper_leads')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('campaign_id', campaignId)
+    .in('id', scraperLeadIds);
+
+  const needsCrm = (rows || []).filter((r: { crm_lead_id?: string | null }) => !r.crm_lead_id);
+  if (needsCrm.length) {
+    await saveLeadsToCrm(tenantId, userId, needsCrm as Array<Record<string, unknown>>);
+  }
+
+  const { data: refreshed } = await supabase
+    .from('scraper_leads')
+    .select('id, crm_lead_id, status')
+    .eq('tenant_id', tenantId)
+    .in('id', scraperLeadIds);
+
+  return refreshed || [];
+}
+
+export async function markLeadsAsContacted(tenantId: string, scraperLeadIds: string[]) {
+  if (!scraperLeadIds.length) return { updated: 0 };
+
+  const supabase = createSupabaseAdminClient();
+
+  const { data: rows, error } = await supabase
+    .from('scraper_leads')
+    .select('id, crm_lead_id, email')
+    .eq('tenant_id', tenantId)
+    .in('id', scraperLeadIds);
+
+  if (error) throw error;
+
+  await supabase
+    .from('scraper_leads')
+    .update({ status: 'contacted' })
+    .eq('tenant_id', tenantId)
+    .in('id', scraperLeadIds);
+
+  let crmUpdated = 0;
+  for (const row of rows || []) {
+    if (row.crm_lead_id) {
+      const { error: crmErr } = await supabase
+        .from('leads')
+        .update({
+          status: 'contacted',
+          stage: 'lead',
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', row.crm_lead_id);
+      if (!crmErr) crmUpdated++;
+      continue;
+    }
+
+    const email = String(row.email || '').trim();
+    if (email.includes('@')) {
+      const { error: crmErr } = await supabase
+        .from('leads')
+        .update({
+          status: 'contacted',
+          stage: 'lead',
+        })
+        .eq('tenant_id', tenantId)
+        .ilike('email', email);
+      if (!crmErr) crmUpdated++;
+    }
+  }
+
+  return { updated: scraperLeadIds.length, crmUpdated };
+}
+
+export async function triggerNexusAutomation(
+  tenantId: string,
+  userId: string,
+  options: { autoSend?: boolean; outreachContext?: string }
+) {
+  const enrich = await executeSingleBonnieTool({
+    tenantId,
+    userId,
+    tool: 'nexus_lead_enrichment',
+    args: {},
+    skipPolicy: true,
+    policySource: 'mcp',
+  });
+
+  const campaign = await executeSingleBonnieTool({
+    tenantId,
+    userId,
+    tool: 'nexus_sales_campaign',
+    args: {
+      auto_send_outreach: options.autoSend ?? false,
+      outreach_context: options.outreachContext || 'Lead Finder chat automation',
+      user_id: userId,
+    },
+    skipPolicy: true,
+    policySource: 'mcp',
+  });
+
+  return { enrich, campaign };
+}
+
+export async function startLeadOutreachAutomation(
+  tenantId: string,
+  userId: string,
+  scraperLeadIds: string[],
+  channel: 'email' | 'sms' | 'both' = 'email'
+) {
+  const supabase = createSupabaseAdminClient();
+  const { data: scraperLeads } = await supabase
+    .from('scraper_leads')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .in('id', scraperLeadIds);
+
+  const saved = await saveLeadsToCrm(tenantId, userId, scraperLeads || []);
+  const crmLeadIds = saved.map((s) => s.crm_lead_id).filter(Boolean) as string[];
+
+  await emitBusinessEvent(tenantId, 'scraper_outreach_requested', {
+    leadIds: crmLeadIds.length ? crmLeadIds : scraperLeadIds,
+    userId,
+    channel,
+    source: 'lead_finder_chat',
+  });
+
+  const nexus = await triggerNexusAutomation(tenantId, userId, {
+    autoSend: channel === 'email' || channel === 'both',
+    outreachContext: `Automated ${channel} sequence from Lead Finder`,
+  });
+
+  return { nexus, crmLeadIds };
+}

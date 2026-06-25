@@ -73,6 +73,15 @@ export async function GET(request: NextRequest) {
           case 'task_created':
             workflowToStart = taskCreatedWorkflow;
             break;
+          case 'scraper_outreach_requested': {
+            const { leadNurtureWorkflow } = await import('@/workflows/lead-nurture');
+            for (const leadId of event.payload?.leadIds || []) {
+              const { runId } = await start(leadNurtureWorkflow, [{ leadId, tenantId: event.tenant_id }]);
+              results.push({ eventId: event.id, status: 'dispatched', runId, type: 'lead_nurture' });
+            }
+            await supabase.from('business_automation_events').update({ processed: true }).eq('id', event.id);
+            continue;
+          }
           default:
             console.warn(`[Automation] No workflow mapping for event type: ${event.event_type}`);
         }

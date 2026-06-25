@@ -12,6 +12,7 @@ import { integrationsService, IntegrationConfig } from '../../../services/integr
 import { useTenant } from '../../../contexts/TenantContext';
 import { getMimeType } from '../../../utils/mimeTypes';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
+import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 
 interface ComposeEmailModalProps {
     isOpen: boolean;
@@ -538,6 +539,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
+
+                                    {to.includes('@') && (
+                                        <div className="mt-3">
+                                            <EmailLeadInsightPanel from={to} subject={subject} compact />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {matchedClient && (

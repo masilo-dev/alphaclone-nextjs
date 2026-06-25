@@ -43,16 +43,20 @@ const SalesAgent: React.FC = () => {
     const getInitialTab = (): 'leads' | 'agent' | 'omni' | 'kanban' | 'automation' => {
         const tab = searchParams?.get('tab');
         if (tab === 'chat') return 'agent';
-        if (tab === 'finder') return 'omni';
+        if (tab === 'leads' || tab === 'omni') return 'omni';
         return 'omni';
     };
     const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>(getInitialTab);
 
     useEffect(() => {
         const tab = searchParams?.get('tab');
-        if (tab === 'finder' || tab === 'leads' || tab === 'omni') setActiveTab('omni');
+        if (tab === 'finder') {
+            router.replace('/dashboard/leads/campaigns');
+            return;
+        }
+        if (tab === 'leads' || tab === 'omni') setActiveTab('omni');
         else if (tab === 'chat' || tab === 'agent') setActiveTab('agent');
-    }, [searchParams]);
+    }, [searchParams, router]);
     const [searchCriteria, setSearchCriteria] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "alphaclone-web": {
+      "source": {
+        "repo": ".",
+        "rootDirectory": "."
+      },
+      "deploy": {
+        "startCommand": "npm run start",
+        "healthcheckPath": "/api/health"
+      }
+    },
+    "alphaclone-scraper": {
+      "source": {
+        "repo": ".",
+        "rootDirectory": "alphaclone-scraper"
+      },
+      "deploy": {
+        "dockerfilePath": "Dockerfile",
+        "healthcheckPath": "/health"
+      }
+    }
+  }
+}

@@ -150,7 +150,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'CRM Reports', href: '/dashboard/crm/reports', icon: BarChart3 },
       { label: 'Sales Forecast', href: '/dashboard/forecast', icon: TrendingUp },
       { label: 'Production Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-      { label: 'Find Leads (AI)', href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Lead Finder', href: '/dashboard/leads/campaigns', icon: MessageSquare },
       { label: 'Lead Ingestion', href: '/dashboard/business/ingestion', icon: Database },
     ],
   },

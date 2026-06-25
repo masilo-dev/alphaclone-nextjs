@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { extractEmailAddress } from '@/lib/email/composeNavigation';
 import toast from 'react-hot-toast';
+import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 
 function resolveOutreachProvider(source?: string | null): string | undefined {
   const normalized = String(source || '').toLowerCase();
@@ -506,6 +507,16 @@ export default function UnifiedInboxTab() {
                 </button>
               </div>
             </div>
+
+            {selectedMessage.channel === 'email' && selectedMessage.from_address && (
+              <div className="px-4 pt-3">
+                <EmailLeadInsightPanel
+                  from={selectedMessage.from_address}
+                  subject={selectedMessage.subject}
+                  compact
+                />
+              </div>
+            )}
 
             {/* Main Area: Message Display & AI Panel */}
             <div className="flex-1 flex overflow-hidden">

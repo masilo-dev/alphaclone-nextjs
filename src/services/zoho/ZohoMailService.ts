@@ -442,6 +442,16 @@ export class ZohoMailService extends ZohoService {
                             integrationId: zohoIntegration.id,
                         },
                     });
+
+                    try {
+                        const { searchEmailContext } = await import('@/lib/scraper/emailLeadAutoSearch');
+                        await searchEmailContext(zohoIntegration.tenant_id, sender, {
+                            subject,
+                            queueEnrichment: true,
+                        });
+                    } catch {
+                        // Auto lead search is best-effort during inbox sync
+                    }
                 }
             } catch {
             }

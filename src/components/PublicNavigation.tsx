@@ -55,6 +55,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Services', path: '/services' },
+    { label: 'AI Agents', path: '/ai-agents' },
     { label: 'Ecosystem', path: '/ecosystem' },
     { label: 'About', path: '/about' },
     { label: 'Results', path: '/results' },
@@ -63,15 +64,22 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
     { label: 'Docs', path: '/docs' },
     { label: 'FAQ', path: '/faq' },
     { label: 'Pricing', path: '/pricing' },
+    { label: 'Book Demo', path: '/book-demo' },
     { label: 'Contact', path: '/contact' },
   ];
 
-  const desktopPrimaryLabels = new Set(['Home', 'About', 'Services', 'Docs', 'Pricing']);
+  const desktopPrimaryLabels = new Set([
+    'Home',
+    'Services',
+    'About',
+    'Pricing',
+    'Book Demo',
+  ]);
   const desktopPrimaryLinks = navItems.filter((item) => desktopPrimaryLabels.has(item.label));
   const desktopDropdownLinks = navItems.filter((item) => !desktopPrimaryLabels.has(item.label));
 
   const primaryMobileItems = navItems.filter((item) =>
-    ['Home', 'Services', 'Results', 'Pricing', 'About', 'Contact'].includes(item.label)
+    ['Home', 'Services', 'Results', 'Pricing', 'Book Demo', 'About', 'Contact'].includes(item.label)
   );
   const secondaryMobileItems = navItems.filter(
     (item) => !primaryMobileItems.some((primary) => primary.path === item.path)
