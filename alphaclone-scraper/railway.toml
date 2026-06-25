@@ -1,0 +1,11 @@
+# alphaclone-scraper only — web app stays on Vercel.
+# Railway dashboard: set service Root Directory to alphaclone-scraper.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"

@@ -1,60 +1,54 @@
-# Railway Cron Jobs
+# Railway Cron Jobs (scraper-only setup)
 
-Configure in Railway dashboard → Service `alphaclone-web` → Cron Jobs.
+**Vercel** runs all app crons — see `vercel.json` and `vercel.pro.crons.json`.  
+**Railway** runs **one cron** on `alphaclone-scraper` in the recommended split.
 
-**Auth header (all jobs):**
-```
-Authorization: Bearer $CRON_SECRET
-```
+Do not duplicate Vercel crons on Railway (double invoices, emails, social posts).
 
-Or set custom header:
-```
-x-railway-cron: 1
-```
+---
 
-## Active (from vercel.json)
+## Railway — alphaclone-scraper
+
+Configure in Railway dashboard → **alphaclone-scraper** → Cron Jobs.
 
 | Schedule | Method | Path | Purpose |
 |----------|--------|------|---------|
-| `0 0 * * *` | GET | `/api/cron/process-recurring-invoices` | Recurring invoices |
-| `0 1 * * *` | GET | `/api/cron/process-invoice-overdue-reminders` | Invoice reminders |
-| `0 2 * * *` | GET | `/api/cron/bonnie-dream` | Bonnie dream loop |
-| `0 3 * * *` | GET | `/api/cron/daily` | Daily tasks |
-| `0 4 * * *` | GET | `/api/cron/intelligence-snapshots` | Intelligence snapshots |
-| `*/5 * * * *` | GET | `/api/cron/social-publish` | Social post publishing |
-| `*/15 * * * *` | GET | `/api/cron/publish-linkedin` | LinkedIn publishing |
-| `*/5 * * * *` | GET | `/api/cron/sync-zoho-inbox` | Zoho inbox poll sync |
+| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` | Poll active lead campaigns |
 
-## Pro-tier (enable on Railway)
+**Auth header:**
+```
+x-internal-api-key: $INTERNAL_API_KEY
+```
 
-| Schedule | Method | Path | Purpose |
-|----------|--------|------|---------|
-| `*/5 * * * *` | GET | `/api/cron/process-events` | Automation event bus |
-| `*/5 * * * *` | GET | `/api/cron/process-campaigns` | Email campaigns |
-| `*/5 * * * *` | GET | `/api/cron/sequence-worker` | Outreach sequences |
-| `*/5 * * * *` | GET | `/api/cron/process-scheduled-ai-tasks` | Scheduled AI tasks |
-| `*/15 * * * *` | GET | `/api/cron/process-task-reminders` | Task reminders |
-| `*/5 * * * *` | GET | `/api/cron/autonomous-runner` | Autonomous agent |
-| `*/5 * * * *` | GET | `/api/cron/autonomous-sync` | Autonomous sync |
-| `0 * * * *` | GET | `/api/cron/retry-failed` | Retry failed automations |
-| `0 * * * *` | GET | `/api/cron/reconcile-social-posts` | Social post reconcile |
-| `*/15 * * * *` | GET | `/api/cron/linkedin-inbox-sync` | LinkedIn inbox poll |
-| `0 * * * *` | GET | `/api/cron/deal-intelligence` | Deal intelligence |
-| `0 * * * *` | GET | `/api/cron/contact-psychology` | Contact psychology |
-| `0 * * * *` | GET | `/api/cron/entanglement-model` | Entanglement model |
-| `*/30 * * * *` | GET | `/api/cron/calendly-sync` | Calendly sync |
-
-## Scraper service (alphaclone-scraper)
-
-| Schedule | Method | Path | Purpose |
-|----------|--------|------|---------|
-| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` | Poll active campaigns |
-
-Use `x-internal-api-key: $INTERNAL_API_KEY` for scraper crons.
-
-## Test a cron manually
+### Test manually
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://<your-railway-web>.up.railway.app/api/cron/social-publish
+curl -X POST \
+  -H "x-internal-api-key: $INTERNAL_API_KEY" \
+  https://<scraper>.up.railway.app/api/scraper/campaign/poll
 ```
+
+---
+
+## Vercel — all other crons (reference)
+
+These stay on **Vercel**, not Railway.
+
+### Active (`vercel.json`)
+
+| Schedule | Path |
+|----------|------|
+| `0 0 * * *` | `/api/cron/process-recurring-invoices` |
+| `0 1 * * *` | `/api/cron/process-invoice-overdue-reminders` |
+| `0 2 * * *` | `/api/cron/bonnie-dream` |
+| `0 3 * * *` | `/api/cron/daily` |
+| `0 4 * * *` | `/api/cron/intelligence-snapshots` |
+| `*/5 * * * *` | `/api/cron/social-publish` |
+| `*/15 * * * *` | `/api/cron/publish-linkedin` |
+| `*/5 * * * *` | `/api/cron/sync-zoho-inbox` |
+
+### Pro-tier (`vercel.pro.crons.json`)
+
+Includes `process-events`, `sequence-worker`, `process-campaigns`, and other automation crons — enable on Vercel when on Pro plan.
+
+**Auth:** `Authorization: Bearer $CRON_SECRET` or `x-railway-cron: 1` (if using external cron caller).

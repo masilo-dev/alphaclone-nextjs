@@ -1,9 +1,3 @@
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
-
-[deploy]
-startCommand = "npm run start"
-healthcheckPath = "/api/health"
-healthcheckTimeout = 120
-restartPolicyType = "ON_FAILURE"
+# Web app (Next.js) is deployed on Vercel — not Railway.
+# Scraper config: alphaclone-scraper/railway.toml
+# Docs: docs/RAILWAY_DEPLOY.md

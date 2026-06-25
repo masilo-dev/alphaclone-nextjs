@@ -1,117 +1,132 @@
-# Railway Deployment Guide
+# Railway Deployment Guide (scraper-only)
 
-Zero-downtime migration from Vercel to Railway for Alphaclone Systems.
+**Vercel** hosts the full Next.js app (domain, dashboard, MCP, crons, webhooks).  
+**Railway** runs **`alphaclone-scraper` only** — Playwright lead scraping, enrichment, and campaign polling.
 
-## Services
+This saves cost and avoids running two web hosts.
 
-| Service | Root | Start |
-|---------|------|-------|
-| `alphaclone-web` | `/` | Docker (`Dockerfile`) → `npm run start` |
-| `alphaclone-scraper` | `/alphaclone-scraper` | Docker / uvicorn |
+## Architecture
 
-## Build notes
+```
+Users → alphaclonesystems.com (Vercel)
+              │
+              │  SCRAPER_SERVICE_URL
+              ▼
+        Railway alphaclone-scraper
+              │
+              │  MCP_SYNC_URL → Vercel /api/internal/leads/mcp-sync
+              ▼
+        Supabase + CRM (shared)
+```
 
-**alphaclone-web** uses the root `Dockerfile` (Node 22) — not Nixpacks alone. The repo also contains `alphaclone-scraper/` (Python), which can confuse Nixpacks into skipping Node/npm. If you switch back to Nixpacks, use `nixpacks.toml` with `providers = ["node"]`.
+| Component | Host |
+|-----------|------|
+| Website, dashboard, Lead Finder UI | **Vercel** |
+| MCP, Stripe/webhooks, OAuth callbacks | **Vercel** |
+| Crons (invoices, social, zoho, automation) | **Vercel** (`vercel.json`) |
+| Playwright scraping + lead campaigns | **Railway** (`alphaclone-scraper`) |
+| Campaign poll cron | **Railway** scraper service |
 
-**alphaclone-scraper** uses `alphaclone-scraper/Dockerfile` (Playwright Python). Set service root directory to `alphaclone-scraper` in Railway.
+## Railway setup (one service)
 
-## Pre-deployment checklist
+### 1. Remove or disable `alphaclone-web` on Railway
 
-- [ ] `npm run build` passes locally
-- [ ] Supabase migration applied: `npm run supabase:push`
-- [ ] All env vars copied from Vercel → Railway (see `RAILWAY_ENV_TEMPLATE.md`)
-- [ ] `SCRAPER_SERVICE_URL` set on web service
-- [ ] `MCP_SYNC_URL` set on scraper service pointing to web `/api/internal/leads/mcp-sync`
+In Railway dashboard:
 
-## Vercel + Railway parallel run (automation)
+1. Open project → **alphaclone-web** service (if it exists)
+2. **Settings** → **Danger** → **Remove service** (or pause deployments)
+3. Keep only **alphaclone-scraper**
 
-Both platforms can run the **same app** during migration. Automation works on either:
+### 2. Configure `alphaclone-scraper`
 
-| Component | Vercel | Railway |
-|-----------|--------|---------|
-| Web app + MCP | ✅ | ✅ |
-| Python scraper | ❌ (use Railway service) | ✅ `alphaclone-scraper` |
-| Cron jobs (`process-events`, `sequence-worker`) | `vercel.json` | `docs/RAILWAY_CRON_JOBS.md` |
-| Lead Finder fallback search | OSM/Nominatim (no Playwright) | Full Playwright scraper |
+| Setting | Value |
+|---------|--------|
+| **Root Directory** | `alphaclone-scraper` |
+| **Builder** | Dockerfile |
+| **Dockerfile** | `Dockerfile` (inside that folder) |
+| **Health check** | `/health` |
 
-**Lead Finder Chat** auto-falls back to free OSM local search when the Railway scraper is unreachable — so it works on Vercel-only until you cut over DNS.
+Connect repo: `masilo-dev/alphaclone-nextjs`, branch `master`.
 
-**Nexus + n8n-level automation:** Lead Finder emits `scraper_outreach_requested` → `process-events` cron → `leadNurtureWorkflow` (email drip). Enable `/api/cron/process-events` on whichever host is primary (every 5 min).
+### 3. Scraper environment variables
 
+See `docs/RAILWAY_ENV_TEMPLATE.md` → **alphaclone-scraper** section.
 
-1. Deploy both Railway services without DNS change
-2. Note Railway URLs: `https://<web>.up.railway.app`, `https://<scraper>.up.railway.app`
-3. Health checks:
-   ```bash
-   curl https://<web>.up.railway.app/api/health
-   curl https://<web>.up.railway.app/api/mcp/health
-   curl https://<scraper>.up.railway.app/health
-   ```
-4. Test cron:
-   ```bash
-   curl -H "Authorization: Bearer $CRON_SECRET" \
-     https://<web>.up.railway.app/api/cron/daily
-   ```
-5. Test campaign run on Railway staging URL via `/dashboard/leads/campaigns`
-6. Register **second** webhook endpoints at Stripe/Meta (keep Vercel active)
+Required:
 
-## DNS cutover (Cloudflare)
+| Variable | Value |
+|----------|--------|
+| `SUPABASE_URL` | Same as Vercel `NEXT_PUBLIC_SUPABASE_URL` |
+| `SUPABASE_KEY` | Same as Vercel `SUPABASE_SERVICE_ROLE_KEY` |
+| `INTERNAL_API_KEY` | **Must match Vercel** |
+| `MCP_SYNC_URL` | `https://alphaclonesystems.com/api/internal/leads/mcp-sync` |
 
-1. Lower TTL to 60s (24 hours before cutover)
-2. Add custom domain in Railway → `alphaclonesystems.com`
-3. Update Cloudflare CNAME to Railway target
-4. Update `NEXT_PUBLIC_APP_URL` on Railway
-5. Update OAuth redirect URIs (Google, LinkedIn, Zoho, Calendly, Zoom, HubSpot, Microsoft, X)
-6. Update Supabase Auth → Site URL and redirect URLs
-7. Update webhook URLs at all providers (see list below)
-8. Configure Railway cron jobs (`RAILWAY_CRON_JOBS.md`)
+Optional: `APOLLO_API_KEY`, `HUNTER_API_KEY`, `WORKER_CONCURRENCY=2`, `ENABLE_ML_SCORING=false`
 
-## Webhook URL updates
+### 4. Vercel — add bridge vars
 
-Replace `https://alphaclonesystems.com` with your production domain (unchanged after cutover if same domain):
+In Vercel → **Environment Variables** → Production:
 
-| Provider | Path |
-|----------|------|
-| Stripe | `/api/stripe/webhook` |
-| Meta Lead Ads | `/api/webhooks/facebook/leads` |
-| Messenger | `/api/webhooks/facebook/messenger` |
-| WhatsApp | `/api/webhooks/whatsapp` |
-| Calendly | `/api/webhooks/calendly` |
-| Zoom | `/api/webhooks/zoom` |
-| Zoho Mail | `/api/webhooks/zoho/incoming` |
-| Twilio | `/api/webhooks/twilio/sms` |
-| Daily.co | `/api/daily/webhook` |
-| Slack | `/api/slack/interactive` |
+| Variable | Value |
+|----------|--------|
+| `SCRAPER_SERVICE_URL` | `https://<scraper>.up.railway.app` |
+| `INTERNAL_API_KEY` | Same as Railway scraper |
 
-## Rollback
+Redeploy Vercel after saving.
 
-1. Revert Cloudflare DNS to Vercel
-2. Vercel crons in `vercel.json` resume automatically
-3. Keep Railway running for debugging
+### 5. Scraper cron (Railway only)
 
-## Post-migration cleanup
+Railway → **alphaclone-scraper** → **Cron**:
 
-- [ ] Disable Vercel auto-deploy (after 1 week stable)
-- [ ] Archive Vercel environment variable export
-- [ ] Remove duplicate Stripe/Meta webhook endpoints pointing to Vercel
-- [ ] Monitor Sentry + Railway logs for 48 hours
+| Schedule | Method | Path | Auth |
+|----------|--------|------|------|
+| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` | Header `x-internal-api-key: $INTERNAL_API_KEY` |
 
-## CLI commands
+Do **not** duplicate Vercel crons on Railway.
+
+## Pre-flight checklist
+
+- [ ] `npm run supabase:push` (scraper tables migration)
+- [ ] Railway: only `alphaclone-scraper` service active
+- [ ] Vercel: `SCRAPER_SERVICE_URL` + `INTERNAL_API_KEY` set
+- [ ] Scraper: `MCP_SYNC_URL` points to **Vercel** domain
+- [ ] Health checks pass (below)
+
+## Health checks
+
+```bash
+# Vercel (primary web)
+curl https://alphaclonesystems.com/api/health
+curl https://alphaclonesystems.com/api/mcp/health
+
+# Railway scraper
+curl https://<scraper>.up.railway.app/health
+```
+
+## Test Lead Finder end-to-end
+
+1. Log in on **Vercel** → **Sales Hub** → **Lead Finder**
+2. Run a chat search (e.g. “Find SMB dental clinics in Austin”)
+3. Railway scraper logs should show campaign activity
+4. Leads appear in UI; outreach + “contacted” still run on Vercel
+
+If Railway is down, Lead Finder falls back to light OSM search on Vercel.
+
+## Optional: full web on Railway later
+
+Root `Dockerfile` + `nixpacks.toml` remain in the repo for a future full migration. They are **not** used in the scraper-only setup. See git history / `railway.json` in older commits if you ever move web off Vercel.
+
+## CLI
 
 ```bash
 npm i -g @railway/cli
 railway login
 railway link
-railway up --service alphaclone-web
-railway up --service alphaclone-scraper
-railway logs --service alphaclone-web
 railway logs --service alphaclone-scraper
 ```
 
-## Apply database migration
+## Database migration
 
 ```bash
 npm run supabase:push
-# or
-npx supabase db push
 ```
