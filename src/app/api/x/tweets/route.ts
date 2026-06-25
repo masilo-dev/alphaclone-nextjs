@@ -9,8 +9,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
     }
     await requireTenantAccess(tenantId);
+    const integration = await xService.getXIntegration(tenantId);
+    if (!integration) {
+      return NextResponse.json({ success: true, connected: false, data: null });
+    }
     const data = await xService.getUserTweets(tenantId);
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, connected: true, data });
   } catch (err) {
     return routeErrorResponse(err, 'Failed to load X timeline');
   }
