@@ -4,14 +4,15 @@
 -- ============================================================
 
 -- Step 1: Add missing columns to the main tickets table
+-- Note: client_id references companies(id) instead of non-existent clients table
 ALTER TABLE tickets 
     ADD COLUMN IF NOT EXISTS ticket_number TEXT,
     ADD COLUMN IF NOT EXISTS category TEXT CHECK (category IN ('billing','technical','general','feature_request','bug','onboarding')),
     ADD COLUMN IF NOT EXISTS first_response_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS sla_due_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS resolution_note TEXT,
-    ADD COLUMN IF NOT EXISTS contact_id UUID REFERENCES contacts(id),
-    ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id),
+    ADD COLUMN IF NOT EXISTS contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES companies(id) ON DELETE SET NULL,
     ADD COLUMN IF NOT EXISTS message_id UUID;
 
 -- Step 2: Expand source enum to include support_tickets sources
