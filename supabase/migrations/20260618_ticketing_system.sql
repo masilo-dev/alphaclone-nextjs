@@ -120,26 +120,25 @@ WHERE c.phone LIKE '%' || wm.phone_number
 AND wm.contact_id IS NULL;
 
 -- ============================================================
--- Fix 4A: Set Bonnie's default persona
+-- Fix 4A: Set Bonnie's default persona (uses config column)
 -- ============================================================
 UPDATE integrations
-SET settings = settings || '{
+SET config = config || '{
   "persona_prompt": "You are Bonnie, the AI business assistant for AlphaClone Systems (alphaclonesystems.com). You help SMB owners manage their CRM, invoices, leads, contracts, and social media from one place. When responding to inbound messages: - Be friendly, professional, and concise - If someone asks about pricing: Starter $15/mo, Pro $45/mo, Enterprise $80/mo - If someone wants a demo: direct them to alphaclonesystems.com - If someone has a billing issue: create a support ticket and let them know the team will follow up within 24 hours - If someone is a new lead: capture their name, business, and need, then add them to CRM - Never make promises about features that don''t exist - Always sign off as: Bonnie | AlphaClone Systems"
 }'::jsonb
 WHERE type = 'whatsapp'
-AND tenant_id = '51772ee6-dee8-4c42-81f7-0fee297e5b27';
+AND (config->>'persona_prompt') IS NULL;
 
 -- ============================================================
--- Fix 4B: Add auto_reply_enabled column to integrations settings
+-- Fix 4B: Add auto_reply_enabled to integrations config
 -- ============================================================
 UPDATE integrations
-SET settings = settings::jsonb || '{"auto_reply_enabled": true}'::jsonb
+SET config = config || '{"auto_reply_enabled": true}'::jsonb
 WHERE type = 'whatsapp'
-AND tenant_id = '51772ee6-dee8-4c42-81f7-0fee297e5b27'
-AND (settings->>'auto_reply_enabled') IS NULL;
+AND (config->>'auto_reply_enabled') IS NULL;
 
 -- ============================================================
--- Fix 5C: Create function for avg resolution time
+-- Fix 5C: Create function for avg resolution time (uses unified tickets)
 -- ============================================================
 CREATE OR REPLACE FUNCTION get_avg_ticket_resolution_time(p_tenant_id UUID)
 RETURNS TABLE(avg_hours NUMERIC) AS $$
@@ -150,7 +149,7 @@ BEGIN
       AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600),
       0
     )::NUMERIC(10,2) AS avg_hours
-  FROM support_tickets
+  FROM tickets
   WHERE tenant_id = p_tenant_id
     AND resolved_at IS NOT NULL
     AND created_at IS NOT NULL;
