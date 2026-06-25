@@ -15,8 +15,19 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
         if (isOpen) {
             setRun(true);
             setStepIndex(0);
+        } else {
+            setRun(false);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        if (isOpen && run) {
+            document.documentElement.setAttribute('data-product-tour-active', 'true');
+            return () => document.documentElement.removeAttribute('data-product-tour-active');
+        }
+        document.documentElement.removeAttribute('data-product-tour-active');
+    }, [isOpen, run]);
 
     const adminSteps: Step[] = [
         {
@@ -128,6 +139,9 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             continuous
             showProgress
             showSkipButton
+            disableOverlay
+            disableScrolling
+            spotlightClicks
             callback={handleJoyrideCallback}
             styles={{
                 options: {
