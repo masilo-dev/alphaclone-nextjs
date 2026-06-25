@@ -191,6 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const normalizeTabForRole = (tab: string) => {
     if (!tab) return '/dashboard';
     if (user.role === 'tenant_admin') {
+      if (tab === '/dashboard/business') return '/dashboard';
       if (tab === '/dashboard/messages') return '/dashboard/business/messages';
       if (tab === '/dashboard/settings') return '/dashboard/business/settings';
       if (tab === '/dashboard/contracts') return '/dashboard/business/contracts';
