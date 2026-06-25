@@ -549,6 +549,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             recipientEmail: targetEmail,
             subject: `Contract: ${form.projectName || 'Service Agreement'}`,
             message: `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
+            provider: 'auto',
         });
         setAiSendInstructions(
             `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
