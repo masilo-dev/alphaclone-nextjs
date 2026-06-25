@@ -1,6 +1,5 @@
 /**
- * Heavy workloads run on Railway (Playwright scraper, long crons, ML scoring).
- * Vercel web stays lightweight — proxy to Railway when SCRAPER_SERVICE_URL is set.
+ * Vercel hosts the web app. Railway runs alphaclone-scraper only (Playwright, lead campaigns).
  */
 
 export const RAILWAY_HEAVY_ROUTES = [

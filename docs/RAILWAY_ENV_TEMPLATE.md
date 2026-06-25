@@ -1,8 +1,28 @@
 # Railway Environment Variables Template
 
-Copy each group into the Railway dashboard (Variables tab). **Do not commit secrets to git.**
+**Vercel** = full web app (see your Vercel dashboard for all existing vars).  
+**Railway** = **`alphaclone-scraper` only** (this file’s scraper section).
 
-## alphaclone-web (Next.js)
+Do not copy the whole web env to Railway unless you deploy `alphaclone-web` (not recommended — use Vercel for web).
+
+---
+
+## Vercel — add these for Railway bridge
+
+Add to **existing** Vercel Production env (everything else stays):
+
+| Variable | Description |
+|----------|-------------|
+| `SCRAPER_SERVICE_URL` | `https://<scraper>.up.railway.app` |
+| `INTERNAL_API_KEY` | Random secret — **same value** on Vercel + Railway scraper |
+
+All other vars (Supabase, Stripe, OAuth, AI keys, crons) remain on **Vercel only**.
+
+---
+
+## alphaclone-web (Vercel only — reference)
+
+These live on **Vercel**, not Railway, in the scraper-only setup:
 
 ### Required — Core
 | Variable | Description |
@@ -97,17 +117,18 @@ Copy each group into the Railway dashboard (Variables tab). **Do not commit secr
 | `UPSTASH_REDIS_REST_TOKEN` | |
 | `SENTRY_DSN` | Server Sentry |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client Sentry |
-| `SCRAPER_SERVICE_URL` | Internal Railway URL of alphaclone-scraper |
+| `SCRAPER_SERVICE_URL` | On **Vercel** — Railway scraper URL (not on Railway web) |
 
-### Cost control — keep heavy work on Railway
+### Cost control
 
-| Variable | Description |
-|----------|-------------|
-| `SCRAPER_SERVICE_URL` | **Required on web** — proxies Playwright scraping, enrichment, and campaign runs to `alphaclone-scraper` |
-| `FORCE_LOCAL_HEAVY_WORK` | `true` only for local dev without scraper; never on Vercel |
-| `WORKER_CONCURRENCY` | On scraper: `2`–`3` keeps memory ~1–2 GB per instance (pricing-friendly) |
+| Variable | Where | Description |
+|----------|--------|-------------|
+| `SCRAPER_SERVICE_URL` | **Vercel** | Points to Railway `alphaclone-scraper` |
+| `WORKER_CONCURRENCY` | **Railway scraper** | `2`–`3` |
+| `ENABLE_ML_SCORING` | **Railway scraper** | `false` unless needed |
 
-**Run on Railway only (not Vercel):** scraper campaigns, Playwright, ML scoring (`ENABLE_ML_SCORING`), `process-events`, `sequence-worker`, `sync-zoho-inbox`, lead nurture crons. Vercel web stays API + UI; set `SCRAPER_SERVICE_URL` so chat Lead Finder and email enrichment queue to Railway.
+**Railway runs:** Playwright scraper + campaign poll cron only.  
+**Vercel runs:** web, MCP, webhooks, Lead Finder UI, all other crons.
 
 ### Optional enrichment (legacy in-app routes)
 
@@ -141,25 +162,25 @@ Copy each group into the Railway dashboard (Variables tab). **Do not commit secr
 
 ---
 
-## CLI setup (copy-paste)
+## CLI setup (scraper only)
 
 ```bash
-npm i -g @railway/cli
+npm i -g @railway.cli
 railway login
-railway init
+railway link
 
-# Set variables on web service
-railway variables set NODE_ENV=production --service alphaclone-web
-railway variables set NEXT_PUBLIC_SUPABASE_URL=... --service alphaclone-web
-# ... repeat for all vars above
+# Scraper service only
+railway variables set SUPABASE_URL=... --service alphaclone-scraper
+railway variables set SUPABASE_KEY=... --service alphaclone-scraper
+railway variables set INTERNAL_API_KEY=... --service alphaclone-scraper
+railway variables set MCP_SYNC_URL=https://alphaclonesystems.com/api/internal/leads/mcp-sync --service alphaclone-scraper
 
-# Link scraper to web
-railway variables set MCP_SYNC_URL=https://<web>.up.railway.app/api/internal/leads/mcp-sync --service alphaclone-scraper
-railway variables set SCRAPER_SERVICE_URL=https://<scraper>.up.railway.app --service alphaclone-web
+# Then on Vercel (dashboard or CLI):
+# SCRAPER_SERVICE_URL=https://<scraper>.up.railway.app
+# INTERNAL_API_KEY=<same secret>
 ```
 
-## Cron jobs (Railway dashboard → Cron)
+## Cron jobs
 
-All crons: `GET` or `POST` with header `Authorization: Bearer $CRON_SECRET`
-
-See `docs/RAILWAY_CRON_JOBS.md` for full schedule list.
+**Vercel:** all app crons — see `vercel.json`  
+**Railway:** scraper poll only — see `docs/RAILWAY_CRON_JOBS.md`
