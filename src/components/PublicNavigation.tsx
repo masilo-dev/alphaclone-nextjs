@@ -98,7 +98,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
             isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'
           }`}
         >
-          <div className="flex items-center gap-6 lg:gap-8 min-w-0 flex-1">
           <Link
             href="/"
             className="flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0"
@@ -124,7 +123,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
             <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-0.5 min-w-0">
+          <div className="hidden lg:flex items-center gap-0.5 shrink-0 ml-auto">
             {desktopPrimaryLinks.map((item) => (
               <Link
                 key={item.path}
@@ -153,7 +152,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${exploreOpen ? 'rotate-180' : ''}`} />
               </button>
               {exploreOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 w-52 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50 py-1">
+                <div className="absolute top-[calc(100%+8px)] right-0 w-52 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50 py-1">
                   {desktopDropdownLinks.map((item) => (
                     <Link
                       key={item.path}
@@ -171,25 +170,24 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                 </div>
               )}
             </div>
-          </div>
-          </div>
 
-          <div className="hidden lg:flex items-center gap-2 shrink-0">
-            <Link
-              href={LOGIN_HREF}
-              className="inline-flex items-center h-9 px-4 text-sm font-semibold rounded-lg border border-teal-500/40 text-teal-400 hover:text-teal-300 hover:border-teal-400/70 transition-colors whitespace-nowrap"
-            >
-              Login
-            </Link>
-
-            <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center shrink-0">
-              <Button
-                size="sm"
-                className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20 whitespace-nowrap"
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-800">
+              <Link
+                href={LOGIN_HREF}
+                className="inline-flex items-center h-9 px-4 text-sm font-semibold rounded-lg border border-teal-500/40 text-teal-400 hover:text-teal-300 hover:border-teal-400/70 transition-colors whitespace-nowrap"
               >
-                Start Free Trial
-              </Button>
-            </Link>
+                Login
+              </Link>
+
+              <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center shrink-0">
+                <Button
+                  size="sm"
+                  className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20 whitespace-nowrap"
+                >
+                  Start Free Trial
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="lg:hidden relative z-[140] pointer-events-auto flex items-center gap-2 h-full">
