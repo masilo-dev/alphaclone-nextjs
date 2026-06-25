@@ -22,7 +22,7 @@ export const BONNIE_MODULE_DATA_TOOLS: Record<string, string[]> = {
   whatsapp: ['get_whatsapp_status', 'get_recent_messages'],
   social: ['get_social_accounts', 'get_scheduled_posts'],
   mail: ['microsoft_get_emails'],
-  accounting: ['get_invoices', 'accounting_snapshot'],
+  accounting: ['get_revenue_summary', 'accounting_snapshot', 'get_invoices'],
   contracts: ['get_contracts'],
   tasks: ['get_tasks', 'get_projects'],
   meetings: ['get_meetings', 'microsoft_get_calendar'],
@@ -37,6 +37,10 @@ export function suggestToolsForQuestion(text: string, moduleId: string): string[
 
   if (/\b(invoice|billing|ar|receivable|overdue|unpaid)\b/.test(t)) {
     picks.add('get_invoices');
+    picks.add('accounting_snapshot');
+  }
+  if (/\b(revenue|income|profit|p&l|pnl|earnings|sales|collected|outstanding)\b/.test(t)) {
+    picks.add('get_revenue_summary');
     picks.add('accounting_snapshot');
   }
   if (/\b(deal|pipeline|stage|opportunit)\b/.test(t)) {

@@ -1,6 +1,47 @@
-const nodemailer: any = typeof window === 'undefined' ? eval('require')('nodemailer') : null;
-const Resend: any = typeof window === 'undefined' ? eval('require')('resend').Resend : null;
-const sgMail: any = typeof window === 'undefined' ? eval('require')('@sendgrid/mail') : null;
+type NodemailerModule = typeof import('nodemailer');
+type ResendCtor = typeof import('resend').Resend;
+type SendGridModule = typeof import('@sendgrid/mail');
+
+let nodemailerCache: NodemailerModule | null | undefined;
+let resendCtorCache: ResendCtor | null | undefined;
+let sendGridCache: SendGridModule | null | undefined;
+
+function loadNodemailer(): NodemailerModule | null {
+  if (typeof window !== 'undefined') return null;
+  if (nodemailerCache !== undefined) return nodemailerCache;
+  try {
+    nodemailerCache = require('nodemailer') as NodemailerModule;
+  } catch (err) {
+    console.warn('[providerSdk] nodemailer unavailable:', err instanceof Error ? err.message : err);
+    nodemailerCache = null;
+  }
+  return nodemailerCache;
+}
+
+function loadResendCtor(): ResendCtor | null {
+  if (typeof window !== 'undefined') return null;
+  if (resendCtorCache !== undefined) return resendCtorCache;
+  try {
+    resendCtorCache = require('resend').Resend as ResendCtor;
+  } catch (err) {
+    console.warn('[providerSdk] resend unavailable:', err instanceof Error ? err.message : err);
+    resendCtorCache = null;
+  }
+  return resendCtorCache;
+}
+
+function loadSendGrid(): SendGridModule | null {
+  if (typeof window !== 'undefined') return null;
+  if (sendGridCache !== undefined) return sendGridCache;
+  try {
+    sendGridCache = require('@sendgrid/mail') as SendGridModule;
+  } catch (err) {
+    console.warn('[providerSdk] sendgrid unavailable:', err instanceof Error ? err.message : err);
+    sendGridCache = null;
+  }
+  return sendGridCache;
+}
+
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
@@ -45,8 +86,9 @@ function normalizeRecipients(to: string | string[]): string[] {
 
 async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
     try {
+        const Resend = loadResendCtor();
         if (!Resend) {
-            return { ok: false, provider: 'resend', error: 'Resend is not available in browser environment' };
+            return { ok: false, provider: 'resend', error: 'Resend is not available in this environment' };
         }
         const resend = new Resend(input.apiKey);
         const resendPayload: Record<string, unknown> = {
@@ -93,8 +135,9 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
 
 async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> {
     try {
+        const sgMail = loadSendGrid();
         if (!sgMail) {
-            return { ok: false, provider: 'sendgrid', error: 'SendGrid is not available in browser environment' };
+            return { ok: false, provider: 'sendgrid', error: 'SendGrid is not available in this environment' };
         }
         sgMail.setApiKey(input.apiKey);
 
@@ -255,8 +298,9 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
             return { ok: false, provider: 'gmail', error: 'Gmail requires an App Password. Generate one at myaccount.google.com/apppasswords' };
         }
 
+        const nodemailer = loadNodemailer();
         if (!nodemailer) {
-            return { ok: false, provider: 'gmail', error: 'Nodemailer is not available in browser environment' };
+            return { ok: false, provider: 'gmail', error: 'Nodemailer is not available in this environment' };
         }
 
         const transporter = nodemailer.createTransport({
@@ -387,8 +431,9 @@ async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
             return { ok: false, provider: 'smtp', error: 'SMTP host not configured' };
         }
 
+        const nodemailer = loadNodemailer();
         if (!nodemailer) {
-            return { ok: false, provider: 'smtp', error: 'Nodemailer is not available in browser environment' };
+            return { ok: false, provider: 'smtp', error: 'Nodemailer is not available in this environment' };
         }
 
         const transporter = nodemailer.createTransport({

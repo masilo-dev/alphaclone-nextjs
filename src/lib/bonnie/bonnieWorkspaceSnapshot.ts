@@ -12,6 +12,8 @@ export type BonnieWorkspaceSnapshot = {
     open_tickets: number;
     contracts: number;
     campaigns: number;
+    revenue_paid: number;
+    revenue_outstanding: number;
   };
   autonomous: {
     enabled: boolean;
@@ -48,6 +50,7 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
     open_tickets,
     contracts,
     campaigns,
+    invoiceRowsRes,
     rulesRes,
     actionsRes,
   ] = await Promise.all([
@@ -71,6 +74,11 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
       q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)
     ),
     admin
+      .from('business_invoices')
+      .select('total, status')
+      .eq('tenant_id', tenantId)
+      .limit(500),
+    admin
       .from('autonomous_runner_rules')
       .select('enabled, auto_send_enabled, high_risk_approval_required')
       .eq('tenant_id', tenantId)
@@ -84,6 +92,13 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
   ]);
 
   const rules = rulesRes.error ? null : rulesRes.data;
+  const invoiceRows = invoiceRowsRes.error ? [] : invoiceRowsRes.data || [];
+  const revenue_paid = invoiceRows
+    .filter((i: { status?: string }) => i.status === 'paid')
+    .reduce((s: number, i: { total?: number }) => s + (Number(i.total) || 0), 0);
+  const revenue_outstanding = invoiceRows
+    .filter((i: { status?: string }) => i.status !== 'paid')
+    .reduce((s: number, i: { total?: number }) => s + (Number(i.total) || 0), 0);
 
   const counts = {
     leads,
@@ -95,6 +110,8 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
     open_tickets,
     contracts,
     campaigns: typeof campaigns === 'number' ? campaigns : 0,
+    revenue_paid,
+    revenue_outstanding,
   };
 
   const parts: string[] = [];
@@ -107,6 +124,8 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
   if (counts.open_tickets) parts.push(`${counts.open_tickets} open tickets`);
   if (counts.contracts) parts.push(`${counts.contracts} contracts`);
   if (counts.campaigns) parts.push(`${counts.campaigns} campaigns`);
+  if (counts.revenue_paid > 0) parts.push(`$${Math.round(counts.revenue_paid).toLocaleString()} revenue collected`);
+  if (counts.revenue_outstanding > 0) parts.push(`$${Math.round(counts.revenue_outstanding).toLocaleString()} outstanding`);
 
   return {
     tenant_id: tenantId,
