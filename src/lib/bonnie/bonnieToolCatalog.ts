@@ -8,7 +8,7 @@ export const BONNIE_REGISTRY_TOOLS = [
   'get_contacts', 'create_contact', 'update_contact', 'log_contact_activity',
   'get_deals', 'create_deal', 'update_deal', 'move_deal_stage', 'get_pipeline_summary',
   // Finance
-  'get_invoices', 'create_invoice', 'update_invoice_status', 'accounting_snapshot',
+  'get_invoices', 'create_invoice', 'update_invoice_status', 'accounting_snapshot', 'get_revenue_summary',
   // Projects & tasks
   'get_projects', 'create_project', 'get_project_tasks', 'create_project_task', 'update_project_task',
   // Campaigns & outreach
@@ -127,8 +127,8 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   accounting: {
     label: 'Accounting',
-    tools: ['get_invoices', 'accounting_snapshot', 'get_accounts_receivable_aging', 'send_invoice'],
-    examples: ['Show overdue invoices', 'Run AR aging report'],
+    tools: ['get_revenue_summary', 'accounting_snapshot', 'get_invoices', 'send_invoice'],
+    examples: ['What is my revenue this month?', 'Show overdue invoices'],
   },
   contracts: {
     label: 'Contracts',

@@ -32,6 +32,14 @@ export async function executeCustomTool(
     if (snapshot.counts.open_tasks) summary.push(`${snapshot.counts.open_tasks} tasks`);
     if (snapshot.counts.contacts) summary.push(`${snapshot.counts.contacts} contacts`);
     if (snapshot.counts.clients) summary.push(`${snapshot.counts.clients} clients`);
+    if (snapshot.counts.contracts) summary.push(`${snapshot.counts.contracts} contracts`);
+    if (snapshot.counts.campaigns) summary.push(`${snapshot.counts.campaigns} campaigns`);
+    if (snapshot.counts.revenue_paid > 0) {
+      summary.push(`$${Math.round(snapshot.counts.revenue_paid).toLocaleString()} revenue collected`);
+    }
+    if (snapshot.counts.revenue_outstanding > 0) {
+      summary.push(`$${Math.round(snapshot.counts.revenue_outstanding).toLocaleString()} outstanding`);
+    }
 
     return {
       tool,
