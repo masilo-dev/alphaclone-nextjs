@@ -6,8 +6,14 @@ Zero-downtime migration from Vercel to Railway for Alphaclone Systems.
 
 | Service | Root | Start |
 |---------|------|-------|
-| `alphaclone-web` | `/` | `npm run start` |
+| `alphaclone-web` | `/` | Docker (`Dockerfile`) → `npm run start` |
 | `alphaclone-scraper` | `/alphaclone-scraper` | Docker / uvicorn |
+
+## Build notes
+
+**alphaclone-web** uses the root `Dockerfile` (Node 22) — not Nixpacks alone. The repo also contains `alphaclone-scraper/` (Python), which can confuse Nixpacks into skipping Node/npm. If you switch back to Nixpacks, use `nixpacks.toml` with `providers = ["node"]`.
+
+**alphaclone-scraper** uses `alphaclone-scraper/Dockerfile` (Playwright Python). Set service root directory to `alphaclone-scraper` in Railway.
 
 ## Pre-deployment checklist
 
