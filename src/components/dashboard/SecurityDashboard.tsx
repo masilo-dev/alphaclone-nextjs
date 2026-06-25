@@ -15,6 +15,7 @@ import {
 import { Card, Button, Badge } from '../ui/UIComponents';
 import { activityService } from '../../services/activityService';
 import { User } from '../../types';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
 interface SecurityDashboardProps {
     user: User;
@@ -42,7 +43,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
     }, [activeTab]);
 
     const fetchStats = async () => {
-        if (user.role === 'admin') {
+        if (isPlatformAdminRole(user.role)) {
             const { stats } = await activityService.getActivityStats();
             setStats(stats || {});
         }
@@ -51,7 +52,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
     const fetchTabContent = async (tab: string) => {
         setIsLoading(true);
         try {
-            if (user.role === 'admin') {
+            if (isPlatformAdminRole(user.role)) {
                 if (tab === 'logs' && activityLogs.length === 0) {
                     const { logs } = await activityService.getAllActivityLogs(100);
                     setActivityLogs(logs || []);
@@ -151,7 +152,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             </div>
 
             {/* Stats Cards (Admin Only) */}
-            {user.role === 'admin' && (
+            {isPlatformAdminRole(user.role) && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <Card className="bg-blue-500/5 border-blue-500/20">
                         <div className="flex items-center gap-4">
@@ -205,7 +206,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-slate-800 overflow-x-auto pb-1">
-                {['logs', 'sessions', 'alerts', 'failed_logins', 'errors', user.role === 'admin' && 'blocked'].filter(Boolean).map((tab) => (
+                {['logs', 'sessions', 'alerts', 'failed_logins', 'errors', isPlatformAdminRole(user.role) && 'blocked'].filter(Boolean).map((tab) => (
                     <button
                         key={String(tab)}
                         onClick={() => setActiveTab(tab as any)}
@@ -244,7 +245,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                     </div>
                                     <div className="flex-1">
                                         <div className="text-white font-medium">{log.action}</div>
-                                        {user.role === 'admin' && log.profiles && (
+                                        {isPlatformAdminRole(user.role) && log.profiles && (
                                             <div className="text-xs text-slate-500">{log.profiles.email}</div>
                                         )}
                                     </div>
@@ -279,7 +280,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <div className="flex items-center gap-4 flex-1">
                                     <div className={`w-2 h-2 rounded-full ${session.is_active ? 'bg-green-500' : 'bg-slate-600'}`} />
                                     <div className="flex-1">
-                                        {user.role === 'admin' && session.profiles && (
+                                        {isPlatformAdminRole(user.role) && session.profiles && (
                                             <div className="text-white font-medium">{session.profiles.email}</div>
                                         )}
                                         <div className="text-xs text-slate-400">
@@ -333,14 +334,14 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                             <Badge className={getSeverityColor(alert.severity)}>{alert.severity}</Badge>
                                         </div>
                                         <p className="text-sm mb-2">{alert.description}</p>
-                                        {user.role === 'admin' && alert.profiles && (
+                                        {isPlatformAdminRole(user.role) && alert.profiles && (
                                             <div className="text-xs opacity-75">User: {alert.profiles.email}</div>
                                         )}
                                         <div className="text-xs opacity-75 mt-1">
                                             {new Date(alert.created_at).toLocaleString()}
                                         </div>
                                     </div>
-                                    {!alert.is_resolved && user.role === 'admin' && (
+                                    {!alert.is_resolved && isPlatformAdminRole(user.role) && (
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -444,7 +445,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             )}
 
             {/* Blocked Countries Tab (Admin Only) */}
-            {activeTab === 'blocked' && user.role === 'admin' && (
+            {activeTab === 'blocked' && isPlatformAdminRole(user.role) && (
                 <Card>
                     <h3 className="font-bold text-white mb-4">Blocked Countries</h3>
                     <div className="space-y-2">

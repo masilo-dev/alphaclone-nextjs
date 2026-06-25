@@ -383,13 +383,45 @@ export async function DELETE(request: NextRequest) {
         await requireTenantAccess(tenantId);
         const admin = createSupabaseAdminClient();
 
-        const { error } = await admin
+        const { data: campaign, error: fetchError } = await admin
             .from('email_campaigns')
-            .delete()
+            .select('id, status')
             .eq('id', campaignId)
             .eq('tenant_id', tenantId)
-            .in('status', ['draft', 'cancelled']);
+            .maybeSingle();
+        if (fetchError) {
+            return NextResponse.json({ error: fetchError.message, code: 'CAMPAIGN_FETCH_FAILED' }, { status: 500 });
+        }
+        if (!campaign) {
+            return NextResponse.json({ error: 'Campaign not found', code: 'NOT_FOUND' }, { status: 404 });
+        }
+
+        const deletableStatuses = ['draft', 'cancelled', 'queued', 'failed', 'scheduled', 'paused'];
+        if (!deletableStatuses.includes(String(campaign.status || ''))) {
+            return NextResponse.json(
+                {
+                    error: `Cannot delete a campaign with status "${campaign.status}". Pause or cancel it first.`,
+                    code: 'CAMPAIGN_NOT_DELETABLE',
+                },
+                { status: 409 }
+            );
+        }
+
+        await admin
+            .from('campaign_recipients')
+            .delete()
+            .eq('campaign_id', campaignId)
+            .eq('tenant_id', tenantId);
+
+        const { error, count } = await admin
+            .from('email_campaigns')
+            .delete({ count: 'exact' })
+            .eq('id', campaignId)
+            .eq('tenant_id', tenantId);
         if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_DELETE_FAILED' }, { status: 500 });
+        if (!count) {
+            return NextResponse.json({ error: 'Campaign could not be deleted', code: 'CAMPAIGN_DELETE_FAILED' }, { status: 500 });
+        }
         return NextResponse.json({ success: true });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to delete campaign', request);

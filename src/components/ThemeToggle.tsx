@@ -12,7 +12,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
     const [theme, setTheme] = useState<AcThemeMode>('dark');
 
     const loadTheme = async () => {
-        const stored = readStoredAcTheme();
+        const stored = readStoredAcTheme(userId);
         applyAcThemeClass(stored);
         setTheme(stored);
         const { preferences } = await preferencesService.getPreferences(userId);
@@ -20,7 +20,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
         if (serverTheme && ['light', 'dark', 'auto'].includes(serverTheme)) {
             setTheme(serverTheme);
             applyAcThemeClass(serverTheme);
-            persistAcTheme(serverTheme);
+            persistAcTheme(serverTheme, userId);
         }
     };
 
@@ -29,7 +29,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
     }, [userId]);
 
     useEffect(() => {
-        const onRemote = () => setTheme(readStoredAcTheme());
+        const onRemote = () => setTheme(readStoredAcTheme(userId));
         window.addEventListener('ac-theme-changed', onRemote);
         return () => window.removeEventListener('ac-theme-changed', onRemote);
     }, []);
@@ -37,7 +37,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
     const handleThemeChange = async (newTheme: AcThemeMode) => {
         setTheme(newTheme);
         applyAcThemeClass(newTheme);
-        persistAcTheme(newTheme);
+        persistAcTheme(newTheme, userId);
         await preferencesService.updateTheme(userId, newTheme);
     };
 

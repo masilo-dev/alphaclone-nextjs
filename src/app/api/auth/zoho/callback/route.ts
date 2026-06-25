@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
     const stateStr = searchParams.get('state');
     const error = searchParams.get('error');
     const appUrl = getAppUrl(req);
-    const zohoMailReturnUrl = `${appUrl}/dashboard/zoho/mail`;
+    const zohoMailReturnUrl = `${appUrl}/dashboard/mail`;
 
     if (error) {
         return NextResponse.redirect(`${zohoMailReturnUrl}?error=${encodeURIComponent(error)}`);

@@ -25,6 +25,16 @@ async function getCurrentUserId() {
   return user.id;
 }
 
+function tokenNeedsRefresh(tokenExpiry: string | null | undefined, force = false): boolean {
+  if (force) return true;
+  if (!tokenExpiry) return true;
+  const expiresAt = new Date(tokenExpiry).getTime();
+  if (Number.isNaN(expiresAt)) return true;
+  return Date.now() + 5 * 60 * 1000 >= expiresAt;
+}
+
+let refreshInFlight: Promise<{ success: boolean; connection: MicrosoftConnection }> | null = null;
+
 export const microsoftAuthService = {
   async getConnection(): Promise<MicrosoftConnection | null> {
     const userId = await getCurrentUserId();
@@ -62,43 +72,53 @@ export const microsoftAuthService = {
       : '/api/auth/microsoft/connect';
   },
 
-  async refreshAccessToken(refreshToken?: string) {
-    const connection = await this.getConnection();
-    const token = refreshToken || connection?.refresh_token;
-    if (!token) {
-      throw new Error('No Microsoft refresh token available.');
-    }
+  async refreshAccessToken(refreshToken?: string, options?: { force?: boolean }) {
+    if (refreshInFlight) return refreshInFlight;
 
-    const response = await fetch('/api/auth/microsoft/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken: token }),
+    refreshInFlight = (async () => {
+      const connection = await this.getConnection();
+      const token = refreshToken || connection?.refresh_token;
+      if (!token) {
+        throw new Error('No Microsoft refresh token available.');
+      }
+
+      if (!options?.force && connection && !tokenNeedsRefresh(connection.token_expiry)) {
+        return { success: true, connection };
+      }
+
+      const response = await fetch('/api/auth/microsoft/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: token, force: options?.force === true }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to refresh Microsoft access token.');
+      }
+
+      return payload as {
+        success: boolean;
+        connection: MicrosoftConnection;
+        refreshed?: boolean;
+      };
+    })().finally(() => {
+      refreshInFlight = null;
     });
 
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(payload?.error || 'Failed to refresh Microsoft access token.');
-    }
-
-    return payload as {
-      success: boolean;
-      connection: MicrosoftConnection;
-    };
+    return refreshInFlight;
   },
 
-  async getValidAccessToken() {
+  async getValidAccessToken(options?: { force?: boolean }) {
     const connection = await this.getConnection();
     if (!connection?.access_token) {
       throw new Error('Microsoft 365 is not connected.');
     }
 
-    const expiresAt = connection.token_expiry ? new Date(connection.token_expiry).getTime() : 0;
-    const refreshWindowMs = 5 * 60 * 1000;
-
-    if (expiresAt && Date.now() + refreshWindowMs >= expiresAt) {
-      const refreshed = await this.refreshAccessToken(connection.refresh_token);
+    if (tokenNeedsRefresh(connection.token_expiry, options?.force)) {
+      const refreshed = await this.refreshAccessToken(connection.refresh_token, options);
       return refreshed.connection.access_token;
     }
 

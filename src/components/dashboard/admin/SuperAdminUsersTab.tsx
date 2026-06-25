@@ -16,13 +16,19 @@ import {
 import { userService } from '../../../services/userService';
 import { User } from '../../../types';
 import { Button, Input } from '../../ui/UIComponents';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+    rowActionsClass,
+} from '../../ui/ResponsiveTable';
 import { toast } from 'react-hot-toast';
 
 const SuperAdminUsersTab: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState<'all' | 'active' | 'suspended' | 'admin' | 'client'>('all');
+    const [filter, setFilter] = useState<'all' | 'active' | 'suspended' | 'admin' | 'super_admin' | 'tenant_admin' | 'client'>('all');
 
     const loadUsers = useCallback(async () => {
         setLoading(true);
@@ -119,7 +125,7 @@ const SuperAdminUsersTab: React.FC = () => {
 
             {/* Filters */}
             <div className="flex flex-wrap gap-2">
-                {(['all', 'active', 'suspended', 'admin', 'client'] as const).map(f => (
+                {(['all', 'active', 'suspended', 'admin', 'super_admin', 'tenant_admin', 'client'] as const).map(f => (
                     <button
                         key={f}
                         onClick={() => setFilter(f)}
@@ -133,8 +139,57 @@ const SuperAdminUsersTab: React.FC = () => {
                 ))}
             </div>
 
+            {/* Mobile cards */}
+            <ResponsiveTableMobile className="mb-4">
+                {filteredUsers.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 italic bg-slate-900/40 border border-slate-800 rounded-2xl">
+                        No users match your current criteria.
+                    </div>
+                ) : (
+                    filteredUsers.map((user) => (
+                        <MobileDataCard key={user.id} className="group border-slate-800 bg-slate-900/40">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 shrink-0 relative">
+                                        <Image
+                                            src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email}`}
+                                            alt={user.name}
+                                            fill
+                                            className="object-cover"
+                                            sizes="40px"
+                                        />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-white text-sm truncate">{user.name}</p>
+                                        <p className="text-xs text-slate-500 font-mono truncate">{user.email}</p>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded text-xs font-black uppercase shrink-0 ${(user as any).status === 'suspended' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'}`}>
+                                    {(user as any).status || 'active'}
+                                </span>
+                            </div>
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-black uppercase ${
+                                user.role === 'admin' || user.role === 'super_admin' ? 'bg-purple-500/10 text-purple-400' :
+                                user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400' :
+                                'bg-slate-800 text-slate-400'
+                            }`}>
+                                {user.role}
+                            </span>
+                            <div className={`${rowActionsClass} justify-end`}>
+                                {(user as any).status === 'suspended' ? (
+                                    <button onClick={() => handleRestore(user.id)} className="min-h-11 px-3 py-2 bg-green-500/10 text-green-400 rounded-lg border border-green-500/20 text-xs font-bold">Restore</button>
+                                ) : (
+                                    <button onClick={() => handleSuspend(user.id)} className="min-h-11 px-3 py-2 bg-orange-500/10 text-orange-400 rounded-lg border border-orange-500/20 text-xs font-bold">Suspend</button>
+                                )}
+                                <button onClick={() => handleDelete(user.id, user.name)} className="min-h-11 px-3 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20 text-xs font-bold">Delete</button>
+                            </div>
+                        </MobileDataCard>
+                    ))
+                )}
+            </ResponsiveTableMobile>
+
             {/* Table */}
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-x-auto backdrop-blur-md min-w-0">
+            <ResponsiveTableDesktop className="bg-slate-900/40 border border-slate-800 rounded-2xl backdrop-blur-md min-w-0">
                 <table className="w-full min-w-[720px] text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-500 text-xs uppercase tracking-widest font-black">
@@ -172,10 +227,11 @@ const SuperAdminUsersTab: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                                                user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                                    'bg-slate-800 text-slate-400 border border-white/5'
-                                            }`}>
+                                        <span className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter ${
+                                            user.role === 'admin' || user.role === 'super_admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                                            user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                            'bg-slate-800 text-slate-400 border border-white/5'
+                                        }`}>
                                             {user.role}
                                         </span>
                                     </td>
@@ -188,7 +244,7 @@ const SuperAdminUsersTab: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className={`${rowActionsClass} justify-end`}>
                                             {(user as any).status === 'suspended' ? (
                                                 <button
                                                     onClick={() => handleRestore(user.id)}
@@ -220,7 +276,7 @@ const SuperAdminUsersTab: React.FC = () => {
                         )}
                     </tbody>
                 </table>
-            </div>
+            </ResponsiveTableDesktop>
         </div>
     );
 };

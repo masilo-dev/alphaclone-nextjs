@@ -234,8 +234,13 @@ export class ZohoService {
         const config = await this.getConfig();
         if (!config) return null;
 
-        const expiry = new Date(config.expiryDate).getTime();
-        if (Date.now() > expiry - 300000) {
+        const expiry = config.expiryDate ? new Date(config.expiryDate).getTime() : NaN;
+        const needsRefresh =
+            !config.expiryDate ||
+            Number.isNaN(expiry) ||
+            Date.now() > expiry - 300000;
+
+        if (needsRefresh) {
             return await this.refreshAccessToken();
         }
 

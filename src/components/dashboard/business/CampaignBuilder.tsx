@@ -15,10 +15,15 @@ import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CAMPAIGN_LANGUAGE_OPTIONS, getCampaignLanguageInstruction, type CampaignLanguageMode } from '@/lib/languageUtils';
+import EmailCampaignAnalytics from '../marketing/EmailCampaignAnalytics';
+import SegmentBuilder from '../marketing/SegmentBuilder';
+import DeliverabilityPanel from '../marketing/DeliverabilityPanel';
+import { showActionNextSteps } from '../../common/showActionNextSteps';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
     scheduled: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    queued: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
     sending: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     sent: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     paused: 'bg-slate-600/10 text-slate-500 border-slate-600/20',
@@ -154,6 +159,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         balanceByDailyLimit: true,
         sendImmediately: false,
         languageMode: 'auto' as CampaignLanguageMode,
+        abTestEnabled: false,
+        subjectB: '',
+        abSplitPercent: 50,
     });
 
     const sanitizedBodyHtml = useMemo(() => {
@@ -370,6 +378,10 @@ Request: ${userMsg}`,
             toast.error('Choose a campaign language before launch, or switch language to Auto.');
             return;
         }
+        if (form.abTestEnabled && !form.subjectB.trim()) {
+            toast.error('Subject line B is required when A/B testing is enabled');
+            return;
+        }
         if (!recipientType) {
             toast.error('Choose who should receive the campaign');
             return;
@@ -404,6 +416,13 @@ Request: ${userMsg}`,
                     selectedProviders: form.selectedProviders,
                     balanceByDailyLimit: form.balanceByDailyLimit,
                 },
+                abTest: form.abTestEnabled
+                    ? {
+                        enabled: true,
+                        subjectB: form.subjectB.trim(),
+                        splitPercent: form.abSplitPercent,
+                    }
+                    : { enabled: false },
             },
         });
 
@@ -454,12 +473,15 @@ Request: ${userMsg}`,
                 if (!sendResult.success) {
                     const detail = await describeCampaignFailure(campaign.id, sendResult.error);
                     toast.error(`Campaign created but sending failed: ${detail}`, { id: toastId, duration: 8000 });
+                    showActionNextSteps('campaign_created', (path) => router.push(path));
                 } else {
                     toast.success('Campaign launched and sent!', { id: toastId });
+                    showActionNextSteps('campaign_sent', (path) => router.push(path));
                 }
             } else {
                 await emailCampaignService.updateCampaign(campaign.id, { status: 'scheduled' });
                 toast.success('Campaign scheduled successfully.', { id: toastId });
+                showActionNextSteps('campaign_created', (path) => router.push(path));
             }
         }
         setViewMode('list');
@@ -574,29 +596,36 @@ Voice & rules:
     const handleDeleteCampaign = async (id: string) => {
         const toastId = toast.loading('Deleting campaign...');
         try {
-            await supabase.from('email_campaigns').delete().eq('id', id);
+            const { success, error } = await emailCampaignService.deleteCampaign(id);
+            if (!success) throw new Error(error || 'Failed to delete campaign');
             toast.success('Campaign deleted', { id: toastId });
             setCampaigns(prev => prev.filter(c => c.id !== id));
-        } catch {
-            toast.error('Failed to delete campaign', { id: toastId });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to delete campaign';
+            toast.error(message, { id: toastId });
         }
     };
 
     const handleDuplicateCampaign = (camp: EmailCampaign) => {
+        const meta = (camp.metadata as Record<string, unknown>) || {};
+        const abTest = (meta.abTest as Record<string, unknown>) || {};
         setForm({
             name: `${camp.name} (Copy)`,
             subject: camp.subject,
-            bodyHtml: (camp.metadata as any)?.bodyHtml || '',
+            bodyHtml: (meta.bodyHtml as string) || '',
             fromName: camp.fromName,
             fromEmail: camp.fromEmail,
             scheduledAt: '',
             scheduleEnabled: false,
             skipPreviouslyContacted: true,
-            selectedProviders: [(camp.metadata as any)?.provider || 'resend'],
-            deliveryChannel: ((camp.metadata as any)?.deliveryChannel || 'email') as 'email' | 'whatsapp' | 'both',
+            selectedProviders: [(meta.provider as string) || 'resend'],
+            deliveryChannel: ((meta.deliveryChannel as string) || 'email') as 'email' | 'whatsapp' | 'both',
             balanceByDailyLimit: true,
             sendImmediately: false,
-            languageMode: ((camp.metadata as any)?.languageMode || 'auto') as CampaignLanguageMode,
+            languageMode: ((meta.languageMode as string) || 'auto') as CampaignLanguageMode,
+            abTestEnabled: !!abTest.enabled,
+            subjectB: String(abTest.subjectB || ''),
+            abSplitPercent: Number(abTest.splitPercent) || 50,
         });
         setViewMode('compose');
         setActiveStep(1);
@@ -618,6 +647,9 @@ Voice & rules:
             balanceByDailyLimit: true,
             sendImmediately: false,
             languageMode: 'auto',
+            abTestEnabled: false,
+            subjectB: '',
+            abSplitPercent: 50,
         });
         setCampaignMode('simple');
         setCampaignGoal('');
@@ -707,6 +739,7 @@ Voice & rules:
                     {/* 1. LIST VIEW */}
                     {viewMode === 'list' && (
                         <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                            <DeliverabilityPanel />
                             {campaigns.some((camp) => camp.status === 'draft') && (
                                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3">
                                     <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
@@ -826,6 +859,7 @@ Voice & rules:
                                                     const res = await emailCampaignService.sendCampaign(selectedCampaign.id);
                                                     if (res.success) {
                                                         toast.success('Campaign sent!', { id: toastId });
+                                                        showActionNextSteps('campaign_sent', (path) => router.push(path));
                                                         loadData();
                                                         setViewMode('list');
                                                     } else {
@@ -863,6 +897,14 @@ Voice & rules:
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Detailed analytics panel */}
+                            {(selectedCampaign.status === 'sent' || selectedCampaign.totalSent > 0) && (
+                                <div className="bg-slate-900 p-5 rounded-3xl border border-white/5">
+                                    <h3 className="text-xs font-bold text-slate-400 tracking-wide mb-4">Campaign Analytics</h3>
+                                    <EmailCampaignAnalytics campaign={selectedCampaign} embedded />
+                                </div>
+                            )}
 
                             {/* Timeline status steps */}
                             <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
@@ -973,6 +1015,39 @@ Voice & rules:
                                                 placeholder="e.g. Quick question about workspace optimization"
                                                 className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
                                             />
+                                        </div>
+
+                                        <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
+                                            <label className="flex items-center gap-2 text-xs font-bold text-violet-300">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.abTestEnabled}
+                                                    onChange={(e) => setForm((f) => ({ ...f, abTestEnabled: e.target.checked }))}
+                                                    className="rounded border-violet-500/50"
+                                                />
+                                                A/B test subject lines
+                                            </label>
+                                            {form.abTestEnabled && (
+                                                <>
+                                                    <input
+                                                        value={form.subjectB}
+                                                        onChange={(e) => setForm((f) => ({ ...f, subjectB: e.target.value }))}
+                                                        placeholder="Subject line B"
+                                                        className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white"
+                                                    />
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-[10px] text-slate-400">Split to B: {form.abSplitPercent}%</span>
+                                                        <input
+                                                            type="range"
+                                                            min={10}
+                                                            max={90}
+                                                            value={form.abSplitPercent}
+                                                            onChange={(e) => setForm((f) => ({ ...f, abSplitPercent: Number(e.target.value) }))}
+                                                            className="flex-1 accent-violet-500"
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
 
                                         {campaignMode === 'advanced' ? (
@@ -1104,6 +1179,8 @@ Voice & rules:
                                         </div>
 
                                         {recipientType === 'specific' && (
+                                            <>
+                                            <SegmentBuilder />
                                             <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase">Select Industry Target</span>
                                                 {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && (
@@ -1130,6 +1207,7 @@ Voice & rules:
                                                     })}
                                                 </div>
                                             </div>
+                                            </>
                                         )}
 
                                         {recipientType === 'few' && (

@@ -5,7 +5,6 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { emailService } from './email/emailService';
 import { tenantService } from './tenancy/TenantService';
 
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -30,6 +29,11 @@ export interface Ticket {
     closed_at?: string;
     tags?: string[];
     metadata?: Record<string, any>;
+    _origin?: 'tickets' | 'support_tickets';
+}
+
+export function isSupportChannelTicket(ticket: Ticket): boolean {
+    return ticket._origin === 'support_tickets' || ticket.metadata?.fromSupportTable === true;
 }
 
 export interface TicketComment {
@@ -51,6 +55,8 @@ export interface CreateTicketInput {
     assigned_to?: string;
     tags?: string[];
     metadata?: Record<string, any>;
+    /** Optional customer email for confirmation and update notifications */
+    customerEmail?: string;
 }
 
 class TicketService {
@@ -62,6 +68,11 @@ class TicketService {
         if (!user) throw new Error('Authentication required');
 
         const tenantId = await this.getTenantId();
+
+        const metadata = { ...(input.metadata || {}) };
+        if (input.customerEmail) {
+            metadata.customerEmail = input.customerEmail;
+        }
 
         const { data, error } = await supabase
             .from('tickets')
@@ -77,15 +88,16 @@ class TicketService {
                 assigned_to: input.assigned_to,
                 created_by: user.id,
                 tags: input.tags || [],
-                metadata: input.metadata || {},
+                metadata,
             })
             .select()
             .single();
 
         if (error) throw error;
 
-        // Send notification email
-        await this.sendTicketCreatedNotification(data);
+        await this.dispatchNotification('created', data, {
+            customerEmail: input.customerEmail || input.metadata?.customerEmail,
+        });
 
         return data;
     }
@@ -119,6 +131,21 @@ class TicketService {
     }): Promise<Ticket[]> {
         const tenantId = await this.getTenantId();
 
+        try {
+            const res = await fetch(`/api/tickets?tenantId=${encodeURIComponent(tenantId)}`);
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+                let tickets = (data.tickets || []) as Ticket[];
+                if (filters?.status) tickets = tickets.filter((t) => t.status === filters.status);
+                if (filters?.priority) tickets = tickets.filter((t) => t.priority === filters.priority);
+                if (filters?.source) tickets = tickets.filter((t) => t.source === filters.source);
+                if (filters?.assignedTo) tickets = tickets.filter((t) => t.assigned_to === filters.assignedTo);
+                return tickets;
+            }
+        } catch (err) {
+            console.warn('[ticketService] unified fetch failed, falling back:', err);
+        }
+
         let query = supabase
             .from('tickets')
             .select('*')
@@ -132,13 +159,28 @@ class TicketService {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+        return (data || []).map((t: Ticket) => ({ ...t, _origin: 'tickets' as const }));
     }
 
     /**
      * Update ticket status
      */
-    async updateStatus(ticketId: string, status: TicketStatus): Promise<void> {
+    async updateStatus(ticketId: string, status: TicketStatus, origin: 'tickets' | 'support_tickets' = 'tickets'): Promise<void> {
+        const tenantId = await this.getTenantId();
+
+        if (origin === 'support_tickets') {
+            const res = await fetch(`/api/tickets/${ticketId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, origin, status }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to update ticket');
+            }
+            return;
+        }
+
         const updateData: Partial<Ticket> = { status, updated_at: new Date().toISOString() };
 
         if (status === 'resolved') updateData.resolved_at = new Date().toISOString();
@@ -147,6 +189,40 @@ class TicketService {
         const { error } = await supabase
             .from('tickets')
             .update(updateData)
+            .eq('id', ticketId);
+
+        if (error) throw error;
+
+        const { data: ticket } = await supabase.from('tickets').select('*').eq('id', ticketId).single();
+        if (ticket) {
+            await this.dispatchNotification('status_changed', ticket as Ticket, {
+                customerEmail: ticket.metadata?.customerEmail,
+            });
+        }
+    }
+
+    /**
+     * Update ticket priority
+     */
+    async updatePriority(ticketId: string, priority: TicketPriority, origin: 'tickets' | 'support_tickets' = 'tickets'): Promise<void> {
+        const tenantId = await this.getTenantId();
+
+        if (origin === 'support_tickets') {
+            const res = await fetch(`/api/tickets/${ticketId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, origin, priority }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'Failed to update priority');
+            }
+            return;
+        }
+
+        const { error } = await supabase
+            .from('tickets')
+            .update({ priority, updated_at: new Date().toISOString() })
             .eq('id', ticketId);
 
         if (error) throw error;
@@ -171,6 +247,16 @@ class TicketService {
             .single();
 
         if (error) throw error;
+
+        const { data: ticket } = await supabase.from('tickets').select('*').eq('id', ticketId).single();
+        if (ticket && !isInternal) {
+            await this.dispatchNotification('comment', ticket as Ticket, {
+                customerEmail: ticket.metadata?.customerEmail,
+                commentPreview: content,
+                isInternalComment: false,
+            });
+        }
+
         return data;
     }
 
@@ -188,6 +274,33 @@ class TicketService {
         return data || [];
     }
 
+    /** Thread placeholder for WhatsApp/MCP tickets (no comment table) */
+    buildSupportTicketThread(ticket: Ticket): TicketComment[] {
+        const items: TicketComment[] = [];
+        if (ticket.description) {
+            items.push({
+                id: `${ticket.id}-desc`,
+                ticket_id: ticket.id,
+                user_id: 'system',
+                content: ticket.description,
+                created_at: ticket.created_at,
+                is_internal: false,
+            });
+        }
+        const note = ticket.metadata?.resolution_note as string | undefined;
+        if (note) {
+            items.push({
+                id: `${ticket.id}-resolution`,
+                ticket_id: ticket.id,
+                user_id: 'system',
+                content: note,
+                created_at: ticket.updated_at,
+                is_internal: true,
+            });
+        }
+        return items;
+    }
+
     /**
      * Assign a ticket to a user
      */
@@ -200,34 +313,34 @@ class TicketService {
         if (error) throw error;
     }
 
-    /**
-     * Send notification when ticket is created
-     */
-    private async sendTicketCreatedNotification(ticket: Ticket): Promise<void> {
+    private async dispatchNotification(
+        event: 'created' | 'status_changed' | 'comment',
+        ticket: Ticket,
+        extras?: {
+            customerEmail?: string;
+            commentPreview?: string;
+            isInternalComment?: boolean;
+        }
+    ): Promise<void> {
         try {
-            const notificationEmail = typeof process !== 'undefined' && process.env?.NOTIFICATION_EMAIL 
-                ? process.env.NOTIFICATION_EMAIL 
-                : 'support@alphaclonesystems.com';
-            
-            const appUrl = typeof process !== 'undefined' && process.env?.APP_URL 
-                ? process.env.APP_URL 
-                : 'https://alphaclonesystems.com';
-
-            await emailService.send({
-                to: notificationEmail,
-                subject: `New Ticket: ${ticket.title}`,
-                html: `
-                    <h2>New Ticket Created</h2>
-                    <p><strong>Title:</strong> ${ticket.title}</p>
-                    <p><strong>Source:</strong> ${ticket.source}</p>
-                    <p><strong>Priority:</strong> ${ticket.priority}</p>
-                    <p><strong>Description:</strong></p>
-                    <p>${ticket.description}</p>
-                    <p><a href="${appUrl}/dashboard/tickets/${ticket.id}">View Ticket</a></p>
-                `,
+            await fetch('/api/tickets/notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event,
+                    tenantId: ticket.tenant_id,
+                    ticketId: ticket.id,
+                    title: ticket.title,
+                    description: ticket.description,
+                    status: ticket.status,
+                    priority: ticket.priority,
+                    customerEmail: extras?.customerEmail,
+                    commentPreview: extras?.commentPreview,
+                    isInternalComment: extras?.isInternalComment,
+                }),
             });
         } catch (error) {
-            console.error('Failed to send ticket notification:', error);
+            console.error('Failed to dispatch ticket notification:', error);
         }
     }
 

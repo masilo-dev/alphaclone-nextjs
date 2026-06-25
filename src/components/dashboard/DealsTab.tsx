@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   ChevronRight, ArrowLeft, Plus, TrendingUp, Clock,
   User, Mail, Phone, FileText, CheckSquare, ArrowRight,
@@ -16,6 +17,15 @@ import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import toast from 'react-hot-toast';
 import { CommunicationModal } from './crm/CommunicationModal';
 import type { EmailRecipient } from './crm/emailRecipient';
+import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
+import { DealRevenueTimeline } from './deals/DealRevenueTimeline';
+import EmptyState from '../ui/EmptyState';
+import { transitionDealStage } from '@/lib/dealStageActions';
+import {
+  getDealStageProgress,
+  getForwardStageTarget,
+  PIPELINE_FORWARD_ONLY_HINT,
+} from '@/lib/stageProgression';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -59,25 +69,23 @@ const scoreColor = (s: number) => s >= 8 ? 'text-emerald-400' : s >= 5 ? 'text-y
 const SwipeableDealRow: React.FC<{
   deal: Deal;
   onAdvance: (id: string) => void;
-  onRetreat: (id: string) => void;
+  onMarkLost: (id: string) => void;
   onTap: (deal: Deal) => void;
-}> = ({ deal, onAdvance, onRetreat, onTap }) => {
+}> = ({ deal, onAdvance, onMarkLost, onTap }) => {
   const x = useMotionValue(0);
   const leftOp  = useTransform(x, [0, 80],  [0, 1]);
   const rightOp = useTransform(x, [-80, 0], [1, 0]);
-  const stageIdx = STAGES.indexOf(deal.stage);
-  const canAdvance = stageIdx < STAGES.length - 1;
-  const canRetreat = stageIdx > 0;
+  const progress = getDealStageProgress(deal.stage);
+  const nextStage = getForwardStageTarget(deal.stage);
+  const canAdvance = nextStage != null;
+  const canMarkLost = deal.stage !== 'closed_won' && deal.stage !== 'closed_lost';
   const col = STAGE_COLORS[deal.stage];
 
   const handleDragEnd = (_: any, info: any) => {
     if (info.offset.x > 80 && canAdvance) { onAdvance(deal.id); }
-    else if (info.offset.x < -80 && canRetreat) { onRetreat(deal.id); }
+    else if (info.offset.x < -80 && canMarkLost) { onMarkLost(deal.id); }
     x.set(0);
   };
-
-  const nextStage = canAdvance ? STAGES[stageIdx + 1] : null;
-  const prevStage = canRetreat ? STAGES[stageIdx - 1] : null;
 
   return (
     <div className="relative overflow-hidden">
@@ -85,9 +93,9 @@ const SwipeableDealRow: React.FC<{
         <ArrowRight className="w-5 h-5 text-white" />
         <span className="text-[10px] text-white font-bold capitalize">{nextStage?.replace('_', ' ')}</span>
       </motion.div>
-      <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-24 bg-orange-500/80 flex flex-col items-center justify-center z-0 gap-1">
+      <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-24 bg-red-500/80 flex flex-col items-center justify-center z-0 gap-1">
         <ArrowLeft className="w-5 h-5 text-white" />
-        <span className="text-[10px] text-white font-bold capitalize">{prevStage?.replace('_', ' ')}</span>
+        <span className="text-[10px] text-white font-bold">Lost</span>
       </motion.div>
 
       <motion.div
@@ -107,6 +115,14 @@ const SwipeableDealRow: React.FC<{
             )}
           </div>
           {deal.contact_name && <span className="text-[13px] text-slate-500 opacity-55 block truncate">{deal.contact_name}</span>}
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full bg-teal-500 rounded-full" style={{ width: `${progress.percent}%` }} />
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 tabular-nums shrink-0">
+              {progress.step}/{progress.total} · {progress.percent}%
+            </span>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className="text-[15px] font-bold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
@@ -126,7 +142,8 @@ const DealDetail: React.FC<{
   onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
 }> = ({ deal, user, onBack, onStageChange, onComposeEmail }) => {
   const col = STAGE_COLORS[deal.stage];
-  const stageIdx = STAGES.indexOf(deal.stage);
+  const progress = getDealStageProgress(deal.stage);
+  const nextStage = getForwardStageTarget(deal.stage);
 
   const [products, setProducts] = useState<DealProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -214,19 +231,37 @@ const DealDetail: React.FC<{
         {/* Value hero */}
         <div className="flex flex-col items-center py-4 gap-2">
           <span className="text-[32px] font-extrabold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
-          <button
-            onClick={() => {
-              const next = stageIdx < STAGES.length - 1 ? STAGES[stageIdx + 1] : deal.stage;
-              onStageChange(deal.id, next);
-            }}
-            className={`px-4 py-1.5 rounded-full text-[13px] font-bold border capitalize ${col.bg} ${col.text} ${col.border}`}
-          >
-            {deal.stage.replace('_', ' ')} → advance
-          </button>
+          <div className="w-full max-w-xs px-2">
+            <div className="flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1">
+              <span>Pipeline step {progress.step} of {progress.total}</span>
+              <span>{progress.percent}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${progress.percent}%` }} />
+            </div>
+          </div>
+          {nextStage && (
+            <button
+              onClick={() => onStageChange(deal.id, nextStage)}
+              className={`px-4 py-1.5 rounded-full text-[13px] font-bold border capitalize ${col.bg} ${col.text} ${col.border}`}
+            >
+              Advance to {nextStage.replace('_', ' ')}
+            </button>
+          )}
+          {deal.stage !== 'closed_won' && deal.stage !== 'closed_lost' && (
+            <button
+              onClick={() => onStageChange(deal.id, 'closed_lost')}
+              className="text-[11px] font-semibold text-red-400/80 hover:text-red-400"
+            >
+              Mark closed lost
+            </button>
+          )}
           {deal.score != null && (
             <span className={`text-[20px] font-black ${scoreColor(deal.score)}`}>Score: {deal.score}/10</span>
           )}
         </div>
+
+        <DealRevenueTimeline dealId={deal.id} dealStage={deal.stage} />
 
         {/* Contact */}
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
@@ -349,6 +384,7 @@ const DealDetail: React.FC<{
 
 // ── Main DealsTab ──────────────────────────────────────────────────────────────
 const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
+  const router = useRouter();
   const { currentTenant } = useTenant();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -402,33 +438,50 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   useEffect(() => { load(); }, [load]);
 
-  const advanceStage = async (id: string) => {
-    const deal = deals.find(d => d.id === id);
+  const applyStageChange = async (id: string, newStage: DealStage) => {
+    const deal = deals.find((d) => d.id === id);
     if (!deal) return;
-    const idx = STAGES.indexOf(deal.stage);
-    if (idx >= STAGES.length - 1) return;
-    const newStage = STAGES[idx + 1];
-    await supabase.from('deals').update({ stage: newStage, updated_at: new Date().toISOString() }).eq('id', id);
-    setDeals(prev => prev.map(d => d.id === id ? { ...d, stage: newStage } : d));
+    const result = await transitionDealStage({
+      dealId: id,
+      fromStage: deal.stage,
+      toStage: newStage,
+      navigate: (path) => router.push(path),
+    });
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    setDeals((prev) =>
+      prev.map((d) =>
+        d.id === id ? { ...d, stage: newStage, updated_at: new Date().toISOString() } : d
+      )
+    );
+    if (selectedDeal?.id === id) {
+      setSelectedDeal((prev) => (prev ? { ...prev, stage: newStage } : prev));
+    }
     toast.success(`Moved to ${newStage.replace('_', ' ')}`);
   };
 
-  const retreatStage = async (id: string) => {
-    const deal = deals.find(d => d.id === id);
+  const advanceStage = async (id: string) => {
+    const deal = deals.find((d) => d.id === id);
     if (!deal) return;
-    const idx = STAGES.indexOf(deal.stage);
-    if (idx <= 0) return;
-    const newStage = STAGES[idx - 1];
-    await supabase.from('deals').update({ stage: newStage, updated_at: new Date().toISOString() }).eq('id', id);
-    setDeals(prev => prev.map(d => d.id === id ? { ...d, stage: newStage } : d));
-    toast.success(`Moved back to ${newStage.replace('_', ' ')}`);
+    const newStage = getForwardStageTarget(deal.stage);
+    if (!newStage) return;
+    await applyStageChange(id, newStage);
+  };
+
+  const markDealLost = async (id: string) => {
+    await applyStageChange(id, 'closed_lost');
   };
 
   const handleStageChange = async (id: string, stage: DealStage) => {
-    await supabase.from('deals').update({ stage, updated_at: new Date().toISOString() }).eq('id', id);
-    setDeals(prev => prev.map(d => d.id === id ? { ...d, stage } : d));
-    if (selectedDeal?.id === id) setSelectedDeal(prev => prev ? { ...prev, stage } : prev);
-    toast.success(`Stage updated`);
+    await applyStageChange(id, stage);
+  };
+
+  const handleBoardDrop = async (dealId: string, targetStage: DealStage) => {
+    const deal = deals.find((d) => d.id === dealId);
+    if (!deal || deal.stage === targetStage) return;
+    await applyStageChange(dealId, targetStage);
   };
 
   const handleCreateDeal = async (e: React.FormEvent) => {
@@ -479,6 +532,13 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       setSavingNewDeal(false);
     }
   };
+
+  const pipelineHealth = useMemo(() => {
+    if (deals.length === 0) return 0;
+    return Math.round(
+      deals.reduce((s, d) => s + getDealStageProgress(d.stage).percent, 0) / deals.length
+    );
+  }, [deals]);
 
   // Group by stage for Board / mobile views
   const grouped = useMemo(() => {
@@ -585,7 +645,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               const id = e.dataTransfer.getData('text/plain');
-              if (id) handleStageChange(id, stage);
+              if (id) void handleBoardDrop(id, stage);
             }}
             className="flex-1 min-w-[280px] max-w-[320px] bg-slate-900/25 border border-white/5 rounded-2xl flex flex-col h-full overflow-hidden"
           >
@@ -628,6 +688,17 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       {deal.contact_name && (
                         <span className="text-[11px] text-slate-500 mt-1 block truncate">{deal.contact_name}</span>
                       )}
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
+                          <div
+                            className="h-full bg-teal-500/80 rounded-full"
+                            style={{ width: `${getDealStageProgress(deal.stage).percent}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-500 tabular-nums">
+                          {getDealStageProgress(deal.stage).percent}%
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-1 shrink-0">
@@ -810,7 +881,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   key={deal.id}
                   deal={deal}
                   onAdvance={advanceStage}
-                  onRetreat={retreatStage}
+                  onMarkLost={markDealLost}
                   onTap={setSelectedDeal}
                 />
               ))}
@@ -821,6 +892,20 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     </div>
   );
 
+  if (!loading && deals.length === 0) {
+    return (
+      <div className="relative flex flex-col h-full bg-slate-950 p-6">
+        <EmptyState
+          icon={TrendingUp}
+          title="No deals yet"
+          description="Create your first deal to track pipeline value and stage progression."
+          actionLabel="Add deal"
+          onAction={() => setShowCreateModal(true)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-col h-full bg-slate-950">
       {/* View Switcher Top Bar */}
@@ -829,7 +914,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           <h1 className="text-[15px] font-black text-white">Deals Pipeline</h1>
           <p className="text-[11px] text-slate-500 mt-0.5 font-semibold">
             Total Pipeline: <span className="text-teal-400 font-bold">${totalPipelineValue.toLocaleString()}</span> • {deals.length} deals
+            {pipelineHealth != null && (
+              <> • Avg progress <span className="text-teal-400 font-bold">{pipelineHealth}%</span></>
+            )}
           </p>
+          <p className="text-[10px] text-slate-600 mt-1 max-w-md leading-relaxed">{PIPELINE_FORWARD_ONLY_HINT}</p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
@@ -879,6 +968,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           </button>
         </div>
       </div>
+
+      {!loading && (
+        <div className="px-4 pt-3 shrink-0">
+          <RevenueLeakagePanel deals={deals} heading="What to fix next" />
+        </div>
+      )}
 
       {/* KPI Overview + Stage Funnel */}
       {!loading && deals.length > 0 && (

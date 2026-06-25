@@ -68,10 +68,28 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 setClients(clients || []);
             });
 
-            // Fetch available email integrations
-            integrationsService.getUserIntegrations(userId).then(({ integrations }) => {
+            // Fetch available email integrations (including Microsoft 365 via status API)
+            Promise.all([
+                integrationsService.getUserIntegrations(userId),
+                fetch(`/api/integrations/status?tenantId=${encodeURIComponent(currentTenant.id)}`).then((r) => r.json().catch(() => ({}))),
+            ]).then(([{ integrations }, statusData]) => {
                 const emailTypes = ['microsoft', 'sendgrid', 'resend', 'brevo', 'zoho'];
                 const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+
+                const statusList = Array.isArray(statusData?.integrations) ? statusData.integrations : [];
+                const msStatus = statusList.find((i: { type?: string; connected?: boolean }) => i.type === 'microsoft' && i.connected);
+                if (msStatus && !filtered.some((p) => p.type === 'microsoft')) {
+                    filtered.unshift({
+                        id: 'microsoft-connection',
+                        type: 'microsoft',
+                        name: 'Microsoft 365',
+                        enabled: true,
+                        userId,
+                        createdAt: new Date().toISOString(),
+                        config: { fromEmail: (msStatus as { email?: string }).email || '' },
+                    });
+                }
+
                 setAvailableProviders(filtered);
                 
                 // Prefer Microsoft, then Zoho/Brevo/Resend/SendGrid, then first available provider.
@@ -262,6 +280,9 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             const result = await res.json().catch(() => ({}));
             if (!res.ok || !result.success) {
                 throw new Error(result.error || 'Failed to send message');
+            }
+            if (result.status === 'queued') {
+                throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry.');
             }
 
             toast.success(`Email sent via ${String(result.provider || selectedProvider?.type || 'platform').toUpperCase()}`);

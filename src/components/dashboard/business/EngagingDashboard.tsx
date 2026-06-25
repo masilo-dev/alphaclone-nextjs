@@ -41,6 +41,7 @@ import {
     MessagesSquare
 } from 'lucide-react';
 import { MomentumHUD } from '../MomentumHUD';
+import { RevenueLeakagePanel } from '../crm/RevenueLeakagePanel';
 
 // ─── Greeting Helpers ────────────────────────────────────────────────
 function getGreeting(): { text: string; Icon: React.FC<any> } {
@@ -316,24 +317,24 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             items.push(
                 {
                     step: '1',
-                    title: 'Review performance',
-                    description: 'Check reports and trends to spot what is working this week.',
-                    href: '/dashboard/business/reports',
-                    icon: BarChart2,
+                    title: 'Find & qualify leads',
+                    description: 'Search prospects, score them, and convert qualified interest into deals with value.',
+                    href: '/dashboard/leads',
+                    icon: Target,
                 },
                 {
                     step: '2',
-                    title: 'Plan outreach',
-                    description: 'Launch or refine an email campaign to stay in front of clients.',
-                    href: '/dashboard/business/campaigns',
-                    icon: Mail,
+                    title: 'Run the deal chain',
+                    description: 'Proposal → contract → invoice → project. Check Sales Console for anything skipped.',
+                    href: '/dashboard/crm/console',
+                    icon: DollarSign,
                 },
                 {
                     step: '3',
-                    title: 'Check inbox',
-                    description: 'Scan unified inbox and mail for anything that needs a reply.',
-                    href: '/dashboard/business/messages',
-                    icon: Inbox,
+                    title: 'Launch outreach',
+                    description: 'Send a campaign or social post, then convert replies into pipeline within 48 hours.',
+                    href: '/dashboard/business/campaigns',
+                    icon: Mail,
                 }
             );
         }
@@ -393,7 +394,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     const activeTimelineActions = isOwner ? ownerTodayActions : todayActions;
 
     return (
-        <div className="px-2 py-3 sm:p-6 max-w-7xl mx-auto space-y-3 sm:space-y-6">
+        <div className="px-2 py-3 sm:p-6 max-w-7xl mx-auto space-y-3 sm:space-y-6" data-tour="business-home">
 
             {showSetupGuide && (
                 <motion.div
@@ -716,13 +717,21 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     );
                 })}
             </div>
-            
-            {/* Database Engine Summary — desktop only (mobile uses KPI row above) */}
+
+            {isOwner && (
+                <RevenueLeakagePanel
+                    leakageOnly
+                    heading="Where revenue is stuck"
+                    subheading="Fix skipped steps before they cost you deals, contracts, or cash."
+                />
+            )}
+
+            {/* Database Engine Summary */}
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="hidden md:block bg-slate-900/40 border border-slate-800 rounded-2xl p-5 hover:border-teal-500/20 transition-all group"
+                className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-teal-500/20 transition-all group"
             >
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-2">
@@ -737,7 +746,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-6">
                     <div className="flex flex-col group/item cursor-default">
                         <span className="text-2xl font-black text-white group-hover/item:text-teal-400 transition-colors">{stats?.totalLeads || 0}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">

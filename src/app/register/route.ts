@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
-  // Original human registration page redirect
-  return NextResponse.redirect(new URL('/auth/login?register=true&type=business&plan=starter', 'https://www.alphaclonesystems.com'));
+export async function GET(req: NextRequest) {
+  const origin = req.nextUrl.origin;
+  return NextResponse.redirect(new URL('/auth/login?register=true&type=business&plan=starter', origin));
 }
 
 export async function POST() {

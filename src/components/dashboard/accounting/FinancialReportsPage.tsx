@@ -7,8 +7,22 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { generatePnLPDF, generateBalanceSheetPDF } from '../../../utils/pdfGenerator';
 import toast from 'react-hot-toast';
 import { FileDown } from 'lucide-react';
+import CashFlowStatement from './CashFlowStatement';
+import ModuleJumpSelect from '../common/ModuleJumpSelect';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+} from '../../ui/ResponsiveTable';
 
-type ReportType = 'trial_balance' | 'balance_sheet' | 'profit_loss';
+type ReportType = 'trial_balance' | 'balance_sheet' | 'profit_loss' | 'cash_flow';
+
+const REPORT_OPTIONS: { label: string; href: ReportType }[] = [
+    { label: 'Trial Balance', href: 'trial_balance' },
+    { label: 'Balance Sheet', href: 'balance_sheet' },
+    { label: 'Profit & Loss', href: 'profit_loss' },
+    { label: 'Cash Flow', href: 'cash_flow' },
+];
 
 export function FinancialReportsPage() {
     const { user } = useAuth();
@@ -123,7 +137,51 @@ export function FinancialReportsPage() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto min-w-0">
+                    <ResponsiveTableMobile>
+                        {trialBalance.accounts.map((account) => (
+                            <MobileDataCard key={account.accountCode} className="border-slate-700 bg-slate-800/80">
+                                <div className="flex justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-xs text-slate-400 font-mono">{account.accountCode}</p>
+                                        <p className="text-sm font-medium text-white truncate">{account.accountName}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-sm font-mono">
+                                    <div>
+                                        <span className="text-xs text-slate-500 block">Debit</span>
+                                        <span className="text-white">{account.debitBalance > 0 ? `$${account.debitBalance.toFixed(2)}` : '—'}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs text-slate-500 block">Credit</span>
+                                        <span className="text-white">{account.creditBalance > 0 ? `$${account.creditBalance.toFixed(2)}` : '—'}</span>
+                                    </div>
+                                </div>
+                            </MobileDataCard>
+                        ))}
+                        <MobileDataCard className="border-slate-600 bg-slate-900">
+                            <div className="grid grid-cols-2 gap-2 text-sm font-mono font-bold text-white">
+                                <div>
+                                    <span className="text-xs text-slate-400 block font-sans font-normal">Total Debits</span>
+                                    ${trialBalance.totalDebits.toFixed(2)}
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs text-slate-400 block font-sans font-normal">Total Credits</span>
+                                    ${trialBalance.totalCredits.toFixed(2)}
+                                </div>
+                            </div>
+                            <p className="text-center text-sm pt-1">
+                                {trialBalance.isBalanced ? (
+                                    <span className="text-green-400 font-semibold">✓ Books are balanced</span>
+                                ) : (
+                                    <span className="text-red-400 font-semibold">
+                                        ⚠ Difference: ${Math.abs(trialBalance.totalDebits - trialBalance.totalCredits).toFixed(2)}
+                                    </span>
+                                )}
+                            </p>
+                        </MobileDataCard>
+                    </ResponsiveTableMobile>
+
+                    <ResponsiveTableDesktop>
                         <table className="min-w-[560px] w-full divide-y divide-slate-700">
                             <thead className="bg-slate-900">
                                 <tr>
@@ -174,7 +232,7 @@ export function FinancialReportsPage() {
                                 </tr>
                             </tfoot>
                         </table>
-                    </div>
+                    </ResponsiveTableDesktop>
                 </div>
             </div>
         );
@@ -423,7 +481,14 @@ export function FinancialReportsPage() {
 
             {/* Report Selector */}
             <div className="bg-slate-800 rounded-lg shadow-sm p-4 mb-6">
-                <div className="flex flex-wrap gap-4">
+                <ModuleJumpSelect
+                    options={REPORT_OPTIONS}
+                    currentHref={selectedReport}
+                    label="Report type"
+                    onNavigate={(href) => setSelectedReport(href as ReportType)}
+                    className="mb-3"
+                />
+                <div className="hidden md:flex flex-wrap gap-4">
                     <button
                         onClick={() => setSelectedReport('trial_balance')}
                         className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'trial_balance'
@@ -445,11 +510,20 @@ export function FinancialReportsPage() {
                     <button
                         onClick={() => setSelectedReport('profit_loss')}
                         className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'profit_loss'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-teal-600 text-white'
                             : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                             }`}
                     >
                         Profit & Loss
+                    </button>
+                    <button
+                        onClick={() => setSelectedReport('cash_flow')}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'cash_flow'
+                            ? 'bg-teal-600 text-white'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
+                    >
+                        Cash Flow
                     </button>
                 </div>
             </div>
@@ -467,6 +541,7 @@ export function FinancialReportsPage() {
                     {selectedReport === 'trial_balance' && renderTrialBalance()}
                     {selectedReport === 'balance_sheet' && renderBalanceSheet()}
                     {selectedReport === 'profit_loss' && renderProfitLoss()}
+                    {selectedReport === 'cash_flow' && <CashFlowStatement />}
                 </>
             )}
         </div>

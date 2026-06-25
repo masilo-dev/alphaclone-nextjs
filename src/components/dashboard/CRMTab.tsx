@@ -24,6 +24,9 @@ import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { missedCallsService } from '@/services/missedCallsService';
 import OnlineStatusBadge from './OnlineStatusBadge';
 import { CommunicationModal } from './crm/CommunicationModal';
+import { LeadImportModal } from './crm/LeadImportModal';
+import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
+import { showActionNextSteps } from '../common/showActionNextSteps';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -1112,6 +1115,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [isQualifyOpen, setIsQualifyOpen] = useState(false);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isLeadImportOpen, setIsLeadImportOpen] = useState(false);
   const [isSyncingContacts, setIsSyncingContacts] = useState(false);
 
   useEffect(() => {
@@ -1379,6 +1383,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       if (dealErr) throw dealErr;
 
       toast.success('Lead converted to Customer & Deal active!', { id: resolveToast });
+      showActionNextSteps('lead_qualified', (path) => router.push(path));
       setSelectedEntity(null);
       loadCRMData();
     } catch (err) {
@@ -1604,6 +1609,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         })}
       </div>
 
+      <div className="px-4 pb-2">
+        <RevenueLeakagePanel leakageOnly heading="Pipeline integrity" />
+      </div>
+
       {/* Segment Tabs */}
       <div className="flex border-b border-white/5 bg-slate-950">
         {(['leads', 'clients', 'contacts'] as SubView[]).map(v => (
@@ -1689,6 +1698,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setIsLeadImportOpen(true)}
+              className="flex-shrink-0 h-8 px-3 rounded-full text-xs font-bold bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/25 transition-colors"
+            >
+              Import pool
+            </button>
           </div>
           <p className="hidden sm:block text-[10px] text-slate-500 pt-0.5">
             {leadsView === 'board'
@@ -1796,6 +1812,15 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           />
         )}
       </AnimatePresence>
+
+      <LeadImportModal
+        isOpen={isLeadImportOpen}
+        onClose={() => setIsLeadImportOpen(false)}
+        onImportComplete={() => {
+          setIsLeadImportOpen(false);
+          loadCRMData();
+        }}
+      />
     </div>
   );
 };

@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
-  FolderOpen, ShieldCheck, FileText, Upload, Plus, Trash2,
-  Sparkles, Loader2, RefreshCw, Key, ShieldAlert, Check,
-  Download, Eye, Lock, Unlock, AlertCircle, HardDrive
+  FolderOpen, ShieldCheck, FileText, Upload, Trash2,
+  Sparkles, Loader2, Key, ShieldAlert, Lock, Unlock, HardDrive, Download
 } from 'lucide-react';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { fileUploadService } from '@/services/fileUploadService';
 import toast from 'react-hot-toast';
 
 interface VaultDocument {
@@ -22,6 +22,29 @@ interface VaultDocument {
   security_level: 'public' | 'internal' | 'confidential' | 'restricted';
   is_encrypted: boolean;
   created_at: string;
+  proxiedUrl?: string;
+}
+
+function parseVaultRow(row: Record<string, unknown>): VaultDocument {
+  const tags = (row.tags as string[]) || [];
+  const securityTag = tags.find((t) => t.startsWith('security:'))?.replace('security:', '') || 'confidential';
+  return {
+    id: String(row.id),
+    tenant_id: String(row.tenant_id || ''),
+    name: String(row.original_filename || row.filename || 'Document'),
+    file_path: String(row.storage_path || row.filename || ''),
+    file_size: Number(row.file_size) || null,
+    mime_type: String(row.file_type || 'application/pdf'),
+    category: String(row.category || 'Agreement'),
+    security_level: (['public', 'internal', 'confidential', 'restricted'].includes(securityTag)
+      ? securityTag
+      : 'confidential') as VaultDocument['security_level'],
+    is_encrypted: tags.includes('encrypted'),
+    created_at: String(row.created_at || new Date().toISOString()),
+    proxiedUrl: row.storage_path
+      ? fileUploadService.getProxiedUrl('uploads', String(row.storage_path))
+      : undefined,
+  };
 }
 
 export default function DocumentVaultTab() {
@@ -33,24 +56,27 @@ export default function DocumentVaultTab() {
   const [runningAi, setRunningAi] = useState(false);
   
   const [form, setForm] = useState({
-    name: '',
     category: 'Agreement',
     security_level: 'confidential' as 'public' | 'internal' | 'confidential' | 'restricted',
-    is_encrypted: true
+    is_encrypted: true,
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const loadDocuments = useCallback(async () => {
     if (!tenant?.id) return;
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('vault_documents')
+        .from('file_uploads')
         .select('*')
         .eq('tenant_id', tenant.id)
+        .contains('tags', ['vault'])
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+      setDocuments((data || []).map((row: Record<string, unknown>) => parseVaultRow(row)));
     } catch (err: any) {
       toast.error('Failed to load vault documents: ' + err.message);
     } finally {
@@ -62,36 +88,31 @@ export default function DocumentVaultTab() {
     loadDocuments();
   }, [loadDocuments]);
 
-  const handleUploadSimulated = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenant?.id) return;
-    if (!form.name.trim()) return toast.error('Document name is required');
+    if (!tenant?.id || !selectedFile) return toast.error('Select a file to upload');
 
     setSaving(true);
     try {
-      // Simulate file size and path
-      const fakeSize = Math.floor(Math.random() * 4500000) + 120000; // 120KB - 4.6MB
-      const extension = form.name.toLowerCase().endsWith('.pdf') ? '' : '.pdf';
-      const fileName = `${form.name}${extension}`;
-      const fakePath = `vault/${tenant.id}/${Date.now()}-${fileName}`;
+      const tags = [
+        'vault',
+        `security:${form.security_level}`,
+        ...(form.is_encrypted ? ['encrypted'] : []),
+      ];
+      const result = await fileUploadService.uploadFile(
+        selectedFile,
+        'vault',
+        tenant.id,
+        undefined,
+        tenant.id,
+        { tags, category: form.category }
+      );
 
-      const { error } = await supabase
-        .from('vault_documents')
-        .insert({
-          tenant_id: tenant.id,
-          name: fileName,
-          file_path: fakePath,
-          file_size: fakeSize,
-          mime_type: 'application/pdf',
-          category: form.category,
-          security_level: form.security_level,
-          is_encrypted: form.is_encrypted
-        });
-
-      if (error) throw error;
-      toast.success('Document uploaded and encrypted in vault');
+      if (!result.success) throw new Error(result.error || 'Upload failed');
+      toast.success('Document uploaded to vault');
       setShowModal(false);
-      setForm({ name: '', category: 'Agreement', security_level: 'confidential', is_encrypted: true });
+      setSelectedFile(null);
+      setForm({ category: 'Agreement', security_level: 'confidential', is_encrypted: true });
       loadDocuments();
     } catch (err: any) {
       toast.error(err.message);
@@ -100,17 +121,17 @@ export default function DocumentVaultTab() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (doc: VaultDocument) => {
     if (!confirm('Are you sure you want to permanently delete this document from the vault?')) return;
     try {
       const { error } = await supabase
-        .from('vault_documents')
-        .delete()
-        .eq('id', id);
+        .from('file_uploads')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', doc.id);
 
       if (error) throw error;
       toast.success('Document deleted');
-      setDocuments(prev => prev.filter(d => d.id !== id));
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -137,10 +158,10 @@ export default function DocumentVaultTab() {
       if (Array.isArray(classifications)) {
         for (const item of classifications) {
           await supabase
-            .from('vault_documents')
+            .from('file_uploads')
             .update({
               category: item.category,
-              security_level: item.security_level
+              tags: ['vault', `security:${item.security_level}`, 'encrypted'],
             })
             .eq('id', item.id);
         }
@@ -294,14 +315,14 @@ export default function DocumentVaultTab() {
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => toast.success('Secure download link generated')}
+                          onClick={() => doc.proxiedUrl && window.open(doc.proxiedUrl, '_blank')}
                           className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors"
-                          title="Download Decrypted File"
+                          title="Download file"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(doc.id)}
+                          onClick={() => handleDelete(doc)}
                           className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-rose-400 transition-colors"
                           title="Delete File"
                         >
@@ -326,17 +347,19 @@ export default function DocumentVaultTab() {
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white text-sm">Close</button>
             </div>
 
-            <form onSubmit={handleUploadSimulated} className="p-5 space-y-4">
+            <form onSubmit={handleUpload} className="p-5 space-y-4">
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Document Name / Title</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">File</label>
                 <input
-                  type="text"
-                  required
-                  placeholder="e.g. Master Services Agreement 2026"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-teal-500"
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-teal-600 file:text-white"
                 />
+                {selectedFile && (
+                  <p className="text-[10px] text-slate-500 mt-1">{selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

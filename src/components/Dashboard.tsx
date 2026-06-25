@@ -22,10 +22,12 @@ import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
 import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL, APP_NAME } from '../constants';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { useLanguage } from '../contexts/LanguageContext';
 import Image from 'next/image';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole, STAGES } from '../types';
-import BusinessDashboard from './dashboard/business/BusinessDashboard';
+import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
+import InsightsHub from './dashboard/hubs/InsightsHub';
 import { useTenant } from '../contexts/TenantContext';
 
 import AIStudio from './dashboard/AIStudio';
@@ -79,6 +81,7 @@ import { useMeetingSession } from '../hooks/useMeetingSession';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
 
+const BusinessDashboard = React.lazy(() => import('./dashboard/business/BusinessDashboard'));
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
 const CRMTab = React.lazy(() => import('./dashboard/CRMTab'));
@@ -94,14 +97,13 @@ const TasksTab = React.lazy(() => import('./dashboard/TasksTab'));
 const DealsTab = React.lazy(() => import('./dashboard/DealsTab'));
 const QuotesTab = React.lazy(() => import('./dashboard/QuotesTab'));
 const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab'));
-const UserLocationTable = React.lazy(() => import('./dashboard/admin/UserLocationTable'));
 const MailTab = React.lazy(() => import('./dashboard/MailTab'));
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
-const PnLStatement = React.lazy(() => import('./accounting/PnLStatement'));
+const AccountingDashboard = React.lazy(() => import('./dashboard/accounting/AccountingDashboard'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/business/BusinessPerformanceDashboard'));
 const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
 const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
@@ -116,7 +118,7 @@ import { CelebrationOverlay } from './ui/CelebrationOverlay';
 import { TrialBanner } from './dashboard/TrialBanner';
 
 // Zoho Components
-const ZohoMailView = React.lazy(() => import('./dashboard/zoho/ZohoMailView'));
+const UnifiedInboxView = React.lazy(() => import('./dashboard/business/UnifiedInboxView'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
 const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
 const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
@@ -328,12 +330,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Super Admin: sees ALL data across ALL tenants
   // Tenant Admin: sees all data within their tenant
   // Client: sees only their own data
-  const filteredProjects = useMemo(() => user.role === 'admin'
-    ? (projects || []) // Super Admin sees everything
+  const filteredProjects = useMemo(() => isPlatformAdminRole(user.role)
+    ? (projects || []) // Platform super admin sees everything
     : (projects || []).filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
 
-  const filteredMessages = useMemo(() => user.role === 'admin'
-    ? (messages || []) // Super Admin sees everything
+  const filteredMessages = useMemo(() => isPlatformAdminRole(user.role)
+    ? (messages || []) // Platform super admin sees everything
     : (messages || []).filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
 
   const filteredInvoices = useMemo(() => (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'
@@ -349,7 +351,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Stats Logic - PRIORITIZE REAL DATA FROM RPC (No Placeholders)
     const currentStats: DashboardStat[] = useMemo(() => {
-      const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+      const isAdmin = isPlatformAdminRole(user.role) || user.role === 'tenant_admin';
       
       if (isAdmin) {
         return [
@@ -423,7 +425,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Determine Navigation Items based on Role
   const NAV_ITEMS = React.useMemo(() => {
-    if (user.role === 'admin') return ADMIN_NAV_ITEMS;
+    if (isPlatformAdminRole(user.role)) return ADMIN_NAV_ITEMS;
     if (user.role === 'tenant_admin') return TENANT_ADMIN_NAV_ITEMS;
     return CLIENT_NAV_ITEMS;
   }, [user.role]);
@@ -462,7 +464,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     try {
       let result;
       // Client/TenantAdmin fetches all invoices relevant to their tenant/business view
-      if (user.role === 'admin' || user.role === 'tenant_admin') {
+      if (isPlatformAdminRole(user.role) || user.role === 'tenant_admin') {
         result = await paymentService.getAllInvoices(user.role); // Pass role for filtering
       } else {
         result = await paymentService.getUserInvoices(user.id);
@@ -510,7 +512,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     } catch (e) { console.error('Cache load error', e); }
 
     const loadAllData = async () => {
-      const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+      const isAdmin = isPlatformAdminRole(user.role) || user.role === 'tenant_admin';
 
       const promises: Promise<any>[] = [
         refreshProjects(),
@@ -523,7 +525,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         })
       ];
 
-      if (user.role === 'admin') {
+      if (isPlatformAdminRole(user.role)) {
         promises.push(userService.getUsers().then(({ users, error }) => {
           if (!error && users) {
             const count = (users || []).filter(u => u.role === 'client').length;
@@ -596,7 +598,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Subscribe to real-time messages with filtering for performance
   useEffect(() => {
-    const isAdmin = user.role === 'admin' || user.role === 'tenant_admin';
+    const isAdmin = isPlatformAdminRole(user.role) || user.role === 'tenant_admin';
     // ✅ Now uses filtered subscription - gets INSERT + UPDATE for instant read receipts
     const unsubscribe = messageService.subscribeToMessages(
       user.id,
@@ -737,7 +739,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
     }
 
-    if (user.role === 'admin' && !finalRecipientId) {
+    if (isPlatformAdminRole(user.role) && !finalRecipientId) {
       import('react-hot-toast').then(({ toast }) => {
         toast.error('Please select a recipient first.');
       });
@@ -759,7 +761,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage: ChatMessage = {
       id: tempId,
-      role: user.role === 'admin' ? 'model' : 'user',
+      role: isPlatformAdminRole(user.role) ? 'model' : 'user',
       senderId: user.id,
       senderName: user.name,
       recipientId: finalRecipientId,
@@ -777,7 +779,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       const { message, error } = await messageService.sendMessage(
         user.id,
         user.name,
-        user.role === 'admin' ? 'model' : 'user',
+        isPlatformAdminRole(user.role) ? 'model' : 'user',
         text,
         finalRecipientId,
         attachments,
@@ -1166,60 +1168,100 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       // New Enterprise Views
       case '/dashboard/admin/tenants':
-        return (
+        return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
             <SuperAdminTenantsTab />
           </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">Platform administrator access required.</p>
+          </div>
         );
 
       case '/dashboard/admin/users':
-        return (
+        return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TableSkeleton rows={10} columns={4} />}>
             <SuperAdminUsersTab />
           </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">Platform administrator access required.</p>
+          </div>
         );
 
       case '/dashboard/admin/improvements':
-        return (
+        return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TableSkeleton rows={10} columns={4} />}>
             <ImprovementsPage />
           </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">Platform administrator access required.</p>
+          </div>
         );
 
       case '/dashboard/admin/settings':
-        return (
+        return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
             <GlobalSettingsTab />
           </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">Platform administrator access required.</p>
+          </div>
         );
 
       case '/dashboard/admin/operations':
-        return (
+        return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
             <OperationsConsoleTab />
           </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">Platform administrator access required.</p>
+          </div>
         );
 
       case '/dashboard/security':
-        return (
+        return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
             <SecurityDashboard user={user} />
           </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">Platform administrator access required.</p>
+          </div>
         );
 
       case '/dashboard/analytics':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <div data-tour="analytics">
-              <AnalyticsTab />
-            </div>
+            <InsightsHub>
+              <div data-tour="analytics">
+                <AnalyticsTab />
+              </div>
+            </InsightsHub>
           </React.Suspense>
         );
 
       case '/dashboard/performance':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <BusinessPerformanceDashboard />
+            <InsightsHub>
+              <BusinessPerformanceDashboard />
+            </InsightsHub>
           </React.Suspense>
         );
 
@@ -1270,7 +1312,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/zoho/mail':
         return (
           <React.Suspense fallback={<TabSkeleton rows={6} showStats={false} />}>
-            <ZohoMailView userId={user.id} />
+            <div className="h-full p-3 md:p-5">
+              <UnifiedInboxView defaultProvider="zoho" />
+            </div>
           </React.Suspense>
         );
 
@@ -1377,7 +1421,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/accounting':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <PnLStatement />
+            <AccountingDashboard />
           </React.Suspense>
         );
 
@@ -1394,7 +1438,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/portfolio-manager':
-        return <PortfolioShowcase projects={filteredProjects} isAdmin={user.role === 'admin'} onRefresh={refreshProjects} userId={user.id} />;
+        return <PortfolioShowcase projects={filteredProjects} isAdmin={isPlatformAdminRole(user.role)} onRefresh={refreshProjects} userId={user.id} />;
 
       case '/dashboard/projects':
         return (
@@ -1421,7 +1465,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             onProjectClick={(id) => {
               const project = filteredProjects.find(p => p.id === id);
               if (project) {
-                if (user.role === 'admin') {
+                if (isPlatformAdminRole(user.role)) {
                   setSelectedProjectForMilestones(project);
                   setMilestoneModalOpen(true);
                 } else {
@@ -1437,12 +1481,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   // -- CRITICAL FIX: ISOLATED TENANT DASHBOARD --
   // Return early for Tenant Admins to avoid double-shell layout collisions
   if (user.role === 'tenant_admin') {
+    const businessRoute = normalizeBusinessRoute(location || '/dashboard', user.role);
     return (
       <BusinessDashboard
         user={user}
         currentTenant={currentTenant}
         onLogout={onLogout}
-        activeTab={location || '/dashboard'}
+        activeTab={businessRoute}
         setActiveTab={(tab) => router.push(tab)}
       />
     );

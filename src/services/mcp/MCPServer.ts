@@ -967,6 +967,25 @@ class AlphaCloneMCPServer {
   ): Promise<any> {
     const supabase = supabaseAdmin;
 
+    const tenantIdForPolicy = (args?.tenant_id && String(args.tenant_id).trim()) || this.ctx?.tenantId || '';
+    const userIdForPolicy = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
+    if (tenantIdForPolicy && userIdForPolicy) {
+      const { evaluateToolPolicy } = await import('@/lib/ai/ToolPolicyGate');
+      const policy = await evaluateToolPolicy({
+        tenantId: tenantIdForPolicy,
+        userId: userIdForPolicy,
+        toolName: name,
+        source: 'mcp',
+        args: args || {},
+      });
+      if (policy.outcome === 'deny' || policy.outcome === 'queue_approval') {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: true, message: policy.reason, approvalId: policy.approvalId }) }],
+          isError: true,
+        };
+      }
+    }
+
     // Check new registry first
     try {
       const { hasTool, executeTool, initializeRegistry } = await import('@/lib/mcp/tool-registry');

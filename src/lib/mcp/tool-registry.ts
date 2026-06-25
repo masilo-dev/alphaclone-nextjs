@@ -125,6 +125,7 @@ export function initializeRegistry() {
   require('./tools/bonnie-dream');
   require('./tools/bonnie-orchestrate');
   require('./tools/bonnie-outcomes');
+  require('./tools/bonnie-skills');
   require('./tools/google-workspace');
   require('./tools/microsoft');
   require('./tools/microsoft-diagnostics');

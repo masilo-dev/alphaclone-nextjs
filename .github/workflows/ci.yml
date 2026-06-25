@@ -180,12 +180,50 @@ jobs:
         continue-on-error: true
 
   # ============================================================================
+  # Platform pentest smoke (requires running server)
+  # ============================================================================
+  pentest:
+    name: Platform Pentest Smoke
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start server and run pentest
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          npm run start &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/api/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          npm run pentest http://localhost:3000 || PENTEST_EXIT=$?
+          kill $SERVER_PID || true
+          exit ${PENTEST_EXIT:-0}
+
+  # ============================================================================
   # Final Status Check
   # ============================================================================
   ci-success:
     name: CI Pipeline Success
     runs-on: ubuntu-latest
-    needs: [quality, security, build, migrations, test]
+    needs: [quality, security, build, migrations, test, pentest]
     if: always()
 
     steps:
@@ -196,6 +234,7 @@ jobs:
           echo "Build:      ${{ needs.build.result }}"
           echo "Migrations: ${{ needs.migrations.result }}"
           echo "Tests:      ${{ needs.test.result }}"
+          echo "Pentest:    ${{ needs.pentest.result }}"
 
           failed=0
           if [[ "${{ needs.quality.result }}" == "failure" ]]; then
@@ -212,6 +251,10 @@ jobs:
           fi
           if [[ "${{ needs.test.result }}" == "failure" ]]; then
             echo "FAILED: tests"
+            failed=1
+          fi
+          if [[ "${{ needs.pentest.result }}" == "failure" ]]; then
+            echo "FAILED: pentest"
             failed=1
           fi
           if [[ "$failed" == "1" ]]; then

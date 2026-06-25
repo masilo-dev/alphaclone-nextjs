@@ -29,7 +29,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
         }
 
         setIsSearching(true);
-        const role = user.role === 'admin' ? 'admin' : 'client';
+        const role = user.role === 'admin' || user.role === 'tenant_admin' ? 'admin' : 'client';
         const { results: searchResults, error } = await searchService.search(
             query,
             user.id,
@@ -45,7 +45,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
     }, [query, user.id, user.role, filters]);
 
     const loadSuggestions = useCallback(async () => {
-        const role = user.role === 'admin' ? 'admin' : 'client';
+        const role = user.role === 'admin' || user.role === 'tenant_admin' ? 'admin' : 'client';
         const suggs = await searchService.getSuggestions(query, user.id, role);
         setSuggestions(suggs);
     }, [query, user.id, user.role]);

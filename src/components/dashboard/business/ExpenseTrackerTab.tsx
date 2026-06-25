@@ -11,6 +11,12 @@ import { useTenant } from '@/contexts/TenantContext';
 import { chartOfAccountsService, ChartOfAccount } from '@/services/accounting/chartOfAccountsService';
 import toast from 'react-hot-toast';
 import { Modal } from '../../ui/UIComponents';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+    rowActionsClass,
+} from '../../ui/ResponsiveTable';
 
 interface ExpenseCategory {
     id: string;
@@ -571,7 +577,44 @@ export default function ExpenseTrackerTab() {
                     <p className="text-slate-600 text-sm mt-1">Add your first expense to start tracking spending.</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                <>
+                <ResponsiveTableMobile>
+                    {filtered.map((expense) => (
+                        <MobileDataCard key={expense.id} className="group border-slate-800 bg-slate-900/40">
+                            <div className="flex justify-between gap-2">
+                                <p className="text-white font-medium truncate flex-1">{expense.description || '—'}</p>
+                                <p className="font-semibold text-white shrink-0">{fmt(expense.total ?? expense.amount, expense.currency)}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+                                <span>{new Date(expense.date + 'T00:00:00').toLocaleDateString()}</span>
+                                <span className="truncate">{expense.vendor_name || '—'}</span>
+                                <span>{expense.expense_categories?.name || '—'}</span>
+                                <span className="capitalize">{expense.payment_method?.replace('_', ' ') || '—'}</span>
+                            </div>
+                            <select
+                                value={expense.status}
+                                onChange={(e) => handleStatusChange(expense.id, e.target.value)}
+                                className={`w-full min-h-11 text-xs px-2 py-2 border rounded-lg bg-slate-950 focus:outline-none ${STATUS_STYLES[expense.status] || STATUS_STYLES.pending}`}
+                            >
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="reimbursed">Reimbursed</option>
+                            </select>
+                            <div className={`${rowActionsClass} justify-end`}>
+                                <button onClick={() => handleEdit(expense)} className="min-h-11 px-3 py-2 rounded-lg border border-slate-700 text-slate-300 text-xs">Edit</button>
+                                <button onClick={() => handleDelete(expense.id)} className="min-h-11 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 text-xs">Delete</button>
+                            </div>
+                        </MobileDataCard>
+                    ))}
+                    <MobileDataCard className="border-slate-700 bg-slate-900/60">
+                        <div className="flex justify-between text-sm font-bold text-white">
+                            <span>{filtered.length} expense{filtered.length !== 1 ? 's' : ''}</span>
+                            <span>{fmt(totalAmount)}</span>
+                        </div>
+                    </MobileDataCard>
+                </ResponsiveTableMobile>
+                <ResponsiveTableDesktop className="rounded-2xl border border-slate-800 min-w-0">
                     <table className="w-full min-w-[720px] text-sm">
                         <thead>
                             <tr className="border-b border-slate-800 bg-slate-900/50">
@@ -642,7 +685,7 @@ export default function ExpenseTrackerTab() {
                                         </select>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className={`justify-end ${rowActionsClass}`}>
                                             <button onClick={() => handleEdit(expense)}
                                                 className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
@@ -668,7 +711,8 @@ export default function ExpenseTrackerTab() {
                             </tr>
                         </tfoot>
                     </table>
-                </div>
+                </ResponsiveTableDesktop>
+                </>
             )}
         </div>
     );

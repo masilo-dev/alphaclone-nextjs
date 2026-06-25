@@ -493,6 +493,7 @@ Rules:
                 if (log) {
                     const { Client } = await import('@upstash/qstash');
                     const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
+                    const autoReplyDelaySeconds = Number(process.env.EMAIL_AUTO_REPLY_DELAY_SECONDS || '3600');
                     await qstash.publishJSON({
                         url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
                         body: {
@@ -504,7 +505,7 @@ Rules:
                             replyText: ensureFooter(String(data.draft_reply || '').trim()),
                             logId: log.id,
                         },
-                        delay: 600 // 10 minute delay
+                        delay: autoReplyDelaySeconds,
                     });
                 }
             }

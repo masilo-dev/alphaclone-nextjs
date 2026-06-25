@@ -13,6 +13,9 @@ export interface FormSettings {
   thankYouMessage?: string;
   createLead?: boolean;
   notifyEmail?: boolean;
+  provider?: 'native' | 'typeform' | 'tally';
+  embedUrl?: string;
+  webhookSecret?: string;
 }
 
 export interface TenantForm {

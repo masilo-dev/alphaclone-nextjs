@@ -219,7 +219,12 @@ const AIAgentsTab: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Action successfully ${status}!`, { id: toastId });
+        const execMsg = data.execution?.success
+          ? `Action approved and executed: ${data.execution?.result?.summary || 'done'}`
+          : data.execution?.error
+            ? `Approved but execution failed: ${data.execution.error}`
+            : `Action successfully ${status}!`;
+        toast.success(execMsg, { id: toastId });
         await loadData();
       } else {
         throw new Error(data.error);
@@ -523,6 +528,12 @@ const AIAgentsTab: React.FC = () => {
                         <span className="text-[9px] font-black px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/25 rounded-md uppercase tracking-wider">
                           {app.action_key.replace(/_/g, ' ')}
                         </span>
+                        {(app.payload?.source || app.payload?.tool_name) && (
+                          <span className="ml-2 text-[9px] font-black px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/25 rounded-md uppercase tracking-wider">
+                            {String(app.payload?.source || 'runner')}
+                            {app.payload?.tool_name ? `: ${app.payload.tool_name}` : ''}
+                          </span>
+                        )}
                         <h4 className="text-xs font-bold text-white mt-1.5">{app.reason}</h4>
                       </div>
                       <div className="text-right">

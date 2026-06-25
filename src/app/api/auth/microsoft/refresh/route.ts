@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     const fallbackRefreshToken = typeof body?.refreshToken === 'string' ? body.refreshToken : '';
+    const forceRefresh = body?.force === true;
 
     const admin = createSupabaseAdminClient();
     const { data: connection, error: connectionError } = await admin
@@ -33,6 +34,21 @@ export async function POST(req: NextRequest) {
     const refreshToken = connection?.refresh_token || fallbackRefreshToken;
     if (!refreshToken) {
       return NextResponse.json({ error: 'No Microsoft refresh token available.' }, { status: 400 });
+    }
+
+    const expiresAt = connection?.token_expiry ? new Date(connection.token_expiry).getTime() : 0;
+    const needsRefresh =
+      forceRefresh ||
+      !connection?.token_expiry ||
+      Number.isNaN(expiresAt) ||
+      Date.now() + 5 * 60 * 1000 >= expiresAt;
+
+    if (!needsRefresh && connection) {
+      return NextResponse.json({
+        success: true,
+        refreshed: false,
+        connection,
+      });
     }
 
     const clientId = ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID;
@@ -91,6 +107,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      refreshed: true,
       connection: updatedConnection,
     });
   } catch (err: unknown) {

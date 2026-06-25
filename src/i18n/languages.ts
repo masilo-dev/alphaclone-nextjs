@@ -1,3 +1,5 @@
+import { readUserPrefKey, writeUserPrefKey } from '@/lib/scopedUserPrefs';
+
 export type SupportedLanguage = 'en' | 'es' | 'pl';
 
 export const LANGUAGES: { code: SupportedLanguage; label: string; flag: string; nativeName: string }[] = [
@@ -183,11 +185,11 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     },
 };
 
-// Get current language from localStorage
-export function getCurrentLanguage(): SupportedLanguage {
+// Get current language from localStorage (optional user scope for multi-account browsers)
+export function getCurrentLanguage(userId?: string | null): SupportedLanguage {
     if (typeof window === 'undefined') return 'en';
     try {
-        const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY) as SupportedLanguage | null;
+        const saved = readUserPrefKey(LANGUAGE_STORAGE_KEY, userId) as SupportedLanguage | null;
         if (saved && ['en', 'es', 'pl'].includes(saved)) return saved;
     } catch {
         /* ignore */
@@ -196,10 +198,10 @@ export function getCurrentLanguage(): SupportedLanguage {
 }
 
 // Set language and persist
-export function setLanguage(lang: SupportedLanguage): void {
+export function setLanguage(lang: SupportedLanguage, userId?: string | null): void {
     if (typeof window === 'undefined') return;
     try {
-        localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+        writeUserPrefKey(LANGUAGE_STORAGE_KEY, lang, userId);
         document.documentElement.setAttribute('lang', lang);
         window.dispatchEvent(new CustomEvent('ac-language-changed', { detail: { language: lang } }));
     } catch {

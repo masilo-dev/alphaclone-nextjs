@@ -10,6 +10,9 @@ import {
 import { getBonnieWorkspaceSnapshot } from '@/lib/bonnie/bonnieWorkspaceSnapshot';
 import type { BonnieToolCall, BonnieToolResult } from '@/lib/bonnie/bonnieToolExecutor';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { suggestToolsForQuestion } from '@/lib/bonnie/bonnieTenantDataRules';
+import { warmBonnieWorkspaceContext, formatWarmContextBlock } from '@/lib/bonnie/bonnieWarmContext';
+import { sanitizeBonnieResponse, BONNIE_ANTI_HEDGE_INSTRUCTION } from '@/lib/bonnie/bonnieResponseSanitizer';
 
 export type BonnieAgentInput = {
   tenantId: string;
@@ -53,10 +56,12 @@ function parseJsonPlan(raw: string): BonniePlan {
   return JSON.parse(jsonText) as BonniePlan;
 }
 
-function looksLikeActionRequest(text: string): boolean {
-  return /\b(send|create|run|publish|draft|compose|find|search|audit|update|delete|schedule|post|invoice|reach out|follow up|open|show me|list|get|sync|enable|disable|queue|launch|execute|do|make|write|generate)\b/i.test(
-    text
-  );
+/** Only skip tools for pure greetings — everything else uses the tool loop with tenant data. */
+function looksLikePureChitchat(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (t.length <= 3) return true;
+  return /^(hi|hello|hey|thanks|thank you|ok|okay|bye|goodbye|good morning|good night)[!.?\s]*$/i.test(t);
 }
 
 async function conversationalReply(
@@ -64,10 +69,11 @@ async function conversationalReply(
   history: BonnieAgentInput['history'],
   moduleId: BonnieModuleId,
   snapshot: Awaited<ReturnType<typeof getBonnieWorkspaceSnapshot>>,
+  tenantId: string,
   onStreamToken?: (token: string) => void
 ): Promise<{ text: string; model: string }> {
-  const systemPrompt = buildBonnieConversationalPrompt(moduleId);
-  const contextBlock = `Workspace snapshot (live counts):\n${JSON.stringify(snapshot.counts || snapshot, null, 2)}\n\nUser:\n${instruction}`;
+  const systemPrompt = buildBonnieConversationalPrompt(moduleId, tenantId, snapshot);
+  const contextBlock = `Workspace: ${snapshot.module_summary}\n\nUser:\n${instruction}`;
 
   if (process.env.DEEPSEEK_API_KEY) {
     const model = 'deepseek-chat';
@@ -108,9 +114,11 @@ async function planWithDeepSeek(
   history: BonnieAgentInput['history'],
   moduleId: BonnieModuleId,
   priorToolResults: BonnieToolResult[],
-  round: number
+  round: number,
+  tenantId: string,
+  warmPrefetch: BonnieToolResult[] = []
 ): Promise<{ plan: BonniePlan; model: string }> {
-  const systemPrompt = buildBonnieSystemPrompt(moduleId);
+  const systemPrompt = await buildBonnieSystemPrompt(moduleId, tenantId);
   const priorBlock =
     priorToolResults.length > 0
       ? `\n\nPRIOR TOOL RESULTS (round ${round}):\n${JSON.stringify(
@@ -124,13 +132,17 @@ async function planWithDeepSeek(
         )}\nIf the task is complete, set "done": true and return empty tool_calls with your final response. Otherwise continue with the next tool_calls needed.`
       : '';
 
-  const userBlock = `WORKSPACE SNAPSHOT (live):
-${JSON.stringify(snapshot, null, 2)}
+  const suggestedTools = suggestToolsForQuestion(instruction, moduleId);
+  const userBlock = `WORKSPACE CONTEXT (already loaded — answer from this, do not ask to check):
+${formatWarmContextBlock(snapshot, round === 0 ? warmPrefetch : [])}
+
+SUGGESTED READ TOOLS FOR THIS MESSAGE (run if you need fresher detail):
+${suggestedTools.join(', ')}
 
 USER INSTRUCTION:
 ${instruction}${priorBlock}
 
-Plan like DeepCode: break work into steps, run tools, iterate until done. Round ${round + 1} of ${MAX_AGENT_ROUNDS}.`;
+Plan like DeepCode: fetch tenant data with tools when needed — never ask yes/no to read. Round ${round + 1} of ${MAX_AGENT_ROUNDS}.`;
 
   if (process.env.DEEPSEEK_API_KEY) {
     const model = 'deepseek-chat';
@@ -187,7 +199,8 @@ Your draft: ${plan.response}
 Tools executed:
 ${toolResults.map((r) => `- ${r.success ? '✓' : '✗'} ${r.tool}: ${sanitizeSummary(r.summary)}`).join('\n')}
 
-Write the final reply: what you did, key results, and clear next step if any. Plain text, concise, professional. No vendor names.`;
+Write the final reply: what you did, key results, and clear next step if any. Plain text, concise, professional. No vendor names.
+${BONNIE_ANTI_HEDGE_INSTRUCTION}`;
 
   if (process.env.DEEPSEEK_API_KEY) {
     if (onStreamToken) {
@@ -282,15 +295,23 @@ function resolveModuleId(
 export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAgentResult> {
   const { tenantId, userId, instruction, history = [], pathname, moduleContext, onStreamToken } = input;
   const moduleId = resolveModuleId(moduleContext, pathname);
-  const snapshot = await getBonnieWorkspaceSnapshot(tenantId);
 
   let model = 'deepseek-chat';
   const provider = process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback';
 
-  // Pure Q&A — conversational DeepChat mode without tool JSON
-  if (!looksLikeActionRequest(instruction)) {
+  const { snapshot, warmResults } = await warmBonnieWorkspaceContext(tenantId, userId, moduleId);
+
+  // Pure chitchat only — all business/data questions use the tool loop
+  if (looksLikePureChitchat(instruction)) {
     try {
-      const { text, model: chatModel } = await conversationalReply(instruction, history, moduleId, snapshot, onStreamToken);
+      const { text, model: chatModel } = await conversationalReply(
+        instruction,
+        history,
+        moduleId,
+        snapshot,
+        tenantId,
+        onStreamToken
+      );
       return {
         response: text,
         success: true,
@@ -313,8 +334,8 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     }
   }
 
-  const allToolResults: BonnieToolResult[] = [];
-  const allLogs: string[] = [];
+  const allToolResults: BonnieToolResult[] = [...warmResults];
+  const allLogs: string[] = warmResults.map((r) => `Prefetched ${r.tool}: ${r.summary}`);
   let lastPlan: BonniePlan = { response: 'Done.' };
   let rounds = 0;
 
@@ -327,7 +348,9 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         history,
         moduleId,
         allToolResults,
-        round
+        round,
+        tenantId,
+        warmResults
       );
       plan = planned.plan;
       model = planned.model;
@@ -335,7 +358,14 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     } catch (err: any) {
       // JSON plan failed — fall back to conversational DeepChat reply
       try {
-        const { text, model: chatModel } = await conversationalReply(instruction, history, moduleId, snapshot, onStreamToken);
+        const { text, model: chatModel } = await conversationalReply(
+          instruction,
+          history,
+          moduleId,
+          snapshot,
+          tenantId,
+          onStreamToken
+        );
         return {
           response: text,
           success: true,
@@ -382,12 +412,12 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     }
   }
 
-  let response = lastPlan.response || 'Done.';
+  let response = sanitizeBonnieResponse(lastPlan.response || 'Done.');
   if (allToolResults.length) {
     const synthesized = await synthesizeWithDeepSeek(instruction, lastPlan, allToolResults, moduleId, onStreamToken).catch(
       () => null
     );
-    if (synthesized?.trim()) response = synthesized.trim();
+    if (synthesized?.trim()) response = sanitizeBonnieResponse(synthesized.trim());
   }
 
   await persistBonnieLogs(tenantId, allLogs).catch(() => undefined);

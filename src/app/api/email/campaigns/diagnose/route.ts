@@ -37,6 +37,16 @@ export async function GET(req: NextRequest) {
 
         info.push(`Campaign status: "${campaign.status}"`);
 
+        const meta = (campaign.metadata || {}) as Record<string, unknown>;
+        const abTest = (meta.abTest || {}) as Record<string, unknown>;
+        if (abTest.enabled) {
+          if (!String(abTest.subjectB || '').trim()) {
+            warnings.push('A/B test is enabled but subject B is missing — all sends will use subject A.');
+          } else {
+            info.push(`A/B test active: ${abTest.splitPercent ?? 50}% to variant B ("${abTest.subjectB}").`);
+          }
+        }
+
         if (campaign.status === 'sent' || campaign.status === 'completed') {
             info.push(`Campaign already completed. Sent: ${campaign.total_sent} emails.`);
             return NextResponse.json({ issues, warnings, info });

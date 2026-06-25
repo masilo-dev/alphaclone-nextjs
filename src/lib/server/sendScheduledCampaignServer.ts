@@ -324,6 +324,31 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                 .eq('status', 'pending'))?.data || []
             : recipients;
 
+        const abTestMeta = parseJsonObject(rawMeta?.abTest);
+        const abTestEnabled = abTestMeta.enabled === true && String(abTestMeta.subjectB || '').trim().length > 0;
+        const abSubjectB = String(abTestMeta.subjectB || '').trim();
+        const abSplitPercent = Math.min(100, Math.max(0, Number(abTestMeta.splitPercent) || 50));
+
+        if (abTestEnabled && emailRecipients.length > 0) {
+            const shuffled = [...emailRecipients];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const bCount = Math.round((shuffled.length * abSplitPercent) / 100);
+            for (let i = 0; i < shuffled.length; i++) {
+                const variant = i < bCount ? 'B' : 'A';
+                const existingMeta = parseJsonObject(shuffled[i].metadata);
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        metadata: { ...existingMeta, abVariant: variant },
+                    })
+                    .eq('id', shuffled[i].id);
+                shuffled[i].metadata = { ...existingMeta, abVariant: variant };
+            }
+        }
+
         let failedCount = 0;
 
         for (const recipient of emailRecipients) {
@@ -399,8 +424,14 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                 fromName,
                 senderName: fromName,
             });
+            const recipientMeta = parseJsonObject(recipient.metadata);
+            const abVariant = String(recipientMeta.abVariant || 'A');
+            const subjectSource =
+                abTestEnabled && abVariant === 'B' && abSubjectB
+                    ? abSubjectB
+                    : String(c.subject || '');
             const personalizedSubject = emailCampaignService.injectVariables(
-                String(c.subject || ''),
+                subjectSource,
                 {
                     ...recipientData,
                     fromName,
@@ -427,7 +458,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .update({
                         status: 'sent',
                         sent_at: new Date().toISOString(),
-                        metadata: { provider: sendResult.provider || provider.id, provider_from: fromEmail, language: campaignLanguage },
+                        metadata: { provider: sendResult.provider || provider.id, provider_from: fromEmail, language: campaignLanguage, abVariant: abVariant || 'A' },
                     })
                     .eq('id', recipient.id);
                 try {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, CheckSquare, Calendar, Clock, Plus, ArrowRight, DollarSign, TrendingUp, History, MessageSquare, Phone, Mail, User, FileText } from 'lucide-react';
 import { Button, Card, Badge } from '../../ui/UIComponents';
 import { Deal, DealStage, dealService } from '../../../services/dealService';
@@ -8,7 +9,10 @@ import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { supabase } from '../../../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { transitionDealStage } from '@/lib/dealStageActions';
+import { DealRevenueTimeline } from './DealRevenueTimeline';
 
 interface DealDetailModalProps {
     isOpen: boolean;
@@ -19,10 +23,12 @@ interface DealDetailModalProps {
 
 export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }: DealDetailModalProps) {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'tasks' | 'notes'>('overview');
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'tasks' | 'notes' | 'products' | 'history'>('overview');
     const [isLoading, setIsLoading] = useState(false);
     const [activities, setActivities] = useState<any[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [products, setProducts] = useState<{ id: string; name: string; quantity: number; unit_price: number }[]>([]);
 
     // New Note State
     const [newNote, setNewNote] = useState('');
@@ -47,6 +53,11 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                     relatedToDeal: deal.id
                 });
                 setTasks(fetchedTasks || []);
+            }
+
+            if (activeTab === 'products' || activeTab === 'overview') {
+                const { data } = await supabase.from('deal_products').select('*').eq('deal_id', deal.id);
+                setProducts((data || []) as typeof products);
             }
         } catch (error) {
             console.error('Error fetching deal data:', error);
@@ -73,8 +84,13 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
 
     const handleStageChange = async (newStage: DealStage) => {
         try {
-            const { error } = await dealService.updateDeal(deal.id, { stage: newStage });
-            if (error) throw new Error(error);
+            const result = await transitionDealStage({
+                dealId: deal.id,
+                fromStage: deal.stage,
+                toStage: newStage,
+                navigate: (path) => router.push(path),
+            });
+            if (!result.ok) throw new Error(result.message);
 
             const updatedDeal = { ...deal, stage: newStage };
             if (onDealUpdate) onDealUpdate(updatedDeal);
@@ -162,6 +178,8 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                             {[
                                 { id: 'overview', icon: User, label: 'Overview' },
                                 { id: 'activity', icon: History, label: 'Activity' },
+                                { id: 'products', icon: FileText, label: 'Products' },
+                                { id: 'history', icon: TrendingUp, label: 'Stage History' },
                                 { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
                                 { id: 'notes', icon: MessageSquare, label: 'Notes' }
                             ].map((tab) => (
@@ -183,6 +201,8 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             {activeTab === 'overview' && (
                                 <div className="space-y-6">
+                                    <DealRevenueTimeline dealId={deal.id} dealStage={deal.stage} />
+
                                     <ModuleIntelligenceCard moduleKey="aiProposals" title="Proposal and Deal Intelligence" />
 
                                     {/* Prominent 24px Bold Value Card */}
@@ -268,11 +288,36 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                                 </div>
                             )}
 
+                            {activeTab === 'products' && (
+                                <div className="space-y-3">
+                                    {products.length === 0 ? (
+                                        <p className="text-sm text-slate-500 py-8 text-center">No line items on this deal.</p>
+                                    ) : (
+                                        products.map((p) => (
+                                            <div key={p.id} className="flex justify-between p-3 bg-slate-900/30 rounded-xl border border-white/5 text-sm">
+                                                <span className="text-white">{p.name}</span>
+                                                <span className="text-teal-400">{p.quantity} × ${Number(p.unit_price).toLocaleString()}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'history' && (
+                                <div className="space-y-2">
+                                    {activities.filter((a) => a.metadata?.old_stage || a.type === 'stage_change').map((a) => (
+                                        <div key={a.id} className="p-3 bg-slate-900/30 rounded-xl border border-white/5 text-sm text-slate-300">
+                                            {format(new Date(a.createdAt), 'MMM d, h:mm a')} — stage updated
+                                        </div>
+                                    ))}
+                                    {activities.filter((a) => a.metadata?.old_stage).length === 0 && (
+                                        <p className="text-sm text-slate-500 py-8 text-center">No stage changes recorded.</p>
+                                    )}
+                                </div>
+                            )}
+
                             {activeTab === 'tasks' && (
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Tasks</h3>
-                                    </div>
                                     <div className="space-y-2">
                                         {tasks.length === 0 ? (
                                             <div className="text-center py-12 text-slate-500">
@@ -280,7 +325,7 @@ export default function DealDetailModal({ isOpen, onClose, deal, onDealUpdate }:
                                                 <p className="text-sm">No tasks found for this deal.</p>
                                             </div>
                                         ) : (
-                                            tasks.map(task => (
+                                            tasks.map((task) => (
                                                 <div key={task.id} className="flex items-center gap-3 p-3 bg-slate-900/30 rounded-xl border border-white/5">
                                                     <div className={`w-4 h-4 rounded border ${task.status === 'completed' ? 'bg-teal-500 border-teal-500' : 'border-slate-600'}`} />
                                                     <span className="flex-1 text-slate-200 text-sm">{task.title}</span>

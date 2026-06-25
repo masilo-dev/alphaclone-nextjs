@@ -12,7 +12,8 @@ interface GraphRequestOptions {
 
 async function graphRequest<T = any>(
   path: string,
-  options: GraphRequestOptions = {}
+  options: GraphRequestOptions = {},
+  retried = false
 ): Promise<T> {
   const accessToken = await microsoftAuthService.getValidAccessToken();
   const response = await fetch(
@@ -35,6 +36,20 @@ async function graphRequest<T = any>(
 
   if (!response.ok) {
     const message = await response.text().catch(() => '');
+    const isAuthError =
+      response.status === 401 ||
+      response.status === 403 ||
+      /InvalidAuthenticationToken|token.*expired|Lifetime validation failed/i.test(message);
+
+    if (isAuthError && !retried) {
+      try {
+        await microsoftAuthService.refreshAccessToken(undefined, { force: true });
+        return graphRequest<T>(path, options, true);
+      } catch {
+        // Fall through with the original error below.
+      }
+    }
+
     throw new Error(message || `Microsoft Graph request failed: ${response.status}`);
   }
 
@@ -359,11 +374,36 @@ export const microsoftGraphService = {
     return data.value.map(mapEmail);
   },
 
-  async getConversationMessages(conversationId: string) {
-    const data = await graphRequest<{ value: any[] }>(
-      `/me/messages?$filter=conversationId eq '${conversationId}'&$orderby=receivedDateTime ASC`
-    );
-    return data.value.map(mapEmail);
+  async getConversationMessages(conversationId: string, anchorMessageId?: string) {
+    let resolvedConversationId = String(conversationId || '').trim();
+    if (!resolvedConversationId && anchorMessageId) {
+      const anchor = await this.getMessage(anchorMessageId);
+      resolvedConversationId = String(anchor.threadId || '').trim();
+    }
+    if (!resolvedConversationId) return [];
+
+    const escaped = resolvedConversationId.replace(/'/g, "''");
+    try {
+      const data = await graphRequest<{ value: any[] }>(
+        `/me/messages?$filter=conversationId eq '${escaped}'&$orderby=receivedDateTime asc&$top=50&$select=id,conversationId,subject,from,toRecipients,body,bodyPreview,receivedDateTime,isRead,hasAttachments,webLink`,
+        {
+          headers: {
+            ConsistencyLevel: 'eventual',
+          },
+        }
+      );
+      if (Array.isArray(data.value) && data.value.length > 0) {
+        return data.value.map(mapEmail);
+      }
+    } catch (err) {
+      console.warn('[microsoftGraphService] conversationId filter failed:', err);
+    }
+
+    if (anchorMessageId) {
+      const detailed = await this.getMessage(anchorMessageId);
+      return [detailed];
+    }
+    return [];
   },
 
   async replyToMessage(messageId: string, comment: string) {

@@ -252,4 +252,10 @@ export const preferencesService = {
     async updateTheme(userId: string, theme: 'light' | 'dark' | 'auto') {
         return this.updatePreferences(userId, { theme });
     },
+
+    async updateLanguage(userId: string, language: string) {
+        const { preferences } = await this.getPreferences(userId);
+        const layout = { ...(preferences?.dashboard_layout || {}), ui_language: language };
+        return this.updatePreferences(userId, { dashboard_layout: layout });
+    },
 };

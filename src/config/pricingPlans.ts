@@ -30,7 +30,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     name: 'Starter',
     price: 15,
     yearly: 144,
-    tagline: 'Everything a small business needs to run operations in one place.',
+    tagline: 'Win clients, send invoices, and deliver work — without a scattered tool stack.',
     features: [
       'Up to 25 team members',
       '50 active projects',
@@ -51,9 +51,9 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     name: 'Pro',
     price: 45,
     yearly: 432,
-    tagline: 'For growing teams that want AI assistance and unlimited scale.',
+    tagline: 'Scale outreach and automation when manual follow-up becomes the bottleneck.',
     highlight: true,
-    badge: 'Most Popular',
+    badge: 'Best for growing teams',
     features: [
       'Everything in Starter, plus:',
       'Unlimited team members & projects',
@@ -72,7 +72,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     name: 'Enterprise',
     price: 80,
     yearly: 768,
-    tagline: 'Maximum scale, priority infrastructure, and full automation.',
+    tagline: 'Priority support and headroom when client volume and data needs grow.',
     features: [
       'Everything in Pro, plus:',
       '500GB secure storage',

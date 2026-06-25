@@ -315,19 +315,17 @@ export const userService = {
     },
 
     /**
-     * Suspend a user account (Super Admin only)
+     * Suspend a user account (Super Admin only — server-side)
      */
     async suspendUser(userId: string): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    status: 'suspended',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', userId);
-
-            if (error) throw error;
+            const res = await fetch('/api/admin/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action: 'suspend' }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to suspend user' };
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to suspend user' };
@@ -335,19 +333,17 @@ export const userService = {
     },
 
     /**
-     * Restore a suspended user account (Super Admin only)
+     * Restore a suspended user account (Super Admin only — server-side)
      */
     async restoreUser(userId: string): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    status: 'active',
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', userId);
-
-            if (error) throw error;
+            const res = await fetch('/api/admin/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action: 'restore' }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to restore user' };
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to restore user' };
@@ -355,27 +351,15 @@ export const userService = {
     },
 
     /**
-     * Delete a user account (Super Admin only)
+     * Delete a user account (Super Admin only — server-side)
      */
     async deleteUser(userId: string): Promise<{ error: string | null }> {
         try {
-            // 1. Remove from tenant_users
-            const { error: tuError } = await supabase
-                .from('tenant_users')
-                .delete()
-                .eq('user_id', userId);
-
-            if (tuError) throw tuError;
-
-            // 2. Delete profile
-            const { error: pError } = await supabase
-                .from('profiles')
-                .delete()
-                .eq('id', userId);
-
-            if (pError) throw pError;
-
-            // Note: In production, we'd also call a server-side function to delete from auth.users
+            const res = await fetch(`/api/admin/users?userId=${encodeURIComponent(userId)}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to delete user' };
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to delete user' };
@@ -383,27 +367,14 @@ export const userService = {
     },
 
     /**
-     * Get all users across the entire platform (Super Admin only)
+     * Get all users across the entire platform (Super Admin only — server-side)
      */
     async getAllPlatformUsers(): Promise<{ users: User[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            const users: User[] = (data || []).map((p: any) => ({
-                id: p.id,
-                email: p.email,
-                name: p.name,
-                role: p.role as UserRole,
-                status: p.status || 'active',
-                avatar: p.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=random`
-            }));
-
-            return { users, error: null };
+            const res = await fetch('/api/admin/users');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { users: [], error: data.error || 'Failed to fetch platform users' };
+            return { users: data.users || [], error: null };
         } catch (err) {
             return { users: [], error: err instanceof Error ? err.message : 'Failed to fetch platform users' };
         }

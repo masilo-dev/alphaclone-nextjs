@@ -13,35 +13,20 @@ export interface TenantInfo {
 
 export const tenantManagementService = {
     /**
-     * Get all tenants (admin only)
+     * Get all tenants (platform super admin — server-side)
      */
     async getAllTenants(): Promise<{ tenants: TenantInfo[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('tenants')
-                .select(`
-                    *,
-                    tenant_users (count)
-                `)
-                .is('deletion_pending_at', null)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            const tenants = (data || []).map((tenant: any) => ({
-                id: tenant.id,
-                name: tenant.name,
-                status: tenant.status || 'active',
-                createdAt: tenant.created_at,
-                userCount: tenant.tenant_users?.[0]?.count || 0,
-                subscription: tenant.subscription_tier || 'free',
-                settings: tenant.settings // Expose settings for UI checks
-            }));
-
-            return { tenants, error: null };
-        } catch (err: any) {
+            const res = await fetch('/api/admin/tenants');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { tenants: [], error: data.error || 'Failed to fetch tenants' };
+            }
+            return { tenants: data.tenants || [], error: null };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch tenants';
             console.error('Error fetching tenants:', err);
-            return { tenants: [], error: err.message };
+            return { tenants: [], error: message };
         }
     },
 
@@ -105,24 +90,22 @@ export const tenantManagementService = {
     },
 
     /**
-     * Delete tenant (admin only)
+     * Delete tenant (platform super admin — soft delete via server)
      */
     async deleteTenant(tenantId: string): Promise<{ error: string | null }> {
         try {
-            // Soft delete for admin as well
-            const { error } = await supabase
-                .from('tenants')
-                .update({
-                    deletion_pending_at: new Date().toISOString(),
-                    subscription_status: 'suspended'
-                })
-                .eq('id', tenantId);
-
-            if (error) throw error;
+            const res = await fetch('/api/admin/tenants', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to delete tenant' };
             return { error: null };
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to delete tenant';
             console.error('Error deleting tenant:', err);
-            return { error: err.message };
+            return { error: message };
         }
     }
 };

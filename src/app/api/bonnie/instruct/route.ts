@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { runBonnieAgent } from '@/lib/bonnie/bonnieAgent';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
+import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
+import { UNITS_PER_CHAT_TURN } from '@/config/aiUsageQuotas';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -26,6 +28,11 @@ export async function POST(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { data: authUser } = await supabase.auth.getUser();
     const userId = authUser.user?.id || user.id;
+
+    const admin = createSupabaseAdminClient();
+    const { data: tenantRow } = await admin.from('tenants').select('subscription_plan').eq('id', tenantId).maybeSingle();
+    const blocked = await consumeAiUnitsOr429(admin, tenantId, (tenantRow?.subscription_plan as string) || 'free', UNITS_PER_CHAT_TURN);
+    if (blocked) return blocked;
 
     const result = await runBonnieAgent({
       tenantId,

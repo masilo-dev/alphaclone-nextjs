@@ -1,30 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Globe } from 'lucide-react';
-import { LANGUAGES, SupportedLanguage, getCurrentLanguage, setLanguage } from '@/i18n/languages';
+import { LANGUAGES, type SupportedLanguage } from '@/i18n/languages';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function LanguageSwitcher() {
-    const [currentLang, setCurrentLang] = useState<SupportedLanguage>('en');
+    const { language, setLanguage } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        setCurrentLang(getCurrentLanguage());
-        const unsubscribe = () => {
-            // Cleanup if needed
-        };
-        return unsubscribe;
-    }, []);
 
     const handleChange = (lang: SupportedLanguage) => {
         setLanguage(lang);
-        setCurrentLang(lang);
         setIsOpen(false);
-        // Force re-render of translated components
-        window.location.reload();
     };
 
-    const current = LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
+    const current = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
     return (
         <div className="relative">
@@ -46,7 +36,7 @@ export default function LanguageSwitcher() {
                                 key={lang.code}
                                 onClick={() => handleChange(lang.code)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                                    currentLang === lang.code
+                                    language === lang.code
                                         ? 'bg-teal-500/10 text-teal-400'
                                         : 'text-slate-300 hover:bg-slate-800'
                                 }`}
@@ -56,7 +46,7 @@ export default function LanguageSwitcher() {
                                     <span className="font-medium">{lang.nativeName}</span>
                                     <span className="block text-xs text-slate-500">{lang.label}</span>
                                 </div>
-                                {currentLang === lang.code && (
+                                {language === lang.code && (
                                     <span className="ml-auto w-2 h-2 rounded-full bg-teal-400" />
                                 )}
                             </button>

@@ -48,8 +48,12 @@ async function getValidConnection(userId: string) {
   if (!data) return null;
 
   const connection = data as MicrosoftServerConnection;
-  const expiresAt = connection.token_expiry ? new Date(connection.token_expiry).getTime() : 0;
-  if (expiresAt && Date.now() + 5 * 60 * 1000 >= expiresAt) {
+  const expiresAt = connection.token_expiry ? new Date(connection.token_expiry).getTime() : NaN;
+  const needsRefresh =
+    !connection.token_expiry ||
+    Number.isNaN(expiresAt) ||
+    Date.now() + 5 * 60 * 1000 >= expiresAt;
+  if (needsRefresh) {
     return refreshMicrosoftConnection(connection);
   }
 
@@ -60,7 +64,8 @@ async function graphRequest<T = any>(
   userId: string,
   path: string,
   init: RequestInit = {},
-  beta = false
+  beta = false,
+  retried = false
 ): Promise<T> {
   const connection = await getValidConnection(userId);
   if (!connection?.access_token) {
@@ -78,7 +83,22 @@ async function graphRequest<T = any>(
   });
 
   if (!response.ok) {
-    throw new Error(await response.text().catch(() => 'Microsoft Graph request failed.'));
+    const message = await response.text().catch(() => 'Microsoft Graph request failed.');
+    const isAuthError =
+      response.status === 401 ||
+      response.status === 403 ||
+      /InvalidAuthenticationToken|token.*expired|Lifetime validation failed/i.test(message);
+
+    if (isAuthError && !retried) {
+      try {
+        await refreshMicrosoftConnection(connection);
+        return graphRequest<T>(userId, path, init, beta, true);
+      } catch {
+        // Fall through with the original error below.
+      }
+    }
+
+    throw new Error(message);
   }
 
   if (response.status === 204 || response.status === 202) return {} as T;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { generateContractPDF } from '@/utils/pdfGenerator';
 import { z } from 'zod';
 
 const generatePdfSchema = z.object({
@@ -31,10 +32,27 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Contract not found', code: 'NOT_FOUND' }, { status: 404 });
         }
 
-        // 2. Generate PDF content (simple HTML-to-PDF via puppeteer or @react-pdf/renderer)
-        // For now, we'll create a simple text-based PDF using a basic approach
-        // In production, use a proper PDF library like puppeteer or @react-pdf/renderer
-        const pdfContent = generateSimplePdf(contract);
+        // 2. Fetch tenant for branding
+        const { data: tenant } = await admin
+            .from('tenants')
+            .select('*')
+            .eq('id', tenantId)
+            .single();
+
+        const doc = generateContractPDF(
+            {
+                id: contract.id,
+                title: contract.title,
+                status: contract.status,
+                content: contract.content,
+                signed_at: contract.signed_at,
+                signer_name: contract.signer_name,
+                signer_email: contract.signer_email,
+                created_at: contract.created_at,
+            },
+            tenant as any
+        );
+        const pdfContent = Buffer.from(doc.output('arraybuffer'));
 
         // 3. Upload to Supabase storage
         const fileName = `${contract.id}.pdf`;
@@ -96,25 +114,4 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     } catch (error) {
         return routeErrorResponse(error, 'Failed to generate PDF', req);
     }
-}
-
-function generateSimplePdf(contract: any): Buffer {
-    // Simple PDF generation using basic text layout
-    // In production, use @react-pdf/renderer or puppeteer
-    const content = `
-        Contract: ${contract.title || 'Agreement'}
-        Status: ${contract.status}
-        Signed at: ${contract.signed_at || 'Not signed'}
-        Signer: ${contract.signer_name || 'N/A'}
-        Signer Email: ${contract.signer_email || 'N/A'}
-        
-        --- Contract Content ---
-        ${contract.content || 'No content available'}
-    `;
-
-    // Create a minimal PDF using PDFKit-like approach
-    // For now, return a simple text buffer (placeholder)
-    // In production, use a proper PDF library
-    const pdfBuffer = Buffer.from(content, 'utf-8');
-    return pdfBuffer;
 }
