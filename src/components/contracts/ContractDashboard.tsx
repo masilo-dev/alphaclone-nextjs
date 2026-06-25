@@ -328,7 +328,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [sendingContract, setSendingContract] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
-    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string });
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
     const [previewTab, setPreviewTab] = useState<'document' | 'audit'>('document');
@@ -592,7 +592,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             const res = await fetch('/api/contracts/management', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                    body: JSON.stringify({
                     tenantId: currentTenant.id,
                     action: 'send_contract',
                     config: {
@@ -602,6 +602,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         message: sendForm.message,
                         format: 'pdf',
                         userId: user.id,
+                        provider: sendForm.provider !== 'auto' ? sendForm.provider : undefined,
                     },
                 }),
             });
@@ -1410,6 +1411,36 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 value={sendForm.subject}
                                 onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { value: 'auto', label: 'Auto', icon: '🔄', desc: 'Best available' },
+                                    { value: 'zoho', label: 'Zoho Mail', icon: '📧', desc: 'Zoho' },
+                                    { value: 'gmail', label: 'Gmail', icon: '✉️', desc: 'Google' },
+                                    { value: 'brevo', label: 'Brevo', icon: '📨', desc: 'Brevo' },
+                                    { value: 'sendgrid', label: 'SendGrid', icon: '📬', desc: 'SendGrid' },
+                                    { value: 'resend', label: 'Resend', icon: '🚀', desc: 'Resend' },
+                                ].map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setSendForm(prev => ({ ...prev, provider: opt.value }))}
+                                        className={`flex flex-col items-center justify-center gap-0.5 py-2 px-2 rounded-xl border text-xs font-medium transition-all ${
+                                            sendForm.provider === opt.value
+                                                ? 'bg-teal-600/20 border-teal-500 text-teal-300'
+                                                : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                                        }`}
+                                    >
+                                        <span className="text-base">{opt.icon}</span>
+                                        <span>{opt.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            {sendForm.provider !== 'auto' && (
+                                <p className="text-xs text-slate-500 mt-1.5">Will attempt <span className="text-teal-400 font-medium">{sendForm.provider}</span> first, then fall back to other configured services if unavailable.</p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>

@@ -11,6 +11,7 @@ const sendEmailSchema = z.object({
   threadId: z.string().optional(),
   contactId: z.string().uuid().optional(),
   clientId: z.string().uuid().optional(),
+  provider: z.enum(['auto', 'zoho', 'gmail', 'brevo', 'sendgrid', 'resend']).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -24,16 +25,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { tenantId, to, subject, body_html, contactId, clientId } = parsed.data;
+    const { tenantId, to, subject, body_html, contactId, provider } = parsed.data;
     const { user } = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
 
+    const preferredProvider = provider && provider !== 'auto' ? provider as any : undefined;
     const result = await sendEmail(tenantId, {
       to,
       subject,
       html: body_html,
       userId: user.id,
-    });
+    }, preferredProvider);
 
     if (!result.success) {
       return NextResponse.json(

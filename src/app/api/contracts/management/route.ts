@@ -276,7 +276,7 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
 
 export async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
   try {
-    const { contractId, recipients, subject, message, format = 'pdf' } = config;
+    const { contractId, recipients, subject, message, format = 'pdf', provider } = config;
     if (!contractId || !recipients) {
       return { success: false, error: 'contractId and recipients are required' };
     }
@@ -350,6 +350,7 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       tenantId,
       userId: actorUserId || undefined,
       fromName: tenantName,
+      preferredProvider: provider as any || undefined,
       attachments: [{
         filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
         content: generated.data.bufferBase64,
