@@ -3,6 +3,7 @@ import { routeAIRequest } from '@/services/aiRouter';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cleanAIJSONResponse } from '@/lib/utils';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { extractEmailAddress, formatMailFrom } from '@/lib/email/parseEmailHeader';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 
 export interface ZohoMessage {
@@ -206,7 +207,11 @@ export class ZohoMailService extends ZohoService {
             id,
             thread_id: String(message.threadId || message.thread_id || message.conversationId || id || '') || null,
             subject: String(message.subject || ''),
-            from: String(message.sender || message.fromAddress || message.from || ''),
+            from: formatMailFrom({
+                name: String(message.sender || ''),
+                address: String(message.fromAddress || message.from || ''),
+                raw: String(message.sender || message.fromAddress || message.from || ''),
+            }),
             to: String(message.toAddress || message.to || '').split(',').map((item) => item.trim()).filter(Boolean),
             cc: String(message.ccAddress || message.cc || '').split(',').map((item) => item.trim()).filter(Boolean),
             date: String(message.receivedTime || message.sentDateInGMT || message.date || message.createdTime || '') || null,

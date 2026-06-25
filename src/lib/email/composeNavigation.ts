@@ -6,8 +6,4 @@ export function buildMailComposeUrl(to: string, subject?: string): string {
   return `/dashboard/mail?${params.toString()}`;
 }
 
-export function extractEmailAddress(value?: string | null): string {
-  if (!value) return '';
-  const match = value.match(/[\w.+-]+@[\w.-]+\.\w+/);
-  return match?.[0] || value.trim();
-}
+export { extractEmailAddress } from '@/lib/email/parseEmailHeader';

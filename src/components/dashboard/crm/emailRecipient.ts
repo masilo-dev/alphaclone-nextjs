@@ -1,4 +1,9 @@
 import type { BusinessClient } from '@/services/businessClientService';
+import {
+  extractEmailAddress,
+  formatMailFrom,
+  parseEmailFromHeader,
+} from '@/lib/email/parseEmailHeader';
 
 export type EmailRecipient = {
   name: string;
@@ -8,19 +13,7 @@ export type EmailRecipient = {
   description?: string;
 };
 
-/** Parse "Name <email@domain.com>" or bare email strings from mail headers. */
-export function parseEmailFromHeader(raw: string): { name: string; email: string } {
-  const trimmed = String(raw || '').trim();
-  const angleMatch = trimmed.match(/<([^>]+@[^>]+)>/);
-  if (angleMatch) {
-    const name = trimmed.split('<')[0].trim().replace(/^"|"$/g, '');
-    return { name: name || angleMatch[1], email: angleMatch[1].trim() };
-  }
-  if (trimmed.includes('@')) {
-    return { name: trimmed.split('@')[0], email: trimmed };
-  }
-  return { name: trimmed || 'Recipient', email: '' };
-}
+export { extractEmailAddress, formatMailFrom, parseEmailFromHeader };
 
 export function toBusinessClientFromRecipient(
   recipient: EmailRecipient,

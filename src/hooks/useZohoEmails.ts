@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InboxFolder, UnifiedInboxMessage } from '@/types/unifiedInbox';
 import { isAuthErrorMessage, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
+import { formatMailFrom } from '@/lib/email/parseEmailHeader';
 
 interface ZohoFolderRow {
   folderId: string;
@@ -35,7 +36,11 @@ function mapZohoMessage(row: Record<string, unknown>, folderId: string): Unified
     id: String(row.messageId || row.id || ''),
     provider: 'zoho',
     subject: String(row.subject || ''),
-    from: String(row.sender || row.fromAddress || ''),
+    from: formatMailFrom({
+      name: String(row.sender || ''),
+      address: String(row.fromAddress || row.from || ''),
+      raw: String(row.sender || row.fromAddress || row.from || ''),
+    }),
     snippet: String(row.snippet || row.summary || ''),
     receivedAt: parseZohoTime(String(row.receivedTime || row.sentDateInGMT || '')),
     zohoFolderId: folderId,
