@@ -42,31 +42,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await admin.from('lead_outreach_log').insert({
-      tenant_id: tenantId,
-      contact_id: contactId || null,
-      client_id: clientId || null,
-      type: 'email',
-      direction: 'outbound',
-      subject,
-      body: body_html,
-      sent_at: new Date().toISOString(),
-      provider: result.provider || 'unknown',
-      status: 'sent',
-      metadata: {
-        email_id: result.emailId || null,
-      },
-    });
-
+    // Log outreach - fire-and-forget, don't let logging failure break the send
     if (contactId) {
-      await admin.from('client_email_history').insert({
+      admin.from('lead_outreach_log').insert({
         tenant_id: tenantId,
-        contact_id: contactId,
-        direction: 'outbound',
+        lead_id: contactId,
         subject,
         body_html,
         sent_at: new Date().toISOString(),
-      });
+        provider: result.provider || 'unknown',
+        status: 'sent',
+      }).then(null, () => { /* non-fatal */ });
     }
 
     return NextResponse.json({ success: true, provider: result.provider, emailId: result.emailId });
