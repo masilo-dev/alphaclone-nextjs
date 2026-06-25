@@ -8,6 +8,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json .npmrc ./
+COPY scripts/postinstall.mjs scripts/postinstall.mjs
 RUN npm ci
 
 COPY . .
