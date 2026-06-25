@@ -81,8 +81,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     if (!user?.id) return;
 
     try {
-      setIsLoading(true);
       setError(null); // Clear previous errors
+      const hasCachedTenant = !!tenantService.getCachedCurrentTenant();
+      if (!hasCachedTenant) {
+        setIsLoading(true);
+      }
 
       // Get all tenants user belongs to
       const tenants = await tenantService.getUserTenants(user.id);
