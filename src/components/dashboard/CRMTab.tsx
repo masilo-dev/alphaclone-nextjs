@@ -27,6 +27,8 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { showActionNextSteps } from '../common/showActionNextSteps';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -1095,6 +1097,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
 
   // Unified State Management
   const [subView, setSubView] = useState<SubView>('leads');
@@ -1551,9 +1554,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       <div className="grid grid-cols-3 gap-3 p-4 bg-slate-900/20 border-b border-white/5">
         {([
           {
-            label: 'Leads Pool',
+            label: t('Leads Pool'),
             value: totalLeadsCount.toLocaleString(),
-            sub: 'In the funnel',
+            sub: t('In the funnel'),
             Icon: Target,
             card: 'from-purple-500/12 via-slate-900/70 to-slate-900/50 hover:border-purple-500/40',
             glow: 'bg-purple-500/10 group-hover:bg-purple-500/20',
@@ -1562,9 +1565,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             valueColor: 'text-white',
           },
           {
-            label: 'Customers',
+            label: t('Customers'),
             value: activeClientsCount.toLocaleString(),
-            sub: 'Won accounts',
+            sub: t('Won accounts'),
             Icon: UserCheck,
             card: 'from-teal-500/12 via-slate-900/70 to-slate-900/50 hover:border-teal-500/40',
             glow: 'bg-teal-500/10 group-hover:bg-teal-500/20',
@@ -1573,9 +1576,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             valueColor: 'text-teal-300',
           },
           {
-            label: 'Active Book',
+            label: t('Active Book'),
             value: `$${totalClientValue.toLocaleString()}`,
-            sub: 'Customer value',
+            sub: t('Customer value'),
             Icon: DollarSign,
             card: 'from-emerald-500/12 via-slate-900/70 to-slate-900/50 hover:border-emerald-500/40',
             glow: 'bg-emerald-500/10 group-hover:bg-emerald-500/20',
@@ -1610,26 +1613,26 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       </div>
 
       <div className="px-4 pb-2">
-        <RevenueLeakagePanel leakageOnly heading="Pipeline integrity" />
+        <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />
       </div>
 
       {/* Segment Tabs */}
       <div className="flex border-b border-white/5 bg-slate-950">
-        {(['leads', 'clients', 'contacts'] as SubView[]).map(v => (
+        {([
+          { key: 'leads', label: t('Leads'), count: leads.length },
+          { key: 'clients', label: t('Customers'), count: activeClientsCount },
+          { key: 'contacts', label: t('Contacts'), count: clients.length },
+        ] as { key: SubView; label: string; count: number }[]).map(({ key, label, count }) => (
           <button
-            key={v}
+            key={key}
             onClick={() => {
-              setSubView(v);
+              setSubView(key);
               setSelectedEntity(null);
               setAccountFilter('all');
             }}
-            className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === v ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}
+            className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}
           >
-            {v} ({
-              v === 'leads' ? leads.length :
-              v === 'clients' ? activeClientsCount :
-              clients.length
-            })
+            {label} ({count})
           </button>
         ))}
       </div>
@@ -1763,26 +1766,51 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         ) : filteredEntities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-slate-500 px-4 text-center">
             <Users className="w-12 h-12 mb-3 opacity-30 text-teal-400" />
-            <p className="text-sm font-bold text-slate-300">No matching records</p>
+            <p className="text-sm font-bold text-slate-300">{t('No matching records')}</p>
             <p className="text-xs text-slate-500 max-w-xs mt-1 leading-normal">
-              {subView === 'leads' ? 'Swipe right to qualify/contact accounts, swipe left to archive.' : 'Add accounts or qualify leads to view them here.'}
+              {subView === 'leads' ? t('Swipe right to qualify/contact accounts, swipe left to archive.') : t('Add accounts or qualify leads to view them here.')}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
-            {filteredEntities.map(entity => (
-              <SwipeableRow
-                key={entity.id}
-                entity={entity}
-                status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
-                isTeamsConnected={isTeamsConnected}
-                onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
-                onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
-                onQualify={(ent) => ent.rawLead && handleQualifyLead(ent.rawLead)}
-                onTap={setSelectedEntity}
-              />
-            ))}
-          </div>
+          <>
+            {/* Mobile View - Card List */}
+            <ResponsiveTableMobile className="md:hidden">
+              {filteredEntities.map(entity => (
+                <MobileDataCard
+                  key={entity.id}
+                  onClick={() => setSelectedEntity(entity)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-white">{entity.name}</p>
+                      <p className="text-sm text-slate-400">{entity.email || entity.phone || '-'}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-500/20 text-slate-400'}`}>
+                      {t(entity.status)}
+                    </span>
+                  </div>
+                </MobileDataCard>
+              ))}
+            </ResponsiveTableMobile>
+
+            {/* Desktop View - Table List */}
+            <ResponsiveTableDesktop className="hidden md:block">
+              <div className="divide-y divide-white/5">
+                {filteredEntities.map(entity => (
+                  <SwipeableRow
+                    key={entity.id}
+                    entity={entity}
+                    status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
+                    isTeamsConnected={isTeamsConnected}
+                    onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
+                    onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
+                    onQualify={(ent) => ent.rawLead && handleQualifyLead(ent.rawLead)}
+                    onTap={setSelectedEntity}
+                  />
+                ))}
+              </div>
+            </ResponsiveTableDesktop>
+          </>
         )}
       </div>
 
