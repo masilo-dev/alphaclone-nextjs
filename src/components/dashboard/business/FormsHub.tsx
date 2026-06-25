@@ -3,8 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText, CheckSquare,
-  ClipboardList, TrendingUp, ToggleRight, BarChart3, Code2
+  ClipboardList, TrendingUp, ToggleRight, BarChart3, Code2, Inbox, Settings2, ChevronRight, User, Mail, Phone
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import {
   DndContext,
   PointerSensor,
@@ -118,6 +119,10 @@ export default function FormsHub() {
   const [editorTab, setEditorTab] = useState<'fields' | 'embed' | 'external'>('fields');
   const [isActive, setIsActive] = useState(true);
   const [isDefault, setIsDefault] = useState(true);
+  const [viewMode, setViewMode] = useState<'editor' | 'submissions'>('editor');
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [expandedSub, setExpandedSub] = useState<string | null>(null);
 
   const appOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const tenantSlug = currentTenant?.slug || '';
@@ -201,6 +206,32 @@ export default function FormsHub() {
   }, [currentTenant?.id]);
 
   useEffect(() => { loadForms(); }, [loadForms]);
+
+  const loadSubmissions = useCallback(async (formId: string) => {
+    if (!currentTenant?.id || !formId) return;
+    setSubmissionsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('form_submissions')
+        .select('id, submitter_name, submitter_email, submitter_phone, data, status, source, created_at')
+        .eq('form_id', formId)
+        .eq('tenant_id', currentTenant.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      setSubmissions(data || []);
+    } catch (err: any) {
+      toast.error('Failed to load submissions');
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  }, [currentTenant?.id]);
+
+  useEffect(() => {
+    if (viewMode === 'submissions' && selectedId) {
+      loadSubmissions(selectedId);
+    }
+  }, [viewMode, selectedId, loadSubmissions]);
 
   const selectForm = (form: TenantForm) => {
     setSelectedId(form.id);
@@ -347,6 +378,99 @@ export default function FormsHub() {
         </div>
 
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 md:p-6 space-y-5">
+
+          {/* Mode toggle */}
+          <div className="flex gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl w-fit">
+            <button
+              type="button"
+              onClick={() => setViewMode('editor')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'editor' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Settings2 className="w-3.5 h-3.5" /> Editor
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('submissions')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === 'submissions' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              <Inbox className="w-3.5 h-3.5" /> Submissions
+              {(forms.find(f => f.id === selectedId)?.submission_count || 0) > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px]">
+                  {forms.find(f => f.id === selectedId)?.submission_count}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Submissions view */}
+          {viewMode === 'submissions' && (
+            <div className="space-y-3">
+              {submissionsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+                </div>
+              ) : submissions.length === 0 ? (
+                <div className="text-center py-12">
+                  <Inbox className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm font-medium">No submissions yet</p>
+                  <p className="text-slate-500 text-xs mt-1">Share your form link to start collecting responses</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {submissions.map((sub) => (
+                    <div key={sub.id} className="border border-slate-800 rounded-xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSub(expandedSub === sub.id ? null : sub.id)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0">
+                            <User className="w-4 h-4 text-teal-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{sub.submitter_name || 'Anonymous'}</p>
+                            <p className="text-xs text-slate-500 truncate">{sub.submitter_email || '—'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          <span className="text-xs text-slate-500">{new Date(sub.created_at).toLocaleDateString()}</span>
+                          <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${expandedSub === sub.id ? 'rotate-90' : ''}`} />
+                        </div>
+                      </button>
+                      {expandedSub === sub.id && (
+                        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-slate-800 bg-slate-950/40">
+                          {sub.submitter_email && (
+                            <div className="flex items-center gap-2 text-xs text-slate-300">
+                              <Mail className="w-3.5 h-3.5 text-slate-500" />
+                              <a href={`mailto:${sub.submitter_email}`} className="hover:text-teal-400 underline">{sub.submitter_email}</a>
+                            </div>
+                          )}
+                          {sub.submitter_phone && (
+                            <div className="flex items-center gap-2 text-xs text-slate-300">
+                              <Phone className="w-3.5 h-3.5 text-slate-500" />
+                              {sub.submitter_phone}
+                            </div>
+                          )}
+                          {sub.data && typeof sub.data === 'object' && Object.entries(sub.data).filter(([k]) => !['name','email','phone','_hp'].includes(k)).map(([k, v]) => (
+                            <div key={k} className="text-xs">
+                              <span className="text-slate-500 capitalize">{k.replace(/_/g, ' ')}:</span>{' '}
+                              <span className="text-slate-300">{String(v)}</span>
+                            </div>
+                          ))}
+                          {sub.source && (
+                            <div className="text-[10px] text-slate-600 mt-1">Source: {sub.source}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === 'editor' && <>
           <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
             <Link2 className="w-4 h-4 text-teal-400 shrink-0" />
             <code className="text-xs text-slate-300 truncate flex-1">{publicUrl || 'Set workspace slug in settings'}</code>
@@ -486,6 +610,7 @@ export default function FormsHub() {
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save form
           </button>
+          </>}
         </div>
       </div>
       )}

@@ -100,7 +100,7 @@ export const analyticsService = {
             // 2. Expenses (Costs)
             supabase
                 .from('expenses')
-                .select('amount, created_at, category')
+                .select('amount, created_at')
                 .eq('tenant_id', tenantId)
                 .gte('created_at', startDate.toISOString())
                 .lte('created_at', endDate.toISOString()),
