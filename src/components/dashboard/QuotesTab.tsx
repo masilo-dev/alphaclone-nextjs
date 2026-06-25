@@ -654,6 +654,22 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
     }
   };
 
+  const quoteStats = useMemo<ModuleStat[]>(() => {
+    const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
+    const pipeline = quotes.reduce((s, q) => s + (q.amount || 0), 0);
+    const wonQuotes = quotes.filter(q => q.status === 'accepted' || q.status === 'converted');
+    const wonValue = wonQuotes.reduce((s, q) => s + (q.amount || 0), 0);
+    const outstanding = quotes.filter(q => q.status === 'sent').reduce((s, q) => s + (q.amount || 0), 0);
+    const decided = quotes.filter(q => ['accepted', 'converted', 'rejected'].includes(q.status)).length;
+    const winRate = decided > 0 ? Math.round((wonQuotes.length / decided) * 100) : 0;
+    return [
+      { label: 'Pipeline Value', value: fmt(pipeline), sub: `${quotes.length} quotes`, Icon: DollarSign, accent: 'teal' },
+      { label: 'Won', value: fmt(wonValue), sub: `${wonQuotes.length} accepted`, Icon: Trophy, accent: 'emerald' },
+      { label: 'Outstanding', value: fmt(outstanding), sub: 'Sent, awaiting reply', Icon: Clock, accent: 'amber' },
+      { label: 'Win Rate', value: `${winRate}%`, sub: `${decided} decided`, Icon: FileText, accent: 'purple' },
+    ];
+  }, [quotes]);
+
   if (selected) {
     return (
       <>
@@ -682,22 +698,6 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   }
 
   const filtered = quotes.filter(q => filter === 'all' || q.status === filter);
-
-  const quoteStats = useMemo<ModuleStat[]>(() => {
-    const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
-    const pipeline = quotes.reduce((s, q) => s + (q.amount || 0), 0);
-    const wonQuotes = quotes.filter(q => q.status === 'accepted' || q.status === 'converted');
-    const wonValue = wonQuotes.reduce((s, q) => s + (q.amount || 0), 0);
-    const outstanding = quotes.filter(q => q.status === 'sent').reduce((s, q) => s + (q.amount || 0), 0);
-    const decided = quotes.filter(q => ['accepted', 'converted', 'rejected'].includes(q.status)).length;
-    const winRate = decided > 0 ? Math.round((wonQuotes.length / decided) * 100) : 0;
-    return [
-      { label: 'Pipeline Value', value: fmt(pipeline), sub: `${quotes.length} quotes`, Icon: DollarSign, accent: 'teal' },
-      { label: 'Won', value: fmt(wonValue), sub: `${wonQuotes.length} accepted`, Icon: Trophy, accent: 'emerald' },
-      { label: 'Outstanding', value: fmt(outstanding), sub: 'Sent, awaiting reply', Icon: Clock, accent: 'amber' },
-      { label: 'Win Rate', value: `${winRate}%`, sub: `${decided} decided`, Icon: FileText, accent: 'purple' },
-    ];
-  }, [quotes]);
 
   return (
     <div className="relative flex flex-col h-full">
