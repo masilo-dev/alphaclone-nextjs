@@ -153,6 +153,9 @@ const MARKETING_HUB_ROUTES = new Set([
   '/dashboard/business/unified-inbox',
   '/dashboard/marketing/sequences',
   '/dashboard/marketing/deliverability',
+  '/dashboard/business/facebook',
+  '/dashboard/business/linkedin',
+  '/dashboard/business/x',
 ]);
 
 const INSIGHTS_HUB_ROUTES = new Set([

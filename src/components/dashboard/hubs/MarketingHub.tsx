@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Mail, Globe, FileText, MessageSquare } from 'lucide-react';
+import { Mail, Globe, FileText, MessageSquare, Facebook, Linkedin, Twitter } from 'lucide-react';
 import HubShell from './HubShell';
 
 const MARKETING_TABS = [
@@ -10,6 +10,9 @@ const MARKETING_TABS = [
   { label: 'Deliverability', href: '/dashboard/marketing/deliverability', icon: MessageSquare },
   { label: 'Forms', href: '/dashboard/business/forms', icon: FileText },
   { label: 'Social', href: '/dashboard/business/social', icon: Globe },
+  { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
+  { label: 'LinkedIn', href: '/dashboard/business/linkedin', icon: Linkedin },
+  { label: 'X (Twitter)', href: '/dashboard/business/x', icon: Twitter },
   { label: 'Inbox', href: '/dashboard/mail', icon: MessageSquare },
 ];
 

@@ -106,13 +106,14 @@ export const analyticsService = {
                 .lte('created_at', endDate.toISOString()),
 
             // 3. Other Revenue (Direct payments/payouts)
-            supabase
-                .from('revenue_records')
-                .select('amount, created_at')
-                .eq('tenant_id', tenantId)
-                .gte('created_at', startDate.toISOString())
-                .lte('created_at', endDate.toISOString())
-                .catch(() => ({ data: [], error: null })) // Graceful fallback if table doesn't exist yet
+            Promise.resolve(
+                supabase
+                    .from('revenue_records')
+                    .select('amount, created_at')
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', startDate.toISOString())
+                    .lte('created_at', endDate.toISOString())
+            ).catch(() => ({ data: [] as { amount: number; created_at: string }[], error: null }))
         ]);
 
         const invoices = invoicesRes.data || [];
@@ -164,13 +165,14 @@ export const analyticsService = {
                 .eq('tenant_id', tenantId)
                 .gte('created_at', lastMonthStart.toISOString())
                 .lte('created_at', lastMonthEnd.toISOString()),
-            supabase
-                .from('revenue_records')
-                .select('amount')
-                .eq('tenant_id', tenantId)
-                .gte('created_at', lastMonthStart.toISOString())
-                .lte('created_at', lastMonthEnd.toISOString())
-                .catch(() => ({ data: [], error: null }))
+            Promise.resolve(
+                supabase
+                    .from('revenue_records')
+                    .select('amount')
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', lastMonthStart.toISOString())
+                    .lte('created_at', lastMonthEnd.toISOString())
+            ).catch(() => ({ data: [] as { amount: number }[], error: null }))
         ]);
 
         const lastMonthRevenue = (lastMonthInvoicesRes.data || []).reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0) +
