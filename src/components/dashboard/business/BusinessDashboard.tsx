@@ -57,6 +57,7 @@ const BookingTab = React.lazy(() => import('./BookingTab'));
 const CRMTab = React.lazy(() => import('../CRMTab'));
 const TasksTab = React.lazy(() => import('../TasksTab'));
 import SalesAgent from '../SalesAgent';
+const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
 const DealsTab = React.lazy(() => import('../DealsTab'));
 const QuotesTab = React.lazy(() => import('../QuotesTab'));
 const ClientsPage = React.lazy(() => import('./ClientsPage'));
@@ -127,6 +128,7 @@ const SALES_HUB_ROUTES = new Set([
   '/dashboard/crm/accounts',
   '/dashboard/crm/reports',
   '/dashboard/leads',
+  '/dashboard/leads/campaigns',
   '/dashboard/deals',
   '/dashboard/contacts',
   '/dashboard/crm/unified-contacts',
@@ -218,6 +220,7 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/business/projects',
     '/dashboard/tasks',
     '/dashboard/sales-agent',
+    '/dashboard/leads/campaigns',
     '/dashboard/zoho/mail',
     '/dashboard/business/messages',
 ];
@@ -672,6 +675,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
+            case '/dashboard/leads/campaigns':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <ScraperCampaignsPage />
+                    </React.Suspense>
+                );
             case '/dashboard/contracts':
             case '/dashboard/business/contracts':
                 return <ContractDashboard user={user} initialTab="details" />;
@@ -977,6 +986,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
+            case '/dashboard/leads/campaigns': return t('Lead Finder');
             case '/dashboard/business/bonnie': return t('Bonnie AI Console');
             case '/dashboard/business/tickets': return t('Deep-Desk Support');
             case '/dashboard/accounting': return t('Accounting Dashboard');

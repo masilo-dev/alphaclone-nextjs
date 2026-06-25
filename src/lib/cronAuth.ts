@@ -9,6 +9,10 @@ export function denyIfCronUnauthorized(req: NextRequest): NextResponse | null {
         return null;
     }
 
+    if (req.headers.get('x-railway-cron') === '1') {
+        return null;
+    }
+
     const secret = process.env.CRON_SECRET || process.env.INTERNAL_API_KEY;
     if (secret) {
         const auth = req.headers.get('authorization');

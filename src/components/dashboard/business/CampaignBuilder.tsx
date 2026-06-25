@@ -1153,7 +1153,7 @@ Voice & rules:
                                             <p className="text-xs text-slate-400">Recipients include CRM contacts, saved leads, and clients with email.</p>
                                             <button
                                                 type="button"
-                                                onClick={() => router.push('/dashboard/sales-agent?tab=finder')}
+                                                onClick={() => router.push('/dashboard/leads/campaigns')}
                                                 className="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase bg-teal-500/10 border border-teal-500/30 text-teal-400 hover:bg-teal-500/20"
                                             >
                                                 Open Lead Finder

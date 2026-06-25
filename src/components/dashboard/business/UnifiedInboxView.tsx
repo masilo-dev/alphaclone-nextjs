@@ -22,6 +22,7 @@ import { useZohoEmails } from '@/hooks/useZohoEmails';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { useAuth } from '@/contexts/AuthContext';
 import ComposeEmailModal from './ComposeEmailModal';
+import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 import { parseEmailFromHeader } from '../crm/emailRecipient';
 import type { InboxFolder, InboxProvider, UnifiedInboxMessage } from '@/types/unifiedInbox';
 
@@ -485,6 +486,10 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                <EmailLeadInsightPanel
+                  from={selectedEmail.from}
+                  subject={selectedEmail.subject}
+                />
                 {loadingBody && provider === 'zoho' && !selectedEmail.body ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />

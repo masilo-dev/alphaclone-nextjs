@@ -23,6 +23,7 @@ interface OutreachLead {
   address?:   string;
   category?:  string;
   source?:    string;
+  scraperLeadId?: string;
   qualification: QualificationResult;
 }
 
@@ -59,10 +60,11 @@ interface OutreachPanelProps {
   leads:    OutreachLead[];
   industry: string;
   onClose:  () => void;
+  onSendComplete?: (results: Array<{ businessName: string; status: 'sent' | 'queued' | 'failed'; scraperLeadId?: string }>) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) {
+export function OutreachPanel({ leads, industry, onClose, onSendComplete }: OutreachPanelProps) {
   const { currentTenant } = useTenant();
   const [tone,          setTone         ] = useState('professional');
   const [customContext, setCustomContext ] = useState('');
@@ -244,6 +246,16 @@ export function OutreachPanel({ leads, industry, onClose }: OutreachPanelProps) 
     const queuedCount = results.filter(r => r.status === 'queued').length;
     const failedCount = results.filter(r => r.status === 'failed').length;
     toast.success(`✅ ${sentCount} sent · ${queuedCount} queued · ${failedCount} failed`);
+
+    if (onSendComplete) {
+      onSendComplete(
+        results.map((r, i) => ({
+          businessName: r.name,
+          status: r.status,
+          scraperLeadId: leads[i]?.scraperLeadId,
+        }))
+      );
+    }
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────

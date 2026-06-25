@@ -27,6 +27,9 @@ const envSchema = z.object({
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
     MANUS_API_KEY: z.string().optional(),
 
+    // Scraper microservice (Railway)
+    SCRAPER_SERVICE_URL: z.string().url().optional(),
+
     CRON_SECRET: z.string().optional(),
     INTERNAL_API_KEY: z.string().optional(),
 
@@ -259,6 +262,7 @@ function validateEnv() {
 
         CRON_SECRET: process.env.CRON_SECRET,
         INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
+        SCRAPER_SERVICE_URL: process.env.SCRAPER_SERVICE_URL,
     };
 
     Object.keys(rawEnv).forEach(key => {

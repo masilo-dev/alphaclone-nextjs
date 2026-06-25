@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import MarketingRelatedLinks from '@/components/landing/MarketingRelatedLinks';
 import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
@@ -56,6 +57,20 @@ export default function LeadManagementPage() {
                 <li>Conversion into CRM opportunities and tasks</li>
                 <li>Send emails via Zoho, Outlook, or Gmail</li>
               </ul>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/auth/login?next=/dashboard/leads/campaigns"
+                className="inline-flex items-center justify-center rounded-xl bg-teal-500 hover:bg-teal-400 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
+              >
+                Sign in to open Lead Finder
+              </Link>
+              <Link
+                href="/auth/login?register=true&type=business&plan=starter&next=/dashboard/leads/campaigns"
+                className="inline-flex items-center justify-center rounded-xl border border-teal-500/40 px-5 py-3 text-sm font-semibold text-teal-300 hover:bg-teal-500/10 transition-colors"
+              >
+                Start free trial
+              </Link>
             </div>
             <MarketingRelatedLinks
               links={[
