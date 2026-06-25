@@ -1,5 +1,31 @@
 import { z } from 'zod';
 
+/** Normalize Railway scraper URL for Vercel — accepts host-only values, rejects internal hostnames. */
+function normalizeScraperServiceUrl(value: string | undefined): string | undefined {
+    const trimmed = value?.trim();
+    if (!trimmed) return undefined;
+
+    if (trimmed.includes('.railway.internal')) {
+        console.warn(
+            '[env] SCRAPER_SERVICE_URL cannot be a .railway.internal hostname from Vercel; use the public https://….up.railway.app URL'
+        );
+        return undefined;
+    }
+
+    const candidate = /^https?:\/\//i.test(trimmed)
+        ? trimmed
+        : `https://${trimmed.replace(/^\/+/, '')}`;
+
+    try {
+        const url = new URL(candidate);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+        return candidate.replace(/\/$/, '');
+    } catch {
+        console.warn('[env] Ignoring invalid SCRAPER_SERVICE_URL:', trimmed);
+        return undefined;
+    }
+}
+
 /**
  * Environment variable validation schema
  * Ensures all required environment variables are present and valid
@@ -262,7 +288,9 @@ function validateEnv() {
 
         CRON_SECRET: process.env.CRON_SECRET,
         INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
-        SCRAPER_SERVICE_URL: process.env.SCRAPER_SERVICE_URL,
+        SCRAPER_SERVICE_URL: normalizeScraperServiceUrl(
+            process.env.SCRAPER_SERVICE_URL || process.env.RAILWAY_SCRAPER_SERVICE_URL
+        ),
     };
 
     Object.keys(rawEnv).forEach(key => {

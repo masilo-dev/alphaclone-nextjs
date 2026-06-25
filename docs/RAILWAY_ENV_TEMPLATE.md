@@ -117,7 +117,7 @@ These live on **Vercel**, not Railway, in the scraper-only setup:
 | `UPSTASH_REDIS_REST_TOKEN` | |
 | `SENTRY_DSN` | Server Sentry |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client Sentry |
-| `SCRAPER_SERVICE_URL` | On **Vercel** — Railway scraper URL (not on Railway web) |
+| `SCRAPER_SERVICE_URL` | On **Vercel** — public Railway URL, e.g. `https://alphaclone-nextjs-production.up.railway.app` (must include `https://`; not `.railway.internal`) |
 
 ### Cost control
 

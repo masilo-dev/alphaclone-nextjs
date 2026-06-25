@@ -2,6 +2,8 @@
  * Vercel hosts the web app. Railway runs alphaclone-scraper only (Playwright, lead campaigns).
  */
 
+import { ENV } from './env';
+
 export const RAILWAY_HEAVY_ROUTES = [
   '/api/scraper-campaigns',
   '/api/scraper-campaigns/chat',
@@ -27,10 +29,7 @@ export function isRailwayHeavyCron(path: string): boolean {
 
 /** True when scraper microservice URL is configured (Railway alphaclone-scraper). */
 export function hasRailwayScraper(): boolean {
-  return Boolean(
-    process.env.SCRAPER_SERVICE_URL?.trim() ||
-      process.env.RAILWAY_SCRAPER_SERVICE_URL?.trim()
-  );
+  return Boolean(ENV.SCRAPER_SERVICE_URL);
 }
 
 /**
@@ -43,8 +42,5 @@ export function shouldProxyHeavyWorkToRailway(): boolean {
 }
 
 export function getScraperServiceBaseUrl(): string | null {
-  const url =
-    process.env.SCRAPER_SERVICE_URL?.trim() ||
-    process.env.RAILWAY_SCRAPER_SERVICE_URL?.trim();
-  return url || null;
+  return ENV.SCRAPER_SERVICE_URL ?? null;
 }
