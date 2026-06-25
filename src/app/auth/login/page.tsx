@@ -327,7 +327,7 @@ function LoginContent() {
                 // Map Supabase raw errors to user-friendly messages
                 if (signInError.toLowerCase().includes('invalid login credentials') ||
                     signInError.toLowerCase().includes('invalid credentials')) {
-                    setError('Incorrect email or password. Please check your details and try again, or use "Forgot?" to reset your password.');
+                    setError('Incorrect email or password. If you signed up with Google, use "Continue with Google" instead. Otherwise use "Forgot?" to reset your password.');
                 } else if (signInError.toLowerCase().includes('email not confirmed')) {
                     setError('Please check your inbox and confirm your email address before signing in.');
                 } else if (signInError.toLowerCase().includes('too many requests') || signInError.toLowerCase().includes('rate limit')) {
