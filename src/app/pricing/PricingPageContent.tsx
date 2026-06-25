@@ -12,7 +12,6 @@ import dynamic from 'next/dynamic';
 import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
 import MarketingFooter from '@/components/landing/MarketingFooter';
-import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
 import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
 import MarketingFaqAccordion from '@/components/marketing/MarketingFaqAccordion';
 import { PUBLIC_PRICING_PLANS, PRICING_FROM } from '@/config/pricingPlans';
@@ -84,7 +83,7 @@ export default function PricingPageContent() {
     const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
 
     return (
-        <div className="min-h-screen page-network-bg marketing-theme text-slate-200 selection:bg-teal-500/30 pb-24 lg:pb-0">
+        <div className="min-h-screen page-network-bg marketing-theme text-slate-200 selection:bg-teal-500/30">
             {/* Persistent full-page animated network background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <HeroBackground />
@@ -332,7 +331,6 @@ export default function PricingPageContent() {
                 </div>
             </main>
             <MarketingFooter />
-            <MarketingMobileCtaBar />
         </div>
     );
 }

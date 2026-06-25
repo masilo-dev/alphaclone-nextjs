@@ -48,7 +48,7 @@ export const pwaService = {
         }
 
         try {
-            const purgeKey = 'pwa_purge_v1';
+            const purgeKey = 'pwa_purge_v2';
             const shouldPurge = typeof window !== 'undefined' && window.localStorage?.getItem(purgeKey) !== '1';
             if (shouldPurge) {
                 const registrations = await navigator.serviceWorker.getRegistrations();

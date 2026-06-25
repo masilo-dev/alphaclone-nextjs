@@ -23,7 +23,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from './ui/UIComponents';
 import PublicNavigation from './PublicNavigation';
 import MarketingFooter from './landing/MarketingFooter';
-import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
 import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
 import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
 import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
@@ -111,7 +110,7 @@ const LandingPage = () => {
    };
 
    return (
-      <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30 pb-24 lg:pb-0">
+      <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30">
          {/* Persistent full-page background */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             <HeroBackground />
@@ -844,7 +843,6 @@ const LandingPage = () => {
             <MarketingFooter />
          </div>
 
-         <MarketingMobileCtaBar />
       </div>
    );
 };

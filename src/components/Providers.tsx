@@ -11,6 +11,7 @@ import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { UserPreferencesBootstrap } from '@/components/UserPreferencesBootstrap';
+import ServiceWorkerBootstrap from '@/components/common/ServiceWorkerBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -45,6 +46,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ThemeProvider>
               <LanguageProvider>
                 <UserPreferencesBootstrap />
+                <ServiceWorkerBootstrap />
                 <TenantProvider>
                   <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
                 </TenantProvider>
