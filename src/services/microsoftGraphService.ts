@@ -73,12 +73,19 @@ async function graphRequest<T = any>(
   return JSON.parse(body) as T;
 }
 
+function formatGraphFrom(emailAddress?: { name?: string; address?: string }) {
+  const address = String(emailAddress?.address || '').trim();
+  const name = String(emailAddress?.name || '').trim();
+  if (address && name) return `${name} <${address}>`;
+  return address || name || '';
+}
+
 function mapEmail(item: any) {
   return {
     id: item.id,
     threadId: item.conversationId,
     subject: item.subject,
-    from: item.from?.emailAddress?.address || '',
+    from: formatGraphFrom(item.from?.emailAddress),
     to:
       item.toRecipients?.map((recipient: any) => recipient.emailAddress?.address).filter(Boolean) ||
       [],
