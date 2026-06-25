@@ -303,11 +303,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     React.useEffect(() => {
         if (!user?.id || typeof window === 'undefined') return;
         const key = `business_tour_completed_${user.id}`;
-        if (!localStorage.getItem(key) && activeTab === '/dashboard') {
-            const timer = window.setTimeout(() => setShowProductTour(true), 900);
+        if (!localStorage.getItem(key) && route === '/dashboard') {
+            const timer = window.setTimeout(() => setShowProductTour(true), 2500);
             return () => window.clearTimeout(timer);
         }
-    }, [user?.id, activeTab]);
+    }, [user?.id, route]);
 
     // Initialize MS Teams-like Presence
     React.useEffect(() => {

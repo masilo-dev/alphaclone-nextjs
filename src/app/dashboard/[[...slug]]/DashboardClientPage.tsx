@@ -72,7 +72,8 @@ export default function DashboardClientPage() {
         return <DashboardShellSkeleton />;
     }
 
-    if (!user || needsMfa) return <DashboardShellSkeleton />;
+    // Auth redirect in progress — avoid re-mounting the blocking skeleton over a live dashboard.
+    if (!user || needsMfa) return null;
 
     return (
         <BuildErrorLogger>

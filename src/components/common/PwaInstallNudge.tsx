@@ -8,9 +8,23 @@ import { usePWA } from '@/contexts/PWAContext';
 const LAST_KEY = 'ac_pwa_nudge_last';
 const DISMISS_SESSION = 'ac_pwa_nudge_dismissed_session';
 const INTERVAL_MS = 14 * 24 * 60 * 60 * 1000;
+const MIN_IDLE_MS = 30_000;
+const MAX_WAIT_MS = 90_000;
+
+const DASHBOARD_SCROLL_SELECTORS = '.ac-business-scroll, .ac-dashboard-main, #main-content';
+
+function isBlockingOverlayActive(): boolean {
+    if (typeof document === 'undefined') return false;
+    return Boolean(
+        document.getElementById('react-joyride-portal') ||
+        document.documentElement.hasAttribute('data-product-tour-active'),
+    );
+}
 
 /**
  * Occasional reminder for dashboard users to install the PWA (standalone app).
+ * Shown only after the user has scrolled or interacted with the dashboard so
+ * core navigation is never blocked on first load.
  */
 export default function PwaInstallNudge() {
     const pathname = usePathname();
@@ -27,8 +41,46 @@ export default function PwaInstallNudge() {
         const last = parseInt(localStorage.getItem(LAST_KEY) || '0', 10);
         if (Date.now() - last < INTERVAL_MS) return;
 
-        const timer = window.setTimeout(() => setOpen(true), 10000);
-        return () => window.clearTimeout(timer);
+        let cancelled = false;
+        let hasEngaged = false;
+        let scheduled = false;
+        const mountedAt = Date.now();
+
+        const maybeOpen = () => {
+            if (cancelled) return;
+            if (isBlockingOverlayActive()) return;
+            const idleLongEnough = Date.now() - mountedAt >= MIN_IDLE_MS;
+            if (!hasEngaged && !idleLongEnough) return;
+            setOpen(true);
+        };
+
+        const onEngage = () => {
+            hasEngaged = true;
+            if (scheduled) return;
+            scheduled = true;
+            window.setTimeout(maybeOpen, MIN_IDLE_MS);
+        };
+
+        const scrollTargets = Array.from(
+            document.querySelectorAll<HTMLElement>(DASHBOARD_SCROLL_SELECTORS),
+        );
+        scrollTargets.forEach((el) => el.addEventListener('scroll', onEngage, { passive: true }));
+        window.addEventListener('wheel', onEngage, { passive: true });
+        window.addEventListener('touchmove', onEngage, { passive: true });
+        window.addEventListener('pointerdown', onEngage, { passive: true });
+
+        const poll = window.setInterval(maybeOpen, 1000);
+        const maxWait = window.setTimeout(maybeOpen, MAX_WAIT_MS);
+
+        return () => {
+            cancelled = true;
+            window.clearInterval(poll);
+            window.clearTimeout(maxWait);
+            scrollTargets.forEach((el) => el.removeEventListener('scroll', onEngage));
+            window.removeEventListener('wheel', onEngage);
+            window.removeEventListener('touchmove', onEngage);
+            window.removeEventListener('pointerdown', onEngage);
+        };
     }, [isPWA, isLoading, pathname]);
 
     if (!open) return null;
@@ -45,10 +97,14 @@ export default function PwaInstallNudge() {
 
     return (
         <div
-            role="region"
-            aria-label="Install app"
-            className="fixed bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:max-w-md z-[48] rounded-xl border border-slate-600 bg-slate-900 shadow-xl p-4 text-left"
+            className="fixed bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:max-w-md z-[48] pointer-events-none"
+            aria-hidden
         >
+            <div
+                role="region"
+                aria-label="Install app"
+                className="pointer-events-auto rounded-xl border border-slate-600 bg-slate-900 shadow-xl p-4 text-left"
+            >
             <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-teal-500/15 text-teal-400 shrink-0">
                     <Download className="w-5 h-5" aria-hidden />
@@ -84,6 +140,7 @@ export default function PwaInstallNudge() {
                 >
                     <X className="w-4 h-4" />
                 </button>
+            </div>
             </div>
         </div>
     );
