@@ -36,7 +36,7 @@ export const authService = {
     async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null; needsMfa?: boolean }> {
         try {
             // Validate input
-            const validated = signInSchema.parse({ email: email.toLowerCase(), password });
+            const validated = signInSchema.parse({ email: email.trim().toLowerCase(), password });
 
             const { data, error } = await withAuthTimeout(supabase.auth.signInWithPassword({
                 email: validated.email,

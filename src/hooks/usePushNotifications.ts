@@ -92,7 +92,16 @@ export function usePushNotifications() {
             setIsSubscribed(true);
             return true;
         } catch (err) {
-            console.error('[PushNotifications] Subscription failed:', err);
+            const message = err instanceof Error ? err.message : String(err);
+            const isUnavailable =
+                message.includes('push service not available') ||
+                message.includes('Registration failed') ||
+                (err instanceof DOMException && err.name === 'AbortError');
+            if (isUnavailable) {
+                console.warn('[PushNotifications] Push not available in this browser:', message);
+            } else {
+                console.error('[PushNotifications] Subscription failed:', err);
+            }
             return false;
         }
     }, [registration]);
