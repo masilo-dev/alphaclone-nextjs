@@ -255,8 +255,6 @@ const ES: Record<string, string> = {
     'Active Book': 'Cartera activa',
     'Customer value': 'Valor de clientes',
     'Pipeline integrity': 'Integridad del pipeline',
-    Contacts: 'Contactos',
-    Leads: 'Leads',
     'No matching records': 'No hay registros coincidentes',
     'Swipe right to qualify/contact accounts, swipe left to archive.': 'Desliza derecha para calificar/contactar cuentas, izquierda para archivar.',
     'Add accounts or qualify leads to view them here.': 'Agrega cuentas o califica leads para verlos aquí.',
