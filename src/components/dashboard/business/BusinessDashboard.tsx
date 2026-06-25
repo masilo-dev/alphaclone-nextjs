@@ -497,6 +497,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
         switch (tab) {
             case '/dashboard':
+            case '/dashboard/business':
                 return <BusinessHome user={user} stats={dashboardStats} />;
             case '/dashboard/projects':
             case '/dashboard/business/projects':
