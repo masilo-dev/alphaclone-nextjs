@@ -47,13 +47,6 @@ export interface ZohoAccount {
     status: string;
 }
 
-function extractEmailAddress(input: string): string {
-    const value = String(input || '').trim();
-    const match = value.match(/<([^>]+)>/);
-    if (match?.[1]) return match[1].trim();
-    return value;
-}
-
 function normalizeReplySubject(subject: string): string {
     const cleaned = normalizeEmailSubject(subject);
     if (!cleaned) return 'Re: Conversation';

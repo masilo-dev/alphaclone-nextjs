@@ -27,12 +27,21 @@ class RateLimitService {
         userRole: string,
         generationType: 'logo' | 'image' | 'content'
     ): Promise<RateLimitCheck> {
-        // RATE LIMITS REMOVED - Unlimited for everyone
+        if (userRole === 'admin' || userRole === 'super_admin') {
+            return {
+                allowed: true,
+                remaining: 999,
+                limit: 999,
+                resetAt: this.getNextMidnight(),
+            };
+        }
+
+        const remaining = await this.getRemainingGenerations(userId, userRole, generationType);
         return {
-            allowed: true,
-            remaining: 999,
-            limit: 999,
-            resetAt: this.getNextMidnight()
+            allowed: remaining > 0,
+            remaining,
+            limit: this.CLIENT_DAILY_LIMIT,
+            resetAt: this.getNextMidnight(),
         };
     }
 
@@ -69,8 +78,13 @@ class RateLimitService {
         userRole: string,
         generationType: 'logo' | 'image' | 'content'
     ): Promise<number> {
-        // RATE LIMITS REMOVED - Unlimited for everyone
-        return 999;
+        if (userRole === 'admin' || userRole === 'super_admin') {
+            return 999;
+        }
+
+        const stats = await this.getUsageStats(userId);
+        const used = stats[generationType] ?? 0;
+        return Math.max(0, this.CLIENT_DAILY_LIMIT - used);
     }
 
     /**

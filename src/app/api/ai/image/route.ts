@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { UNITS_PER_IMAGE } from '@/config/aiUsageQuotas';
+import { UNITS_PER_IMAGE, planIncludesImageGeneration } from '@/config/aiUsageQuotas';
 import {
     isPlatformSuperAdmin,
     resolveTenantContextForUser,
@@ -168,6 +168,16 @@ export async function POST(req: NextRequest) {
                     code: 'TENANT_REQUIRED',
                 },
                 { status: 400 }
+            );
+        }
+        if (!planIncludesImageGeneration(ctx.plan)) {
+            return NextResponse.json(
+                {
+                    error: 'AI image generation requires a Pro plan or higher.',
+                    code: 'PLAN_UPGRADE_REQUIRED',
+                    plan: ctx.plan,
+                },
+                { status: 403 }
             );
         }
         const blocked = await consumeAiUnitsOr429(admin, ctx.tenantId, ctx.plan, UNITS_PER_IMAGE);

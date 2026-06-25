@@ -513,6 +513,22 @@ export async function POST(req: NextRequest) {
         result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
       }, { headers: getMcpCorsHeaders(req) });
     }
+
+    // Registry tools — bypass MCPServer (avoids nodemailer / heavy email import chain)
+    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
+    initializeRegistry();
+    if (hasTool(toolName)) {
+      const result = await executeTool(tenantId, userId, toolName, {
+        ...toolArgs,
+        tenant_id: tenantId,
+        user_id: userId,
+      });
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result,
+      }, { headers: getMcpCorsHeaders(req) });
+    }
   }
 
   // 5. Execute via SDK (lazy-load heavy MCPServer module for POST only)

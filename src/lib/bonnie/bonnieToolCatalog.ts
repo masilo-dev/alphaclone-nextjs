@@ -8,7 +8,7 @@ export const BONNIE_REGISTRY_TOOLS = [
   'get_contacts', 'create_contact', 'update_contact', 'log_contact_activity',
   'get_deals', 'create_deal', 'update_deal', 'move_deal_stage', 'get_pipeline_summary',
   // Finance
-  'get_invoices', 'create_invoice', 'update_invoice_status', 'accounting_snapshot', 'get_revenue_summary',
+  'get_invoices', 'create_invoice', 'update_invoice_status', 'accounting_snapshot', 'get_revenue_summary', 'get_finance_snapshot',
   // Projects & tasks
   'get_projects', 'create_project', 'get_project_tasks', 'create_project_task', 'update_project_task',
   // Campaigns & outreach
@@ -51,7 +51,7 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'send_whatsapp_message', 'get_whatsapp_status', 'enable_whatsapp_chatbot', 'disable_whatsapp_chatbot',
   'set_lead_auto_outreach', 'set_outreach_rate_limits',
   // Business intel
-  'get_business_snapshot', 'get_finance_snapshot', 'get_strategic_plan',
+  'get_business_snapshot', 'get_strategic_plan',
   'run_chief_of_staff_routine', 'get_recent_messages',
   'run_playbook', 'get_automation_health',
   // Tickets
