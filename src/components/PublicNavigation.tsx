@@ -160,6 +160,15 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
               </button>
             )}
 
+            {!mobileMenuOpen && (
+              <Link
+                href={BUSINESS_SIGNUP_HREF}
+                className="inline-flex items-center h-9 px-4 rounded-xl bg-teal-500 text-slate-950 text-xs font-bold hover:bg-teal-400 transition-colors shadow-md shadow-teal-500/20"
+              >
+                Start free
+              </Link>
+            )}
+
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <button
@@ -168,12 +177,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                       ? 'bg-slate-900 border-teal-500/50 text-teal-400 shadow-lg shadow-teal-500/10'
                       : 'bg-slate-900/50 border-slate-800 text-white hover:text-teal-400 hover:border-teal-500/30'
                   }`}
-                  aria-label="Open menu"
+                  aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 >
                   <div className="relative w-5 h-5 flex flex-col items-center justify-center">
-                    <span className="absolute h-0.5 w-full bg-current -translate-y-1.5" />
-                    <span className="absolute h-0.5 w-full bg-current" />
-                    <span className="absolute h-0.5 w-full bg-current translate-y-1.5" />
+                    <span className={`absolute h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? 'w-full rotate-45' : 'w-full -translate-y-1.5'}`} />
+                    <span className={`absolute h-0.5 w-full bg-current transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 scale-x-0' : ''}`} />
+                    <span className={`absolute h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? 'w-full -rotate-45' : 'w-full translate-y-1.5'}`} />
                   </div>
                 </button>
               </SheetTrigger>
