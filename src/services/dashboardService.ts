@@ -234,7 +234,7 @@ export const preferencesService = {
             .from('user_preferences')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
         return { preferences: data, error };
     },

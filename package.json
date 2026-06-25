@@ -25,6 +25,8 @@
     "pentest": "node scripts/platform-pentest.mjs"
   },
   "dependencies": {
+    "ai": "^6.0.0",
+    "@ai-sdk/gateway": "^3.0.0",
     "@anthropic-ai/sdk": "^0.74.0",
     "@azure/communication-calling": "^1.43.1",
     "@azure/communication-common": "^2.4.0",
