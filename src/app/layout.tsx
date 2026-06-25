@@ -173,9 +173,6 @@ export default function RootLayout({
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'none',
           touchAction: 'manipulation',
-          WebkitTouchCallout: 'none',
-          WebkitUserSelect: 'none',
-          userSelect: 'none',
         }}
       >
         <script

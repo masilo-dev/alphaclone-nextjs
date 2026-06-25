@@ -528,9 +528,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Active state for touch feedback */
-button:active,
-a:active {
+/* Active state for touch feedback — native/PWA controls only */
+.native-tap:active,
+button.native-tap:active,
+a.native-tap:active {
   transform: scale(0.98);
   opacity: 0.9;
   transition: transform 0.1s ease, opacity 0.1s ease;
@@ -972,15 +973,18 @@ body {
   }
 }
 
-/* PWA Touch & Viewport Improvements */
-body, html {
+/* PWA Touch & Viewport Improvements — scoped to app shells, not marketing pages */
+html.pwa-standalone body,
+html.pwa-standalone,
+.ac-dashboard-root,
+.ac-business-root {
   height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
 }
 
-body {
+html.pwa-standalone body {
   position: fixed;
   inset: 0;
   width: 100%;

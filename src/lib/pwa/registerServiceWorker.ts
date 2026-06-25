@@ -22,23 +22,6 @@ async function purgeStaleServiceWorkerCaches(): Promise<void> {
     }
 }
 
-async function activateWaitingWorker(registration: ServiceWorkerRegistration): Promise<void> {
-    const waiting = registration.waiting;
-    if (!waiting) return;
-
-    waiting.postMessage({ type: 'SKIP_WAITING' });
-
-    await new Promise<void>((resolve) => {
-        const timeout = window.setTimeout(resolve, 4000);
-        waiting.addEventListener('statechange', () => {
-            if (waiting.state === 'activated') {
-                window.clearTimeout(timeout);
-                resolve();
-            }
-        });
-    });
-}
-
 export async function registerServiceWorkerSafely(): Promise<ServiceWorkerRegistration | null> {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
         return null;
@@ -68,7 +51,6 @@ export async function registerServiceWorkerSafely(): Promise<ServiceWorkerRegist
                     // update() can fail offline — keep existing registration.
                 }
 
-                await activateWaitingWorker(registration);
                 return registration;
             } catch {
                 return null;

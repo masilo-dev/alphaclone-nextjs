@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Project, ChatMessage, GalleryItem } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,7 @@ import dynamic from 'next/dynamic';
 
 const Dashboard = dynamic(() => import('@/components/Dashboard'), {
     ssr: false,
-    loading: () => <DashboardShellSkeleton />,
+    loading: () => null,
 });
 
 class BuildErrorLogger extends React.Component<{ children: React.ReactNode }> {
@@ -41,8 +41,14 @@ export default function DashboardClientPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
     const { user, loading: authLoading, needsMfa, signOut } = useAuth();
-    const { currentTenant, isLoading: tenantLoading } = useTenant();
+    const { isLoading: tenantLoading } = useTenant();
     const router = useRouter();
+    const hasBootstrappedRef = useRef(false);
+
+    const isReady = Boolean(user && !needsMfa && !authLoading && !tenantLoading);
+    if (isReady) {
+        hasBootstrappedRef.current = true;
+    }
 
     const handleLogout = async () => {
         await signOut();
@@ -61,12 +67,11 @@ export default function DashboardClientPage() {
     // Initialize the session timeout hook (10 min timeout, 2 min warning)
     const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout);
 
-    // Show skeleton shell immediately if loading
-    if (authLoading || tenantLoading) {
+    // Only block with skeleton on the first load — never flash back after the dashboard is interactive.
+    if (!hasBootstrappedRef.current && (authLoading || tenantLoading || !user || needsMfa)) {
         return <DashboardShellSkeleton />;
     }
 
-    // Shield against rendering without user or if MFA is needed
     if (!user || needsMfa) return <DashboardShellSkeleton />;
 
     return (

@@ -36,26 +36,17 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
-    const { isSubscribed, subscribeToPush } = usePushNotifications();
+    const { isSubscribed, pushSupported, subscribeToPush } = usePushNotifications();
     const [pushBusy, setPushBusy] = useState(false);
     const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
 
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        if (typeof window === 'undefined' || !pushSupported) {
             setPushPermission('unsupported');
             return;
         }
         setPushPermission(Notification.permission);
-    }, []);
-
-    // If the user already granted permission but the device lost its subscription
-    // (e.g. new device / reinstall), silently re-subscribe so push keeps working.
-    useEffect(() => {
-        if (pushPermission === 'granted' && !isSubscribed) {
-            void subscribeToPush();
-        }
-    }, [pushPermission, isSubscribed, subscribeToPush]);
+    }, [pushSupported]);
 
     const handleEnablePush = useCallback(async () => {
         setPushBusy(true);
@@ -70,7 +61,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
         }
     }, [subscribeToPush]);
 
-    const showPushPrompt = pushPermission !== 'unsupported' && pushPermission !== 'denied' && !isSubscribed;
+    const showPushPrompt = pushSupported && pushPermission !== 'denied' && !isSubscribed;
 
     const loadNotifications = useCallback(async () => {
         const { notifications: loaded } = await notificationService.getNotifications(userId, tenantId);

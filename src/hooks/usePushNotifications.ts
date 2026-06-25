@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { registerServiceWorkerSafely } from '@/lib/pwa/registerServiceWorker';
+import { isPushSupported, isPushUnavailableError } from '@/lib/push/isPushSupported';
 
 // Helper to convert VAPID public key
 function urlBase64ToUint8Array(base64String: string) {
@@ -22,66 +23,53 @@ function urlBase64ToUint8Array(base64String: string) {
 export function usePushNotifications() {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+    const [pushSupported] = useState(() => isPushSupported());
 
-    // Register Service Worker (generated at production build time)
     useEffect(() => {
-        if (
-            process.env.NODE_ENV === 'production' &&
-            typeof window !== 'undefined' &&
-            'serviceWorker' in navigator &&
-            'PushManager' in window
-        ) {
-            void registerServiceWorkerSafely()
-                .then((reg) => {
-                    if (!reg) return null;
-                    setRegistration(reg);
-                    return reg.pushManager.getSubscription();
-                })
-                .then((sub) => {
-                    if (sub !== null && sub !== undefined) {
-                        setIsSubscribed(!!sub);
-                    }
-                })
-                .catch(() => {
-                    // Missing /sw.js or blocked registration — non-critical
-                });
-        }
-    }, []);
+        if (!pushSupported) return;
 
-    // Subscribe function
+        void registerServiceWorkerSafely()
+            .then((reg) => {
+                if (!reg) return null;
+                setRegistration(reg);
+                return reg.pushManager.getSubscription();
+            })
+            .then((sub) => {
+                if (sub) setIsSubscribed(true);
+            })
+            .catch(() => {
+                // Non-critical — service worker may be unavailable in this browser.
+            });
+    }, [pushSupported]);
+
     const subscribeToPush = useCallback(async () => {
+        if (!pushSupported) return false;
+
         if (!registration) {
-            console.error('[PushNotifications] Service worker registration not ready');
             return false;
         }
 
         try {
-            // Request user permission for notifications
             const permission = await Notification.requestPermission();
             if (permission !== 'granted') {
-                console.warn('[PushNotifications] Notification permission denied');
                 return false;
             }
 
             const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
             if (!vapidPublicKey) {
-                console.error('[PushNotifications] NEXT_PUBLIC_VAPID_PUBLIC_KEY environment variable is not set');
                 return false;
             }
 
             const convertedKey = urlBase64ToUint8Array(vapidPublicKey);
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: convertedKey
+                applicationServerKey: convertedKey,
             });
 
-            // Send subscription to server
             const response = await fetch('/api/push/subscribe', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(subscription)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription),
             });
 
             if (!response.ok) {
@@ -92,26 +80,15 @@ export function usePushNotifications() {
             setIsSubscribed(true);
             return true;
         } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            const isUnavailable =
-                message.includes('push service not available') ||
-                message.includes('Registration failed') ||
-                (err instanceof DOMException && err.name === 'AbortError');
-            if (isUnavailable) {
-                console.warn('[PushNotifications] Push not available in this browser:', message);
-            } else {
-                console.error('[PushNotifications] Subscription failed:', err);
+            if (!isPushUnavailableError(err)) {
+                console.warn('[PushNotifications] Subscription failed:', err);
             }
             return false;
         }
-    }, [registration]);
+    }, [pushSupported, registration]);
 
-    // Unsubscribe function
     const unsubscribeFromPush = useCallback(async () => {
-        if (!registration) {
-            console.error('[PushNotifications] Service worker registration not ready');
-            return false;
-        }
+        if (!registration) return false;
 
         try {
             const subscription = await registration.pushManager.getSubscription();
@@ -124,14 +101,17 @@ export function usePushNotifications() {
             }
             return false;
         } catch (err) {
-            console.error('[PushNotifications] Unsubscription failed:', err);
+            if (!isPushUnavailableError(err)) {
+                console.warn('[PushNotifications] Unsubscription failed:', err);
+            }
             return false;
         }
     }, [registration]);
 
     return {
         isSubscribed,
+        pushSupported,
         subscribeToPush,
-        unsubscribeFromPush
+        unsubscribeFromPush,
     };
 }
