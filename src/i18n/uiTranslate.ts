@@ -246,6 +246,24 @@ const ES: Record<string, string> = {
     'Team Messages': 'Mensajes del equipo',
     'Mail Inbox': 'Bandeja de correo',
     'MS Teams': 'Microsoft Teams',
+
+    // CRM translations
+    'Leads Pool': 'Pool de leads',
+    'In the funnel': 'En el embudo',
+    Customers: 'Clientes',
+    'Won accounts': 'Cuentas ganadas',
+    'Active Book': 'Cartera activa',
+    'Customer value': 'Valor de clientes',
+    'Pipeline integrity': 'Integridad del pipeline',
+    Contacts: 'Contactos',
+    Leads: 'Leads',
+    'No matching records': 'No hay registros coincidentes',
+    'Swipe right to qualify/contact accounts, swipe left to archive.': 'Desliza derecha para calificar/contactar cuentas, izquierda para archivar.',
+    'Add accounts or qualify leads to view them here.': 'Agrega cuentas o califica leads para verlos aquí.',
+    new: 'nuevo',
+    contacted: 'contactado',
+    qualified: 'calificado',
+    disqualified: 'descalificado',
 };
 
 const PL: Record<string, string> = {
@@ -484,6 +502,24 @@ const PL: Record<string, string> = {
     'Team Messages': 'Wiadomości zespołu',
     'Mail Inbox': 'Skrzynka pocztowa',
     'MS Teams': 'Microsoft Teams',
+
+    // CRM translations
+    'Leads Pool': 'Pula leadów',
+    'In the funnel': 'W lejku',
+    Customers: 'Klienci',
+    'Won accounts': 'Wygrane konta',
+    'Active Book': 'Aktywna księga',
+    'Customer value': 'Wartość klientów',
+    'Pipeline integrity': 'Integralność pipeline',
+    Contacts: 'Kontakty',
+    Leads: 'Leady',
+    'No matching records': 'Brak pasujących rekordów',
+    'Swipe right to qualify/contact accounts, swipe left to archive.': 'Przesuń w prawo, aby zakwalifikować/skontaktować się z kontami, w lewo, aby zarchiwizować.',
+    'Add accounts or qualify leads to view them here.': 'Dodaj konta lub zakwalifikuj leady, aby je zobaczyć tutaj.',
+    new: 'nowy',
+    contacted: 'skontaktowany',
+    qualified: 'zakwalifikowany',
+    disqualified: 'dyskwalifikowany',
 };
 
 export function uiTranslate(lang: SupportedLanguage, text: string): string {
