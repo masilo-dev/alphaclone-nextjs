@@ -66,6 +66,10 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
     { label: 'Contact', path: '/contact' },
   ];
 
+  const desktopPrimaryLabels = new Set(['Home', 'About', 'Services', 'Docs', 'Pricing']);
+  const desktopPrimaryLinks = navItems.filter((item) => desktopPrimaryLabels.has(item.label));
+  const desktopDropdownLinks = navItems.filter((item) => !desktopPrimaryLabels.has(item.label));
+
   const primaryMobileItems = navItems.filter((item) =>
     ['Home', 'Services', 'Results', 'Pricing', 'About', 'Contact'].includes(item.label)
   );
@@ -90,10 +94,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
     <nav className="fixed w-full z-[120] pt-safe transition-all duration-300 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className={`flex items-center justify-between transition-all duration-300 ${
+          className={`flex items-center justify-between gap-4 transition-all duration-300 ${
             isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'
           }`}
         >
+          <div className="flex items-center gap-6 lg:gap-8 min-w-0 flex-1">
           <Link
             href="/"
             className="flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0"
@@ -119,22 +124,37 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
             <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-1">
-            {/* Explore dropdown */}
+          <div className="hidden lg:flex items-center gap-0.5 min-w-0">
+            {desktopPrimaryLinks.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`inline-flex items-center h-10 px-2.5 xl:px-3 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                  isActive(item.path)
+                    ? 'text-teal-400 bg-teal-500/10'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900/50'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+
             <div className="relative" ref={exploreRef}>
               <button
                 type="button"
                 onClick={() => setExploreOpen((v) => !v)}
-                className={`inline-flex items-center gap-1.5 h-10 px-3 text-sm font-semibold rounded-lg transition-colors ${
-                  exploreOpen ? 'text-teal-400 bg-teal-500/10' : 'text-slate-300 hover:text-white hover:bg-slate-900/50'
+                className={`inline-flex items-center gap-1.5 h-10 px-2.5 xl:px-3 text-sm font-semibold rounded-lg transition-colors ${
+                  exploreOpen || desktopDropdownLinks.some((item) => isActive(item.path))
+                    ? 'text-teal-400 bg-teal-500/10'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900/50'
                 }`}
               >
-                Explore
+                More
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${exploreOpen ? 'rotate-180' : ''}`} />
               </button>
               {exploreOpen && (
                 <div className="absolute top-[calc(100%+8px)] left-0 w-52 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50 py-1">
-                  {navItems.map((item) => (
+                  {desktopDropdownLinks.map((item) => (
                     <Link
                       key={item.path}
                       href={item.path}
@@ -151,36 +171,25 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                 </div>
               )}
             </div>
+          </div>
+          </div>
 
-            {/* Pricing — standalone so it's always visible */}
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
             <Link
-              href="/pricing"
-              className={`inline-flex items-center h-10 px-3 text-sm font-semibold rounded-lg transition-colors ${
-                isActive('/pricing') ? 'text-teal-400 bg-teal-500/10' : 'text-slate-300 hover:text-white hover:bg-slate-900/50'
-              }`}
+              href={LOGIN_HREF}
+              className="inline-flex items-center h-9 px-4 text-sm font-semibold rounded-lg border border-teal-500/40 text-teal-400 hover:text-teal-300 hover:border-teal-400/70 transition-colors whitespace-nowrap"
             >
-              Pricing
+              Login
             </Link>
 
-            <div className="flex items-center gap-2 ml-3 pl-3 border-l border-slate-800">
-              {/* Login — highlighted with teal border */}
-              <Link
-                href={LOGIN_HREF}
-                className="inline-flex items-center h-9 px-4 text-sm font-semibold rounded-lg border border-teal-500/40 text-teal-400 hover:text-teal-300 hover:border-teal-400/70 transition-colors"
+            <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center shrink-0">
+              <Button
+                size="sm"
+                className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20 whitespace-nowrap"
               >
-                Login
-              </Link>
-
-              {/* Start Free Trial — primary CTA */}
-              <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
-                <Button
-                  size="sm"
-                  className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/20"
-                >
-                  Start Free Trial
-                </Button>
-              </Link>
-            </div>
+                Start Free Trial
+              </Button>
+            </Link>
           </div>
 
           <div className="lg:hidden relative z-[140] pointer-events-auto flex items-center gap-2 h-full">
