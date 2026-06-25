@@ -17,6 +17,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Zap, Mail, Plus, Play, Save, Settings, Loader2, RefreshCw, History, LayoutTemplate, Maximize, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ModuleJumpSelect from '../common/ModuleJumpSelect';
+import { MobileDataCard, ResponsiveTableDesktop, ResponsiveTableMobile } from '../../ui/ResponsiveTable';
 import { workflowService, Workflow, WorkflowExecution } from '../../../services/workflowService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
@@ -414,7 +416,17 @@ export default function AutomationBuilder() {
     <div className="w-full h-full min-w-0 min-h-[min(100dvh,720px)] sm:min-h-[640px] lg:min-h-[700px] flex flex-col bg-slate-50 dark:bg-slate-950 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner">
         {/* Main Tab Controller */}
         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between z-20 min-w-0">
-            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
+            <ModuleJumpSelect
+                options={[
+                    { label: 'Builder', href: 'editor' },
+                    { label: 'Audit Trail', href: 'history' },
+                    { label: 'Templates', href: 'templates' },
+                ]}
+                currentHref={activeTab}
+                label="Automation section"
+                onNavigate={(href) => setActiveTab(href as typeof activeTab)}
+            />
+            <div className="hidden md:flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
                 {[
                     { id: 'editor', label: 'Builder', icon: Zap },
                     { id: 'history', label: 'Audit Trail', icon: History },
@@ -423,7 +435,7 @@ export default function AutomationBuilder() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-11 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
                             activeTab === tab.id
                                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
@@ -456,7 +468,7 @@ export default function AutomationBuilder() {
             <div className="pointer-events-auto flex items-center gap-2">
                 <button 
                   onClick={centerView}
-                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition"
+                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-2.5 min-h-11 min-w-11 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition"
                   title="Center View"
                 >
                   <Maximize className="w-5 h-5" />
@@ -639,7 +651,29 @@ export default function AutomationBuilder() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl overflow-x-auto">
+                    <>
+                    <ResponsiveTableMobile className="space-y-3">
+                        {executions.map((ex) => (
+                            <MobileDataCard key={ex.id} className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                <p className="text-sm font-medium text-slate-900 dark:text-slate-200">
+                                    {new Date(ex.executed_at).toLocaleString()}
+                                </p>
+                                {ex.status === 'completed' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-black uppercase">
+                                        <CheckCircle2 className="w-3 h-3" /> Completed
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs font-black uppercase">
+                                        <XCircle className="w-3 h-3" /> {ex.status}
+                                    </span>
+                                )}
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    {ex.error_message || 'Workflow executed successfully.'}
+                                </p>
+                            </MobileDataCard>
+                        ))}
+                    </ResponsiveTableMobile>
+                    <ResponsiveTableDesktop className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
                         <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
@@ -672,7 +706,8 @@ export default function AutomationBuilder() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
+                    </ResponsiveTableDesktop>
+                    </>
                 )}
             </div>
         )}

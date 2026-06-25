@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { expenseService } from '../../../../services/finance/ExpenseService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
 import { enforceQuota } from '@/lib/quotaMiddleware';
 import { quotaEnforcementService } from '@/services/quotaEnforcementService';
 
-async function getUser(req: NextRequest) {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
-}
-
 export async function GET(req: NextRequest) {
-    const user = await getUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+
+    let user;
+    try {
+        ({ user } = await requireTenantAccess(tenantId));
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const quotaResponse = await enforceQuota(req, tenantId, {
         metric: 'api_calls',
@@ -60,13 +58,17 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const user = await getUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json();
     const { action, tenantId, ...payload } = body;
 
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+
+    let user;
+    try {
+        ({ user } = await requireTenantAccess(tenantId));
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const quotaResponse = await enforceQuota(req, tenantId, {
         metric: 'api_calls',
@@ -114,11 +116,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-    const user = await getUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const { tenantId, expenseId, ...updates } = await req.json();
     if (!tenantId || !expenseId) return NextResponse.json({ error: 'tenantId and expenseId required' }, { status: 400 });
+
+    let user;
+    try {
+        ({ user } = await requireTenantAccess(tenantId));
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const quotaResponse = await enforceQuota(req, tenantId, {
         metric: 'api_calls',
@@ -136,14 +142,18 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-    const user = await getUser(req);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const { searchParams } = new URL(req.url);
     const tenantId  = searchParams.get('tenantId');
     const expenseId = searchParams.get('expenseId');
 
     if (!tenantId || !expenseId) return NextResponse.json({ error: 'tenantId and expenseId required' }, { status: 400 });
+
+    let user;
+    try {
+        ({ user } = await requireTenantAccess(tenantId));
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const quotaResponse = await enforceQuota(req, tenantId, {
         metric: 'api_calls',

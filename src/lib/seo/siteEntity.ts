@@ -2,12 +2,17 @@ import { SITE_URL, absoluteUrl } from '@/lib/siteUrl';
 
 export const SOCIAL_PROFILES = {
   linkedin: 'https://www.linkedin.com/company/alphaclone-systems',
+  facebook: 'https://www.facebook.com/100089899181752',
   twitter: 'https://twitter.com/AlphaCloneSys',
   x: 'https://x.com/AlphaCloneSys',
 } as const;
 
 /** Verified external profiles — used in Organization schema sameAs for entity linking. */
-export const SAME_AS_URLS = [SOCIAL_PROFILES.linkedin, SOCIAL_PROFILES.twitter] as const;
+export const SAME_AS_URLS = [
+  SOCIAL_PROFILES.linkedin,
+  SOCIAL_PROFILES.facebook,
+  SOCIAL_PROFILES.twitter,
+] as const;
 
 /** Primary marketing routes Google uses for sitelink and navigation signals. */
 export const PRIMARY_SITE_NAV = [

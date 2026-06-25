@@ -61,7 +61,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarTab, setSidebarTab] = useState<'chats' | 'contacts'>('chats');
     const [selectedCRMContact, setSelectedCRMContact] = useState<{ id: string; name: string; email?: string; phone?: string } | null>(null);
-    const [activeChannel, setActiveChannel] = useState<'all' | 'email' | 'whatsapp' | 'sms' | 'internal'>('all');
+    const [activeChannel, setActiveChannel] = useState<'all' | 'email' | 'chat'>('all');
     const [isAIGenerating, setIsAIGenerating] = useState(false);
     const { currentTenant } = useTenant();
     const { clients: crmClients, isLoading: isLoadingCRM } = useClients(currentTenant?.id, { limit: 100 });
@@ -396,7 +396,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             if (selectedCRMContact) {
                 const filtered = unifiedMessages.filter(m => {
                     if (activeChannel === 'all') return true;
-                    return m.source === activeChannel;
+                    if (activeChannel === 'email') return m.source === 'email';
+                    return m.source === 'whatsapp' || m.source === 'sms' || m.source === 'internal';
                 });
                 return filtered.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
             }
@@ -710,9 +711,6 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             {/* Messages View */}
             {(!isAdmin || adminView === 'messages') && (
                 <>
-                <div className="flex-shrink-0 px-3 sm:px-4 pt-3 pb-1 border-b border-white/5">
-                    <ModuleStatCards stats={messageStats} className="grid-cols-2 lg:grid-cols-4" />
-                </div>
                 <div className="flex-1 flex overflow-hidden relative min-h-0">
                     {/* Ambient Background Glow */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -mt-20 -mr-20"></div>
@@ -735,8 +733,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                             <div className="p-4 border-b border-white/5">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-white font-bold flex items-center gap-2">
-                                        <MessageSquare className="w-5 h-5 text-teal-400" /> Messaging Center
+                                        <MessageSquare className="w-5 h-5 text-teal-400" /> Messages
                                     </h3>
+                                    <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                                        Pick a contact — chat, WhatsApp, and SMS in one thread.
+                                    </p>
                                     <button
                                         onClick={() => setDesktopSidebarOpen(false)}
                                         className="hidden md:block p-1 text-slate-400 hover:text-white transition-colors"
@@ -862,20 +863,24 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                             <h3 className="text-white font-bold text-sm">{selectedCRMContact.name}</h3>
                                             <p className="text-xs text-slate-400">{selectedCRMContact.email || 'CRM Contact'}</p>
                                         </div>
-                                        <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30 font-semibold">OMNICHANNEL</span>
+                                        <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/30 font-semibold">All channels</span>
                                     </div>
                                     <div className="flex gap-1 pb-0 overflow-x-auto">
-                                        {(['all', 'email', 'whatsapp', 'sms', 'internal'] as const).map(ch => (
+                                        {([
+                                            { id: 'all' as const, label: 'All' },
+                                            { id: 'email' as const, label: 'Email' },
+                                            { id: 'chat' as const, label: 'Chat' },
+                                        ]).map(({ id, label }) => (
                                             <button
-                                                key={ch}
-                                                onClick={() => setActiveChannel(ch)}
+                                                key={id}
+                                                onClick={() => setActiveChannel(id)}
                                                 className={`px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
-                                                    activeChannel === ch
+                                                    activeChannel === id
                                                         ? 'text-teal-400 border-teal-400 bg-teal-500/10'
                                                         : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
                                                 }`}
                                             >
-                                                {ch === 'all' ? '🌐 All' : ch === 'email' ? '✉️ Email' : ch === 'whatsapp' ? '💬 WhatsApp' : ch === 'sms' ? '📱 SMS' : '🔒 Internal'}
+                                                {label}
                                             </button>
                                         ))}
                                     </div>

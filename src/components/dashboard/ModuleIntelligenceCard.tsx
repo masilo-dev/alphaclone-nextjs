@@ -17,21 +17,7 @@ interface ModulePayload {
   systemicRisks: string[];
 }
 
-// Map a free-text recommendation to a concrete Nexus system action.
-function resolveSystemKey(actionText: string): string {
-  const t = actionText.toLowerCase();
-  if (t.includes('enrich')) return 'lead_enrichment';
-  if (t.includes('campaign')) return 'sales_campaign';
-  if (t.includes('triage')) return 'email_triage';
-  if (t.includes('reminder') || t.includes('recovery') || t.includes('invoice') || t.includes('chas')) return 'invoice_chasing';
-  if (t.includes('backlog') || t.includes('task') || t.includes('project')) return 'project_architect';
-  if (t.includes('onboard')) return 'onboarding_flow';
-  if (t.includes('proposal') || t.includes('contract')) return 'contract_drafter';
-  if (t.includes('meeting') || t.includes('calendar')) return 'calendar_nexus';
-  if (t.includes('support')) return 'support_triage';
-  if (t.includes('content') || t.includes('post')) return 'content_synthesis';
-  return 'market_pulse';
-}
+import { runModuleIntelligenceAction } from '@/services/intelligence/intelligenceFacade';
 
 export function ModuleIntelligenceCard({
   moduleKey,
@@ -88,18 +74,18 @@ export function ModuleIntelligenceCard({
     }
     setExecuting(actionText);
     try {
-      const res = await fetch('/api/social/command-center', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ tenantId, mode: 'nexus_system_action', systemKey: resolveSystemKey(actionText) }),
+      const result = await runModuleIntelligenceAction({
+        tenantId,
+        moduleKey,
+        actionText,
       });
-      const result = await res.json().catch(() => ({}));
-      if (res.ok) {
-        toast.success(result?.result?.message || result?.result?.strategic_summary || 'Action executed.');
+      if (result.success) {
+        toast.success(result.summary || result.text || 'Action executed via Bonnie.');
         await load();
+      } else if (result.approvalRequired) {
+        toast('Action queued for approval in AI Agents tab', { icon: '⚠️' });
       } else {
-        toast.error(result?.error || 'Failed to execute action.');
+        toast.error(result.error || 'Action failed');
       }
     } catch {
       toast.error('Execution failed.');

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { integrationActionSchema } from '@/schemas/validation';
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
     }
     const { tenantId, integrationType, action, config } = parsed.data;
 
+    await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
 
     // Set tenant context for RLS

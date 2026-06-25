@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import {
     Zap, Database, Shield, BarChart3, Settings, Globe,
-    ArrowRight, Star, Clock, Users, DollarSign,
+    ArrowRight, Clock, Users, DollarSign,
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
     Award, Lock, RefreshCw, Phone, ChevronRight
 } from 'lucide-react';
@@ -13,6 +13,9 @@ import PublicNavigation from '../PublicNavigation';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import MarketingFooter from '../landing/MarketingFooter';
+import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
+import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
+import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -371,14 +374,8 @@ const ServicesPage: React.FC = () => {
                 {/* Testimonial / Social Proof Strip */}
                 <section className="py-12 bg-transparent">
                     <AnimateIn type="scaleIn">
-                        <div className="max-w-4xl mx-auto px-4 text-center">
-                            <div className="flex justify-center gap-1 mb-4">
-                                {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />)}
-                            </div>
-                            <blockquote className="text-xl text-slate-200 italic leading-relaxed mb-6">
-                                "Before AlphaClone, operations were fragmented across disconnected workflows and manual follow-up. Now our client operations, finance visibility, and outreach execution run from one platform."
-                            </blockquote>
-                            <cite className="text-teal-400 font-semibold">Example workflow summary for professional services teams</cite>
+                        <div className="max-w-5xl mx-auto px-4">
+                            <MarketingTestimonialsCarousel items={MARKETING_TESTIMONIALS} />
                         </div>
                     </AnimateIn>
                 </section>
@@ -419,6 +416,7 @@ const ServicesPage: React.FC = () => {
                 </section>
             </div>
             <MarketingFooter />
+            <MarketingMobileCtaBar />
         </div>
     );
 };

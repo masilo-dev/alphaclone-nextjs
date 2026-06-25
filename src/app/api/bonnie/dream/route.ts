@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -7,19 +8,21 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { tenant_id, auto_apply = false } = body;
+    const tenantId = body.tenant_id || body.tenantId;
+    const auto_apply = body.auto_apply ?? false;
 
-    if (!tenant_id) {
+    if (!tenantId) {
       return NextResponse.json({ error: 'tenant_id is required' }, { status: 400 });
     }
 
+    await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
 
     // 1. Fetch last 50 mcp_sessions for the tenant
     const { data: sessions, error: sessErr } = await supabase
       .from('mcp_sessions')
       .select('id, tool_name, success, error_message, duration_ms, created_at')
-      .eq('tenant_id', tenant_id)
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -99,7 +102,7 @@ Return ONLY valid JSON with:
     const { data: dreamSession, error: insertErr } = await supabase
       .from('bonnie_dream_sessions')
       .insert({
-        tenant_id,
+        tenant_id: tenantId,
         reviewed_sessions: sessions || [],
         patterns_extracted: patternsExtracted,
         memory_updates: memoryUpdates,
@@ -120,7 +123,7 @@ Return ONLY valid JSON with:
           await supabase
             .from('tasks')
             .insert({
-              tenant_id,
+              tenant_id: tenantId,
               title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
               description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
               priority: 'medium',
@@ -144,8 +147,7 @@ Return ONLY valid JSON with:
       memory_updates_count: memoryUpdates.length,
       auto_applied: auto_apply,
     });
-  } catch (err: any) {
-    console.error('[bonnie/dream] Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+  } catch (err: unknown) {
+    return routeErrorResponse(err, 'Bonnie dream failed', req);
   }
 }

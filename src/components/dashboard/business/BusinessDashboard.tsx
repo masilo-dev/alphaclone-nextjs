@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
     LayoutDashboard,
@@ -71,7 +70,7 @@ const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
 const MicrosoftMeetingEmbed = React.lazy(() => import('../video/MicrosoftMeetingEmbed'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
-const ZohoMailView = React.lazy(() => import('../zoho/ZohoMailView'));
+const UnifiedInboxView = React.lazy(() => import('./UnifiedInboxView'));
 const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./BusinessPerformanceDashboard'));
 
@@ -97,12 +96,99 @@ const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCent
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
 const TeamsPage = React.lazy(() => import('./TeamsPage'));
 
-const UnifiedInboxTab = React.lazy(() => import('./UnifiedInboxTab'));
 const CashFlowForecastTab = React.lazy(() => import('./CashFlowForecastTab'));
 const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
 const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
+const ContactsList = React.lazy(() => import('../crm/ContactsList'));
+const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
+const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
+const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
+const SalesConsole = React.lazy(() => import('../crm/SalesConsole'));
+const CRMReportsTab = React.lazy(() => import('../crm/CRMReportsTab'));
+const BankingCenterPage = React.lazy(() => import('../accounting/BankingCenterPage'));
+const BillsPayablePage = React.lazy(() => import('../accounting/BillsPayablePage'));
+const PeriodClosePage = React.lazy(() => import('../accounting/PeriodClosePage'));
+const SequenceBuilder = React.lazy(() => import('../marketing/SequenceBuilder'));
+const DeliverabilityPanel = React.lazy(() => import('../marketing/DeliverabilityPanel'));
+const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
+const FinanceTab = React.lazy(() => import('../FinanceTab'));
+
+import SalesHub from '../hubs/SalesHub';
+import MoneyHub from '../hubs/MoneyHub';
+import MarketingHub from '../hubs/MarketingHub';
+import InsightsHub from '../hubs/InsightsHub';
+import DocumentsHub from '../hubs/DocumentsHub';
+
+const SALES_HUB_ROUTES = new Set([
+  '/dashboard/crm',
+  '/dashboard/crm/console',
+  '/dashboard/crm/accounts',
+  '/dashboard/crm/reports',
+  '/dashboard/leads',
+  '/dashboard/deals',
+  '/dashboard/contacts',
+  '/dashboard/crm/unified-contacts',
+  '/dashboard/forecast',
+  '/dashboard/tasks',
+]);
+
+const MONEY_HUB_ROUTES = new Set([
+  '/dashboard/accounting',
+  '/dashboard/accounting/banking',
+  '/dashboard/accounting/bills',
+  '/dashboard/accounting/period-close',
+  '/dashboard/business/billing',
+  '/dashboard/business/expenses',
+  '/dashboard/business/quotes',
+  '/dashboard/business/cash-flow',
+  '/dashboard/finance',
+]);
+
+const MARKETING_HUB_ROUTES = new Set([
+  '/dashboard/business/campaigns',
+  '/dashboard/business/forms',
+  '/dashboard/business/social',
+  '/dashboard/business/unified-inbox',
+  '/dashboard/marketing/sequences',
+  '/dashboard/marketing/deliverability',
+]);
+
+const INSIGHTS_HUB_ROUTES = new Set([
+  '/dashboard/analytics',
+  '/dashboard/performance',
+  '/dashboard/executive',
+  '/dashboard/business/reports',
+]);
+
+const DOCUMENTS_HUB_ROUTES = new Set([
+  '/dashboard/business/documents',
+  '/dashboard/business/vault',
+  '/dashboard/contracts',
+  '/dashboard/business/contracts',
+]);
+
+const ALL_HUB_ROUTES = new Set([
+  ...SALES_HUB_ROUTES,
+  ...MONEY_HUB_ROUTES,
+  ...MARKETING_HUB_ROUTES,
+  ...INSIGHTS_HUB_ROUTES,
+  ...DOCUMENTS_HUB_ROUTES,
+]);
+
+function isHubRoute(tab: string): boolean {
+  return ALL_HUB_ROUTES.has(tab);
+}
+
+function wrapInHub(tab: string, content: React.ReactNode): React.ReactNode {
+  if (SALES_HUB_ROUTES.has(tab)) return <SalesHub>{content}</SalesHub>;
+  if (MONEY_HUB_ROUTES.has(tab)) return <MoneyHub>{content}</MoneyHub>;
+  if (MARKETING_HUB_ROUTES.has(tab)) return <MarketingHub>{content}</MarketingHub>;
+  if (INSIGHTS_HUB_ROUTES.has(tab)) return <InsightsHub>{content}</InsightsHub>;
+  if (DOCUMENTS_HUB_ROUTES.has(tab)) return <DocumentsHub>{content}</DocumentsHub>;
+  return content;
+}
 
 import { TrialBanner } from '../TrialBanner';
 import BonnieWidget from '../bonnie/BonnieWidget';
@@ -115,7 +201,11 @@ import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import NotificationCenter from '../NotificationCenter';
+import CommandPalette from '../CommandPalette';
+import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
+import ProductTour from '../../onboarding/ProductTour';
 import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
+import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 
@@ -139,12 +229,17 @@ interface BusinessDashboardProps {
 
 export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { t, language, setLanguage } = useLanguage();
+    const route = useMemo(
+        () => normalizeBusinessRoute(activeTab, user.role),
+        [activeTab, user.role],
+    );
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const currentTenant = propTenant || contextTenant;
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+    const [showProductTour, setShowProductTour] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const {
         activeMeetingCallId,
@@ -186,6 +281,26 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             setSidebarOpen(window.innerWidth >= 768);
         }
     }, []);
+
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                setCommandPaletteOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    React.useEffect(() => {
+        if (!user?.id || typeof window === 'undefined') return;
+        const key = `business_tour_completed_${user.id}`;
+        if (!localStorage.getItem(key) && activeTab === '/dashboard') {
+            const timer = window.setTimeout(() => setShowProductTour(true), 900);
+            return () => window.clearTimeout(timer);
+        }
+    }, [user?.id, activeTab]);
 
     // Initialize MS Teams-like Presence
     React.useEffect(() => {
@@ -352,8 +467,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
 
 
-    // Map routes to display content
-    const renderBusinessContent = () => {
+    // Map routes to display content (uses normalized route — not affected by language changes)
+    const renderBusinessContent = (tab: string) => {
         // const plan = currentTenant?.subscription_plan || 'free';
         // const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
 
@@ -377,7 +492,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             </div>
         );
 
-        switch (activeTab) {
+        switch (tab) {
             case '/dashboard':
                 return <BusinessHome user={user} stats={dashboardStats} />;
             case '/dashboard/projects':
@@ -467,6 +582,78 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <ClientsPage
                             user={user}
                         />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/unified-contacts':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
+                        <ContactsList />
+                    </React.Suspense>
+                );
+            case '/dashboard/forecast':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <SalesForecastTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/analytics':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <AnalyticsTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/executive':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <ExecutiveDashboard />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/console':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <SalesConsole />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/accounts':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
+                        <AccountsPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/reports':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <CRMReportsTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/accounting/banking':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <BankingCenterPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/accounting/bills':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <BillsPayablePage />
+                    </React.Suspense>
+                );
+            case '/dashboard/accounting/period-close':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <PeriodClosePage />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/sequences':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <SequenceBuilder />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/deliverability':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <div className="p-4"><DeliverabilityPanel /></div>
                     </React.Suspense>
                 );
             case '/dashboard/tasks':
@@ -616,7 +803,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/zoho/mail':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} />}>
-                        <ZohoMailView userId={user.id} />
+                        <div className="h-full p-3 md:p-5">
+                            <UnifiedInboxView defaultProvider="zoho" />
+                        </div>
                     </React.Suspense>
                 );
 
@@ -638,7 +827,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/unified-inbox':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
-                        <UnifiedInboxTab />
+                        <div className="h-full p-3 md:p-5">
+                            <UnifiedInboxView />
+                        </div>
                     </React.Suspense>
                 );
 
@@ -685,29 +876,55 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
-            case '/dashboard/finance': {
-                const FinanceTab = React.lazy(() => import('../FinanceTab'));
+            case '/dashboard/finance':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
                         <FinanceTab user={user} />
                     </React.Suspense>
                 );
-            }
 
             default:
-                return <BusinessHome user={user} stats={dashboardStats} />;
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+                        <p className="text-slate-400 text-sm mb-4">{t('This section could not be loaded.')}</p>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('/dashboard')}
+                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold"
+                        >
+                            {t('Back to Dashboard')}
+                        </button>
+                    </div>
+                );
         }
     };
 
+    const moduleContent = useMemo(
+        () => wrapInHub(route, renderBusinessContent(route)),
+        [route, user.id, currentTenant?.id, dashboardStats],
+    );
+
     // Get current page title
     const getPageTitle = () => {
-        switch (activeTab) {
+        switch (route) {
             case '/dashboard': return t('Dashboard');
             case '/dashboard/crm': return t('CRM');
             case '/dashboard/leads': return t('Leads');
             case '/dashboard/deals': return t('Deals');
             case '/dashboard/contacts':
             case '/dashboard/business/clients': return t('Contacts');
+            case '/dashboard/crm/unified-contacts': return t('Unified Contacts');
+            case '/dashboard/forecast': return t('Sales Forecast');
+            case '/dashboard/analytics': return t('Insights');
+            case '/dashboard/executive': return t('Executive Dashboard');
+            case '/dashboard/crm/console': return t('Sales Console');
+            case '/dashboard/crm/accounts': return t('Accounts');
+            case '/dashboard/crm/reports': return t('CRM Reports');
+            case '/dashboard/accounting/banking': return t('Banking');
+            case '/dashboard/accounting/bills': return t('Bills Payable');
+            case '/dashboard/accounting/period-close': return t('Period Close');
+            case '/dashboard/marketing/sequences': return t('Sequences');
+            case '/dashboard/marketing/deliverability': return t('Deliverability');
             case '/dashboard/projects':
             case '/dashboard/business/projects': return t('Projects');
             case '/dashboard/business/team': return t('Team Management');
@@ -808,16 +1025,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     return (
         <div className="flex min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root [height:100dvh]">
+            <div data-tour="navigation" className="flex-shrink-0">
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
                 user={user}
                 navItems={TENANT_ADMIN_NAV_ITEMS}
-                activeTab={activeTab}
+                activeTab={route}
                 setActiveTab={setActiveTab}
                 unreadMessageCount={unreadMessageCount}
                 onLogout={onLogout}
             />
+            </div>
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
@@ -864,15 +1083,19 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
                                 )}
                             </div>
-                            <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
+                            {!isHubRoute(route) && (
+                                <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
+                            )}
                         </div>
 
-                        {/* Breadcrumb or Title for Desktop */}
+                        {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
+                        {!isHubRoute(route) && (
                         <div className="hidden md:block">
                             <h1 className="text-lg font-bold text-white/90 tracking-tight">
                                 {getPageTitle()}
                             </h1>
                         </div>
+                        )}
                     </div>
 
                     {/* Right: Actions, Notifications, Profile */}
@@ -897,6 +1120,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <div className="hidden sm:block w-px h-6 bg-slate-800 mx-1" />
 
                         <div className="flex items-center gap-3 sm:gap-4">
+                            <div data-tour="global-search" className="hidden sm:block">
+                                <EnhancedGlobalSearch
+                                    user={user}
+                                    onNavigate={(path) => setActiveTab(path)}
+                                />
+                            </div>
                             <MissedCallsNotification
                                 userId={user.id}
                                 onCallBack={(callerId) => {
@@ -905,7 +1134,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     router.push(`/dashboard/call/${roomId}`);
                                 }}
                             />
+                            <div data-tour="business-notifications">
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
+                            </div>
                             <div className="hidden sm:flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-full pl-2 pr-1 py-1">
                                 <Globe className="w-3.5 h-3.5 text-slate-400" />
                                 <select
@@ -948,28 +1179,22 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 {/* Dynamic Content Area */}
                 <div
                     className={`flex-1 min-h-0 ac-business-scroll ${
-                        DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
+                        DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
                             ? 'overflow-hidden p-0'
                             : 'overflow-y-auto overflow-x-hidden p-4 md:p-8 dashboard-content-padding'
                     }`}
                 >
                     <WidgetErrorBoundary title="Business Dashboard Error">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={activeTab}
-                                initial={{ opacity: 0, scale: 0.99, y: 5 }}
-                                animate={{ opacity: 1, scale: 1, y: 0, pointerEvents: 'auto' }}
-                                exit={{ opacity: 0, scale: 0.99, y: -5, pointerEvents: 'none' }}
-                                transition={{ duration: 0.15, ease: "easeOut" }}
-                                className={`w-full min-w-0 ${
-                                    DASHBOARD_EDGE_TO_EDGE_TABS.includes(activeTab)
-                                        ? 'h-full min-h-0'
-                                        : 'min-h-full'
-                                }`}
-                            >
-                                {renderBusinessContent()}
-                            </motion.div>
-                        </AnimatePresence>
+                        <div
+                            key={route}
+                            className={`w-full min-w-0 ${
+                                DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
+                                    ? 'h-full min-h-0 max-md:pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))]'
+                                    : 'min-h-full'
+                            }`}
+                        >
+                            {moduleContent}
+                        </div>
                     </WidgetErrorBoundary>
                 </div>
             </main>
@@ -1017,14 +1242,34 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Mobile Bottom Navigation */}
             <BottomNav
-                activeTab={activeTab}
+                activeTab={route}
                 onNavigate={(href) => setActiveTab(href)}
                 onToggleMenu={() => setSidebarOpen(true)}
                 unreadCount={unreadMessageCount}
                 userRole="tenant_admin"
             />
 
-            {activeTab !== '/dashboard/business/bonnie' && <BonnieWidget />}
+            {route !== '/dashboard/business/bonnie' && <BonnieWidget />}
+
+            <CommandPalette
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+                userId={user.id}
+                onCreateTask={() => setActiveTab('/dashboard/tasks')}
+                onCreateProject={() => setActiveTab('/dashboard/business/projects')}
+                onCreateInvoice={() => setActiveTab('/dashboard/business/billing')}
+            />
+
+            <ProductTour
+                isOpen={showProductTour}
+                onComplete={() => {
+                    setShowProductTour(false);
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem(`business_tour_completed_${user.id}`, '1');
+                    }
+                }}
+                userRole="tenant_admin"
+            />
 
         </div>
     );

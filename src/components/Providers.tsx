@@ -10,6 +10,7 @@ import { ToastProvider } from '@/components/Toast';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { UserPreferencesBootstrap } from '@/components/UserPreferencesBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -40,15 +41,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <ThemeProvider>
-            <LanguageProvider>
-              <AuthProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <LanguageProvider>
+                <UserPreferencesBootstrap />
                 <TenantProvider>
                   <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
                 </TenantProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </ThemeProvider>
+              </LanguageProvider>
+            </ThemeProvider>
+          </AuthProvider>
         </ToastProvider>
       </QueryClientProvider>
     </GlobalErrorBoundary>

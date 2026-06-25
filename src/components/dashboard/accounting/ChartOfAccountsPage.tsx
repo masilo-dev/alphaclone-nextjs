@@ -5,6 +5,11 @@ import toast from 'react-hot-toast';
 import { ChartOfAccount, chartOfAccountsService, AccountType } from '../../../services/accounting/chartOfAccountsService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+} from '../../ui/ResponsiveTable';
 
 export function ChartOfAccountsPage() {
     const { user } = useAuth();
@@ -245,7 +250,32 @@ export function ChartOfAccountsPage() {
                                 {accountTypeLabels[type as AccountType]}
                             </h2>
                         </div>
-                        <div className="overflow-x-auto min-w-0">
+                        <ResponsiveTableMobile className="p-3 space-y-2">
+                            {accountList.map((account) => (
+                                <MobileDataCard key={account.id} className={`border-slate-700 bg-slate-800/80 ${!account.isActive ? 'opacity-60' : ''}`}>
+                                    <div className="flex justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-mono text-slate-400">{account.accountCode}</p>
+                                            <p className="text-sm font-medium text-white truncate">{account.accountName}</p>
+                                        </div>
+                                        <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs ${account.isActive ? 'bg-green-900/50 text-green-300' : 'bg-slate-700 text-slate-400'}`}>
+                                            {account.isActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-400">{account.normalBalance === 'debit' ? 'DR' : 'CR'}</span>
+                                        <span className="font-mono text-white">${account.currentBalance.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => openEditModal(account)} className="min-h-11 flex-1 text-blue-400 text-xs font-medium rounded-lg border border-slate-600 py-2">Edit</button>
+                                        {!account.isSystemAccount && (
+                                            <button onClick={() => handleDelete(account.id)} className="min-h-11 flex-1 text-red-400 text-xs font-medium rounded-lg border border-red-500/30 py-2">Delete</button>
+                                        )}
+                                    </div>
+                                </MobileDataCard>
+                            ))}
+                        </ResponsiveTableMobile>
+                        <ResponsiveTableDesktop>
                             <table className="min-w-[720px] w-full divide-y divide-slate-700">
                                 <thead className="bg-slate-900">
                                     <tr>
@@ -301,7 +331,7 @@ export function ChartOfAccountsPage() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </ResponsiveTableDesktop>
                     </div>
                 ))}
             </div>

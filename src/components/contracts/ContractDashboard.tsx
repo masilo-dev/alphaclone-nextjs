@@ -515,7 +515,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (error) throw new Error(error);
             toast.success('Contract saved successfully!');
             if (contract?.id) setContractId(contract.id);
-            showActionNextSteps('contract_saved', (path) => router.push(path));
+            showActionNextSteps(isSigned ? 'contract_signed' : 'contract_saved', (path) => router.push(path));
             setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
             setIsEditing(false);
@@ -1166,7 +1166,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {activeView === 'lawyer' && (
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-280px)] min-h-[500px] mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-auto lg:h-[calc(100vh-280px)] min-h-0 lg:min-h-[500px] mb-8">
                     {/* Left Sidebar: Context and Quick Actions */}
                     <div className="lg:col-span-1 flex flex-col gap-4">
                         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">

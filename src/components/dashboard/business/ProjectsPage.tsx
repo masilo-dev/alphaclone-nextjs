@@ -210,7 +210,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 min-w-0">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 sm:gap-3 mb-1 min-w-0">
-                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl sm:rounded-2xl shadow-xl shadow-violet-500/20 shrink-0">
+                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-teal-600 to-cyan-600 rounded-xl sm:rounded-2xl shadow-xl shadow-violet-500/20 shrink-0">
                             <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight break-words">
@@ -227,21 +227,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     <div className="flex p-1 bg-slate-900 shadow-inner rounded-2xl border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <LayoutList className="w-4 h-4" />
                             <span className="text-xs font-medium">List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'timeline' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'timeline' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <BarChart3 className="w-4 h-4" />
                             <span className="text-xs font-medium">Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
-                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'health' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'health' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                         >
                             <Activity className="w-4 h-4" />
                             <span className="text-xs font-medium">Health</span>
@@ -424,8 +424,54 @@ const ProjectListRow = ({
                 </div>
             </div>
 
+            {/* Mobile metadata */}
+            <div className="lg:hidden grid grid-cols-2 gap-3 pt-3 mt-1 border-t border-white/5">
+                <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
+                    <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        project.status === 'in_progress' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
+                            'bg-slate-800 text-slate-400 border-white/5'
+                        }`}>
+                        {project.status.replace('_', ' ')}
+                    </span>
+                </div>
+                <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Health</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs border ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                        project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
+                            'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                        }`}>
+                        {project.health || 'Unknown'}
+                    </span>
+                </div>
+                <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Due</span>
+                    {project.dueDate ? (
+                        <TaskCountdown dueDate={project.dueDate} showAlarm={true} />
+                    ) : (
+                        <span className="text-xs text-slate-600 italic">No deadline</span>
+                    )}
+                </div>
+                <div className="flex items-end justify-end gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onEdit(project); }}
+                        className="min-h-11 min-w-11 p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg"
+                        title="Edit project"
+                    >
+                        <Activity className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+                        className="min-h-11 min-w-11 p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg"
+                        title="Delete project"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
             {/* Status */}
-            <div className="col-span-1 lg:col-span-2 flex justify-center">
+            <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 <span className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     project.status === 'in_progress' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
@@ -435,7 +481,7 @@ const ProjectListRow = ({
             </div>
 
             {/* Health & Risk */}
-            <div className="col-span-1 lg:col-span-2 flex justify-center gap-2">
+            <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center gap-2">
                 <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
                     project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                         'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
@@ -446,7 +492,7 @@ const ProjectListRow = ({
             </div>
 
             {/* Countdown */}
-            <div className="col-span-1 lg:col-span-2 flex justify-center">
+            <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 {project.dueDate ? (
                     <div className="scale-90 origin-center bg-slate-950/50 px-3 py-1.5 rounded-lg border border-white/5">
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} />
@@ -457,7 +503,7 @@ const ProjectListRow = ({
             </div>
 
             {/* Ops */}
-            <div className="col-span-1 lg:col-span-1 flex justify-end gap-1">
+            <div className="hidden lg:flex col-span-1 lg:col-span-1 justify-end gap-1">
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(project); }}
                     className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg transition-all"

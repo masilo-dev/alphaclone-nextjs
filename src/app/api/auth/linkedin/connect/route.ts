@@ -16,18 +16,27 @@ type LinkedInOAuthState = {
 };
 
 const LINKEDIN_REQUESTED_SCOPES = [
-  // Core posting scope.
-  'w_member_social',
-  // Organization/Company posting scopes.
-  'w_organization_social',
-  'r_organization_social',
-  // OpenID identity scopes used by /v2/userinfo.
   'openid',
   'profile',
   'email',
-  // Additional approved member profile scopes.
+  // Member posting
+  'w_member_social',
   'r_profile_basicinfo',
   'r_verify',
+  'r_basicprofile',
+  'r_1st_connections_size',
+  // Organization / company page posting & analytics
+  'w_organization_social',
+  'r_organization_social',
+  'r_organization_admin',
+  'rw_organization_admin',
+  // Events (org calendar posts)
+  'rw_events',
+  'r_events',
+  // Ads reporting (MCP ads tools)
+  'r_ads',
+  'r_ads_reporting',
+  'rw_ads',
 ] as const;
 
 export async function GET(req: NextRequest) {

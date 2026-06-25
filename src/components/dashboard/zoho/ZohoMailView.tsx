@@ -7,6 +7,7 @@ import {
     AlertCircle, FileText, CheckSquare, PenTool
 } from 'lucide-react';
 import { generateEmailReply } from '@/services/unifiedAIService';
+import { UnifiedEmailService } from '@/services/email/UnifiedEmailService';
 import { EmailBody } from '../../common/EmailBody';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -108,6 +109,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const [configuredRegion, setConfiguredRegion] = useState<string | null>(null);
     const [replyBody, setReplyBody] = useState('');
     const [messageCache, setMessageCache] = useState<Record<string, any>>({});
+    const [threadSummary, setThreadSummary] = useState<string | null>(null);
+    const [isSummarizing, setIsSummarizing] = useState(false);
     const [selectedMessageIds, setSelectedMessageIds] = useState<Set<string>>(new Set());
 
     const getInitials = (name: string) => {
@@ -252,6 +255,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         if (messageCache[id]) {
             setMessageContent(messageCache[id]);
             setSelectedMessage(id);
+            summarizeMessage(id, messageCache[id]);
             return;
         }
 
@@ -262,8 +266,28 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 setMessageCache(prev => ({ ...prev, [id]: data }));
                 setMessageContent(data);
                 setSelectedMessage(id);
+                summarizeMessage(id, data);
             }
         } finally { setLoading(false); }
+    };
+
+    const summarizeMessage = async (messageId: string, data: { sender?: string; snippet?: string; content?: string; subject?: string }) => {
+        setIsSummarizing(true);
+        setThreadSummary(null);
+        try {
+            const res = await UnifiedEmailService.summarizeThread(messageId, [{
+                from: data.sender || '',
+                subject: data.subject || '',
+                snippet: data.snippet || String(data.content || '').slice(0, 500),
+            }]);
+            if (res.success && res.summary) {
+                setThreadSummary(String(res.summary));
+            }
+        } catch {
+            // Non-fatal — message still displays
+        } finally {
+            setIsSummarizing(false);
+        }
     };
 
     const toggleMessageSelection = (id: string) => {
@@ -692,6 +716,18 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                 {formatDate(messageContent.receivedTime)}
                                             </div>
                                         </div>
+
+                                        {(isSummarizing || threadSummary) && (
+                                            <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4">
+                                                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-teal-400 mb-2">
+                                                    <Sparkles size={12} />
+                                                    {isSummarizing ? 'Summarizing…' : 'Summary'}
+                                                </div>
+                                                {threadSummary && (
+                                                    <p className="text-sm text-slate-300 leading-relaxed">{threadSummary}</p>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Sandboxed Body Content */}
                                         <div className="text-[15px] leading-[1.6] text-gray-200">

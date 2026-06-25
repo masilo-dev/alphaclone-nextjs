@@ -9,6 +9,14 @@ export const runtime = 'nodejs';
 export const maxDuration = 800;
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
+const SUPPORTED_MCP_PROTOCOL_VERSIONS = ['2024-11-05', '2025-03-26', '2025-11-25'] as const;
+
+function negotiateProtocolVersion(requested: unknown): string {
+  if (typeof requested === 'string' && (SUPPORTED_MCP_PROTOCOL_VERSIONS as readonly string[]).includes(requested)) {
+    return requested;
+  }
+  return MCP_PROTOCOL_VERSION;
+}
 
 /**
  * Unified MCP Endpoint (/api/mcp)
@@ -135,7 +143,59 @@ export async function POST(req: NextRequest) {
     userId = auth.user_id;
   }
 
-  // 2. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
+  // 2. Short-circuit handshake methods (SDK import crashes in serverless for initialize)
+  if (requestBody.method === 'initialize') {
+    const protocolVersion = negotiateProtocolVersion(requestBody.params?.protocolVersion);
+    const headers = new Headers(getMcpCorsHeaders(req));
+    headers.set('MCP-Protocol-Version', protocolVersion);
+
+    if (ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      const { DEFAULT_BUSINESS_AI_STATE } = await import('@/services/mcp/businessAIState');
+      const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
+      const { data: sessionRow, error: sessionError } = await supabaseAdmin
+        .from('mcp_sessions')
+        .insert({
+          tenant_id: tenantId,
+          user_id: userId,
+          expires_at: expiresAt,
+          metadata: {
+            client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
+            protocol_version: protocolVersion,
+            business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
+            business_ai_state: DEFAULT_BUSINESS_AI_STATE,
+          },
+        })
+        .select('id')
+        .single();
+
+      if (sessionError) {
+        console.error('[MCP initialize] Session creation failed:', sessionError);
+      } else if (sessionRow?.id) {
+        headers.set('Mcp-Session-Id', sessionRow.id);
+      }
+    }
+
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: {
+        protocolVersion,
+        capabilities: { tools: {}, resources: {}, prompts: {} },
+        serverInfo: { name: 'AlphaClone-MCP', version: '2.0.0' },
+      },
+    }, { headers });
+  }
+
+  if (requestBody.method === 'ping') {
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: {},
+    }, { headers: getMcpCorsHeaders(req) });
+  }
+
+  // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
     const { listAllMcpTools } = await import('@/lib/mcp/listAllTools');
     const tools = await listAllMcpTools();
@@ -257,7 +317,7 @@ export async function POST(req: NextRequest) {
     return new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
   }
 
-  // 3. Handle ticketing tools directly (bypass SDK for reliability)
+  // 4. Handle ticketing tools directly (bypass SDK for reliability)
   if (requestBody.method === 'tools/call') {
     const toolName = requestBody.params?.name;
     const toolArgs = requestBody.params?.arguments || {};
@@ -455,7 +515,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 4. Execute via SDK (lazy-load heavy MCPServer module for POST only)
+  // 5. Execute via SDK (lazy-load heavy MCPServer module for POST only)
   try {
     const { createMCPServer } = await import('@/services/mcp/MCPServer');
     const { DEFAULT_BUSINESS_AI_STATE } = await import('@/services/mcp/businessAIState');

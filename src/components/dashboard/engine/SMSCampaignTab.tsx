@@ -8,6 +8,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+} from '../../ui/ResponsiveTable';
 
 interface SMSCampaign {
     id: string;
@@ -498,7 +503,25 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             <p className="text-slate-500 text-sm">No messages yet</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                        <>
+                        <ResponsiveTableMobile>
+                            {messages.map((msg) => (
+                                <MobileDataCard key={msg.id} className="border-slate-800 bg-slate-900/40">
+                                    <p className="text-slate-300 text-xs font-mono">{msg.to_number}</p>
+                                    <p className="text-slate-400 text-sm line-clamp-3">{msg.body}</p>
+                                    <div className="flex flex-wrap justify-between gap-2 text-xs">
+                                        <span className={`px-2 py-0.5 rounded-full border ${
+                                            msg.status === 'sent' || msg.status === 'delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                                            : msg.status === 'failed' ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                                            : 'bg-slate-700/50 text-slate-400 border-slate-700'}`}>
+                                            {msg.status}
+                                        </span>
+                                        <span className="text-slate-600">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '—'}</span>
+                                    </div>
+                                </MobileDataCard>
+                            ))}
+                        </ResponsiveTableMobile>
+                        <ResponsiveTableDesktop className="rounded-2xl border border-slate-800 min-w-0">
                             <table className="w-full min-w-[640px] text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-800 bg-slate-900/50">
@@ -526,7 +549,8 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </ResponsiveTableDesktop>
+                        </>
                     )}
                 </div>
             )}

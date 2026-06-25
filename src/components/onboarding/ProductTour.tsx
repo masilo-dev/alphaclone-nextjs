@@ -76,7 +76,36 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
         },
     ];
 
-    const steps = userRole === 'admin' ? adminSteps : clientSteps;
+    const tenantAdminSteps: Step[] = [
+        {
+            target: '[data-tour="business-home"]',
+            content: 'Welcome to your Business OS. This home screen shows setup steps and quick actions for your workspace.',
+            placement: 'bottom',
+            disableBeacon: true,
+        },
+        {
+            target: '[data-tour="navigation"]',
+            content: 'Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.',
+            placement: 'right',
+        },
+        {
+            target: '[data-tour="global-search"]',
+            content: 'Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.',
+            placement: 'bottom',
+        },
+        {
+            target: '[data-tour="business-notifications"]',
+            content: 'Notifications appear here for tickets, form submissions, and team alerts.',
+            placement: 'bottom',
+        },
+    ];
+
+    const steps =
+        userRole === 'tenant_admin'
+            ? tenantAdminSteps
+            : userRole === 'admin'
+              ? adminSteps
+              : clientSteps;
 
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status, index } = data;

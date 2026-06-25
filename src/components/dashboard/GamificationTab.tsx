@@ -57,6 +57,9 @@ const GamificationTab: React.FC = () => {
 
   return (
     <div className="overflow-y-auto pb-24 space-y-5 px-4 pt-4">
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <strong className="font-semibold">Beta preview.</strong> Gamification scores and badges shown here are sample data until your workspace profile is wired to live activity.
+      </div>
 
       {/* Profile Header */}
       <div className="flex flex-col items-center gap-3 py-2">

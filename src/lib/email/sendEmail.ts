@@ -227,8 +227,10 @@ export async function sendEmail(
     }
 
     for (const recipient of recipients) {
-      const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
-      if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
+      if (!payload.isPlatformNotification) {
+        const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
+        if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
+      }
       if (await isEmailSuppressed(tenantId, recipient)) {
         return { success: false, tried, error: `Recipient is suppressed: ${recipient}`, code: 'EMAIL_SUPPRESSED' };
       }

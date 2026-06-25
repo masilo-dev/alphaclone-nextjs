@@ -135,6 +135,66 @@ const PACKS: Record<string, NextPack> = {
             { label: 'CRM overview', path: '/dashboard/crm' },
         ],
     },
+    lead_qualified: {
+        headline: 'Lead qualified — conduct the opportunity',
+        detail:
+            'Deal is live. Schedule the next touch, move toward proposal, and set a close date so revenue timing is real.',
+        links: [
+            { label: 'Deals', path: '/dashboard/deals' },
+            { label: 'Calendar', path: '/dashboard/business/calendar' },
+            { label: 'Tasks', path: '/dashboard/tasks' },
+        ],
+    },
+    deal_qualified: {
+        headline: 'Qualified — time to engage',
+        detail:
+            'Confirm budget and decision maker, then advance to proposal with a clear offer and timeline.',
+        links: [
+            { label: 'Quotes', path: '/dashboard/business/quotes' },
+            { label: 'Messages', path: '/dashboard/business/messages' },
+            { label: 'Deals', path: '/dashboard/deals' },
+        ],
+    },
+    deal_proposal: {
+        headline: 'Proposal stage — send and confirm',
+        detail:
+            'Create or send the quote/proposal, log when it went out, and book a follow-up for acceptance or objections.',
+        links: [
+            { label: 'Quotes', path: '/dashboard/business/quotes' },
+            { label: 'Contracts', path: '/dashboard/business/contracts' },
+            { label: 'Deals', path: '/dashboard/deals' },
+        ],
+    },
+    deal_closed_won: {
+        headline: 'Deal won — contract before delivery',
+        detail:
+            'Send the agreement next, then invoice after signature, then create the project. Do not skip to delivery without billing.',
+        links: [
+            { label: 'Contracts', path: '/dashboard/business/contracts' },
+            { label: 'Billing', path: '/dashboard/business/billing' },
+            { label: 'Projects', path: '/dashboard/business/projects' },
+        ],
+    },
+    deal_closed_lost: {
+        headline: 'Deal lost — capture the lesson',
+        detail:
+            'Log why you lost, tag the reason on the deal, and decide if this contact belongs in nurture or is done.',
+        links: [
+            { label: 'Deals', path: '/dashboard/deals' },
+            { label: 'Campaigns', path: '/dashboard/business/campaigns' },
+            { label: 'Contacts', path: '/dashboard/contacts' },
+        ],
+    },
+    contract_signed: {
+        headline: 'Contract signed — bill then deliver',
+        detail:
+            'Send the invoice while momentum is high, then spin up the project with tasks and owners.',
+        links: [
+            { label: 'Billing', path: '/dashboard/business/billing' },
+            { label: 'Projects', path: '/dashboard/business/projects' },
+            { label: 'Tasks', path: '/dashboard/tasks' },
+        ],
+    },
 };
 
 export type ActionNextStepKey = keyof typeof PACKS;

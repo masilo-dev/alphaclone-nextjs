@@ -2,26 +2,32 @@ import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { contractLifecycleWorkflow } from './contract-lifecycle';
 
+/** Normalize legacy stage names to canonical deal stages. */
+function normalizeDealStage(stage: string): string {
+  if (stage === 'won') return 'closed_won';
+  if (stage === 'lost') return 'closed_lost';
+  return stage;
+}
+
 /**
- * Deal Stage Workflow
- * Automates actions when a deal moves between critical stages.
+ * Deal Stage Workflow — MCP/manual trigger when a deal hits a critical stage.
  */
 export async function dealStageWorkflow({ dealId, stage, tenantId }: { dealId: string; stage: string; tenantId: string }) {
   "use workflow";
-  
+
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
-  switch (stage) {
+  const normalized = normalizeDealStage(stage);
+
+  switch (normalized) {
     case 'proposal':
       await proposalActions(dealId);
       break;
-
-    case 'won':
-      await wonActions(dealId, tenantId);
+    case 'closed_won':
+      await closedWonActions(dealId, tenantId);
       break;
-
-    case 'lost':
+    case 'closed_lost':
       await lostActions(dealId);
       break;
   }
@@ -29,20 +35,26 @@ export async function dealStageWorkflow({ dealId, stage, tenantId }: { dealId: s
 
 async function proposalActions(dealId: string) {
   "use step";
-  console.log(`Generating proposal for deal ${dealId}`);
+  console.log(`[deal-stage] Proposal — create/send quote for deal ${dealId}`);
 }
 
-async function wonActions(dealId: string, tenantId: string) {
+async function closedWonActions(dealId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
   const { data: deal } = await supabase.from('deals').select('*').eq('id', dealId).single();
-  const { data: contract } = await supabase.from('contracts').insert({
-    tenant_id: tenantId,
-    title: `Contract for ${deal?.name}`,
-    type: 'Standard Service Agreement',
-    status: 'draft'
-  }).select().single();
+  const { data: contract } = await supabase
+    .from('contracts')
+    .insert({
+      tenant_id: tenantId,
+      title: `Contract for ${deal?.name}`,
+      type: 'Standard Service Agreement',
+      status: 'draft',
+      client_id: deal?.contact_id || null,
+      metadata: { deal_id: dealId, source: 'deal_stage_workflow' },
+    })
+    .select()
+    .single();
 
   if (contract) {
     await start(contractLifecycleWorkflow, [{ contractId: contract.id, tenantId }]);
@@ -51,5 +63,5 @@ async function wonActions(dealId: string, tenantId: string) {
 
 async function lostActions(dealId: string) {
   "use step";
-  console.log(`Deal ${dealId} marked as lost. Archiving.`);
+  console.log(`[deal-stage] Deal ${dealId} marked lost — archive follow-ups`);
 }

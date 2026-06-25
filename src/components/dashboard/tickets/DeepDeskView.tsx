@@ -25,8 +25,8 @@ import {
     UserCheck,
     Check
 } from 'lucide-react';
-import { ticketService, type Ticket, type TicketComment, type TicketPriority, type TicketStatus, type TicketSource } from '@/services/ticketService';
-import { generateText } from '@/services/unifiedAIService';
+import { ticketService, isSupportChannelTicket, type Ticket, type TicketComment, type TicketPriority, type TicketStatus, type TicketSource } from '@/services/ticketService';
+import { draftTicketReply, summarizeTicket } from '@/services/bonnieCopilotService';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 
@@ -65,6 +65,7 @@ export default function DeepDeskView() {
     const [newPriority, setNewPriority] = useState<TicketPriority>('medium');
     const [newSource, setNewSource] = useState<TicketSource>('general');
     const [newSourceName, setNewSourceName] = useState('');
+    const [newCustomerEmail, setNewCustomerEmail] = useState('');
     const [creatingTicket, setCreatingTicket] = useState(false);
 
     // AI states
@@ -85,7 +86,7 @@ export default function DeepDeskView() {
 
     useEffect(() => {
         if (selectedTicket) {
-            loadTicketComments(selectedTicket.id);
+            loadTicketComments(selectedTicket.id, selectedTicket);
         }
     }, [selectedTicket]);
 
@@ -109,9 +110,14 @@ export default function DeepDeskView() {
         }
     };
 
-    const loadTicketComments = async (ticketId: string) => {
+    const loadTicketComments = async (ticketId: string, ticketOverride?: Ticket) => {
         try {
             setCommentsLoading(true);
+            const ticket = ticketOverride || tickets.find((t) => t.id === ticketId) || selectedTicket;
+            if (ticket && isSupportChannelTicket(ticket)) {
+                setComments(ticketService.buildSupportTicketThread(ticket));
+                return;
+            }
             const data = await ticketService.getComments(ticketId);
             setComments(data || []);
         } catch (error) {
@@ -138,6 +144,7 @@ export default function DeepDeskView() {
                 source: newSource,
                 source_id: 'manual_' + Date.now(),
                 source_name: newSourceName || 'Dashboard Agent',
+                customerEmail: newCustomerEmail.trim() || undefined,
             });
 
             setTickets(prev => [ticket, ...prev]);
@@ -148,7 +155,8 @@ export default function DeepDeskView() {
             setNewPriority('medium');
             setNewSource('general');
             setNewSourceName('');
-            toast.success('Ticket created successfully');
+            setNewCustomerEmail('');
+            toast.success(newCustomerEmail.trim() ? 'Ticket created — confirmation email sent' : 'Ticket created successfully');
         } catch (error) {
             console.error('Failed to create ticket:', error);
             toast.error('Failed to create ticket');
@@ -160,6 +168,11 @@ export default function DeepDeskView() {
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newComment.trim() || !selectedTicket) return;
+
+        if (isSupportChannelTicket(selectedTicket)) {
+            toast.error('Replies for WhatsApp/API tickets are managed in the channel inbox');
+            return;
+        }
 
         try {
             const comment = await ticketService.addComment(selectedTicket.id, newComment, isInternalNote);
@@ -174,8 +187,9 @@ export default function DeepDeskView() {
 
     const handleStatusChange = async (status: TicketStatus) => {
         if (!selectedTicket) return;
+        const origin = isSupportChannelTicket(selectedTicket) ? 'support_tickets' : 'tickets';
         try {
-            await ticketService.updateStatus(selectedTicket.id, status);
+            await ticketService.updateStatus(selectedTicket.id, status, origin);
             setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, status } : t));
             setSelectedTicket(prev => prev ? { ...prev, status } : null);
             toast.success(`Ticket status updated to ${status.replace('_', ' ')}`);
@@ -187,47 +201,41 @@ export default function DeepDeskView() {
 
     const handlePriorityChange = async (priority: TicketPriority) => {
         if (!selectedTicket) return;
+        const origin = isSupportChannelTicket(selectedTicket) ? 'support_tickets' : 'tickets';
         try {
-            // Update priority local mock or API update if exists, else reflect in UI state
+            await ticketService.updatePriority(selectedTicket.id, priority, origin);
             setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, priority } : t));
             setSelectedTicket(prev => prev ? { ...prev, priority } : null);
             toast.success(`Ticket priority set to ${priority}`);
         } catch (error) {
             console.error('Failed to update priority:', error);
+            toast.error('Failed to update priority');
         }
     };
 
     // Deep-Desk Copilot AI Actions
     const handleAIDraftReply = async () => {
-        if (!selectedTicket) return;
+        if (!selectedTicket || !currentTenant?.id) return;
         try {
             setAiGenerating(true);
             setAiResult('');
-            
+
             const conversationSnippet = comments
                 .slice(-5)
                 .map(c => `${c.is_internal ? '[Internal Note]' : '[Public]'} User(${c.user_id.slice(0, 8)}): ${c.content}`)
                 .join('\n');
 
-            const prompt = `You are the Deep-Desk AI Copilot. Draft a professional, empathetic, and direct response to the customer's support ticket.
-            
-            TICKET TITLE: ${selectedTicket.title}
-            TICKET DESCRIPTION: ${selectedTicket.description}
-            PRIORITY: ${selectedTicket.priority}
-            
-            RECENT CONVERSATION HISTORY:
-            ${conversationSnippet || 'No messages yet.'}
-            
-            STRICT RULES:
-            - Provide ONLY the direct response to the client. No greetings like "Subject:", no markdown formatting like bold asterisks.
-            - Keep it helpful, precise, and friendly.
-            - Ensure any placeholder is omitted.`;
-
-            const res = await generateText(prompt);
-            if (res.text) {
+            const res = await draftTicketReply({
+                tenantId: currentTenant.id,
+                title: selectedTicket.title,
+                description: selectedTicket.description || '',
+                priority: selectedTicket.priority,
+                conversationSnippet,
+            });
+            if (res.success && res.text) {
                 setAiResult(res.text.trim());
             } else {
-                toast.error('Failed to draft reply');
+                toast.error(res.error || 'Failed to draft reply');
             }
         } catch (error) {
             console.error('AI generate error:', error);
@@ -238,7 +246,7 @@ export default function DeepDeskView() {
     };
 
     const handleAISummarize = async () => {
-        if (!selectedTicket) return;
+        if (!selectedTicket || !currentTenant?.id) return;
         try {
             setAiGenerating(true);
             setAiResult('');
@@ -247,21 +255,16 @@ export default function DeepDeskView() {
                 .map(c => `${c.is_internal ? '[Internal Note]' : '[Public]'} User(${c.user_id.slice(0, 8)}): ${c.content}`)
                 .join('\n');
 
-            const prompt = `You are the Deep-Desk AI Copilot. Summarize the following support ticket and conversation history in 3 concise bullet points for the assigned agent.
-            
-            TICKET TITLE: ${selectedTicket.title}
-            TICKET DESCRIPTION: ${selectedTicket.description}
-            
-            CONVERSATION HISTORY:
-            ${conversationSnippet || 'No messages yet.'}
-            
-            Provide only the 3 bullet points, using plain text (no asterisks).`;
-
-            const res = await generateText(prompt);
-            if (res.text) {
+            const res = await summarizeTicket({
+                tenantId: currentTenant.id,
+                title: selectedTicket.title,
+                description: selectedTicket.description || '',
+                conversationSnippet,
+            });
+            if (res.success && res.text) {
                 setAiResult(res.text.trim());
             } else {
-                toast.error('Failed to summarize ticket');
+                toast.error(res.error || 'Failed to summarize ticket');
             }
         } catch (error) {
             console.error('AI generate error:', error);
@@ -313,6 +316,7 @@ export default function DeepDeskView() {
         );
         setNewSource('lead');
         setNewSourceName(`Facebook: ${name}`);
+        setNewCustomerEmail(lead.email || '');
         setShowCreateModal(true);
     };
 
@@ -556,6 +560,11 @@ export default function DeepDeskView() {
                                             <span className="text-xs text-slate-400 font-mono">#{selectedTicket.id}</span>
                                         </div>
                                         <h3 className="text-sm md:text-base font-bold text-white line-clamp-1">{selectedTicket.title}</h3>
+                                        {selectedTicket.metadata?.customerEmail && (
+                                            <p className="text-xs text-teal-400/90 mt-0.5">
+                                                Email updates → {String(selectedTicket.metadata.customerEmail)}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -893,6 +902,18 @@ export default function DeepDeskView() {
                                     onChange={(e) => setNewSourceName(e.target.value)}
                                     className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-850 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500"
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Customer email (for updates)</label>
+                                <input
+                                    type="email"
+                                    placeholder="customer@example.com"
+                                    value={newCustomerEmail}
+                                    onChange={(e) => setNewCustomerEmail(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-850 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">Sends confirmation, status changes, and public replies to this address.</p>
                             </div>
 
                             <div className="flex justify-end gap-2 pt-2">

@@ -567,7 +567,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
                                     <Globe className="w-4 h-4 text-violet-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">Regional & Language</span>
+                                <span className="text-[13px] font-bold text-slate-200">Regional Format</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['regional'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -578,32 +578,19 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     className="overflow-hidden bg-slate-950/40"
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">Currency</label>
-                                                <select 
-                                                    value={businessSettings.currency} 
-                                                    onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
-                                                    className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
-                                                >
-                                                    <option value="USD">USD ($)</option>
-                                                    <option value="EUR">EUR (€)</option>
-                                                    <option value="GBP">GBP (£)</option>
-                                                    <option value="KES">KES (Ksh)</option>
-                                                </select>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">System Language</label>
-                                                <select 
-                                                    value={language} 
-                                                    onChange={e => setLanguage(e.target.value as any)}
-                                                    className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
-                                                >
-                                                    {LANGUAGES.map(lang => (
-                                                        <option key={lang.code} value={lang.code}>{lang.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] text-slate-500 uppercase font-black">Workspace currency</label>
+                                            <select 
+                                                value={businessSettings.currency} 
+                                                onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
+                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                            >
+                                                <option value="USD">USD ($)</option>
+                                                <option value="EUR">EUR (€)</option>
+                                                <option value="GBP">GBP (£)</option>
+                                                <option value="KES">KES (Ksh)</option>
+                                            </select>
+                                            <p className="text-[10px] text-slate-500 pt-1">Applies to invoices and reports for this workspace.</p>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -810,7 +797,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     key={theme}
                                     onClick={() => {
                                         setThemeMode(theme);
-                                        toast.success(`Theme mode updated to ${theme}`);
+                                        toast.success(`Theme updated to ${theme}`);
                                     }}
                                     className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg uppercase transition-all ${
                                         themeMode === theme ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
@@ -820,6 +807,21 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 </button>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Personal language — does not change workspace for other users */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] text-slate-500 uppercase font-black">Your language</label>
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value as typeof language)}
+                            className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                        >
+                            {LANGUAGES.map((lang) => (
+                                <option key={lang.code} value={lang.code}>{lang.label}</option>
+                            ))}
+                        </select>
+                        <p className="text-[10px] text-slate-500">Personal preference only — other team members keep their own language.</p>
                     </div>
 
                     {/* Color palette dot pickers */}

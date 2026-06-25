@@ -13,6 +13,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
+import EmptyState from '../ui/EmptyState';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
 
@@ -535,6 +536,14 @@ const TasksTab: React.FC<TasksTabProps> = () => {
         )}
         {loading ? (
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : tasks.length === 0 ? (
+          <div className="p-6">
+            <EmptyState
+              icon={ListChecks}
+              title="No tasks yet"
+              description="Use the + button to create your first task and track follow-ups in one place."
+            />
+          </div>
         ) : viewMode === 'board' ? (
           <div className="p-4">
             <KanbanView

@@ -9,15 +9,69 @@
   --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
   --font-inter: "Inter Variable", "Inter", system-ui, sans-serif;
-  --font-heading: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-heading: "Space Grotesk", "Inter Variable", "Inter", system-ui, sans-serif;
   --font-body: "Inter Variable", "Inter", system-ui, sans-serif;
+  --color-ac-accent: #14b8a6;
+  --color-ac-accent-hover: #2dd4bf;
+  --color-ac-accent-deep: #0d9488;
+}
+
+:root {
+  --ac-accent: #14b8a6;
+  --ac-accent-hover: #2dd4bf;
+  --ac-accent-deep: #0d9488;
+  --ac-accent-muted: rgba(20, 184, 166, 0.12);
 }
 
 /* Marketing Theme Definitions */
 .marketing-theme {
   --background: #020D1A;
   --foreground: #f8fafc;
+  --marketing-primary: #06b6d4;
+  --marketing-accent: #14b8a6;
+  --marketing-radius: 0.75rem;
+  --shadow-luxury-sm: 0 0 30px -18px rgba(34, 211, 238, 0.15);
+  --shadow-luxury-md: 0 0 60px -24px rgba(34, 211, 238, 0.22);
+  --shadow-luxury-lg: 0 0 80px -20px rgba(6, 182, 212, 0.25);
   color: var(--foreground);
+}
+
+.marketing-shadow-sm {
+  box-shadow: var(--shadow-luxury-sm);
+}
+
+.marketing-shadow-md {
+  box-shadow: var(--shadow-luxury-md);
+}
+
+.marketing-shadow-lg {
+  box-shadow: var(--shadow-luxury-lg);
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.25s ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.25s ease-out;
 }
 
 .font-marketing-heading {
@@ -623,27 +677,27 @@ body {
   animation: moving-border 3s linear infinite;
 }
 
-/* Hero Metallic Text Gradient - Simplified */
+/* Hero accent text — teal brand gradient (2 stops) */
 .hero-metallic-text {
-  background: linear-gradient(135deg, #0077FF 0%, #00D2A0 100%);
+  background: linear-gradient(135deg, var(--ac-accent-deep) 0%, var(--ac-accent-hover) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 
-/* High-Authority CTA Styles */
+/* Primary CTA — teal brand */
 .cta-primary {
-  background: linear-gradient(135deg, #00D2A0 0%, #0077FF 100%);
-  color: #020D1A;
-  font-weight: 800;
-  box-shadow: 0 0 20px rgba(0, 210, 160, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, var(--ac-accent) 0%, var(--ac-accent-deep) 100%);
+  color: #020617;
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.25);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cta-primary:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 30px rgba(0, 210, 160, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(45, 212, 191, 0.35);
 }
 
 /* Activation & Founder Utilities */

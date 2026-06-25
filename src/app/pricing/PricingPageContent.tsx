@@ -2,17 +2,21 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-    CheckCircle2, Shield, Zap, Globe, MessageSquare, Star,
-    ChevronDown, Brain, FileText, DollarSign,
+    CheckCircle2, Shield, Zap, Globe, MessageSquare,
+    Brain, FileText, DollarSign,
     Video, Calendar, Mail, BarChart3, Lock
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
 import MarketingFooter from '@/components/landing/MarketingFooter';
+import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
+import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
+import MarketingFaqAccordion from '@/components/marketing/MarketingFaqAccordion';
 import { PUBLIC_PRICING_PLANS, PRICING_FROM } from '@/config/pricingPlans';
+import { PRICING_OUTCOME_HERO } from '@/config/marketingOutcomes';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -35,45 +39,52 @@ const replacedTools = [
 
 const faqs = [
     {
-        q: 'Why did we build AlphaClone instead of another separate tool?',
-        a: 'We built AlphaClone because small businesses were forced to run core operations across disconnected tools for CRM, email, contracts, billing, meetings, and reporting. That creates daily friction, duplicated work, and missed follow-ups. AlphaClone is designed as one native system so your team can operate from a single workspace.',
+        question: 'Why did we build AlphaClone instead of another separate tool?',
+        answer:
+            'We built AlphaClone because small businesses were forced to run core operations across disconnected tools for CRM, email, contracts, billing, meetings, and reporting. That creates daily friction, duplicated work, and missed follow-ups. AlphaClone is designed as one native system so your team can operate from a single workspace.',
     },
     {
-        q: 'How much money does software sprawl usually cost per year?',
-        a: 'Costs vary by stack. AlphaClone is priced to consolidate common workflows like CRM, finance, contracts, meetings, projects, and outreach into one $15/month starter workspace.',
+        question: 'How much money does software sprawl usually cost per year?',
+        answer:
+            'Costs vary by stack. AlphaClone is priced to consolidate common workflows like CRM, finance, contracts, meetings, projects, and outreach into one $15/month starter workspace.',
     },
     {
-        q: 'What is included, and how do the plans differ?',
-        a: 'Every plan includes the full operating stack: CRM pipeline, outreach, contracts, invoicing and finance, native 1-hour video meetings, projects, documents, and core automations. Starter ($15/mo) covers up to 25 team members and 25GB storage. Pro ($45/mo) unlocks unlimited members, the Bonnie AI sales assistant, API access, and a custom domain. Enterprise ($80/mo) adds 500GB storage, advanced AI limits, and priority infrastructure.',
+        question: 'What is included, and how do the plans differ?',
+        answer:
+            'Every plan includes the full operating stack: CRM pipeline, outreach, contracts, invoicing and finance, native 1-hour video meetings, projects, documents, and core automations. Starter ($15/mo) covers up to 25 team members and 25GB storage. Pro ($45/mo) unlocks unlimited members, the Bonnie AI sales assistant, API access, and a custom domain. Enterprise ($80/mo) adds 500GB storage, advanced AI limits, and priority infrastructure.',
     },
     {
-        q: 'Do I need a credit card to start?',
-        a: 'No. You can start your 14-day trial without entering card details. You can test your full workflow first, then decide whether to activate paid billing.',
+        question: 'Do I need a credit card to start?',
+        answer:
+            'No. You can start your 14-day trial without entering card details. You can test your full workflow first, then decide whether to activate paid billing.',
     },
     {
-        q: 'Will my team struggle to switch from multiple tools?',
-        a: 'The transition is designed to be practical. You can import contacts and client data, run outreach, and handle meetings and operations from one dashboard.',
+        question: 'Will my team struggle to switch from multiple tools?',
+        answer:
+            'The transition is designed to be practical. You can import contacts and client data, run outreach, and handle meetings and operations from one dashboard.',
     },
     {
-        q: 'Is this really one connected system, or just bundled features?',
-        a: 'It is one connected system. CRM records, communications, meetings, tasks, and financial operations share the same data layer, which removes duplicate entry and keeps your business context consistent across the platform.',
+        question: 'Is this really one connected system, or just bundled features?',
+        answer:
+            'It is one connected system. CRM records, communications, meetings, tasks, and financial operations share the same data layer, which removes duplicate entry and keeps your business context consistent across the platform.',
     },
     {
-        q: 'What happens to my data if I cancel?',
-        a: 'Your data is retained for 90 days after cancellation so you can export records or reactivate. After that retention window, data is permanently removed according to policy.',
+        question: 'What happens to my data if I cancel?',
+        answer:
+            'Your data is retained for 90 days after cancellation so you can export records or reactivate. After that retention window, data is permanently removed according to policy.',
     },
     {
-        q: 'Is my business data secure?',
-        a: 'AlphaClone uses controls including encryption in transit and at rest, tenant isolation, role-based access, and audit logging to protect business data.',
+        question: 'Is my business data secure?',
+        answer:
+            'AlphaClone uses controls including encryption in transit and at rest, tenant isolation, role-based access, and audit logging to protect business data.',
     },
 ];
 
 export default function PricingPageContent() {
-    const [, setIsLoginOpen] = useState(false);
-    const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
 
     return (
-        <div className="min-h-screen page-network-bg text-slate-200 selection:bg-teal-500/30">
+        <div className="min-h-screen page-network-bg marketing-theme text-slate-200 selection:bg-teal-500/30 pb-24 lg:pb-0">
             {/* Persistent full-page animated network background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <HeroBackground />
@@ -126,7 +137,7 @@ export default function PricingPageContent() {
             }} />
 
 
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
+            <PublicNavigation onLoginClick={() => {}} />
 
             <main className="relative overflow-hidden">
                 {/* Pricing Hero Section */}
@@ -137,16 +148,18 @@ export default function PricingPageContent() {
                         <AnimateIn type="fadeIn" delay={0}>
                             <div className="inline-flex items-center gap-2 mb-8 ai-badge">
                                 <Zap className="w-3.5 h-3.5 fill-teal-400" />
-                                <span>THE UNIFIED OPERATING ENGINE</span>
+                                <span>{PRICING_OUTCOME_HERO.badge.toUpperCase()}</span>
                             </div>
                         </AnimateIn>
                         <h1 className="text-5xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-[0.9]">
-                            Operational <br />
-                            <span className="hero-metallic-text">Authority.</span>
+                            {PRICING_OUTCOME_HERO.headline} <br />
+                            <span className="hero-metallic-text">{PRICING_OUTCOME_HERO.headlineAccent}</span>
                         </h1>
-                        <p className="text-slate-400 text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight">
-                            Simple, transparent plans. <br className="hidden md:block" />
-                            The full AlphaClone platform, starting at ${PRICING_FROM}/month.
+                        <p className="text-slate-400 text-xl sm:text-2xl max-w-3xl mx-auto mb-6 font-medium tracking-tight leading-relaxed">
+                            {PRICING_OUTCOME_HERO.subhead}
+                        </p>
+                        <p className="text-slate-500 text-base max-w-2xl mx-auto mb-6">
+                            Plans from ${PRICING_FROM}/month · every tier includes CRM, billing, contracts, meetings, and core automations.
                         </p>
                         <div className="flex items-center justify-center gap-6 text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">
                             <span>• Zero Setup Fees</span>
@@ -157,6 +170,12 @@ export default function PricingPageContent() {
                 </section>
 
                 <div className="max-w-7xl mx-auto px-4 pb-24 relative z-20">
+
+                <MarketingPricingToggle
+                    value={billingPeriod}
+                    onChange={setBillingPeriod}
+                    className="mb-10 flex justify-center"
+                />
 
                 {/* Plan Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-6xl mx-auto items-stretch">
@@ -185,11 +204,17 @@ export default function PricingPageContent() {
                                 </div>
 
                                 <div className="flex items-baseline gap-2 mb-1">
-                                    <span className="text-5xl font-black text-white">${plan.price}</span>
-                                    <span className="text-slate-600 font-bold text-xs uppercase tracking-wider">/ month</span>
+                                    <span className="text-5xl font-black text-white">
+                                        ${billingPeriod === 'monthly' ? plan.price : plan.yearly}
+                                    </span>
+                                    <span className="text-slate-600 font-bold text-xs uppercase tracking-wider">
+                                        / {billingPeriod === 'monthly' ? 'month' : 'year'}
+                                    </span>
                                 </div>
                                 <p className="text-xs text-slate-600 mb-8">
-                                    or ${plan.yearly}/year — save {Math.round((1 - plan.yearly / (plan.price * 12)) * 100)}%
+                                    {billingPeriod === 'monthly'
+                                        ? `or $${plan.yearly}/year — save ${Math.round((1 - plan.yearly / (plan.price * 12)) * 100)}%`
+                                        : `$${Math.round(plan.yearly / 12)}/mo equivalent · save ${Math.round((1 - plan.yearly / (plan.price * 12)) * 100)}% vs monthly`}
                                 </p>
 
                                 <ul className="space-y-3 mb-8 flex-grow">
@@ -275,49 +300,24 @@ export default function PricingPageContent() {
 
                 {/* FAQ */}
                 <div className="max-w-3xl mx-auto mb-20">
-                    <h2 className="text-3xl font-bold text-white text-center mb-10">Frequently Asked Questions</h2>
-                    <div className="space-y-3">
-                        {faqs.map((faq, i) => (
-                            <div key={i} className="rounded-2xl border border-slate-800 overflow-hidden">
-                                <button
-                                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                                    className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-900/50 transition-colors"
-                                >
-                                    <span className="text-sm font-semibold text-white pr-4">{faq.q}</span>
-                                    <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
-                                </button>
-                                <AnimatePresence>
-                                    {openFaq === i && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="overflow-hidden"
-                                        >
-                                            <div className="px-6 pb-5 text-sm text-slate-400 leading-relaxed border-t border-slate-800/50 pt-4">
-                                                {faq.a}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        ))}
-                    </div>
+                    <h2 className="font-marketing-heading text-3xl font-bold text-white text-center mb-10">
+                        Frequently Asked Questions
+                    </h2>
+                    <MarketingFaqAccordion items={faqs} />
                 </div>
 
                 <div className="text-center p-16 relative overflow-hidden rounded-3xl border border-white/[0.05] bg-slate-950">
                     <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-blue-500/5 -z-10" />
-                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter">Ready to Deploy Your <span className="hero-metallic-text">OS?</span></h2>
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter">Ready to run clients on <span className="hero-metallic-text">one system?</span></h2>
                     <p className="text-slate-400 text-xl mb-12 max-w-xl mx-auto font-medium">
-                        Start a 14-day trial and test the CRM, finance, contract, meeting, and workflow modules in one workspace.
+                        Start a 14-day trial. Move a real lead through pipeline, delivery, and billing — then decide.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <Link
                             href="/auth/login?register=true&type=business&plan=starter"
                             className="cta-primary px-12 py-5 rounded-2xl text-lg w-full sm:w-auto text-center"
                         >
-                            Start from $15/month
+                            Start 14-day free trial
                         </Link>
                         <Link
                             href="/contact"
@@ -332,6 +332,7 @@ export default function PricingPageContent() {
                 </div>
             </main>
             <MarketingFooter />
+            <MarketingMobileCtaBar />
         </div>
     );
 }

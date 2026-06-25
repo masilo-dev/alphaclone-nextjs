@@ -33,6 +33,7 @@ export const BONNIE_REGISTRY_TOOLS = [
   'get_tenant_messages', 'send_tenant_message', 'create_in_app_notification',
   // Bonnie meta
   'orchestrate_task', 'define_outcome', 'trigger_bonnie_dream',
+  'list_skills', 'load_skill', 'activate_skill_for_session',
 ] as const;
 
 /** Tools implemented in MCPServer (not in lightweight registry) */
@@ -65,6 +66,9 @@ export const BONNIE_CUSTOM_TOOLS = [
   'run_autonomous_scan',
   'summarize_workspace',
   'search_facebook_leads',
+  'draft_reply',
+  'summarize_ticket',
+  'generate_outreach_draft',
 ] as const;
 
 export type BonnieModuleId =

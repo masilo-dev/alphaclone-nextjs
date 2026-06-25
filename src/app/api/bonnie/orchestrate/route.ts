@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -16,16 +17,18 @@ type SubagentResult = {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { tenant_id, task, subagents = [] } = body;
+    const tenantId = body.tenant_id || body.tenantId;
+    const { task, subagents = [] } = body;
 
-    if (!tenant_id || !task) {
-      return new Response(
-        JSON.stringify({ error: 'tenant_id and task are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!tenantId || !task) {
+      return new Response(JSON.stringify({ error: 'tenant_id and task are required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Set up SSE response
+    await requireTenantAccess(tenantId);
+
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -59,7 +62,12 @@ export async function POST(req: NextRequest) {
                     model: 'claude-sonnet-4-20250514',
                     max_tokens: 512,
                     system: `You are ${subagent.name}, role: ${subagent.role}. Return results as JSON with keys: outcome, details, next_steps.`,
-                    messages: [{ role: 'user', content: `Main task: ${task}\n\nYour instructions: ${subagent.instructions}` }],
+                    messages: [
+                      {
+                        role: 'user',
+                        content: `Main task: ${task}\n\nYour instructions: ${subagent.instructions}`,
+                      },
+                    ],
                     metadata: { session_type: 'multiagent' },
                   }),
                 });
@@ -71,8 +79,8 @@ export async function POST(req: NextRequest) {
                 } else {
                   result = `API error: ${res.status}`;
                 }
-              } catch (e: any) {
-                result = `Subagent error: ${e.message}`;
+              } catch (e: unknown) {
+                result = `Subagent error: ${e instanceof Error ? e.message : String(e)}`;
               }
             } else {
               result = JSON.stringify({
@@ -83,18 +91,31 @@ export async function POST(req: NextRequest) {
               success = false;
             }
 
-            results.push({ name: subagent.name, role: subagent.role, result, success, execution_mode: executionMode });
-            send({ type: 'subagent_complete', name: subagent.name, success, result, execution_mode: executionMode });
+            results.push({
+              name: subagent.name,
+              role: subagent.role,
+              result,
+              success,
+              execution_mode: executionMode,
+            });
+            send({
+              type: 'subagent_complete',
+              name: subagent.name,
+              success,
+              result,
+              execution_mode: executionMode,
+            });
           }
 
           const successful = results.filter((r) => r.success).length;
-          const status = results.length === 0
-            ? 'no_subagents'
-            : successful === results.length
-              ? 'complete'
-              : successful === 0
-                ? 'failed'
-                : 'partial';
+          const status =
+            results.length === 0
+              ? 'no_subagents'
+              : successful === results.length
+                ? 'complete'
+                : successful === 0
+                  ? 'failed'
+                  : 'partial';
 
           send({
             type: 'orchestration_complete',
@@ -106,8 +127,11 @@ export async function POST(req: NextRequest) {
             successful,
             failed: results.length - successful,
           });
-        } catch (err: any) {
-          send({ type: 'error', message: err.message });
+        } catch (err: unknown) {
+          send({
+            type: 'error',
+            message: err instanceof Error ? err.message : 'Orchestration failed',
+          });
         } finally {
           controller.close();
         }
@@ -122,10 +146,11 @@ export async function POST(req: NextRequest) {
         'X-Accel-Buffering': 'no',
       },
     });
-  } catch (err: any) {
-    return new Response(
-      JSON.stringify({ error: err.message || 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+  } catch (err: unknown) {
+    const response = routeErrorResponse(err, 'Orchestration failed', req);
+    return new Response(await response.text(), {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

@@ -4,18 +4,16 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-   Check, 
-   Zap, 
-   Database, 
-   Smartphone, 
-   BarChart, 
-   TrendingUp, 
-   Layers, 
-   Briefcase, 
-   User as UserIcon, 
-   ShieldCheck, 
-   Mail, 
+import {
+   Check,
+   Zap,
+   Database,
+   Smartphone,
+   TrendingUp,
+   Layers,
+   Briefcase,
+   ShieldCheck,
+   Mail,
    ArrowRight,
    Video,
 } from 'lucide-react';
@@ -25,6 +23,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from './ui/UIComponents';
 import PublicNavigation from './PublicNavigation';
 import MarketingFooter from './landing/MarketingFooter';
+import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
+import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
+import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
+import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
+import {
+   BEFORE_AFTER_WORKFLOWS,
+   OUTCOME_HERO_BULLETS,
+   OUTCOME_PROMISE,
+   OUTCOME_PROOF_STATS,
+   OUTCOME_TRUST_POINTS,
+} from '@/config/marketingOutcomes';
 import VerifiedPartnersMarquee from './landing/VerifiedPartnersMarquee';
 import { ServiceCard } from './landing/ServiceCard';
 import { AIWorkerGraphic } from './ui/AIWorkerGraphic';
@@ -47,6 +56,7 @@ const LOGIN_HREF = '/auth/login';
 
 const LandingPage = () => {
    const router = useRouter();
+   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
    const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
    const [contactForm, setContactForm] = useState({
       name: '',
@@ -55,17 +65,8 @@ const LandingPage = () => {
       message: ''
    });
 
-   const heroOutcomePoints = [
-      'Replace CRM, invoicing, contracts, and project tools',
-      'Keep every client workflow in one workspace',
-      'Start free for 14 days, no card required',
-   ];
-
-   const heroTrustPoints = [
-      'Built for service businesses',
-      'GDPR-friendly controls',
-      'Live demo available anytime',
-   ];
+   const heroOutcomePoints = [...OUTCOME_HERO_BULLETS];
+   const heroTrustPoints = [...OUTCOME_TRUST_POINTS];
 
    // Handle contact form submission
    const handleContactSubmit = async (e: React.FormEvent) => {
@@ -110,7 +111,7 @@ const LandingPage = () => {
    };
 
    return (
-      <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30">
+      <div className="min-h-screen page-network-bg marketing-theme font-marketing-body text-slate-200 selection:bg-teal-500/30 pb-24 lg:pb-0">
          {/* Persistent full-page background */}
          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             <HeroBackground />
@@ -140,19 +141,19 @@ const LandingPage = () => {
                      {/* Brand pill */}
                      <div className="inline-flex items-center gap-2.5 bg-cyan-500/10 border border-cyan-500/40 rounded-full px-5 py-2 mb-8">
                         <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                        <span className="text-sm font-semibold text-cyan-300 tracking-wide uppercase">AlphaClone — AI Business OS</span>
+                        <span className="text-sm font-semibold text-cyan-300 tracking-wide uppercase">{OUTCOME_PROMISE.badge}</span>
                      </div>
 
                      {/* Headline */}
                      <h1 className="font-marketing-heading font-black text-white mb-6 tracking-tight">
-                        Run your business from{' '}
-                        <span className="text-cyan-400">one AI workspace.</span>
-                     </h1>                     {/* Solution subheadline */}
+                        {OUTCOME_PROMISE.headline}{' '}
+                        <span className="text-cyan-400">{OUTCOME_PROMISE.headlineAccent}</span>
+                     </h1>
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-                        AlphaClone replaces scattered CRM, billing, contracts, and project tools with one system that helps founders move faster and keep every client workflow connected.
+                        {OUTCOME_PROMISE.subhead}
                      </p>
-                     <p className="hidden sm:block text-sm sm:text-base text-slate-400 mb-8 max-w-3xl mx-auto">
-                        Built for service businesses. Social automation supports LinkedIn pages and Facebook business pages, without needing a personal account.
+                     <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-8 max-w-3xl mx-auto">
+                        {OUTCOME_PROMISE.icp}
                      </p>
 
                      {/* CTAs */}
@@ -172,8 +173,8 @@ const LandingPage = () => {
                         </button>
                      </div>
 
-                     {/* Outcome bullets */}
-                     <div className="hidden sm:grid gap-3 sm:grid-cols-3 mb-10 sm:mb-12 max-w-4xl mx-auto text-left">
+                     {/* Outcome bullets — stack on phone, grid on tablet+ */}
+                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-8 sm:mb-12 max-w-4xl mx-auto text-left">
                         {heroOutcomePoints.map((point) => (
                            <div
                               key={point}
@@ -196,18 +197,18 @@ const LandingPage = () => {
                         ))}
                      </div>
 
-                     {/* Offer block */}
-                     <div className="hidden sm:block mb-10 rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 via-slate-950/60 to-blue-500/10 px-5 py-5 sm:px-6 sm:py-6 text-left max-w-4xl mx-auto">
+                     {/* Trial block */}
+                     <div className="mb-8 sm:mb-10 rounded-2xl sm:rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 via-slate-950/60 to-blue-500/10 px-4 py-4 sm:px-6 sm:py-6 text-left max-w-4xl mx-auto marketing-shadow-md">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                            <div>
                               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300 mb-3">
-                                 Limited-time offer
+                                 Try before you buy
                               </div>
                               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                                  Get set up in minutes, not weeks.
                               </h2>
                               <p className="mt-2 max-w-2xl text-sm sm:text-base text-slate-300 leading-relaxed">
-                                 Start a 14-day trial, see your business workspace in one place, and decide after you’ve tested the CRM, billing, contracts, and workflow tools.
+                                 Run a real client workflow in your 14-day trial — from lead to invoice — and decide with evidence, not a slide deck.
                               </p>
                            </div>
                            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
@@ -229,15 +230,11 @@ const LandingPage = () => {
 
                      {/* Proof stats */}
                      <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-center">
-                        {[
-                           { value: '12', label: 'modules in one place' },
-                           { value: '1', label: 'shared workspace' },
-                           { value: '14', label: 'free trial days' },
-                           { value: '$0', label: 'card required' },
-                        ].map(({ value, label }) => (
-                           <div key={label} className="px-4 py-2 rounded-xl bg-cyan-500/5 border border-cyan-500/15 min-w-[140px]">
+                        {OUTCOME_PROOF_STATS.map(({ value, label, detail }) => (
+                           <div key={label} className="px-4 py-3 rounded-xl bg-cyan-500/5 border border-cyan-500/15 min-w-[140px] max-w-[180px]">
                               <div className="text-2xl sm:text-3xl font-black text-cyan-400 font-marketing-data">{value}</div>
-                              <div className="text-xs text-slate-400 mt-0.5 font-medium uppercase tracking-wide">{label}</div>
+                              <div className="text-xs text-slate-300 mt-0.5 font-semibold uppercase tracking-wide">{label}</div>
+                              <div className="text-[11px] text-slate-500 mt-1 leading-snug">{detail}</div>
                            </div>
                         ))}
                      </div>
@@ -249,10 +246,10 @@ const LandingPage = () => {
             <section className="py-10 border-y border-slate-800/60 bg-slate-950/60 overflow-hidden">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
                   <p className="text-[11px] uppercase tracking-[0.28em] font-bold text-slate-500">
-                     Verified apps you can connect inside AlphaClone
+                     Works with the tools you already use
                   </p>
                   <p className="mt-2 text-sm text-slate-400">
-                     Facebook, WhatsApp, LinkedIn, Stripe, Google, Microsoft, and more — OAuth-ready in your workspace.
+                     Connect Stripe, Google, Microsoft, LinkedIn, Facebook, and more — without rebuilding your client workflow.
                   </p>
                </div>
                <VerifiedPartnersMarquee />
@@ -310,6 +307,36 @@ const LandingPage = () => {
                   </div>
                </div>
             </motion.section>
+
+            {/* Before / After */}
+            <section className="py-16 bg-slate-950/50 border-b border-slate-900">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-10">
+                     <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
+                        What changes when your tools share one client record
+                     </h2>
+                     <p className="text-slate-400 max-w-2xl mx-auto">
+                        Most teams don&apos;t need more software. They need fewer handoffs.
+                     </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     {BEFORE_AFTER_WORKFLOWS.map((row) => (
+                        <div key={row.before} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 text-left">
+                           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-red-400/90 mb-2">Before</p>
+                           <p className="text-sm text-slate-400 mb-4 leading-relaxed">{row.before}</p>
+                           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400 mb-2">After AlphaClone</p>
+                           <p className="text-sm text-slate-200 leading-relaxed">{row.after}</p>
+                        </div>
+                     ))}
+                  </div>
+                  <div className="mt-8 text-center">
+                     <Link href="/results" className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200">
+                        See workflow stories by team type
+                        <ArrowRight className="h-4 w-4" />
+                     </Link>
+                  </div>
+               </div>
+            </section>
 
             {/* Workflow and Product Preview */}
             <section className="py-16 border-y border-slate-800 bg-[#050B14]/80">
@@ -461,13 +488,13 @@ const LandingPage = () => {
                         </div>
                      </div>
                      <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
-                        <h4 className="text-lg font-bold text-white mb-3">Verification Signals</h4>
+                        <h4 className="text-lg font-bold text-white mb-3">Why teams trust the platform</h4>
                         <ul className="space-y-2">
                            {[
-                              'Dedicated legal pages linked directly from the homepage footer and trust section.',
-                              'Public support and security contact channels for policy and account requests.',
-                              'Clear business-only social posting scope and platform behavior disclosures.',
-                              'Data deletion endpoint and policy references for account lifecycle transparency.',
+                              'Encryption in transit and at rest with tenant isolation between workspaces.',
+                              'Role-based access and audit logging for teams handling client and financial data.',
+                              'Public privacy, security, and data-deletion policies — linked from every page.',
+                              'Human support via sales and support email when you need onboarding help.',
                            ].map((item) => (
                               <li key={item} className="text-sm text-slate-300 flex items-start gap-2 leading-relaxed">
                                  <span className="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-cyan-300" />
@@ -480,9 +507,9 @@ const LandingPage = () => {
                </div>
             </section>
 
-            {/* Stats / Proof Section */}
+            {/* Outcome highlights */}
             <section className="hidden sm:block py-12 border-y border-slate-800 bg-slate-950/50">
-               <motion.div 
+               <motion.div
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
@@ -491,9 +518,9 @@ const LandingPage = () => {
                >
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
                      {[
-                        { value: '2', label: 'Public pricing plans' },
-                        { value: '4', label: 'Policy pages linked' },
-                        { value: '3', label: 'Support contact channels' },
+                        { value: 'Win', label: 'Keep pipeline and follow-ups in one place' },
+                        { value: 'Deliver', label: 'Projects tied to the deal that sold them' },
+                        { value: 'Get paid', label: 'Invoices linked to contracts and delivery' },
                      ].map((stat, idx) => (
                         <motion.div
                            key={stat.label}
@@ -524,7 +551,7 @@ const LandingPage = () => {
                         You are not running a business. You are managing software.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-                        Stop juggling disconnected tools. AlphaClone brings CRM, lead operations, project management, AI agents, invoices, quotations, receipts, contracts, and video operations into one workspace.
+                        Each capability below removes a handoff — so you spend time on clients, not copying data between apps.
                      </p>
                   </motion.div>
 
@@ -532,50 +559,50 @@ const LandingPage = () => {
                      {[
                         {
                            icon: Database,
-                           title: 'Unified CRM',
-                           desc: 'Manage contacts, deals, and pipeline in one place. No more disconnected spreadsheets.',
+                           title: 'Win clients',
+                           desc: 'Capture leads, track pipeline, and follow up before opportunities go cold.',
                            color: 'from-blue-500 to-cyan-500'
                         },
                         {
                            icon: Briefcase,
-                           title: 'Project Engine',
-                           desc: 'Track projects, tasks, and deadlines with intelligent automation and team collaboration.',
+                           title: 'Deliver work',
+                           desc: 'Run projects and tasks with the same context sales promised the client.',
                            color: 'from-purple-500 to-indigo-500'
                         },
                         {
                            icon: TrendingUp,
-                           title: 'Finance & Billing',
-                           desc: 'Create invoices, quotations, and receipts with end-to-end revenue and accounting visibility.',
+                           title: 'Get paid',
+                           desc: 'Send quotes and invoices tied to the deal — see what is paid, pending, or overdue.',
                            color: 'from-green-500 to-emerald-500'
                         },
                         {
                            icon: Zap,
-                           title: 'AI Sales Agent',
-                           desc: 'AI-powered lead generation, qualification, outreach support, and meeting booking.',
+                           title: 'Grow without admin drag',
+                           desc: 'AI-assisted outreach and follow-up prep while you focus on delivery.',
                            color: 'from-yellow-500 to-orange-500'
                         },
                         {
                            icon: Video,
-                           title: 'Business Video System',
-                           desc: 'Integrated video workspaces for client demos, team reviews, and execution updates.',
+                           title: 'Meet clients in context',
+                           desc: 'Start a call from the client record — notes and follow-ups stay attached.',
                            color: 'from-cyan-500 to-blue-500'
                         },
                         {
                            icon: Layers,
-                           title: 'Social Media Automation',
-                           desc: 'Daily posting and media workflows for LinkedIn pages and Facebook business pages.',
+                           title: 'Stay visible online',
+                           desc: 'Schedule LinkedIn and Facebook business posts without a separate social stack.',
                            color: 'from-indigo-500 to-violet-500'
                         },
                         {
                            icon: ShieldCheck,
-                           title: 'Safe & Secure',
-                           desc: 'Role-based access, audit logging, and security policy links for operational control.',
+                           title: 'Protect client data',
+                           desc: 'Role-based access and audit trails for teams handling sensitive records.',
                            color: 'from-red-500 to-blue-500'
                         },
                         {
                            icon: Smartphone,
-                           title: 'Mobile Ready',
-                           desc: 'Full-featured mobile apps for iOS and Android. Work from anywhere.',
+                           title: 'Work from anywhere',
+                           desc: 'Check tasks, messages, and billing from mobile when you are away from desk.',
                            color: 'from-indigo-500 to-purple-500'
                         }
                      ].map((service, idx) => (
@@ -606,17 +633,24 @@ const LandingPage = () => {
                      className="text-center mb-16"
                   >
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        Simple plans. Every feature. No games.
+                        One price. Your whole client operation connected.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-                        No hidden fees. No surprise charges. One operating system for the work you run every day.
+                        No hidden fees. Test the full workflow free for 14 days — then keep the plan that matches your team.
                      </p>
                   </motion.div>
+
+                  <MarketingPricingToggle
+                     value={billingPeriod}
+                     onChange={setBillingPeriod}
+                     className="mb-10 flex justify-center"
+                  />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
                      {PUBLIC_PRICING_PLANS.map((p) => ({
                         name: p.name,
-                        price: `$${p.price}`,
+                        price: billingPeriod === 'monthly' ? `$${p.price}` : `$${p.yearly}`,
+                        period: billingPeriod === 'monthly' ? '/mo' : '/yr',
                         desc: p.tagline,
                         features: p.features,
                         note: p.badge || 'All features included',
@@ -632,14 +666,14 @@ const LandingPage = () => {
                         >
                            {plan.popular && (
                               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-400 text-slate-950 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">
-                                 Includes Video
+                                 Best for growing teams
                               </div>
                            )}
                            <h3 className="text-xl sm:text-2xl font-black text-white mb-1">{plan.name}</h3>
                            <p className="text-slate-400 text-sm mb-6">{plan.desc}</p>
                            <div className="flex items-baseline gap-1 mb-3">
                               <span className="text-4xl sm:text-5xl font-black text-white">{plan.price}</span>
-                              <span className="text-slate-500 font-bold">/mo</span>
+                              <span className="text-slate-500 font-bold">{plan.period}</span>
                            </div>
                            <div className="inline-flex items-center gap-1.5 mb-6 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 w-fit">
                               <span className="w-1.5 h-1.5 rounded-full bg-cyan-300" />
@@ -663,6 +697,32 @@ const LandingPage = () => {
                         </motion.div>
                      ))}
                   </div>
+               </div>
+            </section>
+
+            {/* Social proof carousel */}
+            <section className="py-16 sm:py-20 border-y border-slate-800/60 bg-slate-950/40">
+               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     className="text-center mb-10"
+                  >
+                     <p className="text-[11px] uppercase tracking-[0.28em] font-bold text-slate-500 mb-3">
+                        Typical outcomes
+                     </p>
+                     <h2 className="font-marketing-heading text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        What changes when handoffs disappear
+                     </h2>
+                     <p className="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
+                        Representative scenarios from teams like yours.{' '}
+                        <Link href="/results" className="text-cyan-400 hover:text-cyan-300 font-semibold">
+                           Read full workflow stories →
+                        </Link>
+                     </p>
+                  </motion.div>
+                  <MarketingTestimonialsCarousel items={MARKETING_TESTIMONIALS} />
                </div>
             </section>
 
@@ -783,6 +843,8 @@ const LandingPage = () => {
          <div className="relative z-10">
             <MarketingFooter />
          </div>
+
+         <MarketingMobileCtaBar />
       </div>
    );
 };

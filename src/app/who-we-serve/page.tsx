@@ -2,28 +2,28 @@ import type { Metadata } from 'next';
 import WhoWeServeContent from './WhoWeServeContent';
 
 export const metadata: Metadata = {
-    title: 'Who We Serve | AlphaClone Business OS for High-Performance Teams',
-    description: 'AlphaClone\'s Unified Business OS eliminates operational friction for growing agencies, startups, consultants, and remote teams. One high-performance architecture replaces the chaos of fragmented SaaS tools.',
+    title: 'Who We Serve | Alphaclone for Agencies, Consultants & Service Teams',
+    description:
+        'Alphaclone is built for teams that sell and deliver client work — agencies, consultants, founders, and remote teams replacing fragmented CRM, billing, and project tools.',
     keywords: [
-        'AlphaClone for agencies',
-        'Business OS for startups',
+        'Alphaclone for agencies',
         'consulting firm software',
-        'remote team operations platform',
-        'AI CRM for growing teams',
-        'SaaS alternative for small business',
-        'unified platform for consultants',
+        'service business CRM and billing',
+        'remote team client operations',
+        'solo founder business software',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/who-we-serve' },
     openGraph: {
-        title: 'Who AlphaClone Serves | Unified Business OS for High-Performance Teams',
-        description: 'Agencies, startups, consultants, remote teams — AlphaClone eliminates your operational friction with one unified architecture.',
+        title: 'Who Alphaclone Serves | Client Work in One Workspace',
+        description:
+            'See which team types use Alphaclone to connect leads, delivery, contracts, and billing — without tool sprawl.',
         url: 'https://alphaclonesystems.com/who-we-serve',
         type: 'website',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Who AlphaClone Serves | Unified Business OS',
-        description: 'Agencies, startups, consulting firms, and remote teams. One unified Business OS. No SaaS bloat.',
+        title: 'Who Alphaclone Serves',
+        description: 'Agencies, consultants, and founders who need one workspace for client work.',
     },
     robots: { index: true, follow: true },
 };

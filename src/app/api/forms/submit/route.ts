@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 import type { FormField } from '@/types/tenantForms';
 
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,7 @@ const submitSchema = z.object({
   tenantSlug: z.string().min(1),
   formSlug: z.string().min(1).optional(),
   data: z.record(z.string(), z.string()),
+  _hp: z.string().optional(),
 });
 
 function pickValue(data: Record<string, string>, fields: FormField[], keys: string[]): string | null {
@@ -23,14 +25,23 @@ function pickValue(data: Record<string, string>, fields: FormField[], keys: stri
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await rateLimitMiddleware(req, rateLimitConfigs.public.contact);
+    if (limited) return limited;
+
     const body = await req.json();
     const parsed = submitSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { tenantSlug, formSlug = 'contact', data: rawData } = parsed.data;
-    const data: Record<string, string> = rawData;
+    const { tenantSlug, formSlug = 'contact', data: rawData, _hp } = parsed.data;
+
+    if (_hp && String(_hp).trim().length > 0) {
+      return NextResponse.json({ success: true, thankYouMessage: 'Thank you!', submissionId: 'ignored' });
+    }
+
+    const data: Record<string, string> = { ...rawData };
+    delete data._hp;
     const admin = createAdminSupabaseClientOrThrow();
 
     const { data: tenant } = await admin.from('tenants').select('id, name').eq('slug', tenantSlug).maybeSingle();
@@ -109,6 +120,15 @@ export async function POST(req: NextRequest) {
 
     try {
       const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
+      await emitBusinessEvent(tenant.id, 'form_submitted', {
+        source: 'branded_form',
+        formId: form.id,
+        formSlug: form.slug,
+        submissionId: submission.id,
+        email,
+        name,
+        data,
+      });
       await emitBusinessEvent(tenant.id, 'lead_created', {
         source: 'branded_form',
         formId: form.id,
@@ -118,6 +138,36 @@ export async function POST(req: NextRequest) {
       });
     } catch {
       // automation table may not exist yet
+    }
+
+    if (settings.notifyEmail) {
+      try {
+        const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+        const { data: member } = await admin
+          .from('tenant_users')
+          .select('user_id')
+          .eq('tenant_id', tenant.id)
+          .in('role', ['owner', 'admin'])
+          .limit(1)
+          .maybeSingle();
+        let notifyTo = '';
+        if (member?.user_id) {
+          const { data: profile } = await admin.from('profiles').select('email').eq('id', member.user_id).maybeSingle();
+          notifyTo = String(profile?.email || '').trim();
+        }
+        if (notifyTo) {
+          await sendEmailServer({
+            tenantId: tenant.id,
+            to: notifyTo,
+            replyTo: email || undefined,
+            subject: `New form submission: ${form.title}`,
+            text: `Form: ${form.title}\nFrom: ${name || 'Unknown'}${email ? ` <${email}>` : ''}\n\n${message}`,
+            templateName: 'formSubmission',
+          });
+        }
+      } catch (notifyErr) {
+        console.warn('[forms/submit] notifyEmail skipped:', notifyErr);
+      }
     }
 
     const thankYou = String(settings.thankYouMessage || 'Thank you! We will be in touch soon.');

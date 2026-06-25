@@ -152,6 +152,9 @@ const ConferenceTab: React.FC = () => {
 
   return (
     <div className="relative flex flex-col h-full">
+      <div className="mx-4 mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <strong className="font-semibold">Beta preview.</strong> Room list uses demo data. Connect LiveKit or Daily.co in Settings for production meetings.
+      </div>
       {/* Filter tabs */}
       <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5">
         {FILTERS.map(f => (

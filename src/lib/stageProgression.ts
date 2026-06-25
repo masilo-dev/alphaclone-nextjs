@@ -71,6 +71,53 @@ export function getForwardDealStages(currentStage: string): PipelineDealStage[] 
     return DEAL_STAGE_SEQUENCE.filter((_, idx) => idx >= i);
 }
 
+/** Next stage when moving forward (never advances into closed_lost). */
+export function getForwardStageTarget(currentStage: string): PipelineDealStage | null {
+    const current = (currentStage || 'lead') as PipelineDealStage;
+    if (!DEAL_STAGE_SEQUENCE.includes(current) || DEAL_TERMINAL.includes(current)) {
+        return null;
+    }
+    const i = DEAL_STAGE_SEQUENCE.indexOf(current);
+    const next = DEAL_STAGE_SEQUENCE[i + 1];
+    if (!next || next === 'closed_lost') return null;
+    return next;
+}
+
+/** Deal pipeline progress for UI (1–6 steps ending at closed won). */
+export function getDealStageProgress(stage: string): {
+    step: number;
+    total: number;
+    percent: number;
+    label: string;
+} {
+    const current = (stage || 'lead') as PipelineDealStage;
+    const total = 6;
+
+    if (current === 'closed_won') {
+        return { step: total, total, percent: 100, label: 'Closed won' };
+    }
+    if (current === 'closed_lost') {
+        return { step: 0, total, percent: 0, label: 'Closed lost' };
+    }
+
+    const i = DEAL_STAGE_SEQUENCE.indexOf(current);
+    if (i === -1) {
+        return { step: 1, total, percent: Math.round(100 / total), label: 'Lead' };
+    }
+
+    const step = i + 1;
+    const percent = Math.round((step / total) * 100);
+    return {
+        step,
+        total,
+        percent,
+        label: current.replace('_', ' '),
+    };
+}
+
+export const PIPELINE_FORWARD_ONLY_HINT =
+    'Pipeline moves forward only. Swipe or drag right to advance. Swipe left or choose Closed lost to exit — deals do not move backward.';
+
 export const LEAD_STAGE_SEQUENCE = [
     'lead',
     'qualified',

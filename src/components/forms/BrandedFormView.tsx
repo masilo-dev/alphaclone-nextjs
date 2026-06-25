@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Loader2, Send, CheckCircle2 } from 'lucide-react';
 import type { FormField } from '@/types/tenantForms';
 
@@ -10,36 +12,76 @@ interface BrandedFormViewProps {
   form: { slug: string; title: string; description?: string | null; fields: FormField[]; settings?: Record<string, unknown> };
 }
 
+function buildSchema(fields: FormField[]) {
+  const shape: Record<string, z.ZodTypeAny> = {
+    _hp: z.string().optional(),
+  };
+  for (const field of fields) {
+    let validator: z.ZodTypeAny = z.string();
+    if (field.type === 'email') {
+      validator = z.string().email('Enter a valid email');
+    }
+    if (field.required) {
+      validator = validator.refine((v) => String(v || '').trim().length > 0, `${field.label} is required`);
+    } else {
+      validator = validator.optional().or(z.literal(''));
+    }
+    shape[field.id] = validator;
+  }
+  return z.object(shape);
+}
+
 export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const accent = tenant.brandColor || '#14b8a6';
+  const fields = form.fields || [];
+  const schema = useMemo(() => buildSchema(fields), [fields]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = useForm<Record<string, string>>({
+    defaultValues: { _hp: '' },
+  });
+
   const [done, setDone] = useState(false);
   const [thankYou, setThankYou] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const accent = tenant.brandColor || '#14b8a6';
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  const onSubmit = async (values: Record<string, string>) => {
     setError(null);
+    setFieldErrors({});
+    const parsed = schema.safeParse(values);
+    if (!parsed.success) {
+      const next: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (typeof key === 'string') next[key] = issue.message;
+      }
+      setFieldErrors(next);
+      return;
+    }
     try {
+      const { _hp, ...data } = parsed.data;
       const res = await fetch('/api/forms/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantSlug: tenant.slug,
           formSlug: form.slug,
-          data: values,
+          data,
+          _hp,
         }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Submission failed');
-      setThankYou(data.thankYouMessage || 'Thank you!');
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || 'Submission failed');
+      setThankYou(payload.thankYouMessage || 'Thank you!');
       setDone(true);
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
-    } finally {
-      setSubmitting(false);
+      reset();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     }
   };
 
@@ -76,27 +118,24 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
           {form.description && <p className="text-slate-600 mt-2 text-sm leading-relaxed">{form.description}</p>}
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200 shadow-lg p-6 md:p-8 space-y-4">
-          {(form.fields || []).map((field) => (
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-3xl border border-slate-200 shadow-lg p-6 md:p-8 space-y-4">
+          <input type="text" {...register('_hp')} tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
+
+          {fields.map((field) => (
             <div key={field.id} className="space-y-1.5">
               <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">
                 {field.label}{field.required ? ' *' : ''}
               </label>
               {field.type === 'textarea' ? (
                 <textarea
-                  value={values[field.id] || ''}
-                  onChange={(e) => setValues((v) => ({ ...v, [field.id]: e.target.value }))}
+                  {...register(field.id)}
                   placeholder={field.placeholder}
-                  required={field.required}
                   rows={4}
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 resize-y"
-                  style={{ ['--tw-ring-color' as string]: accent }}
                 />
               ) : field.type === 'select' ? (
                 <select
-                  value={values[field.id] || ''}
-                  onChange={(e) => setValues((v) => ({ ...v, [field.id]: e.target.value }))}
-                  required={field.required}
+                  {...register(field.id)}
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm bg-white outline-none"
                 >
                   <option value="">Select...</option>
@@ -107,12 +146,13 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
               ) : (
                 <input
                   type={field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
-                  value={values[field.id] || ''}
-                  onChange={(e) => setValues((v) => ({ ...v, [field.id]: e.target.value }))}
+                  {...register(field.id)}
                   placeholder={field.placeholder}
-                  required={field.required}
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2"
                 />
+              )}
+              {fieldErrors[field.id] && (
+                <p className="text-xs text-red-600">{fieldErrors[field.id]}</p>
               )}
             </div>
           ))}
@@ -121,12 +161,12 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={isSubmitting}
             className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 transition-transform active:scale-[0.98]"
             style={{ backgroundColor: accent }}
           >
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {submitting ? 'Sending...' : 'Submit'}
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {isSubmitting ? 'Sending...' : 'Submit'}
           </button>
 
           <p className="text-center text-[10px] text-slate-400 pt-1">Powered by AlphaClone</p>

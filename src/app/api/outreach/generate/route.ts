@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { resolveTenantContextForUser } from '@/lib/quotas/resolveTenantForAiRequest';
@@ -118,13 +117,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const inbound = await headers();
-    const cookieHeader = inbound.get('cookie') || '';
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-      'http://localhost:3000';
-
     const TONE_DESCRIPTIONS: Record<string, string> = {
       professional: 'formal, expert, and business-focused',
       friendly:     'warm, approachable, and conversational',
@@ -190,22 +182,16 @@ Return this exact JSON structure (array of objects):
 ]
 `;
         try {
-            const aiRes = await fetch(`${baseUrl.replace(/\/$/, '')}/api/ai/generate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-                },
-                body: JSON.stringify({
-                    prompt,
-                    maxTokens: 4096,
-                    tenantId: ctx.tenantId,
-                }),
+            const { executeSingleBonnieTool } = await import('@/lib/bonnie/executeSingleBonnieTool');
+            const toolResult = await executeSingleBonnieTool({
+              tenantId: ctx.tenantId,
+              userId: user.id,
+              tool: 'generate_outreach_draft',
+              args: { prompt },
             });
 
-            if (!aiRes.ok) throw new Error('AI generation failed');
-            const { text } = await aiRes.json();
-            if (!text) throw new Error('AI returned empty response');
+            const text = toolResult.details || toolResult.summary || '';
+            if (!toolResult.success || !text) throw new Error(toolResult.summary || 'AI generation failed');
 
             const jsonMatch = text.match(/\[[\s\S]*\]/);
             if (!jsonMatch) throw new Error('AI response was not valid JSON array');

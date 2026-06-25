@@ -13,7 +13,9 @@ import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskCon
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import type { AcThemeMode } from '@/lib/applyAcTheme';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
+import { preferencesService } from '@/services/dashboardService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -56,19 +58,19 @@ const Sidebar = React.memo<SidebarProps>(({
     // Track which parent nav items are expanded  
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-    // Load + apply saved theme on mount
+    // Load + apply saved theme on mount / user change
     useEffect(() => {
         try {
-            const t = readStoredAcTheme();
-            setTheme(t);
-            applyAcThemeClass(t);
+            const stored = readStoredAcTheme(user.id);
+            setTheme(stored);
+            applyAcThemeClass(stored);
         } catch {
             applyAcThemeClass('dark');
         }
-    }, []);
+    }, [user.id]);
 
     useEffect(() => {
-        const onRemote = () => setTheme(readStoredAcTheme());
+        const onRemote = () => setTheme(readStoredAcTheme(user.id));
         window.addEventListener('ac-theme-changed', onRemote);
         return () => window.removeEventListener('ac-theme-changed', onRemote);
     }, []);
@@ -84,20 +86,23 @@ const Sidebar = React.memo<SidebarProps>(({
         setExpanded(prev => ({ ...prev, ...autoExpand }));
     }, [activeTab, navItems]);
 
-    const handleTheme = useCallback((t: AcThemeMode) => {
-        setTheme(t);
-        applyAcThemeClass(t);
-        persistAcTheme(t);
-    }, []);
+    const handleTheme = useCallback((next: AcThemeMode) => {
+        setTheme(next);
+        applyAcThemeClass(next);
+        persistAcTheme(next, user.id);
+        void preferencesService.updateTheme(user.id, next);
+    }, [user.id]);
 
     const navigate = useCallback((href: string) => {
         if (!href || href === '#') return;
+        const path = href.split('?')[0]?.split('#')[0] || href;
+        setActiveTab(path);
         router.push(href);
         if (onNavigate) onNavigate();
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setSidebarOpen(false);
         }
-    }, [router, onNavigate, setSidebarOpen]);
+    }, [router, onNavigate, setSidebarOpen, setActiveTab]);
 
     const toggleExpanded = useCallback((label: string) => {
         setExpanded(prev => {
@@ -124,7 +129,7 @@ const Sidebar = React.memo<SidebarProps>(({
                 }
             }
         }
-        if (user.role === 'admin' || user.role === 'super_admin') {
+        if (isPlatformAdminRole(user.role)) {
             out.push({ label: t('Operations console'), href: '/dashboard/admin/operations' });
         }
         return out;
@@ -202,7 +207,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
                 <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 custom-scrollbar transform-gpu">
                     {/* Admin badge */}
-                    {(user.role === 'admin' || user.role === 'super_admin') && (
+                    {isPlatformAdminRole(user.role) && (
                         <div className="mb-3 px-1 space-y-1">
                             <button
                                 onClick={() => navigate('/dashboard/admin/tenants')}

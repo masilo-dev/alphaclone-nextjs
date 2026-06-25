@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Validates if a recipient email belongs to a lead or client in the given tenant.
- * This is a security measure to prevent unauthorized arbitrary email sending.
+ * Validates if a recipient email belongs to a lead, contact, or business client in the tenant.
+ * Used to gate bulk outreach; direct compose from CRM should match business_clients.
  */
 export async function validateRecipient(
   supabase: SupabaseClient,
@@ -15,28 +15,44 @@ export async function validateRecipient(
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Check if email belongs to a lead
-  const { data: lead } = await supabase
-    .from('leads')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('email', normalizedEmail)
-    .maybeSingle();
+  const [leadResult, contactResult, clientResult, quoteResult] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('email', normalizedEmail)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('contacts')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('email', normalizedEmail)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('business_clients')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('email', normalizedEmail)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('quotes')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .filter('metadata->>client_email', 'ilike', normalizedEmail)
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  if (lead) return { allowed: true };
+  if (leadResult.data) return { allowed: true };
+  if (contactResult.data) return { allowed: true };
+  if (clientResult.data) return { allowed: true };
+  if (quoteResult.data) return { allowed: true };
 
-  // Check if email belongs to a contact (client)
-  const { data: contact } = await supabase
-    .from('contacts')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('email', normalizedEmail)
-    .maybeSingle();
-
-  if (contact) return { allowed: true };
-
-  return { 
-    allowed: false, 
-    reason: 'Recipient email not found in your leads or contacts list.' 
+  return {
+    allowed: false,
+    reason: 'Recipient email not found in your leads, contacts, or clients list.',
   };
 }

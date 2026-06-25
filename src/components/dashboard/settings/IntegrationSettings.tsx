@@ -22,6 +22,7 @@ import { MessageCircle } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
+import ModuleJumpSelect from '../common/ModuleJumpSelect';
 
 export function IntegrationSettings() {
   const { currentTenant } = useTenant();
@@ -97,7 +98,13 @@ export function IntegrationSettings() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
+      <ModuleJumpSelect
+        options={tabs.map((t) => ({ label: t.label, href: t.id }))}
+        currentHref={activeTab}
+        label="Integrations section"
+        onNavigate={setActiveTab}
+      />
+      <div className="hidden md:flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;

@@ -28,6 +28,8 @@ import { UnifiedEmailService } from '@/services/email/UnifiedEmailService';
 import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { useTenant } from '@/contexts/TenantContext';
+import { ComposeContactPicker } from './common/ComposeContactPicker';
 import { extractEmailAddress } from '@/lib/email/composeNavigation';
 
 const LABELS = [
@@ -65,6 +67,7 @@ interface OutlookMessage {
 }
 
 export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) => {
+    const { currentTenant } = useTenant();
     const searchParams = useSearchParams();
     const [messages, setMessages] = useState<OutlookMessage[]>([]);
     const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -86,6 +89,14 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     const [composeBody, setComposeBody] = useState('');
     const [aiPrompt, setAiPrompt] = useState('');
     const [isAiDrafting, setIsAiDrafting] = useState(false);
+
+    const appendComposeRecipient = (email: string) => {
+        setComposeTo((prev) => {
+            const existing = prev.split(',').map((e) => e.trim()).filter(Boolean);
+            if (existing.includes(email)) return prev;
+            return existing.length ? `${prev}, ${email}` : email;
+        });
+    };
 
     const startComposeTo = useCallback((rawEmail: string, subjectPrefix = '') => {
         const email = extractEmailAddress(rawEmail);
@@ -225,7 +236,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
             let conversationMsgs: OutlookMessage[] = [];
             if (message.threadId) {
                 try {
-                    conversationMsgs = await microsoftGraphService.getConversationMessages(message.threadId);
+                    conversationMsgs = await microsoftGraphService.getConversationMessages(message.threadId, message.id);
                 } catch (err) {
                     console.warn('Could not fetch full conversation list, falling back to single message:', err);
                     conversationMsgs = [message];
@@ -306,7 +317,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
             
             // Reload thread
             if (lastMessage.threadId) {
-                const refreshed = await microsoftGraphService.getConversationMessages(lastMessage.threadId);
+                const refreshed = await microsoftGraphService.getConversationMessages(lastMessage.threadId, lastMessage.id);
                 setThreadMessages(refreshed);
             } else {
                 const refreshed = await microsoftGraphService.getMessage(lastMessage.id);
@@ -515,7 +526,13 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                         {/* Compose Form */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/10">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">To</label>
+                                <div className="flex items-center justify-between gap-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">To</label>
+                                    <ComposeContactPicker
+                                        tenantId={currentTenant?.id}
+                                        onSelect={(email) => appendComposeRecipient(email)}
+                                    />
+                                </div>
                                 <input
                                     type="text"
                                     placeholder="recipient@domain.com (comma separated for multiple)"

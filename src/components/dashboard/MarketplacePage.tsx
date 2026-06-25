@@ -406,7 +406,6 @@ const MarketplacePage: React.FC = () => {
       return;
     }
     if (item.status === 'coming_soon') {
-      toast('Coming soon.');
       return;
     }
     if (item.actionUrl) {

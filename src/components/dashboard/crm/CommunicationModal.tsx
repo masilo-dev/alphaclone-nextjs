@@ -244,6 +244,9 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             if (!response.ok || !result.success) {
                 throw new Error(result.error || 'Failed to send email');
             }
+            if (result.status === 'queued') {
+                throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry with auto-send enabled.');
+            }
 
             await supabase.from('activity_logs').insert({
                 user_id: user.id,

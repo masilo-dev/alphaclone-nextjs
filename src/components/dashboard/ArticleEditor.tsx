@@ -3,6 +3,12 @@ import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, Loader2 } from 'lucide-react'
 import { TabSkeleton } from '../ui/TabSkeleton';
 import { articleService, Article } from '../../services/articleService';
 import toast from 'react-hot-toast';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+    rowActionsClass,
+} from '../ui/ResponsiveTable';
 
 const ArticleEditor: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
@@ -275,7 +281,7 @@ const ArticleEditor: React.FC = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-slate-800 rounded-lg p-4">
                     <div className="text-2xl font-bold text-white">{articles.length}</div>
                     <div className="text-sm text-slate-400">Total Articles</div>
@@ -295,7 +301,34 @@ const ArticleEditor: React.FC = () => {
             </div>
 
             {/* Articles List */}
-            <div className="bg-slate-800 rounded-lg overflow-x-auto min-w-0">
+            <ResponsiveTableMobile>
+                {articles.map((article) => (
+                    <MobileDataCard key={article.id} className="border-slate-700 bg-slate-800">
+                        <div className="min-w-0">
+                            <p className="text-white font-medium truncate">{article.title}</p>
+                            <p className="text-xs text-slate-400 truncate">/blog/{article.slug}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                            <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded">{article.category}</span>
+                            <span className="text-slate-400">{article.views || 0} views</span>
+                            {article.published ? (
+                                <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded">Published</span>
+                            ) : (
+                                <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Draft</span>
+                            )}
+                        </div>
+                        <div className={`${rowActionsClass} justify-end`}>
+                            <button onClick={() => togglePublished(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-teal-400 rounded-lg border border-slate-600 text-xs">
+                                {article.published ? 'Unpublish' : 'Publish'}
+                            </button>
+                            <button onClick={() => setEditing(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-violet-400 rounded-lg border border-slate-600 text-xs">Edit</button>
+                            <button onClick={() => handleDelete(article.id)} className="min-h-11 px-3 py-2 text-red-400 rounded-lg border border-red-500/30 text-xs">Delete</button>
+                        </div>
+                    </MobileDataCard>
+                ))}
+            </ResponsiveTableMobile>
+
+            <ResponsiveTableDesktop className="bg-slate-800 rounded-lg min-w-0">
                 <table className="w-full min-w-[640px]">
                     <thead className="bg-slate-700">
                         <tr>
@@ -359,7 +392,7 @@ const ArticleEditor: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
-            </div>
+            </ResponsiveTableDesktop>
         </div>
     );
 };

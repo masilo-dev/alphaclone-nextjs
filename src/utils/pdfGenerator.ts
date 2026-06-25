@@ -727,3 +727,63 @@ export const generateInvoicePDF = (
     addFooter(doc, pageWidth, pageHeight);
     return doc;
 };
+
+export interface ContractPdfData {
+    id: string;
+    title?: string;
+    status?: string;
+    content?: string;
+    signed_at?: string | null;
+    signer_name?: string | null;
+    signer_email?: string | null;
+    created_at?: string;
+}
+
+export const generateContractPDF = (contract: ContractPdfData, tenant: Tenant) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const brandColor = tenant?.brand_color_primary || '#0f172a';
+
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageWidth, 34, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONTRACT', pageWidth - 20, 18, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(contract.title || 'Agreement', 20, 20);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    let y = 48;
+    doc.text(`Status: ${contract.status || 'draft'}`, 20, y);
+    y += 7;
+    if (contract.signer_name) {
+        doc.text(`Signer: ${contract.signer_name}`, 20, y);
+        y += 7;
+    }
+    if (contract.signer_email) {
+        doc.text(`Email: ${contract.signer_email}`, 20, y);
+        y += 7;
+    }
+    if (contract.signed_at) {
+        doc.text(`Signed: ${new Date(contract.signed_at).toLocaleString()}`, 20, y);
+        y += 7;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(brandColor);
+    doc.text('Agreement', 20, y + 10);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    const body = String(contract.content || 'No content available.');
+    const lines = doc.splitTextToSize(body, pageWidth - 40);
+    doc.text(lines, 20, y + 18);
+
+    addFooter(doc, pageWidth, pageHeight);
+    return doc;
+};

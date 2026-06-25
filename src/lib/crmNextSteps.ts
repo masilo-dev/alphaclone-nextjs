@@ -1,5 +1,6 @@
 import type { Deal } from '../services/dealService';
 import type { Lead } from '../services/leadService';
+import { computeRevenueLeakage, type RevenueLeakageInput } from './revenueLifecycle';
 
 export type CrmNextStepItem = {
     id: string;
@@ -98,6 +99,27 @@ export function buildCrmOverviewNextSteps(deals: Deal[]): CrmNextStepItem[] {
     }
 
     return items.slice(0, 4);
+}
+
+/** Merge deal pipeline nudges with cross-module revenue leakage detection. */
+export function buildCombinedCrmNextSteps(
+    deals: Deal[],
+    leakageInput?: RevenueLeakageInput | null
+): CrmNextStepItem[] {
+    const pipeline = buildCrmOverviewNextSteps(deals);
+    if (!leakageInput) return pipeline.slice(0, 5);
+
+    const leaks = computeRevenueLeakage(leakageInput);
+    const seen = new Set<string>();
+    const merged: CrmNextStepItem[] = [];
+
+    for (const item of [...leaks, ...pipeline]) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        merged.push(item);
+    }
+
+    return merged.slice(0, 6);
 }
 
 export function buildLeadKanbanNextSteps(leads: Lead[]): CrmNextStepItem[] {

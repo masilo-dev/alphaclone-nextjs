@@ -3,9 +3,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Copy, ExternalLink, Loader2, Save, Trash2, GripVertical, Link2, FileText, CheckSquare,
-  ClipboardList, TrendingUp, ToggleRight, BarChart3
+  ClipboardList, TrendingUp, ToggleRight, BarChart3, Code2
 } from 'lucide-react';
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import type { FormField, FormFieldType, TenantForm } from '@/types/tenantForms';
@@ -25,6 +41,64 @@ function newField(): FormField {
   return { id, type: 'text', label: 'New field', required: false, placeholder: '' };
 }
 
+function SortableFieldRow({
+  field,
+  idx,
+  onUpdate,
+  onRemove,
+}: {
+  field: FormField;
+  idx: number;
+  onUpdate: (idx: number, next: FormField) => void;
+  onRemove: (idx: number) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex flex-wrap gap-2 items-start p-3 rounded-xl bg-slate-950 border border-slate-800">
+      <button type="button" className="mt-2 shrink-0 cursor-grab text-slate-600" {...attributes} {...listeners}>
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <select
+        value={field.type}
+        onChange={(e) => onUpdate(idx, { ...field, type: e.target.value as FormFieldType })}
+        className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs text-white"
+      >
+        {FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+      </select>
+      <input
+        value={field.label}
+        onChange={(e) => onUpdate(idx, { ...field, label: e.target.value })}
+        placeholder="Label"
+        className="flex-1 min-w-[120px] rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs text-white"
+      />
+      <label className="flex items-center gap-1 text-xs text-slate-400">
+        <input type="checkbox" checked={!!field.required} onChange={(e) => onUpdate(idx, { ...field, required: e.target.checked })} />
+        Required
+      </label>
+      <button type="button" onClick={() => onRemove(idx)} className="p-1.5 text-slate-500 hover:text-red-400">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+      {field.type === 'select' && (
+        <div className="w-full basis-full space-y-1 mt-1">
+          <label className="text-[10px] font-bold text-slate-500 uppercase">Dropdown options (one per line)</label>
+          <textarea
+            value={(field.options || []).join('\n')}
+            onChange={(e) => {
+              const options = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+              onUpdate(idx, { ...field, options });
+            }}
+            rows={3}
+            placeholder={'Option 1\nOption 2'}
+            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs text-white font-mono"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FormsHub() {
   const { currentTenant } = useTenant();
   const [forms, setForms] = useState<TenantForm[]>([]);
@@ -37,6 +111,11 @@ export default function FormsHub() {
   const [slug, setSlug] = useState('contact');
   const [fields, setFields] = useState<FormField[]>(DEFAULT_CONTACT_FIELDS);
   const [thankYou, setThankYou] = useState('Thank you! We will be in touch soon.');
+  const [notifyEmail, setNotifyEmail] = useState(true);
+  const [formProvider, setFormProvider] = useState<'native' | 'typeform' | 'tally'>('native');
+  const [embedUrl, setEmbedUrl] = useState('');
+  const [webhookSecret, setWebhookSecret] = useState('');
+  const [editorTab, setEditorTab] = useState<'fields' | 'embed' | 'external'>('fields');
   const [isActive, setIsActive] = useState(true);
   const [isDefault, setIsDefault] = useState(true);
 
@@ -53,6 +132,41 @@ export default function FormsHub() {
     if (!appOrigin) return '';
     return `${appOrigin}/api/forms/submit`;
   }, [appOrigin]);
+
+  const embedSnippet = useMemo(() => {
+    if (!publicUrl) return '';
+    return `<iframe src="${publicUrl}" width="100%" height="680" frameborder="0" style="border:0;border-radius:12px;" title="${title}"></iframe>`;
+  }, [publicUrl, title]);
+
+  const typeformWebhookUrl = useMemo(() => {
+    if (!appOrigin || !tenantSlug) return '';
+    return `${appOrigin}/api/forms/webhook/typeform?tenantSlug=${encodeURIComponent(tenantSlug)}&formSlug=${encodeURIComponent(slug)}`;
+  }, [appOrigin, tenantSlug, slug]);
+
+  const tallyWebhookUrl = useMemo(() => {
+    if (!appOrigin || !tenantSlug) return '';
+    return `${appOrigin}/api/forms/webhook/tally?tenantSlug=${encodeURIComponent(tenantSlug)}&formSlug=${encodeURIComponent(slug)}`;
+  }, [appOrigin, tenantSlug, slug]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setFields((items) => {
+      const oldIndex = items.findIndex((f) => f.id === active.id);
+      const newIndex = items.findIndex((f) => f.id === over.id);
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
+
+  const applyFormSettings = (settings: Record<string, unknown>) => {
+    setThankYou(String(settings.thankYouMessage || 'Thank you! We will be in touch soon.'));
+    setNotifyEmail(settings.notifyEmail !== false);
+    setFormProvider((settings.provider as 'native' | 'typeform' | 'tally') || 'native');
+    setEmbedUrl(String(settings.embedUrl || ''));
+    setWebhookSecret(String(settings.webhookSecret || ''));
+  };
 
   const loadForms = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -75,7 +189,7 @@ export default function FormsHub() {
         setDescription(pick.description || '');
         setSlug(pick.slug);
         setFields(pick.fields?.length ? pick.fields : DEFAULT_CONTACT_FIELDS);
-        setThankYou(String((pick.settings as any)?.thankYouMessage || thankYou));
+        applyFormSettings((pick.settings || {}) as Record<string, unknown>);
         setIsActive(pick.is_active);
         setIsDefault(pick.is_default);
       }
@@ -94,7 +208,7 @@ export default function FormsHub() {
     setDescription(form.description || '');
     setSlug(form.slug);
     setFields(form.fields?.length ? form.fields : DEFAULT_CONTACT_FIELDS);
-    setThankYou(String((form.settings as any)?.thankYouMessage || 'Thank you! We will be in touch soon.'));
+    applyFormSettings((form.settings || {}) as Record<string, unknown>);
     setIsActive(form.is_active);
     setIsDefault(form.is_default);
   };
@@ -123,7 +237,14 @@ export default function FormsHub() {
           fields,
           is_active: isActive,
           is_default: nextIsDefault,
-          settings: { thankYouMessage: thankYou, createLead: true },
+          settings: {
+            thankYouMessage: thankYou,
+            createLead: true,
+            notifyEmail,
+            provider: formProvider,
+            embedUrl: embedUrl || undefined,
+            webhookSecret: webhookSecret || undefined,
+          },
         }),
       });
       const data = await res.json();
@@ -198,6 +319,15 @@ export default function FormsHub() {
 
       {forms.length > 0 && <ModuleStatCards stats={formStats} />}
 
+      {forms.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="No forms yet"
+          description="Create your first branded form to capture leads on your domain — like a built-in OpnForm."
+          actionLabel="Create first form"
+          onAction={handleNewForm}
+        />
+      ) : (
       <div className="grid lg:grid-cols-[240px_1fr] gap-6">
         <div className="space-y-2">
           {forms.map((f) => (
@@ -254,42 +384,89 @@ export default function FormsHub() {
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-white resize-none" />
           </div>
 
+          <div className="flex gap-2 border-b border-slate-800 pb-2">
+            {(['fields', 'embed', 'external'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setEditorTab(tab)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize ${
+                  editorTab === tab ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {tab === 'external' ? 'Typeform / Tally' : tab}
+              </button>
+            ))}
+          </div>
+
+          {editorTab === 'embed' && (
+            <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div className="flex items-center gap-2 text-teal-400 text-xs font-bold"><Code2 className="w-4 h-4" /> Embed snippet</div>
+              <textarea readOnly value={embedSnippet} rows={4} className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-[10px] text-slate-300 font-mono" />
+              <button
+                type="button"
+                onClick={async () => { await navigator.clipboard.writeText(embedSnippet); toast.success('Embed code copied'); }}
+                className="text-xs font-bold text-teal-400 hover:text-teal-300"
+              >
+                Copy iframe code
+              </button>
+            </div>
+          )}
+
+          {editorTab === 'external' && (
+            <div className="space-y-3 p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+              <label className="text-[10px] font-bold text-slate-500 uppercase">Provider</label>
+              <select value={formProvider} onChange={(e) => setFormProvider(e.target.value as 'native' | 'typeform' | 'tally')} className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-white">
+                <option value="native">Native AlphaClone form</option>
+                <option value="typeform">Typeform embed + webhook</option>
+                <option value="tally">Tally embed + webhook</option>
+              </select>
+              {(formProvider === 'typeform' || formProvider === 'tally') && (
+                <>
+                  <input value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="https://form.typeform.com/to/..." className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-white" />
+                  <input value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="Webhook secret (optional)" className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-white" />
+                  <div className="space-y-1">
+                    <p className="text-slate-500">Typeform webhook URL</p>
+                    <code className="block text-[10px] text-slate-300 break-all">{typeformWebhookUrl}</code>
+                    <p className="text-slate-500 pt-2">Tally webhook URL</p>
+                    <code className="block text-[10px] text-slate-300 break-all">{tallyWebhookUrl}</code>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {editorTab === 'fields' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2"><FileText className="w-4 h-4 text-teal-400" /> Fields</h3>
-              <button onClick={() => setFields((f) => [...f, newField()])} className="text-xs font-bold text-teal-400 hover:text-teal-300">+ Add field</button>
+              <button type="button" onClick={() => setFields((f) => [...f, newField()])} className="text-xs font-bold text-teal-400 hover:text-teal-300">+ Add field</button>
             </div>
-            {fields.map((field, idx) => (
-              <div key={field.id} className="flex flex-wrap gap-2 items-start p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <GripVertical className="w-4 h-4 text-slate-600 mt-2 shrink-0" />
-                <select
-                  value={field.type}
-                  onChange={(e) => setFields((arr) => arr.map((f, i) => i === idx ? { ...f, type: e.target.value as FormFieldType } : f))}
-                  className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs text-white"
-                >
-                  {FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-                <input
-                  value={field.label}
-                  onChange={(e) => setFields((arr) => arr.map((f, i) => i === idx ? { ...f, label: e.target.value } : f))}
-                  placeholder="Label"
-                  className="flex-1 min-w-[120px] rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs text-white"
-                />
-                <label className="flex items-center gap-1 text-xs text-slate-400">
-                  <input type="checkbox" checked={!!field.required} onChange={(e) => setFields((arr) => arr.map((f, i) => i === idx ? { ...f, required: e.target.checked } : f))} />
-                  Required
-                </label>
-                <button onClick={() => setFields((arr) => arr.filter((_, i) => i !== idx))} className="p-1.5 text-slate-500 hover:text-red-400">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                {fields.map((field, idx) => (
+                  <SortableFieldRow
+                    key={field.id}
+                    field={field}
+                    idx={idx}
+                    onUpdate={(i, next) => setFields((arr) => arr.map((f, j) => (j === i ? next : f)))}
+                    onRemove={(i) => setFields((arr) => arr.filter((_, j) => j !== i))}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase">Thank-you message</label>
             <input value={thankYou} onChange={(e) => setThankYou(e.target.value)} className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-white" />
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-300">
+            <input type="checkbox" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} />
+            Email workspace admin on new submission
+          </label>
 
           <label className="flex items-center gap-2 text-sm text-slate-300">
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
@@ -311,6 +488,7 @@ export default function FormsHub() {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }

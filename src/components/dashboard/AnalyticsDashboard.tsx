@@ -5,7 +5,7 @@ import { WrapChart } from '../../lib/chartWrapper';
 import { TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
 import { TableSkeleton } from '../ui/Skeleton';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#14b8a6', '#06b6d4', '#8b5cf6', '#f87171'];
 
 const AnalyticsDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);

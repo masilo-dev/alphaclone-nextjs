@@ -1,8 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
-    // Stub for sending receipt - functionality to be implemented
-    return NextResponse.json({ sent: true });
+export async function POST(req: NextRequest) {
+  try {
+    await requireAuthenticatedUser();
+    return NextResponse.json(
+      { error: 'Receipt sending is not yet implemented', code: 'NOT_IMPLEMENTED' },
+      { status: 501 }
+    );
+  } catch (error) {
+    return routeErrorResponse(error, 'Unauthorized', req);
+  }
 }

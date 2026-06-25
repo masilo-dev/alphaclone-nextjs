@@ -53,7 +53,7 @@ const AboutPage: React.FC = () => {
 
     const values = [
         {
-            title: 'Obsessed with Real Business Outcomes',
+            title: 'Focused on real business outcomes',
             desc: "We do not measure success by feature count. We measure it by whether the product makes a business more organized, more profitable, and easier to run.",
         },
         {

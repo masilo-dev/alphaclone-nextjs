@@ -1024,6 +1024,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             <div>
                                                 <h2 className="text-2xl font-bold text-white leading-tight">{selectedClient.name}</h2>
                                                 {selectedClient.industry && <p className="text-slate-400 text-sm mt-0.5">{selectedClient.industry}</p>}
+                                                {selectedClient.email && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedClientForCommunication(selectedClient);
+                                                            setShowCommunicationModal(true);
+                                                        }}
+                                                        className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                                                    >
+                                                        <Mail className="w-3.5 h-3.5" />
+                                                        {selectedClient.email}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
@@ -1220,7 +1233,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                             size="sm"
                                                                             className="text-teal-400 hover:text-teal-300"
                                                                             onClick={() => {
-                                                                                window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf`, '_blank');
+                                                                                window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf?tenantId=${currentTenant?.id}`, '_blank');
                                                                             }}
                                                                         >
                                                                             View PDF
@@ -1230,7 +1243,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                             size="sm"
                                                                             className="text-blue-400 hover:text-blue-300"
                                                                             onClick={() => {
-                                                                                window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf?download=true`, '_blank');
+                                                                                window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf?tenantId=${currentTenant?.id}&download=true`, '_blank');
                                                                             }}
                                                                         >
                                                                             Download
@@ -1251,7 +1264,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         <p className="text-xs text-slate-400 mb-1">Email</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
                                                             <Mail className="w-4 h-4 text-teal-500" />
-                                                            <span className="truncate">{selectedClient.email || 'N/A'}</span>
+                                                            {selectedClient.email ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedClientForCommunication(selectedClient);
+                                                                        setShowCommunicationModal(true);
+                                                                    }}
+                                                                    className="truncate text-teal-400 hover:text-teal-300 text-left"
+                                                                >
+                                                                    {selectedClient.email}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="truncate">N/A</span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
@@ -1880,6 +1906,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
 };
 
 const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: BusinessClient; user: User; onClose: () => void; onCreated: () => void }) => {
+    const { currentTenant } = useTenant();
     const [formData, setFormData] = useState({
         name: `Proposal for ${client.name}`,
         category: 'Consulting',
@@ -1890,6 +1917,10 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!currentTenant?.id) {
+            toast.error('No active workspace selected.');
+            return;
+        }
         setIsSubmitting(true);
         try {
             const { projectService } = await import('../../../services/projectService');

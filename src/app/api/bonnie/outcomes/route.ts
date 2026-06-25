@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -7,9 +8,10 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { tenant_id, criteria, status, session_id, notes } = body;
+    const tenantId = body.tenant_id || body.tenantId;
+    const { criteria, status, session_id, notes } = body;
 
-    if (!tenant_id || !criteria || !status) {
+    if (!tenantId || !criteria || !status) {
       return NextResponse.json(
         { error: 'tenant_id, criteria, and status are required' },
         { status: 400 }
@@ -27,14 +29,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'criteria must be a non-empty array' }, { status: 400 });
     }
 
+    await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
 
-    const metCount = criteria.filter((c: any) => c.met).length;
+    const metCount = criteria.filter((c: { met?: boolean }) => c.met).length;
     const score = Math.round((metCount / criteria.length) * 100);
 
-    // Log outcome to mcp_sessions
     const { error } = await supabase.from('mcp_sessions').insert({
-      tenant_id,
+      tenant_id: tenantId,
       tool_name: 'define_outcome',
       success: status === 'success',
       duration_ms: 0,
@@ -59,8 +61,7 @@ export async function POST(req: NextRequest) {
         notes: notes || null,
       },
     });
-  } catch (err: any) {
-    console.error('[bonnie/outcomes] Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+  } catch (err: unknown) {
+    return routeErrorResponse(err, 'Failed to record outcome', req);
   }
 }

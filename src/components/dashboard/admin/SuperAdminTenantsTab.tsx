@@ -13,6 +13,11 @@ import {
     Calendar // Added for Calendly status
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+} from '../../ui/ResponsiveTable';
 import { tenantManagementService, TenantInfo } from '../../../services/tenantManagementService';
 import { securityLogService } from '../../../services/securityLogService';
 
@@ -25,7 +30,10 @@ const SuperAdminTenantsTab: React.FC = () => {
 
     const loadTenants = useCallback(async () => {
         setLoading(true);
-        const { tenants: data } = await tenantManagementService.getAllTenants();
+        const { tenants: data, error } = await tenantManagementService.getAllTenants();
+        if (error) {
+            toast.error(`Error loading tenants: ${error}`);
+        }
         setTenants(data);
         setLoading(false);
     }, []);
@@ -46,7 +54,7 @@ const SuperAdminTenantsTab: React.FC = () => {
         const { error } = await tenantManagementService.deleteTenant(tenantId);
         if (!error) {
             setTenants(prev => prev.filter(t => t.id !== tenantId));
-            toast.success('Tenant deleted successfully');
+            toast.success('Tenant scheduled for deletion');
         } else {
             toast.error(`Error deleting tenant: ${error}`);
         }
@@ -97,8 +105,63 @@ const SuperAdminTenantsTab: React.FC = () => {
                 <StatCard label="Avg Users/Tenant" value={(tenants.reduce((sum, t) => sum + t.userCount, 0) / (tenants.length || 1)).toFixed(1)} trend="Growing" color="text-blue-400" />
             </div>
 
+            {/* Tenants — mobile cards */}
+            <ResponsiveTableMobile className="mb-4">
+                {filteredTenants.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                        No tenants found. {searchTerm && 'Try a different search term.'}
+                    </div>
+                ) : (
+                    filteredTenants.map((tenant) => (
+                        <MobileDataCard key={tenant.id} className="border-slate-800 bg-slate-900/50">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                                        {tenant.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-white truncate">{tenant.name}</p>
+                                        <p className="text-xs text-slate-500">ID: {tenant.id.substring(0, 8)}…</p>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium border shrink-0 ${getStatusColor(tenant.status)} uppercase`}>
+                                    {tenant.status}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+                                <span>Plan: <span className="text-slate-200 capitalize">{tenant.subscription || 'Free'}</span></span>
+                                <span>Users: <span className="text-slate-200 font-mono">{tenant.userCount}</span></span>
+                                <span>Created: {new Date(tenant.createdAt).toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1">
+                                    Calendly:
+                                    {(tenant.settings as any)?.calendly?.enabled ? (
+                                        <Calendar className="w-4 h-4 text-teal-400" />
+                                    ) : (
+                                        <Calendar className="w-4 h-4 text-slate-600" />
+                                    )}
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                <button
+                                    onClick={() => handleViewLogs(tenant.id)}
+                                    className="min-h-11 flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 text-xs font-medium"
+                                >
+                                    <Eye className="w-4 h-4" /> Logs
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                                    className="min-h-11 px-3 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20 text-xs font-medium"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </MobileDataCard>
+                    ))
+                )}
+            </ResponsiveTableMobile>
+
             {/* Tenants Table */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-x-auto backdrop-blur-sm min-w-0">
+            <ResponsiveTableDesktop className="bg-slate-900/50 border border-slate-800 rounded-2xl backdrop-blur-sm min-w-0">
                 <table className="w-full min-w-[920px] text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-sm">
@@ -114,7 +177,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                     <tbody>
                         {filteredTenants.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-slate-400">
+                                <td colSpan={7} className="p-8 text-center text-slate-400">
                                     No tenants found. {searchTerm && 'Try a different search term.'}
                                 </td>
                             </tr>
@@ -182,7 +245,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                         )}
                     </tbody>
                 </table>
-            </div>
+            </ResponsiveTableDesktop>
 
             {/* Security Logs Modal */}
             {selectedTenant && (
