@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import {
   Sheet,
@@ -22,11 +22,12 @@ interface PublicNavigationProps {
 
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
 const LOGIN_HREF = '/auth/login';
-const BOOK_DEMO_HREF = '/book-demo';
 
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLoginClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const exploreRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -35,13 +36,21 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
   }, [pathname]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exploreRef.current && !exploreRef.current.contains(e.target as Node)) {
+        setExploreOpen(false);
+      }
+    };
+    if (exploreOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [exploreOpen]);
 
   const navItems = [
     { label: 'Home', path: '/' },
@@ -110,34 +119,59 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
             <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`inline-flex items-center h-10 text-sm font-semibold transition-colors ${
-                  isActive(item.path) ? 'text-teal-400' : 'text-slate-300 hover:text-white'
+          <div className="hidden lg:flex items-center gap-1">
+            {/* Explore dropdown */}
+            <div className="relative" ref={exploreRef}>
+              <button
+                type="button"
+                onClick={() => setExploreOpen((v) => !v)}
+                className={`inline-flex items-center gap-1.5 h-10 px-3 text-sm font-semibold rounded-lg transition-colors ${
+                  exploreOpen ? 'text-teal-400 bg-teal-500/10' : 'text-slate-300 hover:text-white hover:bg-slate-900/50'
                 }`}
               >
-                {item.label}
-              </Link>
-            ))}
-            <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-800">
+                Explore
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${exploreOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {exploreOpen && (
+                <div className="absolute top-[calc(100%+8px)] left-0 w-52 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50 py-1">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      onClick={() => setExploreOpen(false)}
+                      className={`flex items-center px-4 py-2.5 text-sm font-medium transition-colors ${
+                        isActive(item.path)
+                          ? 'text-teal-400 bg-teal-500/5'
+                          : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pricing — standalone so it's always visible */}
+            <Link
+              href="/pricing"
+              className={`inline-flex items-center h-10 px-3 text-sm font-semibold rounded-lg transition-colors ${
+                isActive('/pricing') ? 'text-teal-400 bg-teal-500/10' : 'text-slate-300 hover:text-white hover:bg-slate-900/50'
+              }`}
+            >
+              Pricing
+            </Link>
+
+            <div className="flex items-center gap-2 ml-3 pl-3 border-l border-slate-800">
+              {/* Login — highlighted with teal border */}
               <Link
                 href={LOGIN_HREF}
-                className="inline-flex items-center h-10 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                className="inline-flex items-center h-9 px-4 text-sm font-semibold rounded-lg border border-teal-500/40 text-teal-400 hover:text-teal-300 hover:border-teal-400/70 transition-colors"
               >
                 Login
               </Link>
-              <Link href="/book-demo" className="inline-flex items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-slate-600 hover:border-teal-500/50 text-slate-300 hover:text-teal-400 font-semibold transition-all"
-                >
-                  Book Demo
-                </Button>
-              </Link>
+
+              {/* Start Free Trial — primary CTA */}
               <Link href={BUSINESS_SIGNUP_HREF} className="inline-flex items-center">
                 <Button
                   size="sm"
@@ -189,30 +223,11 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
 
               <SheetContent side="right" className="w-[min(100vw,24rem)] overflow-y-auto pb-safe">
                 <SheetHeader className="pr-8">
-                  <SheetTitle>Menu</SheetTitle>
+                  <SheetTitle>AlphaClone</SheetTitle>
                   <SheetDescription>
-                    Explore AlphaClone and start your free trial when you are ready.
+                    Your all-in-one business platform.
                   </SheetDescription>
                 </SheetHeader>
-
-                <div className="rounded-2xl border border-teal-500/15 bg-teal-500/5 p-4 marketing-shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300 mb-2">
-                    New here?
-                  </p>
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    Book a demo for a guided walkthrough of the platform.
-                  </p>
-                  <div className="mt-4">
-                    <Link href={BOOK_DEMO_HREF} onClick={closeMobileMenu}>
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-teal-500/30 text-teal-300 hover:text-white hover:border-teal-400 rounded-xl text-sm font-semibold"
-                      >
-                        Book Demo
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
 
                 <div className="space-y-4">
                   <div>

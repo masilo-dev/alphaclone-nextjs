@@ -868,9 +868,21 @@ body {
 
 .marketing-theme .text-5xl,
 .marketing-theme .text-6xl {
-  font-size: clamp(2.2rem, 5vw, 3.3rem) !important;
+  font-size: clamp(2rem, 4.5vw, 3rem) !important;
   line-height: 1.08 !important;
 }
+
+/* ── Marketing-wide font size reduction ──────────────────────────────────── */
+/* Shifts every text tier down one step so the site reads lighter/smaller.   */
+/* Dashboard pages are unaffected (no .marketing-theme wrapper).             */
+.marketing-theme .text-5xl  { font-size: clamp(1.75rem, 3.5vw, 2.6rem) !important; }
+.marketing-theme .text-4xl  { font-size: clamp(1.5rem, 3vw, 2rem) !important; }
+.marketing-theme .text-3xl  { font-size: clamp(1.3rem, 2.5vw, 1.7rem) !important; }
+.marketing-theme .text-2xl  { font-size: 1.3rem !important; }
+.marketing-theme .text-xl   { font-size: 1.1rem !important; }
+.marketing-theme .text-lg   { font-size: 0.9375rem !important; }
+.marketing-theme .text-base { font-size: 0.875rem !important; }
+.marketing-theme .text-sm   { font-size: 0.8125rem !important; }
 
 .marketing-theme .font-black,
 .marketing-theme .font-extrabold,
