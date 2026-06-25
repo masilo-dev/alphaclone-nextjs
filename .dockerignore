@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+.cursor
+terminals
+mobile
+alphaclone-scraper
+*.md
+.env
+.env.*
+!.env.example

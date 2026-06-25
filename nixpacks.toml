@@ -1,0 +1,15 @@
+# Force Node.js for alphaclone-web (repo also contains Python scraper subfolder).
+providers = ["node"]
+
+[variables]
+NODE_VERSION = "22"
+NIXPACKS_NODE_VERSION = "22"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
