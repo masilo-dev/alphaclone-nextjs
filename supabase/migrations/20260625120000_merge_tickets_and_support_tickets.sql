@@ -69,55 +69,60 @@ CREATE TRIGGER auto_sla
     FOR EACH ROW
     EXECUTE FUNCTION set_merged_ticket_sla();
 
--- Step 7: Migrate data from support_tickets to tickets
-INSERT INTO tickets (
-    id,
-    tenant_id,
-    ticket_number,
-    title,
-    description,
-    status,
-    priority,
-    category,
-    source,
-    contact_id,
-    client_id,
-    assigned_to,
-    message_id,
-    first_response_at,
-    resolved_at,
-    closed_at,
-    sla_due_at,
-    resolution_note,
-    metadata,
-    created_at,
-    updated_at
-)
-SELECT 
-    id,
-    tenant_id,
-    ticket_number,
-    title,
-    description,
-    status,
-    priority,
-    category,
-    source,
-    contact_id,
-    client_id,
-    assigned_to,
-    message_id,
-    first_response_at,
-    resolved_at,
-    closed_at,
-    sla_due_at,
-    resolution_note,
-    metadata,
-    created_at,
-    updated_at
-FROM support_tickets
-WHERE id NOT IN (SELECT id FROM tickets)
-ON CONFLICT (id) DO NOTHING;
+-- Step 7: Migrate data from support_tickets to tickets (only if support_tickets exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'support_tickets') THEN
+        INSERT INTO tickets (
+            id,
+            tenant_id,
+            ticket_number,
+            title,
+            description,
+            status,
+            priority,
+            category,
+            source,
+            contact_id,
+            client_id,
+            assigned_to,
+            message_id,
+            first_response_at,
+            resolved_at,
+            closed_at,
+            sla_due_at,
+            resolution_note,
+            metadata,
+            created_at,
+            updated_at
+        )
+        SELECT 
+            id,
+            tenant_id,
+            ticket_number,
+            title,
+            description,
+            status,
+            priority,
+            category,
+            source,
+            contact_id,
+            client_id,
+            assigned_to,
+            message_id,
+            first_response_at,
+            resolved_at,
+            closed_at,
+            sla_due_at,
+            resolution_note,
+            metadata,
+            created_at,
+            updated_at
+        FROM support_tickets
+        WHERE id NOT IN (SELECT id FROM tickets)
+        ON CONFLICT (id) DO NOTHING;
+    END IF;
+END $$;
 
 -- Step 8: Create index on new columns
 CREATE INDEX IF NOT EXISTS idx_tickets_category ON tickets(category);
