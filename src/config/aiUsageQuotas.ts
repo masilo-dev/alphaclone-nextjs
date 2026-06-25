@@ -24,6 +24,13 @@ export function unitsForTextGeneration(maxTokens?: number): number {
 
 export const UNITS_PER_CHAT_TURN = 4;
 export const UNITS_PER_IMAGE = 25;
+
+/** Plans that include AI image generation (logos, social AI images, AI Studio). */
+export const IMAGE_GENERATION_PLANS = new Set(['pro', 'enterprise', 'custom']);
+
+export function planIncludesImageGeneration(plan: string | null | undefined): boolean {
+    return IMAGE_GENERATION_PLANS.has((plan || 'free').toLowerCase());
+}
 // Video generation is by far the most expensive AI operation (long polling, GPU minutes).
 export const UNITS_PER_VIDEO = 80;
 export const UNITS_PER_VISION = 10;
