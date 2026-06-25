@@ -21,7 +21,6 @@ import { User } from '@/types';
 import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
 import MarketingFooter from '@/components/landing/MarketingFooter';
-import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
 import { WHO_WE_SERVE_HERO, WHO_WE_SERVE_SEGMENTS, type WhoWeServeSegment } from '@/config/marketingOutcomes';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
@@ -49,7 +48,7 @@ export default function WhoWeServePage() {
     };
 
     return (
-        <div className="min-h-screen page-network-bg text-slate-200 pb-24 lg:pb-0">
+        <div className="min-h-screen page-network-bg text-slate-200">
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <HeroBackground />
             </div>
@@ -201,7 +200,6 @@ export default function WhoWeServePage() {
             </section>
 
             <MarketingFooter />
-            <MarketingMobileCtaBar />
         </div>
     );
 }

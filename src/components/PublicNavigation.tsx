@@ -203,15 +203,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
               </button>
             )}
 
-            {!mobileMenuOpen && (
-              <Link
-                href={BUSINESS_SIGNUP_HREF}
-                className="inline-flex items-center h-9 px-4 rounded-xl bg-teal-500 text-slate-950 text-xs font-bold hover:bg-teal-400 transition-colors shadow-md shadow-teal-500/20"
-              >
-                Start free
-              </Link>
-            )}
-
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <button

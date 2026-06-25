@@ -23,7 +23,8 @@ const networkOnlyRetryOrError = new NetworkOnly({
         {
             handlerDidError: async ({ request }) => {
                 try {
-                    return await fetch(request instanceof Request ? request : new Request(request));
+                    const req = request instanceof Request ? request : new Request(request);
+                    return await fetch(new Request(req, { cache: 'no-store' }));
                 } catch {
                     return Response.error();
                 }
@@ -35,6 +36,16 @@ const networkOnlyRetryOrError = new NetworkOnly({
 // API and dashboard: same behavior — synthetic 503 breaks debugging and hides real status codes.
 const apiNetworkOnly = networkOnlyRetryOrError;
 const dashboardNetworkOnly = networkOnlyRetryOrError;
+const nextAssetNetworkOnly = networkOnlyRetryOrError;
+
+// Drop Serwist defaults that cache deployment-scoped URLs (stale dpl_* breaks after deploy).
+const deploymentSafeDefaultCache = defaultCache.filter((rule) => {
+    if (rule.matcher instanceof RegExp) {
+        const src = rule.matcher.source;
+        if (src.includes("_next\\/image") || src.includes("_next/image")) return false;
+    }
+    return true;
+});
 
 const serwist = new Serwist({
     precacheEntries: self.__SW_MANIFEST,
@@ -66,6 +77,36 @@ const serwist = new Serwist({
                 return url.pathname.startsWith('/dashboard');
             },
             handler: dashboardNetworkOnly,
+        },
+        {
+            // Next.js image optimizer URLs are deployment-scoped — never cache them.
+            matcher({ url }) {
+                return url.pathname.startsWith('/_next/image');
+            },
+            handler: nextAssetNetworkOnly,
+        },
+        {
+            // Hashed static assets: network-first so a new deploy wins quickly.
+            matcher({ url }) {
+                return url.pathname.startsWith('/_next/static');
+            },
+            handler: new NetworkFirst({
+                networkTimeoutSeconds: 5,
+                cacheName: 'next-static-live',
+                plugins: [
+                    {
+                        cacheWillUpdate: async ({ response }) => (response?.ok ? response : null),
+                        handlerDidError: async ({ request }) => {
+                            try {
+                                const req = request instanceof Request ? request : new Request(request);
+                                return await fetch(new Request(req, { cache: 'no-store' }));
+                            } catch {
+                                return Response.error();
+                            }
+                        },
+                    },
+                ],
+            }),
         },
         {
             // API and third-party: pass through to network without synthetic 503 on failure.
@@ -105,7 +146,7 @@ const serwist = new Serwist({
                 ],
             }),
         },
-        ...defaultCache,
+        ...deploymentSafeDefaultCache,
     ],
 });
 

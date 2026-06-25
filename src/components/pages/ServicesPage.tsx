@@ -13,7 +13,6 @@ import PublicNavigation from '../PublicNavigation';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import MarketingFooter from '../landing/MarketingFooter';
-import MarketingMobileCtaBar from '@/components/marketing/MarketingMobileCtaBar';
 import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
 import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
 
@@ -416,7 +415,6 @@ const ServicesPage: React.FC = () => {
                 </section>
             </div>
             <MarketingFooter />
-            <MarketingMobileCtaBar />
         </div>
     );
 };
