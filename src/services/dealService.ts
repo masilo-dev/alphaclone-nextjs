@@ -434,6 +434,16 @@ export const dealService: DealService = {
                 }
             }
 
+            if (updates.stage === 'closed_lost') {
+                const { error: deleteError } = await supabase
+                    .from('deals')
+                    .delete()
+                    .eq('id', dealId)
+                    .eq('tenant_id', tenantId);
+                if (deleteError) throw deleteError;
+                return { deal: null, error: null };
+            }
+
             const updateData: any = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;
