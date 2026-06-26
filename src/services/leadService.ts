@@ -245,7 +245,7 @@ export const leadService = {
 
             const leads: Lead[] = (data || [])
                 .map(normalizeLeadRecord)
-                .filter((lead) => !isTerminalLeadStage(lead.stage));
+                .filter((lead: Lead) => !isTerminalLeadStage(lead.stage));
 
             return { leads, error: null };
         } catch (err) {

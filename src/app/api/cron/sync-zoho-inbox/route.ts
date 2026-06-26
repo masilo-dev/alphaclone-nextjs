@@ -83,12 +83,12 @@ export async function GET(req: NextRequest) {
   }
 
   type ZohoIntegrationRow = { user_id: string | null; tenant_id: string | null };
+  type ActiveZohoIntegration = { user_id: string; tenant_id: string };
 
-  const rows = (integrations ?? []).filter(
-    (row: ZohoIntegrationRow): row is { user_id: string; tenant_id: string } =>
-      Boolean(row.user_id && row.tenant_id)
+  const rows: ActiveZohoIntegration[] = ((integrations ?? []) as ZohoIntegrationRow[]).filter(
+    (row): row is ActiveZohoIntegration => Boolean(row.user_id && row.tenant_id)
   );
-  const results = await mapWithConcurrency(rows, CONCURRENCY, (row) =>
+  const results = await mapWithConcurrency(rows, CONCURRENCY, (row: ActiveZohoIntegration) =>
     syncUserInbox(row.user_id, row.tenant_id)
   );
 

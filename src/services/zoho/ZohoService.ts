@@ -12,6 +12,8 @@ export interface ZohoConfig {
     accountsServer: string;
     accountId?: string;
     booksOrgId?: string;  // Zoho Books organization ID
+    authExpiredAt?: string;
+    authExpiredReason?: string;
 }
 
 export class ZohoAuthExpiredError extends Error {
