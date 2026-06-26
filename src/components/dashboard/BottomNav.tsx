@@ -36,12 +36,15 @@ const BottomNav: React.FC<BottomNavProps> = ({
         router.push(href);
     };
 
+    const isSettingsActive = activeTab === '/dashboard/pwa-settings';
+
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-50 h-[calc(env(safe-area-inset-bottom,0px)+54px)] native-bottom-bar">
-            <div className="flex justify-around items-center h-[54px]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-50 h-[calc(env(safe-area-inset-bottom,0px)+62px)] native-bottom-bar">
+            <div className="flex justify-around items-center h-[62px] px-1">
                 {mobileNavItems.map((item) => {
                     const isActive = isPwaNavActive(activeTab, item);
-                    const showBadge = item.label === 'Mail' && unreadCount > 0;
+                    const showBadge =
+                        unreadCount > 0 && (item.moduleId === 'mail' || item.moduleId === 'chat');
                     return (
                         <button
                             key={item.href}
@@ -49,17 +52,30 @@ const BottomNav: React.FC<BottomNavProps> = ({
                             onClick={() => handleNavClick(item.href)}
                             aria-label={item.label}
                             aria-current={isActive ? 'page' : undefined}
-                            className={`native-tap flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${
-                                isActive ? 'text-teal-400' : 'text-slate-500'
-                            }`}
+                            className="native-tap flex flex-col items-center justify-center w-full h-full gap-1 transition-colors"
                         >
                             <div className="relative">
-                                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.25 : 1.75} />
+                                <div
+                                    className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm transition-all ${
+                                        isActive ? `${item.tileBg} scale-105` : item.tileBgMuted
+                                    }`}
+                                >
+                                    <item.icon
+                                        className={`w-4 h-4 ${isActive ? 'text-white' : 'text-white/80'}`}
+                                        strokeWidth={isActive ? 2.25 : 1.75}
+                                    />
+                                </div>
                                 {showBadge ? (
                                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-slate-900" />
                                 ) : null}
                             </div>
-                            <span className="pwa-tab-label max-w-[4.5rem] truncate">{item.label}</span>
+                            <span
+                                className={`pwa-tab-label max-w-[4.75rem] truncate ${
+                                    isActive ? item.labelActive : 'text-slate-500'
+                                }`}
+                            >
+                                {item.label}
+                            </span>
                         </button>
                     );
                 })}
@@ -73,18 +89,26 @@ const BottomNav: React.FC<BottomNavProps> = ({
                         e.preventDefault();
                         handleNavClick('/dashboard/pwa-settings');
                     }}
-                    aria-label={isPWA ? 'Mobile settings' : 'More'}
-                    aria-current={activeTab === '/dashboard/pwa-settings' ? 'page' : undefined}
-                    className={`native-tap flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${
-                        activeTab === '/dashboard/pwa-settings' ? 'text-teal-400' : 'text-slate-500'
-                    }`}
+                    aria-label={isPWA ? 'Mobile app settings' : 'More'}
+                    aria-current={isSettingsActive ? 'page' : undefined}
+                    className="native-tap flex flex-col items-center justify-center w-full h-full gap-1 transition-colors"
                 >
-                    {isPWA ? (
-                        <Settings2 className="w-5 h-5" strokeWidth={1.75} />
-                    ) : (
-                        <Menu className="w-5 h-5" strokeWidth={1.75} />
-                    )}
-                    <span className="pwa-tab-label">{isPWA ? 'App' : 'More'}</span>
+                    <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm transition-all ${
+                            isSettingsActive ? 'bg-slate-500 scale-105' : 'bg-slate-500/20'
+                        }`}
+                    >
+                        {isPWA ? (
+                            <Settings2 className="w-4 h-4 text-white" strokeWidth={isSettingsActive ? 2.25 : 1.75} />
+                        ) : (
+                            <Menu className="w-4 h-4 text-white/80" strokeWidth={1.75} />
+                        )}
+                    </div>
+                    <span
+                        className={`pwa-tab-label ${isSettingsActive ? 'text-slate-300' : 'text-slate-500'}`}
+                    >
+                        {isPWA ? 'App' : 'More'}
+                    </span>
                 </button>
             </div>
         </div>

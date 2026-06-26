@@ -19,6 +19,9 @@ export interface PwaModuleDef {
   id: string;
   label: string;
   icon: LucideIcon;
+  tileBg: string;
+  tileBgMuted: string;
+  labelActive: string;
   hrefForRole: (role: UserRole) => string;
   matchPrefixesForRole?: (role: UserRole) => string[];
 }
@@ -29,6 +32,9 @@ export interface PwaNavItem {
   icon: LucideIcon;
   matchPrefixes?: string[];
   moduleId: string;
+  tileBg: string;
+  tileBgMuted: string;
+  labelActive: string;
 }
 
 export const PWA_MAX_BOTTOM_SLOTS = 4;
@@ -38,6 +44,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'home',
     label: 'Home',
     icon: LayoutDashboard,
+    tileBg: 'bg-cyan-500',
+    tileBgMuted: 'bg-cyan-500/20',
+    labelActive: 'text-cyan-400',
     hrefForRole: () => '/dashboard',
     matchPrefixesForRole: () => ['/dashboard', '/dashboard/business'],
   },
@@ -45,6 +54,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'crm',
     label: 'CRM',
     icon: Users,
+    tileBg: 'bg-orange-500',
+    tileBgMuted: 'bg-orange-500/20',
+    labelActive: 'text-orange-400',
     hrefForRole: () => '/dashboard/crm',
     matchPrefixesForRole: () => ['/dashboard/crm'],
   },
@@ -52,6 +64,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'mail',
     label: 'Mail',
     icon: Mail,
+    tileBg: 'bg-green-500',
+    tileBgMuted: 'bg-green-500/20',
+    labelActive: 'text-green-400',
     hrefForRole: () => '/dashboard/mail',
     matchPrefixesForRole: () => ['/dashboard/mail'],
   },
@@ -59,6 +74,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'clients',
     label: 'Clients',
     icon: UserCircle,
+    tileBg: 'bg-blue-500',
+    tileBgMuted: 'bg-blue-500/20',
+    labelActive: 'text-blue-400',
     hrefForRole: (role) =>
       role === 'tenant_admin' ? '/dashboard/business/clients' : '/dashboard/contacts',
     matchPrefixesForRole: (role) =>
@@ -70,6 +88,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'tasks',
     label: 'Tasks',
     icon: CheckSquare,
+    tileBg: 'bg-rose-500',
+    tileBgMuted: 'bg-rose-500/20',
+    labelActive: 'text-rose-400',
     hrefForRole: () => '/dashboard/tasks',
     matchPrefixesForRole: () => ['/dashboard/tasks', '/dashboard/business/tasks'],
   },
@@ -77,14 +98,20 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'calls',
     label: 'Calls',
     icon: Video,
+    tileBg: 'bg-purple-500',
+    tileBgMuted: 'bg-purple-500/20',
+    labelActive: 'text-purple-400',
     hrefForRole: (role) =>
       role === 'tenant_admin' ? '/dashboard/business/meetings' : '/dashboard/calendar',
     matchPrefixesForRole: () => ['/dashboard/business/meetings', '/dashboard/calendar', '/call'],
   },
   {
     id: 'chat',
-    label: 'Chat',
+    label: 'Messages',
     icon: MessageSquare,
+    tileBg: 'bg-emerald-500',
+    tileBgMuted: 'bg-emerald-500/20',
+    labelActive: 'text-emerald-400',
     hrefForRole: (role) =>
       role === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages',
     matchPrefixesForRole: (role) =>
@@ -94,6 +121,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'invoices',
     label: 'Invoices',
     icon: DollarSign,
+    tileBg: 'bg-amber-500',
+    tileBgMuted: 'bg-amber-500/20',
+    labelActive: 'text-amber-400',
     hrefForRole: (role) =>
       role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance',
     matchPrefixesForRole: () => ['/dashboard/finance', '/dashboard/business/billing'],
@@ -102,6 +132,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'projects',
     label: 'Projects',
     icon: Briefcase,
+    tileBg: 'bg-rose-600',
+    tileBgMuted: 'bg-rose-600/20',
+    labelActive: 'text-rose-300',
     hrefForRole: () => '/dashboard/projects',
     matchPrefixesForRole: () => ['/dashboard/projects', '/dashboard/business/projects'],
   },
@@ -109,6 +142,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'social',
     label: 'Social',
     icon: Globe,
+    tileBg: 'bg-indigo-500',
+    tileBgMuted: 'bg-indigo-500/20',
+    labelActive: 'text-indigo-400',
     hrefForRole: () => '/dashboard/business/social',
     matchPrefixesForRole: () => ['/dashboard/social', '/dashboard/business/social'],
   },
@@ -116,6 +152,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'contracts',
     label: 'Contracts',
     icon: FileText,
+    tileBg: 'bg-slate-500',
+    tileBgMuted: 'bg-slate-500/20',
+    labelActive: 'text-slate-300',
     hrefForRole: () => '/dashboard/contracts',
     matchPrefixesForRole: () => ['/dashboard/contracts', '/dashboard/business/contracts'],
   },
@@ -123,6 +162,9 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
     id: 'deals',
     label: 'Deals',
     icon: Target,
+    tileBg: 'bg-teal-500',
+    tileBgMuted: 'bg-teal-500/20',
+    labelActive: 'text-teal-400',
     hrefForRole: () => '/dashboard/deals',
     matchPrefixesForRole: () => ['/dashboard/deals'],
   },
@@ -137,6 +179,9 @@ export function moduleDefToNavItem(def: PwaModuleDef, role: UserRole): PwaNavIte
     href: def.hrefForRole(role),
     icon: def.icon,
     matchPrefixes: def.matchPrefixesForRole?.(role) ?? [def.hrefForRole(role)],
+    tileBg: def.tileBg,
+    tileBgMuted: def.tileBgMuted,
+    labelActive: def.labelActive,
   };
 }
 

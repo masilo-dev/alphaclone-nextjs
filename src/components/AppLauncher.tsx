@@ -78,8 +78,8 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
 
       {/* Top Status Bar (Native Feel) */}
       <div className="relative z-20 flex justify-between items-center px-4 sm:px-6 pt-2 pb-2 text-[11px] sm:text-[12px] font-bold tracking-tight">
-        <div className="flex items-center gap-1.5 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 uppercase tracking-[0.1em] truncate max-w-[40%]">
-          AlphaClone
+        <div className="flex items-center gap-1.5 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 tracking-[0.06em] truncate max-w-[50%]">
+          AlphaClone Systems
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <Signal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -121,7 +121,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
             className="w-full h-10 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center gap-2 text-white/50 cursor-pointer hover:bg-white/15 transition-all group"
           >
             <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium">Search</span>
+            <span className="text-sm font-medium">Search systems</span>
             <div className="hidden sm:flex items-center gap-1 ml-4 py-0.5 px-2 bg-white/5 rounded border border-white/10">
               <Command className="w-2.5 h-2.5" />
               <span className="text-xs">K</span>
@@ -204,7 +204,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
               </div>
               <div className="p-4 flex flex-col gap-2">
                 <p className="text-xs uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
-                {['Open CRM', 'Check mail', 'Start call', 'View clients'].map((action) => (
+                {['Open CRM', 'Check mail', 'Start a call', 'View clients'].map((action) => (
                    <div key={action} className="p-3 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between group transition-colors">
                      <span className="text-sm font-medium">{action}</span>
                      <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-teal-400 group-hover:translate-x-1 transition-all" />
