@@ -21,10 +21,10 @@ export function MetricCard({ label, value, delta, deltaDir, deltaColor = 'green'
   const arrow = deltaDir === 'down' ? '↓' : deltaDir === 'up' ? '↑' : '';
 
   return (
-    <div className="bg-surface-1 rounded-lg p-4 min-h-[88px] flex flex-col justify-between">
-      <span className="text-xs text-slate-400 truncate">{label}</span>
-      <div className="flex items-end justify-between gap-2 mt-1">
-        <span className="text-2xl font-medium text-white leading-none">{value}</span>
+    <div className="bg-surface-1 rounded-lg p-4 md:p-5 min-h-[96px] flex flex-col justify-between border border-slate-800/40">
+      <span className="text-xs md:text-sm text-slate-400 truncate">{label}</span>
+      <div className="flex items-end justify-between gap-2 mt-2">
+        <span className="text-2xl md:text-3xl font-semibold text-white leading-none tabular-nums">{value}</span>
         {delta ? (
           <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${DELTA_STYLES[deltaColor]}`}>
             {arrow} {delta}

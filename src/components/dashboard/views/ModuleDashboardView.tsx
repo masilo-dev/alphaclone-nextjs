@@ -23,6 +23,10 @@ interface ModuleDashboardViewProps {
   valuePrefix?: string;
   dualBar?: boolean;
   overview?: boolean;
+  chartTitle?: string;
+  chartSubtitle?: string;
+  breakdownTitle?: string;
+  breakdownSubtitle?: string;
 }
 
 function DashboardContent({
@@ -32,15 +36,20 @@ function DashboardContent({
   valuePrefix,
   dualBar = false,
   overview = false,
+  chartTitle,
+  chartSubtitle,
+  breakdownTitle,
+  breakdownSubtitle,
 }: ModuleDashboardViewProps) {
   const { currentTenant } = useTenant();
   const { data, loading, error } = useDashboardStats(currentTenant?.id, endpoint);
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading && !data) return <DashboardSkeleton />;
   if (error || !data) {
     return (
-      <div className="bg-surface-1 rounded-lg p-8 text-center text-xs text-slate-500">
-        {error || 'No data'}
+      <div className="bg-surface-1 rounded-lg p-8 text-center">
+        <p className="text-sm text-slate-300">Could not load dashboard</p>
+        <p className="text-xs text-slate-500 mt-2">{error || 'No data available'}</p>
       </div>
     );
   }
@@ -48,54 +57,68 @@ function DashboardContent({
   const overviewData = overview ? (data as OverviewStatsResponse) : null;
 
   return (
-    <ModuleDashboardLayout
-      row1={data.metrics.map((m) => (
-        <MetricCard
-          key={m.label}
-          label={m.label}
-          value={m.value}
-          delta={m.delta}
-          deltaDir={m.deltaDir}
-          deltaColor={m.deltaColor}
-        />
-      ))}
-      row1Extra={
-        overviewData?.metricsRowB
-          ? overviewData.metricsRowB.map((m) => (
-              <MetricCard
-                key={m.label}
-                label={m.label}
-                value={m.value}
-                delta={m.delta}
-                deltaDir={m.deltaDir}
-                deltaColor={m.deltaColor}
+    <div className={loading ? 'opacity-80 transition-opacity' : ''}>
+      <ModuleDashboardLayout
+        row1={data.metrics.map((m) => (
+          <MetricCard
+            key={m.label}
+            label={m.label}
+            value={m.value}
+            delta={m.delta}
+            deltaDir={m.deltaDir}
+            deltaColor={m.deltaColor}
+          />
+        ))}
+        row1Extra={
+          overviewData?.metricsRowB
+            ? overviewData.metricsRowB.map((m) => (
+                <MetricCard
+                  key={m.label}
+                  label={m.label}
+                  value={m.value}
+                  delta={m.delta}
+                  deltaDir={m.deltaDir}
+                  deltaColor={m.deltaColor}
+                />
+              ))
+            : undefined
+        }
+        row2={
+          <>
+            {chartType === 'line' ? (
+              <DashboardLineChart
+                data={data.mainChart}
+                color={chartColor}
+                valuePrefix={valuePrefix}
+                title={chartTitle}
+                subtitle={chartSubtitle}
               />
-            ))
-          : undefined
-      }
-      row2={
-        <>
-          {chartType === 'line' ? (
-            <DashboardLineChart data={data.mainChart} color={chartColor} valuePrefix={valuePrefix} />
-          ) : (
-            <DashboardBarChart
-              data={data.mainChart}
-              color={chartColor}
-              dual={dualBar}
-              valuePrefix={valuePrefix}
+            ) : (
+              <DashboardBarChart
+                data={data.mainChart}
+                color={chartColor}
+                dual={dualBar}
+                valuePrefix={valuePrefix}
+                title={chartTitle}
+                subtitle={chartSubtitle}
+              />
+            )}
+            <BreakdownBars
+              items={data.breakdown}
+              title={breakdownTitle}
+              subtitle={breakdownSubtitle}
             />
-          )}
-          <BreakdownBars items={data.breakdown} />
-        </>
-      }
-      row3={
-        <>
-          <StatusDonut segments={data.donut} />
-          <StatusPills items={overviewData?.platformHealth ?? data.pills} />
-          <ActivityFeed items={data.feed} />
-        </>
-      }
-    />
+          </>
+        }
+        row3={
+          <>
+            <StatusDonut segments={data.donut} />
+            <StatusPills items={overviewData?.platformHealth ?? data.pills} />
+            <ActivityFeed items={data.feed} />
+          </>
+        }
+      />
+    </div>
   );
 }
 
@@ -115,6 +138,10 @@ export function OverviewDashboard() {
       chartColor={DASHBOARD_COLORS.green}
       valuePrefix="$"
       overview
+      chartTitle="Revenue trend"
+      chartSubtitle="Invoiced last 6 months"
+      breakdownTitle="Module activity"
+      breakdownSubtitle="Where work is happening"
     />
   );
 }
@@ -129,11 +156,31 @@ export function CrmDashboard() {
     }
   }, [router, searchParams]);
 
-  return <ModuleDashboardView endpoint="/api/crm/stats" chartType="line" chartColor={DASHBOARD_COLORS.blue} />;
+  return (
+    <ModuleDashboardView
+      endpoint="/api/crm/stats"
+      chartType="line"
+      chartColor={DASHBOARD_COLORS.blue}
+      chartTitle="Deals closed"
+      chartSubtitle="Won deals by month"
+      breakdownTitle="Pipeline stages"
+      breakdownSubtitle="Open deals by stage"
+    />
+  );
 }
 
 export function OutreachDashboard() {
-  return <ModuleDashboardView endpoint="/api/outreach/stats" chartType="line" chartColor={DASHBOARD_COLORS.amber} />;
+  return (
+    <ModuleDashboardView
+      endpoint="/api/outreach/stats"
+      chartType="line"
+      chartColor={DASHBOARD_COLORS.amber}
+      chartTitle="Emails sent"
+      chartSubtitle="Last 14 days"
+      breakdownTitle="Channels"
+      breakdownSubtitle="Outreach by channel"
+    />
+  );
 }
 
 export function InvoicingDashboard() {
@@ -144,18 +191,52 @@ export function InvoicingDashboard() {
       chartColor={DASHBOARD_COLORS.blue}
       dualBar
       valuePrefix="$"
+      chartTitle="Invoiced vs collected"
+      chartSubtitle="Monthly comparison"
+      breakdownTitle="Top clients"
+      breakdownSubtitle="By invoice value"
     />
   );
 }
 
 export function ContractsDashboard() {
-  return <ModuleDashboardView endpoint="/api/contracts/stats" chartType="line" chartColor={DASHBOARD_COLORS.blue} />;
+  return (
+    <ModuleDashboardView
+      endpoint="/api/contracts/stats"
+      chartType="line"
+      chartColor={DASHBOARD_COLORS.blue}
+      chartTitle="Contracts signed"
+      chartSubtitle="Signed per month"
+      breakdownTitle="Contract types"
+      breakdownSubtitle="Active portfolio mix"
+    />
+  );
 }
 
 export function ProjectsDashboard() {
-  return <ModuleDashboardView endpoint="/api/projects/stats" chartType="bar" chartColor={DASHBOARD_COLORS.amber} />;
+  return (
+    <ModuleDashboardView
+      endpoint="/api/projects/stats"
+      chartType="bar"
+      chartColor={DASHBOARD_COLORS.amber}
+      chartTitle="Tasks completed"
+      chartSubtitle="Weekly completions"
+      breakdownTitle="Open tasks"
+      breakdownSubtitle="By project"
+    />
+  );
 }
 
 export function SocialDashboard() {
-  return <ModuleDashboardView endpoint="/api/social/stats" chartType="line" chartColor={DASHBOARD_COLORS.red} />;
+  return (
+    <ModuleDashboardView
+      endpoint="/api/social/stats"
+      chartType="line"
+      chartColor={DASHBOARD_COLORS.red}
+      chartTitle="Posts published"
+      chartSubtitle="Last 14 days"
+      breakdownTitle="Platforms"
+      breakdownSubtitle="Posts by network"
+    />
+  );
 }
