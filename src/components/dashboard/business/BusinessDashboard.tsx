@@ -57,6 +57,7 @@ const BillingPage = React.lazy(() => import('./BillingPage'));
 const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
 const ReportsPage = React.lazy(() => import('./ReportsPage'));
 const SettingsPage = React.lazy(() => import('./SettingsPage'));
+const PwaSettingsScreen = React.lazy(() => import('../../pwa/PwaSettingsScreen'));
 const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
 const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
 const BookingTab = React.lazy(() => import('./BookingTab'));
@@ -230,6 +231,7 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/leads/campaigns',
     '/dashboard/zoho/mail',
     '/dashboard/business/messages',
+    '/dashboard/pwa-settings',
 ];
 
 interface BusinessDashboardProps {
@@ -552,6 +554,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
                         <SettingsPage user={user} />
+                    </React.Suspense>
+                );
+            case '/dashboard/pwa-settings':
+                return (
+                    <React.Suspense fallback={<div className="min-h-screen bg-[#0a0f1a]" />}>
+                        <PwaSettingsScreen
+                            user={user}
+                            onBack={() => setActiveTab('/dashboard/business')}
+                        />
                     </React.Suspense>
                 );
             case '/dashboard/business/meetings':
@@ -959,6 +970,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/performance': return t('Business OS Performance');
             case '/dashboard/settings':
             case '/dashboard/business/settings': return t('Settings');
+            case '/dashboard/pwa-settings': return t('Mobile app');
             case '/dashboard/contracts':
             case '/dashboard/business/contracts': return t('Contracts');
             case '/dashboard/business/documents': return t('Document Hub');
@@ -1086,7 +1098,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 )}
 
                 {/* Header */}
-                <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header">
+                <header className={`h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
                         {/* Mobile Menu Toggle removed - BottomNav handles it */}
@@ -1160,6 +1172,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             user={user}
                             onLogout={onLogout}
                             onSettings={() => setActiveTab('/dashboard/business/settings')}
+                            onPwaSettings={() => setActiveTab('/dashboard/pwa-settings')}
                         />
                     </div>
                 </header>

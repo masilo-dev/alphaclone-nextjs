@@ -2,20 +2,26 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronDown, Globe, LogOut, Settings } from 'lucide-react';
+import { ChevronDown, Globe, LogOut, Settings, Smartphone } from 'lucide-react';
 import { User } from '@/types';
 import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
+import { usePWA } from '@/contexts/PWAContext';
+import { useIsMobile } from '@/hooks/useTouchGestures';
 
 interface DashboardAccountMenuProps {
   user: User;
   onLogout: () => void;
   onSettings: () => void;
+  onPwaSettings?: () => void;
 }
 
-export function DashboardAccountMenu({ user, onLogout, onSettings }: DashboardAccountMenuProps) {
+export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings }: DashboardAccountMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const { language, setLanguage, t } = useLanguage();
+  const { isPWA } = usePWA();
+  const isMobile = useIsMobile();
+  const showMobileApp = isPWA || isMobile;
 
   const displayName = user.name || user.email?.split('@')[0] || 'User';
   const avatarUrl =
@@ -65,6 +71,21 @@ export function DashboardAccountMenu({ user, onLogout, onSettings }: DashboardAc
             <p className="text-sm font-medium text-white truncate">{displayName}</p>
             <p className="text-xs text-slate-500 truncate mt-0.5">{user.email}</p>
           </div>
+
+          {showMobileApp && onPwaSettings ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onPwaSettings();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800/80 transition-colors"
+            >
+              <Smartphone className="w-4 h-4 text-teal-400" />
+              {t('Mobile app')}
+            </button>
+          ) : null}
 
           <button
             type="button"
