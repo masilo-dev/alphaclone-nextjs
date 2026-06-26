@@ -31,13 +31,11 @@ import { SlackIntegration } from '../integrations/SlackIntegration';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
-import { dailyService } from '../../../services/dailyService';
-import { callSignalingService } from '../../../services/video/CallSignalingService';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
-import { loadMeetingForJoin, type PlatformMeetingProvider } from '@/services/instantMeetingService';
+import { loadMeetingForJoin, startClientVideoCall, type PlatformMeetingProvider } from '@/services/instantMeetingService';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -351,51 +349,30 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const handleInitiateCallToClient = async (clientId: string) => {
         const toastId = toast.loading('Initiating secure call...');
         try {
-            // 1. Fetch Client Details
             const { client, error: clientError } = await (await import('../../../services/businessClientService')).businessClientService.getClient(clientId);
             if (clientError || !client) throw new Error(clientError || 'Client not found');
 
-            if (!client.email) {
-                toast.error('Client has no email address. Cannot initiate call.', { id: toastId });
-                return;
-            }
-
-            // 2. Find Recipient User ID by Email
-            const { data: users, error: userError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('email', client.email)
-                .single();
-
-            if (userError || !users) {
-                toast.error('Client is not a registered user on the platform.', { id: toastId });
-                return;
-            }
-
-            // 3. Create Video Room
-            const { call, error: roomError } = await dailyService.createVideoCall({
+            const { call, provider, error } = await startClientVideoCall({
                 hostId: user.id,
-                title: `Call with ${client.name}`,
-                isPublic: false
+                hostName: user.name || user.email || 'Host',
+                tenantId: currentTenant?.id,
+                clientName: client.name,
+                clientEmail: client.email,
             });
 
-            if (roomError || !call || !call.daily_room_url) {
-                throw new Error(roomError || 'Failed to create room');
+            if (error || !call) {
+                throw new Error(error || 'Failed to create meeting');
             }
 
-            // 4. Send Signal
-            await callSignalingService.sendCallSignal(users.id, {
-                callerId: user.id,
-                callerName: user.name,
-                roomUrl: call.daily_room_url,
-                roomId: call.id
-            });
+            if (provider === 'teams') {
+                toast.success('Teams meeting ready — opening…', { id: toastId });
+            } else if (!client.email) {
+                toast.success('Meeting room ready — client has no email on file.', { id: toastId });
+            } else {
+                toast.success('Calling client…', { id: toastId });
+            }
 
-            toast.success('Calling client...', { id: toastId });
-
-            // 5. Join Room
             handleJoinCall(call.id);
-
         } catch (error) {
             console.error('Call failed:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to start call.', { id: toastId });

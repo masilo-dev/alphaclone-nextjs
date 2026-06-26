@@ -151,7 +151,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     tenantId: currentTenant.id,
                     to: recipient,
                     subject: emailSubject.trim() || `Document: ${emailFile.original_filename}`,
-                    html,
+                    body_html: html,
                     document_file_ids: [emailFile.id],
                 }),
             });

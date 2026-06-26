@@ -102,9 +102,9 @@ export async function loadClientEmailContext(
       (async () => {
         const { data } = await supabase
           .from('calendar_events')
-          .select('id, title, start_time, status')
+          .select('id, title, start_time')
           .eq('tenant_id', tenantId)
-          .eq('client_id', clientId)
+          .eq('related_entity_id', clientId)
           .order('start_time', { ascending: false })
           .limit(6);
         (data || []).forEach((row: any) => {

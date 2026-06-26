@@ -322,15 +322,16 @@ export default function WhatsAppChatHub() {
         if (!activeThread || activeThread.messages.length === 0) return;
 
         const lastInbound = [...activeThread.messages].reverse().find(m => m.direction === 'inbound');
-        if (!lastInbound) {
-            toast.error('No inbound customer message found to reply to.');
+        const contextMessage = lastInbound || [...activeThread.messages].reverse()[0];
+        if (!contextMessage) {
+            toast.error('No messages in this thread yet. Send a first message, then use AI suggest.');
             return;
         }
 
         setAiGenerating(true);
         try {
             const suggestion = await generateMessengerReply(
-                lastInbound.body,
+                lastInbound ? lastInbound.body : contextMessage.body,
                 'Helpful, strategic business executive. Speak in WhatsApp style: concise, short, using bullet points or simple structure, highly actionable.'
             );
             setReplyText(suggestion);

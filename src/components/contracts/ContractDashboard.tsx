@@ -290,15 +290,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (!cleaned.trim()) throw new Error('Nothing to save yet');
 
             const title = `AI Lawyer Agreement — ${form.clientName || 'Client'} — ${format(new Date(), 'MMM d, yyyy')}`;
+            const html = cleaned.startsWith('<') ? cleaned : contractToHTML(cleaned);
             const { contract, error } = await contractService.createContract({
                 title,
-                content: cleaned,
+                content: html,
                 status: 'draft',
                 client_id: selectedClientIdForLawyer || form.clientId || undefined,
             });
             if (error || !contract) throw new Error(error || 'Failed to save contract');
 
-            const html = cleaned.startsWith('<') ? cleaned : contractToHTML(cleaned);
             setGeneratedContract(cleaned);
             setEditedHtml(html);
             setContractId(contract.id);
@@ -310,7 +310,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             setSignatureData('');
             setActiveView('new');
 
-            await contractService.downloadPDF(contract, currentTenant);
+            await contractService.downloadPDF({ ...contract, content: html }, currentTenant);
             toast.success('AI Lawyer contract saved and PDF generated', { id: toastId });
         } catch (err: any) {
             toast.error(err?.message || 'Failed to generate PDF', { id: toastId });

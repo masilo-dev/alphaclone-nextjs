@@ -2,10 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomVideoRoom from '@/components/dashboard/video/CustomVideoRoom';
-import { dailyService } from '@/services/dailyService';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { loadMeetingForJoin } from '@/services/instantMeetingService';
+import { Loader2, AlertCircle, ExternalLink } from 'lucide-react';
+
+const MicrosoftMeetingEmbed = dynamic(
+    () => import('@/components/dashboard/video/MicrosoftMeetingEmbed'),
+    { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-400" /></div> }
+);
 
 export default function CallPage() {
     const params = useParams();
@@ -13,6 +19,7 @@ export default function CallPage() {
     const { user, loading: authLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [teamsJoinUrl, setTeamsJoinUrl] = useState<string | null>(null);
 
     const callId = params?.roomId as string;
 
@@ -21,8 +28,7 @@ export default function CallPage() {
 
         const fetchCallDetails = async () => {
             try {
-                // Check if it's a UUID (our DB ID) or a full URL
-                const { call, error: fetchError } = await dailyService.getVideoCall(callId);
+                const { call, provider, joinUrl, error: fetchError } = await loadMeetingForJoin(callId);
 
                 if (fetchError || !call) {
                     setError('Call not found or access denied.');
@@ -35,8 +41,16 @@ export default function CallPage() {
                     return;
                 }
 
-                setLoading(false);
+                if (provider === 'teams') {
+                    if (!joinUrl) {
+                        setError('Teams join link missing. Start a new meeting from the dashboard.');
+                        setLoading(false);
+                        return;
+                    }
+                    setTeamsJoinUrl(joinUrl);
+                }
 
+                setLoading(false);
             } catch (err) {
                 console.error('Error fetching call:', err);
                 setError('Failed to load call details.');
@@ -74,14 +88,37 @@ export default function CallPage() {
         );
     }
 
+    if (teamsJoinUrl) {
+        return (
+            <div className="h-screen w-screen bg-slate-950 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/80">
+                    <p className="text-sm text-slate-300">Microsoft Teams · 40 minute session</p>
+                    <a
+                        href={teamsJoinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-blue-300 hover:text-blue-200"
+                    >
+                        Open in Teams app <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                </div>
+                <div className="flex-1 min-h-0">
+                    <MicrosoftMeetingEmbed
+                        meetingLink={teamsJoinUrl}
+                        displayName={user?.name || user?.email || 'Guest'}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden overscroll-none touch-none">
             {user && (
                 <CustomVideoRoom
                     user={user}
                     callId={callId}
-                    onLeave={() => router.push(user ? '/dashboard' : '/')}
-                    showSidebar={false}
+                    onLeave={() => router.push('/dashboard/business/teams')}
                 />
             )}
         </div>

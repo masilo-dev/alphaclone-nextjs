@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { UNITS_PER_IMAGE, planIncludesImageGeneration } from '@/config/aiUsageQuotas';
+import { UNITS_PER_IMAGE, planIncludesImageGeneration, isImageGenerationPromoActive } from '@/config/aiUsageQuotas';
 import {
     isPlatformSuperAdmin,
     resolveTenantContextForUser,
@@ -145,7 +145,8 @@ export async function POST(req: NextRequest) {
     }
     dailyUsage = usageData;
     const generatedToday = Number(dailyUsage?.generated_count ?? 0);
-    if (usageTrackingEnabled && generatedToday >= FREE_IMAGES_PER_DAY) {
+    const promoActive = isImageGenerationPromoActive();
+    if (usageTrackingEnabled && !promoActive && generatedToday >= FREE_IMAGES_PER_DAY) {
         return NextResponse.json(
             {
                 error: `Daily free image limit reached (${FREE_IMAGES_PER_DAY}/day).`,
@@ -180,8 +181,10 @@ export async function POST(req: NextRequest) {
                 { status: 403 }
             );
         }
-        const blocked = await consumeAiUnitsOr429(admin, ctx.tenantId, ctx.plan, UNITS_PER_IMAGE);
-        if (blocked) return blocked;
+        if (!isImageGenerationPromoActive()) {
+            const blocked = await consumeAiUnitsOr429(admin, ctx.tenantId, ctx.plan, UNITS_PER_IMAGE);
+            if (blocked) return blocked;
+        }
     }
 
     try {
