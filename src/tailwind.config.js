@@ -46,7 +46,20 @@ export default {
                     850: '#1e293b',
                     900: '#0f172a',
                     950: '#020617',
-                }
+                },
+                dashboard: {
+                    green: '#639922',
+                    greenBg: '#EAF3DE',
+                    amber: '#EF9F27',
+                    amberBg: '#FAEEDA',
+                    red: '#E24B4A',
+                    redBg: '#FCEBEB',
+                    blue: '#378ADD',
+                    blueBg: '#E6F1FB',
+                },
+                surface: {
+                    1: 'var(--surface-1)',
+                },
             },
             fontFamily: {
                 sans: [

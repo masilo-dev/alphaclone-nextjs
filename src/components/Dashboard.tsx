@@ -41,6 +41,15 @@ import Sidebar from './dashboard/Sidebar';
 import BottomNav from './dashboard/BottomNav';
 import CommandPalette from './dashboard/CommandPalette';
 import HomeTab from './dashboard/HomeTab';
+import {
+  OverviewDashboard,
+  CrmDashboard,
+  OutreachDashboard,
+  InvoicingDashboard,
+  ContractsDashboard,
+  ProjectsDashboard,
+  SocialDashboard,
+} from './dashboard/views/ModuleDashboardView';
 import ProjectSubmitTab from './dashboard/ProjectSubmitTab';
 import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
@@ -1346,11 +1355,17 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/crm':
+        return <CrmDashboard />;
+
+      case '/dashboard/crm/workspace':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <CRMTab user={user} />
           </React.Suspense>
         );
+
+      case '/dashboard/outreach':
+        return <OutreachDashboard />;
 
       case '/dashboard/email-campaigns':
       case '/dashboard/business/campaigns':
@@ -1370,6 +1385,10 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       case '/dashboard/social':
       case '/dashboard/business/social':
+        return <SocialDashboard />;
+
+      case '/dashboard/social/compose':
+      case '/dashboard/business/social/compose':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <SocialMediaComposer />
@@ -1398,7 +1417,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/finance':
-        // Clients see read-only invoice view, tenant_admin sees full billing/subscription management
+        return <InvoicingDashboard />;
+
+      case '/dashboard/finance/manage':
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
             <FinanceTab user={user} />
@@ -1406,6 +1427,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/contracts':
+        return <ContractsDashboard />;
+
+      case '/dashboard/contracts/manage':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <ContractsTab user={user} />
@@ -1442,6 +1466,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         return <PortfolioShowcase projects={filteredProjects} isAdmin={isPlatformAdminRole(user.role)} onRefresh={refreshProjects} userId={user.id} />;
 
       case '/dashboard/projects':
+        return <ProjectsDashboard />;
+
+      case '/dashboard/projects/manage':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <ProjectsTab user={user} />
@@ -1449,6 +1476,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       default:
+        if (location === '/dashboard' || location === '/dashboard/business') {
+          return <OverviewDashboard />;
+        }
         return (
           <HomeTab
             user={user}

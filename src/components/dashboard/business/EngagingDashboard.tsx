@@ -110,7 +110,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
             description: 'Grow your network',
             icon: UserPlus,
             color: 'bg-blue-500',
-            action: () => router.push('/dashboard/crm?quickAdd=true')
+            action: () => router.push('/dashboard/crm/workspace?quickAdd=true')
         },
         {
             id: 'new-invoice',
@@ -438,7 +438,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <button 
-                        onClick={() => router.push('/dashboard/crm?quickAdd=true')}
+                        onClick={() => router.push('/dashboard/crm/workspace?quickAdd=true')}
                         className="px-3 py-2 sm:px-4 bg-slate-800 border border-slate-700 rounded-lg text-xs sm:text-sm font-medium text-white hover:bg-slate-700 transition-colors shadow-sm active:scale-95"
                     >
                         Quick Add
