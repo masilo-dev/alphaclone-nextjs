@@ -74,6 +74,8 @@ async function sendEmail(invoiceId: string, tenantId: string) {
     subject: `Invoice ${invoiceNumber}`,
     html: invoiceEmailTemplates.invoiceSent({
       recipientName: invoice.client?.name || 'Valued Client',
+      recipientEmail: invoice.client.email,
+      tenantId,
       invoiceNumber,
       amount: invoice.total || invoice.total_amount || 0,
       currency: invoice.currency || 'USD',
@@ -88,6 +90,7 @@ async function sendEmail(invoiceId: string, tenantId: string) {
       content_type: 'application/pdf',
     }],
     templateName: 'invoiceLifecycleSent',
+    skipFooter: true,
   });
   if (!result.success) {
     throw new Error(`Invoice email dispatch failed: ${result.error}`);
@@ -127,6 +130,8 @@ async function sendReminder(invoiceId: string, tenantId: string) {
     subject: `Reminder: Invoice ${invoiceNumber}`,
     html: invoiceEmailTemplates.invoiceSent({
       recipientName: invoice.client?.name || 'Valued Client',
+      recipientEmail: invoice.client.email,
+      tenantId,
       invoiceNumber,
       amount: invoice.total || invoice.total_amount || 0,
       currency: invoice.currency || 'USD',
@@ -136,6 +141,7 @@ async function sendReminder(invoiceId: string, tenantId: string) {
       notes: 'Friendly reminder that this invoice is still awaiting payment.',
     }),
     templateName: 'invoiceLifecycleReminder',
+    skipFooter: true,
   });
   if (!result.success) throw new Error(`Invoice reminder failed: ${result.error}`);
   console.log(`[invoice-lifecycle] Step 4 reminder complete via ${result.provider}: ${invoiceId}`);
@@ -158,6 +164,8 @@ async function escalateOverdue(invoiceId: string, tenantId: string) {
     subject: `Overdue: Invoice ${invoiceNumber}`,
     html: invoiceEmailTemplates.invoiceOverdue({
       recipientName: invoice.client?.name || 'Valued Client',
+      recipientEmail: invoice.client.email,
+      tenantId,
       invoiceNumber,
       amount: invoice.total || invoice.total_amount || 0,
       currency: invoice.currency || 'USD',
@@ -166,6 +174,7 @@ async function escalateOverdue(invoiceId: string, tenantId: string) {
       workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
     }),
     templateName: 'invoiceLifecycleOverdue',
+    skipFooter: true,
   });
   if (!result.success) throw new Error(`Invoice overdue email failed: ${result.error}`);
   console.log(`[invoice-lifecycle] Step 5 overdue complete via ${result.provider}: ${invoiceId}`);

@@ -9,8 +9,9 @@ import {
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
-import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
-import { buildEmailUnsubscribeUrl } from '@/lib/email/unsubscribe';
+import { normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
+import { buildEmail } from '@/lib/email/template';
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -198,9 +199,23 @@ export async function POST(request: Request) {
         '*': ['style', 'class'],
       }
     });
-    const unsubscribeUrl = buildEmailUnsubscribeUrl({ tenantId, email: leadEmail });
-    // Single shared footer (company legal name, Wyoming address, unsubscribe) — no duplicate block.
-    const bodyWithFooter = ensureFooter(sanitizedBody, { unsubscribeUrl });
+    const unsubscribeUrl = buildUnsubscribeUrl(leadEmail, tenantId);
+
+    const { data: tenantRow } = await admin.from('tenants').select('name').eq('id', tenantId).maybeSingle();
+    const tenantName = tenantRow?.name || 'Your workspace';
+
+    const htmlWithTemplate = buildEmail({
+      subject: normalizedSubject,
+      bodyHtml: sanitizedBody,
+      tenantName,
+      tenantId,
+      recipientEmail: leadEmail,
+    });
+
+    if (await isUnsubscribed(leadEmail, tenantId)) {
+      console.log(`[outreach/send] Skipping — recipient unsubscribed: ${leadEmail} (tenant ${tenantId})`);
+      return NextResponse.json({ success: false, status: 'unsubscribed', error: 'Recipient has unsubscribed' }, { status: 409 });
+    }
     if (await isEmailSuppressed(tenantId, leadEmail)) {
       return NextResponse.json({ success: false, status: 'suppressed', error: 'Recipient is suppressed' }, { status: 409 });
     }
@@ -220,7 +235,7 @@ export async function POST(request: Request) {
     const trackingId = crypto.randomUUID();
 
     // 2. Inject tracking pixel (footer already applied above via ensureFooter)
-    const htmlBody = injectTrackingPixel(bodyWithFooter, trackingId);
+    const htmlBody = injectTrackingPixel(htmlWithTemplate, trackingId);
     const htmlWithComplianceFooter = htmlBody;
 
     // 3. Pre-insert log row as 'queued'

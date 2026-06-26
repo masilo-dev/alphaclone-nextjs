@@ -128,6 +128,8 @@ async function processInvoiceOverdueReminders() {
 
                     const emailData = {
                         recipientName: client?.name || 'Valued Client',
+                        recipientEmail,
+                        tenantId: invoice.tenant_id,
                         invoiceNumber: invoice.invoice_number,
                         amount: invoice.total_amount || 0,
                         currency: invoice.currency || 'USD',
@@ -152,6 +154,7 @@ async function processInvoiceOverdueReminders() {
                         subject: emailSubject,
                         templateName: 'invoiceOverdue',
                         html: htmlContent,
+                        skipFooter: true,
                     });
 
                     if (!sendResult.success) throw new Error(sendResult.error || 'Reminder email failed');

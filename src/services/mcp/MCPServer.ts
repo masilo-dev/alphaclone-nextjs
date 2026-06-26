@@ -4533,6 +4533,8 @@ class AlphaCloneMCPServer {
             fromName: invoice.tenant?.name || 'AlphaClone',
             html: invoiceEmailTemplates.invoiceSent({
               recipientName: invoice.client?.name || 'Valued Client',
+              recipientEmail: to,
+              tenantId: tenant_id,
               invoiceNumber: invoice.invoice_number,
               amount: Number(invoice.total || 0),
               currency: invoice.currency || 'USD',
@@ -4547,6 +4549,7 @@ class AlphaCloneMCPServer {
               content_type: 'application/pdf',
             }],
             templateName: 'mcpInvoiceSent',
+            skipFooter: true,
           });
 
           if (!dispatch.success) {
@@ -4612,7 +4615,7 @@ class AlphaCloneMCPServer {
           const variables = {
             invoice_number: invoice.invoice_number,
             amount,
-            payment_date: new Date().toLocaleDateString(),
+            payment_date: new Date().toISOString(),
             receipt_url: receiptUrl,
           };
           let html = `

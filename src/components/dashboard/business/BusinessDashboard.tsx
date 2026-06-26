@@ -7,7 +7,6 @@ import {
     Users,
     Briefcase,
     Settings,
-    Globe,
     CreditCard,
     FileText,
     Bell,
@@ -28,6 +27,7 @@ import {
     Minimize2,
 } from 'lucide-react';
 import { SlackIntegration } from '../integrations/SlackIntegration';
+import { DashboardAccountMenu } from '../DashboardAccountMenu';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -216,7 +216,7 @@ import NotificationCenter from '../NotificationCenter';
 import CommandPalette from '../CommandPalette';
 import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
 import ProductTour from '../../onboarding/ProductTour';
-import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
@@ -242,7 +242,7 @@ interface BusinessDashboardProps {
 
 export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
-    const { t, language, setLanguage } = useLanguage();
+    const { t } = useLanguage();
     const route = useMemo(
         () => normalizeBusinessRoute(activeTab, user.role),
         [activeTab, user.role],
@@ -1120,81 +1120,47 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         )}
                     </div>
 
-                    {/* Right: Actions, Notifications, Profile */}
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Right: compact utility cluster + account menu */}
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {activeBgTasksCount > 0 && (
-                            <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                <span className="hidden sm:inline">{activeBgTasksCount} Task(s)</span>
+                            <div className="hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                <span>{activeBgTasksCount}</span>
                             </div>
                         )}
                         {activeMeetingCallId && (
                             <button
                                 onClick={() => setIsMeetingMinimized(false)}
-                                className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
+                                className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
                                 title="Return to active meeting"
                             >
                                 <Video className="w-3.5 h-3.5" />
-                                {isMeetingMinimized ? 'Return to Meeting' : 'Meeting Active'}
+                                <span className="hidden lg:inline">{isMeetingMinimized ? 'Meeting' : 'Live'}</span>
                             </button>
                         )}
 
-                        <div className="hidden sm:block w-px h-6 bg-slate-800 mx-1" />
-
-                        <div className="flex items-center gap-3 sm:gap-4">
-                            <div data-tour="global-search" className="hidden sm:block">
-                                <EnhancedGlobalSearch
-                                    user={user}
-                                    onNavigate={(path) => setActiveTab(path)}
-                                />
-                            </div>
-                            <MissedCallsNotification
-                                userId={user.id}
-                                onCallBack={(callerId) => {
-                                    const roomId = `room-${callerId.slice(0, 8)}`;
-                                    toast.success('Calling back...');
-                                    router.push(`/dashboard/call/${roomId}`);
-                                }}
+                        <div data-tour="global-search" className="hidden md:block">
+                            <EnhancedGlobalSearch
+                                user={user}
+                                onNavigate={(path) => setActiveTab(path)}
                             />
-                            <div data-tour="business-notifications">
-                            <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
-                            </div>
-                            <div className="hidden sm:flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-full pl-2 pr-1 py-1">
-                                <Globe className="w-3.5 h-3.5 text-slate-400" />
-                                <select
-                                    value={language}
-                                    onChange={(e) => setLanguage(e.target.value as typeof language)}
-                                    aria-label="Language"
-                                    className="bg-transparent text-[11px] font-semibold text-slate-300 outline-none cursor-pointer pr-1"
-                                >
-                                    {LANGUAGES.map((lang) => (
-                                        <option key={lang.code} value={lang.code} className="bg-slate-900">{lang.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <button
-                                onClick={() => setActiveTab('/dashboard/business/settings')}
-                                title="Settings"
-                                aria-label="Settings"
-                                className="hidden sm:flex w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 items-center justify-center text-slate-300 hover:text-white hover:border-teal-500/40 transition-all active:scale-95"
-                            >
-                                <Settings className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('/dashboard/business/settings')}
-                                title="Profile & settings"
-                                aria-label="Profile and settings"
-                                className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700/50 overflow-hidden shadow-lg shadow-teal-500/10 ring-2 ring-transparent hover:ring-teal-500/50 transition-all cursor-pointer group relative active:scale-95"
-                            >
-                                <Image
-                                    src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`}
-                                    alt="Profile"
-                                    fill
-                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                    sizes="40px"
-                                />
-                            </button>
                         </div>
+                        <MissedCallsNotification
+                            userId={user.id}
+                            onCallBack={(callerId) => {
+                                const roomId = `room-${callerId.slice(0, 8)}`;
+                                toast.success('Calling back...');
+                                router.push(`/dashboard/call/${roomId}`);
+                            }}
+                        />
+                        <div data-tour="business-notifications">
+                            <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
+                        </div>
+                        <DashboardAccountMenu
+                            user={user}
+                            onLogout={onLogout}
+                            onSettings={() => setActiveTab('/dashboard/business/settings')}
+                        />
                     </div>
                 </header>
 

@@ -40,6 +40,7 @@ import EnhancedGlobalSearch from './dashboard/EnhancedGlobalSearch';
 import Sidebar from './dashboard/Sidebar';
 import BottomNav from './dashboard/BottomNav';
 import CommandPalette from './dashboard/CommandPalette';
+import { DashboardAccountMenu } from './dashboard/DashboardAccountMenu';
 import HomeTab from './dashboard/HomeTab';
 import {
   OverviewDashboard,
@@ -1838,6 +1839,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                   }}
                 />
                 <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />
+                <DashboardAccountMenu
+                  user={user}
+                  onLogout={onLogout}
+                  onSettings={() => setActiveTab('/dashboard/settings')}
+                />
               </div>
             </div>
           </div>

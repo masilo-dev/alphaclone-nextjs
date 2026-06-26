@@ -9,7 +9,47 @@ export const runtime = 'nodejs';
 export const maxDuration = 800;
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
+const MCP_VERSION_HEADER = '2025-03-26';
 const SUPPORTED_MCP_PROTOCOL_VERSIONS = ['2024-11-05', '2025-03-26', '2025-11-25'] as const;
+
+function mcpJsonHeaders(req: NextRequest, extra?: Record<string, string>): HeadersInit {
+  return {
+    ...getMcpCorsHeaders(req),
+    'Content-Type': 'application/json',
+    'MCP-Version': MCP_VERSION_HEADER,
+    ...extra,
+  };
+}
+
+function toUtcIso(value: unknown): unknown {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (Array.isArray(value)) {
+    return value.map(toUtcIso);
+  }
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const normalized: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(record)) {
+      if (entry instanceof Date) {
+        normalized[key] = entry.toISOString();
+      } else if (
+        typeof entry === 'string'
+        && /(?:_at|_date|At|Date|timestamp|expires|expiry|due)$/i.test(key)
+        && !Number.isNaN(Date.parse(entry))
+      ) {
+        normalized[key] = new Date(entry).toISOString();
+      } else if (entry && typeof entry === 'object') {
+        normalized[key] = toUtcIso(entry);
+      } else {
+        normalized[key] = entry;
+      }
+    }
+    return normalized;
+  }
+  return value;
+}
 
 function negotiateProtocolVersion(requested: unknown): string {
   if (typeof requested === 'string' && (SUPPORTED_MCP_PROTOCOL_VERSIONS as readonly string[]).includes(requested)) {
@@ -78,7 +118,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32700, message: 'Parse error' },
       id: null,
-    }, { status: 400, headers: getMcpCorsHeaders(req) });
+    }, { status: 400, headers: mcpJsonHeaders(req) });
   }
 
   if (!requestBody || typeof requestBody !== 'object' || !requestBody.method) {
@@ -86,7 +126,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32600, message: 'Invalid Request' },
       id: requestBody?.id ?? null,
-    }, { status: 400, headers: getMcpCorsHeaders(req) });
+    }, { status: 400, headers: mcpJsonHeaders(req) });
   }
 
   const mcpSessionId = req.headers.get('mcp-session-id');
@@ -96,7 +136,7 @@ export async function POST(req: NextRequest) {
   // 1. Authentication
   if (mcpSessionId) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: getMcpCorsHeaders(req) });
+      return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: mcpJsonHeaders(req) });
     }
     const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
     const { data: session, error: sessionError } = await supabaseAdmin
@@ -112,7 +152,7 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           error: { code: -32001, message: 'Session not found. Please re-initialize.' },
           id: requestBody.id ?? null,
-        }, { status: 401, headers: getMcpCorsHeaders(req) });
+        }, { status: 401, headers: mcpJsonHeaders(req) });
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
@@ -125,7 +165,7 @@ export async function POST(req: NextRequest) {
             jsonrpc: '2.0',
             error: { code: -32001, message: 'Session expired. Please re-initialize.' },
             id: requestBody.id ?? null,
-          }, { status: 401, headers: getMcpCorsHeaders(req) });
+          }, { status: 401, headers: mcpJsonHeaders(req) });
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
@@ -137,7 +177,7 @@ export async function POST(req: NextRequest) {
   } else {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
@@ -146,7 +186,7 @@ export async function POST(req: NextRequest) {
   // 2. Short-circuit handshake methods (SDK import crashes in serverless for initialize)
   if (requestBody.method === 'initialize') {
     const protocolVersion = negotiateProtocolVersion(requestBody.params?.protocolVersion);
-    const headers = new Headers(getMcpCorsHeaders(req));
+    const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
     headers.set('MCP-Protocol-Version', protocolVersion);
 
     if (ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
@@ -192,7 +232,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       id: requestBody.id,
       result: {},
-    }, { headers: getMcpCorsHeaders(req) });
+    }, { headers: mcpJsonHeaders(req) });
   }
 
   // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
@@ -273,7 +313,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       id: requestBody.id,
       result: { tools: [...tools, ...ticketingTools] }
-    }, { headers: getMcpCorsHeaders(req) });
+    }, { headers: mcpJsonHeaders(req) });
   }
 
   if (requestBody.method === 'resources/list') {
@@ -296,7 +336,7 @@ export async function POST(req: NextRequest) {
           }
         ] 
       } 
-    }, { headers: getMcpCorsHeaders(req) });
+    }, { headers: mcpJsonHeaders(req) });
   }
 
   if (requestBody.method === 'prompts/list') {
@@ -310,11 +350,11 @@ export async function POST(req: NextRequest) {
         required: a.required ?? false,
       })),
     }));
-    return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { prompts } }, { headers: getMcpCorsHeaders(req) });
+    return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { prompts } }, { headers: mcpJsonHeaders(req) });
   }
 
   if (requestBody.method?.startsWith('notifications/')) {
-    return new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
+    return new NextResponse(null, { status: 204, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
   }
 
   // 4. Handle ticketing tools directly (bypass SDK for reliability)
@@ -345,14 +385,14 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           id: requestBody.id,
           error: { code: -32603, message: `Failed to create ticket: ${error.message}` },
-        }, { status: 500, headers: getMcpCorsHeaders(req) });
+        }, { status: 500, headers: mcpJsonHeaders(req) });
       }
 
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
-      }, { headers: getMcpCorsHeaders(req) });
+        result: { content: [{ type: 'text', text: JSON.stringify(toUtcIso(ticket)) }] },
+      }, { headers: mcpJsonHeaders(req) });
     }
 
     if (toolName === 'get_tickets') {
@@ -375,14 +415,14 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           id: requestBody.id,
           error: { code: -32603, message: `Failed to fetch tickets: ${error.message}` },
-        }, { status: 500, headers: getMcpCorsHeaders(req) });
+        }, { status: 500, headers: mcpJsonHeaders(req) });
       }
 
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result: { content: [{ type: 'text', text: JSON.stringify(tickets || []) }] },
-      }, { headers: getMcpCorsHeaders(req) });
+        result: { content: [{ type: 'text', text: JSON.stringify(toUtcIso(tickets || [])) }] },
+      }, { headers: mcpJsonHeaders(req) });
     }
 
     if (toolName === 'update_ticket') {
@@ -417,14 +457,14 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           id: requestBody.id,
           error: { code: -32603, message: `Failed to update ticket: ${error.message}` },
-        }, { status: 500, headers: getMcpCorsHeaders(req) });
+        }, { status: 500, headers: mcpJsonHeaders(req) });
       }
 
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
-      }, { headers: getMcpCorsHeaders(req) });
+        result: { content: [{ type: 'text', text: JSON.stringify(toUtcIso(ticket)) }] },
+      }, { headers: mcpJsonHeaders(req) });
     }
 
     if (toolName === 'get_ticket_stats') {
@@ -456,18 +496,18 @@ export async function POST(req: NextRequest) {
         .lt('sla_due_at', new Date().toISOString())
         .limit(10);
 
-      const stats = {
+      const stats = toUtcIso({
         status_counts: statusCounts || [],
         avg_resolution_hours: avgResolution?.avg_hours || null,
         sla_breaches: slaBreaches || [],
         total_open: (statusCounts || []).filter((s: any) => s.status === 'open').reduce((sum: number, s: any) => sum + (s.count || 0), 0),
-      };
+      });
 
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
         result: { content: [{ type: 'text', text: JSON.stringify(stats) }] },
-      }, { headers: getMcpCorsHeaders(req) });
+      }, { headers: mcpJsonHeaders(req) });
     }
 
     if (toolName === 'escalate_ticket') {
@@ -489,7 +529,7 @@ export async function POST(req: NextRequest) {
           jsonrpc: '2.0',
           id: requestBody.id,
           error: { code: -32603, message: `Failed to escalate ticket: ${error.message}` },
-        }, { status: 500, headers: getMcpCorsHeaders(req) });
+        }, { status: 500, headers: mcpJsonHeaders(req) });
       }
 
       // Send notification to Alpha
@@ -510,8 +550,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result: { content: [{ type: 'text', text: JSON.stringify(ticket) }] },
-      }, { headers: getMcpCorsHeaders(req) });
+        result: { content: [{ type: 'text', text: JSON.stringify(toUtcIso(ticket)) }] },
+      }, { headers: mcpJsonHeaders(req) });
     }
 
     // Registry tools — bypass MCPServer (avoids nodemailer / heavy email import chain)
@@ -526,8 +566,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result,
-      }, { headers: getMcpCorsHeaders(req) });
+        result: toUtcIso(result),
+      }, { headers: mcpJsonHeaders(req) });
     }
   }
 
@@ -553,10 +593,10 @@ export async function POST(req: NextRequest) {
     const responseMessage = await transport.getResponse(10000);
 
     if (!responseMessage) {
-      return new NextResponse(null, { status: 202, headers: getMcpCorsHeaders(req) });
+      return new NextResponse(null, { status: 202, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
     }
 
-    const headers = new Headers(getMcpCorsHeaders(req));
+    const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
     headers.set('MCP-Protocol-Version', MCP_PROTOCOL_VERSION);
 
     // Generate session on initialize
@@ -591,7 +631,7 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32603, message: 'Internal Server Error' },
       id: requestBody?.id ?? null,
-    }, { status: 500, headers: getMcpCorsHeaders(req) });
+    }, { status: 500, headers: mcpJsonHeaders(req) });
   }
 }
 
@@ -602,7 +642,7 @@ export async function GET(req: NextRequest) {
   try {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
     }
 
     const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
@@ -613,17 +653,16 @@ export async function GET(req: NextRequest) {
     const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
 
     return NextResponse.json({ tools: [...newTools, ...legacyFiltered] }, {
-      headers: {
-        ...getMcpCorsHeaders(req),
+      headers: mcpJsonHeaders(req, {
         'X-MCP-Version': '2.0.0',
         'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
-      },
+      }),
     });
   } catch (err) {
     console.error('[MCP GET] Failed:', err);
     return NextResponse.json(
       { error: 'MCP server failed to load tools' },
-      { status: 500, headers: getMcpCorsHeaders(req) }
+      { status: 500, headers: mcpJsonHeaders(req) }
     );
   }
 }
@@ -640,7 +679,7 @@ export async function DELETE(req: NextRequest) {
 
   const auth = await resolveAuth(req);
   if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
   }
 
   const mcpSessionId = req.headers.get('mcp-session-id');
@@ -660,11 +699,12 @@ export async function DELETE(req: NextRequest) {
     status: 204,
     headers: {
       ...getMcpCorsHeaders(req),
+      'MCP-Version': MCP_VERSION_HEADER,
       'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
     },
   });
 }
 
 export async function OPTIONS(req: NextRequest) {
-  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
+  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
 }
