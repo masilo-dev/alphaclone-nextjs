@@ -3,8 +3,10 @@
 import React, { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { ModuleDashboardLayout } from '../ModuleDashboardLayout';
+import { ModuleDashboardActions } from '../ModuleDashboardActions';
 import { MetricCard } from '../MetricCard';
 import { DashboardLineChart } from '../DashboardLineChart';
 import { DashboardBarChart } from '../DashboardBarChart';
@@ -15,8 +17,10 @@ import { ActivityFeed } from '../ActivityFeed';
 import { DashboardSkeleton } from '../DashboardSkeleton';
 import type { OverviewStatsResponse } from '@/types/dashboardStats';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
+import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 
 interface ModuleDashboardViewProps {
+  moduleId: ModuleDashboardId;
   endpoint: string;
   chartType?: 'line' | 'bar' | 'dual-bar';
   chartColor?: string;
@@ -30,6 +34,7 @@ interface ModuleDashboardViewProps {
 }
 
 function DashboardContent({
+  moduleId,
   endpoint,
   chartType = 'line',
   chartColor,
@@ -42,15 +47,27 @@ function DashboardContent({
   breakdownSubtitle,
 }: ModuleDashboardViewProps) {
   const { currentTenant } = useTenant();
+  const { user } = useAuth();
   const { data, loading, error } = useDashboardStats(currentTenant?.id, endpoint);
 
-  if (loading && !data) return <DashboardSkeleton />;
+  if (loading && !data) {
+    return (
+      <>
+        <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} />
+        <DashboardSkeleton />
+      </>
+    );
+  }
   if (error || !data) {
     return (
-      <div className="bg-surface-1 rounded-lg p-8 text-center">
-        <p className="text-sm text-slate-300">Could not load dashboard</p>
-        <p className="text-xs text-slate-500 mt-2">{error || 'No data available'}</p>
-      </div>
+      <>
+        <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} />
+        <div className="bg-surface-1 rounded-lg p-8 text-center">
+          <p className="text-sm text-slate-300">Could not load dashboard charts</p>
+          <p className="text-xs text-slate-500 mt-2">{error || 'No data available'}</p>
+          <p className="text-xs text-slate-500 mt-3">Use the actions above to open the workspace and keep working.</p>
+        </div>
+      </>
     );
   }
 
@@ -58,6 +75,7 @@ function DashboardContent({
 
   return (
     <div className={loading ? 'opacity-80 transition-opacity' : ''}>
+      <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} />
       <ModuleDashboardLayout
         row1={data.metrics.map((m) => (
           <MetricCard
@@ -133,6 +151,7 @@ export function ModuleDashboardView(props: ModuleDashboardViewProps) {
 export function OverviewDashboard() {
   return (
     <ModuleDashboardView
+      moduleId="overview"
       endpoint="/api/dashboard/overview"
       chartType="line"
       chartColor={DASHBOARD_COLORS.green}
@@ -158,6 +177,7 @@ export function CrmDashboard() {
 
   return (
     <ModuleDashboardView
+      moduleId="crm"
       endpoint="/api/crm/stats"
       chartType="line"
       chartColor={DASHBOARD_COLORS.blue}
@@ -172,6 +192,7 @@ export function CrmDashboard() {
 export function OutreachDashboard() {
   return (
     <ModuleDashboardView
+      moduleId="outreach"
       endpoint="/api/outreach/stats"
       chartType="line"
       chartColor={DASHBOARD_COLORS.amber}
@@ -186,6 +207,7 @@ export function OutreachDashboard() {
 export function InvoicingDashboard() {
   return (
     <ModuleDashboardView
+      moduleId="invoicing"
       endpoint="/api/invoices/stats"
       chartType="bar"
       chartColor={DASHBOARD_COLORS.blue}
@@ -202,6 +224,7 @@ export function InvoicingDashboard() {
 export function ContractsDashboard() {
   return (
     <ModuleDashboardView
+      moduleId="contracts"
       endpoint="/api/contracts/stats"
       chartType="line"
       chartColor={DASHBOARD_COLORS.blue}
@@ -216,6 +239,7 @@ export function ContractsDashboard() {
 export function ProjectsDashboard() {
   return (
     <ModuleDashboardView
+      moduleId="projects"
       endpoint="/api/projects/stats"
       chartType="bar"
       chartColor={DASHBOARD_COLORS.amber}
@@ -230,6 +254,7 @@ export function ProjectsDashboard() {
 export function SocialDashboard() {
   return (
     <ModuleDashboardView
+      moduleId="social"
       endpoint="/api/social/stats"
       chartType="line"
       chartColor={DASHBOARD_COLORS.red}
