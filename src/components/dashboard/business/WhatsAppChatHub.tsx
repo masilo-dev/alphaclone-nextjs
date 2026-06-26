@@ -78,9 +78,13 @@ export default function WhatsAppChatHub() {
 
     const fetchIntegrations = async () => {
         try {
-            const res = await fetch(`/api/integrations/whatsapp?tenantId=${currentTenant?.id}`);
-            const data = await res.json().catch(() => ({}));
-            setMetaConnected(data?.success && data?.integrations?.length > 0);
+            const [integrationRes, statusRes] = await Promise.all([
+                fetch(`/api/integrations/whatsapp?tenantId=${currentTenant?.id}`),
+                fetch(`/api/integrations/whatsapp/status?tenantId=${encodeURIComponent(currentTenant?.id || '')}`),
+            ]);
+            const data = await integrationRes.json().catch(() => ({}));
+            const status = await statusRes.json().catch(() => ({}));
+            setMetaConnected(!!status?.sendConfigured || (data?.success && data?.integrations?.length > 0));
         } catch (err) {
             console.error('Failed to fetch WhatsApp status', err);
             setMetaConnected(false);
@@ -287,6 +291,11 @@ export default function WhatsAppChatHub() {
     const handleSend = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!replyText.trim() || !selectedPhone || !currentTenant?.id || sending) return;
+
+        if (!metaConnected) {
+            toast.error('WhatsApp is not configured. Add credentials under Integration Settings.');
+            return;
+        }
 
         setSending(true);
         const textToSend = replyText;
@@ -508,9 +517,18 @@ export default function WhatsAppChatHub() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-sm text-white tracking-wide">{activeThread.contactName}</h4>
-                                    <div className="text-[10px] text-emerald-400 flex items-center gap-1.5 font-bold uppercase tracking-wider mt-0.5">
-                                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                                        WhatsApp Active Connection
+                                    <div className="text-[10px] flex items-center gap-1.5 font-bold uppercase tracking-wider mt-0.5">
+                                        {metaConnected ? (
+                                            <>
+                                                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                                <span className="text-emerald-400">WhatsApp connected</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                                                <span className="text-amber-400">Not configured — set up in Integrations</span>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -550,6 +568,11 @@ export default function WhatsAppChatHub() {
 
                         {/* Input Footer */}
                         <div className="p-4 border-t border-white/5 bg-slate-900/30 backdrop-blur-md space-y-3">
+                            {!metaConnected && (
+                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                                    Outbound WhatsApp is not configured for this workspace. Connect Meta Cloud API credentials in Integration Settings before sending messages.
+                                </div>
+                            )}
                             <div className="flex items-center justify-between">
                                 <button
                                     onClick={handleAiSuggest}
@@ -566,12 +589,13 @@ export default function WhatsAppChatHub() {
                                     type="text"
                                     value={replyText}
                                     onChange={e => setReplyText(e.target.value)}
-                                    placeholder="Type a WhatsApp message..."
-                                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500/40 transition-all placeholder:text-slate-600"
+                                    placeholder={metaConnected ? 'Type a WhatsApp message...' : 'Configure WhatsApp to send messages'}
+                                    disabled={!metaConnected}
+                                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500/40 transition-all placeholder:text-slate-600 disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"
-                                    disabled={sending || !replyText.trim()}
+                                    disabled={sending || !replyText.trim() || !metaConnected}
                                     className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl shadow-xl shadow-emerald-900/20 disabled:opacity-50 disabled:scale-100 transition-all active:scale-95 shrink-0 flex items-center justify-center"
                                 >
                                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
