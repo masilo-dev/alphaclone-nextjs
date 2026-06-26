@@ -39,8 +39,7 @@ import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
-import { dailyService } from '../../../services/dailyService';
-import { callSignalingService } from '../../../services/video/CallSignalingService';
+import { startClientVideoCall } from '@/services/instantMeetingService';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '../../common/showActionNextSteps';
@@ -459,54 +458,32 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     };
 
     const handleCallClient = async (client: BusinessClient) => {
-        if (!client.email) {
-            toast.error('Client has no email address. Cannot initiate call.');
-            return;
-        }
-
         const toastId = toast.loading('Initiating secure call...');
 
         try {
-            // 1. Find User ID by Email (to signal them)
-            const { data: users, error: userError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('email', client.email)
-                .single();
+            const { call, provider, joinUrl, recipientUserId, error } = await startClientVideoCall({
+                hostId: user.id,
+                hostName: user.name || user.email || 'Host',
+                tenantId: currentTenant?.id,
+                clientName: client.name,
+                clientEmail: client.email,
+            });
 
-            if (userError || !users) {
-                console.warn('User lookup failed:', userError);
-                toast.error('Client is not a registered user on the platform.', { id: toastId });
+            if (error || !call) {
+                throw new Error(error || 'Failed to create meeting');
+            }
+
+            if (provider === 'teams' && joinUrl) {
+                window.open(joinUrl, '_blank', 'noopener,noreferrer');
+                toast.success('Teams meeting opened — 40 minute session', { id: toastId });
                 return;
             }
 
-            const recipientId = users.id;
-
-            // 2. Create Video Room
-            const { call, error: roomError } = await dailyService.createVideoCall({
-                hostId: user.id,
-                title: `Call with ${client.name}`,
-                isPublic: false
-            });
-
-            if (roomError || !call || !call.daily_room_url) {
-                // Throw the specific error message from the service, or a default
-                throw new Error(roomError || 'Failed to create room: No URL returned');
-            }
-
-            // 3. Send Signal to Client
-            await callSignalingService.sendCallSignal(recipientId, {
-                callerId: user.id,
-                callerName: user.name,
-                roomUrl: call.daily_room_url,
-                roomId: call.id
-            });
-
-            toast.success('Calling client...', { id: toastId });
-
-            // 4. Redirect Admin to Room
+            toast.success(
+                recipientUserId ? 'Calling client…' : 'Meeting room ready — join when your guest arrives.',
+                { id: toastId }
+            );
             router.push(`/call/${call.id}`);
-
         } catch (error) {
             console.error('Call failed:', error);
             // Show the actual error message to the user

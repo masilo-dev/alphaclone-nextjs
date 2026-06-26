@@ -28,7 +28,15 @@ export const UNITS_PER_IMAGE = 25;
 /** Plans that include AI image generation (logos, social AI images, AI Studio). */
 export const IMAGE_GENERATION_PLANS = new Set(['pro', 'enterprise', 'custom']);
 
+/** Promo: all plans can generate images free through end of June 2026. */
+export const IMAGE_GENERATION_FREE_UNTIL = new Date('2026-06-30T23:59:59.999Z');
+
+export function isImageGenerationPromoActive(now: Date = new Date()): boolean {
+    return now.getTime() <= IMAGE_GENERATION_FREE_UNTIL.getTime();
+}
+
 export function planIncludesImageGeneration(plan: string | null | undefined): boolean {
+    if (isImageGenerationPromoActive()) return true;
     return IMAGE_GENERATION_PLANS.has((plan || 'free').toLowerCase());
 }
 // Video generation is by far the most expensive AI operation (long polling, GPU minutes).

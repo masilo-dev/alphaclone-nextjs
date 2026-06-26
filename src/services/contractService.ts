@@ -595,6 +595,22 @@ export const contractService = {
         }
 
         const rawContent = typeof contract?.content === 'string' ? contract.content : '';
+        if (typeof window !== 'undefined' && rawContent.trim().startsWith('<')) {
+            const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+            if (printWindow) {
+                const title = String(contract.title || 'Contract').replace(/</g, '&lt;');
+                printWindow.document.open();
+                printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title>
+<style>body{font-family:Georgia,"Times New Roman",serif;color:#0f172a;line-height:1.6;padding:40px;max-width:800px;margin:0 auto;} h1,h2,h3{color:#0f766e;}</style>
+</head><body>${rawContent}</body></html>`);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                }, 300);
+                return;
+            }
+        }
         if (typeof window !== 'undefined' && this.hasNonLatinText(rawContent)) {
             const html = this.buildUnicodeSafeContractHtml(contract, tenant);
             const printWindow = window.open('', '_blank', 'noopener,noreferrer');

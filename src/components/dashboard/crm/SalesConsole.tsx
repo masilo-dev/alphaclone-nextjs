@@ -31,9 +31,9 @@ export default function SalesConsole() {
         const [leadsRes, pipelineRes, tasksRes, forecastRes] = await Promise.all([
           supabase
             .from('leads')
-            .select('id, name, business_name, status')
+            .select('id, business_name, stage')
             .eq('tenant_id', currentTenant.id)
-            .in('status', ['new', 'contacted'])
+            .in('stage', ['lead', 'qualified'])
             .order('created_at', { ascending: false })
             .limit(5),
           dealService.getPipelineStats(),
@@ -41,10 +41,10 @@ export default function SalesConsole() {
           forecastingService.getForecastSummary(),
         ]);
 
-        const leads = (leadsRes.data || []).map((l: { id: string; name?: string; business_name?: string; status: string }) => ({
+        const leads = (leadsRes.data || []).map((l: { id: string; business_name?: string; stage?: string }) => ({
           id: l.id,
-          name: l.name || l.business_name || 'Lead',
-          status: l.status,
+          name: l.business_name || 'Lead',
+          status: l.stage || 'lead',
         }));
         setHotLeads(leads);
 

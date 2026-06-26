@@ -3,6 +3,8 @@ import { dailyService, type VideoCall } from '@/services/dailyService';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { tenantService } from '@/services/tenancy/TenantService';
+import { callSignalingService } from '@/services/video/CallSignalingService';
+import { MAX_MEETING_DURATION_MINUTES, meetingEndTimeFromNow } from '@/lib/meetingLimits';
 
 export type PlatformMeetingProvider = 'teams' | 'livekit' | 'daily' | 'jitsi';
 
@@ -84,7 +86,7 @@ export async function createInstantMeeting(input: {
     const microsoftConnected = await microsoftAuthService.isConnected();
     if (microsoftConnected) {
       const now = new Date();
-      const end = new Date(now.getTime() + 60 * 60 * 1000);
+      const end = meetingEndTimeFromNow(MAX_MEETING_DURATION_MINUTES);
       const teamsMeeting = await microsoftGraphService.createOnlineMeeting({
         subject: input.title,
         startDateTime: now.toISOString(),
@@ -137,6 +139,7 @@ export async function createInstantMeeting(input: {
       title: input.title,
       tenantId,
       isPublic: false,
+      duration: MAX_MEETING_DURATION_MINUTES,
     });
 
     return {
@@ -170,4 +173,50 @@ export async function loadMeetingForJoin(callId: string): Promise<{
     joinUrl: resolveMeetingJoinUrl(call),
     error: null,
   };
+}
+
+export async function startClientVideoCall(input: {
+  hostId: string;
+  hostName: string;
+  tenantId?: string | null;
+  clientName: string;
+  clientEmail?: string | null;
+}): Promise<{
+  call: VideoCall | null;
+  provider: PlatformMeetingProvider | null;
+  joinUrl: string | null;
+  recipientUserId: string | null;
+  error: string | null;
+}> {
+  let recipientUserId: string | null = null;
+  if (input.clientEmail?.trim()) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', input.clientEmail.trim())
+      .maybeSingle();
+    recipientUserId = profile?.id || null;
+  }
+
+  const { call, provider, error } = await createInstantMeeting({
+    hostId: input.hostId,
+    tenantId: input.tenantId,
+    title: `Call with ${input.clientName}`,
+  });
+
+  if (error || !call) {
+    return { call: null, provider: null, joinUrl: null, recipientUserId, error: error || 'Failed to create meeting.' };
+  }
+
+  const joinUrl = resolveMeetingJoinUrl(call);
+  if (recipientUserId && joinUrl) {
+    await callSignalingService.sendCallSignal(recipientUserId, {
+      callerId: input.hostId,
+      callerName: input.hostName,
+      roomUrl: joinUrl,
+      roomId: call.id,
+    });
+  }
+
+  return { call, provider, joinUrl, recipientUserId, error: null };
 }

@@ -2,16 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { resolveEmailAttachmentsFromFileIds } from '@/lib/files/resolveEmailAttachments';
 
 const sendEmailSchema = z.object({
   tenantId: z.string().uuid(),
   to: z.string().email(),
   subject: z.string().min(1),
-  body_html: z.string().min(1),
+  body_html: z.string().min(1).optional(),
+  html: z.string().min(1).optional(),
   threadId: z.string().optional(),
   contactId: z.string().uuid().optional(),
   clientId: z.string().uuid().optional(),
   provider: z.enum(['auto', 'zoho', 'gmail', 'brevo', 'sendgrid', 'resend']).optional(),
+  document_file_ids: z.array(z.string().uuid()).optional(),
+}).refine((data) => Boolean(data.body_html?.trim() || data.html?.trim()), {
+  message: 'body_html or html is required',
+  path: ['body_html'],
 });
 
 export async function POST(req: NextRequest) {
@@ -25,16 +31,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { tenantId, to, subject, body_html, contactId, provider } = parsed.data;
+    const { tenantId, to, subject, contactId, provider, document_file_ids } = parsed.data;
+    const body_html = (parsed.data.body_html || parsed.data.html || '').trim();
     const { user } = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
 
     const preferredProvider = provider && provider !== 'auto' ? provider as any : undefined;
+    const attachments = document_file_ids?.length
+      ? await resolveEmailAttachmentsFromFileIds(tenantId, document_file_ids)
+      : undefined;
     const result = await sendEmail(tenantId, {
       to,
       subject,
       html: body_html,
       userId: user.id,
+      attachments,
     }, preferredProvider);
 
     if (!result.success) {

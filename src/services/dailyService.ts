@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import type { DailyCall } from '@daily-co/daily-js';
 import { tenantService } from './tenancy/TenantService';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { MAX_MEETING_DURATION_MINUTES } from '@/lib/meetingLimits';
 
 
 /**
@@ -217,9 +218,10 @@ class DailyService {
                 }
             }
 
+            const requestedDuration = data.duration || MAX_MEETING_DURATION_MINUTES;
             const durationLimit = limitsWaived || planFeatures.maxVideoMinutesPerMeeting === -1
-                ? (data.duration || 1440)
-                : Math.min(data.duration || 1440, planFeatures.maxVideoMinutesPerMeeting);
+                ? Math.min(requestedDuration, MAX_MEETING_DURATION_MINUTES)
+                : Math.min(requestedDuration, planFeatures.maxVideoMinutesPerMeeting, MAX_MEETING_DURATION_MINUTES);
 
             const roomName =
                 typeof crypto !== 'undefined' && 'randomUUID' in crypto
