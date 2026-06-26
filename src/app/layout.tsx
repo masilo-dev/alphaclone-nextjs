@@ -7,6 +7,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 import { PWAProvider } from "@/contexts/PWAContext";
+import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import CookieBanner from "@/components/legal/CookieBanner";
 import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
@@ -195,6 +196,7 @@ export default function RootLayout({
         <Providers>
           <PrismBackground />
           <PWAProvider>
+            <PwaPushBootstrap />
             <NativeInteractions />
             <ShellSwitcher>
               <PageTransition>

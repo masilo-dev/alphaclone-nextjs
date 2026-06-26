@@ -1835,7 +1835,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onCallBack={(callerId) => {
                     const roomId = `room-${callerId.slice(0, 8)}`;
                     toast.success('Calling back...');
-                    router.push(`/dashboard/call/${roomId}`);
+                    router.push(`/call/${roomId}`);
                   }}
                 />
                 <NotificationCenter userId={user.id} tenantId={currentTenant?.id || ''} />

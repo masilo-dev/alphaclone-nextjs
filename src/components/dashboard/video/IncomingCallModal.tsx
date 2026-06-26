@@ -90,7 +90,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
     if (!incomingCall) return <audio ref={audioRef} src="/sounds/ringtone.mp3" loop hidden />;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             {/* Ringtone Audio Element */}
             <audio ref={audioRef} src="/sounds/ringtone.mp3" loop hidden />
 
