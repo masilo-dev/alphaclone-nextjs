@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseAdminClient();
     const stats = await dashboardStatsService.getOverviewStats(supabase, tenantId);
 
-    return NextResponse.json({ stats });
+    return NextResponse.json({ stats }, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' },
+    });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to load overview stats');
   }

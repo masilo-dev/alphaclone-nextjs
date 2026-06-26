@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getStatsCache, setStatsCache } from '@/lib/dashboard/statsCache';
 import {
   DASHBOARD_COLORS,
   type DashboardFeedItem,
@@ -154,6 +155,16 @@ async function fetchActivityFeed(
 
 export const dashboardStatsService = {
   async getCrmStats(supabase: SupabaseClient, tenantId: string): Promise<DashboardStatsResponse> {
+    const key = `crm:${tenantId}`;
+    const cached = getStatsCache<DashboardStatsResponse>(key);
+    if (cached) return cached;
+
+    const result = await this._getCrmStats(supabase, tenantId);
+    setStatsCache(key, result);
+    return result;
+  },
+
+  async _getCrmStats(supabase: SupabaseClient, tenantId: string): Promise<DashboardStatsResponse> {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
@@ -702,75 +713,116 @@ export const dashboardStatsService = {
   },
 
   async getOverviewStats(supabase: SupabaseClient, tenantId: string): Promise<OverviewStatsResponse> {
-    const [crm, outreach, invoices, contracts, projects, social] = await Promise.all([
-      this.getCrmStats(supabase, tenantId),
-      this.getOutreachStats(supabase, tenantId),
-      this.getInvoicesStats(supabase, tenantId),
-      this.getContractsStats(supabase, tenantId),
-      this.getProjectsStats(supabase, tenantId),
-      this.getSocialStats(supabase, tenantId),
+    const key = `overview:${tenantId}`;
+    const cached = getStatsCache<OverviewStatsResponse>(key);
+    if (cached) return cached;
+
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const in30 = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [invoices, deals, outreach, contracts, tasks, socialPosts, feed] = await Promise.all([
+      safeRows<{
+        total?: number;
+        status?: string;
+        created_at: string;
+        paid_at?: string;
+        client_name?: string;
+      }>(supabase, 'business_invoices', 'total, status, created_at, paid_at, client_name', tenantId, undefined, 250),
+      safeRows<{ stage: string; created_at: string }>(
+        supabase, 'business_deals', 'stage, created_at', tenantId, undefined, 200,
+      ),
+      safeRows<{ created_at: string }>(
+        supabase, 'lead_outreach_log', 'created_at', tenantId, (q) => q.gte('created_at', since30), 150,
+      ),
+      safeRows<{ status?: string; end_date?: string }>(
+        supabase, 'contracts', 'status, end_date', tenantId, undefined, 150,
+      ),
+      safeRows<{ status?: string }>(
+        supabase, 'tasks', 'status', tenantId, undefined, 200,
+      ),
+      safeRows<{ status?: string; scheduled_at?: string }>(
+        supabase, 'social_posts', 'status, scheduled_at', tenantId, undefined, 100,
+      ),
+      fetchActivityFeed(supabase, tenantId, undefined, DASHBOARD_COLORS.blue),
     ]);
 
-    const today = new Date().toISOString().slice(0, 10);
-    const tasksDueToday = await safeCount(supabase, 'tasks', tenantId, {});
+    const thisMonth = invoices.filter((i) => i.created_at >= monthStart);
+    const totalInvoiced = thisMonth.reduce((s, i) => s + Number(i.total || 0), 0);
+    const overdueCount = invoices.filter((i) => i.status === 'overdue').length;
+    const monthKeys = lastNMonthKeys(6);
+    const invoicedByMonth: Record<string, number> = {};
+    monthKeys.forEach((k) => { invoicedByMonth[k] = 0; });
+    invoices.forEach((i) => {
+      const k = i.created_at.slice(0, 7);
+      if (invoicedByMonth[k] !== undefined) invoicedByMonth[k] += Number(i.total || 0);
+    });
 
-    const metricsRowA = [
-      invoices.metrics[0],
-      crm.metrics[1],
-      { label: 'Tasks due', value: tasksDueToday },
-      social.metrics[3],
-    ];
+    const statusMap: Record<string, number> = { Paid: 0, Pending: 0, Overdue: 0, Draft: 0 };
+    invoices.forEach((i) => {
+      const s = String(i.status || 'draft').toLowerCase();
+      if (s === 'paid') statusMap.Paid++;
+      else if (s === 'overdue') statusMap.Overdue++;
+      else if (s === 'sent') statusMap.Pending++;
+      else statusMap.Draft++;
+    });
 
-    const overdueMetric = invoices.metrics[3];
-    const openTasks = projects.metrics[0];
-    const metricsRowB = [
-      { label: 'Emails sent', value: outreach.metrics[0].value },
-      contracts.metrics[1],
-      { label: 'Overdue invoices', value: overdueMetric.value, deltaColor: overdueMetric.deltaColor as 'red' | 'green' },
-      { label: 'Open tasks', value: openTasks.value },
-    ];
+    const activeDeals = deals.filter((d) => !['closed_won', 'closed_lost'].includes(d.stage)).length;
+    const emailsSent = outreach.length;
+    const expiringSoon = contracts.filter((c) => c.end_date && c.end_date >= now && c.end_date <= in30).length;
+    const openTasks = tasks.filter((t) => t.status !== 'completed').length;
+    const overdueTasks = tasks.filter((t) => t.status === 'overdue').length;
+    const scheduledPosts = socialPosts.filter(
+      (p) => ['scheduled', 'queued', 'draft'].includes(String(p.status)) && p.scheduled_at,
+    ).length;
 
     const moduleActivity = [
-      { label: 'CRM', value: crm.feed.length + Number(crm.metrics[1].value) },
-      { label: 'Outreach', value: Number(outreach.metrics[0].value) },
-      { label: 'Projects', value: Number(projects.metrics[2].value) + Number(projects.metrics[0].value) },
-      { label: 'Social', value: Number(social.metrics[0].value) },
+      { label: 'CRM', value: activeDeals },
+      { label: 'Outreach', value: emailsSent },
+      { label: 'Projects', value: openTasks },
+      { label: 'Social', value: scheduledPosts },
     ];
 
     const platformHealth = [
       { label: 'CRM', value: 1, color: DASHBOARD_COLORS.green },
-      { label: 'Outreach', value: 1, color: Number(outreach.metrics[0].value) > 0 ? DASHBOARD_COLORS.green : DASHBOARD_COLORS.amber },
-      { label: 'Invoicing', value: 1, color: Number(overdueMetric.value) > 0 ? DASHBOARD_COLORS.red : DASHBOARD_COLORS.green },
-      { label: 'Contracts', value: 1, color: Number(contracts.metrics[1].value) > 0 ? DASHBOARD_COLORS.amber : DASHBOARD_COLORS.green },
-      { label: 'Projects', value: 1, color: Number(projects.metrics[2].value) > 0 ? DASHBOARD_COLORS.red : DASHBOARD_COLORS.green },
+      { label: 'Outreach', value: 1, color: emailsSent > 0 ? DASHBOARD_COLORS.green : DASHBOARD_COLORS.amber },
+      { label: 'Invoicing', value: 1, color: overdueCount > 0 ? DASHBOARD_COLORS.red : DASHBOARD_COLORS.green },
+      { label: 'Contracts', value: 1, color: expiringSoon > 0 ? DASHBOARD_COLORS.amber : DASHBOARD_COLORS.green },
+      { label: 'Projects', value: 1, color: overdueTasks > 0 ? DASHBOARD_COLORS.red : DASHBOARD_COLORS.green },
       { label: 'Social', value: 1, color: DASHBOARD_COLORS.green },
     ];
 
-    const globalFeed: DashboardFeedItem[] = [
-      ...crm.feed.slice(0, 1).map((f) => ({ ...f, dot: DASHBOARD_COLORS.blue })),
-      ...outreach.feed.slice(0, 1).map((f) => ({ ...f, dot: DASHBOARD_COLORS.amber })),
-      ...invoices.feed.slice(0, 1).map((f) => ({ ...f, dot: DASHBOARD_COLORS.green })),
-      ...contracts.feed.slice(0, 1).map((f) => ({ ...f, dot: DASHBOARD_COLORS.blue })),
-      ...projects.feed.slice(0, 1).map((f) => ({ ...f, dot: DASHBOARD_COLORS.amber })),
-    ].slice(0, 5);
-
-    return {
-      metrics: metricsRowA,
-      metricsRowB,
-      mainChart: invoices.mainChart.map((p) => ({ label: p.label, value: p.value })),
+    const result: OverviewStatsResponse = {
+      metrics: [
+        { label: 'Total invoiced', value: formatMoney(totalInvoiced) },
+        { label: 'Active deals', value: activeDeals },
+        { label: 'Tasks due', value: openTasks },
+        { label: 'Scheduled posts', value: scheduledPosts },
+      ],
+      metricsRowB: [
+        { label: 'Emails sent', value: emailsSent },
+        { label: 'Expiring soon', value: expiringSoon, deltaColor: 'amber' },
+        { label: 'Overdue invoices', value: overdueCount, deltaColor: overdueCount > 0 ? 'red' : 'green' },
+        { label: 'Open tasks', value: openTasks },
+      ],
+      mainChart: monthKeys.map((k) => ({ label: monthLabel(k), value: invoicedByMonth[k] || 0 })),
       breakdown: moduleActivity.map((m, i) => ({
         label: m.label,
-        value: typeof m.value === 'number' ? m.value : 0,
+        value: m.value,
         color: [DASHBOARD_COLORS.blue, DASHBOARD_COLORS.amber, DASHBOARD_COLORS.green, DASHBOARD_COLORS.red][i],
       })),
-      donut: invoices.breakdown.slice(0, 5).map((b, i) => ({
-        label: b.label.slice(0, 10),
-        value: b.value,
-        color: [DASHBOARD_COLORS.green, DASHBOARD_COLORS.blue, DASHBOARD_COLORS.amber, DASHBOARD_COLORS.red, DASHBOARD_COLORS.green][i],
+      donut: Object.entries(statusMap).map(([label, value], i) => ({
+        label,
+        value,
+        color: [DASHBOARD_COLORS.green, DASHBOARD_COLORS.amber, DASHBOARD_COLORS.red, DASHBOARD_COLORS.blue][i],
       })),
       pills: platformHealth,
       platformHealth,
-      feed: globalFeed,
+      feed: feed.slice(0, 5),
     };
+
+    setStatsCache(key, result);
+    return result;
   },
 };
