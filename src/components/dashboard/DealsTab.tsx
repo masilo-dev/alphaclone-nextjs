@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   ChevronRight, ArrowLeft, Plus, TrendingUp, Clock,
   User, Mail, Phone, FileText, CheckSquare, ArrowRight,
-  LayoutGrid, List, Smartphone, Search, ArrowUpDown, Filter
+  LayoutGrid, List, Smartphone, Search, ArrowUpDown, Filter, Trash2, Square
 } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -27,6 +27,10 @@ import {
   assertDealStageTransition,
 } from '@/lib/stageProgression';
 import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
+import { showDealStageNextSteps } from '@/lib/dealStageActions';
+import { CRMNav } from './crm/CRMNav';
+import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
+import { usePathname } from 'next/navigation';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -387,6 +391,7 @@ const DealDetail: React.FC<{
 // ── Main DealsTab ──────────────────────────────────────────────────────────────
 const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const router = useRouter();
+  const pathname = usePathname() || '';
   const { currentTenant } = useTenant();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -414,6 +419,39 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [newDealDescription, setNewDealDescription] = useState('');
   const [savingNewDeal, setSavingNewDeal] = useState(false);
   const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
+  const [selectedDealIds, setSelectedDealIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleDealSelection = (dealId: string) => {
+    setSelectedDealIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(dealId)) next.delete(dealId);
+      else next.add(dealId);
+      return next;
+    });
+  };
+
+  const handleBulkDeleteDeals = async () => {
+    const ids = [...selectedDealIds];
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} deal(s)? This cannot be undone.`)) return;
+
+    setBulkDeleting(true);
+    const toastId = toast.loading(`Deleting ${ids.length} deal(s)...`);
+    try {
+      const { error, count } = await dealService.bulkDeleteDeals(ids);
+      if (error) throw new Error(error);
+      setDeals((prev) => prev.filter((d) => !selectedDealIds.has(d.id)));
+      if (selectedDeal && selectedDealIds.has(selectedDeal.id)) setSelectedDeal(null);
+      setSelectedDealIds(new Set());
+      toast.success(`Deleted ${count} deal(s)`, { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
+      await load();
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   // Detect responsive view mode on load
   useEffect(() => {
@@ -457,6 +495,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       setDeals((prev) => prev.filter((d) => d.id !== id));
       if (selectedDeal?.id === id) setSelectedDeal(null);
       toast.success('Deal removed from pipeline');
+      showDealStageNextSteps('closed_lost', (path) => router.push(path));
       return;
     }
 
@@ -482,6 +521,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       setDeals((prev) => prev.filter((d) => d.id !== id));
       if (selectedDeal?.id === id) setSelectedDeal(null);
       toast.success('Deal closed won — removed from active board');
+      showDealStageNextSteps('closed_won', (path) => router.push(path));
       return;
     }
 
@@ -494,6 +534,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       setSelectedDeal((prev) => (prev ? { ...prev, stage: newStage } : prev));
     }
     toast.success(`Moved to ${newStage.replace('_', ' ')}`);
+    showDealStageNextSteps(newStage, (path) => router.push(path));
   };
 
   const advanceStage = async (id: string) => {
@@ -708,8 +749,23 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       e.dataTransfer.setData('text/plain', deal.id);
                     }}
                     onClick={() => setSelectedDeal(deal)}
-                    className="bg-slate-950 border border-white/5 hover:border-slate-800 p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98]"
+                    className={`bg-slate-950 border hover:border-slate-800 p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
+                      selectedDealIds.has(deal.id) ? 'border-teal-500/40' : 'border-white/5'
+                    }`}
                   >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDealSelection(deal.id);
+                      }}
+                      className="absolute top-3 right-3 z-10 text-slate-500 hover:text-teal-400"
+                      aria-label={`Select ${deal.name}`}
+                    >
+                      {selectedDealIds.has(deal.id)
+                        ? <CheckSquare className="w-4 h-4 text-teal-400" />
+                        : <Square className="w-4 h-4" />}
+                    </button>
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-[13px] font-bold text-white group-hover:text-teal-400 transition-colors leading-tight truncate">{deal.name}</h4>
@@ -827,6 +883,22 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         <table className="w-full border-collapse text-left min-w-[700px]">
           <thead>
             <tr className="border-b border-white/5 bg-slate-900/20">
+              <th className="p-4 w-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const visibleIds = filteredDeals.map((d) => d.id);
+                    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedDealIds.has(id));
+                    setSelectedDealIds(allSelected ? new Set() : new Set(visibleIds));
+                  }}
+                  className="text-slate-400 hover:text-white"
+                  aria-label="Select all deals"
+                >
+                  {filteredDeals.length > 0 && filteredDeals.every((d) => selectedDealIds.has(d.id))
+                    ? <CheckSquare className="w-4 h-4" />
+                    : <Square className="w-4 h-4" />}
+                </button>
+              </th>
               <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Deal Name</th>
               <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Stage</th>
               <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Value</th>
@@ -838,7 +910,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           <tbody className="divide-y divide-white/5">
             {filteredDeals.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-500 text-xs">
+                <td colSpan={7} className="p-8 text-center text-slate-500 text-xs">
                   No deals found matching search criteria.
                 </td>
               </tr>
@@ -849,8 +921,20 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   <tr
                     key={deal.id}
                     onClick={() => setSelectedDeal(deal)}
-                    className="hover:bg-white/5 transition-colors cursor-pointer"
+                    className={`hover:bg-white/5 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-teal-500/5' : ''}`}
                   >
+                    <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => toggleDealSelection(deal.id)}
+                        className="text-slate-400 hover:text-teal-400"
+                        aria-label={`Select ${deal.name}`}
+                      >
+                        {selectedDealIds.has(deal.id)
+                          ? <CheckSquare className="w-4 h-4 text-teal-400" />
+                          : <Square className="w-4 h-4" />}
+                      </button>
+                    </td>
                     <td className="p-4">
                       <span className="text-[13px] font-bold text-white block">{deal.name}</span>
                     </td>
@@ -942,6 +1026,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   return (
     <div className="relative flex flex-col h-full bg-slate-950">
+      <div className="px-4 pt-3 shrink-0 space-y-3">
+        <CRMNav pathname={pathname} />
+        <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+      </div>
       {/* View Switcher Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
         <div>
@@ -956,6 +1044,25 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          {selectedDealIds.size > 0 && (
+            <div className="flex items-center gap-2 mr-1">
+              <button
+                type="button"
+                onClick={() => setSelectedDealIds(new Set())}
+                className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 border border-white/10"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                disabled={bulkDeleting}
+                onClick={handleBulkDeleteDeals}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-rose-300 border border-rose-500/30 disabled:opacity-50"
+              >
+                {bulkDeleting ? 'Deleting…' : `Delete (${selectedDealIds.size})`}
+              </button>
+            </div>
+          )}
           {/* Switcher pills */}
           <div className="flex bg-slate-900/60 p-1 rounded-xl border border-white/5">
             <button

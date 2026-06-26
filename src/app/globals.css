@@ -1089,7 +1089,6 @@ html.pwa-standalone .pwa-page-title {
 }
 
 .native-bottom-bar {
-  padding-bottom: max(env(safe-area-inset-bottom), 0px);
   box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
 }
 
@@ -1196,7 +1195,7 @@ html.pwa-standalone .pwa-page-title {
 @media (max-width: 767px) {
   .dashboard-content-padding {
     padding: 0.75rem !important;
-    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .ac-dashboard-header,

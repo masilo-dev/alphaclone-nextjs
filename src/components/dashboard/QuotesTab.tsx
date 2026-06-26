@@ -9,6 +9,9 @@ import { useTenant } from '../../contexts/TenantContext';
 import { quoteService } from '../../services/quoteService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { showActionNextSteps } from '../common/showActionNextSteps';
+import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { CommunicationModal } from './crm/CommunicationModal';
 import type { EmailRecipient } from './crm/emailRecipient';
 
@@ -551,6 +554,7 @@ const QuoteEditModal: React.FC<{
 interface QuotesTabProps { user: User; }
 
 const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
+  const router = useRouter();
   const { currentTenant } = useTenant();
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -648,6 +652,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       setQuotes(p => p.map(q => q.id === quote.id ? { ...q, status: 'accepted' } : q));
       setSelected(null);
       toast.success('Converted to business invoice', { id: 'conv' });
+      showActionNextSteps('quote_to_invoice', (path) => router.push(path));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to convert';
       toast.error(message, { id: 'conv' });
@@ -701,6 +706,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
 
   return (
     <div className="relative flex flex-col h-full">
+      <div className="px-4 pt-3">
+        <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
+      </div>
       {!loading && quotes.length > 0 && (
         <div className="p-4 border-b border-white/5 bg-slate-900/20">
           <ModuleStatCards stats={quoteStats} />

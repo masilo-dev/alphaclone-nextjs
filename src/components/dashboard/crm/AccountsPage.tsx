@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Building2, Plus, Loader2, ChevronRight } from 'lucide-react';
 import { companyService, type Company } from '@/services/unified/CompanyService';
 import ListViewToolbar from './ListViewToolbar';
@@ -18,6 +19,7 @@ const STAGE_FILTERS = [
 ];
 
 export default function AccountsPage() {
+  const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -25,6 +27,7 @@ export default function AccountsPage() {
   const [selected, setSelected] = useState<Company | null>(null);
   const [detailTab, setDetailTab] = useState('overview');
   const [relations, setRelations] = useState<{ contacts: unknown[]; opportunities: unknown[]; activities: unknown[] } | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,6 +49,38 @@ export default function AccountsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleCreateAccount = async () => {
+    const name = window.prompt('Company / account name');
+    if (!name?.trim()) return;
+    setCreating(true);
+    try {
+      const company = await companyService.create({
+        name: name.trim(),
+        lifecycle_stage: 'lead',
+      });
+      setCompanies((prev) => [company, ...prev]);
+      toast.success('Account created');
+    } catch {
+      toast.error('Failed to create account');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleEditAccount = async () => {
+    if (!selected) return;
+    const name = window.prompt('Account name', selected.name);
+    if (!name?.trim() || name.trim() === selected.name) return;
+    try {
+      const updated = await companyService.update(selected.id, { name: name.trim() });
+      setSelected(updated);
+      setCompanies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      toast.success('Account updated');
+    } catch {
+      toast.error('Failed to update account');
+    }
+  };
 
   const openDetail = async (company: Company) => {
     setSelected(company);
@@ -81,7 +116,7 @@ export default function AccountsPage() {
         ]}
         activeTab={detailTab}
         onTabChange={setDetailTab}
-        onEdit={() => toast('Edit account — coming soon')}
+        onEdit={handleEditAccount}
       >
         <div className="p-4 space-y-4">
           {detailTab === 'overview' && (
@@ -105,13 +140,12 @@ export default function AccountsPage() {
           {detailTab === 'deals' && (
             <RelatedList items={relations?.opportunities || []} labelKey="name" fallback="Opportunity" />
           )}
-          {detailTab === 'files' && (
-            <RecordFilesTab companyId={selected.id} />
-          )}
+          {detailTab === 'files' && <RecordFilesTab companyId={selected.id} />}
           {detailTab === 'activity' && (
             <RelatedList items={relations?.activities || []} labelKey="subject" fallback="Activity" />
           )}
           <button
+            type="button"
             onClick={() => setSelected(null)}
             className="text-sm text-teal-400 font-bold hover:text-teal-300"
           >
@@ -133,8 +167,10 @@ export default function AccountsPage() {
         onFilterChange={setStageFilter}
         actions={
           <button
-            onClick={() => toast('Create account form — use CRM import for now')}
-            className="h-10 px-3 rounded-xl bg-teal-500 text-white text-xs font-bold flex items-center gap-1"
+            type="button"
+            disabled={creating}
+            onClick={handleCreateAccount}
+            className="h-10 px-3 rounded-xl bg-teal-500 text-white text-xs font-bold flex items-center gap-1 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" /> New
           </button>
@@ -149,14 +185,15 @@ export default function AccountsPage() {
           icon={Building2}
           title="No accounts yet"
           description="Create your first company account to organize contacts and deals by organization."
-          actionLabel="Import from CRM"
-          onAction={() => toast('Use Lead Import or Outlook sync in CRM Overview')}
+          actionLabel="Open CRM workspace"
+          onAction={() => router.push('/dashboard/crm/workspace')}
         />
       ) : (
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
           {companies.map((c) => (
             <button
               key={c.id}
+              type="button"
               onClick={() => openDetail(c)}
               className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 text-left"
             >

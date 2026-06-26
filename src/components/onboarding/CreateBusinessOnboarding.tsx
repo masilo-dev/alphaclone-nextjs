@@ -117,7 +117,7 @@ export default function CreateBusinessOnboarding() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="w-12 h-12 text-teal-400" />
-            <h1 className="text-4xl font-bold text-white tracking-tighter">Build your operating workspace.</h1>
+            <h1 className="text-4xl font-bold text-white tracking-tighter">Set up your AlphaClone workspace</h1>
           </div>
           <p className="text-slate-400 text-lg">
             Add the basics, choose your plan, and start from the dashboard.

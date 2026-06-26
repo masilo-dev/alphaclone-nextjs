@@ -22,10 +22,13 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/contracts': '/dashboard/business/contracts',
         '/dashboard/finance': '/dashboard/business/billing',
         '/dashboard/projects': '/dashboard/business/projects',
-        '/dashboard/tasks': '/dashboard/business/tasks',
         '/dashboard/quotes': '/dashboard/business/quotes',
         '/dashboard/tickets': '/dashboard/business/tickets',
         '/dashboard/billing': '/dashboard/business/billing',
+        '/dashboard/bonnie': '/dashboard/business/bonnie',
+        '/dashboard/security': '/dashboard/business/settings',
+        '/dashboard/projects/manage': '/dashboard/business/projects/manage',
+        '/dashboard/contracts/manage': '/dashboard/business/contracts/manage',
     };
 
     return tenantAliases[base] ?? base;

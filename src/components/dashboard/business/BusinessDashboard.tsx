@@ -110,7 +110,6 @@ const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
 const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
-const ContactsList = React.lazy(() => import('../crm/ContactsList'));
 const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
 const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
 const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
@@ -604,7 +603,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/crm/unified-contacts':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <ContactsList />
+                        <ClientsPage user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/forecast':
@@ -945,7 +944,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/deals': return t('Deals');
             case '/dashboard/contacts':
             case '/dashboard/business/clients': return t('Contacts');
-            case '/dashboard/crm/unified-contacts': return t('Unified Contacts');
+            case '/dashboard/crm/unified-contacts': return t('Contacts');
             case '/dashboard/forecast': return t('Sales Forecast');
             case '/dashboard/analytics': return t('Insights');
             case '/dashboard/executive': return t('Executive Dashboard');
@@ -1256,9 +1255,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 isOpen={commandPaletteOpen}
                 onClose={() => setCommandPaletteOpen(false)}
                 userId={user.id}
+                userRole={user.role}
                 onCreateTask={() => setActiveTab('/dashboard/tasks')}
-                onCreateProject={() => setActiveTab('/dashboard/business/projects')}
-                onCreateInvoice={() => setActiveTab('/dashboard/business/billing')}
+                onCreateProject={() => setActiveTab('/dashboard/business/projects/manage?create=true')}
+                onCreateInvoice={() => setActiveTab('/dashboard/business/billing/manage?create=true')}
             />
 
             <IncomingCallModal userId={user.id} userName={user.name} />

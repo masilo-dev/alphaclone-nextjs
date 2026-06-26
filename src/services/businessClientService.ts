@@ -475,6 +475,30 @@ export const businessClientService = {
     },
 
     /**
+     * Archive multiple clients (soft delete)
+     */
+    async bulkArchiveClients(clientIds: string[]): Promise<{ error: string | null; count: number }> {
+        if (!clientIds.length) return { error: null, count: 0 };
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'No tenant selected', count: 0 };
+
+            const uniqueIds = [...new Set(clientIds)];
+            const { error } = await supabase
+                .from('business_clients')
+                .update({ is_active: false })
+                .in('id', uniqueIds)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+            return { error: null, count: uniqueIds.length };
+        } catch (err: any) {
+            console.error('Error bulk archiving clients:', err);
+            return { error: err.message, count: 0 };
+        }
+    },
+
+    /**
      * Import clients from parsed data
      */
     async importClients(tenantId: string, clients: any[], quotaUserId?: string): Promise<{ count: number; error: string | null }> {

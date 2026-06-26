@@ -273,6 +273,29 @@ export const contactService = {
         }
     },
 
+    async bulkDeleteContacts(contactIds: string[]): Promise<{ error: string | null; count: number }> {
+        if (!contactIds.length) return { error: null, count: 0 };
+        try {
+            const tenantId = this.getTenantId();
+            const { data: userData } = await supabase.auth.getUser();
+            const uniqueIds = [...new Set(contactIds)];
+            const { error } = await supabase
+                .from('contacts')
+                .update({
+                    deleted_at: new Date().toISOString(),
+                    updated_by: userData.user?.id,
+                })
+                .in('id', uniqueIds)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+            return { error: null, count: uniqueIds.length };
+        } catch (err: any) {
+            console.error('Error bulk deleting contacts:', err);
+            return { error: err.message, count: 0 };
+        }
+    },
+
     /**
      * Convert lead to contact
      * Uses database function for atomic operation

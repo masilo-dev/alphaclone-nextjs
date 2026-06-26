@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Plus, FolderPlus, CheckSquare, Flag, Calendar,
-  Users, DollarSign, ChevronRight, ChevronDown, Clock, Target
+  Users, DollarSign, ChevronRight, ChevronDown, Clock, Target, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -53,7 +54,7 @@ const MilestoneTimeline: React.FC<{ milestones: Milestone[] }> = ({ milestones }
 );
 
 // ── Project Detail ─────────────────────────────────────────────────────────────
-const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ project, onBack }) => {
+const ProjectDetail: React.FC<{ project: Project; onBack: () => void; onAddTask?: () => void }> = ({ project, onBack, onAddTask }) => {
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -215,7 +216,12 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
       </div>
 
       {/* Context-aware FAB */}
-      <button className="fixed bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30">
+      <button
+        type="button"
+        onClick={onAddTask}
+        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30"
+        aria-label="Add task to project"
+      >
         <Plus className="w-6 h-6 text-white" />
       </button>
     </div>
@@ -224,10 +230,50 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
 
 // ── Main ProjectsTab ───────────────────────────────────────────────────────────
 const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Project | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!searchParams) return;
+    if (searchParams.get('create') === 'true' || searchParams.get('new') === 'true') {
+      setShowCreate(true);
+      router.replace('/dashboard/projects/manage', { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentTenant?.id || !newName.trim()) return;
+    setCreating(true);
+    try {
+      const { error } = await supabase.from('projects').insert({
+        tenant_id: currentTenant.id,
+        owner_id: user.id,
+        owner_name: user.name || 'User',
+        name: newName.trim(),
+        status: 'planning',
+        progress: 0,
+        task_count: 0,
+        completed_tasks: 0,
+      });
+      if (error) throw error;
+      toast.success('Project created');
+      setShowCreate(false);
+      setNewName('');
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create project');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -239,7 +285,15 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
 
   useEffect(() => { load(); }, [load]);
 
-  if (selected) return <ProjectDetail project={selected} onBack={() => setSelected(null)} />;
+  if (selected) {
+    return (
+      <ProjectDetail
+        project={selected}
+        onBack={() => setSelected(null)}
+        onAddTask={() => router.push(`/dashboard/tasks?project=${selected.id}`)}
+      />
+    );
+  }
 
   return (
     <div className="relative flex flex-col h-full">
@@ -273,9 +327,56 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
         )}
       </div>
 
-      <button className="fixed bottom-20 right-4 w-14 h-14 bg-violet-500 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/30 z-30">
+      <button
+        type="button"
+        onClick={() => setShowCreate(true)}
+        className="fixed bottom-20 right-4 w-14 h-14 bg-violet-500 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/30 z-30"
+      >
         <FolderPlus className="w-6 h-6 text-white" />
       </button>
+
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4">
+          <form
+            onSubmit={handleCreateProject}
+            className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-xl"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">New project</h2>
+              <button type="button" onClick={() => setShowCreate(false)} className="p-1.5 text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <label className="block mb-4">
+              <span className="text-xs text-slate-400">Project name</span>
+              <input
+                required
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
+                placeholder="Website redesign"
+              />
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreate(false)}
+                className="flex-1 h-10 rounded-xl border border-white/10 text-slate-300 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="flex-1 h-10 rounded-xl bg-violet-500 text-white text-sm font-bold disabled:opacity-50"
+              >
+                {creating ? 'Creating…' : 'Create'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'AlphaClone',
     short_name: 'AlphaClone',
-    description: 'CRM, mail, clients, and calls.',
+    description: 'Your business operating system — CRM, mail, billing, and projects.',
     id: '/',
     start_url: '/dashboard',
     scope: '/',

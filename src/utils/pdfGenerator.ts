@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Quote, QuoteItem } from '../services/quoteService';
 import { Tenant } from '../services/tenancy/types';
+import type { TrialBalance } from '../services/accounting/generalLedgerService';
 
 /**
  * Convert hex color to RGB array
@@ -573,6 +574,100 @@ export const generateBalanceSheetPDF = (
 
     addFooter(doc, pageWidth, pageHeight);
 
+    return doc;
+};
+
+/**
+ * Trial Balance PDF
+ */
+export const generateTrialBalancePDF = (
+    trialBalance: TrialBalance,
+    tenant: Tenant,
+    asOfDate: string
+) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const brandColor = tenant?.brand_color_primary || '#0f172a';
+
+    const currencyFormatter = (val: number) =>
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+
+    const brandRgb = hexToRgb(brandColor);
+    doc.setFillColor(brandRgb[0], brandRgb[1], brandRgb[2]);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 20);
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Trial Balance', 20, 32);
+
+    doc.setFontSize(9);
+    doc.text(`As of: ${new Date(asOfDate).toLocaleDateString()}`, 20, 40);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 20, 40, { align: 'right' });
+
+    const rows = trialBalance.accounts.map((account) => [
+        account.accountCode,
+        account.accountName,
+        account.debitBalance > 0 ? currencyFormatter(account.debitBalance) : '',
+        account.creditBalance > 0 ? currencyFormatter(account.creditBalance) : '',
+    ]);
+
+    autoTable(doc, {
+        head: [['Code', 'Account', 'Debit', 'Credit']],
+        body: rows,
+        startY: 55,
+        theme: 'grid',
+        headStyles: {
+            fillColor: brandRgb,
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold',
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+            0: { cellWidth: 24 },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 32, halign: 'right' },
+            3: { cellWidth: 32, halign: 'right' },
+        },
+        foot: [
+            [
+                '',
+                'TOTALS',
+                currencyFormatter(trialBalance.totalDebits),
+                currencyFormatter(trialBalance.totalCredits),
+            ],
+        ],
+        footStyles: {
+            fillColor: [30, 41, 59],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10,
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+    });
+
+    const summaryY = (doc as any).lastAutoTable.finalY + 12;
+    const boxColor = trialBalance.isBalanced ? [34, 197, 94] : [239, 68, 68];
+    doc.setFillColor(boxColor[0], boxColor[1], boxColor[2]);
+    doc.roundedRect(20, summaryY, pageWidth - 40, 22, 3, 3, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(
+        trialBalance.isBalanced
+            ? 'Books are balanced'
+            : `Out of balance by ${currencyFormatter(Math.abs(trialBalance.totalDebits - trialBalance.totalCredits))}`,
+        30,
+        summaryY + 14
+    );
+
+    addFooter(doc, pageWidth, pageHeight);
     return doc;
 };
 

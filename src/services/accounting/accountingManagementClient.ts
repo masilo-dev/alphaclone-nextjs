@@ -33,6 +33,15 @@ export const accountingManagementClient = {
     status?: string;
   }) => post<{ success: boolean; data: unknown }>('create_reconciliation_session', config),
 
+  createBankAccount: (config: {
+    name: string;
+    bankName?: string;
+    accountNumberLast4?: string;
+    accountType?: 'checking' | 'savings' | 'credit' | 'other';
+    currency?: string;
+    openingBalance?: number;
+  }) => post<{ success: boolean; data: BankAccount }>('create_bank_account', config),
+
   getBills: (page = 1, limit = 50, status?: string) =>
     post<{ success: boolean; data: { bills: VendorBill[]; pagination: { total: number } } }>(
       'get_bills',

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles } from 'lucide-react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -10,6 +10,7 @@ import { User as UserType } from '../../types';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
+import { OperationalWorkflowStrip } from '../dashboard/OperationalWorkflowStrip';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
@@ -136,6 +137,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         const [loadingContracts, setLoadingContracts] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer'>('new');
+    const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
+    const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
     
     // AI Lawyer Chat States
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
@@ -624,8 +627,47 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const labelCls = 'block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5';
     const sectionCls = 'bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4';
 
+    const draftContracts = savedContracts.filter((c) => c.status === 'draft');
+    const toggleContractSelection = (contractId: string, isDraft: boolean) => {
+        if (!isDraft) {
+            toast.error('Only draft contracts can be deleted. Signed contracts stay on file for your records.');
+            return;
+        }
+        setSelectedContractIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(contractId)) next.delete(contractId);
+            else next.add(contractId);
+            return next;
+        });
+    };
+
+    const handleBulkDeleteContracts = async () => {
+        const ids = [...selectedContractIds];
+        if (!ids.length) return;
+        if (!confirm(`Delete ${ids.length} draft contract(s)? This cannot be undone.`)) return;
+
+        setBulkDeletingContracts(true);
+        const toastId = toast.loading(`Deleting ${ids.length} contract(s)...`);
+        try {
+            const { error, count, skipped } = await contractService.bulkDeleteContracts(ids);
+            if (error) throw new Error(error);
+            setSavedContracts((prev) => prev.filter((c) => !selectedContractIds.has(c.id)));
+            setSelectedContractIds(new Set());
+            if (skipped > 0) {
+                toast.success(`Deleted ${count} draft(s). ${skipped} signed contract(s) were skipped.`, { id: toastId });
+            } else {
+                toast.success(`Deleted ${count} contract(s)`, { id: toastId });
+            }
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
+        } finally {
+            setBulkDeletingContracts(false);
+        }
+    };
+
     return (
         <div className="min-h-full text-white px-1 sm:px-0">
+            <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} className="mb-4" />
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
                 <div className="min-w-0">
@@ -673,6 +715,33 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             {/* Saved Contracts List */}
             {activeView === 'list' && (
                 <div className="space-y-2 sm:space-y-3">
+                    {draftContracts.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                            <p className="text-xs text-slate-500">
+                                Select draft contracts to remove. Signed contracts are kept for compliance.
+                            </p>
+                            {selectedContractIds.size > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedContractIds(new Set())}
+                                        className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 border border-white/10"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={bulkDeletingContracts}
+                                        onClick={handleBulkDeleteContracts}
+                                        className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5 disabled:opacity-50"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        {bulkDeletingContracts ? 'Deleting…' : `Delete (${selectedContractIds.size})`}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {loadingContracts ? (
                         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
                     ) : savedContracts.length === 0 ? (
@@ -696,8 +765,20 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         };
 
                         return (
-                            <div key={c.id} className="bg-slate-900/60 border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all">
+                            <div key={c.id} className={`bg-slate-900/60 border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all ${
+                                selectedContractIds.has(c.id) ? 'border-teal-500/40' : 'border-white/5'
+                            }`}>
                                 <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleContractSelection(c.id, c.status === 'draft')}
+                                        className={`mt-0.5 shrink-0 ${c.status === 'draft' ? 'text-slate-400 hover:text-teal-400' : 'text-slate-700 cursor-not-allowed'}`}
+                                        aria-label={c.status === 'draft' ? `Select ${c.title}` : 'Signed contracts cannot be deleted'}
+                                    >
+                                        {selectedContractIds.has(c.id)
+                                            ? <CheckSquare className="w-4 h-4 text-teal-400" />
+                                            : <Square className="w-4 h-4" />}
+                                    </button>
                                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
                                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
                                     </div>

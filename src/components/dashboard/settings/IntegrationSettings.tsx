@@ -24,6 +24,19 @@ import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
 
+const PREF_ROWS = [
+  { id: 'enableNotifications', label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: false },
+  { id: 'errorReporting', label: 'Error reporting', sub: 'Share anonymous error data to improve reliability', defaultChecked: false },
+  { id: 'apiKeyRotation', label: 'API key rotation', sub: 'Auto-rotate API keys every 90 days', defaultChecked: false },
+  { id: 'require2fa', label: 'Require 2FA for actions', sub: 'Extra confirmation before connecting or disconnecting', defaultChecked: false },
+] as const;
+
+type PrefId = (typeof PREF_ROWS)[number]['id'];
+
+function prefsStorageKey(tenantId: string) {
+  return `integration_prefs_${tenantId}`;
+}
+
 export function IntegrationSettings() {
   const { currentTenant } = useTenant();
   const { integrations, loading, connected, refresh } = useIntegrations();
@@ -31,6 +44,34 @@ export function IntegrationSettings() {
   const [syncStatus, setSyncStatus] = useState<Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }>>({});
   const [errorLogs, setErrorLogs] = useState<Array<{ id: string; integration: string; error: string; timestamp: string }>>([]);
   const [errorLogsLoading, setErrorLogsLoading] = useState(false);
+  const [prefs, setPrefs] = useState<Record<PrefId, boolean>>({
+    enableNotifications: false,
+    errorReporting: false,
+    apiKeyRotation: false,
+    require2fa: false,
+  });
+
+  useEffect(() => {
+    if (!currentTenant?.id || typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(prefsStorageKey(currentTenant.id));
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<Record<PrefId, boolean>>;
+      setPrefs((prev) => ({ ...prev, ...parsed }));
+    } catch {
+      // ignore corrupt storage
+    }
+  }, [currentTenant?.id]);
+
+  const updatePref = (id: PrefId, checked: boolean) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [id]: checked };
+      if (currentTenant?.id && typeof window !== 'undefined') {
+        localStorage.setItem(prefsStorageKey(currentTenant.id), JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const next: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
@@ -162,23 +203,19 @@ export function IntegrationSettings() {
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-white">Global Preferences</h2>
             <p className="text-sm text-slate-500">
-              Workspace-wide integration policies are managed from Security and Billing. Toggles below are UI placeholders until synced settings are enabled.
+              Workspace-wide integration policies. Preferences are saved per workspace on this device.
             </p>
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
-              {[
-                { label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: false },
-                { label: 'Error reporting',       sub: 'Share anonymous error data to improve reliability', defaultChecked: false },
-                { label: 'API key rotation',      sub: 'Auto-rotate API keys every 90 days', defaultChecked: false },
-                { label: 'Require 2FA for actions', sub: 'Extra confirmation before connecting or disconnecting', defaultChecked: false },
-              ].map(row => (
-                <div key={row.label} className="flex items-center justify-between">
+              {PREF_ROWS.map((row) => (
+                <div key={row.id} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-white">{row.label}</p>
                     <p className="text-xs text-slate-400">{row.sub}</p>
                   </div>
                   <input
                     type="checkbox"
-                    defaultChecked={row.defaultChecked}
+                    checked={prefs[row.id]}
+                    onChange={(e) => updatePref(row.id, e.target.checked)}
                     className="rounded accent-teal-500 w-4 h-4"
                   />
                 </div>

@@ -559,6 +559,24 @@ export const leadService = {
         return { error: error ? error.message : null };
     },
 
+    async bulkDeleteLeads(ids: string[]): Promise<{ error: string | null; count: number }> {
+        if (!ids.length) return { error: null, count: 0 };
+        const tenantId = this.getTenantId();
+        const uniqueIds = [...new Set(ids)];
+        try {
+            await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('lead', id)));
+            const { error } = await supabase
+                .from('leads')
+                .delete()
+                .in('id', uniqueIds)
+                .eq('tenant_id', tenantId);
+            if (error) throw error;
+            return { error: null, count: uniqueIds.length };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };
+        }
+    },
+
     /**
      * Check if the tenant has reached the lead generation limit
      * Limit: 30 leads per 24-hour window for Free users

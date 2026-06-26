@@ -35,6 +35,9 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const [sortField, setSortField] = useState<'createdAt' | 'name' | 'company'>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -101,6 +104,10 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
         setFilteredContacts(filtered);
     }, [contacts, searchQuery, statusFilter, sortField, sortDirection]);
 
+    useEffect(() => {
+        setSelectedIds([]);
+    }, [searchQuery, statusFilter]);
+
     const handleDeleteContact = async (contactId: string) => {
         try {
             setActionLoading(contactId);
@@ -115,6 +122,27 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
             setActionLoading(null);
         }
     };
+
+    const handleBulkDelete = async () => {
+        if (!selectedIds.length) return;
+        try {
+            setBulkDeleting(true);
+            const { error: err } = await contactService.bulkDeleteContacts(selectedIds);
+            if (err) throw new Error(err);
+            setContacts(prev => prev.filter(c => !selectedIds.includes(c.id)));
+            setSelectedIds([]);
+            setShowBulkDeleteConfirm(false);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to bulk delete contacts:', err);
+            setError(err instanceof Error ? err.message : 'Failed to delete contacts');
+        } finally {
+            setBulkDeleting(false);
+        }
+    };
+
+    const allVisibleSelected =
+        filteredContacts.length > 0 && filteredContacts.every(c => selectedIds.includes(c.id));
 
     const handleExportCSV = () => {
         const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Status', 'Created At'];
@@ -159,6 +187,15 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                     <p className="text-sm text-slate-400">Manage your contacts and leads</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    {selectedIds.length > 0 && (
+                        <button
+                            onClick={() => setShowBulkDeleteConfirm(true)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete ({selectedIds.length})
+                        </button>
+                    )}
                     <button
                         onClick={handleExportCSV}
                         disabled={filteredContacts.length === 0}
@@ -252,15 +289,55 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                 </div>
             ) : (
                 <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (allVisibleSelected) {
+                                    setSelectedIds([]);
+                                } else {
+                                    setSelectedIds(filteredContacts.map(c => c.id));
+                                }
+                            }}
+                            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+                        >
+                            {allVisibleSelected ? <CheckCircle className="w-4 h-4 text-teal-400" /> : <div className="w-4 h-4 border border-slate-500 rounded" />}
+                            {allVisibleSelected ? 'Deselect all' : `Select all (${filteredContacts.length})`}
+                        </button>
+                        {selectedIds.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setSelectedIds([])}
+                                className="text-sm text-slate-500 hover:text-slate-300"
+                            >
+                                Clear selection
+                            </button>
+                        )}
+                    </div>
                     {filteredContacts.map((contact) => {
                         const status = STATUS_CONFIG[contact.status] || STATUS_CONFIG.active;
+                        const isSelected = selectedIds.includes(contact.id);
                         return (
                             <div
                                 key={contact.id}
-                                className="bg-slate-800 rounded-lg border border-slate-700 p-4 hover:border-slate-600 transition-colors"
+                                className={`bg-slate-800 rounded-lg border p-4 hover:border-slate-600 transition-colors ${isSelected ? 'border-teal-500/50 ring-1 ring-teal-500/30' : 'border-slate-700'}`}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedIds(prev =>
+                                                    prev.includes(contact.id)
+                                                        ? prev.filter(id => id !== contact.id)
+                                                        : [...prev, contact.id]
+                                                );
+                                            }}
+                                            className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                                            aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
+                                        >
+                                            {isSelected ? <CheckCircle className="w-5 h-5 text-teal-400" /> : <div className="w-5 h-5 border border-slate-500 rounded" />}
+                                        </button>
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                                             {contact.firstName[0]}{contact.lastName[0]}
                                         </div>
@@ -329,6 +406,33 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Bulk Delete Confirmation */}
+            {showBulkDeleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-md w-full">
+                        <h3 className="text-lg font-semibold text-white mb-2">Delete {selectedIds.length} contacts?</h3>
+                        <p className="text-sm text-slate-400 mb-6">
+                            This action cannot be undone. Selected contacts will be permanently deleted.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowBulkDeleteConfirm(false)}
+                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={bulkDeleting}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                            >
+                                {bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.length}`}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -27,6 +27,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Image from 'next/image';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole, STAGES } from '../types';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
+import { resolveDashboardPath } from '@/lib/dashboardNavigate';
 import InsightsHub from './dashboard/hubs/InsightsHub';
 import { useTenant } from '../contexts/TenantContext';
 
@@ -41,7 +42,6 @@ import Sidebar from './dashboard/Sidebar';
 import BottomNav from './dashboard/BottomNav';
 import CommandPalette from './dashboard/CommandPalette';
 import { DashboardAccountMenu } from './dashboard/DashboardAccountMenu';
-import HomeTab from './dashboard/HomeTab';
 import {
   OverviewDashboard,
   CrmDashboard,
@@ -113,12 +113,12 @@ const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSetti
 const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
 const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
-const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
+const ProjectsPage = React.lazy(() => import('./dashboard/business/ProjectsPage'));
+const ContractDashboard = React.lazy(() => import('./contracts/ContractDashboard'));
 const AccountingDashboard = React.lazy(() => import('./dashboard/accounting/AccountingDashboard'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/business/BusinessPerformanceDashboard'));
 const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
 const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
-const ContractsTab = React.lazy(() => import('./dashboard/ContractsTab'));
 const DeepDeskView = React.lazy(() => import('./dashboard/tickets/DeepDeskView'));
 const CampaignBuilder = React.lazy(() => import('./dashboard/business/CampaignBuilder'));
 const SocialMediaComposer = React.lazy(() => import('./dashboard/engine/SocialMediaComposer'));
@@ -132,6 +132,16 @@ import { TrialBanner } from './dashboard/TrialBanner';
 const UnifiedInboxView = React.lazy(() => import('./dashboard/business/UnifiedInboxView'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
 const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
+const ScraperCampaignsPage = React.lazy(() => import('./dashboard/leads/ScraperCampaignsPage'));
+const CRMReportsTab = React.lazy(() => import('./dashboard/crm/CRMReportsTab'));
+const AccountsPage = React.lazy(() => import('./dashboard/crm/AccountsPage'));
+const SalesConsole = React.lazy(() => import('./dashboard/crm/SalesConsole'));
+const CashFlowForecastTab = React.lazy(() => import('./dashboard/business/CashFlowForecastTab'));
+const ExpenseTrackerTab = React.lazy(() => import('./dashboard/business/ExpenseTrackerTab'));
+const ReportsPage = React.lazy(() => import('./dashboard/business/ReportsPage'));
+const ExecutiveDashboard = React.lazy(() => import('./dashboard/ExecutiveDashboard'));
+const BankingCenterPage = React.lazy(() => import('./dashboard/accounting/BankingCenterPage'));
+const IngestionPanel = React.lazy(() => import('./dashboard/engine/IngestionPanel'));
 const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
 const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
 import { GlobalShortcutListener } from './common/GlobalShortcutListener';
@@ -209,7 +219,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (tab === '/dashboard/deals') return '/dashboard/deals';
       if (tab === '/dashboard/finance') return '/dashboard/business/billing';
       if (tab === '/dashboard/projects') return '/dashboard/business/projects';
-      if (tab === '/dashboard/tasks') return '/dashboard/business/tasks';
       if (tab === '/dashboard/quotes') return '/dashboard/business/quotes';
       if (tab === '/dashboard/tickets') return '/dashboard/business/tickets';
       return tab;
@@ -286,7 +295,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false);
-  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [taskSchedulerOpen, setTaskSchedulerOpen] = useState(false);
@@ -1278,11 +1286,105 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/clients':
+      case '/dashboard/contacts':
+      case '/dashboard/leads':
+      case '/dashboard/crm/unified-contacts':
         return (
           <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
             <ClientsPage
               user={user}
             />
+          </React.Suspense>
+        );
+
+      case '/dashboard/leads/campaigns':
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+            <ScraperCampaignsPage />
+          </React.Suspense>
+        );
+
+      case '/dashboard/crm/reports':
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+            <CRMReportsTab />
+          </React.Suspense>
+        );
+
+      case '/dashboard/crm/console':
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+            <SalesConsole />
+          </React.Suspense>
+        );
+
+      case '/dashboard/crm/accounts':
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
+            <AccountsPage />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/cash-flow':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <CashFlowForecastTab />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/expenses':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ExpenseTrackerTab />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/reports':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ReportsPage user={user} />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/tasks':
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+            <TaskScheduler />
+          </React.Suspense>
+        );
+
+      case '/dashboard/executive':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ExecutiveDashboard />
+          </React.Suspense>
+        );
+
+      case '/dashboard/accounting/banking':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <BankingCenterPage />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/ingestion':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <IngestionPanel />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/projects':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ProjectsPage user={user} />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/projects/manage':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ProjectsPage user={user} />
           </React.Suspense>
         );
 
@@ -1434,7 +1536,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/contracts/manage':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <ContractsTab user={user} />
+            <div className="w-full h-full bg-slate-950 p-2 sm:p-4 rounded-3xl overflow-y-auto">
+              <ContractDashboard user={user} />
+            </div>
           </React.Suspense>
         );
 
@@ -1481,7 +1585,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/projects/manage':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <ProjectsTab user={user} />
+            <ProjectsPage user={user} />
           </React.Suspense>
         );
 
@@ -1490,31 +1594,19 @@ const Dashboard: React.FC<DashboardProps> = ({
           return <OverviewDashboard />;
         }
         return (
-          <HomeTab
-            user={user}
-            handlePayClick={handlePayClick}
-            currentStats={currentStats}
-            databaseStats={dashboardStats}
-            filteredProjects={filteredProjects}
-            isLoadingProjects={isLoadingProjects}
-            updateProjectStage={updateProjectStage}
-            STAGES={STAGES}
-            momentumScore={dashboardStats?.momentumScore ?? 0}
-            loginStreak={dashboardStats?.loginStreak ?? 1}
-            activity24h={dashboardStats?.activity24h ?? 0}
-            newLeads24h={dashboardStats?.newLeads24h ?? 0}
-            onProjectClick={(id) => {
-              const project = filteredProjects.find(p => p.id === id);
-              if (project) {
-                if (isPlatformAdminRole(user.role)) {
-                  setSelectedProjectForMilestones(project);
-                  setMilestoneModalOpen(true);
-                } else {
-                  router.push('/dashboard/projects');
-                }
-              }
-            }}
-          />
+          <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
+            <h2 className="text-lg font-bold text-white mb-2">This section is not available</h2>
+            <p className="text-sm text-slate-400 max-w-md mb-6">
+              The page <span className="text-slate-300 font-mono text-xs">{activeTab}</span> could not be loaded for your account role.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard')}
+              className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold"
+            >
+              Back to dashboard
+            </button>
+          </div>
         );
     }
   };
@@ -1615,7 +1707,12 @@ const Dashboard: React.FC<DashboardProps> = ({
           {paymentMethod === 'paypal' && (
             <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center animate-fade-in">
               <p className="text-blue-200 text-sm mb-4">You will be redirected to PayPal to complete your purchase securely.</p>
-              <Button className="w-full bg-[#0070BA] hover:bg-[#003087]">Log in to PayPal</Button>
+              <Button
+                className="w-full bg-[#0070BA] hover:bg-[#003087]"
+                onClick={() => toast.error('PayPal checkout is not enabled yet. Please pay with card.')}
+              >
+                Log in to PayPal
+              </Button>
             </div>
           )}
 
@@ -1952,8 +2049,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         onClose={() => setCommandPaletteOpen(false)}
         onCreateInvoice={() => setCreateInvoiceOpen(true)}
         onCreateTask={() => setCreateTaskOpen(true)}
-        onCreateProject={() => setCreateProjectOpen(true)}
+        onCreateProject={() => router.push(resolveDashboardPath('/dashboard/projects/manage?create=true', user.role))}
         userId={user.id}
+        userRole={user.role}
       />
 
       <GlobalShortcutListener

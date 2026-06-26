@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { APP_TAGLINE } from '@/constants';
 
 interface SplashScreenProps {
   isVisible?: boolean;
@@ -78,8 +79,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em] text-white">
                 ALPHA<span className="text-teal-400">CLONE</span>
               </h1>
-              <p className="text-xs uppercase tracking-[0.4em] text-teal-400/60 font-medium">
-                Unified Business Operating System
+              <p className="text-xs uppercase tracking-[0.35em] text-teal-400/60 font-medium text-center px-4">
+                {APP_TAGLINE}
               </p>
             </motion.div>
 

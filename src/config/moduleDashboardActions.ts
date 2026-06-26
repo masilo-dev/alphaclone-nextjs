@@ -48,7 +48,7 @@ function hrefFor(role: UserRole, href: string | ((role: UserRole) => string)): s
 }
 
 const clientsPath = (role: UserRole) =>
-  role === 'tenant_admin' ? '/dashboard/business/clients' : '/dashboard/contacts';
+  role === 'tenant_admin' ? '/dashboard/contacts' : '/dashboard/clients';
 
 const billingPath = (role: UserRole) =>
   role === 'tenant_admin' ? '/dashboard/business/billing/manage' : '/dashboard/finance/manage';

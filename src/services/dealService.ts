@@ -154,6 +154,7 @@ export interface DealService {
     createDeal(userId: string, dealData: CreateDealInput): Promise<{ deal: Deal | null; error: string | null }>;
     updateDeal(dealId: string, updates: Partial<Deal>): Promise<{ deal: Deal | null; error: string | null }>;
     deleteDeal(dealId: string): Promise<{ success: boolean; error: string | null }>;
+    bulkDeleteDeals(dealIds: string[]): Promise<{ error: string | null; count: number }>;
     getDealActivities(dealId: string): Promise<{ activities: DealActivity[]; error: string | null }>;
     addDealActivity(
         dealId: string,
@@ -604,6 +605,24 @@ export const dealService: DealService = {
             return { success: true, error: null };
         } catch (err) {
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    async bulkDeleteDeals(dealIds: string[]): Promise<{ error: string | null; count: number }> {
+        if (!dealIds.length) return { error: null, count: 0 };
+        const tenantId = this.getTenantId();
+        const uniqueIds = [...new Set(dealIds)];
+        try {
+            await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('deal', id)));
+            const { error } = await supabase
+                .from('deals')
+                .delete()
+                .in('id', uniqueIds)
+                .eq('tenant_id', tenantId);
+            if (error) throw error;
+            return { error: null, count: uniqueIds.length };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };
         }
     },
 

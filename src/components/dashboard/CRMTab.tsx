@@ -6,7 +6,8 @@ import {
   MessageCircle, Clock,
   UserCheck, Users, ArrowLeft, Star, AlertCircle,
   ShieldCheck, DollarSign, Activity, Loader2, Smartphone, Video,
-  ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw, Target
+  ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw, Target,
+  Trash2, CheckSquare, Square
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
@@ -14,7 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { dailyService } from '../../services/dailyService';
 import { churnPropensityService, ChurnRiskReport } from '@/services/intelligence/churnPropensityService';
 import { customer360Service, Customer360Profile } from '@/services/intelligence/customer360Service';
@@ -29,6 +30,10 @@ import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
+import { leadService } from '../../services/leadService';
+import { businessClientService } from '../../services/businessClientService';
+import { CRMNav } from './crm/CRMNav';
+import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -91,6 +96,8 @@ const getInitials = (name?: string) => {
   return name.split(' ').filter(Boolean).map(n => n[0] || '').join('').toUpperCase().slice(0, 2) || '?';
 };
 
+const entityKey = (entity: { type: string; id: string }) => `${entity.type}:${entity.id}`;
+
 const hashColor = (name?: string) => {
   if (!name) return 'bg-slate-700';
   const colors = [
@@ -135,7 +142,9 @@ const SwipeableRow: React.FC<{
   onDisqualify: (id: string) => void;
   onQualify: (entity: CRMEntity) => void;
   onTap: (entity: CRMEntity) => void;
-}> = ({ entity, status, isTeamsConnected, onMarkContacted, onDisqualify, onQualify, onTap }) => {
+  isSelected?: boolean;
+  onToggleSelect?: (entity: CRMEntity) => void;
+}> = ({ entity, status, isTeamsConnected, onMarkContacted, onDisqualify, onQualify, onTap, isSelected, onToggleSelect }) => {
   const x = useMotionValue(0);
   const leftOpacity  = useTransform(x, [0, 80],  [0, 1]);
   const rightOpacity = useTransform(x, [-80, 0], [1, 0]);
@@ -171,9 +180,19 @@ const SwipeableRow: React.FC<{
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className="relative z-10 bg-slate-950/60 flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-slate-900/40 active:bg-slate-900/60 transition-colors"
+        className={`relative z-10 bg-slate-950/60 flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-slate-900/40 active:bg-slate-900/60 transition-colors ${isSelected ? 'bg-teal-500/10' : ''}`}
         onClick={() => onTap(entity)}
       >
+        {onToggleSelect && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggleSelect(entity); }}
+            className="flex-shrink-0 p-1 text-slate-500 hover:text-teal-400 transition-colors"
+            aria-label={isSelected ? 'Deselect' : 'Select'}
+          >
+            {isSelected ? <CheckSquare className="w-4 h-4 text-teal-400" /> : <Square className="w-4 h-4" />}
+          </button>
+        )}
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div className={`w-10 h-10 rounded-xl ${hashColor(entity.name)} flex items-center justify-center shadow-inner`}>
@@ -1006,7 +1025,13 @@ const KANBAN_COLUMNS: { status: LeadStatus; label: string; accent: string; dot: 
   { status: 'disqualified', label: 'Disqualified', accent: 'border-rose-500/30', dot: 'bg-rose-400' },
 ];
 
-const KanbanCard: React.FC<{ lead: Lead; onClick: () => void; overlay?: boolean }> = ({ lead, onClick, overlay }) => {
+const KanbanCard: React.FC<{
+  lead: Lead;
+  onClick: () => void;
+  overlay?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (lead: Lead) => void;
+}> = ({ lead, onClick, overlay, isSelected, onToggleSelect }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id, data: { status: lead.status } });
   return (
     <div
@@ -1014,9 +1039,20 @@ const KanbanCard: React.FC<{ lead: Lead; onClick: () => void; overlay?: boolean 
       {...(overlay ? {} : attributes)}
       {...(overlay ? {} : listeners)}
       onClick={onClick}
-      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-white/5 bg-slate-900 p-3 shadow-sm hover:border-teal-500/30 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-teal-500/40' : ''}`}
+      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-white/5 bg-slate-900 p-3 shadow-sm hover:border-teal-500/30 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-teal-500/40' : ''} ${isSelected ? 'border-teal-500/50 bg-teal-500/10' : ''}`}
     >
       <div className="flex items-center gap-2.5">
+        {onToggleSelect && !overlay && (
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onToggleSelect(lead); }}
+            className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+            aria-label={isSelected ? 'Deselect lead' : 'Select lead'}
+          >
+            {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
+          </button>
+        )}
         <div className={`w-8 h-8 rounded-lg ${hashColor(lead.name)} flex items-center justify-center flex-shrink-0`}>
           <span className="text-[11px] font-black text-white">{getInitials(lead.name)}</span>
         </div>
@@ -1029,7 +1065,13 @@ const KanbanCard: React.FC<{ lead: Lead; onClick: () => void; overlay?: boolean 
   );
 };
 
-const KanbanColumn: React.FC<{ col: typeof KANBAN_COLUMNS[number]; leads: Lead[]; onSelect: (l: Lead) => void }> = ({ col, leads, onSelect }) => {
+const KanbanColumn: React.FC<{
+  col: typeof KANBAN_COLUMNS[number];
+  leads: Lead[];
+  onSelect: (l: Lead) => void;
+  selectedKeys?: Set<string>;
+  onToggleSelect?: (lead: Lead) => void;
+}> = ({ col, leads, onSelect, selectedKeys, onToggleSelect }) => {
   const { setNodeRef, isOver } = useDroppable({ id: col.status });
   return (
     <div className="flex w-[78%] sm:w-72 flex-shrink-0 flex-col">
@@ -1045,7 +1087,13 @@ const KanbanColumn: React.FC<{ col: typeof KANBAN_COLUMNS[number]; leads: Lead[]
         className={`flex-1 min-h-[120px] rounded-2xl border ${col.accent} ${isOver ? 'bg-teal-500/10 border-teal-500/40' : 'bg-slate-950/40'} p-2 space-y-2 transition-colors`}
       >
         {leads.map(l => (
-          <KanbanCard key={l.id} lead={l} onClick={() => onSelect(l)} />
+          <KanbanCard
+            key={l.id}
+            lead={l}
+            onClick={() => onSelect(l)}
+            isSelected={selectedKeys?.has(entityKey({ type: 'lead', id: l.id }))}
+            onToggleSelect={onToggleSelect}
+          />
         ))}
         {leads.length === 0 && (
           <p className="text-center text-[10px] text-slate-600 py-6">Drop leads here</p>
@@ -1055,7 +1103,13 @@ const KanbanColumn: React.FC<{ col: typeof KANBAN_COLUMNS[number]; leads: Lead[]
   );
 };
 
-const LeadKanban: React.FC<{ leads: Lead[]; onUpdate: (id: string, status: LeadStatus) => void; onSelect: (l: Lead) => void }> = ({ leads, onUpdate, onSelect }) => {
+const LeadKanban: React.FC<{
+  leads: Lead[];
+  onUpdate: (id: string, status: LeadStatus) => void;
+  onSelect: (l: Lead) => void;
+  selectedKeys?: Set<string>;
+  onToggleSelect?: (lead: Lead) => void;
+}> = ({ leads, onUpdate, onSelect, selectedKeys, onToggleSelect }) => {
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -1083,6 +1137,8 @@ const LeadKanban: React.FC<{ leads: Lead[]; onUpdate: (id: string, status: LeadS
             col={col}
             leads={leads.filter(l => l.status === col.status)}
             onSelect={onSelect}
+            selectedKeys={selectedKeys}
+            onToggleSelect={onToggleSelect}
           />
         ))}
       </div>
@@ -1096,6 +1152,7 @@ const LeadKanban: React.FC<{ leads: Lead[]; onUpdate: (id: string, status: LeadS
 const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
+  const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const { t } = useLanguage();
 
@@ -1109,6 +1166,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [leadsView, setLeadsView] = useState<'list' | 'board'>('list');
   const [search, setSearch] = useState('');
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const [presenceMap, setPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
   const [teamsPresenceMap, setTeamsPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
@@ -1318,6 +1377,71 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     loadCRMData();
   }, [loadCRMData]);
 
+  useEffect(() => {
+    setSelectedKeys(new Set());
+  }, [subView, leadsView, filter, accountFilter]);
+
+  const toggleEntitySelection = useCallback((entity: CRMEntity) => {
+    const key = entityKey(entity);
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleLeadSelection = useCallback((lead: Lead) => {
+    toggleEntitySelection({ type: 'lead', id: lead.id } as CRMEntity);
+  }, [toggleEntitySelection]);
+
+  const handleBulkDelete = async () => {
+    if (selectedKeys.size === 0) return;
+
+    const leadIds: string[] = [];
+    const clientIds: string[] = [];
+    selectedKeys.forEach((key) => {
+      const [type, id] = key.split(':');
+      if (!id) return;
+      if (type === 'lead') leadIds.push(id);
+      else clientIds.push(id);
+    });
+
+    const total = leadIds.length + clientIds.length;
+    if (!total) return;
+
+    const noun = subView === 'leads' ? 'lead' : 'contact';
+    if (!confirm(`Delete ${total} ${noun}(s)? This cannot be undone.`)) return;
+
+    setBulkDeleting(true);
+    const toastId = toast.loading(`Deleting ${total}...`);
+    try {
+      if (leadIds.length) {
+        const { error } = await leadService.bulkDeleteLeads(leadIds);
+        if (error) throw new Error(error);
+        setLeads((prev) => prev.filter((l) => !leadIds.includes(l.id)));
+      }
+      if (clientIds.length) {
+        const { error } = await businessClientService.bulkArchiveClients(clientIds);
+        if (error) throw new Error(error);
+        setClients((prev) => prev.filter((c) => !clientIds.includes(c.id)));
+      }
+
+      const deletedEntityKey = selectedEntity ? entityKey(selectedEntity) : null;
+      const shouldClearDetail = deletedEntityKey ? selectedKeys.has(deletedEntityKey) : false;
+      setSelectedKeys(new Set());
+      if (shouldClearDetail) {
+        setSelectedEntity(null);
+      }
+      toast.success(`Deleted ${total} ${noun}(s)`, { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
+      await loadCRMData();
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   // Lead status transition
   const handleStatusUpdate = async (id: string, status: LeadStatus) => {
     try {
@@ -1511,6 +1635,29 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     return true;
   });
 
+  const selectedCount = selectedKeys.size;
+
+  const filteredKanbanLeads = leads.filter((l) => {
+    if (filter !== 'all' && l.status !== filter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return (
+        l.name.toLowerCase().includes(q) ||
+        (l.email?.toLowerCase().includes(q) || false) ||
+        (l.company?.toLowerCase().includes(q) || false)
+      );
+    }
+    return true;
+  });
+
+  const bulkSelectTargetKeys =
+    subView === 'leads' && leadsView === 'board'
+      ? filteredKanbanLeads.map((l) => entityKey({ type: 'lead', id: l.id }))
+      : filteredEntities.map(entityKey);
+
+  const allBulkSelected =
+    bulkSelectTargetKeys.length > 0 && bulkSelectTargetKeys.every((k) => selectedKeys.has(k));
+
   // Render detail views
   if (selectedEntity) {
     if (selectedEntity.type === 'lead' && selectedEntity.rawLead) {
@@ -1550,6 +1697,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-slate-950 select-none relative">
+      <div className="px-4 pt-3 space-y-3 shrink-0">
+        <CRMNav pathname={pathname} />
+        <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+      </div>
       {/* Metric Cards Banner */}
       <div className="grid grid-cols-3 gap-3 p-4 bg-slate-900/20 border-b border-white/5">
         {([
@@ -1740,22 +1891,57 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             ))}
           </div>
         )}
+
+        {/* Bulk selection toolbar */}
+        {!loading && (filteredEntities.length > 0 || (subView === 'leads' && leadsView === 'board' && filteredKanbanLeads.length > 0)) && (
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (allBulkSelected) {
+                  setSelectedKeys(new Set());
+                } else {
+                  setSelectedKeys(new Set(bulkSelectTargetKeys));
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            >
+              {allBulkSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
+              {allBulkSelected ? 'Deselect all' : `Select all (${bulkSelectTargetKeys.length})`}
+            </button>
+            {selectedCount > 0 && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedKeys(new Set())}
+                  className="text-xs text-slate-500 hover:text-slate-300"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 disabled:opacity-50"
+                >
+                  {bulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Delete ({selectedCount})
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* List content */}
       <div className={`flex-1 ${subView === 'leads' && leadsView === 'board' ? 'overflow-hidden' : 'overflow-y-auto'} bg-slate-950`}>
         {!loading && subView === 'leads' && leadsView === 'board' ? (
           <LeadKanban
-            leads={leads.filter(l => {
-              if (filter !== 'all' && l.status !== filter) return false;
-              if (search) {
-                const q = search.toLowerCase();
-                return l.name.toLowerCase().includes(q) || (l.email?.toLowerCase().includes(q) || false) || (l.company?.toLowerCase().includes(q) || false);
-              }
-              return true;
-            })}
+            leads={filteredKanbanLeads}
             onUpdate={handleStatusUpdate}
             onSelect={(l) => setSelectedEntity(entities.find(e => e.id === l.id) || null)}
+            selectedKeys={selectedKeys}
+            onToggleSelect={toggleLeadSelection}
           />
         ) : loading ? (
           <div className="space-y-px">
@@ -1779,13 +1965,26 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <MobileDataCard
                   key={entity.id}
                   onClick={() => setSelectedEntity(entity)}
+                  className={selectedKeys.has(entityKey(entity)) ? 'ring-1 ring-teal-500/50' : undefined}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleEntitySelection(entity); }}
+                      className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                      aria-label={selectedKeys.has(entityKey(entity)) ? 'Deselect' : 'Select'}
+                    >
+                      {selectedKeys.has(entityKey(entity)) ? (
+                        <CheckSquare className="w-4 h-4 text-teal-400" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </button>
+                    <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white">{entity.name}</p>
                       <p className="text-sm text-slate-400">{entity.email || entity.phone || '-'}</p>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-500/20 text-slate-400'}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-500/20 text-slate-400'}`}>
                       {t(entity.status)}
                     </span>
                   </div>
@@ -1806,6 +2005,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
                     onQualify={(ent) => ent.rawLead && handleQualifyLead(ent.rawLead)}
                     onTap={setSelectedEntity}
+                    isSelected={selectedKeys.has(entityKey(entity))}
+                    onToggleSelect={toggleEntitySelection}
                   />
                 ))}
               </div>

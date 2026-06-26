@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Video, Plus, Users, Clock, Mic, MicOff, Camera, CameraOff, Share2, X, Copy, Link } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -140,6 +141,7 @@ const InCallUI: React.FC<{ room: Room; onEnd: () => void }> = ({ room, onEnd }) 
 
 // ── Main ConferenceTab ─────────────────────────────────────────────────────────
 const ConferenceTab: React.FC = () => {
+  const router = useRouter();
   const [filter, setFilter] = useState<RoomFilter>('all');
   const [preJoinRoom, setPreJoinRoom] = useState<Room | null>(null);
   const [inCallRoom, setInCallRoom] = useState<Room | null>(null);
@@ -207,7 +209,12 @@ const ConferenceTab: React.FC = () => {
         )}
       </div>
 
-      <button className="fixed bottom-20 right-4 w-14 h-14 bg-red-500 rounded-full flex items-center justify-center shadow-lg shadow-red-500/30 z-30">
+      <button
+        type="button"
+        onClick={() => router.push('/dashboard/business/booking')}
+        aria-label="Schedule a meeting"
+        className="fixed bottom-20 right-4 w-14 h-14 bg-red-500 rounded-full flex items-center justify-center shadow-lg shadow-red-500/30 z-30"
+      >
         <Video className="w-6 h-6 text-white" />
       </button>
     </div>
