@@ -93,6 +93,7 @@ export default function LeadFinderChat() {
   const [showOutreach, setShowOutreach] = useState(false);
   const [outreachLeadIds, setOutreachLeadIds] = useState<string[]>([]);
   const completedNotifiedRef = useRef(false);
+  const pollAttemptsRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -112,7 +113,7 @@ export default function LeadFinderChat() {
 
   const pollStatusAndLeads = useCallback(
     async (cid: string) => {
-      if (!tenant?.id) return;
+      if (!tenant?.id) return false;
 
       const statusRes = await fetch('/api/scraper-campaigns/chat', {
         method: 'POST',
@@ -132,12 +133,17 @@ export default function LeadFinderChat() {
         setLeads(leadsData.leads);
       }
 
+      const status = statusData.status;
       const done =
-        statusData.status?.status === 'completed' ||
-        statusData.status?.progress >= 100 ||
-        statusData.status?.current_step === 'done';
+        status?.status === 'completed' ||
+        status?.progress >= 100 ||
+        status?.current_step === 'done';
 
-      return !done;
+      const stalledUnknown =
+        status?.status === 'unknown' &&
+        (leadsData.leads?.length || 0) > 0;
+
+      return !(done || stalledUnknown);
     },
     [tenant?.id]
   );
@@ -180,8 +186,10 @@ export default function LeadFinderChat() {
     if (runStatus?.status === 'completed' || runStatus?.progress === 100) return;
 
     const interval = setInterval(async () => {
+      pollAttemptsRef.current += 1;
       const stillRunning = await pollStatusAndLeads(campaignId);
-      if (!stillRunning && !completedNotifiedRef.current) {
+      const timedOut = pollAttemptsRef.current >= 18;
+      if ((!stillRunning || timedOut) && !completedNotifiedRef.current) {
         completedNotifiedRef.current = true;
         clearInterval(interval);
 
@@ -285,6 +293,7 @@ export default function LeadFinderChat() {
       setRunStatus({ status: 'running', progress: 5 });
       setLeads([]);
       setRetryAttempt(0);
+      pollAttemptsRef.current = 0;
       completedNotifiedRef.current = false;
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to start search');
