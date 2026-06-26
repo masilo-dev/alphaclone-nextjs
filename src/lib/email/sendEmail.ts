@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
-import { buildEmailUnsubscribeUrl } from '@/lib/email/unsubscribe';
+import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
@@ -31,6 +31,7 @@ export interface EmailPayload {
   templateName?: string;
   listUnsubscribeUrl?: string;
   isPlatformNotification?: boolean;
+  skipFooter?: boolean;
 }
 
 export interface SendEmailResult {
@@ -231,6 +232,10 @@ export async function sendEmail(
         const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
         if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
       }
+      if (await isUnsubscribed(recipient, tenantId)) {
+        console.log(`[email] Skipping send — recipient unsubscribed: ${recipient} (tenant ${tenantId})`);
+        return { success: false, tried, error: `Recipient unsubscribed: ${recipient}`, code: 'EMAIL_UNSUBSCRIBED' };
+      }
       if (await isEmailSuppressed(tenantId, recipient)) {
         return { success: false, tried, error: `Recipient is suppressed: ${recipient}`, code: 'EMAIL_SUPPRESSED' };
       }
@@ -240,16 +245,24 @@ export async function sendEmail(
     // Falls back gracefully inside ensureFooter when unavailable.
     const singleRecipient = recipients.length === 1 ? String(recipients[0] || '').trim() : '';
     const unsubscribeUrl = payload.listUnsubscribeUrl
-      || (singleRecipient ? buildEmailUnsubscribeUrl({ tenantId, email: singleRecipient }) : '');
+      || (singleRecipient ? buildUnsubscribeUrl(singleRecipient, tenantId) : '');
 
     const normalizedSubject = normalizeEmailSubject(payload.subject);
+    const shouldAppendFooter = !payload.skipFooter;
     const normalizedHtml = payload.html
-      ? ensureFooter(sanitizeHtml(String(payload.html), {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
-        allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
-      }), { unsubscribeUrl })
+      ? (shouldAppendFooter
+        ? ensureFooter(sanitizeHtml(String(payload.html), {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
+          allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
+        }), { unsubscribeUrl })
+        : sanitizeHtml(String(payload.html), {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
+          allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
+        }))
       : undefined;
-    const normalizedText = payload.text ? ensureFooter(payload.text, { unsubscribeUrl }) : undefined;
+    const normalizedText = payload.text
+      ? (shouldAppendFooter ? ensureFooter(payload.text, { unsubscribeUrl }) : payload.text)
+      : undefined;
 
     const configs = await resolveProviderConfigs({
       tenantId,

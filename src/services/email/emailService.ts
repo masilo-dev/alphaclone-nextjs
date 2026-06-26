@@ -640,6 +640,8 @@ export const emailHelpers = {
             subject: `Invoice ${invoiceNumber} from AlphaClone Systems`,
             html: invoiceEmailTemplates.invoiceSent({
                 recipientName: 'Valued Client',
+                recipientEmail: email,
+                tenantId: 'platform',
                 invoiceNumber,
                 amount,
                 actionUrl: invoiceUrl,

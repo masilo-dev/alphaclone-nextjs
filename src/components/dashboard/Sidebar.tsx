@@ -8,10 +8,9 @@ import {
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
-import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
 import type { AcThemeMode } from '@/lib/applyAcTheme';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
@@ -50,7 +49,7 @@ const Sidebar = React.memo<SidebarProps>(({
     activeBgTasksCount = 0,
 }) => {
     const router = useRouter();
-    const { language, setLanguage, languageCode, t } = useLanguage();
+    const { t } = useLanguage();
     const { tasks, dismissTask } = useBackgroundTasks();
 
     // ── ALL hooks must be declared before any conditional return ─────────
@@ -103,6 +102,9 @@ const Sidebar = React.memo<SidebarProps>(({
             setSidebarOpen(false);
         }
     }, [router, onNavigate, setSidebarOpen, setActiveTab]);
+
+    const settingsPath =
+        user.role === 'tenant_admin' ? '/dashboard/business/settings' : '/dashboard/settings';
 
     const toggleExpanded = useCallback((label: string) => {
         setExpanded(prev => {
@@ -390,52 +392,35 @@ const Sidebar = React.memo<SidebarProps>(({
                         </button>
                     )}
 
-                    {/* User row: avatar → settings, name/role, language flag, logout */}
-                    <div className={`flex ${sidebarOpen ? 'items-center gap-2.5' : 'flex-col items-center gap-2'}`}>
-                        {/* Avatar → Settings */}
+                    {/* User row — identity only; account actions live in header menu */}
+                    <div className={`flex ${sidebarOpen ? 'items-center gap-3' : 'flex-col items-center gap-2'}`}>
                         <button
-                            onClick={() => navigate('/dashboard/business/settings')}
+                            onClick={() => navigate(settingsPath)}
                             title={t('Settings')}
-                            className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 hover:ring-2 hover:ring-teal-400 hover:ring-offset-2 hover:ring-offset-slate-900 transition-all active:scale-95"
+                            className={`flex items-center min-w-0 rounded-lg hover:bg-slate-800/60 transition-colors active:scale-[0.98] ${
+                                sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
+                            }`}
                         >
-                            {initials}
+                            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                                {initials}
+                            </span>
+                            {sidebarOpen && (
+                                <span className="flex-1 min-w-0 text-left">
+                                    <span className="block text-sm font-semibold text-white truncate leading-tight">
+                                        {user.name || user.email?.split('@')[0] || t('User')}
+                                    </span>
+                                    <span className="block text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</span>
+                                </span>
+                            )}
                         </button>
 
-                        {sidebarOpen && (
-                            <>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-white truncate leading-tight">
-                                        {user.name || user.email?.split('@')[0] || t('User')}
-                                    </p>
-                                    <p className="text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</p>
-                                </div>
-
-                                {/* Language switcher - immediate change */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const currentIdx = LANGUAGES.findIndex((l) => l.code === language);
-                                        const nextLang = LANGUAGES[(currentIdx + 1) % LANGUAGES.length];
-                                        setLanguage(nextLang.code);
-                                        toast.success(`${t('Switched to')} ${nextLang.nativeName}`);
-                                    }}
-                                    title={t('Switch language')}
-                                    className="text-xs font-bold min-w-[2rem] h-8 px-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:border-teal-500/50 transition-colors flex items-center justify-center flex-shrink-0"
-                                >
-                                    {languageCode}
-                                </button>
-                            </>
-                        )}
-
-                        {/* Logout */}
                         <button
                             onClick={onLogout}
                             title={t('Log Out')}
-                            className={`flex items-center gap-1.5 text-slate-500 hover:text-red-400 transition-colors group rounded-lg hover:bg-red-500/10 active:scale-95 touch-manipulation
-                                ${sidebarOpen ? 'px-2 py-1.5' : 'p-2'}`}
+                            aria-label={t('Log Out')}
+                            className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
                         >
-                            <LogOut className="w-4 h-4 flex-shrink-0" />
-                            {sidebarOpen && <span className="text-xs font-medium whitespace-nowrap">{t('Log out')}</span>}
+                            <LogOut className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
