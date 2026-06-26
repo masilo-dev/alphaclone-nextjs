@@ -114,11 +114,15 @@ export async function sendWhatsAppMessage(params: {
 
     if (!response.ok) {
       console.error('[WhatsApp send failed] Meta API response:', result);
+      const metaCode = result.error?.code;
+      const metaMessage = result.error?.message || 'Failed to send WhatsApp message via Meta Cloud API';
       return {
         success: false,
         provider: 'meta-whatsapp',
         code: 'META_API_ERROR',
-        error: result.error?.message || 'Failed to send WhatsApp message via Meta Cloud API',
+        error: metaCode === 190
+          ? 'WhatsApp access token expired or invalid. Reconnect Meta Cloud API credentials under Integration Settings → WhatsApp.'
+          : metaMessage,
       };
     }
 
