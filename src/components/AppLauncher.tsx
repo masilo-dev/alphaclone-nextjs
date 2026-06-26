@@ -8,7 +8,6 @@ import {
   MessageSquare,
   Video,
   LayoutDashboard,
-  BrainCircuit,
   Settings,
   Briefcase,
   Users,
@@ -26,21 +25,21 @@ interface AppLauncherProps {
 }
 
 const APPS = [
-  { name: 'Messages', icon: MessageSquare, color: 'bg-green-500' },
-  { name: 'Meetings', icon: Video, color: 'bg-purple-500' },
-  { name: 'AI Assistant', icon: BrainCircuit, color: 'bg-teal-500' },
   { name: 'CRM', icon: Users, color: 'bg-orange-500' },
-  { name: 'Projects', icon: Briefcase, color: 'bg-rose-500' },
+  { name: 'Mail', icon: MessageSquare, color: 'bg-green-500' },
+  { name: 'Calls', icon: Video, color: 'bg-purple-500' },
+  { name: 'Clients', icon: Users, color: 'bg-blue-500' },
+  { name: 'Tasks', icon: Briefcase, color: 'bg-rose-500' },
   { name: 'Calendar', icon: Calendar, color: 'bg-indigo-500' },
-  { name: 'Network', icon: LayoutDashboard, color: 'bg-blue-500' },
+  { name: 'Home', icon: LayoutDashboard, color: 'bg-cyan-500' },
   { name: 'Settings', icon: Settings, color: 'bg-slate-500' },
 ];
 
 const DOCK_APPS = [
   { name: 'Home', icon: LayoutDashboard, color: 'bg-blue-600' },
-  { name: 'Chat', icon: MessageSquare, color: 'bg-green-600' },
-  { name: 'Join', icon: Video, color: 'bg-indigo-600' },
-  { name: 'Brain', icon: BrainCircuit, color: 'bg-teal-600' },
+  { name: 'Mail', icon: MessageSquare, color: 'bg-green-600' },
+  { name: 'Calls', icon: Video, color: 'bg-indigo-600' },
+  { name: 'CRM', icon: Users, color: 'bg-orange-600' },
 ];
 
 export default function AppLauncher({ onLogin }: AppLauncherProps) {
@@ -80,7 +79,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
       {/* Top Status Bar (Native Feel) */}
       <div className="relative z-20 flex justify-between items-center px-4 sm:px-6 pt-2 pb-2 text-[11px] sm:text-[12px] font-bold tracking-tight">
         <div className="flex items-center gap-1.5 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 uppercase tracking-[0.1em] truncate max-w-[40%]">
-          AlphaClone 1.0.5
+          AlphaClone
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <Signal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -122,7 +121,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
             className="w-full h-10 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center gap-2 text-white/50 cursor-pointer hover:bg-white/15 transition-all group"
           >
             <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium">Search Systems</span>
+            <span className="text-sm font-medium">Search</span>
             <div className="hidden sm:flex items-center gap-1 ml-4 py-0.5 px-2 bg-white/5 rounded border border-white/10">
               <Command className="w-2.5 h-2.5" />
               <span className="text-xs">K</span>
@@ -205,7 +204,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
               </div>
               <div className="p-4 flex flex-col gap-2">
                 <p className="text-xs uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
-                {['Launch Dashboard', 'Start Meeting', 'Open Support', 'View Invoices'].map((action) => (
+                {['Open CRM', 'Check mail', 'Start call', 'View clients'].map((action) => (
                    <div key={action} className="p-3 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between group transition-colors">
                      <span className="text-sm font-medium">{action}</span>
                      <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-teal-400 group-hover:translate-x-1 transition-all" />

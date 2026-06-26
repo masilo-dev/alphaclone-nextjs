@@ -487,7 +487,7 @@ const Client360Detail: React.FC<{
         return;
       }
       toast.success('Meeting room ready', { id: toastId });
-      router.push(`/dashboard/call/${call.id}`);
+      router.push(`/call/${call.id}`);
     } catch (err) {
       toast.error('Failed to start call', { id: toastId });
     }

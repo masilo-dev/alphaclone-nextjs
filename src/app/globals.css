@@ -1048,9 +1048,17 @@ input, textarea, select {
 }
 
 .pwa-tab-label {
-  font-size: 10px !important;
-  font-weight: 500 !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+}
+
+html.pwa-standalone .pwa-page-title {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pwa-badge {

@@ -601,36 +601,39 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-950 z-[100] text-white flex flex-col overflow-hidden select-none">
+        <div className="fixed inset-0 bg-slate-950 z-[100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             {/* Immersive Header */}
-            <header className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-6 flex items-center justify-between pointer-events-none">
+            <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-black/70 to-transparent z-[110] px-3 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
-                            REC • {formatTime(secondsElapsed)}
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl">
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/90">
+                            {formatTime(secondsElapsed)}
                         </span>
                     </div>
-                    {/* Signal Indicator visual */}
+                    {!isMobile && (
                     <div className="flex items-end gap-0.5 h-3">
                         <div className="w-0.5 h-full bg-teal-500 rounded-full" />
                         <div className="w-0.5 h-4/5 bg-teal-500 rounded-full" />
                         <div className="w-0.5 h-3/5 bg-teal-500 rounded-full" />
                     </div>
+                    )}
                 </div>
 
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    <div className={`px-3 py-1 rounded-xl border text-xs font-bold uppercase tracking-widest ${
+                <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+                    <div className={`px-2 sm:px-3 py-1 rounded-xl border text-[10px] sm:text-xs font-bold uppercase tracking-wide ${
                         networkQuality === 'good'
                             ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
                             : networkQuality === 'poor'
                                 ? 'bg-amber-500/10 border-amber-400/30 text-amber-300'
                                 : 'bg-slate-500/10 border-white/10 text-slate-300'
                     }`}>
-                        {networkQuality === 'good' ? <Wifi className="inline w-3 h-3 mr-1" /> : <WifiOff className="inline w-3 h-3 mr-1" />}
-                        {networkQuality === 'good' ? 'Connection Good' : networkQuality === 'poor' ? 'Connection Poor' : 'Checking Network'}
+                        {networkQuality === 'good' ? <Wifi className="inline w-3 h-3" /> : <WifiOff className="inline w-3 h-3" />}
+                        {!isMobile && (
+                          <span className="ml-1">{networkQuality === 'good' ? 'Good' : networkQuality === 'poor' ? 'Poor' : '…'}</span>
+                        )}
                     </div>
-                    {(platformState === 'error' || networkQuality === 'poor') && (
+                    {(platformState === 'error' || networkQuality === 'poor') && !isMobile && (
                         <button
                             onClick={() => void reconnect()}
                             className="px-3 py-1 rounded-xl border border-white/10 text-xs text-slate-200 hover:bg-white/10 transition-colors"
@@ -640,7 +643,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                             Reconnect
                         </button>
                     )}
-                    <div className="flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-1">
+                    <div className={`flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-0.5 sm:p-1 ${isMobile ? 'hidden' : ''}`}>
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === 'grid' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
@@ -658,7 +661,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             </header>
 
             {/* Main Stage */}
-            <main className={`flex-1 relative mt-16 mb-24 overflow-hidden ${viewMode === 'grid' ? 'p-4 sm:p-6' : ''}`}>
+            <main className={`flex-1 relative mt-12 sm:mt-14 mb-[calc(5.5rem+env(safe-area-inset-bottom))] overflow-hidden ${viewMode === 'grid' ? 'p-2 sm:p-6' : ''}`}>
                 {viewMode === 'grid' ? (
                     <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
                         {participants.map(p => (

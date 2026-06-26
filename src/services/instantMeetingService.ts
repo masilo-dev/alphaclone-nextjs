@@ -4,6 +4,7 @@ import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { callSignalingService } from '@/services/video/CallSignalingService';
+import { dispatchPushNotification } from '@/lib/push/dispatchPushNotification';
 import { MAX_MEETING_DURATION_MINUTES, meetingEndTimeFromNow } from '@/lib/meetingLimits';
 
 export type PlatformMeetingProvider = 'teams' | 'livekit' | 'daily' | 'jitsi';
@@ -215,6 +216,15 @@ export async function startClientVideoCall(input: {
       callerName: input.hostName,
       roomUrl: joinUrl,
       roomId: call.id,
+    });
+    void dispatchPushNotification({
+      userId: recipientUserId,
+      tenantId: input.tenantId ?? undefined,
+      type: 'call',
+      title: 'Incoming call',
+      message: `${input.hostName} is calling`,
+      link: `/call/${call.id}`,
+      email: false,
     });
   }
 

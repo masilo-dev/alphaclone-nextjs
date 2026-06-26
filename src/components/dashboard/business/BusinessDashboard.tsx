@@ -26,7 +26,7 @@ import {
     X,
     Minimize2,
 } from 'lucide-react';
-import { SlackIntegration } from '../integrations/SlackIntegration';
+import IncomingCallModal from '../video/IncomingCallModal';
 import { DashboardAccountMenu } from '../DashboardAccountMenu';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
@@ -1150,7 +1150,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             onCallBack={(callerId) => {
                                 const roomId = `room-${callerId.slice(0, 8)}`;
                                 toast.success('Calling back...');
-                                router.push(`/dashboard/call/${roomId}`);
+                                router.push(`/call/${roomId}`);
                             }}
                         />
                         <div data-tour="business-notifications">
@@ -1247,6 +1247,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 onCreateProject={() => setActiveTab('/dashboard/business/projects')}
                 onCreateInvoice={() => setActiveTab('/dashboard/business/billing')}
             />
+
+            <IncomingCallModal userId={user.id} userName={user.name} />
 
             <ProductTour
                 isOpen={showProductTour}
