@@ -82,12 +82,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const results = [];
-  const rows = (integrations || []).filter((row) => row.user_id && row.tenant_id);
-  const mapped = await mapWithConcurrency(rows, CONCURRENCY, (row) =>
-    syncUserInbox(row.user_id!, row.tenant_id!)
+  type ZohoIntegrationRow = { user_id: string | null; tenant_id: string | null };
+
+  const rows = (integrations ?? []).filter(
+    (row: ZohoIntegrationRow): row is { user_id: string; tenant_id: string } =>
+      Boolean(row.user_id && row.tenant_id)
   );
-  results.push(...mapped);
+  const results = await mapWithConcurrency(rows, CONCURRENCY, (row) =>
+    syncUserInbox(row.user_id, row.tenant_id)
+  );
 
   return NextResponse.json({
     ok: true,
