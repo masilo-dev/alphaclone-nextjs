@@ -101,11 +101,9 @@ export async function GET(req: NextRequest) {
   try {
     const fields = [
       'id', 'message', 'story', 'full_picture', 'permalink_url',
-      'created_time', 'type',
-      'insights.metric(post_impressions,post_impressions_unique,post_engaged_users,post_clicks)',
-      'likes.summary(true)',
+      'created_time',
       'reactions.summary(true)',
-      'comments.summary(true).limit(5){id,message,created_time,from,like_count,comments.limit(3){id,message,created_time,from}}',
+      'comments.summary(true)',
       'shares',
     ].join(',');
 
@@ -146,7 +144,7 @@ export async function GET(req: NextRequest) {
         full_picture:   p.full_picture || null,
         permalink_url:  p.permalink_url || null,
         post_type:      p.type || 'post',
-        likes_count:    p.likes?.summary?.total_count || p.reactions?.summary?.total_count || 0,
+        likes_count:    p.reactions?.summary?.total_count || 0,
         comments_count: p.comments?.summary?.total_count || 0,
         shares_count:   p.shares?.count || 0,
         metadata:       { insights: p.insights || {} },
