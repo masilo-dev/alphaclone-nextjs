@@ -1,12 +1,19 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 
+export type SendWhatsAppErrorCode =
+  | 'NOT_CONFIGURED'
+  | 'VALIDATION_ERROR'
+  | 'META_API_ERROR'
+  | 'NETWORK_ERROR';
+
 export interface SendWhatsAppResult {
   success: boolean;
   provider: 'meta-whatsapp';
   messageId?: string;
   to?: string;
   error?: string;
+  code?: SendWhatsAppErrorCode;
 }
 
 function cleanPhone(phone: string): string {
@@ -43,7 +50,12 @@ export async function sendWhatsAppMessage(params: {
   const supabase = createSupabaseAdminClient();
   const cleanTo = cleanPhone(params.phone);
   if (!params.tenantId || !cleanTo || !params.message.trim()) {
-    return { success: false, provider: 'meta-whatsapp', error: 'tenantId, phone, and message are required' };
+    return {
+      success: false,
+      provider: 'meta-whatsapp',
+      code: 'VALIDATION_ERROR',
+      error: 'tenantId, phone, and message are required',
+    };
   }
 
   // 1. Resolve credentials (first try DB integrations, then fall back to env vars)
@@ -72,7 +84,8 @@ export async function sendWhatsAppMessage(params: {
     return {
       success: false,
       provider: 'meta-whatsapp',
-      error: 'WhatsApp integration is not configured. Please add your Phone Number ID and Access Token under Integration Settings.',
+      code: 'NOT_CONFIGURED',
+      error: 'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Vercel.',
     };
   }
 
@@ -104,6 +117,7 @@ export async function sendWhatsAppMessage(params: {
       return {
         success: false,
         provider: 'meta-whatsapp',
+        code: 'META_API_ERROR',
         error: result.error?.message || 'Failed to send WhatsApp message via Meta Cloud API',
       };
     }
@@ -150,6 +164,11 @@ export async function sendWhatsAppMessage(params: {
     return { success: true, provider: 'meta-whatsapp', messageId, to: cleanTo };
   } catch (err: any) {
     console.error('[whatsapp/send] Meta send failed:', err);
-    return { success: false, provider: 'meta-whatsapp', error: err?.message || 'Meta WhatsApp send failed' };
+    return {
+      success: false,
+      provider: 'meta-whatsapp',
+      code: 'NETWORK_ERROR',
+      error: err?.message || 'Meta WhatsApp send failed',
+    };
   }
 }
