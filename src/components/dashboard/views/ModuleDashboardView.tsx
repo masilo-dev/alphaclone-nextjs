@@ -54,6 +54,7 @@ function DashboardContent({
     return (
       <>
         <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} />
+        <p className="text-xs text-slate-500 mb-4 px-1">Loading charts…</p>
         <DashboardSkeleton />
       </>
     );
@@ -75,7 +76,10 @@ function DashboardContent({
 
   return (
     <div className={loading ? 'opacity-80 transition-opacity' : ''}>
-      <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} />
+      <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} showChartNote />
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3 px-1">
+        Read-only snapshot
+      </p>
       <ModuleDashboardLayout
         row1={data.metrics.map((m) => (
           <MetricCard
@@ -130,9 +134,21 @@ function DashboardContent({
         }
         row3={
           <>
-            <StatusDonut segments={data.donut} />
-            <StatusPills items={overviewData?.platformHealth ?? data.pills} />
-            <ActivityFeed items={data.feed} />
+            <StatusDonut
+              segments={data.donut}
+              title="Status mix"
+              subtitle="Where records sit today"
+            />
+            <StatusPills
+              items={overviewData?.platformHealth ?? data.pills}
+              title={overview ? 'Module health' : 'Quick status'}
+              subtitle="Green = healthy, amber/red = needs action"
+            />
+            <ActivityFeed
+              items={data.feed}
+              title="Recent activity"
+              subtitle="Latest changes — open workspace to act on these"
+            />
           </>
         }
       />
