@@ -11,16 +11,16 @@ export const ENTERPRISE_DOMAIN_BLOCKLIST = [
   'bankofamerica.com', 'wellsfargo.com', 'citi.com', 'hsbc.com', 'barclays.com',
 ];
 
+/** Name patterns for known mega-corps only — do NOT block "Inc." / "LLC" on normal SMBs. */
 export const ENTERPRISE_NAME_PATTERNS = [
-  /\b(inc\.?|corp\.?|corporation|holdings|global|international|worldwide|group plc)\b/i,
-  /\b(fortune\s*500|enterprise|conglomerate)\b/i,
+  /\b(fortune\s*500|conglomerate|multinational\s+holding)\b/i,
   /\b(Google|Microsoft|Apple|Amazon|Meta|Facebook|Netflix|Salesforce|Oracle|IBM|Accenture)\b/,
-  /\b(Walmart|Target|Costco|JPMorgan|Goldman Sachs|Bank of America)\b/i,
+  /\b(Walmart|Target|Costco|JPMorgan|Goldman Sachs|Bank of America|Deloitte|PwC|KPMG|Ernst\s*&?\s*Young)\b/i,
 ];
 
 export const SMB_DEFAULTS = {
   company_size_range: { min: 1, max: 200 },
-  min_score_threshold: 45,
+  min_score_threshold: 35,
   daily_limit: 40,
   exclude_domains: ENTERPRISE_DOMAIN_BLOCKLIST,
   exclude_keywords: ['enterprise', 'fortune 500', 'global headquarters', 'conglomerate'],

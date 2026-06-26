@@ -5,17 +5,42 @@ import { freePlacesService } from '@/services/freePlacesService';
 import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
 import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
 
+function formatSearchNiche(intent: ParsedLeadIntent): string {
+  return (
+    intent.niche ||
+    intent.industry?.[0] ||
+    intent.search_query?.split(/\s+in\s+/i)[0]?.trim() ||
+    'business'
+  );
+}
+
+function formatSearchLocation(intent: ParsedLeadIntent): string {
+  const loc = intent.location || {};
+  const parts = [loc.city, loc.country].filter(Boolean);
+  if (parts.length) return parts.join(', ');
+  const fromQuery = intent.search_query?.match(/\bin\s+([^.!?\n]+)/i)?.[1]?.trim();
+  if (fromQuery) return fromQuery;
+  return 'United States';
+}
+
+export async function scraperRunAccepted(res: Response): Promise<boolean> {
+  if (!res.ok) return false;
+  try {
+    const body = (await res.json()) as { status?: string; campaign_id?: string };
+    return body.status === 'started' || Boolean(body.campaign_id);
+  } catch {
+    return false;
+  }
+}
+
 export async function fallbackLocalSearch(
   tenantId: string,
   campaignId: string,
   intent: ParsedLeadIntent
 ): Promise<number> {
   const supabase = createSupabaseAdminClient();
-  const niche = intent.industry?.[0] || intent.search_query || 'business';
-  const location =
-    intent.location?.city ||
-    intent.location?.country ||
-    'United States';
+  const niche = formatSearchNiche(intent);
+  const location = formatSearchLocation(intent);
 
   const result = await freePlacesService.searchPlacesForLeads(niche, location, undefined, {
     maxResults: 30,

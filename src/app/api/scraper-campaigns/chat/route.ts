@@ -10,6 +10,7 @@ import {
 } from '@/lib/scraper/nicheSearchAdvisor';
 import {
   fallbackLocalSearch,
+  scraperRunAccepted,
   saveLeadsToCrm,
   startLeadOutreachAutomation,
   triggerNexusAutomation,
@@ -57,7 +58,7 @@ async function createAndRunCampaign(
     throw new Error(error?.message || 'Failed to create campaign');
   }
 
-  let scraperOk = false;
+  let scraperStarted = false;
   try {
     const scraperRes = await callScraperService('/api/scraper/campaign/run', {
       method: 'POST',
@@ -67,26 +68,31 @@ async function createAndRunCampaign(
         user_id: userId,
       },
     });
-    scraperOk = scraperRes.ok;
-    if (!scraperRes.ok) {
-      console.warn('[chat] Scraper service unavailable:', await scraperRes.text());
+    scraperStarted = await scraperRunAccepted(scraperRes);
+    if (!scraperStarted) {
+      console.warn('[chat] Scraper service unavailable or invalid response');
     }
   } catch (err) {
     console.warn('[chat] Scraper service call failed:', err);
   }
 
-  if (!scraperOk) {
-    const count = await fallbackLocalSearch(tenantId, campaign.id, intent);
-    await supabase.from('lead_campaign_runs').insert({
-      campaign_id: campaign.id,
-      tenant_id: tenantId,
-      status: count > 0 ? 'completed' : 'running',
-      current_step: count > 0 ? 'done' : 'scraping',
-      progress: count > 0 ? 100 : 20,
-      source_count: count,
-      enriched_count: count,
-    });
+  let fallbackCount = 0;
+  try {
+    fallbackCount = await fallbackLocalSearch(tenantId, campaign.id, intent);
+  } catch (err) {
+    console.warn('[chat] Local fallback search failed:', err);
   }
+
+  const completed = fallbackCount > 0 && !scraperStarted;
+  await supabase.from('lead_campaign_runs').insert({
+    campaign_id: campaign.id,
+    tenant_id: tenantId,
+    status: completed ? 'completed' : scraperStarted ? 'running' : fallbackCount > 0 ? 'completed' : 'running',
+    current_step: fallbackCount > 0 ? (scraperStarted ? 'scraping' : 'done') : 'scraping',
+    progress: fallbackCount > 0 ? (scraperStarted ? 40 : 100) : scraperStarted ? 15 : 10,
+    source_count: fallbackCount,
+    enriched_count: fallbackCount,
+  });
 
   return campaign;
 }
@@ -151,6 +157,26 @@ export async function POST(req: NextRequest) {
         .order('run_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      const { count: leadCount } = await supabase
+        .from('scraper_leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('campaign_id', campaignId);
+
+      if (leadCount && leadCount > 0) {
+        return NextResponse.json({
+          status: {
+            ...(run || {}),
+            status: 'completed',
+            progress: 100,
+            current_step: 'done',
+            source_count: leadCount,
+            enriched_count: leadCount,
+          },
+        });
+      }
+
       return NextResponse.json({ status: run || { status: 'unknown', progress: 0 } });
     }
 
