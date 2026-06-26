@@ -85,8 +85,9 @@ export async function updateSession(request: NextRequest) {
         const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
-            // Log error but allow request to proceed (as unauthenticated) to prevent 500 crash
-            console.error('Middleware Warning: Missing Supabase Environment Variables');
+            if (!pathname.startsWith('/api/')) {
+                console.warn('Middleware: Supabase public env vars are not set; session refresh skipped.');
+            }
             return response;
         }
 
