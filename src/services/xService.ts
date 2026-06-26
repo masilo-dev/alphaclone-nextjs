@@ -243,10 +243,14 @@ export const xService = {
             body: JSON.stringify(body)
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         const data = await response.json();
 
@@ -284,10 +288,14 @@ export const xService = {
             })
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         const data = await response.json();
 
@@ -319,10 +327,14 @@ export const xService = {
             }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         return await response.json();
     },
@@ -348,10 +360,14 @@ export const xService = {
             })
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         const data = await response.json();
 
@@ -391,10 +407,14 @@ export const xService = {
             }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         const data = await response.json();
 
@@ -449,10 +469,14 @@ export const xService = {
             }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         return await response.json();
     },
@@ -476,10 +500,14 @@ export const xService = {
             }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         return await response.json();
     },
@@ -505,10 +533,14 @@ export const xService = {
             }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      const errBody = error as { title?: string; detail?: string; message?: string };
+      if (errBody.title === 'CreditsDepleted') {
+        throw new Error('X_API_CREDITS_DEPLETED');
+      }
+      throw new Error(`X API error: ${JSON.stringify(error)}`);
+    }
 
         return await response.json();
     }

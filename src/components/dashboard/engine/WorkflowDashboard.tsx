@@ -312,13 +312,10 @@ export default function WorkflowDashboard() {
         ...f, actions: [...f.actions, { type: 'notify_user', config: { title: 'New event', message: '' } }]
     }));
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
-        </div>
+    const activeCount = useMemo(
+        () => workflows.filter(w => w.is_active).length,
+        [workflows],
     );
-
-    const activeCount = workflows.filter(w => w.is_active).length;
 
     const workflowStats = useMemo<ModuleStat[]>(() => {
         const succeeded = executions.filter(e => e.status === 'success').length;
@@ -335,6 +332,12 @@ export default function WorkflowDashboard() {
             { label: 'Avg Duration', value: avgMs > 1000 ? `${(avgMs / 1000).toFixed(1)}s` : `${avgMs}ms`, sub: failed > 0 ? `${failed} failed` : 'All healthy', Icon: Clock, accent: failed > 0 ? 'rose' : 'purple' },
         ];
     }, [workflows.length, activeCount, executions]);
+
+    if (loading) return (
+        <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+        </div>
+    );
 
     return (
         <div className="space-y-6">

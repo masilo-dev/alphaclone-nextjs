@@ -24,6 +24,7 @@ export default function XIntegrationTab() {
   const [posting, setPosting] = useState(false);
   const [tweets, setTweets] = useState<Array<{ id: string; text: string }>>([]);
   const [loadingTweets, setLoadingTweets] = useState(false);
+  const [creditsDepleted, setCreditsDepleted] = useState(false);
   const connectedAt = integration?.created_at ? new Date(integration.created_at) : null;
   const remainingChars = 280 - postText.length;
 
@@ -50,6 +51,12 @@ export default function XIntegrationTab() {
     try {
       const res = await fetch(`/api/x/tweets?tenantId=${encodeURIComponent(currentTenant.id)}`);
       const payload = await res.json();
+      if (payload.creditsDepleted) {
+        setCreditsDepleted(true);
+        setTweets([]);
+        return;
+      }
+      setCreditsDepleted(false);
       if (!res.ok || !payload.success) {
         throw new Error(payload.error || 'Failed to load posts');
       }
@@ -103,6 +110,11 @@ export default function XIntegrationTab() {
         body: JSON.stringify({ tenantId: currentTenant.id, text: postText.trim() }),
       });
       const payload = await res.json();
+      if (payload.creditsDepleted) {
+        setCreditsDepleted(true);
+        toast.error(payload.error || 'X API credits depleted');
+        return;
+      }
       if (!res.ok || !payload.success) {
         throw new Error(payload.error || 'Post failed');
       }
@@ -208,6 +220,16 @@ export default function XIntegrationTab() {
           </div>
         </div>
       </div>
+
+      {creditsDepleted && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Your X developer account has no API credits left. Timeline and posting are paused until you add credits at{' '}
+          <a href="https://developer.x.com" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            developer.x.com
+          </a>
+          .
+        </div>
+      )}
 
       <form onSubmit={handlePost} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
         <div className="flex items-center justify-between">
