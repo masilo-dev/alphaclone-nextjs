@@ -1,209 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  Box,
-  Card,
-  CardBody,
-  CardHeader,
-  Flex,
-  Heading,
-  Icon,
-  Skeleton,
-  Text,
-  VStack,
-  useColorModeValue,
-} from '@chakra-ui/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
-import { useTenant } from '@/contexts/TenantContext';
-import { formatDistanceToNow } from 'date-fns';
-import {
-  Activity,
-  FileText,
-  MessageSquare,
-  DollarSign,
-  User,
-  Clock,
-} from 'lucide-react';
-
-interface ActivityLog {
-  id: string;
-  entity_type: string;
-  action: string;
-  created_at: string;
-  tenant_id: string;
-}
+import type { DashboardFeedItem } from '@/types/dashboardStats';
 
 interface ActivityFeedProps {
-  userId: string;
-  limit?: number;
+  items: DashboardFeedItem[];
 }
 
-const ENTITY_ICONS: Record<string, React.ElementType> = {
-  project: FileText,
-  message: MessageSquare,
-  payment: DollarSign,
-  user: User,
-};
+function truncateText(text: string, max = 40): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
 
-const ENTITY_COLORS: Record<string, string> = {
-  project: 'blue',
-  message: 'purple',
-  payment: 'green',
-  user: 'yellow',
-};
-
-/**
- * Activity feed component showing recent audit log entries with realtime updates.
- * Uses Chakra UI for styling and Framer Motion for animations.
- */
-export function ActivityFeed({ userId, limit = 20 }: ActivityFeedProps) {
-  const { currentTenant, isLoading: tenantLoading } = useTenant();
-  const tenantId = currentTenant?.id;
-  const [activities, setActivities] = useState<ActivityLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(true);
-
-  const bgCard = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-
-  useEffect(() => {
-    if (!tenantId) return;
-
-    const supabase = createSupabaseBrowserClient();
-
-    async function fetchActivities() {
-      try {
-        const { data } = await supabase
-          .from('audit_logs')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .order('created_at', { ascending: false })
-          .limit(limit);
-
-        setActivities(data || []);
-      } catch (err) {
-        console.error('Failed to fetch activities:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchActivities();
-
-    // Realtime subscription
-    const channel = supabase.channel(`activity-feed-${tenantId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'audit_logs', filter: `tenant_id=eq.${tenantId}` },
-        (payload: any) => {
-          setActivities((prev) => [payload.new as ActivityLog, ...prev.slice(0, limit - 1)]);
-        }
-      )
-      .subscribe((status: any) => {
-        setIsConnected(status === 'SUBSCRIBED');
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tenantId, limit]);
-
-  if (tenantLoading || isLoading) {
-    return (
-      <Card bg={bgCard} borderColor={borderColor} borderWidth="1px">
-        <CardBody>
-          <VStack spacing={3}>
-            {[...Array(5)].map((_, i) => (
-              <Flex key={i} gap={3} w="100%">
-                <Skeleton boxSize="32px" borderRadius="lg" />
-                <Box flex={1}>
-                  <Skeleton height="16px" mb={2} w="75%" />
-                  <Skeleton height="12px" w="50%" />
-                </Box>
-              </Flex>
-            ))}
-          </VStack>
-        </CardBody>
-      </Card>
-    );
-  }
+export function ActivityFeed({ items }: ActivityFeedProps) {
+  const visible = items.slice(0, 5);
 
   return (
-    <Card bg={bgCard} borderColor={borderColor} borderWidth="1px">
-      <CardHeader>
-        <Flex justify="space-between" align="center">
-          <Heading size="md" color={textColor}>
-            Recent Activity
-          </Heading>
-          {!isConnected && (
-            <Text fontSize="xs" color="red.500">
-              Disconnected
-            </Text>
-          )}
-        </Flex>
-      </CardHeader>
-      <CardBody>
-        {activities.length === 0 ? (
-          <Box textAlign="center" py={8} color="gray.500">
-            <Activity size={48} style={{ margin: '0 auto', marginBottom: '12px', opacity: 0.5 }} />
-            <Text fontSize="sm">No recent activity</Text>
-          </Box>
+    <div className="bg-surface-1 rounded-lg p-4 h-full min-h-[200px]">
+      <div className="space-y-3">
+        {visible.length === 0 ? (
+          <div className="text-xs text-slate-500 py-8 text-center">No activity</div>
         ) : (
-          <VStack spacing={1} align="stretch">
-            <AnimatePresence>
-              {activities.map((activity, index) => {
-                const IconComponent = ENTITY_ICONS[activity.entity_type] || Activity;
-                const color = ENTITY_COLORS[activity.entity_type] || 'gray';
-
-                return (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ delay: index * 0.02 }}
-                  >
-                    <Flex
-                      gap={3}
-                      p={3}
-                      borderRadius="lg"
-                      _hover={{ bg: useColorModeValue('gray.50', 'gray.700') }}
-                      transition="all 0.2s"
-                    >
-                      <Box
-                        boxSize="32px"
-                        borderRadius="lg"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        bg={`${color}.100`}
-                        _dark={{ bg: `${color}.900` }}
-                        flexShrink={0}
-                      >
-                        <Icon as={IconComponent} boxSize={4} color={`${color}.500`} />
-                      </Box>
-                      <Box flex={1} minW={0}>
-                        <Text fontSize="sm" fontWeight="medium" color={textColor} noOfLines={1}>
-                          {activity.action}
-                        </Text>
-                        <Flex align="center" gap={1} mt={1}>
-                          <Clock size={12} />
-                          <Text fontSize="xs" color="gray.500">
-                            {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                          </Text>
-                        </Flex>
-                      </Box>
-                    </Flex>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </VStack>
+          visible.map((item, i) => (
+            <div key={`${item.text}-${i}`} className="flex items-start gap-2">
+              <span
+                className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                style={{ backgroundColor: item.dot }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-200 truncate">{truncateText(item.text)}</p>
+                <span className="text-[10px] text-slate-500">{item.time}</span>
+              </div>
+            </div>
+          ))
         )}
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }

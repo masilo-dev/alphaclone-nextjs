@@ -39,6 +39,15 @@ import { loadMeetingForJoin, startClientVideoCall, type PlatformMeetingProvider 
 
 // Components
 import BusinessHome from './BusinessHome';
+import {
+  OverviewDashboard,
+  CrmDashboard,
+  OutreachDashboard,
+  InvoicingDashboard,
+  ContractsDashboard,
+  ProjectsDashboard,
+  SocialDashboard,
+} from '../views/ModuleDashboardView';
 import ProjectsPage from './ProjectsPage';
 import TeamPage from './TeamPage';
 // Lazy load heavier tabs that aren't needed on dashboard mount
@@ -482,9 +491,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         switch (tab) {
             case '/dashboard':
             case '/dashboard/business':
-                return <BusinessHome user={user} stats={dashboardStats} />;
+                return <BusinessHome />;
             case '/dashboard/projects':
             case '/dashboard/business/projects':
+                return <ProjectsDashboard />;
+            case '/dashboard/projects/manage':
+            case '/dashboard/business/projects/manage':
                 return <ProjectsPage user={user} />;
             case '/dashboard/business/team':
                 return <TeamPage user={user} />;
@@ -516,6 +528,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/billing':
             case '/dashboard/business/billing':
+                return <InvoicingDashboard />;
+            case '/dashboard/business/billing/manage':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <EnhancedBillingPage user={user} />
@@ -549,11 +563,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             // New Routes
             case '/dashboard/crm':
+                return <CrmDashboard />;
+            case '/dashboard/crm/workspace':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
                         <CRMTab user={user} />
                     </React.Suspense>
                 );
+            case '/dashboard/outreach':
+                return <OutreachDashboard />;
             case '/dashboard/deals':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
@@ -660,6 +678,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/contracts':
             case '/dashboard/business/contracts':
+                return <ContractsDashboard />;
+            case '/dashboard/contracts/manage':
+            case '/dashboard/business/contracts/manage':
                 return <ContractDashboard user={user} initialTab="details" />;
             // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
             case '/dashboard/business/quotes':
@@ -743,6 +764,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/business/social':
+            case '/dashboard/social':
+                return <SocialDashboard />;
+            case '/dashboard/social/compose':
+            case '/dashboard/business/social/compose':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={4} columns={3} />}>
                         <SocialMediaComposer />
@@ -871,6 +896,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
             case '/dashboard/finance':
+                return <InvoicingDashboard />;
+            case '/dashboard/finance/manage':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
                         <FinanceTab user={user} />

@@ -21,6 +21,20 @@
   --ac-accent-hover: #2dd4bf;
   --ac-accent-deep: #0d9488;
   --ac-accent-muted: rgba(20, 184, 166, 0.12);
+  --surface-1: #f8fafc;
+  --dashboard-green: #639922;
+  --dashboard-green-bg: #EAF3DE;
+  --dashboard-amber: #EF9F27;
+  --dashboard-amber-bg: #FAEEDA;
+  --dashboard-red: #E24B4A;
+  --dashboard-red-bg: #FCEBEB;
+  --dashboard-blue: #378ADD;
+  --dashboard-blue-bg: #E6F1FB;
+}
+
+.dark,
+.ac-business-root {
+  --surface-1: rgba(30, 41, 59, 0.65);
 }
 
 /* Marketing Theme Definitions */
