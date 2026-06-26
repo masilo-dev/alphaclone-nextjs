@@ -466,8 +466,8 @@ export const dealService: DealService = {
             if (updates.wonDetails !== undefined) updateData.won_details = updates.wonDetails;
             if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
 
-            // Auto-set actual_close_date when deal is won or lost
-            if ((updates.stage === 'closed_won' || updates.stage === 'closed_lost') && !updates.actualCloseDate) {
+            // Auto-set actual_close_date when deal is won (closed_lost deletes above)
+            if (updates.stage === 'closed_won' && !updates.actualCloseDate) {
                 updateData.actual_close_date = new Date().toISOString().split('T')[0];
             }
 
