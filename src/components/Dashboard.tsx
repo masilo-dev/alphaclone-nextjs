@@ -79,6 +79,7 @@ import { userService } from '../services/userService';
 import SecurityDashboard from './dashboard/SecurityDashboard';
 import AlphaCloneContractModal from './contracts/AlphaCloneContractModal';
 import SettingsPage from './dashboard/SettingsPage';
+import PwaSettingsScreen from './pwa/PwaSettingsScreen';
 import OnboardingPipelines from './dashboard/OnboardingPipelines';
 import PortfolioShowcase from './dashboard/PortfolioShowcase';
 import WelcomeModal from './dashboard/WelcomeModal';
@@ -1454,6 +1455,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/settings':
         return <SettingsPage user={user} />;
 
+      case '/dashboard/pwa-settings':
+        return (
+          <PwaSettingsScreen
+            user={user}
+            onBack={() => setActiveTab('/dashboard')}
+          />
+        );
+
       case '/dashboard/submit':
         return (
           <ProjectSubmitTab
@@ -1779,13 +1788,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         onNavigate={(href) => setActiveTab(href)}
         onToggleMenu={() => setSidebarOpen(true)}
         unreadCount={unreadMessageCount}
+        userRole={user.role}
       />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden bg-slate-950 ac-dashboard-shell-bg [height:100dvh]">
         <TrialBanner />
         {/* Header - Visible in all dashboard views */}
-        <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header">
+        <header className={`bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header ${activeTab === '/dashboard/pwa-settings' ? 'hidden md:block' : ''}`}>
           <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
@@ -1843,6 +1853,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   user={user}
                   onLogout={onLogout}
                   onSettings={() => setActiveTab('/dashboard/settings')}
+                  onPwaSettings={() => setActiveTab('/dashboard/pwa-settings')}
                 />
               </div>
             </div>
@@ -1852,7 +1863,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Main Content Area */}
         <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
-          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${activeTab === '/dashboard/mail' || activeTab === '/dashboard/messages' ? 'h-full flex flex-col' : 'min-h-full'}`}>
+          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${
+            activeTab === '/dashboard/pwa-settings'
+              ? 'p-0 max-w-none'
+              : activeTab === '/dashboard/mail' || activeTab === '/dashboard/messages'
+                ? 'h-full flex flex-col'
+                : 'min-h-full'
+          }`}>
             {/* Background decorative elements */}
             <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 max-w-7xl mx-auto min-h-full">

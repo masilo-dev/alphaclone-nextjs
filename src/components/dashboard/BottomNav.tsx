@@ -2,9 +2,11 @@
 
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, Settings2 } from 'lucide-react';
 import { UserRole } from '../../types';
-import { getPwaBottomNavItems, isPwaNavActive } from '@/config/pwaMobileNav';
+import { isPwaNavActive, resolveBottomNavItems } from '@/config/pwaMobileNav';
+import { usePwaPreferences } from '@/hooks/usePwaPreferences';
+import { usePWA } from '@/contexts/PWAContext';
 
 interface BottomNavProps {
     activeTab: string;
@@ -22,7 +24,12 @@ const BottomNav: React.FC<BottomNavProps> = ({
     userRole = 'client',
 }) => {
     const router = useRouter();
-    const mobileNavItems = useMemo(() => getPwaBottomNavItems(userRole), [userRole]);
+    const { isPWA } = usePWA();
+    const { prefs } = usePwaPreferences();
+    const mobileNavItems = useMemo(
+        () => resolveBottomNavItems(userRole, prefs.bottomNavModuleIds),
+        [userRole, prefs.bottomNavModuleIds],
+    );
 
     const handleNavClick = (href: string) => {
         onNavigate(href);
@@ -59,12 +66,25 @@ const BottomNav: React.FC<BottomNavProps> = ({
 
                 <button
                     type="button"
-                    onClick={onToggleMenu}
-                    aria-label="More"
-                    className="native-tap flex flex-col items-center justify-center w-full h-full gap-0.5 text-slate-500 transition-colors"
+                    onClick={() =>
+                        isPWA ? handleNavClick('/dashboard/pwa-settings') : onToggleMenu()
+                    }
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        handleNavClick('/dashboard/pwa-settings');
+                    }}
+                    aria-label={isPWA ? 'Mobile settings' : 'More'}
+                    aria-current={activeTab === '/dashboard/pwa-settings' ? 'page' : undefined}
+                    className={`native-tap flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${
+                        activeTab === '/dashboard/pwa-settings' ? 'text-teal-400' : 'text-slate-500'
+                    }`}
                 >
-                    <Menu className="w-5 h-5" strokeWidth={1.75} />
-                    <span className="pwa-tab-label">More</span>
+                    {isPWA ? (
+                        <Settings2 className="w-5 h-5" strokeWidth={1.75} />
+                    ) : (
+                        <Menu className="w-5 h-5" strokeWidth={1.75} />
+                    )}
+                    <span className="pwa-tab-label">{isPWA ? 'App' : 'More'}</span>
                 </button>
             </div>
         </div>
