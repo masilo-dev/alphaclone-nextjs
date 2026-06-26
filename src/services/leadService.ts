@@ -4,6 +4,7 @@ import { businessClientService } from './businessClientService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
 import { assertLeadStageTransition } from '../lib/stageProgression';
+import { isTerminalLeadStage, normalizeLeadPipelineStage } from '../lib/crmPipelineStages';
 import { intelligenceScoringService } from './intelligence/intelligenceScoringService';
 
 type LeadMetadata = Record<string, any>;
@@ -155,7 +156,7 @@ function normalizeLeadRecord(l: any): Lead {
         email: l.email,
         website: l.website,
         source: l.source,
-        stage: l.stage,
+        stage: normalizeLeadPipelineStage(l.stage),
         value: l.value,
         notes: l.notes,
         created_at: l.created_at,
@@ -242,7 +243,9 @@ export const leadService = {
 
             if (error) throw error;
 
-            const leads: Lead[] = (data || []).map(normalizeLeadRecord);
+            const leads: Lead[] = (data || [])
+                .map(normalizeLeadRecord)
+                .filter((lead) => !isTerminalLeadStage(lead.stage));
 
             return { leads, error: null };
         } catch (err) {
@@ -426,6 +429,11 @@ export const leadService = {
         const tenantId = this.getTenantId();
 
         if (updates.stage) {
+            const normalizedStage = normalizeLeadPipelineStage(updates.stage);
+            if (isTerminalLeadStage(normalizedStage) && normalizedStage === 'lost') {
+                return this.deleteLead(id);
+            }
+
             const { data: existingLead } = await supabase
                 .from('leads')
                 .select('stage')
@@ -434,12 +442,15 @@ export const leadService = {
                 .single();
 
             if (existingLead) {
-                const check = assertLeadStageTransition(existingLead.stage, updates.stage);
+                const fromStage = normalizeLeadPipelineStage(existingLead.stage);
+                const check = assertLeadStageTransition(fromStage, normalizedStage);
                 if (!check.ok) {
                     const message = (check as any).message || 'Invalid stage transition';
                     return { error: message };
                 }
             }
+
+            updates = { ...updates, stage: normalizedStage };
         }
 
         const dbPayload: any = {};

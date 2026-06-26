@@ -20,16 +20,18 @@ import type { EmailRecipient } from './crm/emailRecipient';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { DealRevenueTimeline } from './deals/DealRevenueTimeline';
 import EmptyState from '../ui/EmptyState';
-import { transitionDealStage } from '@/lib/dealStageActions';
 import {
   getDealStageProgress,
   getForwardStageTarget,
   PIPELINE_FORWARD_ONLY_HINT,
+  assertDealStageTransition,
 } from '@/lib/stageProgression';
+import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
 const STAGES: DealStage[] = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
+const BOARD_STAGES = ACTIVE_DEAL_STAGES;
 
 const STAGE_COLORS: Record<DealStage, { bg: string; text: string; border: string }> = {
   lead:          { bg: 'bg-slate-500/15',   text: 'text-slate-400',   border: 'border-slate-500/30' },
@@ -432,7 +434,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       .select('*')
       .eq('tenant_id', currentTenant.id)
       .order('created_at', { ascending: false });
-    setDeals((data as Deal[]) || []);
+    setDeals((data as Deal[])?.filter((d) => isActiveDealStage(d.stage)) || []);
     setLoading(false);
   }, [currentTenant?.id]);
 
@@ -440,17 +442,49 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   const applyStageChange = async (id: string, newStage: DealStage) => {
     const deal = deals.find((d) => d.id === id);
-    if (!deal) return;
-    const result = await transitionDealStage({
-      dealId: id,
-      fromStage: deal.stage,
-      toStage: newStage,
-      navigate: (path) => router.push(path),
-    });
-    if (!result.ok) {
-      toast.error(result.message);
+    if (!deal || !currentTenant?.id) return;
+
+    if (newStage === 'closed_lost') {
+      const { error } = await supabase
+        .from('deals')
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', currentTenant.id);
+      if (error) {
+        toast.error(error.message || 'Failed to remove deal');
+        return;
+      }
+      setDeals((prev) => prev.filter((d) => d.id !== id));
+      if (selectedDeal?.id === id) setSelectedDeal(null);
+      toast.success('Deal removed from pipeline');
       return;
     }
+
+    const check = assertDealStageTransition(deal.stage, newStage);
+    if (!check.ok) {
+      toast.error(check.message);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('deals')
+      .update({ stage: newStage, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', currentTenant.id);
+
+    if (error) {
+      toast.error(error.message || 'Failed to update deal stage');
+      return;
+    }
+
+    const removesFromBoard = newStage === 'closed_won';
+    if (removesFromBoard) {
+      setDeals((prev) => prev.filter((d) => d.id !== id));
+      if (selectedDeal?.id === id) setSelectedDeal(null);
+      toast.success('Deal closed won — removed from active board');
+      return;
+    }
+
     setDeals((prev) =>
       prev.map((d) =>
         d.id === id ? { ...d, stage: newStage, updated_at: new Date().toISOString() } : d
@@ -542,7 +576,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   // Group by stage for Board / mobile views
   const grouped = useMemo(() => {
-    return STAGES.reduce<Record<string, Deal[]>>((acc, s) => {
+    return BOARD_STAGES.reduce<Record<string, Deal[]>>((acc, s) => {
       acc[s] = deals.filter(d => d.stage === s);
       return acc;
     }, {} as Record<string, Deal[]>);
@@ -634,7 +668,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   // ── RENDER BOARD VIEW ──────────────────────────────────────────────────────────
   const renderBoard = () => (
     <div className="flex gap-4 p-4 overflow-x-auto h-[calc(100vh-210px)] select-none">
-      {STAGES.map((stage) => {
+      {BOARD_STAGES.map((stage) => {
         const stageDeals = grouped[stage] || [];
         const col = STAGE_COLORS[stage];
         const totalVal = stageDeals.reduce((sum, d) => sum + (d.value || 0), 0);
@@ -859,7 +893,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   // ── RENDER STAGES LIST VIEW (Existing Swipe view) ────────────────────────────────
   const renderMobileStageList = () => (
     <div className="flex-grow overflow-y-auto pb-20">
-      {STAGES.map(stage => {
+      {BOARD_STAGES.map(stage => {
         const stageDeals = grouped[stage] || [];
         if (stageDeals.length === 0) return null;
         const col = STAGE_COLORS[stage];

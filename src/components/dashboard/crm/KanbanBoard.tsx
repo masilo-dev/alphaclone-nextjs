@@ -25,6 +25,7 @@ import { CrmNextStepsPanel } from './CrmNextStepsPanel';
 import { buildLeadKanbanNextSteps } from '@/lib/crmNextSteps';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
+import { ACTIVE_LEAD_KANBAN_STAGES } from '@/lib/crmPipelineStages';
 import { Mail, Phone, MapPin, Sparkles, AlertCircle, ShieldCheck, GripVertical, CheckCircle2, Plus, X } from 'lucide-react';
 import AIOutreachModal from '../business/AIOutreachModal';
 import { supabase } from '@/lib/supabase';
@@ -33,15 +34,13 @@ import { Avatar } from '@/components/ui/Avatar';
 import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-// Define the columns/stages based on the database
+// Active pipeline columns only — won/lost are terminal actions (removed from board).
 const KANBAN_STAGES = [
   { id: 'lead', title: 'Discovered', color: 'bg-slate-800' },
   { id: 'qualified', title: 'Qualified', color: 'bg-blue-900/20' },
   { id: 'proposal', title: 'Proposal', color: 'bg-indigo-900/20' },
   { id: 'negotiation', title: 'Negotiation', color: 'bg-amber-900/20' },
-  { id: 'won', title: 'Closed Won', color: 'bg-emerald-900/20' },
-  { id: 'lost', title: 'Closed Lost', color: 'bg-rose-900/20' },
-];
+] as const;
 
 /** ------------------------------------------------------------------
  * KANBAN CARD COMPONENT
@@ -328,8 +327,6 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     else if (stage.id === 'qualified') dotColor = 'bg-blue-400';
                     else if (stage.id === 'proposal') dotColor = 'bg-indigo-400';
                     else if (stage.id === 'negotiation') dotColor = 'bg-amber-400';
-                    else if (stage.id === 'won') dotColor = 'bg-emerald-400';
-                    else if (stage.id === 'lost') dotColor = 'bg-rose-400';
 
                     return (
                       <button
@@ -351,6 +348,22 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                       </button>
                     );
                   })}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onStageSelect(lead.id, 'won')}
+                    className="flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  >
+                    Mark won
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onStageSelect(lead.id, 'lost')}
+                    className="flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                  >
+                    Mark lost
+                  </button>
                 </div>
               </div>
 
@@ -474,30 +487,44 @@ export default function KanbanBoard() {
       toast.error(check.message);
       return;
     }
+
+    const removesFromBoard = newStage === 'lost' || newStage === 'won';
     
     // Optimistically update local states
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
+    if (removesFromBoard) {
+      setLeads(prev => prev.filter(l => l.id !== leadId));
+    } else {
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
+    }
     if (mobileDrawerLead && mobileDrawerLead.id === leadId) {
-      setMobileDrawerLead(prev => prev ? { ...prev, stage: newStage } : null);
+      if (removesFromBoard) {
+        setMobileDrawerOpen(false);
+        setMobileDrawerLead(null);
+      } else {
+        setMobileDrawerLead(prev => prev ? { ...prev, stage: newStage } : null);
+      }
     }
     if (detailLead && detailLead.id === leadId) {
-      setDetailLead(prev => prev ? { ...prev, stage: newStage } : null);
+      if (removesFromBoard) {
+        setDetailLead(null);
+      } else {
+        setDetailLead(prev => prev ? { ...prev, ...{ stage: newStage } } : null);
+      }
     }
 
     try {
       const { error } = await leadService.updateLead(leadId, { stage: newStage });
       if (error) throw new Error(error);
-      toast.success(`Moved to ${KANBAN_STAGES.find(s => s.id === newStage)?.title}`);
+      if (newStage === 'lost') {
+        toast.success('Lead removed from pipeline');
+      } else if (newStage === 'won') {
+        toast.success('Lead marked won — removed from active board');
+      } else {
+        toast.success(`Moved to ${KANBAN_STAGES.find(s => s.id === newStage)?.title}`);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to update stage');
-      // Rollback
-      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: originStage } : l));
-      if (mobileDrawerLead && mobileDrawerLead.id === leadId) {
-        setMobileDrawerLead(prev => prev ? { ...prev, stage: originStage } : null);
-      }
-      if (detailLead && detailLead.id === leadId) {
-        setDetailLead(prev => prev ? { ...prev, stage: originStage } : null);
-      }
+      await loadLeads();
     }
   };
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
@@ -519,13 +546,17 @@ export default function KanbanBoard() {
     if (error) {
         toast.error('Failed to load CRM pipeline');
     } else {
-        // Map any unknown/legacy stages to the first column so they remain visible.
+        // Map any unknown/legacy stages to the correct active column.
         const mappedLeads = (dbLeads || []).map(l => {
             if (!KANBAN_STAGES.find(c => c.id === l.stage)) {
-                return { ...l, stage: 'lead' }; // Default to first column if unknown
+                if (l.stage === 'won' || l.stage === 'lost') return null;
+                const fallback = ACTIVE_LEAD_KANBAN_STAGES.includes(l.stage as any)
+                  ? l.stage
+                  : 'lead';
+                return { ...l, stage: fallback };
             }
             return l;
-        });
+        }).filter(Boolean) as Lead[];
         setLeads(mappedLeads);
     }
     setLoading(false);
@@ -671,6 +702,7 @@ export default function KanbanBoard() {
                 await loadLeads();
                 return;
             }
+            const removesFromBoard = newStage === 'lost' || newStage === 'won';
             try {
                 await toast.promise(
                     (async () => {
@@ -679,10 +711,13 @@ export default function KanbanBoard() {
                     })(),
                     {
                         loading: 'Syncing pipeline...',
-                        success: 'Pipeline updated',
+                        success: removesFromBoard ? 'Removed from active pipeline' : 'Pipeline updated',
                         error: (err) => (err instanceof Error ? err.message : 'Failed to update pipeline'),
                     }
                 );
+                if (removesFromBoard) {
+                    setLeads((prev) => prev.filter((l) => l.id !== lead.id));
+                }
             } catch {
                 await loadLeads();
             }
@@ -755,7 +790,7 @@ export default function KanbanBoard() {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {KANBAN_STAGES.map((stage) => (
               <div key={stage.id} className="px-2 py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-xs text-slate-300 flex justify-between">
                 <span>{stage.title}</span>
@@ -771,7 +806,7 @@ export default function KanbanBoard() {
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
-            <div className="flex md:grid md:grid-cols-6 gap-3 md:gap-4 min-h-[280px] snap-x snap-proximity md:snap-none pb-4 items-stretch">
+            <div className="flex md:grid md:grid-cols-4 gap-3 md:gap-4 min-h-[280px] snap-x snap-proximity md:snap-none pb-4 items-stretch">
                 <SortableContext items={columns.map(c => c.id)}>
                     {columns.map((col) => (
                         <KanbanColumn
