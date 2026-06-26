@@ -33,7 +33,9 @@ import {
     Send,
     DollarSign,
     UserCheck,
-    Target
+    Target,
+    CheckSquare,
+    Square
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
@@ -52,46 +54,13 @@ import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
+import { CRMNav } from '../crm/CRMNav';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
+const ContactsList = lazy(() => import('../crm/ContactsList'));
 
-const CRM_NAV_LINKS: { href: string; label: string }[] = [
-    { href: '/dashboard/crm', label: 'Overview' },
-    { href: '/dashboard/deals', label: 'Deals' },
-    { href: '/dashboard/leads', label: 'Leads' },
-    { href: '/dashboard/contacts', label: 'Contacts' },
-];
-
-function isCrmNavActive(pathname: string, href: string): boolean {
-    if (href === '/dashboard/contacts') {
-        return pathname === '/dashboard/contacts' || pathname === '/dashboard/business/clients';
-    }
-    return pathname === href;
-}
-
-function CRMNav({ pathname }: { pathname: string }) {
-    return (
-        <nav
-            aria-label="CRM sections"
-            className="flex flex-nowrap gap-1.5 sm:gap-2 mb-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl overflow-x-auto overscroll-x-contain [scrollbar-width:thin]"
-        >
-            {CRM_NAV_LINKS.map((link) => (
-                <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
-                        isCrmNavActive(pathname, link.href)
-                            ? 'bg-teal-600 text-white'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                    }`}
-                >
-                    {link.label}
-                </Link>
-            ))}
-        </nav>
-    );
-}
+type ContactDirectoryView = 'sales' | 'email';
 
 interface ClientsPageProps {
     user: User;
@@ -187,6 +156,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
     const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
+    const directoryParam = searchParams?.get('directory');
+    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
 
     const loadClients = useCallback(async (isInitial = true) => {
         if (!currentTenant) return;
@@ -249,6 +220,54 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             router.replace(`${pathname}?${params.toString()}`, { scroll: false });
         }
     }, [searchParams, pathname, router]);
+
+    useEffect(() => {
+        if (pathname === '/dashboard/crm/unified-contacts') {
+            const base = pathname.includes('business') ? '/dashboard/business/clients' : '/dashboard/contacts';
+            router.replace(`${base}?directory=email`, { scroll: false });
+            return;
+        }
+        if (directoryParam === 'email') setDirectoryView('email');
+        else if (directoryParam === 'sales') setDirectoryView('sales');
+    }, [pathname, directoryParam, router]);
+
+    const contactsBasePath =
+        pathname === '/dashboard/business/clients' ? '/dashboard/business/clients' : '/dashboard/contacts';
+
+    const setDirectoryViewAndUrl = (view: ContactDirectoryView) => {
+        setDirectoryView(view);
+        router.replace(`${contactsBasePath}?directory=${view}`, { scroll: false });
+    };
+
+    const directorySwitcher = (
+        <div className="space-y-2">
+            <div className="flex gap-1 p-1 bg-slate-900/80 border border-slate-800 rounded-xl w-full sm:w-fit">
+                <button
+                    type="button"
+                    onClick={() => setDirectoryViewAndUrl('sales')}
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                        directoryView === 'sales' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                >
+                    Sales pipeline
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setDirectoryViewAndUrl('email')}
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                        directoryView === 'email' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                >
+                    Email list
+                </button>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+                {directoryView === 'sales'
+                    ? 'Clients and prospects in your pipeline — tie to deals, invoices, and outreach.'
+                    : 'Imported and campaign contacts for email and SMS. These are separate from sales pipeline records.'}
+            </p>
+        </div>
+    );
 
     useEffect(() => {
         filterClients();
@@ -440,6 +459,58 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+    const toggleClientSelection = (clientId: string) => {
+        setSelectedClientIds((prev) => {
+            if (prev.includes(clientId)) return prev.filter((id) => id !== clientId);
+            if (prev.length >= 500) {
+                toast.error('Maximum 500 contacts can be selected');
+                return prev;
+            }
+            return [...prev, clientId];
+        });
+    };
+
+    const allFilteredClientsSelected =
+        filteredClients.length > 0 && filteredClients.every((c) => selectedClientIds.includes(c.id));
+
+    const toggleSelectAllFiltered = () => {
+        if (allFilteredClientsSelected) {
+            setSelectedClientIds([]);
+            return;
+        }
+        const batch = filteredClients.slice(0, 500).map((c) => c.id);
+        setSelectedClientIds(batch);
+        if (filteredClients.length > 500) {
+            toast('Selected first 500 contacts (maximum).', { icon: 'ℹ️' });
+        }
+    };
+
+    const renderBulkSelectRow = () => (
+        <div className="flex items-center justify-between px-1">
+            <button
+                type="button"
+                onClick={toggleSelectAllFiltered}
+                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white"
+            >
+                {allFilteredClientsSelected ? (
+                    <CheckSquare className="w-4 h-4 text-teal-400" />
+                ) : (
+                    <Square className="w-4 h-4" />
+                )}
+                {allFilteredClientsSelected ? 'Deselect all' : `Select all (${Math.min(filteredClients.length, 500)})`}
+            </button>
+            {selectedClientIds.length > 0 && (
+                <button
+                    type="button"
+                    onClick={() => setSelectedClientIds([])}
+                    className="text-xs text-slate-500 hover:text-slate-300"
+                >
+                    Clear ({selectedClientIds.length})
+                </button>
+            )}
+        </div>
+    );
+
     const handleLoadMore = () => {
         void loadClients(false);
     };
@@ -528,6 +599,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         );
     }
 
+    const isContactsRoute = ['/dashboard/contacts', '/dashboard/business/clients', '/dashboard/clients'].includes(pathname);
+
+    if (isContactsRoute && directoryView === 'email') {
+        return (
+            <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+                <CRMNav pathname={pathname} />
+                {directorySwitcher}
+                <Suspense fallback={crmSectionFallback}>
+                    <ContactsList />
+                </Suspense>
+            </div>
+        );
+    }
+
     // Show the simplified solo view on the free plan; paid plans (starter/pro/
     // enterprise) unlock the full CRM contacts workspace (import/export, board
     // view, batch outreach). Mirrors the `fullCRM` feature flag in PLAN_PRICING.
@@ -573,6 +658,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0">
                 <CRMNav pathname={pathname} />
+                {isContactsRoute && directorySwitcher}
                 <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
                 {/* Simplified Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -626,15 +712,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     return (
         <div className="space-y-4 sm:space-y-6 w-full min-w-0">
             <CRMNav pathname={pathname} />
+            {directorySwitcher}
             <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
             <ModuleStatCards stats={contactStats} />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Contacts</h2>
+                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Sales contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">CRM</p>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Pipeline</p>
                     </div>
                 </div>
                 <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -697,8 +784,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             variant="outline"
                             onClick={async () => {
                                 if (!confirm(`Archive ${selectedClientIds.length} contact(s)?`)) return;
-                                for (const id of selectedClientIds) {
-                                    await businessClientService.updateClient(id, { isActive: false });
+                                const { error } = await businessClientService.bulkArchiveClients(selectedClientIds);
+                                if (error) {
+                                    toast.error(error);
+                                    return;
                                 }
                                 setClients(clients.filter(c => !selectedClientIds.includes(c.id)));
                                 setSelectedClientIds([]);
@@ -759,10 +848,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         </select>
                     </div>
 
+                    {renderBulkSelectRow()}
+
                     {/* Micro grid — tiny chips */}
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
                         {filteredClients.map(client => {
                             const initials = (client.name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                            const isSelected = selectedClientIds.includes(client.id);
                             const stageDot: Record<string, string> = {
                                 lead: 'bg-cyan-400', prospect: 'bg-blue-400',
                                 customer: 'bg-emerald-400', lost: 'bg-rose-400'
@@ -774,11 +866,23 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 lost: 'from-slate-500 to-slate-700'
                             };
                             return (
-                                <button
+                                <div
                                     key={client.id}
-                                    onClick={() => { setSelectedClient(client); setViewMode('list'); }}
+                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border transition-all text-center ${isSelected ? 'border-teal-500/60 bg-teal-500/10' : 'border-slate-800 hover:border-teal-500/50 hover:bg-slate-800/80'}`}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleClientSelection(client.id)}
+                                        className="absolute top-1 left-1 text-slate-500 hover:text-teal-400"
+                                        aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
+                                    >
+                                        {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setSelectedClient(client); setViewMode('list'); }}
                                     title={`${client.name}\n${client.industry || ''}\n${client.salesStage}`}
-                                    className="group flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-teal-500/50 hover:bg-slate-800/80 transition-all hover:-translate-y-0.5 cursor-pointer text-center"
+                                    className="flex flex-col items-center gap-1.5 w-full hover:-translate-y-0.5 transition-transform cursor-pointer"
                                 >
                                     {/* Avatar */}
                                     <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-teal-500 to-violet-600'} flex items-center justify-center font-bold text-white text-xs relative`}>
@@ -789,7 +893,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <p className="text-xs font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
                                         {(client.name || '').split(' ')[0]}
                                     </p>
-                                </button>
+                                    </button>
+                                </div>
                             );
                         })}
                         {filteredClients.length === 0 && (
@@ -834,6 +939,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <option value="lost">Lost</option>
                         </select>
                     </div>
+                    {renderBulkSelectRow()}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                         {filteredClients.map(client => {
                             const initials = (client.name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
@@ -852,6 +958,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         onCreateInvoice={(c) => { setSelectedClientForInvoice(c); setShowInvoiceModal(true); }}
                                         onSendEmail={(c) => { setSelectedClientForCommunication(c); setShowCommunicationModal(true); }}
                                         showArchived={showArchived}
+                                        isSelected={selectedClientIds.includes(client.id)}
+                                        onToggleSelect={toggleClientSelection}
                                     />
                             );
                         })}
@@ -1437,7 +1545,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived }: {
+const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived, isSelected, onToggleSelect }: {
     client: BusinessClient;
     onEdit: (c: BusinessClient) => void;
     onDelete: (id: string) => void;
@@ -1446,6 +1554,8 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     onCreateInvoice: (c: BusinessClient) => void;
     onSendEmail: (c: BusinessClient) => void;
     showArchived?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: (id: string) => void;
 }) => {
     const stageVariants = {
         lead: 'blue',
@@ -1500,9 +1610,19 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     ];
 
     return (
-        <Card hoverEffect className="flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all">
+        <Card hoverEffect className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-teal-500/50' : ''}`}>
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
+                    {onToggleSelect && (
+                        <button
+                            type="button"
+                            onClick={() => onToggleSelect(client.id)}
+                            className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                            aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
+                        >
+                            {isSelected ? <CheckSquare className="w-4 h-4 text-teal-400" /> : <Square className="w-4 h-4" />}
+                        </button>
+                    )}
                     <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">
                         {(client.name || '?').charAt(0)}
                     </div>

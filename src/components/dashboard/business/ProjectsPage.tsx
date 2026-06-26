@@ -37,6 +37,8 @@ import {
     Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { showActionNextSteps } from '../../common/showActionNextSteps';
+import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
@@ -158,6 +160,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 } else if (project) {
                     setProjects(prev => [project, ...prev]);
                     setShowAddModal(false);
+                    toast.success('Project created');
+                    showActionNextSteps('project_created', (path) => router.push(path));
                 }
             }
         } catch (e) {
@@ -206,6 +210,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     return (
         <div className="h-full flex flex-col space-y-4 sm:space-y-6 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
+            <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
             {/* Header */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 min-w-0">
                 <div className="min-w-0">

@@ -323,6 +323,38 @@ export const contractService = {
         return { error };
     },
 
+    async bulkDeleteContracts(ids: string[]): Promise<{ error: string | null; count: number; skipped: number }> {
+        if (!ids.length) return { error: null, count: 0, skipped: 0 };
+        const tenantId = this.getTenantId();
+        const uniqueIds = [...new Set(ids)];
+        try {
+            const { data, error: fetchError } = await supabase
+                .from('contracts')
+                .select('id, status')
+                .in('id', uniqueIds)
+                .eq('tenant_id', tenantId);
+            if (fetchError) throw fetchError;
+
+            const draftIds = (data || [])
+                .filter((row: { id: string; status: string }) => row.status === 'draft')
+                .map((row: { id: string }) => row.id);
+            const skipped = uniqueIds.length - draftIds.length;
+
+            for (const id of draftIds) {
+                const { error } = await this.deleteContract(id);
+                if (error) throw error;
+            }
+
+            return { error: null, count: draftIds.length, skipped };
+        } catch (err) {
+            return {
+                error: err instanceof Error ? err.message : 'Unknown error',
+                count: 0,
+                skipped: 0,
+            };
+        }
+    },
+
     /**
      * Sign a contract
      * ESIGN COMPLIANT: Records full audit trail, consent, and tamper seals

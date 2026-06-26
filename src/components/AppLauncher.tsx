@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User } from '@/types';
+import Image from 'next/image';
 import LoginModal from './auth/LoginModal';
+import { APP_NAME, APP_SHORT_NAME, APP_TAGLINE } from '@/constants';
 import {
   MessageSquare,
   Video,
@@ -78,8 +79,9 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
 
       {/* Top Status Bar (Native Feel) */}
       <div className="relative z-20 flex justify-between items-center px-4 sm:px-6 pt-2 pb-2 text-[11px] sm:text-[12px] font-bold tracking-tight">
-        <div className="flex items-center gap-1.5 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 tracking-[0.06em] truncate max-w-[50%]">
-          AlphaClone Systems
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 tracking-[0.04em] truncate max-w-[55%]">
+          <Image src="/logo.png" alt="" width={18} height={18} className="rounded-md shrink-0" />
+          <span className="truncate">{APP_SHORT_NAME}</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <Signal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -104,10 +106,19 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           <h1 className="text-7xl sm:text-8xl font-thin tracking-tighter drop-shadow-2xl">
             {formattedTime}
           </h1>
-          <p className="text-lg sm:text-xl font-medium text-teal-400 mt-2 drop-shadow-lg tracking-wide">
-            {formattedDate}
+          <p className="text-sm sm:text-base font-medium text-teal-400/90 mt-2 drop-shadow-lg tracking-wide text-center px-4">
+            {APP_TAGLINE}
           </p>
         </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+          className="text-xs text-slate-500 mb-6"
+        >
+          {formattedDate}
+        </motion.p>
 
         {/* Spotlight Search Trigger */}
         <motion.div 

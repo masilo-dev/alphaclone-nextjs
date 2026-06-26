@@ -39,8 +39,12 @@ const BottomNav: React.FC<BottomNavProps> = ({
     const isSettingsActive = activeTab === '/dashboard/pwa-settings';
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-50 h-[calc(env(safe-area-inset-bottom,0px)+62px)] native-bottom-bar">
-            <div className="flex justify-around items-center h-[62px] px-1">
+        <nav
+            aria-label="Primary"
+            className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 native-bottom-bar"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 6px)' }}
+        >
+            <div className="flex justify-around items-end h-[54px] px-1 pb-0.5">
                 {mobileNavItems.map((item) => {
                     const isActive = isPwaNavActive(activeTab, item);
                     const showBadge =
@@ -52,7 +56,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                             onClick={() => handleNavClick(item.href)}
                             aria-label={item.label}
                             aria-current={isActive ? 'page' : undefined}
-                            className="native-tap flex flex-col items-center justify-center w-full h-full gap-1 transition-colors"
+                            className="native-tap flex flex-col items-center justify-end w-full h-full gap-0.5 transition-colors"
                         >
                             <div className="relative">
                                 <div
@@ -70,7 +74,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                                 ) : null}
                             </div>
                             <span
-                                className={`pwa-tab-label max-w-[4.75rem] truncate ${
+                                className={`pwa-tab-label max-w-[4.75rem] truncate leading-tight ${
                                     isActive ? item.labelActive : 'text-slate-500'
                                 }`}
                             >
@@ -91,7 +95,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                     }}
                     aria-label={isPWA ? 'Mobile app settings' : 'More'}
                     aria-current={isSettingsActive ? 'page' : undefined}
-                    className="native-tap flex flex-col items-center justify-center w-full h-full gap-1 transition-colors"
+                    className="native-tap flex flex-col items-center justify-end w-full h-full gap-0.5 transition-colors"
                 >
                     <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm transition-all ${
@@ -105,13 +109,13 @@ const BottomNav: React.FC<BottomNavProps> = ({
                         )}
                     </div>
                     <span
-                        className={`pwa-tab-label ${isSettingsActive ? 'text-slate-300' : 'text-slate-500'}`}
+                        className={`pwa-tab-label leading-tight ${isSettingsActive ? 'text-slate-300' : 'text-slate-500'}`}
                     >
                         {isPWA ? 'App' : 'More'}
                     </span>
                 </button>
             </div>
-        </div>
+        </nav>
     );
 };
 

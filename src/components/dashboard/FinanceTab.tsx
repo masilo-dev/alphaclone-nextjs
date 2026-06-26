@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   FilePlus, X, Send, Download, CheckCircle, Trash2,
   ArrowLeft, Search, ChevronRight, Receipt, Camera, Plus,
@@ -187,6 +188,7 @@ const ExpenseRow: React.FC<{ expense: Expense; onDelete: (id: string) => void }>
 type MainTab = 'invoices' | 'expenses';
 
 const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
+  const router = useRouter();
   const { currentTenant } = useTenant();
   const [mainTab, setMainTab] = useState<MainTab>('invoices');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -197,6 +199,48 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [aiExpenseInsight, setAiExpenseInsight] = useState<string | null>(null);
   const [aiExpenseLoading, setAiExpenseLoading] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [newExpense, setNewExpense] = useState({ description: '', amount: '', category: 'other', vendor: '' });
+  const [savingExpense, setSavingExpense] = useState(false);
+
+  const billingManagePath =
+    user.role === 'tenant_admin'
+      ? '/dashboard/business/billing/manage?create=true'
+      : '/dashboard/finance/manage?create=true';
+
+  const handleFabClick = () => {
+    if (mainTab === 'invoices') {
+      router.push(billingManagePath);
+      return;
+    }
+    setShowAddExpense(true);
+  };
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentTenant?.id || !newExpense.description.trim()) return;
+    setSavingExpense(true);
+    try {
+      const { error } = await supabase.from('expenses').insert({
+        tenant_id: currentTenant.id,
+        description: newExpense.description.trim(),
+        amount: Number(newExpense.amount) || 0,
+        category: newExpense.category.toLowerCase(),
+        vendor: newExpense.vendor.trim() || null,
+        status: 'pending',
+        date: new Date().toISOString().split('T')[0],
+      });
+      if (error) throw error;
+      toast.success('Expense added');
+      setShowAddExpense(false);
+      setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add expense');
+    } finally {
+      setSavingExpense(false);
+    }
+  };
 
   const handleAiExpenseReview = async () => {
     if (!currentTenant?.id || expenses.length === 0) {
@@ -387,9 +431,56 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       </div>
 
       {/* FAB */}
-      <button className={`fixed bottom-20 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 ${mainTab === 'invoices' ? 'bg-green-600 shadow-green-600/30' : 'bg-rose-600 shadow-rose-600/30'}`}>
+      <button
+        type="button"
+        onClick={handleFabClick}
+        aria-label={mainTab === 'invoices' ? 'Create invoice' : 'Add expense'}
+        className={`fixed bottom-20 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 ${mainTab === 'invoices' ? 'bg-green-600 shadow-green-600/30' : 'bg-rose-600 shadow-rose-600/30'}`}
+      >
         {mainTab === 'invoices' ? <FilePlus className="w-6 h-6 text-white" /> : <Receipt className="w-6 h-6 text-white" />}
       </button>
+
+      {showAddExpense && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4">
+          <form onSubmit={handleAddExpense} className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Add expense</h2>
+              <button type="button" onClick={() => setShowAddExpense(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <input
+              required
+              value={newExpense.description}
+              onChange={(e) => setNewExpense((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Description"
+              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
+            />
+            <input
+              required
+              type="number"
+              step="0.01"
+              value={newExpense.amount}
+              onChange={(e) => setNewExpense((f) => ({ ...f, amount: e.target.value }))}
+              placeholder="Amount"
+              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
+            />
+            <input
+              value={newExpense.vendor}
+              onChange={(e) => setNewExpense((f) => ({ ...f, vendor: e.target.value }))}
+              placeholder="Vendor (optional)"
+              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
+            />
+            <button
+              type="submit"
+              disabled={savingExpense}
+              className="w-full h-10 rounded-xl bg-rose-600 text-white font-bold text-sm disabled:opacity-50"
+            >
+              {savingExpense ? 'Saving…' : 'Save expense'}
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

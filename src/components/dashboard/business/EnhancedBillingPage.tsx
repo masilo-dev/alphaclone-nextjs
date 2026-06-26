@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
-    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical
+    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -18,6 +18,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import type { EmailRecipient } from '../crm/emailRecipient';
+import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -47,6 +48,46 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     });
     const [clientMap, setClientMap] = useState<Record<string, { name: string; email?: string }>>({});
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
+    const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
+    const [bulkDeletingInvoices, setBulkDeletingInvoices] = useState(false);
+
+    const toggleInvoiceSelection = (inv: BusinessInvoice) => {
+        if (inv.status !== 'draft') {
+            toast.error('Only draft invoices can be deleted. Sent or paid invoices must stay on file.');
+            return;
+        }
+        setSelectedInvoiceIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(inv.id)) next.delete(inv.id);
+            else next.add(inv.id);
+            return next;
+        });
+    };
+
+    const handleBulkDeleteInvoices = async () => {
+        const ids = [...selectedInvoiceIds];
+        if (!ids.length) return;
+        if (!confirm(`Delete ${ids.length} draft invoice(s)? This cannot be undone.`)) return;
+
+        setBulkDeletingInvoices(true);
+        const toastId = toast.loading(`Deleting ${ids.length} invoice(s)...`);
+        try {
+            const { error, count, skipped } = await businessInvoiceService.bulkDeleteInvoices(ids);
+            if (error) throw new Error(error);
+            setInvoices((prev) => prev.filter((inv) => !selectedInvoiceIds.has(inv.id)));
+            setSelectedInvoiceIds(new Set());
+            if (skipped > 0) {
+                toast.success(`Deleted ${count} draft(s). ${skipped} non-draft invoice(s) were skipped.`, { id: toastId });
+            } else {
+                toast.success(`Deleted ${count} invoice(s)`, { id: toastId });
+            }
+            await loadInvoices();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
+        } finally {
+            setBulkDeletingInvoices(false);
+        }
+    };
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -162,6 +203,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     return (
         <div className={`space-y-6 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
+            <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
@@ -246,26 +288,66 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
             {/* Invoices List */}
             <div className="space-y-4">
-                <div className="flex justify-between items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex gap-2 overflow-x-auto no-scrollbar">
                         {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
                             <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
                         ))}
                     </div>
-                    <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 h-10 px-6 bg-teal-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2 transition-all hover:bg-teal-500">
-                        <Plus size={16} /> New Invoice
-                    </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        {selectedInvoiceIds.size > 0 && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedInvoiceIds(new Set())}
+                                    className="h-10 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 text-slate-400"
+                                >
+                                    Clear
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={bulkDeletingInvoices}
+                                    onClick={handleBulkDeleteInvoices}
+                                    className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-500/30 text-rose-300 flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <Trash2 size={14} />
+                                    {bulkDeletingInvoices ? 'Deleting…' : `Delete (${selectedInvoiceIds.size})`}
+                                </button>
+                            </>
+                        )}
+                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 h-10 px-6 bg-teal-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2 transition-all hover:bg-teal-500">
+                            <Plus size={16} /> New Invoice
+                        </button>
+                    </div>
                 </div>
+                <p className="text-xs text-slate-500 -mt-2">
+                    Tip: select draft invoices to bulk-delete. Sent and paid invoices are protected for your books.
+                </p>
 
                 <div className="space-y-3">
                     {filteredInvoices.map(inv => (
                         <Card 
                             key={inv.id} 
                             onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }} 
-                            className="p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer"
+                            className={`p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer ${
+                                selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-teal-500/40' : ''
+                            }`}
                         >
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-3">
+                            <div className="flex justify-between items-start mb-3 gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleInvoiceSelection(inv);
+                                        }}
+                                        className={inv.status === 'draft' ? 'text-slate-400 hover:text-teal-400 shrink-0' : 'text-slate-700 cursor-not-allowed shrink-0'}
+                                        aria-label={inv.status === 'draft' ? `Select ${inv.invoiceNumber}` : 'Only drafts can be selected'}
+                                    >
+                                        {selectedInvoiceIds.has(inv.id)
+                                            ? <CheckSquare size={18} className="text-teal-400" />
+                                            : <Square size={18} />}
+                                    </button>
                                     <div className={`p-2 rounded-lg bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={18} /></div>
                                     <div>
                                         <p className="text-sm font-black text-white">{inv.invoiceNumber}</p>

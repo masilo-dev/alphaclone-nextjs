@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { generalLedgerService, TrialBalance, FinancialStatement } from '../../../services/accounting/generalLedgerService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
-import { generatePnLPDF, generateBalanceSheetPDF } from '../../../utils/pdfGenerator';
+import { generatePnLPDF, generateBalanceSheetPDF, generateTrialBalancePDF } from '../../../utils/pdfGenerator';
 import toast from 'react-hot-toast';
 import { FileDown } from 'lucide-react';
 import CashFlowStatement from './CashFlowStatement';
@@ -97,8 +97,10 @@ export function FinancialReportsPage() {
                 const doc = generateBalanceSheetPDF(balanceSheet, currentTenant, bsAsOfDate);
                 doc.save(`Balance_Sheet_${bsAsOfDate}.pdf`);
                 toast.success('Balance Sheet exported', { id: toastId });
-            } else if (selectedReport === 'trial_balance') {
-                toast.error('Export for Trial Balance not yet implemented', { id: toastId });
+            } else if (selectedReport === 'trial_balance' && trialBalance) {
+                const doc = generateTrialBalancePDF(trialBalance, currentTenant, tbAsOfDate);
+                doc.save(`Trial_Balance_${tbAsOfDate}.pdf`);
+                toast.success('Trial Balance exported', { id: toastId });
             } else {
                 toast.error('Please generate the report first', { id: toastId });
             }

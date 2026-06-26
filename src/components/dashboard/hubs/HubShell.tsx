@@ -58,7 +58,7 @@ export default function HubShell({ title, description, tabs, children }: HubShel
           })}
         </div>
       </div>
-      <div className="flex-1 min-h-0 overflow-x-hidden max-md:pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:pb-safe">{children}</div>
+      <div className="flex-1 min-h-0 overflow-x-hidden max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-safe">{children}</div>
     </div>
   );
 }

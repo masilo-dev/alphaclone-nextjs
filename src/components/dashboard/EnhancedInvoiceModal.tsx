@@ -28,6 +28,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { useServicesCatalog, ServiceItem } from '@/hooks/useServicesCatalog';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { cn } from '@/lib/utils';
 // Removed unused import causing build failure
 
@@ -81,6 +83,7 @@ export default function EnhancedInvoiceModal({
   mode,
   onSuccess
 }: EnhancedInvoiceModalProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const { services, addService } = useServicesCatalog();
@@ -207,6 +210,9 @@ export default function EnhancedInvoiceModal({
 
       onSuccess?.(finalInvoice);
       onClose();
+      if (mode === 'create') {
+        showInvoiceCreatedWithSendPrompt((path) => router.push(path));
+      }
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error("Failed to save invoice draft");

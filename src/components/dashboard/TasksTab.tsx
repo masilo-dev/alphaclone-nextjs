@@ -13,6 +13,9 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { showActionNextSteps } from '../common/showActionNextSteps';
+import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import EmptyState from '../ui/EmptyState';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
@@ -298,8 +301,76 @@ const TaskSection: React.FC<{
   );
 };
 
+const TaskCreateSheet: React.FC<{
+  onClose: () => void;
+  onCreate: (data: { title: string; due_date?: string; priority: Priority }) => Promise<void>;
+  creating: boolean;
+}> = ({ onClose, onCreate, creating }) => {
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [dueDate, setDueDate] = useState('');
+
+  const submit = async () => {
+    if (!title.trim()) {
+      toast.error('Task title is required');
+      return;
+    }
+    await onCreate({ title: title.trim(), due_date: dueDate || undefined, priority });
+  };
+
+  return (
+    <motion.div
+      initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+      className="fixed inset-0 z-50 flex flex-col"
+    >
+      <div className="flex-1 bg-black/50" onClick={onClose} />
+      <div className="bg-slate-900 border-t border-white/10 rounded-t-3xl p-4 pb-10 space-y-4">
+        <h3 className="text-lg font-bold text-white">New task</h3>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="What needs to be done?"
+          className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-teal-500/50"
+          autoFocus
+        />
+        <div>
+          <label className="text-[11px] text-slate-500 uppercase font-black block mb-2">Priority</label>
+          <div className="flex gap-2">
+            {(['low', 'medium', 'high'] as Priority[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPriority(p)}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-500 border-white/5'}`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
+        />
+        <button
+          type="button"
+          onClick={submit}
+          disabled={creating}
+          className="w-full py-3 bg-teal-600 text-white font-bold rounded-xl text-sm disabled:opacity-50"
+        >
+          {creating ? 'Saving…' : 'Create task'}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
 // ── Main TasksTab ──────────────────────────────────────────────────────────────
-const TasksTab: React.FC<TasksTabProps> = () => {
+const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
+  const router = useRouter();
   const { currentTenant } = useTenant();
   const {
     lists: microsoftLists,
@@ -317,6 +388,8 @@ const TasksTab: React.FC<TasksTabProps> = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const PAGE_SIZE = 200;
 
@@ -416,6 +489,34 @@ const TasksTab: React.FC<TasksTabProps> = () => {
     toast.success(`${ids.length} task(s) completed`);
   };
 
+  const handleCreateTask = async (data: { title: string; due_date?: string; priority: Priority }) => {
+    if (!currentTenant?.id) return;
+    setCreating(true);
+    try {
+      const { data: row, error } = await supabase
+        .from('tasks')
+        .insert({
+          tenant_id: currentTenant.id,
+          title: data.title,
+          status: 'todo',
+          priority: data.priority,
+          due_date: data.due_date || null,
+        })
+        .select('*, projects(name)')
+        .single();
+      if (error) throw error;
+      const mapped = { ...(row as any), project_name: (row as any).projects?.name } as Task;
+      setTasks((prev) => [mapped, ...prev]);
+      setCreateOpen(false);
+      toast.success('Task created');
+      showActionNextSteps('task_created', (path) => router.push(path));
+    } catch {
+      toast.error('Failed to create task');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const groups = groupTasks(tasks);
   const ORDER = ['Today', 'This Week', 'Later', 'No Due Date', 'Completed'];
   const isTruncated = totalCount !== null && tasks.length < totalCount;
@@ -442,6 +543,9 @@ const TasksTab: React.FC<TasksTabProps> = () => {
 
   return (
     <div className="relative flex flex-col h-full">
+      <div className="px-4 pt-3">
+        <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+      </div>
       <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
         <div className="flex items-center gap-2">
           <button
@@ -591,12 +695,23 @@ const TasksTab: React.FC<TasksTabProps> = () => {
       </div>
 
       {/* FAB */}
-      <button className="fixed bottom-20 right-4 w-14 h-14 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 z-30">
+      <button
+        type="button"
+        onClick={() => setCreateOpen(true)}
+        className="fixed bottom-20 right-4 w-14 h-14 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 z-30"
+      >
         <Plus className="w-6 h-6 text-white" />
       </button>
 
       {/* Task Detail Sheet */}
       <AnimatePresence>
+        {createOpen && (
+          <TaskCreateSheet
+            onClose={() => setCreateOpen(false)}
+            onCreate={handleCreateTask}
+            creating={creating}
+          />
+        )}
         {detailTask && (
           <TaskDetailSheet
             task={detailTask}

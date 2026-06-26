@@ -511,6 +511,19 @@ export const businessInvoiceService = {
         }
     },
 
+    async bulkDeleteInvoices(invoiceIds: string[]): Promise<{ error: string | null; count: number; skipped: number }> {
+        if (!invoiceIds.length) return { error: null, count: 0, skipped: 0 };
+        const uniqueIds = [...new Set(invoiceIds)];
+        let count = 0;
+        let skipped = 0;
+        for (const id of uniqueIds) {
+            const { error } = await this.deleteInvoice(id);
+            if (error) skipped += 1;
+            else count += 1;
+        }
+        return { error: null, count, skipped };
+    },
+
     /**
      * Generate next invoice number
      * IMPROVED: Using a more robust approach to avoid race conditions

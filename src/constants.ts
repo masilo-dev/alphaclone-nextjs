@@ -42,6 +42,8 @@ import {
 import { NavItem, DashboardStat } from './types';
 
 export const APP_NAME = "AlphaClone Systems";
+export const APP_SHORT_NAME = "AlphaClone";
+export const APP_TAGLINE = "Your business operating system";
 
 /** Platform Calendly link for sales/demo calls (marketing + dashboard). */
 export const PLATFORM_CALENDLY_URL = 'https://calendly.com/bonniealphaclonesystems/30min';
